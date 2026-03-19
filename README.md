@@ -195,6 +195,27 @@ agentic-brain init --template retail
 
 ---
 
+## Development
+
+### Setup
+```bash
+pip install -e ".[dev]"
+pre-commit install
+```
+
+### Running Tests
+```bash
+pytest tests/ -v
+```
+
+### Code Quality
+Pre-commit hooks run automatically on commit. To run manually:
+```bash
+pre-commit run --all-files
+```
+
+---
+
 ## 🔧 Configuration
 
 Set environment variables or use `brain.config`:

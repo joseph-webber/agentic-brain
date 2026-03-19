@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-03-20
+## [1.0.0] - 2026-03-20
 
 ### Added
 
@@ -122,5 +122,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Project licensed under GPL-3.0 for maximum protection
 
-[Unreleased]: https://github.com/joseph-webber/agentic-brain/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/joseph-webber/agentic-brain/releases/tag/v0.1.0
+[Unreleased]: https://github.com/joseph-webber/agentic-brain/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/joseph-webber/agentic-brain/releases/tag/v1.0.0

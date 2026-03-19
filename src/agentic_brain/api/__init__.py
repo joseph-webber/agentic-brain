@@ -10,6 +10,9 @@
 
 from .models import ChatRequest, ChatResponse, SessionInfo, ErrorResponse
 from .server import app, create_app, run_server
+from .routes import register_routes
+from .middleware import setup_cors, setup_exception_handlers
+from .websocket import register_websocket_routes
 
 __all__ = [
     # Models
@@ -21,4 +24,11 @@ __all__ = [
     "app",
     "create_app",
     "run_server",
+    # Routes
+    "register_routes",
+    # Middleware
+    "setup_cors",
+    "setup_exception_handlers",
+    # WebSocket
+    "register_websocket_routes",
 ]
