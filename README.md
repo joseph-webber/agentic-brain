@@ -95,7 +95,7 @@ customer_agent = Agent(name="acme-bot", memory=customer_memory)
 
 ### 🧠 Persistent Memory
 
-Unlike ChatGPT, agentic-brain remembers across sessions:
+Agentic-brain remembers across sessions using Neo4j:
 
 ```python
 # Session 1
@@ -124,11 +124,11 @@ Route to the right model:
 from agentic_brain import LLMRouter
 
 router = LLMRouter(
-    default="gpt-4",
+    default="claude-3-sonnet",
     fallback="ollama/llama3",
     routing_rules={
-        "code": "gpt-4",
-        "simple": "gpt-3.5-turbo",
+        "code": "claude-3-sonnet",
+        "simple": "ollama/llama3",
         "private": "ollama/llama3"  # Keep sensitive queries local
     }
 )
