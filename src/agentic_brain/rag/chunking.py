@@ -65,7 +65,7 @@ class BaseChunker(ABC):
         chunk_size: int = 512,
         overlap: int = 50,
         separator: str = "\n\n"
-    ):
+    ) -> None:
         """
         Initialize base chunker.
         
@@ -174,7 +174,7 @@ class SemanticChunker(BaseChunker):
         chunk_size: int = 512,
         overlap: int = 50,
         min_chunk_size: int = 100
-    ):
+    ) -> None:
         super().__init__(chunk_size, overlap)
         self.min_chunk_size = min_chunk_size
     
@@ -277,7 +277,7 @@ class RecursiveChunker(BaseChunker):
         chunk_size: int = 512,
         overlap: int = 50,
         separators: Optional[List[str]] = None
-    ):
+    ) -> None:
         super().__init__(chunk_size, overlap, separators[0] if separators else "\n\n")
         self.separators = separators or ["\n\n", "\n", ". ", " ", ""]
     
@@ -385,7 +385,7 @@ class MarkdownChunker(BaseChunker):
         chunk_size: int = 512,
         overlap: int = 50,
         include_metadata: bool = True
-    ):
+    ) -> None:
         super().__init__(chunk_size, overlap)
         self.include_metadata = include_metadata
     

@@ -58,7 +58,7 @@ class Plugin(ABC):
         ...         return message
     """
 
-    def __init__(self, config: Optional[PluginConfig] = None):
+    def __init__(self, config: Optional[PluginConfig] = None) -> None:
         """
         Initialize plugin.
 
@@ -151,7 +151,7 @@ class PluginManager:
     - Plugin discovery from directories
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None) -> None:
         """
         Initialize plugin manager.
 

@@ -21,6 +21,7 @@ import logging
 import subprocess
 import shutil
 import json
+import urllib.error
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +157,12 @@ class LLMRouter:
             with urllib.request.urlopen(req, timeout=5) as resp:
                 self._ollama_available = resp.status == 200
                 
-        except Exception:
+        except (ConnectionError, TimeoutError, OSError, urllib.error.URLError) as e:
+            # ConnectionError: network unreachable
+            # TimeoutError: request timeout
+            # OSError: system error
+            # URLError: HTTP error
+            logger.debug(f"Ollama availability check failed: {e}")
             self._ollama_available = False
         
         return self._ollama_available or False
@@ -428,7 +434,14 @@ class LLMRouter:
             
             return [m["name"] for m in result.get("models", [])]
             
-        except Exception:
+        except (ConnectionError, TimeoutError, OSError, json.JSONDecodeError, urllib.error.URLError, ValueError) as e:
+            # ConnectionError: network error
+            # TimeoutError: request timeout
+            # OSError: system error
+            # json.JSONDecodeError: invalid JSON response
+            # URLError: HTTP error
+            # ValueError: JSON parse error
+            logger.debug(f"Failed to fetch Ollama models: {e}")
             return []
     
     @property

@@ -16,7 +16,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, Any
 import logging
@@ -184,7 +184,7 @@ class Neo4jMemory:
     
     def _generate_id(self, content: str, scope: DataScope) -> str:
         """Generate unique ID for memory."""
-        data = f"{content}:{scope.value}:{datetime.utcnow().isoformat()}"
+        data = f"{content}:{scope.value}:{datetime.now(timezone.utc).isoformat()}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
     
     def store(
@@ -227,7 +227,7 @@ class Neo4jMemory:
             id=self._generate_id(content, scope),
             content=content,
             scope=scope,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             customer_id=customer_id,
             metadata=metadata or {},
             embedding=embedding,
@@ -337,7 +337,7 @@ class Neo4jMemory:
                     id=record["id"],
                     content=record["content"],
                     scope=DataScope(record["scope"]),
-                    timestamp=record["timestamp"].to_native() if record["timestamp"] else datetime.utcnow(),
+                    timestamp=record["timestamp"].to_native() if record["timestamp"] else datetime.now(timezone.utc),
                     customer_id=record["customer_id"],
                 ))
         
@@ -390,7 +390,7 @@ class Neo4jMemory:
                     id=record["id"],
                     content=record["content"],
                     scope=DataScope(record["scope"]),
-                    timestamp=record["timestamp"].to_native() if record["timestamp"] else datetime.utcnow(),
+                    timestamp=record["timestamp"].to_native() if record["timestamp"] else datetime.now(timezone.utc),
                     customer_id=record["customer_id"],
                 ))
         
@@ -526,10 +526,10 @@ class InMemoryStore:
     ) -> Memory:
         """Store in memory."""
         memory = Memory(
-            id=hashlib.sha256(f"{content}:{datetime.utcnow()}".encode()).hexdigest()[:16],
+            id=hashlib.sha256(f"{content}:{datetime.now(timezone.utc)}".encode()).hexdigest()[:16],
             content=content,
             scope=scope,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             customer_id=customer_id,
         )
         self._memories[memory.id] = memory

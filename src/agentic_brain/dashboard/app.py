@@ -10,7 +10,7 @@
 
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -55,7 +55,7 @@ class HealthStatus(BaseModel):
 
 
 # Global state tracking
-_startup_time = datetime.utcnow()
+_startup_time = datetime.now(timezone.utc)
 _message_count = 0
 
 
@@ -654,7 +654,7 @@ def create_dashboard_router(
             dict: Statistics including active sessions, messages, memory, uptime
         """
         # Calculate uptime
-        uptime_seconds = int((datetime.utcnow() - _startup_time).total_seconds())
+        uptime_seconds = int((datetime.now(timezone.utc) - _startup_time).total_seconds())
         
         # Try to get memory info, fall back to estimate if psutil not available
         memory_mb = 0.0
@@ -666,11 +666,15 @@ def create_dashboard_router(
             # Estimate memory usage (rough estimate)
             import sys
             memory_mb = sys.getsizeof(_sessions) / 1024 / 1024 + 50  # ~50MB base
-        except Exception:
+        except (OSError, AttributeError, RuntimeError) as e:
+            # OSError: process access error
+            # AttributeError: memory_info missing
+            # RuntimeError: process lookup error
+            logger.debug(f"Memory stat collection failed: {e}")
             memory_mb = 50.0
         
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "sessions_active": len(_sessions),
             "total_messages": sum(len(msgs) for msgs in _messages.values()),
             "memory_usage_mb": memory_mb,
@@ -694,7 +698,7 @@ def create_dashboard_router(
             messages_count = len(_messages.get(session_id, []))
             sessions_list.append({
                 "session_id": session_id,
-                "created_at": session_data.get("created_at", datetime.utcnow().isoformat()),
+                "created_at": session_data.get("created_at", datetime.now(timezone.utc).isoformat()),
                 "messages_count": messages_count,
                 "user_id": session_data.get("user_id"),
             })
@@ -744,7 +748,11 @@ def create_dashboard_router(
         try:
             # This is a simple check - in production you'd query the actual connection
             neo4j_connected = True
-        except Exception:
+        except (OSError, ConnectionError, RuntimeError) as e:
+            # OSError: connection error
+            # ConnectionError: network error
+            # RuntimeError: Neo4j driver error
+            logger.debug(f"Neo4j health check failed: {e}")
             neo4j_connected = False
         
         # Check LLM provider availability
@@ -752,7 +760,11 @@ def create_dashboard_router(
         try:
             # This is a simple check - in production you'd query the LLM provider
             llm_available = True
-        except Exception:
+        except (OSError, ConnectionError, TimeoutError) as e:
+            # OSError: connection error
+            # ConnectionError: network error
+            # TimeoutError: request timeout
+            logger.debug(f"LLM provider health check failed: {e}")
             llm_available = False
         
         return {
@@ -760,7 +772,7 @@ def create_dashboard_router(
             "neo4j_connected": neo4j_connected,
             "llm_provider_available": llm_available,
             "memory_ok": memory_ok,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     
     @router.post(

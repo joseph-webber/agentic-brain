@@ -46,7 +46,7 @@ class RerankResult:
 class BaseReranker(ABC):
     """Base class for all reranking strategies."""
     
-    def __init__(self, top_k: Optional[int] = None):
+    def __init__(self, top_k: Optional[int] = None) -> None:
         """
         Initialize reranker.
         
@@ -92,7 +92,7 @@ class QueryDocumentSimilarityReranker(BaseReranker):
         self,
         embedding_provider: Optional[EmbeddingProvider] = None,
         top_k: Optional[int] = None
-    ):
+    ) -> None:
         """
         Initialize similarity reranker.
         
@@ -166,7 +166,7 @@ class CrossEncoderReranker(BaseReranker):
         model_name: str = "cross-encoder/ms-marco-MiniLM-L-12-v2",
         top_k: Optional[int] = None,
         batch_size: int = 32
-    ):
+    ) -> None:
         """
         Initialize cross-encoder reranker.
         
@@ -181,7 +181,7 @@ class CrossEncoderReranker(BaseReranker):
         self.model = None
         self._init_model()
     
-    def _init_model(self):
+    def _init_model(self) -> None:
         """Initialize cross-encoder model."""
         try:
             from sentence_transformers import CrossEncoder
@@ -266,7 +266,7 @@ class MMRReranker(BaseReranker):
         embedding_provider: Optional[EmbeddingProvider] = None,
         top_k: Optional[int] = None,
         lambda_weight: float = 0.5
-    ):
+    ) -> None:
         """
         Initialize MMR reranker.
         
@@ -369,7 +369,7 @@ class CombinedReranker(BaseReranker):
         self,
         rerankers: List[tuple],  # List of (reranker, weight) tuples
         top_k: Optional[int] = None
-    ):
+    ) -> None:
         """
         Initialize combined reranker.
         

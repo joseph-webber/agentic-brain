@@ -13,7 +13,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Callable, Any
 import logging
 
@@ -200,7 +200,7 @@ Be concise and accurate. If you don't know something, say so."""
         self._history.append({
             "role": "user",
             "content": message,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })
         
         # Store user message in memory
@@ -235,7 +235,7 @@ Be concise and accurate. If you don't know something, say so."""
         self._history.append({
             "role": "assistant",
             "content": answer,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })
         
         # Store response in memory

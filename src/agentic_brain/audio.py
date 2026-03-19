@@ -365,7 +365,11 @@ class Audio:
                         voice_name = line.split()[0]
                         voices.append(voice_name)
                 return voices
-            except Exception:
+            except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
+                # subprocess.CalledProcessError: command failed
+                # FileNotFoundError: 'say' command not found
+                # OSError: subprocess error
+                logger.debug(f"Failed to query available voices: {e}")
                 return ["Karen", "Samantha", "Daniel", "Moira"]
         
         return ["default"]

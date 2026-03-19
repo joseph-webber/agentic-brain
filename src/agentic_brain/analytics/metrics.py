@@ -25,7 +25,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, List, Any
 import logging
 import uuid
@@ -142,7 +142,7 @@ class MetricsCollector:
             ResponseMetric object
         """
         metric_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         
         # Calculate cost
         cost = self._calculate_cost(model, tokens_in, tokens_out)
@@ -224,7 +224,7 @@ class MetricsCollector:
             ErrorMetric object
         """
         error_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         
         error = ErrorMetric(
             error_id=error_id,
@@ -303,7 +303,7 @@ class MetricsCollector:
                     "session_id": session_id,
                     "duration_ms": duration_ms,
                     "message_count": message_count,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 })
         except Exception as e:
             logger.error(f"Failed to record session duration: {e}")

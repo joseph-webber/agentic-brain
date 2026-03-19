@@ -3,7 +3,7 @@ Tests for agentic-brain memory module.
 """
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 
 from agentic_brain.memory import (
     DataScope,
@@ -39,7 +39,7 @@ class TestMemory:
             id="test123",
             content="Test content",
             scope=DataScope.PRIVATE,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         
         assert mem.id == "test123"
@@ -53,7 +53,7 @@ class TestMemory:
             id="cust123",
             content="Customer data",
             scope=DataScope.CUSTOMER,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             customer_id="acme-corp",
         )
         

@@ -53,7 +53,7 @@ class BM25Index:
     used by Elasticsearch, Lucene, etc.
     """
     
-    def __init__(self, k1: float = 1.5, b: float = 0.75):
+    def __init__(self, k1: float = 1.5, b: float = 0.75) -> None:
         """
         Initialize BM25 index.
         
@@ -189,7 +189,7 @@ class HybridSearch:
         index_path: Optional[str] = None,
         k1: float = 1.5,
         b: float = 0.75
-    ):
+    ) -> None:
         """
         Initialize hybrid search.
         

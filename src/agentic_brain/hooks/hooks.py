@@ -12,7 +12,7 @@ import logging
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +176,7 @@ class HooksManager:
 
         context = HookContext(
             event_type=event_type,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             data=data or {},
         )
 

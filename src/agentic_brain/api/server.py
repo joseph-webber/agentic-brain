@@ -10,7 +10,7 @@
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, status, Query, WebSocket, WebSocketDisconnect
@@ -130,7 +130,7 @@ def create_app(
         return {
             "status": "healthy",
             "version": version,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "sessions_active": len(sessions),
         }
     
@@ -149,7 +149,7 @@ def create_app(
     def _ensure_session_exists(session_id: str, user_id: Optional[str] = None):
         """Ensure a session exists, create if it doesn't."""
         if session_id not in sessions:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             sessions[session_id] = {
                 "id": session_id,
                 "created_at": now,
@@ -161,7 +161,7 @@ def create_app(
             logger.info(f"Created new session: {session_id}")
         else:
             # Update last accessed
-            sessions[session_id]["last_accessed"] = datetime.utcnow()
+            sessions[session_id]["last_accessed"] = datetime.now(timezone.utc)
     
     @app.post(
         "/chat",
@@ -198,7 +198,7 @@ def create_app(
                 "id": message_id,
                 "role": "user",
                 "content": request.message,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             })
             
             # Generate response (placeholder - integrate with actual chat logic)
@@ -210,7 +210,7 @@ def create_app(
                 "id": response_id,
                 "role": "assistant",
                 "content": response_text,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             })
             
             # Update message count
@@ -280,7 +280,7 @@ def create_app(
                 "id": _generate_message_id(),
                 "role": "user",
                 "content": message,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             })
             
             # Get conversation history (last N messages)
@@ -397,7 +397,7 @@ def create_app(
                     "id": _generate_message_id(),
                     "role": "user",
                     "content": message,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 })
                 
                 # Get conversation history
@@ -435,7 +435,7 @@ def create_app(
                             "id": _generate_message_id(),
                             "role": "assistant",
                             "content": response_text,
-                            "timestamp": datetime.utcnow().isoformat(),
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
                         })
                     
                     sessions[session_id]["message_count"] += 1
@@ -607,7 +607,7 @@ def create_app(
                 "type": "connection",
                 "session_id": session_id,
                 "message": "Connected to chatbot",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             })
             
             # Message loop
@@ -621,7 +621,7 @@ def create_app(
                         await websocket.send_json({
                             "type": "error",
                             "error": "Empty message",
-                            "timestamp": datetime.utcnow().isoformat(),
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
                         })
                         continue
                     
@@ -634,7 +634,7 @@ def create_app(
                         "id": message_id,
                         "role": "user",
                         "content": message,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     })
                     
                     # Generate response
@@ -644,7 +644,7 @@ def create_app(
                         "id": response_id,
                         "role": "assistant",
                         "content": response_text,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     })
                     
                     sessions[session_id]["message_count"] += 1
@@ -654,7 +654,7 @@ def create_app(
                         "type": "message",
                         "id": response_id,
                         "content": response_text,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     })
                     
                     logger.info(f"WebSocket message processed: {session_id} -> {response_id}")
@@ -663,14 +663,14 @@ def create_app(
                     await websocket.send_json({
                         "type": "error",
                         "error": "Invalid JSON",
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     })
                 except Exception as e:
                     logger.error(f"WebSocket error: {str(e)}")
                     await websocket.send_json({
                         "type": "error",
                         "error": f"Error processing message: {str(e)}",
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     })
         
         except Exception as e:

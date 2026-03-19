@@ -15,6 +15,7 @@ streaming responses, MLX acceleration), see brain-core.
 import os
 import hashlib
 import json
+import logging
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
@@ -22,6 +23,8 @@ from pathlib import Path
 
 from .retriever import Retriever, RetrievedChunk
 from .embeddings import EmbeddingProvider, get_embeddings
+
+logger = logging.getLogger(__name__)
 
 
 # Response cache
@@ -141,7 +144,12 @@ class RAGPipeline:
                         model=data["model"],
                         cached=True
                     )
-            except Exception:
+            except (json.JSONDecodeError, ValueError, KeyError, IOError) as e:
+                # json.JSONDecodeError: corrupted cache file
+                # ValueError: invalid datetime format
+                # KeyError: missing expected field
+                # IOError: file read error
+                logger.debug(f"Cache read failed: {e}")
                 pass
         return None
     

@@ -15,12 +15,15 @@ query expansion), see: https://github.com/joseph-webber/brain-core
 """
 
 import os
+import logging
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any, Callable
 from datetime import datetime
 import math
 
 from .embeddings import EmbeddingProvider, get_embeddings
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -146,7 +149,12 @@ class Retriever:
                             score=record["score"],
                             metadata=dict(node)
                         ))
-                except Exception:
+                except (RuntimeError, OSError, KeyError, AttributeError) as e:
+                    # RuntimeError: Neo4j query failed
+                    # OSError: network/connection error
+                    # KeyError: missing expected field
+                    # AttributeError: missing property
+                    logger.debug(f"Vector index search failed for {label}, falling back: {e}")
                     # Fallback: get all nodes and compute similarity locally
                     result = session.run(f"""
                         MATCH (n:{label})
@@ -212,7 +220,12 @@ class Retriever:
                         score=score,
                         metadata={"path": str(file_path), "extension": ext}
                     ))
-                except Exception:
+                except (IOError, FileNotFoundError, PermissionError, ValueError) as e:
+                    # IOError: file read error
+                    # FileNotFoundError: file disappeared
+                    # PermissionError: no read permission
+                    # ValueError: embedding provider error
+                    logger.debug(f"Skipping file {file_path}: {e}")
                     continue
         
         chunks.sort(key=lambda x: x.score, reverse=True)
@@ -242,8 +255,12 @@ class Retriever:
         try:
             neo4j_chunks = self.search_neo4j(query, k=k, labels=sources)
             all_chunks.extend(neo4j_chunks)
-        except Exception as e:
+        except (OSError, RuntimeError, ConnectionError, TimeoutError) as e:
+            # OSError/ConnectionError: network error
+            # RuntimeError: Neo4j driver error
+            # TimeoutError: query timeout
             # Neo4j not available, skip silently
+            logger.debug(f"Neo4j search unavailable: {e}")
             pass
         
         # Sort all by score

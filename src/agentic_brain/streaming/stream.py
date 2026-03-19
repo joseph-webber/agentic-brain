@@ -47,7 +47,7 @@ class StreamToken:
     metadata: Dict[str, Any] = None
     """Additional metadata (model, timing, etc)"""
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
             self.metadata = {}
     

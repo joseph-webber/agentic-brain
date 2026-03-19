@@ -267,7 +267,10 @@ class WebSocketTransport(BaseTransport):
         try:
             # If we can't access the websocket, it's dead
             return self.websocket is not None and not self.websocket.client_state.name.startswith("DISCONNECTED")
-        except Exception:
+        except (AttributeError, RuntimeError) as e:
+            # AttributeError: websocket doesn't have client_state
+            # RuntimeError: websocket is in an invalid state
+            logger.debug(f"[{self.connection_id}] WebSocket health check failed: {e}")
             return False
 
 

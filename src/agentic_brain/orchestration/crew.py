@@ -80,7 +80,7 @@ class AgentResult:
 class SharedMemory:
     """Thread-safe shared memory for agent communication."""
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize shared memory."""
         self._data: dict[str, Any] = {}
         self._lock = RLock()
@@ -137,7 +137,7 @@ class Crew:
         agents: list[Agent],
         strategy: ExecutionStrategy = ExecutionStrategy.SEQUENTIAL,
         config: Optional[CrewConfig] = None,
-    ):
+    ) -> None:
         """
         Initialize crew.
         

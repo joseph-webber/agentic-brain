@@ -15,11 +15,14 @@ For MLX-accelerated embeddings on Apple Silicon, see brain-core.
 
 import os
 import hashlib
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 import json
+
+logger = logging.getLogger(__name__)
 
 # Cache for embeddings
 CACHE_DIR = Path.home() / ".agentic_brain" / "embedding_cache"
@@ -187,7 +190,11 @@ class CachedEmbeddings(EmbeddingProvider):
         if cache_file.exists():
             try:
                 return json.loads(cache_file.read_text())
-            except Exception:
+            except (json.JSONDecodeError, ValueError, IOError) as e:
+                # json.JSONDecodeError: corrupted cache file
+                # ValueError: invalid JSON content
+                # IOError: read error
+                logger.debug(f"Cache read failed for {cache_file}: {e}")
                 pass
         return None
     
@@ -267,7 +274,11 @@ def get_embeddings(
                 provider = "ollama"
             else:
                 provider = "openai"
-        except Exception:
+        except (ConnectionError, TimeoutError, OSError) as e:
+            # ConnectionError: network unreachable
+            # TimeoutError: request timeout
+            # OSError: system error
+            logger.debug(f"Ollama not available, falling back to OpenAI: {e}")
             provider = "openai"
     
     if provider == "ollama":

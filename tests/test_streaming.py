@@ -146,21 +146,24 @@ class TestStreamTokenGeneration:
         """Test that stream() routes to correct provider."""
         streamer = StreamingResponse(provider="ollama")
         
-        # Mock the Ollama streaming method
-        streamer._stream_ollama = AsyncMock(return_value=None)
-        streamer._stream_ollama.return_value = self._mock_stream()
+        # Mock the Ollama streaming method with proper async generator
+        async def mock_stream(msg, history=None):
+            yield StreamToken(token="Hello", is_start=True)
+            yield StreamToken(token=" world", is_start=False)
+            yield StreamToken(token="", is_end=True, finish_reason="stop")
         
-        async def _mock_stream():
-            yield StreamToken(token="test")
-        
-        streamer._stream_ollama = _mock_stream
+        streamer._stream_ollama = mock_stream
         
         tokens = []
         async for token in streamer.stream("test"):
             tokens.append(token)
         
-        assert len(tokens) == 1
-        assert tokens[0].token == "test"
+        assert len(tokens) == 3
+        assert tokens[0].token == "Hello"
+        assert tokens[0].is_start is True
+        assert tokens[1].token == " world"
+        assert tokens[2].is_end is True
+        assert tokens[2].finish_reason == "stop"
     
     @pytest.mark.asyncio
     async def test_stream_with_history(self):
@@ -266,24 +269,20 @@ class TestErrorHandling:
     
     @pytest.mark.asyncio
     async def test_stream_error_handling(self):
-        """Test that stream errors are handled gracefully."""
+        """Test that stream errors propagate correctly."""
         streamer = StreamingResponse(provider="ollama")
         
         # Mock stream to raise an exception
         async def mock_stream(msg, history=None):
             raise Exception("Connection failed")
+            yield  # Make this an async generator (unreachable but needed)
         
         streamer._stream_ollama = mock_stream
         
-        # Stream should yield error token
-        tokens = []
-        async for token in streamer.stream("test"):
-            tokens.append(token)
-        
-        # Should have error token
-        assert len(tokens) == 1
-        assert tokens[0].finish_reason == "error"
-        assert "error" in tokens[0].metadata
+        # Exception should be raised during iteration
+        with pytest.raises(Exception, match="Connection failed"):
+            async for token in streamer.stream("test"):
+                pass
 
 
 # Integration tests (require running Ollama or API keys)

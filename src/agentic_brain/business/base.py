@@ -4,7 +4,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field, fields, is_dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 from uuid import uuid4
 
@@ -21,8 +21,8 @@ class BusinessEntity(ABC):
     """
 
     id: str = field(default_factory=lambda: str(uuid4()))
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -102,7 +102,7 @@ class BusinessEntity(ABC):
 
     def update_timestamp(self) -> None:
         """Update the modified timestamp to current time."""
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
 
 class Repository(ABC, Generic[T]):

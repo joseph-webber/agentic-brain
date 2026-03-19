@@ -30,7 +30,7 @@ import os
 import json
 import hashlib
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, List, Any, Callable, Union
 from dataclasses import dataclass, field
@@ -54,7 +54,7 @@ class ChatMessage:
     """
     role: str
     content: str
-    timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     metadata: Dict[str, Any] = field(default_factory=dict)
     
     def to_dict(self) -> Dict[str, Any]:
@@ -70,7 +70,7 @@ class ChatMessage:
         return cls(
             role=data["role"],
             content=data["content"],
-            timestamp=data.get("timestamp", datetime.utcnow().isoformat()),
+            timestamp=data.get("timestamp", datetime.now(timezone.utc).isoformat()),
             metadata=data.get("metadata", {})
         )
 
@@ -138,7 +138,7 @@ class Chatbot:
         on_message: Optional[Callable[[ChatMessage], None]] = None,
         on_response: Optional[Callable[[ChatMessage], None]] = None,
         on_error: Optional[Callable[[Exception], None]] = None,
-    ):
+    ) -> None:
         """
         Initialize chatbot.
         
@@ -194,7 +194,7 @@ Guidelines:
 - Remember context from the conversation
 - If you don't know something, say so
 
-Current time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"""
+Current time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"""
     
     def _get_session(
         self,
@@ -228,7 +228,7 @@ Current time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"""
         
         return self._sessions[session_id]
     
-    def _save_session(self, session: Session):
+    def _save_session(self, session: Session) -> None:
         """Save session if persistence enabled."""
         if self.session_manager:
             self.session_manager.save_session(session)
@@ -289,7 +289,7 @@ Current time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"""
         # Fallback message
         return "I'm currently unable to process your request. Please try again."
     
-    def _store_memory(self, session: Session, message: str, response: str):
+    def _store_memory(self, session: Session, message: str, response: str) -> None:
         """Store important information in long-term memory."""
         if not self.memory or not self.config.use_memory:
             return
@@ -311,7 +311,7 @@ Current time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"""
                     metadata={
                         "session_id": session.session_id,
                         "user_id": session.user_id,
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "type": "user_fact"
                     }
                 )
@@ -449,13 +449,13 @@ Current time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"""
         self,
         session_id: Optional[str] = None,
         user_id: Optional[str] = None
-    ):
+    ) -> None:
         """Clear session history."""
         session = self._get_session(session_id, user_id)
         session.clear_history()
         self._save_session(session)
     
-    def set_system_prompt(self, prompt: str):
+    def set_system_prompt(self, prompt: str) -> None:
         """Update system prompt."""
         self.system_prompt = prompt
     

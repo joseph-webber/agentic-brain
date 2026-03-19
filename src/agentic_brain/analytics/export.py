@@ -21,7 +21,7 @@ from __future__ import annotations
 import csv
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from io import StringIO
 from pathlib import Path
 from typing import Optional, Dict, Any, List
@@ -302,15 +302,15 @@ class MetricsExporter:
             True if successful
         """
         data = {
-            "export_time": datetime.utcnow().isoformat(),
+            "export_time": datetime.now(timezone.utc).isoformat(),
             "analysis_period_days": days,
         }
         
         # Add usage data if available
         if self.usage_tracker:
-            end_date = datetime.utcnow().strftime("%Y-%m-%d")
+            end_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
             start_date = (
-                datetime.utcnow() - timedelta(days=days)
+                datetime.now(timezone.utc) - timedelta(days=days)
             ).strftime("%Y-%m-%d")
             
             data["usage"] = {
@@ -427,7 +427,7 @@ class MetricsExporter:
         <body>
             <div class="container">
                 <h1>{title}</h1>
-                <p>Generated: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+                <p>Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
                 <p>Analysis Period: Last {days} days</p>
                 
                 <h2>Key Metrics</h2>
@@ -506,7 +506,7 @@ class MetricsExporter:
         import schedule
         
         def export_daily():
-            date_str = datetime.utcnow().strftime("%Y-%m-%d")
+            date_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
             output_path = Path(output_dir) / f"analytics-{date_str}.{format_type}"
             
             if format_type == "json":

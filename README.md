@@ -160,6 +160,14 @@ agentic-brain init --template retail
 - **[Examples](./examples/)** — Retail, support, and enterprise chatbots
 - **[FAQ](./docs/faq.md)** — Common questions answered
 
+### Core Modules
+
+- **[Streaming](./docs/STREAMING.md)** — Real-time token-by-token responses (Ollama, OpenAI, Anthropic)
+- **[Plugins](./docs/plugins.md)** — Extensible plugin system for custom functionality
+- **[Dashboard](./DASHBOARD.md)** — Admin dashboard for monitoring and management
+- **[Analytics](./docs/chat.md)** — Usage tracking and performance metrics
+- **[Orchestration](./docs/getting-started.md)** — Crew + Workflow integration for multi-agent systems
+
 ---
 
 ## 🏗️ Architecture Overview

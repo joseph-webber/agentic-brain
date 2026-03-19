@@ -16,7 +16,7 @@ Features:
 
 import json
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, Dict, List, Any
 from dataclasses import dataclass, field, asdict
@@ -44,19 +44,19 @@ class Session:
     bot_name: str = "assistant"
     messages: List[Dict[str, Any]] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     
     def add_message(self, role: str, content: str, **kwargs) -> Dict[str, Any]:
         """Add a message to the session."""
         message = {
             "role": role,
             "content": content,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             **kwargs
         }
         self.messages.append(message)
-        self.updated_at = datetime.utcnow().isoformat()
+        self.updated_at = datetime.now(timezone.utc).isoformat()
         return message
     
     def get_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -65,10 +65,10 @@ class Session:
             return self.messages[-limit:]
         return self.messages
     
-    def clear_history(self):
+    def clear_history(self) -> None:
         """Clear message history."""
         self.messages = []
-        self.updated_at = datetime.utcnow().isoformat()
+        self.updated_at = datetime.now(timezone.utc).isoformat()
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -101,7 +101,7 @@ class SessionManager:
         session_dir: Path,
         timeout_seconds: int = 3600,
         auto_cleanup: bool = True
-    ):
+    ) -> None:
         """
         Initialize session manager.
         
@@ -124,19 +124,26 @@ class SessionManager:
         safe_id = hashlib.sha256(session_id.encode()).hexdigest()[:16]
         return self.session_dir / f"session_{safe_id}.json"
     
-    def _cleanup_expired(self):
+    def _cleanup_expired(self) -> None:
         """Remove expired session files."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cleaned = 0
         
         for file in self.session_dir.glob("session_*.json"):
             try:
                 data = json.loads(file.read_text())
-                updated = datetime.fromisoformat(data.get("updated_at", "2000-01-01"))
+                updated_str = data.get("updated_at", "2000-01-01T00:00:00+00:00")
+                updated = datetime.fromisoformat(updated_str)
+                # Ensure timezone-aware for comparison
+                if updated.tzinfo is None:
+                    updated = updated.replace(tzinfo=timezone.utc)
                 if now - updated > self.timeout:
                     file.unlink()
                     cleaned += 1
-            except Exception as e:
+            except (json.JSONDecodeError, ValueError, OSError) as e:
+                # json.JSONDecodeError: invalid JSON
+                # ValueError: invalid datetime format
+                # OSError: file read/delete errors
                 logger.warning(f"Error cleaning session {file}: {e}")
         
         if cleaned:
@@ -192,8 +199,12 @@ class SessionManager:
             path = self._session_path(session.session_id)
             path.write_text(json.dumps(session.to_dict(), indent=2))
             return True
-        except Exception as e:
-            logger.error(f"Failed to save session: {e}")
+        except (IOError, FileNotFoundError, PermissionError, json.JSONDecodeError, TypeError) as e:
+            # IOError/OSError: write failures
+            # FileNotFoundError: path doesn't exist
+            # PermissionError: no write permission
+            # TypeError: object not JSON serializable
+            logger.error(f"Failed to save session: {e}", exc_info=True)
             return False
     
     def load_session(self, session_id: str) -> Optional[Session]:
@@ -211,8 +222,13 @@ class SessionManager:
             if path.exists():
                 data = json.loads(path.read_text())
                 return Session.from_dict(data)
-        except Exception as e:
-            logger.warning(f"Failed to load session {session_id}: {e}")
+        except (IOError, FileNotFoundError, json.JSONDecodeError, ValueError, TypeError) as e:
+            # IOError/OSError: read failures
+            # FileNotFoundError: file doesn't exist
+            # json.JSONDecodeError: invalid JSON
+            # ValueError: invalid data
+            # TypeError: data incompatible with Session
+            logger.warning(f"Failed to load session {session_id}: {e}", exc_info=True)
         return None
     
     def delete_session(self, session_id: str) -> bool:
@@ -234,8 +250,11 @@ class SessionManager:
             if path.exists():
                 path.unlink()
             return True
-        except Exception as e:
-            logger.error(f"Failed to delete session: {e}")
+        except (IOError, FileNotFoundError, PermissionError) as e:
+            # IOError/OSError: delete failures
+            # FileNotFoundError: file doesn't exist (OK to ignore)
+            # PermissionError: no delete permission
+            logger.error(f"Failed to delete session: {e}", exc_info=True)
             return False
     
     def list_sessions(self) -> List[str]:
@@ -249,7 +268,11 @@ class SessionManager:
                 sid = data.get("session_id")
                 if sid and sid not in sessions:
                     sessions.append(sid)
-            except Exception:
+            except (json.JSONDecodeError, ValueError, OSError):
+                # json.JSONDecodeError: invalid JSON file
+                # ValueError: invalid data
+                # OSError: file read error
+                # Skip malformed files silently
                 pass
         
         return sessions

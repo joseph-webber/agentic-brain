@@ -193,7 +193,7 @@ class Workflow:
         >>> result = workflow.run()
     """
     
-    def __init__(self, start_step: str):
+    def __init__(self, start_step: str) -> None:
         """
         Initialize workflow.
         
@@ -205,12 +205,12 @@ class Workflow:
         self.state = WorkflowState.PENDING
         self.last_result: Optional[WorkflowResult] = None
     
-    def add_step(self, step: WorkflowStep) -> Workflow:
+    def add_step(self, step: WorkflowStep) -> "Workflow":
         """Add a step to the workflow (fluent API)."""
         self.steps[step.name] = step
         return self
     
-    def add_steps(self, steps: list[WorkflowStep]) -> Workflow:
+    def add_steps(self, steps: list[WorkflowStep]) -> "Workflow":
         """Add multiple steps (fluent API)."""
         for step in steps:
             self.add_step(step)

@@ -3,7 +3,7 @@
 """E-commerce and retail business models."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional
 
@@ -312,9 +312,9 @@ class Order(BusinessEntity):
 
         # Update timestamp fields based on status
         if new_status == OrderStatus.SHIPPED:
-            self.shipped_at = datetime.utcnow()
+            self.shipped_at = datetime.now(timezone.utc)
         elif new_status == OrderStatus.DELIVERED:
-            self.delivered_at = datetime.utcnow()
+            self.delivered_at = datetime.now(timezone.utc)
 
         return True
 

@@ -19,7 +19,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, List, Any
 import logging
 
@@ -438,7 +438,7 @@ class InsightsEngine:
         """
         return {
             "analysis_period_days": days,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "engagement": self.analyze_user_engagement(days),
             "performance_trends": self.analyze_response_time_trends(days),
             "error_patterns": self.detect_error_patterns(days),

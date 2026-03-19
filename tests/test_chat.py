@@ -10,7 +10,7 @@ import json
 import tempfile
 import time
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch, MagicMock, call
 
 from agentic_brain.chat.config import ChatConfig
@@ -436,7 +436,7 @@ class TestSessionManager:
             # Manually modify the updated_at to be old
             session_path = manager._session_path("old")
             data = json.loads(session_path.read_text())
-            old_time = (datetime.utcnow() - timedelta(hours=2)).isoformat()
+            old_time = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
             data["updated_at"] = old_time
             session_path.write_text(json.dumps(data))
             

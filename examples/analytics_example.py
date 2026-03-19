@@ -9,7 +9,7 @@ This demonstrates the complete workflow from metrics collection to insights gene
 """
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from neo4j import GraphDatabase
 
 from agentic_brain.analytics import (
@@ -128,7 +128,7 @@ def display_daily_stats(analytics):
     print("\n📊 Daily Statistics:")
     
     usage = analytics["usage"]
-    today = datetime.utcnow().strftime("%Y-%m-%d")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
     daily = usage.get_daily_stats(today, bot_name="demo_bot")
     
