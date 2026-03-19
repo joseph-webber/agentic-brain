@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "GPL-3.0-only"}
 authors = [
-    {name = "Joseph Webber", email = "joseph@ecomlounge.com"}
+    {name = "Joseph Webber", email = "joseph.webber@me.com"}
 ]
 keywords = [
     "ai",

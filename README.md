@@ -213,7 +213,7 @@ GPL-2.0-or-later - See [LICENSE](LICENSE)
 ## Author
 
 **Joseph Webber**  
-📧 joseph@ecomlounge.com  
+📧 joseph.webber@me.com  
 🌏 Adelaide, South Australia
 
 ---

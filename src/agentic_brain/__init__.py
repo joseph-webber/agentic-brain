@@ -19,7 +19,7 @@ Example:
 
 __version__ = "0.1.0"
 __author__ = "Joseph Webber"
-__email__ = "joseph@ecomlounge.com"
+__email__ = "joseph.webber@me.com"
 __license__ = "GPL-2.0-or-later"
 
 from agentic_brain.agent import Agent
