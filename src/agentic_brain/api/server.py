@@ -13,14 +13,16 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, status, Query
+from fastapi import FastAPI, HTTPException, status, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse as FastAPIStreamingResponse
 from pydantic import ValidationError
 import uvicorn
 import json
 
 from .models import ChatRequest, ChatResponse, SessionInfo, ErrorResponse
+from ..streaming import StreamingResponse, StreamToken
+from ..dashboard import create_dashboard_router
 
 
 # Configure logging
@@ -228,6 +230,235 @@ def create_app(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error processing message: {str(e)}",
             )
+    
+    # ============================================================================
+    # Streaming Chat Endpoints
+    # ============================================================================
+    
+    @app.get(
+        "/chat/stream",
+        summary="Stream Chat Response",
+        description="Stream chat response using Server-Sent Events (SSE)",
+        tags=["Chat Streaming"],
+    )
+    async def stream_chat(
+        message: str = Query(..., min_length=1, max_length=10000, description="User message"),
+        session_id: Optional[str] = Query(None, description="Session ID"),
+        user_id: Optional[str] = Query(None, description="User ID"),
+        provider: str = Query(default="ollama", description="LLM provider: ollama, openai, or anthropic"),
+        model: str = Query(default="llama3.1:8b", description="Model name"),
+        temperature: float = Query(default=0.7, ge=0.0, le=2.0, description="Sampling temperature"),
+    ):
+        """Stream a chat response as Server-Sent Events.
+        
+        Ideal for web frontends - tokens arrive immediately for instant UX.
+        
+        Example:
+            const eventSource = new EventSource('/chat/stream?message=Hello');
+            eventSource.onmessage = (event) => {
+                const token = JSON.parse(event.data);
+                console.log(token.token);  // Print token immediately
+            };
+        
+        Args:
+            message: User message
+            session_id: Optional session for conversation history
+            user_id: Optional user ID
+            provider: LLM provider (ollama, openai, anthropic)
+            model: Model name
+            temperature: Sampling temperature
+            
+        Returns:
+            StreamingResponse: SSE stream of tokens
+        """
+        try:
+            session_id = session_id or _generate_session_id()
+            _ensure_session_exists(session_id, user_id)
+            
+            # Store user message
+            session_messages[session_id].append({
+                "id": _generate_message_id(),
+                "role": "user",
+                "content": message,
+                "timestamp": datetime.utcnow().isoformat(),
+            })
+            
+            # Get conversation history (last N messages)
+            history = [
+                {
+                    "role": msg["role"],
+                    "content": msg["content"]
+                }
+                for msg in session_messages[session_id][-10:]  # Last 10 for context
+                if msg["role"] in ["user", "assistant"]
+            ]
+            
+            # Create streamer and stream response
+            streamer = StreamingResponse(
+                provider=provider,
+                model=model,
+                temperature=temperature,
+            )
+            
+            return FastAPIStreamingResponse(
+                streamer.stream_sse(message, history[:-1]),  # Exclude the message we just added
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "X-Session-ID": session_id,
+                    "X-Content-Type-Options": "nosniff",
+                },
+            )
+        except Exception as e:
+            logger.error(f"Error in stream_chat: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Streaming error: {str(e)}",
+            )
+    
+    @app.websocket("/ws/chat")
+    async def websocket_chat(websocket: WebSocket):
+        """WebSocket endpoint for streaming chat.
+        
+        Perfect for real-time applications that need bidirectional communication.
+        
+        Message format (client -> server):
+            {
+                "message": "What is AI?",
+                "session_id": "sess_abc123",  # optional
+                "provider": "ollama",  # optional
+                "model": "llama3.1:8b",  # optional
+            }
+        
+        Response format (server -> client):
+            {
+                "token": "hello",
+                "is_start": false,
+                "is_end": false,
+                "finish_reason": null,
+                "metadata": {...}
+            }
+        
+        Example (JavaScript):
+            const ws = new WebSocket('ws://localhost:8000/ws/chat');
+            ws.onopen = () => {
+                ws.send(JSON.stringify({
+                    message: "What is AI?",
+                    provider: "ollama"
+                }));
+            };
+            ws.onmessage = (event) => {
+                const token = JSON.parse(event.data);
+                console.log(token.token);  // Print token immediately
+            };
+        """
+        await websocket.accept()
+        
+        try:
+            while True:
+                # Receive message from client
+                data = await websocket.receive_text()
+                
+                try:
+                    payload = json.loads(data)
+                except json.JSONDecodeError:
+                    await websocket.send_text(
+                        json.dumps({
+                            "error": "Invalid JSON",
+                            "token": "",
+                            "is_end": True,
+                            "finish_reason": "error"
+                        })
+                    )
+                    continue
+                
+                message = payload.get("message")
+                if not message:
+                    await websocket.send_text(
+                        json.dumps({
+                            "error": "Missing message field",
+                            "token": "",
+                            "is_end": True,
+                            "finish_reason": "error"
+                        })
+                    )
+                    continue
+                
+                session_id = payload.get("session_id") or _generate_session_id()
+                user_id = payload.get("user_id")
+                provider = payload.get("provider", "ollama")
+                model = payload.get("model", "llama3.1:8b")
+                temperature = float(payload.get("temperature", 0.7))
+                
+                _ensure_session_exists(session_id, user_id)
+                
+                # Store user message
+                session_messages[session_id].append({
+                    "id": _generate_message_id(),
+                    "role": "user",
+                    "content": message,
+                    "timestamp": datetime.utcnow().isoformat(),
+                })
+                
+                # Get conversation history
+                history = [
+                    {
+                        "role": msg["role"],
+                        "content": msg["content"]
+                    }
+                    for msg in session_messages[session_id][-10:]
+                    if msg["role"] in ["user", "assistant"]
+                ]
+                
+                try:
+                    # Stream response tokens
+                    streamer = StreamingResponse(
+                        provider=provider,
+                        model=model,
+                        temperature=temperature,
+                    )
+                    
+                    response_text = ""
+                    async for token in streamer.stream_websocket(message, history[:-1]):
+                        await websocket.send_text(token)
+                        
+                        # Extract token text for storage
+                        try:
+                            token_data = json.loads(token)
+                            response_text += token_data.get("token", "")
+                        except:
+                            pass
+                    
+                    # Store complete response
+                    if response_text:
+                        session_messages[session_id].append({
+                            "id": _generate_message_id(),
+                            "role": "assistant",
+                            "content": response_text,
+                            "timestamp": datetime.utcnow().isoformat(),
+                        })
+                    
+                    sessions[session_id]["message_count"] += 1
+                    
+                except Exception as e:
+                    logger.error(f"Error in WebSocket streaming: {str(e)}")
+                    await websocket.send_text(
+                        json.dumps({
+                            "error": str(e),
+                            "token": "",
+                            "is_end": True,
+                            "finish_reason": "error"
+                        })
+                    )
+        
+        except WebSocketDisconnect:
+            logger.info("WebSocket disconnected")
+        except Exception as e:
+            logger.error(f"WebSocket error: {str(e)}")
+            try:
+                await websocket.close(code=1011, reason=str(e))
+            except:
+                pass
     
     # ============================================================================
     # Session Management Endpoints
@@ -447,6 +678,16 @@ def create_app(
         
         finally:
             logger.info(f"WebSocket closed: {session_id}")
+    
+    # ============================================================================
+    # Mount Dashboard
+    # ============================================================================
+    
+    dashboard_router = create_dashboard_router(
+        sessions_dict=sessions,
+        session_messages_dict=session_messages,
+    )
+    app.include_router(dashboard_router)
     
     return app
 

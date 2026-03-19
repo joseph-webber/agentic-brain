@@ -1,0 +1,51 @@
+# Agentic Brain Plugin Configuration
+# ===================================
+#
+# This file configures which plugins are enabled and their settings.
+# Plugins are discovered from the plugins/ directory automatically.
+
+plugins:
+  # Logging Plugin - Logs all messages and responses
+  LoggingPlugin:
+    enabled: true
+    version: "1.0.0"
+    description: "Logs all messages and responses for debugging and auditing"
+    config:
+      log_level: INFO
+      log_messages: true
+      log_responses: true
+      log_timestamps: true
+      log_session_id: true
+
+  # Analytics Plugin - Tracks usage statistics
+  AnalyticsPlugin:
+    enabled: true
+    version: "1.0.0"
+    description: "Tracks usage statistics and analytics metrics"
+    config:
+      track_messages: true
+      track_responses: true
+      track_errors: true
+      buffer_size: 100
+
+  # Moderation Plugin - Content filtering and rate limiting
+  ModerationPlugin:
+    enabled: true
+    version: "1.0.0"
+    description: "Provides content filtering, keyword blocking, and rate limiting"
+    config:
+      enabled_filters:
+        - keyword
+        - pattern
+        - length
+        - rate_limit
+      keywords:
+        # Add forbidden keywords here
+        - "badword1"
+        - "badword2"
+      patterns:
+        # Add regex patterns for content filtering here
+        - "(spam|phishing)"
+      max_message_length: 10000
+      rate_limit_messages: 60  # messages per minute
+      action: log  # or 'warn', 'block'
