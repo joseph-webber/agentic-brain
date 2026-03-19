@@ -15,7 +15,9 @@ This module contains all the HTTP route handlers for chat, streaming, and sessio
 import logging
 import uuid
 import json
-from collections import defaultdict
+import asyncio
+from collections import defaultdict, deque
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
@@ -31,11 +33,18 @@ logger = logging.getLogger(__name__)
 # Global storage (shared with middleware)
 sessions: Dict[str, Dict] = {}
 session_messages: Dict[str, List[Dict]] = {}
-request_counts: Dict[str, List[float]] = defaultdict(list)
+request_counts: Dict[str, deque] = defaultdict(lambda: deque(maxlen=60))
 
 # Rate limiting constants
 RATE_LIMIT = 60  # requests per minute per IP
 RATE_LIMIT_WINDOW = 60  # seconds
+
+# Session cleanup constants
+SESSION_MAX_AGE = 3600  # 1 hour
+CLEANUP_INTERVAL = 300  # 5 minutes
+
+# Cleanup task tracking
+_cleanup_task: Optional[asyncio.Task] = None
 
 
 def check_rate_limit(client_ip: str) -> bool:
@@ -53,7 +62,11 @@ def check_rate_limit(client_ip: str) -> bool:
     minute_ago = now - RATE_LIMIT_WINDOW
     
     # Clean up old requests outside the window
-    request_counts[client_ip] = [t for t in request_counts[client_ip] if t > minute_ago]
+    # Deque with maxlen=60 handles overflow automatically
+    request_counts[client_ip] = deque(
+        (t for t in request_counts[client_ip] if t > minute_ago),
+        maxlen=60
+    )
     
     # Check if limit exceeded
     if len(request_counts[client_ip]) >= RATE_LIMIT:
@@ -90,6 +103,61 @@ def _ensure_session_exists(session_id: str, user_id: Optional[str] = None):
     else:
         # Update last accessed
         sessions[session_id]["last_accessed"] = datetime.now(timezone.utc)
+
+
+async def cleanup_expired_sessions():
+    """Background task to clean up expired sessions.
+    
+    Runs periodically to remove sessions that exceed SESSION_MAX_AGE.
+    This prevents unbounded memory growth from long-running servers.
+    """
+    while True:
+        try:
+            await asyncio.sleep(CLEANUP_INTERVAL)
+            now = datetime.now(timezone.utc)
+            expired = []
+            
+            for session_id, session in sessions.items():
+                created = session.get("created_at")
+                if created and (now - created).total_seconds() > SESSION_MAX_AGE:
+                    expired.append(session_id)
+            
+            for session_id in expired:
+                sessions.pop(session_id, None)
+                session_messages.pop(session_id, None)
+                request_counts.pop(session_id, None)
+            
+            if expired:
+                logger.info(f"Cleaned up {len(expired)} expired sessions")
+        except Exception as e:
+            logger.error(f"Error in cleanup_expired_sessions: {e}", exc_info=True)
+
+
+
+
+@asynccontextmanager
+async def lifespan(app):
+    """Manage application startup and shutdown.
+    
+    Starts the background session cleanup task on startup and
+    cancels it on shutdown.
+    """
+    global _cleanup_task
+    
+    # Startup
+    _cleanup_task = asyncio.create_task(cleanup_expired_sessions())
+    logger.info("Started background session cleanup task")
+    
+    yield
+    
+    # Shutdown
+    if _cleanup_task:
+        _cleanup_task.cancel()
+        try:
+            await _cleanup_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("Stopped background session cleanup task")
 
 
 def register_routes(app):

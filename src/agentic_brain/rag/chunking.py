@@ -29,6 +29,11 @@ from typing import List, Optional, Dict, Any, Tuple
 import re
 from enum import Enum
 
+# Default chunking parameters
+DEFAULT_CHUNK_SIZE = 512
+DEFAULT_CHUNK_OVERLAP = 50
+DEFAULT_MIN_CHUNK_SIZE = 100
+
 
 class ChunkingStrategy(Enum):
     """Available chunking strategies."""
@@ -62,8 +67,8 @@ class BaseChunker(ABC):
     
     def __init__(
         self,
-        chunk_size: int = 512,
-        overlap: int = 50,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        overlap: int = DEFAULT_CHUNK_OVERLAP,
         separator: str = "\n\n"
     ) -> None:
         """
@@ -171,9 +176,9 @@ class SemanticChunker(BaseChunker):
     
     def __init__(
         self,
-        chunk_size: int = 512,
-        overlap: int = 50,
-        min_chunk_size: int = 100
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        overlap: int = DEFAULT_CHUNK_OVERLAP,
+        min_chunk_size: int = DEFAULT_MIN_CHUNK_SIZE
     ) -> None:
         super().__init__(chunk_size, overlap)
         self.min_chunk_size = min_chunk_size
@@ -274,8 +279,8 @@ class RecursiveChunker(BaseChunker):
     
     def __init__(
         self,
-        chunk_size: int = 512,
-        overlap: int = 50,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        overlap: int = DEFAULT_CHUNK_OVERLAP,
         separators: Optional[List[str]] = None
     ) -> None:
         super().__init__(chunk_size, overlap, separators[0] if separators else "\n\n")
@@ -382,8 +387,8 @@ class MarkdownChunker(BaseChunker):
     
     def __init__(
         self,
-        chunk_size: int = 512,
-        overlap: int = 50,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        overlap: int = DEFAULT_CHUNK_OVERLAP,
         include_metadata: bool = True
     ) -> None:
         super().__init__(chunk_size, overlap)

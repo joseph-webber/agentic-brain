@@ -32,7 +32,7 @@ from fastapi import FastAPI
 import uvicorn
 
 from .middleware import setup_cors, setup_exception_handlers
-from .routes import register_routes
+from .routes import register_routes, lifespan
 from .websocket import register_websocket_routes
 from ..dashboard import create_dashboard_router
 from .routes import sessions, session_messages
@@ -85,6 +85,7 @@ def create_app(
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+        lifespan=lifespan,
     )
     
     # Store version for health check endpoint

@@ -32,6 +32,11 @@ from dataclasses import dataclass
 from .retriever import RetrievedChunk
 from .embeddings import EmbeddingProvider, get_embeddings
 
+# Default reranking parameters
+DEFAULT_RERANK_TOP_K = 10
+DEFAULT_SIMILARITY_THRESHOLD = 0.5
+DEFAULT_MMR_LAMBDA = 0.5
+
 
 @dataclass
 class RerankResult:
@@ -91,7 +96,7 @@ class QueryDocumentSimilarityReranker(BaseReranker):
     def __init__(
         self,
         embedding_provider: Optional[EmbeddingProvider] = None,
-        top_k: Optional[int] = None
+        top_k: Optional[int] = DEFAULT_RERANK_TOP_K
     ) -> None:
         """
         Initialize similarity reranker.
@@ -129,10 +134,13 @@ class QueryDocumentSimilarityReranker(BaseReranker):
         # Get query embedding
         query_embedding = self.embeddings.embed(query)
         
+        # Batch embed all chunks at once (avoid N+1 embedding calls)
+        chunk_contents = [chunk.content for chunk in chunks]
+        chunk_embeddings = self.embeddings.embed_batch(chunk_contents)
+        
         # Score each chunk
         scored_chunks = []
-        for chunk in chunks:
-            content_embedding = self.embeddings.embed(chunk.content)
+        for chunk, content_embedding in zip(chunks, chunk_embeddings):
             similarity = self._cosine_similarity(query_embedding, content_embedding)
             
             # Create new chunk with updated score
@@ -264,8 +272,8 @@ class MMRReranker(BaseReranker):
     def __init__(
         self,
         embedding_provider: Optional[EmbeddingProvider] = None,
-        top_k: Optional[int] = None,
-        lambda_weight: float = 0.5
+        top_k: Optional[int] = DEFAULT_RERANK_TOP_K,
+        lambda_weight: float = DEFAULT_MMR_LAMBDA
     ) -> None:
         """
         Initialize MMR reranker.
@@ -305,11 +313,9 @@ class MMRReranker(BaseReranker):
         if len(chunks) == 1:
             return chunks
         
-        # Get embeddings
+        # Get embeddings using batch API (avoid N+1 embedding calls)
         query_embedding = self.embeddings.embed(query)
-        chunk_embeddings = [
-            self.embeddings.embed(chunk.content) for chunk in chunks
-        ]
+        chunk_embeddings = self.embeddings.embed_batch([chunk.content for chunk in chunks])
         
         # Calculate query relevance scores
         relevance_scores = [

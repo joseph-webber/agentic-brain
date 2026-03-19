@@ -217,6 +217,7 @@ class TestUsageTracker:
                 "total_sessions": 5,
                 "total_cost": 0.15,
                 "avg_response_time_ms": 300.0,
+                "most_active_hour": 14,
                 "most_used_model": "gpt-4",
                 "error_rate_pct": 2.5,
                 "first_seen": "2024-03-01T10:00:00",
@@ -229,6 +230,7 @@ class TestUsageTracker:
         assert stats.user_id == "user123"
         assert stats.total_responses == 50
         assert stats.total_sessions == 5
+        assert stats.most_active_hour == 14
         assert stats.most_used_model == "gpt-4"
     
     def test_get_top_users(self, usage_tracker, mock_driver):

@@ -41,7 +41,7 @@ WS_URL = "ws://localhost:8000"
 # Example 1: REST API - Health Check
 # =============================================================================
 
-def example_health_check():
+def example_health_check() -> None:
     """Check if the API server is running and healthy."""
     print("\n" + "="*70)
     print("Example 1: Health Check")
@@ -66,7 +66,7 @@ def example_health_check():
 # Example 2: REST API - Send Chat Message (Auto Session)
 # =============================================================================
 
-def example_chat_auto_session():
+def example_chat_auto_session() -> Optional[str]:
     """Send a chat message without providing a session ID."""
     print("\n" + "="*70)
     print("Example 2: Chat Message (Auto-Session)")
@@ -97,7 +97,7 @@ def example_chat_auto_session():
 # Example 3: REST API - Send Chat Message (Persistent Session)
 # =============================================================================
 
-def example_chat_persistent_session(session_id: str):
+def example_chat_persistent_session(session_id: str) -> None:
     """Send multiple messages in the same session."""
     print("\n" + "="*70)
     print("Example 3: Chat with Persistent Session")
@@ -135,7 +135,7 @@ def example_chat_persistent_session(session_id: str):
 # Example 4: REST API - Get Session Information
 # =============================================================================
 
-def example_get_session_info(session_id: str):
+def example_get_session_info(session_id: str) -> None:
     """Retrieve session information."""
     print("\n" + "="*70)
     print("Example 4: Get Session Information")
@@ -161,7 +161,7 @@ def example_get_session_info(session_id: str):
 # Example 5: REST API - Get Session Messages
 # =============================================================================
 
-def example_get_session_messages(session_id: str):
+def example_get_session_messages(session_id: str) -> None:
     """Retrieve all messages in a session."""
     print("\n" + "="*70)
     print("Example 5: Get Session Messages")
@@ -191,7 +191,7 @@ def example_get_session_messages(session_id: str):
 # Example 6: REST API - Delete Session
 # =============================================================================
 
-def example_delete_session(session_id: str):
+def example_delete_session(session_id: str) -> None:
     """Delete a session."""
     print("\n" + "="*70)
     print("Example 6: Delete Session")
@@ -219,7 +219,7 @@ def example_delete_session(session_id: str):
 # Example 7: Error Handling - Invalid Request
 # =============================================================================
 
-def example_error_handling():
+def example_error_handling() -> None:
     """Demonstrate error handling."""
     print("\n" + "="*70)
     print("Example 7: Error Handling")
@@ -262,7 +262,7 @@ def example_error_handling():
 # Example 8: WebSocket - Real-time Communication
 # =============================================================================
 
-async def example_websocket_chat():
+async def example_websocket_chat() -> None:
     """Demonstrate real-time WebSocket communication."""
     print("\n" + "="*70)
     print("Example 8: WebSocket Real-time Chat")
@@ -308,7 +308,7 @@ async def example_websocket_chat():
 # Example 9: Advanced - Multi-user Session Management
 # =============================================================================
 
-def example_multi_user_sessions():
+def example_multi_user_sessions() -> None:
     """Demonstrate multi-user session management."""
     print("\n" + "="*70)
     print("Example 9: Multi-user Session Management")
@@ -356,7 +356,7 @@ def example_multi_user_sessions():
 # Example 10: Advanced - Continuous Conversation
 # =============================================================================
 
-def example_continuous_conversation():
+def example_continuous_conversation() -> None:
     """Demonstrate a continuous conversation."""
     print("\n" + "="*70)
     print("Example 10: Continuous Conversation")
@@ -407,7 +407,7 @@ def example_continuous_conversation():
 # Main - Run All Examples
 # =============================================================================
 
-def main():
+def main() -> None:
     """Run all examples."""
     print("\n" + "="*70)
     print("AGENTIC BRAIN CHATBOT API - EXAMPLES")

@@ -495,7 +495,7 @@ class MetricsExporter:
         self,
         output_dir: str,
         format_type: str = "json",  # json, csv, html
-    ):
+    ) -> None:
         """
         Schedule daily exports of analytics.
         

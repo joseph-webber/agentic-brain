@@ -279,7 +279,7 @@ class MetricsCollector:
         message_count: int,
         bot_name: str = "default",
         user_id: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Record session duration and activity.
         

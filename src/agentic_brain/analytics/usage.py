@@ -324,6 +324,8 @@ class UsageTracker:
             most_used_model: head(collect(distinct m.model order by count(*) desc)),
             error_rate_pct: count(distinct e) * 100.0 / 
                 (count(distinct e) + count(distinct m)),
+            most_active_hour: head(collect(distinct hour(datetime(m.timestamp)) 
+                order by count(*) desc)),
             first_seen: coalesce(min(m2.timestamp), datetime.now().toString()),
             last_seen: coalesce(max(m.timestamp), datetime.now().toString())
         } as stats
@@ -341,7 +343,7 @@ class UsageTracker:
                         total_sessions=data["total_sessions"],
                         total_cost=data["total_cost"],
                         avg_response_time_ms=data["avg_response_time_ms"],
-                        most_active_hour=0,  # TODO: Calculate from timestamps
+                        most_active_hour=data["most_active_hour"] or 0,
                         most_used_model=data["most_used_model"] or "unknown",
                         error_rate_pct=data["error_rate_pct"],
                         first_seen=data["first_seen"],
