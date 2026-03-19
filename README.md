@@ -21,6 +21,18 @@ This is the **lite version** of [brain-core](https://github.com/joseph-webber/br
 
 ---
 
+## 📖 Full Setup Guides
+
+**New to GitHub or Copilot?** See our step-by-step guides:
+
+- 🍎 [**macOS Setup**](docs/SETUP.md#-macos-setup)
+- 🪟 [**Windows Setup**](docs/SETUP.md#-windows-setup) (includes Git Bash)
+- 🐧 [**Linux Setup**](docs/SETUP.md#-linux-setup) (Ubuntu, Fedora, Arch)
+
+Includes: GitHub CLI, SSH keys (no passphrase), Copilot Pro+ setup, Python environment.
+
+---
+
 ## Quick Start
 
 ### Installation
