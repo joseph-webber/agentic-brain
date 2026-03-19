@@ -729,8 +729,8 @@ def create_app(
                         try:
                             token_data = json.loads(token)
                             response_text += token_data.get("token", "")
-                        except:
-                            pass
+                        except Exception as e:
+                            logger.warning(f"Failed to parse token: {str(e)}")
                     
                     # Store complete response
                     if response_text:
@@ -760,8 +760,8 @@ def create_app(
             logger.error(f"WebSocket error: {str(e)}")
             try:
                 await websocket.close(code=1011, reason=str(e))
-            except:
-                pass
+            except Exception as close_error:
+                logger.debug(f"Error closing WebSocket: {str(close_error)}")
     
     # ============================================================================
     # Session Management Endpoints

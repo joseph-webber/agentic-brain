@@ -10,6 +10,7 @@ License: GPL-3.0-or-later
 
 import sys
 import os
+import subprocess
 import argparse
 import getpass
 from pathlib import Path
@@ -200,7 +201,7 @@ def chat_command(args: argparse.Namespace) -> int:
                     continue
 
                 if user_input.lower() == "clear":
-                    os.system("clear" if os.name == "posix" else "cls")
+                    print("\033[2J\033[H", end="", flush=True)
                     continue
 
                 # Send message to agent
@@ -562,7 +563,7 @@ GPL-3.0-or-later
         # Initialize git if requested
         if not args.skip_git:
             print_info("Initializing git repository...")
-            os.system(f"cd {project_path} && git init > /dev/null 2>&1")
+            subprocess.run(['git', 'init'], cwd=project_path, capture_output=True)
             print_success("Git repository initialized")
 
         print_success(f"Project created at: {Colors.CYAN}{project_path}{Colors.RESET}")
