@@ -1,0 +1,86 @@
+[project]
+name = "agentic-brain"
+version = "0.1.0"
+description = "Lightweight AI agent framework with Neo4j memory and LLM orchestration"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "GPL-2.0-or-later"}
+authors = [
+    {name = "Joseph Webber", email = "joseph@ecomlounge.com"}
+]
+keywords = [
+    "ai",
+    "agents",
+    "agentic",
+    "neo4j",
+    "llm",
+    "rag",
+    "knowledge-graph",
+    "chatbot",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "neo4j>=5.14.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "black>=24.0.0",
+    "mypy>=1.8.0",
+    "ruff>=0.3.0",
+]
+llm = [
+    "openai>=1.0.0",
+    "httpx>=0.25.0",
+]
+all = [
+    "openai>=1.0.0",
+    "httpx>=0.25.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/joseph-webber/agentic-brain"
+Repository = "https://github.com/joseph-webber/agentic-brain"
+Documentation = "https://github.com/joseph-webber/agentic-brain#readme"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["agentic_brain*"]
+
+[tool.black]
+line-length = 88
+target-version = ["py39", "py310", "py311", "py312", "py313"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
