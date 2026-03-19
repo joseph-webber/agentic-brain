@@ -79,7 +79,7 @@ class TestChat:
     def test_chat_message_too_long_fails(self, client):
         """Test that overly long message fails validation."""
         response = client.post("/chat", json={
-            "message": "x" * 10001
+            "message": "x" * 32001  # Exceeds 32000 char limit
         })
         assert response.status_code == 422
 

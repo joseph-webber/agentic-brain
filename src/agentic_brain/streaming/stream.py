@@ -14,6 +14,8 @@ Token-by-token streaming for instant UX.
 import logging
 import json
 import os
+import time
+import asyncio
 from typing import Optional, AsyncIterator, List, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
@@ -148,6 +150,9 @@ class StreamingResponse:
             async for token in streamer.stream("Hello"):
                 print(token.token, end="", flush=True)
         """
+        msg_preview = message[:50] + "..." if len(message) > 50 else message
+        logger.debug(f"Starting {self.provider.value} stream for message: {msg_preview}")
+        
         if self.provider == StreamProvider.OLLAMA:
             async for token in self._stream_ollama(message, conversation_history):
                 yield token
@@ -177,13 +182,18 @@ class StreamingResponse:
             "num_predict": self.max_tokens,
         }
         
+        start_time = time.time()
+        total_tokens = 0
+        
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=300, sock_read=30, sock_connect=10)) as resp:
                     if resp.status != 200:
                         error_text = await resp.text()
+                        logger.error(f"Failed to connect to ollama: HTTP {resp.status}")
                         raise Exception(f"Ollama error {resp.status}: {error_text}")
                     
+                    logger.debug("Connected to ollama API")
                     is_first = True
                     async for line in resp.content:
                         if not line:
@@ -194,6 +204,8 @@ class StreamingResponse:
                             token_text = data.get("message", {}).get("content", "")
                             
                             if token_text:
+                                logger.debug(f"Received token: {token_text[:20]}...")
+                                total_tokens += 1
                                 yield StreamToken(
                                     token=token_text,
                                     is_start=is_first,
@@ -202,11 +214,21 @@ class StreamingResponse:
                                     metadata={"provider": "ollama", "model": self.model}
                                 )
                                 is_first = False
-                        except json.JSONDecodeError:
-                            logger.warning(f"Failed to parse Ollama response: {line}")
+                        except json.JSONDecodeError as e:
+                            logger.error(f"Failed to parse ollama response: {str(e)}")
                             continue
+                    
+                    duration = time.time() - start_time
+                    logger.info(f"Stream complete: {total_tokens} tokens in {duration:.2f}s")
+        except asyncio.TimeoutError:
+            logger.error(f"Stream timeout after 300s")
+            yield StreamToken(
+                token="",
+                finish_reason="error",
+                metadata={"error": "timeout"}
+            )
         except Exception as e:
-            logger.error(f"Error streaming from Ollama: {str(e)}")
+            logger.error(f"Failed to connect to ollama: {str(e)}")
             yield StreamToken(
                 token="",
                 finish_reason="error",
@@ -239,49 +261,84 @@ class StreamingResponse:
             "max_tokens": self.max_tokens,
         }
         
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=None)) as resp:
-                    if resp.status != 200:
-                        error_text = await resp.text()
-                        raise Exception(f"OpenAI error {resp.status}: {error_text}")
-                    
-                    is_first = True
-                    async for line in resp.content:
-                        line = line.decode('utf-8').strip()
-                        if not line or line == "data: [DONE]":
-                            continue
+        start_time = time.time()
+        total_tokens = 0
+        max_retries = 3
+        attempt = 0
+        
+        while attempt < max_retries:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=None)) as resp:
+                        elapsed = time.time() - start_time
+                        if elapsed > 10:
+                            logger.warning(f"Slow response from openai: {elapsed:.2f}s")
                         
-                        if line.startswith("data: "):
-                            line = line[6:]
+                        if resp.status != 200:
+                            error_text = await resp.text()
+                            logger.error(f"Failed to connect to openai: HTTP {resp.status}")
+                            raise Exception(f"OpenAI error {resp.status}: {error_text}")
                         
-                        try:
-                            data = json.loads(line)
-                            choices = data.get("choices", [])
-                            if choices:
-                                delta = choices[0].get("delta", {})
-                                token_text = delta.get("content", "")
-                                finish_reason = choices[0].get("finish_reason")
-                                
-                                if token_text or finish_reason:
-                                    yield StreamToken(
-                                        token=token_text,
-                                        is_start=is_first,
-                                        is_end=finish_reason is not None,
-                                        finish_reason=finish_reason,
-                                        metadata={"provider": "openai", "model": self.model}
-                                    )
-                                    is_first = False
-                        except json.JSONDecodeError:
-                            logger.warning(f"Failed to parse OpenAI response: {line}")
-                            continue
-        except Exception as e:
-            logger.error(f"Error streaming from OpenAI: {str(e)}")
-            yield StreamToken(
-                token="",
-                finish_reason="error",
-                metadata={"error": str(e)}
-            )
+                        logger.debug("Connected to openai API")
+                        is_first = True
+                        async for line in resp.content:
+                            line = line.decode('utf-8').strip()
+                            if not line or line == "data: [DONE]":
+                                continue
+                            
+                            if line.startswith("data: "):
+                                line = line[6:]
+                            
+                            try:
+                                data = json.loads(line)
+                                choices = data.get("choices", [])
+                                if choices:
+                                    delta = choices[0].get("delta", {})
+                                    token_text = delta.get("content", "")
+                                    finish_reason = choices[0].get("finish_reason")
+                                    
+                                    if token_text or finish_reason:
+                                        if token_text:
+                                            logger.debug(f"Received token: {token_text[:20]}...")
+                                            total_tokens += 1
+                                        yield StreamToken(
+                                            token=token_text,
+                                            is_start=is_first,
+                                            is_end=finish_reason is not None,
+                                            finish_reason=finish_reason,
+                                            metadata={"provider": "openai", "model": self.model}
+                                        )
+                                        is_first = False
+                            except json.JSONDecodeError as e:
+                                logger.error(f"Failed to parse openai response: {str(e)}")
+                                continue
+                        
+                        duration = time.time() - start_time
+                        logger.info(f"Stream complete: {total_tokens} tokens in {duration:.2f}s")
+                        break
+            except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+                attempt += 1
+                if attempt < max_retries:
+                    logger.warning(f"Retrying openai stream, attempt {attempt}/{max_retries}")
+                else:
+                    if isinstance(e, asyncio.TimeoutError):
+                        logger.error(f"Stream timeout after 300s")
+                    else:
+                        logger.error(f"Failed to connect to openai: {str(e)}")
+                    yield StreamToken(
+                        token="",
+                        finish_reason="error",
+                        metadata={"error": str(e) if not isinstance(e, asyncio.TimeoutError) else "timeout"}
+                    )
+                    break
+            except Exception as e:
+                logger.error(f"Failed to connect to openai: {str(e)}")
+                yield StreamToken(
+                    token="",
+                    finish_reason="error",
+                    metadata={"error": str(e)}
+                )
+                break
     
     async def _stream_anthropic(
         self,
@@ -308,52 +365,88 @@ class StreamingResponse:
             "stream": True,
         }
         
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=300, sock_read=30, sock_connect=10)) as resp:
-                    is_first = True
-                    async for line in resp.content:
-                        line = line.decode('utf-8').strip()
-                        if not line or not line.startswith('data:'):
-                            continue
+        start_time = time.time()
+        total_tokens = 0
+        max_retries = 3
+        attempt = 0
+        
+        while attempt < max_retries:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=300, sock_read=30, sock_connect=10)) as resp:
+                        elapsed = time.time() - start_time
+                        if elapsed > 10:
+                            logger.warning(f"Slow response from anthropic: {elapsed:.2f}s")
                         
-                        data = line[5:].strip()
-                        if data == '[DONE]':
-                            break
+                        if resp.status != 200:
+                            logger.error(f"Failed to connect to anthropic: HTTP {resp.status}")
                         
-                        try:
-                            chunk = json.loads(data)
-                            event_type = chunk.get("type", "")
+                        logger.debug("Connected to anthropic API")
+                        is_first = True
+                        async for line in resp.content:
+                            line = line.decode('utf-8').strip()
+                            if not line or not line.startswith('data:'):
+                                continue
                             
-                            if event_type == "content_block_delta":
-                                delta = chunk.get("delta", {})
-                                text = delta.get("text", "")
-                                if text:
+                            data = line[5:].strip()
+                            if data == '[DONE]':
+                                break
+                            
+                            try:
+                                chunk = json.loads(data)
+                                event_type = chunk.get("type", "")
+                                
+                                if event_type == "content_block_delta":
+                                    delta = chunk.get("delta", {})
+                                    text = delta.get("text", "")
+                                    if text:
+                                        logger.debug(f"Received token: {text[:20]}...")
+                                        total_tokens += 1
+                                        yield StreamToken(
+                                            token=text,
+                                            is_start=is_first,
+                                            is_end=False,
+                                            metadata={"provider": "anthropic", "model": self.model}
+                                        )
+                                        is_first = False
+                                elif event_type == "message_stop":
                                     yield StreamToken(
-                                        token=text,
-                                        is_start=is_first,
-                                        is_end=False,
+                                        token="",
+                                        is_start=False,
+                                        is_end=True,
+                                        finish_reason="stop",
                                         metadata={"provider": "anthropic", "model": self.model}
                                     )
-                                    is_first = False
-                            elif event_type == "message_stop":
-                                yield StreamToken(
-                                    token="",
-                                    is_start=False,
-                                    is_end=True,
-                                    finish_reason="stop",
-                                    metadata={"provider": "anthropic", "model": self.model}
-                                )
-                        except json.JSONDecodeError:
-                            logger.warning(f"Failed to parse Anthropic response: {line}")
-                            continue
-        except Exception as e:
-            logger.error(f"Error streaming from Anthropic: {str(e)}")
-            yield StreamToken(
-                token="",
-                finish_reason="error",
-                metadata={"error": str(e)}
-            )
+                            except json.JSONDecodeError as e:
+                                logger.error(f"Failed to parse anthropic response: {str(e)}")
+                                continue
+                        
+                        duration = time.time() - start_time
+                        logger.info(f"Stream complete: {total_tokens} tokens in {duration:.2f}s")
+                        break
+            except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+                attempt += 1
+                if attempt < max_retries:
+                    logger.warning(f"Retrying anthropic stream, attempt {attempt}/{max_retries}")
+                else:
+                    if isinstance(e, asyncio.TimeoutError):
+                        logger.error(f"Stream timeout after 300s")
+                    else:
+                        logger.error(f"Failed to connect to anthropic: {str(e)}")
+                    yield StreamToken(
+                        token="",
+                        finish_reason="error",
+                        metadata={"error": str(e) if not isinstance(e, asyncio.TimeoutError) else "timeout"}
+                    )
+                    break
+            except Exception as e:
+                logger.error(f"Failed to connect to anthropic: {str(e)}")
+                yield StreamToken(
+                    token="",
+                    finish_reason="error",
+                    metadata={"error": str(e)}
+                )
+                break
     
     async def stream_sse(
         self,

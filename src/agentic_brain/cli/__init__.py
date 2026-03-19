@@ -279,5 +279,12 @@ def main(args: Optional[list[str]] = None) -> int:
         return 1
 
 
+__all__ = [
+    "create_parser",
+    "main",
+    "ColoredFormatter",
+]
+
+
 if __name__ == "__main__":
     sys.exit(main())

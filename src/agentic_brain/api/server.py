@@ -6,14 +6,48 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-"""FastAPI server for agentic-brain chatbot API."""
+"""
+FastAPI Server for Agentic Brain Chatbot API
+==============================================
+
+This module provides a complete REST API and WebSocket interface for the Agentic Brain
+chatbot system. It includes:
+
+- Chat endpoints (POST /chat, GET /chat/stream)
+- WebSocket real-time streaming (/ws/chat)
+- Session management (GET, DELETE /session/{id})
+- Health checks and system monitoring
+- Dashboard integration for admin interface
+- CORS middleware for web frontend support
+
+Features:
+    - In-memory session storage with persistence hooks
+    - Server-Sent Events (SSE) streaming for long responses
+    - WebSocket bidirectional communication
+    - Conversation history per session
+    - Configurable CORS origins
+    - Comprehensive error handling
+
+Example:
+    Start the server:
+        >>> from agentic_brain.api.server import run_server
+        >>> run_server(host="0.0.0.0", port=8000)
+    
+    Or with uvicorn:
+        >>> uvicorn agentic_brain.api.server:app --host 0.0.0.0 --port 8000
+
+Author: Joseph Webber
+License: GPL-3.0-or-later
+"""
 
 import logging
+import time
 import uuid
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, status, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, status, Query, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse as FastAPIStreamingResponse
 from pydantic import ValidationError
@@ -34,6 +68,35 @@ logger = logging.getLogger(__name__)
 sessions: Dict[str, Dict] = {}
 session_messages: Dict[str, List[Dict]] = {}
 
+# Rate limiting (simple in-memory for now)
+request_counts: Dict[str, List[float]] = defaultdict(list)
+RATE_LIMIT = 60  # requests per minute per IP
+RATE_LIMIT_WINDOW = 60  # seconds
+
+
+def check_rate_limit(client_ip: str) -> bool:
+    """Check if client has exceeded rate limit.
+    
+    Args:
+        client_ip: Client IP address
+        
+    Returns:
+        True if request is allowed, False if rate limit exceeded
+    """
+    now = time.time()
+    minute_ago = now - RATE_LIMIT_WINDOW
+    
+    # Clean up old requests outside the window
+    request_counts[client_ip] = [t for t in request_counts[client_ip] if t > minute_ago]
+    
+    # Check if limit exceeded
+    if len(request_counts[client_ip]) >= RATE_LIMIT:
+        return False
+    
+    # Record this request
+    request_counts[client_ip].append(now)
+    return True
+
 
 def create_app(
     title: str = "Agentic Brain Chatbot API",
@@ -41,16 +104,34 @@ def create_app(
     description: str = "FastAPI server for agentic-brain chatbot with real-time chat support",
     cors_origins: Optional[List[str]] = None,
 ) -> FastAPI:
-    """Create and configure the FastAPI application.
+    """
+    Create and configure the FastAPI application with all routes and middleware.
+    
+    Initializes a production-ready FastAPI application with:
+    - CORS middleware for web frontend support
+    - Exception handlers for validation and HTTP errors
+    - Chat endpoints (REST and WebSocket)
+    - Session management endpoints
+    - Dashboard router for admin interface
+    - Comprehensive API documentation (OpenAPI/Swagger)
     
     Args:
-        title: API title
-        version: API version
-        description: API description
-        cors_origins: List of allowed CORS origins
-        
+        title (str): API title for OpenAPI documentation
+        version (str): API version for OpenAPI documentation
+        description (str): API description for OpenAPI documentation
+        cors_origins (Optional[List[str]]): List of allowed CORS origins. If None,
+            defaults to localhost variants (3000, 8000)
+    
     Returns:
-        Configured FastAPI application
+        FastAPI: Fully configured FastAPI application ready to be run
+        
+    Example:
+        >>> app = create_app(
+        ...     title="My Chat API",
+        ...     version="2.0.0",
+        ...     cors_origins=["https://example.com", "https://app.example.com"]
+        ... )
+        >>> # Run with: uvicorn agentic_brain.api.server:app
     """
     
     # Default CORS origins
@@ -122,10 +203,41 @@ def create_app(
         tags=["Health"],
     )
     async def health_check():
-        """Health check endpoint.
+        """
+        Health check endpoint to verify API server status.
+        
+        Provides basic health information including:
+        - Current server status (always "healthy" if responding)
+        - API version
+        - Server timestamp
+        - Number of active sessions
+        
+        This endpoint is useful for:
+        - Monitoring and alerting systems
+        - Load balancer health checks
+        - Kubernetes liveness probes
+        - Frontend connectivity verification
         
         Returns:
-            dict: Health status information
+            dict: Health status with keys:
+                - status (str): "healthy" if server is running
+                - version (str): API version
+                - timestamp (str): ISO 8601 server timestamp
+                - sessions_active (int): Number of active chat sessions
+        
+        Raises:
+            None: Always returns 200 if server is running
+        
+        Example:
+            >>> import requests
+            >>> response = requests.get("http://localhost:8000/health")
+            >>> response.json()
+            {
+                "status": "healthy",
+                "version": "1.0.0",
+                "timestamp": "2026-01-15T10:30:45.123456+00:00",
+                "sessions_active": 5
+            }
         """
         return {
             "status": "healthy",
@@ -171,19 +283,67 @@ def create_app(
         tags=["Chat"],
         status_code=status.HTTP_200_OK,
     )
-    async def chat(request: ChatRequest) -> ChatResponse:
-        """Send a message to the chatbot.
+    async def chat(request: ChatRequest, req: Request) -> ChatResponse:
+        """
+        Send a message to the chatbot and receive a response.
+        
+        This is the primary endpoint for chat interactions. It:
+        - Creates a new session if none provided
+        - Stores the user message in conversation history
+        - Generates an AI response (placeholder: echo for demo)
+        - Returns the response with session information
+        
+        Message flow:
+            1. Client sends ChatRequest with message and optional session_id
+            2. Server creates session if needed
+            3. User message stored in session history
+            4. AI response generated (via LLM in production)
+            5. Response stored in session history
+            6. ChatResponse returned to client with session info
         
         Args:
-            request: Chat request with message and optional session/user IDs
-            
+            request (ChatRequest): Chat request with:
+                - message (str): User's message (1-10000 chars)
+                - session_id (Optional[str]): Session to continue, or None for new
+                - user_id (Optional[str]): Optional user identifier for analytics
+        
         Returns:
-            ChatResponse: Chatbot response with session info
-            
+            ChatResponse: Response with:
+                - response (str): Assistant's message
+                - session_id (str): Session ID for continued conversation
+                - message_id (str): Unique ID of response message
+                - timestamp (Optional[str]): Server timestamp of response
+                - metadata (Optional[dict]): Additional response metadata
+        
         Raises:
-            HTTPException: If processing fails
+            HTTPException: 400 if message is empty or invalid
+            HTTPException: 422 if request validation fails
+            HTTPException: 500 if processing error occurs
+        
+        Example:
+            >>> import requests
+            >>> response = requests.post(
+            ...     "http://localhost:8000/chat",
+            ...     json={
+            ...         "message": "What is artificial intelligence?",
+            ...         "session_id": "sess_abc123",
+            ...         "user_id": "user_456"
+            ...     }
+            ... )
+            >>> data = response.json()
+            >>> print(data["response"])
+            >>> print(f"Session: {data['session_id']}")
         """
         try:
+            # Check rate limit
+            client_ip = req.client.host if req.client else "unknown"
+            if not check_rate_limit(client_ip):
+                logger.warning(f"Rate limit exceeded for client: {client_ip}")
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Rate limit exceeded. Maximum 60 requests per minute allowed."
+                )
+            
             # Generate or use provided session ID
             session_id = request.session_id or _generate_session_id()
             _ensure_session_exists(session_id, request.user_id)
@@ -248,30 +408,92 @@ def create_app(
         provider: str = Query(default="ollama", description="LLM provider: ollama, openai, or anthropic"),
         model: str = Query(default="llama3.1:8b", description="Model name"),
         temperature: float = Query(default=0.7, ge=0.0, le=2.0, description="Sampling temperature"),
+        req: Request = None,
     ):
-        """Stream a chat response as Server-Sent Events.
+        """
+        Stream a chat response using Server-Sent Events (SSE).
         
-        Ideal for web frontends - tokens arrive immediately for instant UX.
+        This endpoint streams the chatbot's response token-by-token as it's generated,
+        providing an instant, ChatGPT-like user experience. Perfect for web frontends
+        where users expect to see text appearing in real-time.
         
-        Example:
-            const eventSource = new EventSource('/chat/stream?message=Hello');
-            eventSource.onmessage = (event) => {
-                const token = JSON.parse(event.data);
-                console.log(token.token);  // Print token immediately
-            };
+        Streaming benefits:
+        - Users see response immediately instead of waiting for complete message
+        - Reduces perceived latency
+        - Works well with slow models or long responses
+        - Browser can cancel request mid-stream
+        
+        Message format (client -> server):
+            GET /chat/stream?message=Hello&session_id=sess_123&provider=ollama&model=llama3.1:8b
+        
+        Response format (server -> client, Server-Sent Events):
+            event: stream
+            data: {"token": "Hello", "is_start": true, "is_end": false}
+            
+            event: stream
+            data: {"token": " there", "is_start": false, "is_end": false}
+            
+            event: stream
+            data: {"token": "!", "is_start": false, "is_end": true, "finish_reason": "stop"}
         
         Args:
-            message: User message
-            session_id: Optional session for conversation history
-            user_id: Optional user ID
-            provider: LLM provider (ollama, openai, anthropic)
-            model: Model name
-            temperature: Sampling temperature
-            
+            message (str): User message to respond to (required, 1-10000 chars)
+            session_id (Optional[str]): Session ID for conversation history, or None for new
+            user_id (Optional[str]): Optional user identifier
+            provider (str): LLM provider: "ollama", "openai", or "anthropic" (default: ollama)
+            model (str): Model name (default: llama3.1:8b)
+            temperature (float): Sampling temperature 0.0-2.0 (default: 0.7)
+                - 0.0: Deterministic (always same response)
+                - 0.7: Balanced (default)
+                - 1.5-2.0: Creative/random
+        
         Returns:
-            StreamingResponse: SSE stream of tokens
+            StreamingResponse: Server-Sent Events stream of tokens
+                Each event contains a JSON object with:
+                - token (str): Token text
+                - is_start (bool): True for first token
+                - is_end (bool): True for final token
+                - finish_reason (Optional[str]): "stop" for normal, "error" for failure
+                - metadata (Optional[dict]): Additional data (session_id, etc)
+        
+        Raises:
+            HTTPException: 400 if message is empty
+            HTTPException: 500 if LLM provider error or streaming fails
+        
+        Example (JavaScript):
+            >>> // HTML
+            >>> <div id="response"></div>
+            >>> 
+            >>> // JavaScript
+            >>> const eventSource = new EventSource(
+            ...     '/chat/stream?message=What%20is%20AI?&provider=ollama'
+            ... );
+            >>> 
+            >>> eventSource.onmessage = (event) => {
+            ...     const token = JSON.parse(event.data);
+            ...     if (token.token) {
+            ...         document.getElementById('response').textContent += token.token;
+            ...     }
+            ...     if (token.is_end) {
+            ...         eventSource.close();
+            ...     }
+            ... };
+            >>> 
+            >>> eventSource.onerror = () => {
+            ...     console.error('Stream error');
+            ...     eventSource.close();
+            ... };
         """
         try:
+            # Check rate limit
+            client_ip = req.client.host if req and req.client else "unknown"
+            if not check_rate_limit(client_ip):
+                logger.warning(f"Rate limit exceeded for client: {client_ip}")
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Rate limit exceeded. Maximum 60 requests per minute allowed."
+                )
+            
             session_id = session_id or _generate_session_id()
             _ensure_session_exists(session_id, user_id)
             
@@ -318,39 +540,120 @@ def create_app(
     
     @app.websocket("/ws/chat")
     async def websocket_chat(websocket: WebSocket):
-        """WebSocket endpoint for streaming chat.
+        """
+        WebSocket endpoint for bidirectional real-time streaming chat.
         
-        Perfect for real-time applications that need bidirectional communication.
+        Provides full-duplex communication for applications needing:
+        - Real-time message streaming
+        - Bidirectional communication (client and server can send anytime)
+        - Lower latency than HTTP streaming
+        - Better for long-lived connections
         
-        Message format (client -> server):
+        This is ideal for:
+        - Desktop chat applications
+        - Terminal-based interfaces
+        - Real-time collaborative tools
+        - Applications with custom WebSocket clients
+        
+        Connection flow:
+            1. Client connects to ws://localhost:8000/ws/chat
+            2. Server accepts connection and generates session_id
+            3. Server sends connection confirmation with session_id
+            4. Client can send multiple messages
+            5. Server streams responses token-by-token
+            6. Connection persists until client disconnects
+        
+        Client message format (client -> server):
             {
-                "message": "What is AI?",
-                "session_id": "sess_abc123",  # optional
-                "provider": "ollama",  # optional
-                "model": "llama3.1:8b",  # optional
+                "message": "What is machine learning?",
+                "session_id": "sess_abc123",  # optional, auto-generated if missing
+                "user_id": "user_456",        # optional
+                "provider": "ollama",         # optional, default: ollama
+                "model": "llama3.1:8b",       # optional
+                "temperature": 0.7            # optional, 0.0-2.0
             }
         
-        Response format (server -> client):
+        Server response format (server -> client, streamed):
             {
-                "token": "hello",
-                "is_start": false,
+                "token": "Machine",
+                "is_start": true,
                 "is_end": false,
                 "finish_reason": null,
-                "metadata": {...}
+                "metadata": {
+                    "session_id": "sess_abc123",
+                    "message_id": "msg_def456"
+                }
             }
         
+        Error format (server -> client):
+            {
+                "error": "Invalid JSON",
+                "token": "",
+                "is_end": true,
+                "finish_reason": "error"
+            }
+        
+        Args:
+            websocket (WebSocket): WebSocket connection object
+        
+        Raises:
+            WebSocketDisconnect: When client disconnects (handled gracefully)
+        
+        Example (Python with websocket-client):
+            >>> import asyncio
+            >>> import websockets
+            >>> import json
+            >>> 
+            >>> async def chat():
+            ...     uri = "ws://localhost:8000/ws/chat"
+            ...     async with websockets.connect(uri) as websocket:
+            ...         # Send message
+            ...         await websocket.send(json.dumps({
+            ...             "message": "What is AI?",
+            ...             "provider": "ollama"
+            ...         }))
+            ...         
+            ...         # Receive streamed response
+            ...         while True:
+            ...             data = await websocket.recv()
+            ...             token = json.loads(data)
+            ...             print(token.get("token", ""), end="", flush=True)
+            ...             if token.get("is_end"):
+            ...                 break
+            ...         
+            ...         print()  # newline
+            >>> 
+            >>> asyncio.run(chat())
+        
         Example (JavaScript):
-            const ws = new WebSocket('ws://localhost:8000/ws/chat');
-            ws.onopen = () => {
-                ws.send(JSON.stringify({
-                    message: "What is AI?",
-                    provider: "ollama"
-                }));
-            };
-            ws.onmessage = (event) => {
-                const token = JSON.parse(event.data);
-                console.log(token.token);  // Print token immediately
-            };
+            >>> const ws = new WebSocket('ws://localhost:8000/ws/chat');
+            >>> 
+            >>> ws.onopen = () => {
+            ...     // Send message
+            ...     ws.send(JSON.stringify({
+            ...         message: "What is AI?",
+            ...         provider: "ollama",
+            ...         model: "llama3.1:8b"
+            ...     }));
+            ... };
+            >>> 
+            >>> ws.onmessage = (event) => {
+            ...     const token = JSON.parse(event.data);
+            ...     if (token.error) {
+            ...         console.error("Error:", token.error);
+            ...         return;
+            ...     }
+            ...     
+            ...     process.stdout.write(token.token || "");
+            ...     if (token.is_end) {
+            ...         console.log("\\nDone!");
+            ...         // Can send another message here
+            ...     }
+            ... };
+            >>> 
+            >>> ws.onerror = (error) => {
+            ...     console.error("WebSocket error:", error);
+            ... };
         """
         await websocket.accept()
         
@@ -472,16 +775,42 @@ def create_app(
         tags=["Sessions"],
     )
     async def get_session(session_id: str) -> SessionInfo:
-        """Get session information.
+        """
+        Retrieve information and statistics about a specific chat session.
+        
+        Sessions are automatically created on first message and persist until:
+        - Explicitly deleted via DELETE /session/{session_id}
+        - Server is restarted (in-memory storage)
+        - Manually cleared via DELETE /sessions
+        
+        Use this endpoint to:
+        - Check conversation history metadata
+        - Get session creation time and last access time
+        - Count total messages in conversation
+        - Identify sessions by user_id
         
         Args:
-            session_id: The session ID to retrieve
-            
+            session_id (str): The session ID to retrieve (format: "sess_" + hex)
+        
         Returns:
-            SessionInfo: Session information and statistics
-            
+            SessionInfo: Session information with:
+                - id (str): Session ID
+                - message_count (int): Total messages in session
+                - created_at (datetime): Session creation timestamp
+                - last_accessed (datetime): Last message timestamp
+                - user_id (Optional[str]): Associated user ID if provided
+        
         Raises:
-            HTTPException: If session not found
+            HTTPException: 404 if session_id not found
+        
+        Example:
+            >>> import requests
+            >>> response = requests.get(
+            ...     "http://localhost:8000/session/sess_abc123"
+            ... )
+            >>> info = response.json()
+            >>> print(f"Messages: {info['message_count']}")
+            >>> print(f"Created: {info['created_at']}")
         """
         if session_id not in sessions:
             logger.warning(f"Session not found: {session_id}")
@@ -539,13 +868,36 @@ def create_app(
         status_code=status.HTTP_204_NO_CONTENT,
     )
     async def delete_session(session_id: str):
-        """Delete a session and clear all messages.
+        """
+        Delete a specific session and all its associated messages.
+        
+        This endpoint:
+        - Removes session metadata (creation time, user_id, etc.)
+        - Clears all messages in the session history
+        - Returns 204 No Content on success
+        - Returns 404 if session doesn't exist
+        
+        Use this to:
+        - Clean up after conversation ends
+        - Comply with data deletion requests (GDPR, etc.)
+        - Remove sensitive conversations
+        - Free memory on long-running servers
         
         Args:
-            session_id: The session ID to delete
-            
+            session_id (str): The session ID to delete (format: "sess_" + hex)
+        
         Raises:
-            HTTPException: If session not found
+            HTTPException: 404 if session_id not found
+        
+        Example:
+            >>> import requests
+            >>> response = requests.delete(
+            ...     "http://localhost:8000/session/sess_abc123"
+            ... )
+            >>> print(response.status_code)  # 204
+        
+        Warning:
+            This operation cannot be undone. All conversation history is permanently lost.
         """
         if session_id not in sessions:
             raise HTTPException(

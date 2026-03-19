@@ -27,6 +27,11 @@ import argparse
 from pathlib import Path
 from typing import Optional, Dict, List, Any
 
+__all__ = [
+    "run_installer",
+    "main",
+]
+
 
 # Installation templates
 TEMPLATES = {

@@ -8,9 +8,10 @@
 
 """Pydantic models for agentic-brain chatbot API."""
 
-from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field
+import re
+from datetime import datetime, timezone
+from typing import Any, Dict, Optional
+from pydantic import BaseModel, Field, field_validator
 
 
 class ChatRequest(BaseModel):
@@ -20,27 +21,74 @@ class ChatRequest(BaseModel):
         message: The user's message/query
         session_id: Optional session identifier for conversation tracking
         user_id: Optional user identifier for multi-user support
+        metadata: Optional metadata dictionary for extended request information
     """
     
     message: str = Field(
         ...,
         min_length=1,
-        max_length=10000,
+        max_length=32000,
         description="The user's message"
     )
     session_id: Optional[str] = Field(
         default=None,
+        max_length=64,
         description="Session ID for conversation tracking"
     )
     user_id: Optional[str] = Field(
         default=None,
+        max_length=64,
         description="User ID for multi-user support"
     )
+    metadata: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Optional metadata for extended request information"
+    )
+    
+    @field_validator('message')
+    @classmethod
+    def message_not_empty(cls, v):
+        """Validate that message is not empty or whitespace only."""
+        if not v or not v.strip():
+            raise ValueError('Message cannot be empty or whitespace only')
+        return v.strip()
+    
+    @field_validator('session_id')
+    @classmethod
+    def session_id_format(cls, v):
+        """Validate session ID format (alphanumeric with hyphens/underscores)."""
+        if v is not None and v:
+            # Allow alphanumeric, hyphens, underscores
+            if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+                raise ValueError('Session ID must be alphanumeric with hyphens/underscores only')
+        return v
+    
+    @field_validator('user_id')
+    @classmethod
+    def user_id_format(cls, v):
+        """Validate user ID format (alphanumeric with hyphens/underscores)."""
+        if v is not None and v:
+            # Allow alphanumeric, hyphens, underscores
+            if not re.match(r'^[a-zA-Z0-9_-]+$', v):
+                raise ValueError('User ID must be alphanumeric with hyphens/underscores only')
+        return v
+    
+    @field_validator('metadata')
+    @classmethod
+    def validate_metadata(cls, v):
+        """Validate metadata is not overly large."""
+        if v is None:
+            return {}
+        # Prevent overly large metadata dictionaries
+        if len(str(v)) > 10000:
+            raise ValueError('Metadata cannot exceed 10000 characters when serialized')
+        return v
     
     model_config = {"example": {
         "message": "What is the weather today?",
         "session_id": "sess_abc123",
-        "user_id": "user_xyz789"
+        "user_id": "user_xyz789",
+        "metadata": {"source": "web_ui"}
     }}
 
 
@@ -63,7 +111,7 @@ class ChatResponse(BaseModel):
         description="Session ID for this conversation"
     )
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Timestamp of response generation"
     )
     message_id: str = Field(
@@ -92,6 +140,7 @@ class SessionInfo(BaseModel):
     
     id: str = Field(
         ...,
+        max_length=64,
         description="Session ID"
     )
     message_count: int = Field(
@@ -109,8 +158,25 @@ class SessionInfo(BaseModel):
     )
     user_id: Optional[str] = Field(
         default=None,
+        max_length=64,
         description="Associated user ID"
     )
+    
+    @field_validator('id')
+    @classmethod
+    def validate_session_id_format(cls, v):
+        """Validate session ID format."""
+        if v and not re.match(r'^[a-zA-Z0-9_-]+$', v):
+            raise ValueError('Session ID must be alphanumeric with hyphens/underscores only')
+        return v
+    
+    @field_validator('user_id')
+    @classmethod
+    def validate_user_id_format(cls, v):
+        """Validate user ID format."""
+        if v and not re.match(r'^[a-zA-Z0-9_-]+$', v):
+            raise ValueError('User ID must be alphanumeric with hyphens/underscores only')
+        return v
     
     model_config = {"example": {
         "id": "sess_abc123",

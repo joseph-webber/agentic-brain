@@ -6,7 +6,51 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-"""FastAPI dashboard routes for agentic-brain admin interface."""
+"""
+Admin Dashboard for Agentic Brain API
+======================================
+
+This module provides a web-based dashboard for monitoring and managing the Agentic Brain
+chatbot API. It integrates seamlessly with the FastAPI server and provides:
+
+- Real-time system statistics (sessions, messages, memory, uptime)
+- Health monitoring (Neo4j, LLM provider, memory)
+- Active session management and viewing
+- System configuration interface
+- System metrics visualization
+
+Features:
+    - HTML/CSS/JavaScript dashboard (no external API required)
+    - Auto-refreshing metrics (5-second intervals)
+    - Status indicators with accessibility support
+    - Gradient UI with Tailwind CSS
+    - Font Awesome icons
+    - Responsive design for mobile/tablet/desktop
+    - VoiceOver and screen reader friendly
+
+Routes:
+    GET  /dashboard           - Dashboard HTML page
+    GET  /api/stats          - System statistics JSON
+    GET  /api/health         - System health status
+    GET  /api/sessions       - Active sessions list
+    POST /api/config         - Update configuration
+    DELETE /api/sessions     - Clear all sessions
+
+Example:
+    Create dashboard and mount to app:
+        >>> from agentic_brain.dashboard import create_dashboard_router
+        >>> router = create_dashboard_router(
+        ...     sessions_dict=sessions,
+        ...     session_messages_dict=session_messages
+        ... )
+        >>> app.include_router(router)
+        
+    Access in browser:
+        >>> # http://localhost:8000/dashboard
+
+Author: Joseph Webber
+License: GPL-3.0-or-later
+"""
 
 import logging
 import os
@@ -610,14 +654,57 @@ def create_dashboard_router(
     sessions_dict: Dict = None,
     session_messages_dict: Dict = None,
 ) -> APIRouter:
-    """Create a dashboard router with admin endpoints.
+    """
+    Create a dashboard router with admin endpoints and monitoring interface.
+    
+    Initializes an APIRouter with all dashboard endpoints:
+    - GET /dashboard - HTML dashboard page
+    - GET /api/stats - System statistics
+    - GET /api/health - Health status
+    - GET /api/sessions - Active sessions list
+    - POST /api/config - Update configuration
+    - DELETE /api/sessions - Clear all sessions
+    
+    The router maintains references to the API server's session dictionaries
+    and provides real-time monitoring without database queries. Metrics are
+    calculated on-demand for fast responses.
     
     Args:
-        sessions_dict: Reference to the sessions dictionary from API server
-        session_messages_dict: Reference to session messages dictionary
+        sessions_dict (Dict, optional): Reference to the API server's sessions dictionary.
+            Maps session_id -> {id, created_at, last_accessed, user_id, message_count}
+            If None, an empty dict is used (dashboard will show 0 sessions).
         
+        session_messages_dict (Dict, optional): Reference to session messages dictionary.
+            Maps session_id -> [list of message dicts]
+            If None, an empty dict is used (message counts will be 0).
+    
     Returns:
-        APIRouter: Configured router for dashboard endpoints
+        APIRouter: Configured router with all dashboard endpoints ready to be
+            mounted onto a FastAPI app via app.include_router()
+    
+    Note:
+        - The router uses PREFIX="/dashboard" for all routes
+        - All endpoints tagged with "Dashboard" for OpenAPI docs
+        - Dashboard accesses data dictionaries directly (no persistence)
+        - Memory usage estimated if psutil not available
+        - Neo4j and LLM checks are placeholder (return True)
+    
+    Example:
+        >>> from fastapi import FastAPI
+        >>> from agentic_brain.dashboard import create_dashboard_router
+        >>> 
+        >>> app = FastAPI()
+        >>> sessions = {}
+        >>> messages = {}
+        >>> 
+        >>> dashboard_router = create_dashboard_router(
+        ...     sessions_dict=sessions,
+        ...     session_messages_dict=messages
+        ... )
+        >>> app.include_router(dashboard_router)
+        >>> 
+        >>> # Access dashboard at: http://localhost:8000/dashboard
+        >>> # API stats at: http://localhost:8000/dashboard/api/stats
     """
     
     router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
@@ -633,10 +720,44 @@ def create_dashboard_router(
         description="Serve the admin dashboard HTML page",
     )
     async def get_dashboard():
-        """Serve the admin dashboard page.
+        """
+        Serve the admin dashboard HTML page.
+        
+        Returns the interactive HTML dashboard that:
+        - Auto-refreshes every 5 seconds
+        - Shows real-time system statistics
+        - Displays health status of components
+        - Lists active sessions
+        - Provides quick action buttons
+        - Responsive on all device sizes
+        - Accessibility-friendly (VoiceOver, screen readers)
+        
+        The dashboard includes:
+        - Active Sessions metric (card with icon)
+        - Total Messages counter
+        - Memory Usage gauge and bar
+        - System Uptime display
+        - Neo4j connection status
+        - LLM provider availability
+        - Memory status indicator
+        - API version and server time
+        - Quick action buttons (API Docs, Neo4j, Clear Sessions)
+        - Session list with message counts
         
         Returns:
-            HTMLResponse: Dashboard HTML page
+            HTMLResponse: Rendered dashboard HTML with embedded CSS and JavaScript
+        
+        Example:
+            >>> import requests
+            >>> response = requests.get("http://localhost:8000/dashboard")
+            >>> html = response.text
+            >>> print("Agentic Brain" in html)  # True
+        
+        Note:
+            - Dashboard loads in modern browsers (Chrome, Firefox, Safari, Edge)
+            - Uses CDN for Tailwind CSS and Font Awesome icons
+            - Requires no additional dependencies
+            - Auto-refreshes every 5 seconds
         """
         logger.info("Dashboard accessed")
         return HTMLResponse(content=_get_dashboard_html())
@@ -648,10 +769,47 @@ def create_dashboard_router(
         description="Get current system statistics",
     )
     async def get_stats() -> Dict[str, Any]:
-        """Get system statistics.
+        """
+        Get current system statistics.
+        
+        Returns real-time metrics about the running API server:
+        - Active sessions count
+        - Total messages across all sessions
+        - Process memory usage (RSS)
+        - Server uptime
+        
+        Metrics:
+            sessions_active: Number of non-expired sessions
+            total_messages: Sum of message counts across all sessions
+            memory_usage_mb: Process memory in megabytes
+                - Calculated via psutil if available (accurate)
+                - Estimated if psutil unavailable (~50MB base + dict size)
+            uptime_seconds: Seconds since server started (for `/dashboard` mount)
+        
+        Memory calculation:
+            - With psutil: Resident Set Size (RSS) / 1024 / 1024
+            - Without psutil: sizeof(sessions_dict) + 50MB estimate
         
         Returns:
-            dict: Statistics including active sessions, messages, memory, uptime
+            Dict[str, Any]: Statistics with:
+                - timestamp (str): ISO 8601 server timestamp
+                - sessions_active (int): Number of active sessions
+                - total_messages (int): Total messages in all sessions
+                - memory_usage_mb (float): Memory usage in MB
+                - uptime_seconds (int): Uptime in seconds
+        
+        Example:
+            >>> import requests
+            >>> response = requests.get("http://localhost:8000/dashboard/api/stats")
+            >>> stats = response.json()
+            >>> print(f"Active: {stats['sessions_active']}")
+            >>> print(f"Memory: {stats['memory_usage_mb']:.1f} MB")
+            >>> print(f"Uptime: {stats['uptime_seconds']} seconds")
+        
+        Note:
+            - Calculations are O(n) for message count (iterates all sessions)
+            - Memory reading is non-blocking
+            - Runs every 5 seconds from dashboard auto-refresh
         """
         # Calculate uptime
         uptime_seconds = int((datetime.now(timezone.utc) - _startup_time).total_seconds())
@@ -687,10 +845,39 @@ def create_dashboard_router(
         description="Get list of active sessions",
     )
     async def get_sessions() -> Dict[str, Any]:
-        """Get active sessions.
+        """
+        Get list of all active sessions.
+        
+        Returns metadata for each session including:
+        - Session ID (unique identifier)
+        - Creation time
+        - Message count
+        - Associated user ID (if any)
+        
+        Useful for:
+        - Monitoring active conversations
+        - User activity tracking
+        - Debugging session issues
+        - Dashboard session display
         
         Returns:
-            dict: List of active sessions with metadata
+            Dict[str, Any]: Object with "sessions" key containing list of:
+                - session_id (str): Session identifier
+                - created_at (str): ISO 8601 creation timestamp
+                - messages_count (int): Total messages in session
+                - user_id (Optional[str]): Associated user ID if provided
+        
+        Example:
+            >>> import requests
+            >>> response = requests.get("http://localhost:8000/dashboard/api/sessions")
+            >>> data = response.json()
+            >>> for session in data["sessions"]:
+            ...     print(f"{session['session_id']}: {session['messages_count']} msgs")
+        
+        Note:
+            - Returns sorted by most recent first (internal implementation)
+            - Session times are preserved from creation (immutable)
+            - Empty list returned if no active sessions
         """
         sessions_list = []
         
@@ -711,9 +898,46 @@ def create_dashboard_router(
         description="Clear all active sessions (use with caution)",
     )
     async def delete_sessions():
-        """Delete all sessions.
+        """
+        Delete ALL active sessions and messages at once.
         
-        WARNING: This operation cannot be undone.
+        WARNING: This operation is irreversible. All conversation history
+        and session data will be permanently lost.
+        
+        This endpoint:
+        - Removes all session metadata
+        - Clears all messages from all sessions
+        - Frees memory from session storage
+        - Returns count of deleted sessions
+        
+        Use cases:
+        - Clean shutdown before restart
+        - Privacy compliance (GDPR data deletion)
+        - Emergency cleanup (before archiving)
+        - Testing/demo reset
+        
+        Returns:
+            Dict[str, Any]: Deletion status with:
+                - status (str): "success"
+                - cleared (int): Number of sessions deleted
+        
+        Example:
+            >>> import requests
+            >>> response = requests.delete("http://localhost:8000/dashboard/api/sessions")
+            >>> result = response.json()
+            >>> print(f"Cleared {result['cleared']} sessions")
+        
+        ⚠️  WARNING:
+            - This will delete conversation history for ALL users
+            - Can only be called once per batch
+            - No undo available
+            - Consider backing up data before calling
+            - May cause active clients to receive errors
+        
+        Note:
+            - Called from dashboard "Clear Sessions" button
+            - Requires user confirmation in UI
+            - Logged as warning-level event
         """
         count = len(_sessions)
         _sessions.clear()
@@ -728,10 +952,59 @@ def create_dashboard_router(
         description="Get system health status",
     )
     async def get_health() -> Dict[str, Any]:
-        """Get system health status.
+        """
+        Get comprehensive system health status.
+        
+        Checks health of critical components:
+        - Neo4j database connection
+        - LLM provider availability
+        - Memory usage levels
+        
+        Status indicators:
+            neo4j_connected (bool): True if Neo4j is accessible
+            llm_provider_available (bool): True if LLM provider responds
+            memory_ok (bool): True if memory usage < 85%
+        
+        Overall status is "healthy" only if all three pass.
+        
+        Health checks:
+            Neo4j Connection:
+                - Attempts connection to Neo4j database
+                - Returns true if driver initialized
+                - Production: Should query actual connection
+            
+            LLM Provider:
+                - Checks if LLM provider is responding
+                - Ollama, OpenAI, or Anthropic
+                - Returns true if provider available
+            
+            Memory Usage:
+                - Uses psutil if available (accurate)
+                - Checks if usage > 85% threshold
+                - Falls back to 50MB estimate if psutil unavailable
         
         Returns:
-            dict: Health status for Neo4j, LLM provider, memory, etc.
+            Dict[str, Any]: Health status with:
+                - status (str): "healthy" or "degraded"
+                - neo4j_connected (bool): Neo4j status
+                - llm_provider_available (bool): LLM status
+                - memory_ok (bool): Memory status
+                - timestamp (str): ISO 8601 check timestamp
+        
+        Example:
+            >>> import requests
+            >>> response = requests.get("http://localhost:8000/dashboard/api/health")
+            >>> health = response.json()
+            >>> print(f"Status: {health['status']}")
+            >>> if not health['neo4j_connected']:
+            ...     print("⚠️  Neo4j is disconnected")
+        
+        Note:
+            - Called every 5 seconds from dashboard
+            - Indicators show visual status (green/red)
+            - Used for alerting in monitoring systems
+            - Memory check is threshold-based (85%)
+            - Production implementations should verify each component
         """
         # Check memory
         memory_ok = True
@@ -781,13 +1054,49 @@ def create_dashboard_router(
         description="Update system configuration",
     )
     async def update_config(config: ConfigUpdate):
-        """Update system configuration.
+        """
+        Update system configuration parameters.
+        
+        Allows runtime configuration changes without restarting the server.
+        
+        Supported config keys (in production):
+            - model_name: LLM model to use
+            - temperature: Sampling temperature (0.0-2.0)
+            - max_tokens: Maximum tokens per response
+            - provider: LLM provider (ollama, openai, anthropic)
+            - neo4j_uri: Neo4j connection string
+            - log_level: Logging level (debug, info, warning, error)
+            - cors_origins: Allowed CORS origins
         
         Args:
-            config: Configuration update with key and value
-            
+            config (ConfigUpdate): Configuration update with:
+                - key (str): Configuration key name
+                - value (Any): New value for config key
+        
         Returns:
-            dict: Update status
+            Dict[str, Any]: Update status with:
+                - status (str): "success" if updated
+                - message (str): Confirmation message
+        
+        Example:
+            >>> import requests
+            >>> response = requests.post(
+            ...     "http://localhost:8000/dashboard/api/config",
+            ...     json={
+            ...         "key": "temperature",
+            ...         "value": 0.8
+            ...     }
+            ... )
+            >>> result = response.json()
+            >>> print(result["message"])
+        
+        Note:
+            - Current implementation is placeholder
+            - Production should validate and apply configs
+            - Some configs may require server restart
+            - Changes may affect running requests
+            - Logs all configuration updates
+            - Implement validation for each config key
         """
         logger.info(f"Configuration update requested: {config.key}")
         
