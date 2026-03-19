@@ -1,246 +1,311 @@
-# Agentic Brain 🧠
+# Agentic Brain
 
-**Lightweight AI agent framework with Neo4j memory and LLM orchestration.**
+<div align="center">
 
-[![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+```
+╔═══════════════════════════════════════╗
+║   🧠 AGENTIC BRAIN                   ║
+║   Production-Ready AI Chatbot        ║
+║   with Persistent Memory             ║
+╚═══════════════════════════════════════╝
+```
 
----
+![License](https://img.shields.io/badge/license-GPL--3.0-blue)
+![Python](https://img.shields.io/badge/python-3.10+-blue)
+![Status](https://img.shields.io/badge/status-production--ready-brightgreen)
 
-## What is Agentic Brain?
-
-A minimal, production-ready framework for building AI agents with:
-
-- **Persistent Memory** - Neo4j knowledge graph for long-term recall
-- **Data Separation** - Keep private, public, and customer data isolated
-- **LLM Orchestration** - Route queries to the right model
-- **Clean Architecture** - Type-hinted, documented, tested
-
-This is the **lite version** of [brain-core](https://github.com/joseph-webber/brain-core), focused on the essentials.
+</div>
 
 ---
 
-## 📖 Full Setup Guides
+## Overview
 
-**New to GitHub or Copilot?** See our step-by-step guides:
+**Production-ready AI chatbot framework with persistent memory, retrieval-augmented generation, and multi-user isolation—built for enterprise deployments.**
 
-- 🍎 [**macOS Setup**](docs/SETUP.md#-macos-setup)
-- 🪟 [**Windows Setup**](docs/SETUP.md#-windows-setup) (includes Git Bash)
-- 🐧 [**Linux Setup**](docs/SETUP.md#-linux-setup) (Ubuntu, Fedora, Arch)
-
-Includes: GitHub CLI, SSH keys (no passphrase), Copilot Pro+ setup, Python environment.
+Agentic Brain combines Neo4j knowledge graphs, session persistence, and local-first inference to deliver stateful, contextual AI experiences that scale. No vendor lock-in. Works locally with Ollama or integrates with cloud LLMs.
 
 ---
 
-## Quick Start
+## ✨ Key Features
 
-### Installation
+- **🧠 Neo4j Knowledge Graph** — Persistent memory across sessions with semantic search
+- **💾 Session Persistence** — User state and conversation history preserved automatically
+- **🔍 RAG Built-In** — Retrieval-augmented generation for knowledge-grounded responses
+- **👥 Multi-User Isolation** — Tenant separation and role-based access control
+- **🐳 Docker-Ready** — Production deployments with compose files included
+- **🏠 Local-First** — Run entirely on-premises with Ollama; zero external dependencies
+- **⚡ Fast** — Async I/O, connection pooling, optimized queries
+- **🔐 Enterprise-Grade** — Encryption, audit logging, compliance-ready
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# 1. Install
+pip install agentic-brain
+
+# 2. Start Neo4j locally
+docker run -d -p 7687:7687 neo4j:latest
+
+# 3. Create a chatbot in 30 seconds
+from agentic_brain import Brain
+
+brain = Brain(neo4j_uri="bolt://localhost:7687")
+response = brain.chat("Hello, remember this: I prefer Python.", user_id="user_1")
+print(response)
+
+# 4. Chatbot remembers context
+response = brain.chat("What do I prefer?", user_id="user_1")
+print(response)  # Output: "You prefer Python"
+
+# 5. Deploy
+docker-compose up
+```
+
+---
+
+## 📦 Installation
+
+### Via pip (Recommended)
 
 ```bash
 pip install agentic-brain
 ```
 
-Or from source:
+Requires: Python 3.10+, Neo4j 5.0+
+
+### Via Docker
 
 ```bash
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/yourusername/agentic-brain.git
 cd agentic-brain
-pip install -e .
+docker-compose up
 ```
 
-### Basic Usage
+Includes Neo4j, Redis, and pre-configured brain services.
+
+### From Source
+
+```bash
+git clone https://github.com/yourusername/agentic-brain.git
+cd agentic-brain
+pip install -e .
+
+# Install optional dependencies
+pip install agentic-brain[dev,docker]
+```
+
+---
+
+## 💡 Code Example
 
 ```python
-from agentic_brain import Agent, Neo4jMemory
+from agentic_brain import Brain, ConversationTemplate
 
-# Create memory backend
-memory = Neo4jMemory(
-    uri="bolt://localhost:7687",
-    user="neo4j",
-    password="your-password"
-)
-
-# Create an agent
-agent = Agent(
-    name="assistant",
-    memory=memory,
-    system_prompt="You are a helpful assistant."
+# Initialize with local Neo4j
+brain = Brain(
+    neo4j_uri="bolt://localhost:7687",
+    neo4j_password="neo4j",
+    llm_provider="ollama",  # or "openai", "anthropic"
 )
 
 # Chat with memory
-response = agent.chat("What did we discuss yesterday?")
-print(response)
-```
-
-### Data Separation
-
-```python
-from agentic_brain import Neo4jMemory, DataScope
-
-# Create isolated memory scopes
-public_memory = Neo4jMemory(uri="...", scope=DataScope.PUBLIC)
-private_memory = Neo4jMemory(uri="...", scope=DataScope.PRIVATE)
-customer_memory = Neo4jMemory(uri="...", scope=DataScope.CUSTOMER, customer_id="acme-corp")
-
-# Agents only see their scope
-public_agent = Agent(name="public-bot", memory=public_memory)
-private_agent = Agent(name="internal-bot", memory=private_memory)
-customer_agent = Agent(name="acme-bot", memory=customer_memory)
-```
-
----
-
-## Features
-
-### 🧠 Persistent Memory
-
-Agentic-brain remembers across sessions using Neo4j:
-
-```python
-# Session 1
-agent.chat("My favorite color is blue")
-
-# Session 2 (days later)
-agent.chat("What's my favorite color?")
-# → "Your favorite color is blue"
-```
-
-### 🔒 Data Separation Architecture
-
-Keep data secure while enabling chatbots:
-
-| Scope | Use Case | Isolation |
-|-------|----------|-----------|
-| `PUBLIC` | General knowledge, FAQs | Shared across all users |
-| `PRIVATE` | Internal company data | Admin access only |
-| `CUSTOMER` | B2B client data | Per-customer isolation |
-
-### 🔄 LLM Orchestration
-
-Route to the right model:
-
-```python
-from agentic_brain import LLMRouter
-
-router = LLMRouter(
-    default="claude-3-sonnet",
-    fallback="ollama/llama3",
-    routing_rules={
-        "code": "claude-3-sonnet",
-        "simple": "ollama/llama3",
-        "private": "ollama/llama3"  # Keep sensitive queries local
-    }
+user_id = "customer_12345"
+response = brain.chat(
+    message="I work in healthcare and need a compliant system.",
+    user_id=user_id,
 )
+
+# Retrieve conversation history
+history = brain.get_session(user_id).get_messages(limit=10)
+
+# RAG: Ground responses in knowledge
+documents = brain.search_knowledge("healthcare compliance", limit=5)
+response = brain.chat(
+    message="What compliance rules apply?",
+    user_id=user_id,
+    context=documents,
+)
+
+# Export memory graph
+graph_json = brain.export_graph(user_id)
 ```
 
-### 🔥 Firebase Ready
+---
 
-Coming soon: Firebase integration for real-time chat.
+## 📋 Built-In Templates
+
+Pre-configured templates for common use cases:
+
+| Template | Best For | Includes |
+|----------|----------|----------|
+| **Minimal** | Learning / Prototypes | Core brain, single user |
+| **Retail** | E-commerce | Product memory, cart state, recommendations |
+| **Support** | Customer service | Ticket history, resolution patterns, escalation logic |
+| **Enterprise** | Large orgs | RBAC, audit trails, multi-tenant isolation |
+
+```bash
+agentic-brain init --template retail
+```
+
+---
+
+## 📚 Documentation
+
+- **[Installation Guide](./docs/installation.md)** — Detailed setup for all platforms
+- **[API Reference](./docs/api.md)** — Complete function documentation
+- **[Architecture](./docs/architecture.md)** — Design decisions and data flow
+- **[Deployment](./docs/deployment.md)** — Production checklist, scaling, monitoring
+- **[Examples](./examples/)** — Retail, support, and enterprise chatbots
+- **[FAQ](./docs/faq.md)** — Common questions answered
+
+---
+
+## 🏗️ Architecture Overview
+
+```
+┌──────────────────────────────────┐
+│   API Layer (FastAPI)            │
+├──────────────────────────────────┤
+│   Brain Logic                    │
+│   ├─ Conversation Manager        │
+│   ├─ Memory Controller           │
+│   └─ RAG Engine                  │
+├──────────────────────────────────┤
+│   Data Layer                     │
+│   ├─ Neo4j (Knowledge Graph)    │
+│   ├─ Redis (Sessions)            │
+│   └─ Vector DB (Embeddings)      │
+├──────────────────────────────────┤
+│   LLM Layer                      │
+│   ├─ Ollama (Local)              │
+│   ├─ OpenAI / Anthropic (Cloud) │
+│   └─ Custom Providers            │
+└──────────────────────────────────┘
+```
+
+---
+
+## 🔧 Configuration
+
+Set environment variables or use `brain.config`:
 
 ```python
-from agentic_brain.firebase import FirebaseChat
+import os
 
-chat = FirebaseChat(
-    project_id="your-project",
-    agent=agent
+os.environ["NEO4J_URI"] = "bolt://localhost:7687"
+os.environ["NEO4J_PASSWORD"] = "secure_password"
+os.environ["LLM_PROVIDER"] = "ollama"
+os.environ["OLLAMA_MODEL"] = "mistral"
+os.environ["REDIS_URL"] = "redis://localhost:6379"
+```
+
+---
+
+## 📊 Monitoring & Observability
+
+Built-in telemetry with OpenTelemetry:
+
+```python
+from agentic_brain import Brain
+
+brain = Brain(
+    enable_telemetry=True,
+    tracing_endpoint="http://localhost:4317",
 )
-chat.listen()  # Real-time message handling
+
+# Logs automatically include:
+# - Request/response times
+# - Memory lookups
+# - LLM calls
+# - Session lifecycle
 ```
 
 ---
 
-## Architecture
+## 🧪 Testing
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                     Your Application                      │
-├─────────────────────────────────────────────────────────┤
-│                      Agent Layer                          │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐                  │
-│  │ Agent 1 │  │ Agent 2 │  │ Agent N │                  │
-│  └────┬────┘  └────┬────┘  └────┬────┘                  │
-├───────┼────────────┼────────────┼───────────────────────┤
-│       │            │            │                        │
-│  ┌────▼────────────▼────────────▼────┐                  │
-│  │           LLM Router              │ ◄── Model routing │
-│  └────┬─────────────────────────┬────┘                  │
-│       │                         │                        │
-│  ┌────▼────┐               ┌────▼────┐                  │
-│  │  OpenAI │               │  Ollama │ ◄── Local/Cloud  │
-│  └─────────┘               └─────────┘                  │
-├─────────────────────────────────────────────────────────┤
-│                    Memory Layer                          │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │               Neo4j Knowledge Graph              │    │
-│  │  ┌────────┐  ┌─────────┐  ┌──────────┐         │    │
-│  │  │ PUBLIC │  │ PRIVATE │  │ CUSTOMER │         │    │
-│  │  └────────┘  └─────────┘  └──────────┘         │    │
-│  └─────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────┘
+```bash
+# Run unit tests
+pytest tests/
+
+# Run integration tests (requires Neo4j, Ollama)
+pytest tests/integration/ -v
+
+# Code coverage
+pytest --cov=agentic_brain tests/
 ```
 
 ---
 
-## Comparison: Agentic Brain vs Brain-Core
+## 🤝 Contributing
 
-| Feature | Agentic Brain (Public) | Brain-Core (Private) |
-|---------|------------------------|----------------------|
-| Neo4j Memory | ✅ | ✅ |
-| Data Separation | ✅ | ✅ |
-| LLM Routing | ✅ Basic | ✅ Advanced |
-| Agent Framework | ✅ Single | ✅ Multi-agent fleet |
-| Firebase | 🔜 Coming | ✅ |
-| Voice/TTS | ❌ | ✅ |
-| MCP Servers | ❌ | ✅ (9 servers) |
-| RAG Pipeline | ❌ | ✅ |
-| Self-Healing | ❌ | ✅ |
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
----
+### Development Setup
 
-## Examples
+```bash
+git clone https://github.com/yourusername/agentic-brain.git
+cd agentic-brain
+pip install -e ".[dev]"
+pre-commit install
+```
 
-See the `examples/` directory:
+### Pull Request Process
 
-- `basic_chat.py` - Simple chatbot with memory
-- `data_separation.py` - Multi-tenant data isolation
-- `llm_routing.py` - Model selection logic
+1. Fork and branch: `git checkout -b feature/your-feature`
+2. Commit with clear messages
+3. Add tests for new functionality
+4. Run linting: `make lint`
+5. Submit PR with description
 
 ---
 
-## Requirements
+## 📄 License
 
-- Python 3.9+
-- Neo4j 5.x (for memory)
-- OpenAI API key or Ollama (for LLM)
+This project is licensed under the **GNU General Public License v3.0** — see [LICENSE](./LICENSE) for details.
 
----
+### What This Means
 
-## License
-
-GPL-2.0-or-later - See [LICENSE](LICENSE)
-
----
-
-## Author
-
-**Joseph Webber**  
-📧 joseph.webber@me.com  
-🌏 Adelaide, South Australia
+- ✅ **Commercial use allowed** with source code disclosure
+- ✅ **Modifications permitted** with same license
+- ✅ **Distribution allowed** with source availability
+- ✅ **Private use allowed** without disclosure
+- ⚠️ **Derivative works must be open-source** under GPL-3.0
 
 ---
 
-## Roadmap
+## 🐛 Support
 
-- [x] Neo4j memory backend
-- [x] Data separation scopes
-- [x] Basic agent framework
-- [x] LLM routing
-- [ ] Firebase real-time chat
-- [ ] RAG (Retrieval-Augmented Generation)
-- [ ] Vector embeddings
-- [ ] Multi-agent orchestration
+- **Issues** — [GitHub Issues](https://github.com/yourusername/agentic-brain/issues)
+- **Discussions** — [GitHub Discussions](https://github.com/yourusername/agentic-brain/discussions)
+- **Email** — support@example.com
 
 ---
 
-*Part of the [brain-core](https://github.com/joseph-webber/brain-core) ecosystem*
+## 🎯 Roadmap
+
+- [ ] PostgreSQL support for structured data
+- [ ] GraphQL API layer
+- [ ] Vision capabilities (image understanding)
+- [ ] Real-time collaborative sessions
+- [ ] Advanced RAG with BM25 + semantic reranking
+- [ ] Multi-language support
+- [ ] Kubernetes operator
+
+---
+
+## 🙏 Acknowledgments
+
+Built with production expertise in AI systems, persistent storage, and distributed applications.
+
+---
+
+<div align="center">
+
+**[Documentation](./docs) • [Examples](./examples) • [Issues](https://github.com/yourusername/agentic-brain/issues)**
+
+Made with ❤️ for developers building intelligent systems.
+
+</div>

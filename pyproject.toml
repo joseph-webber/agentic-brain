@@ -41,17 +41,31 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
     "black>=24.0.0",
     "mypy>=1.8.0",
     "ruff>=0.3.0",
+]
+api = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.0.0",
+    "python-multipart>=0.0.6",
 ]
 llm = [
     "openai>=1.0.0",
     "httpx>=0.25.0",
 ]
 all = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.0.0",
+    "python-multipart>=0.0.6",
     "openai>=1.0.0",
     "httpx>=0.25.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
 ]
 
 [project.urls]

@@ -1,0 +1,72 @@
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Development
+.env
+.env.local
+*.log
+*.log.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/_build/
+site/
+
+# Data (keep for volume mounting)
+# /data - excluded to preserve volumes
+
+# Tests
+.pytest_cache/
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Docker
+docker-compose.override.yml
+.dockerignore

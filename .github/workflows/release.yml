@@ -1,0 +1,87 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Joseph Webber <joseph.webber@me.com>
+#
+# This file is part of Agentic Brain.
+#
+# Agentic Brain is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel build twine
+
+      - name: Verify version matches tag
+        run: |
+          TAG_VERSION="${{ github.ref_name }}"
+          PACKAGE_VERSION=$(python -c "import re; content=open('pyproject.toml').read(); m=re.search(r'version = \"([^\"]+)\"', content); print(m.group(1) if m else '')")
+          
+          echo "Tag version: $TAG_VERSION"
+          echo "Package version: v$PACKAGE_VERSION"
+          
+          if [ "v$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "ERROR: Tag version ($TAG_VERSION) does not match package version (v$PACKAGE_VERSION)"
+            exit 1
+          fi
+          echo "✓ Version match verified!"
+
+      - name: Build distribution packages
+        run: python -m build
+
+      - name: Verify package contents
+        run: |
+          echo "Distribution packages:"
+          ls -lh dist/
+          echo ""
+          echo "Checking package integrity..."
+          twine check dist/*
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          twine upload dist/* --non-interactive --skip-existing
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+          files: dist/*
+          body: |
+            ## Changes in ${{ github.ref_name }}
+            
+            For a detailed changelog, see the [commit history](https://github.com/joseph-webber/agentic-brain/commits/${{ github.ref_name }}).
+            
+            ### Installation
+            ```bash
+            pip install agentic-brain==${{ github.ref_name }}
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

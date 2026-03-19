@@ -1,0 +1,123 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Joseph Webber <joseph.webber@me.com>
+#
+# This file is part of Agentic Brain.
+#
+# Agentic Brain is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e ".[dev]"
+
+      - name: Run black format check
+        run: black --check src/ tests/
+
+      - name: Run ruff linting
+        run: ruff check src/ tests/
+
+      - name: Run mypy type checking
+        run: mypy src/agentic_brain --ignore-missing-imports
+        continue-on-error: true
+
+      - name: Run pytest with coverage
+        run: |
+          pytest tests/ -v --tb=short \
+            --cov=agentic_brain \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-report=html
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-py${{ matrix.python-version }}
+          fail_ci_if_error: false
+
+      - name: Archive coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-py${{ matrix.python-version }}
+          path: htmlcov/
+
+  license-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check GPL-3.0 license headers
+        run: |
+          echo "Checking for GPL-3.0 license headers..."
+          MISSING_HEADERS=0
+          for file in $(find src/ -name "*.py" -type f); do
+            if ! grep -q "SPDX-License-Identifier: GPL-3.0" "$file"; then
+              echo "Missing license header: $file"
+              MISSING_HEADERS=$((MISSING_HEADERS + 1))
+            fi
+          done
+          if [ $MISSING_HEADERS -gt 0 ]; then
+            echo "ERROR: $MISSING_HEADERS files missing GPL-3.0 license headers"
+            exit 1
+          fi
+          echo "✓ All source files have proper license headers!"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [test, license-check]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel build
+
+      - name: Build distribution packages
+        run: python -m build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7

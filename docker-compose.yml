@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:5-community
+    container_name: agentic-brain-neo4j
+    restart: unless-stopped
+    ports:
+      - "7687:7687"  # Bolt port
+      - "7474:7474"  # HTTP port
+      - "7473:7473"  # HTTPS port
+    environment:
+      - NEO4J_AUTH=neo4j/AgenticBrainPassword123!
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_apoc_import_file_enabled=true
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_server_memory_heap_initial_size=512m
+      - NEO4J_server_memory_heap_max_size=1g
+      - NEO4J_dbms_memory_pagecache_size=256m
+    volumes:
+      - agentic_brain_neo4j_data:/var/lib/neo4j/data
+      - agentic_brain_neo4j_logs:/var/lib/neo4j/logs
+      - agentic_brain_neo4j_import:/var/lib/neo4j/import
+    networks:
+      - agentic-brain-network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "AgenticBrainPassword123!", "RETURN 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  agentic-brain:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentic-brain-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=AgenticBrainPassword123!
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    volumes:
+      - ./data:/app/data
+    networks:
+      - agentic-brain-network
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  agentic_brain_neo4j_data:
+  agentic_brain_neo4j_logs:
+  agentic_brain_neo4j_import:
+
+networks:
+  agentic-brain-network:
+    driver: bridge
