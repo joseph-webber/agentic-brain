@@ -25,11 +25,40 @@ __license__ = "GPL-2.0-or-later"
 from agentic_brain.agent import Agent
 from agentic_brain.memory import Neo4jMemory, DataScope
 from agentic_brain.router import LLMRouter
+from agentic_brain.exceptions import (
+    AgenticBrainError,
+    Neo4jConnectionError,
+    LLMProviderError,
+    MemoryError,
+    TransportError,
+    ConfigurationError,
+    RateLimitError,
+    SessionError,
+    ValidationError,
+    TimeoutError,
+    APIError,
+    ModelNotFoundError,
+)
 
 __all__ = [
+    # Core
     "Agent",
     "Neo4jMemory",
     "DataScope",
     "LLMRouter",
+    # Exceptions
+    "AgenticBrainError",
+    "Neo4jConnectionError",
+    "LLMProviderError",
+    "MemoryError",
+    "TransportError",
+    "ConfigurationError",
+    "RateLimitError",
+    "SessionError",
+    "ValidationError",
+    "TimeoutError",
+    "APIError",
+    "ModelNotFoundError",
+    # Version
     "__version__",
 ]

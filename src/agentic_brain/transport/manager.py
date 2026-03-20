@@ -52,7 +52,7 @@ class TransportManager:
         self,
         config: Optional[TransportConfig] = None,
         mode: TransportMode = TransportMode.WEBSOCKET_ONLY,
-    ):
+    ) -> None:
         self.config = config or TransportConfig()
         self.mode = mode
         self._websocket: Optional[WebSocketTransport] = None
@@ -65,6 +65,7 @@ class TransportManager:
         session_id: Optional[str] = None,
     ) -> bool:
         """Connect transports based on mode."""
+        logger.info(f"Transport connecting: mode={self.mode.value}")
         success = False
         
         # Connect WebSocket if needed
@@ -81,6 +82,7 @@ class TransportManager:
                 if ws_ok:
                     success = True
                     self._status.active_transport = TransportType.WEBSOCKET
+                logger.debug(f"WebSocket connection: ok={ws_ok}")
         
         # Connect Firebase if needed
         if self.mode in (
@@ -100,11 +102,13 @@ class TransportManager:
                         success = True
                         if self.mode == TransportMode.FIREBASE_ONLY:
                             self._status.active_transport = TransportType.FIREBASE
+                    logger.debug(f"Firebase connection: ok={fb_ok}")
                 else:
                     logger.warning("Firebase SDK not available, falling back to WebSocket")
             except ImportError:
                 logger.warning("Firebase transport not available")
         
+        logger.info(f"Transport connected: websocket={self._status.websocket_connected}, firebase={self._status.firebase_connected}")
         return success
     
     async def disconnect(self) -> None:
@@ -125,8 +129,10 @@ class TransportManager:
         # Dual write - send to both
         if self.mode == TransportMode.DUAL_WRITE:
             if self._websocket and self._status.websocket_connected:
+                logger.debug(f"Message sent: transport=websocket, session={getattr(message, 'session_id', 'unknown')}")
                 results.append(await self._websocket.send(message))
             if self._firebase and self._status.firebase_connected:
+                logger.debug(f"Message sent: transport=firebase, session={getattr(message, 'session_id', 'unknown')}")
                 results.append(await self._firebase.send(message))
             return any(results)  # Success if either worked
         
@@ -135,11 +141,16 @@ class TransportManager:
         if primary:
             ok = await primary.send(message)
             if ok:
+                logger.debug(f"Message sent: transport={primary.transport_type.value}, session={getattr(message, 'session_id', 'unknown')}")
                 return True
             # Try fallback
             fallback = self._get_fallback_transport()
             if fallback:
-                return await fallback.send(message)
+                logger.warning(f"Transport send failed, trying fallback: transport={primary.transport_type.value}")
+                ok = await fallback.send(message)
+                if ok:
+                    logger.debug(f"Message sent via fallback: transport={fallback.transport_type.value}")
+                return ok
         
         return False
     

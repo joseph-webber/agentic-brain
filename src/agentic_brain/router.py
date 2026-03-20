@@ -22,6 +22,16 @@ import subprocess
 import shutil
 import json
 import urllib.error
+import os
+
+from agentic_brain.exceptions import (
+    LLMProviderError,
+    ConfigurationError,
+    ModelNotFoundError,
+    TimeoutError as AgenticTimeoutError,
+    RateLimitError,
+    APIError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +155,7 @@ class LLMRouter:
         try:
             # Check if ollama command exists
             if not shutil.which("ollama"):
+                logger.debug("Ollama command not found in PATH")
                 self._ollama_available = False
                 return False
             
@@ -163,6 +174,9 @@ class LLMRouter:
             # OSError: system error
             # URLError: HTTP error
             logger.debug(f"Ollama availability check failed: {e}")
+            self._ollama_available = False
+        except Exception as e:
+            logger.error(f"Unexpected error checking Ollama: {e}")
             self._ollama_available = False
         
         return self._ollama_available or False
@@ -195,6 +209,9 @@ class LLMRouter:
         provider = provider or self.config.default_provider
         model = model or self.config.default_model
         
+        logger.info(f"Attempting LLM call: provider={provider.value}, model={model}")
+        logger.debug(f"Request: messages=1, temperature={temperature}, system_prompt={'yes' if system else 'no'}")
+        
         # Try primary provider
         try:
             if provider == Provider.OLLAMA:
@@ -206,7 +223,7 @@ class LLMRouter:
             elif provider == Provider.OPENROUTER:
                 return self._chat_openrouter(message, system, model, temperature)
         except Exception as e:
-            logger.warning(f"Primary provider {provider} failed: {e}")
+            logger.warning(f"LLM provider failed, trying fallback: provider={provider.value}, error={type(e).__name__}: {str(e)[:100]}")
             
             if not self.config.fallback_enabled:
                 raise
@@ -217,7 +234,7 @@ class LLMRouter:
                 continue  # Skip the one that just failed
             
             try:
-                logger.info(f"Trying fallback: {fallback_provider.value}/{fallback_model}")
+                logger.info(f"Trying fallback: provider={fallback_provider.value}, model={fallback_model}")
                 
                 if fallback_provider == Provider.OLLAMA:
                     return self._chat_ollama(message, system, fallback_model, temperature)
@@ -225,9 +242,10 @@ class LLMRouter:
                     return self._chat_openrouter(message, system, fallback_model, temperature)
                     
             except Exception as e:
-                logger.warning(f"Fallback {fallback_provider} failed: {e}")
+                logger.warning(f"LLM provider failed, trying fallback: provider={fallback_provider.value}, error={type(e).__name__}: {str(e)[:100]}")
                 continue
         
+        logger.error("All LLM providers failed after exhausting fallback chain", exc_info=True)
         raise RuntimeError("All LLM providers failed")
     
     def _chat_ollama(
@@ -237,9 +255,21 @@ class LLMRouter:
         model: str,
         temperature: float,
     ) -> Response:
-        """Chat via Ollama."""
+        """Chat via Ollama.
+        
+        Raises:
+            ModelNotFoundError: Model not installed
+            AgenticTimeoutError: Request timed out
+            LLMProviderError: Connection or response error
+        """
         if not self._check_ollama():
-            raise RuntimeError("Ollama not available")
+            raise LLMProviderError(
+                "ollama",
+                model,
+                Exception("Ollama is not running. Try: ollama serve")
+            )
+        
+        logger.debug(f"Ollama chat: model={model}, temperature={temperature}")
         
         import urllib.request
         
@@ -262,15 +292,30 @@ class LLMRouter:
             method="POST",
         )
         
-        with urllib.request.urlopen(req, timeout=self.config.timeout) as resp:
-            result = json.loads(resp.read().decode())
-        
-        return Response(
-            content=result["message"]["content"],
-            model=model,
-            provider=Provider.OLLAMA,
-            tokens_used=result.get("eval_count", 0),
-        )
+        try:
+            with urllib.request.urlopen(req, timeout=self.config.timeout) as resp:
+                result = json.loads(resp.read().decode())
+            
+            tokens_used = result.get("eval_count", 0)
+            logger.info(f"LLM response received: provider={Provider.OLLAMA.value}, tokens={tokens_used}")
+            
+            return Response(
+                content=result["message"]["content"],
+                model=model,
+                provider=Provider.OLLAMA,
+                tokens_used=tokens_used,
+            )
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                raise ModelNotFoundError(model, "ollama")
+            raise APIError(f"{self.config.ollama_host}/api/chat", e.code, str(e), e)
+        except (TimeoutError, urllib.error.URLError) as e:
+            raise AgenticTimeoutError("Ollama chat", self.config.timeout, e)
+        except json.JSONDecodeError as e:
+            raise LLMProviderError("ollama", model, Exception(f"Invalid JSON response from Ollama: {e}"))
+        except Exception as e:
+            logger.error(f"Ollama API error: {type(e).__name__}: {str(e)}", exc_info=True)
+            raise LLMProviderError("ollama", model, e)
     
     def _chat_openai(
         self,
@@ -279,13 +324,24 @@ class LLMRouter:
         model: str,
         temperature: float,
     ) -> Response:
-        """Chat via OpenAI."""
+        """Chat via OpenAI.
+        
+        Raises:
+            ConfigurationError: API key not configured
+            RateLimitError: Rate limit exceeded
+            APIError: API call failed
+        """
         import urllib.request
-        import os
         
         api_key = self.config.openai_key or os.environ.get("OPENAI_API_KEY")
         if not api_key:
-            raise RuntimeError("OpenAI API key not configured")
+            raise ConfigurationError(
+                "OPENAI_API_KEY",
+                "valid OpenAI API key from https://platform.openai.com/account/api-keys",
+                "sk-..."
+            )
+        
+        logger.debug(f"OpenAI chat: model={model}, temperature={temperature}")
         
         messages = []
         if system:
@@ -309,17 +365,36 @@ class LLMRouter:
             method="POST",
         )
         
-        with urllib.request.urlopen(req, timeout=self.config.timeout) as resp:
-            result = json.loads(resp.read().decode())
-        
-        choice = result["choices"][0]
-        return Response(
-            content=choice["message"]["content"],
-            model=model,
-            provider=Provider.OPENAI,
-            tokens_used=result.get("usage", {}).get("total_tokens", 0),
-            finish_reason=choice.get("finish_reason", "stop"),
-        )
+        try:
+            with urllib.request.urlopen(req, timeout=self.config.timeout) as resp:
+                result = json.loads(resp.read().decode())
+            
+            tokens_used = result.get("usage", {}).get("total_tokens", 0)
+            logger.info(f"LLM response received: provider={Provider.OPENAI.value}, tokens={tokens_used}")
+            
+            choice = result["choices"][0]
+            return Response(
+                content=choice["message"]["content"],
+                model=model,
+                provider=Provider.OPENAI,
+                tokens_used=tokens_used,
+                finish_reason=choice.get("finish_reason", "stop"),
+            )
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                raise RateLimitError(
+                    limit=int(e.headers.get("x-ratelimit-limit-requests", 3500)),
+                    window="minute",
+                    retry_after=int(e.headers.get("retry-after", 60))
+                )
+            raise APIError("https://api.openai.com/v1/chat/completions", e.code, str(e), e)
+        except (TimeoutError, urllib.error.URLError) as e:
+            raise AgenticTimeoutError("OpenAI chat", self.config.timeout, e)
+        except json.JSONDecodeError as e:
+            raise LLMProviderError("openai", model, Exception(f"Invalid JSON response from OpenAI: {e}"))
+        except Exception as e:
+            logger.error(f"OpenAI API error: {type(e).__name__}: {str(e)}", exc_info=True)
+            raise
     
     def _chat_anthropic(
         self,
@@ -328,13 +403,22 @@ class LLMRouter:
         model: str,
         temperature: float,
     ) -> Response:
-        """Chat via Anthropic."""
+        """Chat via Anthropic.
+        
+        Raises:
+            ConfigurationError: API key not configured
+            APIError: API call failed
+        """
         import urllib.request
-        import os
         
         api_key = self.config.anthropic_key or os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
-            raise RuntimeError("Anthropic API key not configured")
+            raise ConfigurationError(
+                "ANTHROPIC_API_KEY",
+                "valid Anthropic API key from https://console.anthropic.com/account/keys"
+            )
+        
+        logger.debug(f"Anthropic chat: model={model}, temperature={temperature}")
         
         payload = {
             "model": model,
@@ -358,16 +442,34 @@ class LLMRouter:
             method="POST",
         )
         
-        with urllib.request.urlopen(req, timeout=self.config.timeout) as resp:
-            result = json.loads(resp.read().decode())
-        
-        return Response(
-            content=result["content"][0]["text"],
-            model=model,
-            provider=Provider.ANTHROPIC,
-            tokens_used=result.get("usage", {}).get("input_tokens", 0) + 
-                       result.get("usage", {}).get("output_tokens", 0),
-        )
+        try:
+            with urllib.request.urlopen(req, timeout=self.config.timeout) as resp:
+                result = json.loads(resp.read().decode())
+            
+            tokens_used = result.get("usage", {}).get("input_tokens", 0) + result.get("usage", {}).get("output_tokens", 0)
+            logger.info(f"LLM response received: provider={Provider.ANTHROPIC.value}, tokens={tokens_used}")
+            
+            return Response(
+                content=result["content"][0]["text"],
+                model=model,
+                provider=Provider.ANTHROPIC,
+                tokens_used=tokens_used,
+            )
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                raise RateLimitError(
+                    limit=50000,  # Anthropic rate limit
+                    window="minute",
+                    retry_after=60
+                )
+            raise APIError("https://api.anthropic.com/v1/messages", e.code, str(e), e)
+        except (TimeoutError, urllib.error.URLError) as e:
+            raise AgenticTimeoutError("Anthropic chat", self.config.timeout, e)
+        except json.JSONDecodeError as e:
+            raise LLMProviderError("anthropic", model, Exception(f"Invalid JSON response from Anthropic: {e}"))
+        except Exception as e:
+            logger.error(f"Anthropic API error: {type(e).__name__}: {str(e)}", exc_info=True)
+            raise LLMProviderError("anthropic", model, e)
     
     def _chat_openrouter(
         self,
@@ -376,11 +478,17 @@ class LLMRouter:
         model: str,
         temperature: float,
     ) -> Response:
-        """Chat via OpenRouter (free models available)."""
+        """Chat via OpenRouter (free models available).
+        
+        Raises:
+            APIError: API call failed
+            RateLimitError: Rate limit exceeded
+        """
         import urllib.request
-        import os
         
         api_key = self.config.openrouter_key or os.environ.get("OPENROUTER_API_KEY")
+        
+        logger.debug(f"OpenRouter chat: model={model}, temperature={temperature}, api_key={'configured' if api_key else 'not configured'}")
         
         messages = []
         if system:
@@ -405,16 +513,35 @@ class LLMRouter:
             method="POST",
         )
         
-        with urllib.request.urlopen(req, timeout=self.config.timeout) as resp:
-            result = json.loads(resp.read().decode())
-        
-        choice = result["choices"][0]
-        return Response(
-            content=choice["message"]["content"],
-            model=model,
-            provider=Provider.OPENROUTER,
-            tokens_used=result.get("usage", {}).get("total_tokens", 0),
-        )
+        try:
+            with urllib.request.urlopen(req, timeout=self.config.timeout) as resp:
+                result = json.loads(resp.read().decode())
+            
+            tokens_used = result.get("usage", {}).get("total_tokens", 0)
+            logger.info(f"LLM response received: provider={Provider.OPENROUTER.value}, tokens={tokens_used}")
+            
+            choice = result["choices"][0]
+            return Response(
+                content=choice["message"]["content"],
+                model=model,
+                provider=Provider.OPENROUTER,
+                tokens_used=tokens_used,
+            )
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                raise RateLimitError(
+                    limit=10,  # OpenRouter rate limit
+                    window="minute",
+                    retry_after=60
+                )
+            raise APIError("https://openrouter.ai/api/v1/chat/completions", e.code, str(e), e)
+        except (TimeoutError, urllib.error.URLError) as e:
+            raise AgenticTimeoutError("OpenRouter chat", self.config.timeout, e)
+        except json.JSONDecodeError as e:
+            raise LLMProviderError("openrouter", model, Exception(f"Invalid JSON response from OpenRouter: {e}"))
+        except Exception as e:
+            logger.error(f"OpenRouter API error: {type(e).__name__}: {str(e)}", exc_info=True)
+            raise LLMProviderError("openrouter", model, e)
     
     def list_local_models(self) -> list[str]:
         """List available Ollama models."""

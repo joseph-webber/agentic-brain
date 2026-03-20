@@ -70,6 +70,7 @@ def check_rate_limit(client_ip: str) -> bool:
     
     # Check if limit exceeded
     if len(request_counts[client_ip]) >= RATE_LIMIT:
+        logger.warning(f"Rate limit hit: client={client_ip}, count={len(request_counts[client_ip])}, limit={RATE_LIMIT}")
         return False
     
     # Record this request
@@ -284,12 +285,17 @@ def register_routes(app):
         try:
             # Check rate limit
             client_ip = req.client.host if req.client else "unknown"
+            logger.info(f"API request: endpoint=/chat, client={client_ip}")
+            logger.debug(f"Request body: message_length={len(request.message)}, session={request.session_id}, user={request.user_id}")
+            
             if not check_rate_limit(client_ip):
-                logger.warning(f"Rate limit exceeded for client: {client_ip}")
                 raise HTTPException(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                     detail="Rate limit exceeded. Maximum 60 requests per minute allowed."
                 )
+            
+            import time
+            start_time = time.time()
             
             # Generate or use provided session ID
             session_id = request.session_id or _generate_session_id()
@@ -323,7 +329,8 @@ def register_routes(app):
             # Update message count
             sessions[session_id]["message_count"] += 1
             
-            logger.info(f"Processed message in session {session_id}: {message_id}")
+            duration_ms = int((time.time() - start_time) * 1000)
+            logger.info(f"API response: endpoint=/chat, status=200, duration={duration_ms}ms")
             
             return ChatResponse(
                 response=response_text,
@@ -331,8 +338,10 @@ def register_routes(app):
                 message_id=response_id,
             )
             
+        except HTTPException:
+            raise
         except Exception as e:
-            logger.error(f"Error processing chat: {str(e)}")
+            logger.error(f"Chat error: endpoint=/chat, error={type(e).__name__}: {str(e)}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error processing message: {str(e)}",

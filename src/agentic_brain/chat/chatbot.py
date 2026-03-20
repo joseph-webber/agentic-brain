@@ -366,6 +366,8 @@ Current time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"""
         try:
             # Get/create session
             session = self._get_session(session_id, user_id)
+            logger.info(f"Chat started: session={session.session_id}, user={user_id}")
+            logger.debug(f"Processing message: length={len(message)}")
             
             # Create message object
             user_msg = ChatMessage(
@@ -412,11 +414,12 @@ Current time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"""
             # Store in memory if appropriate
             self._store_memory(session, message, response_text)
             
+            logger.info(f"Chat completed: session={session.session_id}, response_length={len(response_text)}")
             return response_text
             
         except Exception as e:
             self.stats["errors"] += 1
-            logger.error(f"Chat error: {e}")
+            logger.error(f"Chat error: session={session_id}, error={type(e).__name__}: {str(e)}", exc_info=True)
             
             if self._on_error:
                 self._on_error(e)

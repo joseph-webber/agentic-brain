@@ -38,7 +38,7 @@ class FirebaseTransport(BaseTransport):
     - Service account credentials JSON
     """
     
-    def __init__(self, config: TransportConfig, session_id: Optional[str] = None):
+    def __init__(self, config: TransportConfig, session_id: Optional[str] = None) -> None:
         super().__init__(config)
         self.session_id = session_id or str(uuid.uuid4())
         self._app: Optional[Any] = None
@@ -80,7 +80,7 @@ class FirebaseTransport(BaseTransport):
             self._ref = db.reference(f"sessions/{self.session_id}/messages")
             
             # Set up listener for incoming messages
-            def on_message(event):
+            def on_message(event) -> None:
                 if event.data and not self._closed:
                     try:
                         asyncio.get_event_loop().call_soon_threadsafe(

@@ -21,7 +21,7 @@ class WebSocketTransport(BaseTransport):
     - Graceful reconnection
     """
     
-    def __init__(self, config: TransportConfig, websocket: Optional[WebSocket] = None):
+    def __init__(self, config: TransportConfig, websocket: Optional[WebSocket] = None) -> None:
         super().__init__(config)
         self.websocket = websocket
         self._receive_queue: asyncio.Queue = asyncio.Queue()

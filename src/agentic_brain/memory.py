@@ -117,7 +117,7 @@ class Neo4jMemory:
         user: str = "neo4j",
         password: str = "",
         database: str = "neo4j",
-    ):
+    ) -> None:
         """
         Initialize Neo4j memory connection.
         
@@ -221,6 +221,8 @@ class Neo4jMemory:
         if scope == DataScope.CUSTOMER and not customer_id:
             raise ValueError("customer_id required for CUSTOMER scope")
         
+        logger.debug(f"Storing memory: key={content[:50]}..., scope={scope.value}")
+        
         self._ensure_connected()
         
         memory = Memory(
@@ -271,11 +273,15 @@ class Neo4jMemory:
             "embedding": embedding,
         }
         
-        with self._driver.session(database=self.config.database) as session:
-            result = session.run(query, params)
-            record = result.single()
-            if record:
-                logger.debug(f"Stored memory: {record['id']}")
+        try:
+            with self._driver.session(database=self.config.database) as session:
+                result = session.run(query, params)
+                record = result.single()
+                if record:
+                    logger.debug(f"Memory stored successfully: key={memory.id}")
+        except Exception as e:
+            logger.error(f"Memory operation failed: operation=store, key={memory.id}", exc_info=True)
+            raise
         
         return memory
     
@@ -306,6 +312,8 @@ class Neo4jMemory:
         if scope == DataScope.CUSTOMER and not customer_id:
             raise ValueError("customer_id required for CUSTOMER scope search")
         
+        logger.debug(f"Retrieving memory: key={query}, scope={scope.value}")
+        
         self._ensure_connected()
         
         # Scope-filtered search
@@ -330,16 +338,22 @@ class Neo4jMemory:
         """
         
         memories = []
-        with self._driver.session(database=self.config.database) as session:
-            result = session.run(cypher, params)
-            for record in result:
-                memories.append(Memory(
-                    id=record["id"],
-                    content=record["content"],
-                    scope=DataScope(record["scope"]),
-                    timestamp=record["timestamp"].to_native() if record["timestamp"] else datetime.now(timezone.utc),
-                    customer_id=record["customer_id"],
-                ))
+        try:
+            with self._driver.session(database=self.config.database) as session:
+                result = session.run(cypher, params)
+                for record in result:
+                    memories.append(Memory(
+                        id=record["id"],
+                        content=record["content"],
+                        scope=DataScope(record["scope"]),
+                        timestamp=record["timestamp"].to_native() if record["timestamp"] else datetime.now(timezone.utc),
+                        customer_id=record["customer_id"],
+                    ))
+            
+            logger.debug(f"Memory retrieved: key={query}, found={len(memories) > 0}, count={len(memories)}")
+        except Exception as e:
+            logger.error(f"Memory operation failed: operation=search, key={query}", exc_info=True)
+            raise
         
         return memories
     
@@ -514,7 +528,7 @@ class InMemoryStore:
         >>> store.store("test", scope=DataScope.PUBLIC)
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         self._memories: dict[str, Memory] = {}
     
     def store(
