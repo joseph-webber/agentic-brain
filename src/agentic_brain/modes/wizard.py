@@ -206,7 +206,6 @@ class ModeWizard:
         ("team", "developer"): 20,
         ("department", "business"): 20,
         ("organization", "enterprise"): 30,
-        ("enterprise", "enterprise"): 40,
         ("enterprise", "microservices"): 30,
         # Features -> Mode mappings
         ("speed", "turbo"): 40,

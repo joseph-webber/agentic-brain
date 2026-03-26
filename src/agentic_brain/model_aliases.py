@@ -930,10 +930,7 @@ def get_fallback_chain(
                 healthy_chain.append(code)
 
         # If ALL models unhealthy, return original chain (emergency)
-        if not healthy_chain:
-            chain = chain  # Use original
-        else:
-            chain = healthy_chain
+        chain = healthy_chain if healthy_chain else chain
 
     if starting_from is None:
         return chain

@@ -157,7 +157,7 @@ async def turbo_smash(
         try:
             result = task.result()
             router.record_result(result)
-        except:
+        except Exception:
             pass
 
     if winner:
@@ -167,7 +167,7 @@ async def turbo_smash(
     for task in done:
         try:
             return task.result()
-        except:
+        except Exception:
             pass
 
     return SmashResult(
@@ -241,7 +241,7 @@ async def warmup_ping() -> Dict[str, float]:
             if result.get("success"):
                 return worker.name, elapsed
             return worker.name, None
-        except:
+        except Exception:
             return worker.name, None
 
     tasks = [ping_worker(w) for w in workers]

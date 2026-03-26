@@ -699,9 +699,9 @@ class LDAPAuthProvider(AuthProvider):
 
             for entry in conn.entries:
 
-                def get_attr(attr_name: str) -> Optional[str]:
+                def get_attr(attr_name: str, current_entry=entry) -> Optional[str]:
                     try:
-                        attr = getattr(entry, attr_name, None)
+                        attr = getattr(current_entry, attr_name, None)
                         if attr and attr.value:
                             return (
                                 str(attr.value)

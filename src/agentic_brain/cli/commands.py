@@ -452,7 +452,7 @@ def check_command(args: argparse.Namespace) -> int:
                 neo4j_uri = os.getenv("NEO4J_URI")
                 if neo4j_uri:
                     print_info("Neo4j is configured (optional memory/persistence)")
-            except:
+            except Exception:
                 pass
 
             return 0

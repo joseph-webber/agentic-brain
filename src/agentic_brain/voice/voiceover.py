@@ -108,7 +108,7 @@ class VoiceOverCoordinator:
                     ["pgrep", "-x", "VoiceOver"], capture_output=True, timeout=1
                 )
                 self.status.is_running = result.returncode == 0
-            except:
+            except Exception:
                 # If we can't check, assume it's NOT running
                 self.status.is_running = False
 

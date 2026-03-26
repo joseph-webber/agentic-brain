@@ -46,7 +46,7 @@ from typing import Any, Callable, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 
-class RateLimitExceeded(Exception):
+class RateLimitExceededError(Exception):
     """Raised when rate limit is exceeded"""
 
     pass
@@ -444,7 +444,7 @@ def rate_limited(loader_name: str, timeout: float = 60):
             ip_address = kwargs.get("ip_address")
 
             if not await _rate_limiter.wait_for_slot(loader_name, ip_address, timeout):
-                raise RateLimitExceeded(
+                raise RateLimitExceededError(
                     f"Rate limit exceeded for {loader_name} " f"(waited {timeout}s)"
                 )
 
@@ -539,7 +539,7 @@ class IPRateLimiter:
 __all__ = [
     "SmartRateLimiter",
     "RateLimitConfig",
-    "RateLimitExceeded",
+    "RateLimitExceededError",
     "IPRateLimiter",
     "rate_limited",
     "get_rate_limiter",

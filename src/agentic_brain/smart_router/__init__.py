@@ -40,7 +40,6 @@ Usage:
     result = await turbo_smash("Say hi!")
 """
 
-from .coordinator import RedisCoordinator, cascade_smash, turbo_smash
 from .core import SmartRouter, SmashMode, SmashResult
 from .posture import PostureMode, SecurityPosture
 from .workers import (

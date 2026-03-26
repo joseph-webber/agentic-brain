@@ -393,7 +393,9 @@ class MemoryVectorAdapter(VectorDBAdapter):
             return sum(a * b for a, b in zip(vec1, vec2, strict=False))
 
         elif self.metric == "euclidean":
-            dist = math.sqrt(sum((a - b) ** 2 for a, b in zip(vec1, vec2, strict=False)))
+            dist = math.sqrt(
+                sum((a - b) ** 2 for a, b in zip(vec1, vec2, strict=False))
+            )
             return -dist
 
         else:

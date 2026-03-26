@@ -86,9 +86,9 @@ def _get_unified_brain_class():
     global _unified_brain_module
     if _unified_brain_module is None:
         try:
-            from agentic_brain.unified_brain import UnifiedBrain as unified_brain_cls
+            from agentic_brain.unified_brain import UnifiedBrain as UnifiedBrainClass
 
-            _unified_brain_module = unified_brain_cls
+            _unified_brain_module = UnifiedBrainClass
         except ImportError:
             _unified_brain_module = False
     return _unified_brain_module if _unified_brain_module else None

@@ -2,11 +2,11 @@
 
 <div align="center">
 
-[![Tests](https://img.shields.io/badge/tests-2800%2B-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](https://github.com/joseph-webber/agentic-brain/actions)
+[![Tests](https://img.shields.io/badge/tests-4700%2B-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](https://github.com/joseph-webber/agentic-brain/actions)
 [![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen?style=for-the-badge&logo=codecov&logoColor=white)](https://github.com/joseph-webber/agentic-brain/actions)
 [![E2E](https://img.shields.io/badge/E2E-Playwright-45BA4B?style=for-the-badge&logo=playwright&logoColor=white)](./tests/e2e/)
 
-**Enterprise-grade testing with 2800+ tests across unit, integration, and E2E.**
+**Enterprise-grade testing with 4700+ tests across unit, integration, and E2E.**
 
 </div>
 
@@ -16,8 +16,8 @@
 
 | Metric | Value |
 |--------|-------|
-| **Total Tests** | 2,800+ |
-| **Unit Tests** | 2,100+ |
+| **Total Tests** | 4,700+ |
+| **Unit Tests** | 4,300+ |
 | **Integration Tests** | 500+ |
 | **E2E Tests** | 200+ |
 | **Coverage** | 95%+ |
@@ -50,7 +50,7 @@ Agentic Brain uses **pytest** for testing with comprehensive coverage across all
 # Install test dependencies
 pip install -e ".[test]"
 
-# Run all tests (2800+)
+# Run all tests (4700+)
 pytest
 
 # Run with verbose output

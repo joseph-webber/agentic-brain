@@ -245,13 +245,9 @@ def get_platform() -> str:
     import platform
 
     system = platform.system().lower()
-    if system == "darwin":
-        return "macos"
-    elif system == "windows":
-        return "windows"
-    elif system == "linux":
-        return "linux"
-    return system
+    return {"darwin": "macos", "windows": "windows", "linux": "linux"}.get(
+        system, system
+    )
 
 
 def get_home_dir() -> Path:

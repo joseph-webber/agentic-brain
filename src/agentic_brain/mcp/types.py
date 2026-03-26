@@ -25,6 +25,7 @@ Reference: https://modelcontextprotocol.io/
 from __future__ import annotations
 
 import builtins
+import inspect
 from enum import Enum, StrEnum
 from typing import Any, Callable
 

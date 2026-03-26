@@ -48,7 +48,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 logger = logging.getLogger(__name__)
 
@@ -310,7 +310,7 @@ Relevant extract:"""
         selected: list[str] = []
         current_chars = 0
 
-        for score, sentence in scored:
+        for _score, sentence in scored:
             if current_chars >= target_chars:
                 break
             selected.append(sentence)

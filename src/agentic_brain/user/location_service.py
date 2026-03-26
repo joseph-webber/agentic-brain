@@ -294,7 +294,7 @@ def lookup_city(city: str) -> Optional[LocationInfo]:
 
 def _timezone_to_location(timezone: str) -> LocationInfo:
     """Convert timezone to approximate location."""
-    TIMEZONE_MAP = {
+    timezone_map = {
         "Australia/Adelaide": ("Adelaide", "South Australia", "Australia"),
         "Australia/Sydney": ("Sydney", "New South Wales", "Australia"),
         "Australia/Melbourne": ("Melbourne", "Victoria", "Australia"),
@@ -315,8 +315,8 @@ def _timezone_to_location(timezone: str) -> LocationInfo:
         "Asia/Seoul": ("Seoul", "", "South Korea"),
     }
 
-    if timezone in TIMEZONE_MAP:
-        city, state, country = TIMEZONE_MAP[timezone]
+    if timezone in timezone_map:
+        city, state, country = timezone_map[timezone]
         return LocationInfo(
             city=city,
             state=state,

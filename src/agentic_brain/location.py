@@ -490,7 +490,7 @@ class LocationService:
         Returns:
             Distance in kilometers
         """
-        R = 6371  # Earth's radius in km
+        earth_radius_km = 6371
 
         lat1_rad = radians(lat1)
         lat2_rad = radians(lat2)
@@ -503,7 +503,7 @@ class LocationService:
         )
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
-        return R * c
+        return earth_radius_km * c
 
     def filter_services_by_distance(
         self,

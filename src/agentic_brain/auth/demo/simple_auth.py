@@ -229,10 +229,7 @@ class DemoAuthService:
         """Create a new user."""
         try:
             # Hash password (empty string for guest)
-            if password:
-                hashed = pwd_context.hash(password)
-            else:
-                hashed = ""  # Guest user - no password
+            hashed = pwd_context.hash(password) if password else ""
 
             cur = self.conn.cursor()
             cur.execute(

@@ -35,12 +35,13 @@ def detect_platform() -> VoicePlatform:
     """
     system = platform.system()
 
-    if system == "Darwin":
-        return VoicePlatform.MACOS
-    elif system == "Windows":
-        return VoicePlatform.WINDOWS
-    elif system == "Linux":
-        return VoicePlatform.LINUX
+    platform_map = {
+        "Darwin": VoicePlatform.MACOS,
+        "Windows": VoicePlatform.WINDOWS,
+        "Linux": VoicePlatform.LINUX,
+    }
+    if system in platform_map:
+        return platform_map[system]
 
     logger.warning(f"Unknown platform: {system}")
     return VoicePlatform.UNKNOWN

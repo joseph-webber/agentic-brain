@@ -50,7 +50,6 @@ from .australian_regions import (
     AUSTRALIAN_CITIES,
     convert_australian_cities_to_profiles,
     get_local_greeting,
-    get_local_knowledge,
 )
 
 # Convert Australian cities to RegionalProfile objects

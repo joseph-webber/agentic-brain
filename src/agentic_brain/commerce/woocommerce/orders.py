@@ -70,7 +70,7 @@ class OrderEventType(StrEnum):
     REFUNDED = "refunded"
 
 
-class InvalidOrderTransition(RuntimeError):
+class InvalidOrderTransitionError(RuntimeError):
     pass
 
 
@@ -137,7 +137,7 @@ class OrderAggregate:
         }
 
         if event_type not in allowed.get(self.state, set()):
-            raise InvalidOrderTransition(
+            raise InvalidOrderTransitionError(
                 f"invalid transition from {self.state} via {event_type}"
             )
 
@@ -239,7 +239,7 @@ class DurableOrderProcessor:
             )
             try:
                 agg.apply(evt)
-            except InvalidOrderTransition:
+            except InvalidOrderTransitionError:
                 # tolerate legacy / out-of-order events
                 agg.events.append(evt)
         return agg

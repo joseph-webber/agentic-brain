@@ -18,10 +18,13 @@ import os
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 from uuid import uuid4
 
 from .workers import get_worker
+
+if TYPE_CHECKING:
+    from .posture import SecurityPosture
 
 
 class SmashMode(Enum):

@@ -233,7 +233,7 @@ class JiraLoader(BaseLoader):
             # Try as JQL first, fall back to text search
             try:
                 issues = self._jira.search_issues(query, maxResults=max_results)
-            except:
+            except Exception:
                 jql = f'text ~ "{query}" ORDER BY updated DESC'
                 issues = self._jira.search_issues(jql, maxResults=max_results)
 

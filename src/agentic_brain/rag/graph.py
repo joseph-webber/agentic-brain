@@ -646,7 +646,7 @@ class EnhancedGraphRAG:
                 merged[chunk_id]["graph_score"] = result["score"]
 
         # Calculate hybrid score (weighted combination)
-        for chunk_id, result in merged.items():
+        for _chunk_id, result in merged.items():
             vector_weight = 0.6
             graph_weight = 0.4
             hybrid_score = vector_weight * result.get(

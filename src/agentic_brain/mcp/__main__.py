@@ -42,6 +42,10 @@ import asyncio
 import json
 import os
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .server import AgenticMCPServer
 
 
 def parse_args() -> argparse.Namespace:
