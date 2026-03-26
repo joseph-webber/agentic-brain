@@ -1,0 +1,231 @@
+# Agentic Brain Helm Chart Values
+# Override these values for your environment
+
+# Global settings
+nameOverride: ""
+fullnameOverride: ""
+
+# Image configuration
+image:
+  repository: ghcr.io/joseph-webber/agentic-brain
+  tag: ""  # Defaults to Chart.appVersion
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# Replica configuration
+replicaCount: 3
+
+# Service Account
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# Pod configuration
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8000"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# Resource limits
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# Probes
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: api.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: agentic-brain-tls
+      hosts:
+        - api.example.com
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+    scaleUp:
+      stabilizationWindowSeconds: 0
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity - spread pods across nodes
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: agentic-brain
+          topologyKey: kubernetes.io/hostname
+
+# Topology spread constraints
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfied: ScheduleAnyway
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: agentic-brain
+
+# ============================================
+# Application Configuration
+# ============================================
+
+# Logging
+logging:
+  level: INFO
+  format: json
+
+# API settings
+api:
+  host: "0.0.0.0"
+  port: 8000
+
+# CORS settings
+cors:
+  origins: "*"
+  methods: "GET,POST,PUT,DELETE,OPTIONS"
+  headers: "Content-Type,Authorization,X-API-Key"
+
+# Session configuration
+session:
+  backend: redis  # memory or redis
+  ttl: 3600
+
+# Neo4j configuration
+neo4j:
+  uri: "bolt://neo4j:7687"
+  user: "neo4j"
+  password: ""  # REQUIRED: Set via --set or values file
+  maxConnections: 50
+  connectionTimeout: 30
+
+# Redis configuration
+redis:
+  url: "redis://redis:6379"
+  password: ""
+  db: 0
+  maxConnections: 20
+
+# Authentication
+auth:
+  enabled: true
+  jwtSecret: ""  # REQUIRED if auth.enabled: Set via --set or values file
+  jwtAlgorithm: HS256
+  jwtExpiryHours: 24
+  apiKeys: []  # List of API keys
+
+# LLM Configuration
+llm:
+  ollamaBaseUrl: "http://ollama:11434"
+  defaultModel: "llama3.2:3b"
+  openaiApiKey: ""
+  anthropicApiKey: ""
+
+# Rate limiting
+rateLimit:
+  enabled: true
+  requests: 100
+  window: 60
+
+# Feature flags
+features:
+  streaming: true
+  metrics: true
+
+# ============================================
+# External Services (optional)
+# ============================================
+
+# Deploy Neo4j as subchart (optional)
+neo4jSubchart:
+  enabled: false
+  # If true, deploys Neo4j alongside the app
+  # See neo4j/values.yaml for configuration
+
+# Deploy Redis as subchart (optional)  
+redisSubchart:
+  enabled: false
+  # If true, deploys Redis alongside the app
+
+# ============================================
+# Monitoring (optional)
+# ============================================
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    namespace: ""
+    additionalLabels: {}

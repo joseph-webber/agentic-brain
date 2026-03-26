@@ -1,0 +1,98 @@
+site_name: Agentic Brain
+site_description: Universal AI Brain - Modular, Accessible, Powerful
+site_url: https://joseph-webber.github.io/agentic-brain/
+repo_url: https://github.com/joseph-webber/agentic-brain
+repo_name: joseph-webber/agentic-brain
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+plugins:
+  - search:
+      lang: en
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Quick Start: getting-started.md
+      - Installation: INSTALL_OPTIONS.md
+      - Configuration: configuration.md
+  - User Guide:
+      - Chat: chat.md
+      - Streaming: STREAMING.md
+      - Plugins: plugins.md
+      - Memory: MEMORY.md
+      - RAG Guide: RAG_GUIDE.md
+  - Tutorials:
+      - Overview: tutorials/README.md
+      - Simple Chatbot: tutorials/01-simple-chatbot.md
+      - Adding Memory: tutorials/02-adding-memory.md
+      - RAG Chatbot: tutorials/03-rag-chatbot.md
+      - Multi-User: tutorials/04-multi-user.md
+      - Deployment: tutorials/05-deployment.md
+      - Business Automation: tutorials/06-business-automation.md
+  - API Reference:
+      - Overview: api-reference.md
+      - Authentication: AUTHENTICATION.md
+      - API Overview: API.md
+      - API Index: api/index.md
+      - Chat API: api/chat.md
+      - Memory API: api/memory.md
+  - Deployment:
+      - Overview: DEPLOYMENT.md
+      - Docker: DOCKER.md
+      - Security: SECURITY.md
+      - Security Hardening: SECURITY_HARDENING.md
+  - Platform Support:
+      - Overview: PLATFORM_SUPPORT.md
+      - Windows: WINDOWS_INSTALL.md
+      - PowerShell Guide: WINDOWS_POWERSHELL_BEGINNER.md
+      - Cross-Platform Voice: CROSS_PLATFORM_VOICE.md
+  - Development:
+      - Architecture: architecture.md
+      - Testing: TESTING.md
+      - CI/CD: CI_CD.md
+      - Accessibility: ACCESSIBILITY.md
+  - Integrations:
+      - Overview: integrations/README.md
+      - Neo4j: integrations/NEO4J.md
+      - Temporal: integrations/TEMPORAL.md
+      - Firebase: integrations/FIREBASE.md
+      - JHipster: integrations/JHIPSTER.md

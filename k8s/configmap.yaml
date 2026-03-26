@@ -1,0 +1,73 @@
+# Agentic Brain - Kubernetes ConfigMap
+# JHipster-style configuration
+#
+# Usage:
+#   kubectl apply -f k8s/configmap.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agentic-brain-config
+  labels:
+    app: agentic-brain
+data:
+  # Environment
+  ENVIRONMENT: "prod"
+  DEBUG: "false"
+  
+  # Server
+  SERVER_HOST: "0.0.0.0"
+  SERVER_PORT: "8000"
+  SERVER_WORKERS: "4"
+  SERVER_DOCS_ENABLED: "true"
+  
+  # Neo4j (credentials in secret)
+  NEO4J_URI: "bolt://neo4j:7687"
+  NEO4J_USER: "neo4j"
+  NEO4J_DATABASE: "neo4j"
+  NEO4J_MAX_CONNECTION_POOL_SIZE: "50"
+  
+  # LLM
+  LLM_DEFAULT_PROVIDER: "openai"
+  LLM_TIMEOUT: "60"
+  LLM_MAX_RETRIES: "3"
+  
+  # Cache
+  CACHE_BACKEND: "redis"
+  CACHE_REDIS_URL: "redis://redis:6379/0"
+  CACHE_DEFAULT_TTL: "3600"
+  CACHE_SEMANTIC_CACHE_ENABLED: "true"
+  
+  # Observability
+  OBSERVABILITY_ENABLE_TRACING: "true"
+  OBSERVABILITY_ENABLE_METRICS: "true"
+  OBSERVABILITY_LOG_LEVEL: "WARNING"
+  OBSERVABILITY_LOG_FORMAT: "json"
+  OBSERVABILITY_SERVICE_NAME: "agentic-brain"
+  
+  # Security
+  SECURITY_JWT_ALGORITHM: "HS512"
+  SECURITY_JWT_EXPIRATION_HOURS: "24"
+  SECURITY_RATE_LIMIT_REQUESTS: "100"
+
+---
+# Secret template (DO NOT commit with real values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: agentic-brain-secrets
+  labels:
+    app: agentic-brain
+type: Opaque
+stringData:
+  # Neo4j
+  NEO4J_PASSWORD: "CHANGE_ME"
+  
+  # Security
+  SECURITY_JWT_SECRET: "CHANGE_ME_TO_LONG_RANDOM_STRING"
+  
+  # LLM API Keys (add as needed)
+  OPENAI_API_KEY: ""
+  ANTHROPIC_API_KEY: ""
+  GROQ_API_KEY: ""
+  GOOGLE_API_KEY: ""

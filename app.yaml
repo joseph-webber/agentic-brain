@@ -1,0 +1,22 @@
+runtime: custom
+env: flex
+service: agentic-brain
+
+handlers:
+  - url: /.*
+    script: auto
+
+env_variables:
+  NEO4J_URI: "bolt://neo4j:7687"
+  SESSION_BACKEND: "redis"
+  LOG_LEVEL: "INFO"
+
+resources:
+  cpu: 2
+  memory_gb: 2
+  disk_size_gb: 20
+
+automatic_scaling:
+  min_num_instances: 1
+  max_num_instances: 5
+  target_cpu_utilization: 0.7

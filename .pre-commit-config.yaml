@@ -1,0 +1,48 @@
+# Pre-commit hooks for agentic-brain
+# Install: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-requests]
+        args: [--ignore-missing-imports]
+        exclude: tests/
+
+  - repo: local
+    hooks:
+      - id: license-check
+        name: Check Apache 2.0 license headers
+        entry: bash -c 'for f in $(git diff --cached --name-only | grep "\.py$"); do if [ -f "$f" ]; then if ! head -5 "$f" | grep -q "SPDX-License-Identifier: Apache-2.0"; then echo "❌ Missing Apache 2.0 header: $f"; exit 1; fi; fi; done; echo "✅ License headers OK"'
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [commit]
+
+      - id: pytest-check
+        name: pytest-check
+        entry: python -m pytest tests/ -x -q --tb=no
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [push]

@@ -1,0 +1,48 @@
+# Agentic Brain - Kubernetes Service
+# JHipster-style service configuration
+#
+# Usage:
+#   kubectl apply -f k8s/service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentic-brain
+  labels:
+    app: agentic-brain
+    app.kubernetes.io/name: agentic-brain
+    app.kubernetes.io/component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: agentic-brain
+
+---
+# Optional: LoadBalancer service for external access
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentic-brain-lb
+  labels:
+    app: agentic-brain
+    app.kubernetes.io/name: agentic-brain
+  annotations:
+    # AWS specific
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    # GCP specific
+    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: agentic-brain

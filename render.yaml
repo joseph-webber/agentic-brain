@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: agentic-brain
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: NEO4J_URI
+        fromService:
+          type: pserv
+          name: neo4j
+          property: connectionString
+      - key: NEO4J_PASSWORD
+        generateValue: true
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+    autoDeploy: true
+
+  - type: pserv
+    name: neo4j
+    runtime: docker
+    dockerCommand: neo4j
+    disk:
+      name: neo4j-data
+      mountPath: /var/lib/neo4j/data
+      sizeGB: 10
+
+  - type: redis
+    name: redis
+    ipAllowList: []
+    plan: starter

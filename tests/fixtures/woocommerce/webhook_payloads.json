@@ -1,0 +1,12 @@
+{
+  "order.created": {
+    "id": 123,
+    "status": "pending",
+    "total": "100.00"
+  },
+  "product.updated": {
+    "id": 456,
+    "name": "New Product Name",
+    "price": "25.00"
+  }
+}

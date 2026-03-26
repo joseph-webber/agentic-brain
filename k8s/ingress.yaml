@@ -1,0 +1,46 @@
+# Agentic Brain - Kubernetes Ingress
+# JHipster-style ingress with TLS
+#
+# Usage:
+#   kubectl apply -f k8s/ingress.yaml
+#
+# Prerequisites:
+#   - Ingress controller (nginx-ingress, traefik, etc.)
+#   - TLS secret (agentic-brain-tls) or cert-manager
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: agentic-brain
+  labels:
+    app: agentic-brain
+  annotations:
+    # NGINX Ingress Controller
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    # WebSocket support
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr"
+    # Cert-manager (if using)
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - agentic-brain.example.com
+      secretName: agentic-brain-tls
+  rules:
+    - host: agentic-brain.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: agentic-brain
+                port:
+                  number: 80

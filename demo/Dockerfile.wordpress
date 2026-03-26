@@ -1,0 +1,31 @@
+FROM wordpress:latest
+
+# Install wp-cli
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ca-certificates curl; \
+    rm -rf /var/lib/apt/lists/*; \
+    curl -fsSL -o /usr/local/bin/wp https://github.com/wp-cli/wp-cli/releases/latest/download/wp-cli.phar; \
+    chmod +x /usr/local/bin/wp; \
+    wp --info --allow-root
+
+# Use our demo config template (picked up by the upstream wordpress entrypoint)
+COPY demo/wp-config-docker.php /usr/src/wordpress/wp-config-docker.php
+
+# Demo sample data (optional import in entrypoint)
+COPY demo/sample-data /demo/sample-data
+
+# Copy Agentic Brain plugin
+COPY plugins/wordpress/agentic-brain /var/www/html/wp-content/plugins/agentic-brain
+# Also place it into /usr/src so fresh volumes get the plugin when the upstream entrypoint populates /var/www/html
+COPY plugins/wordpress/agentic-brain /usr/src/wordpress/wp-content/plugins/agentic-brain
+
+# Custom entrypoint to auto-install + activate plugins
+COPY demo/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=5 \
+    CMD curl -fsS http://localhost/wp-admin/install.php || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["apache2-foreground"]

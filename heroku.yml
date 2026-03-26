@@ -1,0 +1,10 @@
+build:
+  docker:
+    web: Dockerfile
+  config:
+    ENVIRONMENT: production
+    LOG_LEVEL: INFO
+
+run:
+  web: uvicorn agentic_brain.server:app --host 0.0.0.0 --port ${PORT}
+  worker: python -m agentic_brain.worker

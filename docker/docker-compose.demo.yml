@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  neo4j-demo:
+    image: neo4j:5.15.0
+    container_name: brain-neo4j-demo
+    ports:
+      - "7688:7687"  # Bolt - different port to avoid production!
+      - "7475:7474"  # Browser - different port too
+    environment:
+      - NEO4J_AUTH=neo4j/demo2026
+      - NEO4J_PLUGINS=["apoc", "graph-data-science"]
+      - NEO4J_dbms_memory_heap_initial__size=512m
+      - NEO4J_dbms_memory_heap_max__size=2G
+      - NEO4J_dbms_memory_pagecache_size=512m
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*,gds.*
+      - NEO4J_dbms_security_procedures_allowlist=apoc.*,gds.*
+    volumes:
+      - neo4j-demo-data:/data
+      - neo4j-demo-logs:/logs
+      - neo4j-demo-import:/var/lib/neo4j/import
+      - neo4j-demo-plugins:/plugins
+    networks:
+      - brain-demo
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "demo2026", "RETURN 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  neo4j-demo-data:
+    name: brain-neo4j-demo-data
+  neo4j-demo-logs:
+    name: brain-neo4j-demo-logs
+  neo4j-demo-import:
+    name: brain-neo4j-demo-import
+  neo4j-demo-plugins:
+    name: brain-neo4j-demo-plugins
+
+networks:
+  brain-demo:
+    name: brain-demo-network
+    driver: bridge

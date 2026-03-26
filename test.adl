@@ -1,0 +1,15 @@
+// test.adl
+application MyBrain {
+  name "TestBrain"
+  version "1.0.0"
+}
+
+llm GPT4 {
+  provider OpenAI
+  model gpt-4
+}
+
+deployment {
+  type Docker
+  replicas 3
+}

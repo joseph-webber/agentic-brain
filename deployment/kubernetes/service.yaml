@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentic-brain
+  labels:
+    app: agentic-brain
+spec:
+  type: ClusterIP
+  selector:
+    app: agentic-brain
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

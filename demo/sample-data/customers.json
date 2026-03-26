@@ -1,0 +1,139 @@
+{
+  "customers": [
+    {
+      "id": 1,
+      "email": "sarah.johnson@example.com",
+      "first_name": "Sarah",
+      "last_name": "Johnson",
+      "username": "sarah_j",
+      "billing": {
+        "first_name": "Sarah",
+        "last_name": "Johnson",
+        "company": "",
+        "address_1": "123 Fitness Street",
+        "address_2": "Apt 4B",
+        "city": "Adelaide",
+        "state": "SA",
+        "postcode": "5000",
+        "country": "AU",
+        "email": "sarah.johnson@example.com",
+        "phone": "+61 8 1234 5678"
+      },
+      "shipping": {
+        "first_name": "Sarah",
+        "last_name": "Johnson",
+        "company": "",
+        "address_1": "123 Fitness Street",
+        "address_2": "Apt 4B",
+        "city": "Adelaide",
+        "state": "SA",
+        "postcode": "5000",
+        "country": "AU"
+      },
+      "is_paying_customer": true,
+      "orders_count": 3,
+      "total_spent": "384.97",
+      "avatar_url": "",
+      "meta_data": [
+        {
+          "key": "customer_type",
+          "value": "fitness_enthusiast"
+        },
+        {
+          "key": "preferred_categories",
+          "value": ["Fitness", "Supplements"]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "email": "michael.chen@example.com",
+      "first_name": "Michael",
+      "last_name": "Chen",
+      "username": "mike_chen",
+      "billing": {
+        "first_name": "Michael",
+        "last_name": "Chen",
+        "company": "Tech Solutions Ltd",
+        "address_1": "456 Tech Avenue",
+        "address_2": "Suite 200",
+        "city": "Melbourne",
+        "state": "VIC",
+        "postcode": "3000",
+        "country": "AU",
+        "email": "michael.chen@example.com",
+        "phone": "+61 3 9876 5432"
+      },
+      "shipping": {
+        "first_name": "Michael",
+        "last_name": "Chen",
+        "company": "Tech Solutions Ltd",
+        "address_1": "456 Tech Avenue",
+        "address_2": "Suite 200",
+        "city": "Melbourne",
+        "state": "VIC",
+        "postcode": "3000",
+        "country": "AU"
+      },
+      "is_paying_customer": true,
+      "orders_count": 2,
+      "total_spent": "329.97",
+      "avatar_url": "",
+      "meta_data": [
+        {
+          "key": "customer_type",
+          "value": "tech_professional"
+        },
+        {
+          "key": "preferred_categories",
+          "value": ["Electronics", "Home Office"]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "email": "emma.wilson@example.com",
+      "first_name": "Emma",
+      "last_name": "Wilson",
+      "username": "emma_w",
+      "billing": {
+        "first_name": "Emma",
+        "last_name": "Wilson",
+        "company": "",
+        "address_1": "789 Wellness Road",
+        "address_2": "",
+        "city": "Sydney",
+        "state": "NSW",
+        "postcode": "2000",
+        "country": "AU",
+        "email": "emma.wilson@example.com",
+        "phone": "+61 2 5555 1234"
+      },
+      "shipping": {
+        "first_name": "Emma",
+        "last_name": "Wilson",
+        "company": "",
+        "address_1": "789 Wellness Road",
+        "address_2": "",
+        "city": "Sydney",
+        "state": "NSW",
+        "postcode": "2000",
+        "country": "AU"
+      },
+      "is_paying_customer": true,
+      "orders_count": 4,
+      "total_spent": "459.95",
+      "avatar_url": "",
+      "meta_data": [
+        {
+          "key": "customer_type",
+          "value": "wellness_focused"
+        },
+        {
+          "key": "preferred_categories",
+          "value": ["Food & Beverage", "Fitness", "Accessories"]
+        }
+      ]
+    }
+  ]
+}

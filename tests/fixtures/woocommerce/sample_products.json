@@ -1,0 +1,74 @@
+[
+  {
+    "id": 799,
+    "name": "Ship Your Idea",
+    "slug": "ship-your-idea-22",
+    "permalink": "https://example.com/product/ship-your-idea-22/",
+    "date_created": "2017-03-23T17:03:12",
+    "type": "variable",
+    "status": "publish",
+    "featured": false,
+    "catalog_visibility": "visible",
+    "description": "<p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>\n",
+    "short_description": "<p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>\n",
+    "sku": "",
+    "price": "20.00",
+    "regular_price": "20.00",
+    "sale_price": "",
+    "on_sale": false,
+    "purchasable": true,
+    "total_sales": 0,
+    "virtual": false,
+    "downloadable": false,
+    "stock_quantity": null,
+    "stock_status": "instock",
+    "categories": [
+      {
+        "id": 9,
+        "name": "Clothing",
+        "slug": "clothing"
+      },
+      {
+        "id": 14,
+        "name": "T-shirts",
+        "slug": "t-shirts"
+      }
+    ]
+  },
+  {
+    "id": 794,
+    "name": "Premium Quality",
+    "slug": "premium-quality-19",
+    "permalink": "https://example.com/product/premium-quality-19/",
+    "date_created": "2017-03-23T17:01:14",
+    "type": "simple",
+    "status": "publish",
+    "featured": false,
+    "catalog_visibility": "visible",
+    "description": "<p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>\n",
+    "short_description": "<p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>\n",
+    "sku": "",
+    "price": "21.99",
+    "regular_price": "21.99",
+    "sale_price": "",
+    "on_sale": false,
+    "purchasable": true,
+    "total_sales": 0,
+    "virtual": false,
+    "downloadable": false,
+    "stock_quantity": null,
+    "stock_status": "instock",
+    "categories": [
+      {
+        "id": 9,
+        "name": "Clothing",
+        "slug": "clothing"
+      },
+      {
+        "id": 14,
+        "name": "T-shirts",
+        "slug": "t-shirts"
+      }
+    ]
+  }
+]

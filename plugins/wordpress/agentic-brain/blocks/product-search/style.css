@@ -1,0 +1,83 @@
+.agentic-brain-search-preview {
+	padding: 20px;
+	border: 1px dashed #ccc;
+	background: #fdfdfd;
+}
+
+.search-bar {
+	display: flex;
+	align-items: center;
+	border: 1px solid #ddd;
+	padding: 8px 12px;
+	background: #fff;
+	border-radius: 4px;
+	margin-bottom: 15px;
+}
+
+.search-bar input {
+	border: none;
+	flex-grow: 1;
+	margin: 0 10px;
+	background: transparent;
+}
+
+.search-results-preview {
+	display: flex;
+	gap: 10px;
+}
+
+.search-results-preview.mode-grid .preview-item {
+	width: 30%;
+	height: 60px;
+	background: #eee;
+	border-radius: 4px;
+}
+
+.search-results-preview.mode-list {
+	flex-direction: column;
+}
+
+.search-results-preview.mode-list .preview-item {
+	width: 100%;
+	height: 40px;
+	background: #eee;
+	border-radius: 4px;
+}
+
+/* Frontend Styles */
+.agentic-brain-product-search .search-wrapper {
+	display: flex;
+	position: relative;
+	border: 1px solid #ddd;
+	border-radius: 25px;
+	overflow: hidden;
+	background: #fff;
+	box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.agentic-brain-product-search input[type="search"] {
+	border: none;
+	padding: 12px 20px;
+	width: 100%;
+	outline: none;
+	font-size: 16px;
+}
+
+.voice-search-trigger, .search-submit {
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	padding: 0 15px;
+	color: #555;
+	display: flex;
+	align-items: center;
+}
+
+.voice-search-trigger:hover, .search-submit:hover {
+	color: #0073aa;
+}
+
+.search-submit {
+	background: #f7f7f7;
+	border-left: 1px solid #eee;
+}

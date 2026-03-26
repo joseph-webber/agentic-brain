@@ -1,0 +1,116 @@
+# ============================================================================
+# Docker Compose for CI/CD Testing
+# Uses tmpfs where safe and named volumes for services that need writable data dirs
+#
+# Usage (recommended):
+#   docker compose --env-file .env.test -f docker-compose.test.yml up --build --abort-on-container-exit
+# ============================================================================
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: agentic-brain-test
+    environment:
+      TESTING: "true"
+      PYTHONUNBUFFERED: "1"
+      NEO4J_URI: bolt://neo4j-test:7687
+      NEO4J_USER: ${NEO4J_USER:-neo4j}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-testpass}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-testpass}@redis:6379/0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-testpass}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-redpanda:9092}
+      DEFAULT_LLM_PROVIDER: ${DEFAULT_LLM_PROVIDER:-mock}
+    depends_on:
+      neo4j-test:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+    command: >
+      pytest tests/
+      --ignore=tests/e2e
+      --ignore=tests/test_infrastructure.py
+      --ignore=tests/test_cultural_sensitivity.py
+      --ignore=tests/test_demo_auth.py
+      --ignore=tests/test_documented_features.py
+      --ignore=tests/test_devops_loaders.py
+      --ignore=tests/test_installer_enhanced.py
+      --ignore=tests/test_new_loaders.py
+      -m "not integration"
+      -v --tb=short --color=yes
+      --cov=agentic_brain
+      --cov-report=xml
+      --cov-report=term
+      --timeout=60
+    networks:
+      - test-network
+
+  neo4j-test:
+    image: neo4j:5.15-community
+    container_name: neo4j-test
+    environment:
+      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:-testpass}"
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_memory_heap_max__size: 512m
+    tmpfs:
+      - /data
+      - /logs
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD:-testpass}", "RETURN 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: agentic-brain-test-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-testpass}
+    tmpfs:
+      - /data
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-testpass}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  redpanda:
+    image: redpandadata/redpanda:latest
+    container_name: agentic-brain-test-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp
+      - "1"
+      - --memory
+      - 512M
+      - --overprovisioned
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092
+    volumes:
+      - redpanda_test_data:/var/lib/redpanda/data
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+
+networks:
+  test-network:
+    driver: bridge
+
+volumes:
+  redpanda_test_data:

@@ -1,0 +1,187 @@
+# AWS ECS/EKS Deployment Workflow
+# JHipster-style cloud deployment
+#
+# Supports both:
+#   - ECS Fargate (serverless containers)
+#   - EKS (managed Kubernetes)
+#
+# Required secrets:
+#   - AWS_ACCESS_KEY_ID
+#   - AWS_SECRET_ACCESS_KEY
+#   - AWS_REGION
+#   - ECR_REPOSITORY (e.g., 123456789.dkr.ecr.us-east-1.amazonaws.com/agentic-brain)
+
+name: Deploy to AWS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      deployment_type:
+        description: 'Deployment target'
+        required: true
+        default: 'ecs'
+        type: choice
+        options:
+          - ecs
+          - eks
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment (staging or production)'
+        required: true
+        type: string
+      deployment_type:
+        description: 'Deployment target (ecs or eks)'
+        required: false
+        type: string
+        default: 'ecs'
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: build
+        run: |
+          IMAGE_URI="${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
+          
+          docker build \
+            --build-arg ENVIRONMENT=${{ inputs.environment }} \
+            -t "$IMAGE_URI" \
+            -t "${{ env.ECR_REPOSITORY }}:latest" \
+            .
+          
+          docker push "$IMAGE_URI"
+          docker push "${{ env.ECR_REPOSITORY }}:latest"
+          
+          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+
+  deploy-ecs:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: inputs.deployment_type == 'ecs'
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download ECS task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition agentic-brain-${{ inputs.environment }} \
+            --query taskDefinition > task-definition.json
+
+      - name: Update task definition with new image
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: agentic-brain
+          image: ${{ needs.build-and-push.outputs.image }}
+
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: agentic-brain-${{ inputs.environment }}
+          cluster: agentic-brain-${{ inputs.environment }}
+          wait-for-service-stability: true
+
+      - name: Verify deployment
+        run: |
+          echo "Waiting for service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster agentic-brain-${{ inputs.environment }} \
+            --services agentic-brain-${{ inputs.environment }}
+          echo "✅ Deployment successful!"
+
+  deploy-eks:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: inputs.deployment_type == 'eks'
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name agentic-brain-${{ inputs.environment }} \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Deploy to EKS
+        run: |
+          # Update image in deployment
+          kubectl set image deployment/agentic-brain \
+            agentic-brain=${{ needs.build-and-push.outputs.image }} \
+            -n agentic-brain-${{ inputs.environment }}
+          
+          # Wait for rollout
+          kubectl rollout status deployment/agentic-brain \
+            -n agentic-brain-${{ inputs.environment }} \
+            --timeout=300s
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n agentic-brain-${{ inputs.environment }} -l app=agentic-brain
+          echo "✅ Deployment successful!"
+
+  notify:
+    needs: [build-and-push, deploy-ecs, deploy-eks]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Send notification
+        run: |
+          STATUS="${{ needs.deploy-ecs.result || needs.deploy-eks.result }}"
+          if [ "$STATUS" = "success" ]; then
+            echo "🎉 Deployment to AWS (${{ inputs.environment }}) succeeded!"
+          else
+            echo "❌ Deployment to AWS (${{ inputs.environment }}) failed!"
+            exit 1
+          fi

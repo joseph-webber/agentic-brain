@@ -1,0 +1,219 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from __future__ import annotations
+
+"""
+xAI Grok provider implementation - OpenAI-compatible API.
+
+Grok requires X Premium subscription and provides access to Grok models.
+"""
+
+import asyncio
+import json
+import logging
+import os
+from collections.abc import AsyncGenerator
+from typing import Any, Callable
+
+import aiohttp
+
+from agentic_brain.exceptions import (
+    APIError,
+    ConfigurationError,
+    LLMProviderError,
+    RateLimitError,
+)
+from agentic_brain.exceptions import (
+    TimeoutError as AgenticTimeoutError,
+)
+
+from .config import Provider, Response, RouterConfig
+
+logger = logging.getLogger(__name__)
+
+
+def get_api_key(config: RouterConfig) -> str:
+    """Get xAI API key from config or environment.
+
+    Args:
+        config: Router configuration
+
+    Returns:
+        API key
+
+    Raises:
+        ConfigurationError: API key not configured
+    """
+    api_key = config.xai_key or os.environ.get("XAI_API_KEY")
+    if not api_key:
+        raise ConfigurationError(
+            "XAI_API_KEY",
+            "valid xAI API key from https://console.x.ai",
+            "xai-...",
+        )
+    return api_key
+
+
+async def chat_xai(
+    message: str,
+    system: str | None,
+    model: str,
+    temperature: float,
+    config: RouterConfig,
+    post_fn: Callable[..., Any],
+    track_tokens_fn: Callable[[int, str], None],
+) -> Response:
+    """Chat via xAI Grok (async).
+
+    Uses OpenAI-compatible API endpoint.
+
+    Args:
+        message: User message
+        system: Optional system prompt
+        model: Model name (grok-beta, grok-2, etc.)
+        temperature: Temperature for generation
+        config: Router configuration
+        post_fn: Async function for POST requests
+        track_tokens_fn: Function to track token usage
+
+    Returns:
+        LLM response
+
+    Raises:
+        ConfigurationError: API key not configured
+        RateLimitError: Rate limit exceeded
+        APIError: API call failed
+    """
+    api_key = get_api_key(config)
+
+    logger.debug(f"xAI chat: model={model}, temperature={temperature}")
+
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": message})
+
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+    }
+
+    url = "https://api.x.ai/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+
+    try:
+        status, result = await post_fn(
+            url, payload, headers, timeout=config.xai_timeout
+        )
+
+        if status == 429:
+            raise RateLimitError(limit=10, window="minute", retry_after=60)
+
+        if status != 200:
+            raise APIError(url, status, str(result), None)
+
+        if not isinstance(result, dict):
+            raise LLMProviderError(
+                "xai",
+                model,
+                Exception(f"Unexpected response type: {type(result)}"),
+            )
+
+        tokens_used = result.get("usage", {}).get("total_tokens", 0)
+        logger.info(
+            f"LLM response received: provider={Provider.XAI.value}, tokens={tokens_used}"
+        )
+
+        # Track token usage
+        track_tokens_fn(tokens_used, Provider.XAI.value)
+
+        choice = result["choices"][0]
+        return Response(
+            content=choice["message"]["content"],
+            model=model,
+            provider=Provider.XAI,
+            tokens_used=tokens_used,
+            finish_reason=choice.get("finish_reason", "stop"),
+        )
+    except aiohttp.ClientError as e:
+        raise LLMProviderError("xai", model, e)
+    except TimeoutError:
+        raise AgenticTimeoutError("xAI chat", config.xai_timeout, None)
+    except (KeyError, TypeError) as e:
+        raise LLMProviderError(
+            "xai", model, Exception(f"Invalid response from xAI: {e}")
+        )
+
+
+async def stream_xai(
+    message: str,
+    system: str | None,
+    model: str,
+    temperature: float,
+    config: RouterConfig,
+) -> AsyncGenerator[str, None]:
+    """Stream from xAI Grok.
+
+    Args:
+        message: User message
+        system: Optional system prompt
+        model: Model name (grok-beta, grok-2, etc.)
+        temperature: Temperature for generation
+        config: Router configuration
+
+    Yields:
+        Response tokens as they arrive
+    """
+    api_key = get_api_key(config)
+
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": message})
+
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "stream": True,
+    }
+
+    async with (
+        aiohttp.ClientSession() as session,
+        session.post(
+            "https://api.x.ai/v1/chat/completions",
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            },
+            timeout=aiohttp.ClientTimeout(total=config.xai_timeout),
+        ) as response,
+    ):
+        async for line in response.content:
+            line_str = line.decode().strip()
+            if line_str.startswith("data: ") and line_str != "data: [DONE]":
+                try:
+                    data = json.loads(line_str[6:])
+                    delta = data.get("choices", [{}])[0].get("delta", {})
+                    if "content" in delta:
+                        yield delta["content"]
+                except json.JSONDecodeError:
+                    continue

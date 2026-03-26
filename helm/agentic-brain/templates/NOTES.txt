@@ -1,0 +1,48 @@
+🚀 Agentic Brain has been deployed!
+
+{{- if .Values.ingress.enabled }}
+Access the API at:
+{{- range $host := .Values.ingress.hosts }}
+  {{- range .paths }}
+  https://{{ $host.host }}{{ .path }}
+  {{- end }}
+{{- end }}
+{{- else }}
+
+To access the API, run:
+
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "agentic-brain.fullname" . }} 8000:{{ .Values.service.port }}
+
+Then open: http://localhost:8000
+{{- end }}
+
+Health check:
+  curl http://localhost:8000/health
+
+API Documentation:
+  http://localhost:8000/docs
+
+{{- if .Values.auth.enabled }}
+
+Authentication is ENABLED. Use one of your API keys:
+  curl -H "X-API-Key: YOUR_KEY" http://localhost:8000/v1/chat
+{{- else }}
+
+⚠️  Authentication is DISABLED. Enable for production:
+  --set auth.enabled=true \
+  --set auth.jwtSecret=$(openssl rand -hex 32)
+{{- end }}
+
+Get pods:
+  kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "agentic-brain.name" . }}"
+
+View logs:
+  kubectl logs --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "agentic-brain.name" . }}" -f
+
+{{- if .Values.autoscaling.enabled }}
+
+HPA enabled ({{ .Values.autoscaling.minReplicas }}-{{ .Values.autoscaling.maxReplicas }} replicas):
+  kubectl get hpa --namespace {{ .Release.Namespace }}
+{{- end }}
+
+📖 Documentation: https://github.com/joseph-webber/agentic-brain

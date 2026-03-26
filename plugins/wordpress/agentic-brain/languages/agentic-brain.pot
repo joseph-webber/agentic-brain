@@ -1,0 +1,190 @@
+# Copyright (C) 2026 Joseph Webber
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Agentic Brain 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/ecomlounge/agentic-brain/issues\n"
+"POT-Creation-Date: 2026-01-01T00:00:00+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: public/chatbot-widget.php
+msgid "AI Chat Assistant"
+msgstr ""
+
+#: public/chatbot-widget.php
+msgid "Open chat assistant"
+msgstr ""
+
+#: public/chatbot-widget.php
+msgid "Chat window"
+msgstr ""
+
+#: public/chatbot-widget.php
+msgid "Agentic Brain"
+msgstr ""
+
+#: public/chatbot-widget.php
+msgid "Close chat"
+msgstr ""
+
+#: public/chatbot-widget.php
+msgid "Chat messages"
+msgstr ""
+
+#: public/chatbot-widget.php
+msgid "Type a message"
+msgstr ""
+
+#: public/chatbot-widget.php
+msgid "Send message"
+msgstr ""
+
+#: public/chatbot-widget.php
+msgid "Powered by Agentic Brain"
+msgstr ""
+
+#: public/js/chatbot.js
+msgid "Type a message…"
+msgstr ""
+
+#: public/js/chatbot.js
+msgid "Send"
+msgstr ""
+
+#: public/js/chatbot.js
+msgid "Thinking…"
+msgstr ""
+
+#: public/js/chatbot.js
+msgid "Something went wrong. Please try again."
+msgstr ""
+
+#: includes/class-agentic-brain.php
+msgid "Search products with AI…"
+msgstr ""
+
+#: includes/class-agentic-brain.php
+msgid "Search results"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Connection"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "API Endpoint URL"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "API Key"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Appearance"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Widget Position"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Bottom Right"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Bottom Left"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Primary Colour"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Welcome Message"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Show Widget On"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "All Pages"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "WooCommerce Product Pages Only"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Disabled (shortcode only)"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Content Sync"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Auto-Sync Products"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Sync Posts & Pages"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Enabled"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Disabled"
+msgstr ""
+
+#: includes/class-admin-settings.php
+msgid "Settings"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Agentic Brain Settings"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Connected to Agentic Brain backend"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Cannot reach the Agentic Brain backend — check the URL and API key."
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Manual Sync"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Sync Now"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Sync all content to Agentic Brain now"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Syncing…"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Shortcodes"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Shortcode"
+msgstr ""
+
+#: admin/settings-page.php
+msgid "Description"
+msgstr ""

@@ -1,0 +1,61 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .brain-primary { fill: #8B5CF6; }
+      .brain-accent { fill: #A78BFA; }
+      .circuit-line { stroke: #8B5CF6; stroke-width: 0.8; fill: none; stroke-linecap: round; }
+      .circuit-node { fill: #8B5CF6; }
+      .circuit-node-alt { fill: #C084FC; }
+    </style>
+  </defs>
+
+  <!-- Main brain outline - left hemisphere -->
+  <path class="brain-primary" d="M 35 30 
+    C 28 30, 22 36, 22 45
+    C 22 50, 24 54, 27 57
+    C 25 60, 23 65, 26 70
+    C 28 74, 33 76, 38 76
+    C 42 76, 45 74, 47 71
+    L 50 71
+    L 50 30
+    C 45 28, 40 28, 35 30 Z" />
+
+  <!-- Main brain outline - right hemisphere -->
+  <path class="brain-primary" d="M 65 30
+    C 60 28, 55 28, 50 30
+    L 50 71
+    L 53 71
+    C 55 74, 58 76, 62 76
+    C 67 76, 72 74, 74 70
+    C 77 65, 75 60, 73 57
+    C 76 54, 78 50, 78 45
+    C 78 36, 72 30, 65 30 Z" />
+
+  <!-- Brain texture - wavy lines for cortex pattern -->
+  <path class="brain-accent" d="M 28 45 Q 32 42 36 45 Q 40 48 36 51 Q 32 50 28 47" opacity="0.4" />
+  <path class="brain-accent" d="M 64 45 Q 68 42 72 45 Q 76 48 72 51 Q 68 50 64 47" opacity="0.4" />
+  <path class="brain-accent" d="M 30 55 Q 35 53 40 56 Q 38 59 33 58 Q 28 57 30 55" opacity="0.4" />
+  <path class="brain-accent" d="M 60 55 Q 65 53 70 56 Q 68 59 63 58 Q 58 57 60 55" opacity="0.4" />
+
+  <!-- Circuit elements - connecting lines -->
+  <path class="circuit-line" d="M 32 38 L 38 42 L 42 40" opacity="0.6" />
+  <path class="circuit-line" d="M 68 38 L 62 42 L 58 40" opacity="0.6" />
+  <path class="circuit-line" d="M 35 62 L 40 65 L 42 62" opacity="0.5" />
+  <path class="circuit-line" d="M 65 62 L 60 65 L 58 62" opacity="0.5" />
+
+  <!-- Circuit nodes/connection points -->
+  <circle class="circuit-node" cx="38" cy="42" r="1.2" opacity="0.8" />
+  <circle class="circuit-node" cx="62" cy="42" r="1.2" opacity="0.8" />
+  <circle class="circuit-node-alt" cx="32" cy="38" r="0.9" opacity="0.7" />
+  <circle class="circuit-node-alt" cx="68" cy="38" r="0.9" opacity="0.7" />
+  <circle class="circuit-node" cx="40" cy="65" r="1.2" opacity="0.7" />
+  <circle class="circuit-node" cx="60" cy="65" r="1.2" opacity="0.7" />
+
+  <!-- Center connecting element - subtle synapse -->
+  <path class="circuit-line" d="M 48 45 Q 50 50 52 45" opacity="0.4" />
+  <circle class="circuit-node-alt" cx="50" cy="50" r="0.8" opacity="0.6" />
+
+  <!-- Subtle highlight for depth (works on both light and dark) -->
+  <ellipse cx="35" cy="38" rx="3" ry="2.5" fill="#C084FC" opacity="0.2" />
+  <ellipse cx="65" cy="38" rx="3" ry="2.5" fill="#C084FC" opacity="0.2" />
+</svg>

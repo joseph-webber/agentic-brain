@@ -1,0 +1,76 @@
+# Agentic Brain - Local Dev (host) Neo4j
+#
+# This compose file is for LOCAL development where the Agentic Brain app
+# runs on your machine and connects to Neo4j via:
+#   bolt://localhost:7687
+#
+# Usage:
+#   cp .env.dev.example .env.dev
+#   docker compose --env-file .env.dev -f docker/docker-compose.dev.yml up -d
+#
+# IMPORTANT: Set NEO4J_PASSWORD and REDIS_PASSWORD in .env.dev!
+
+services:
+  neo4j-dev:
+    image: neo4j:5-community
+    container_name: neo4j-dev
+    env_file:
+      - ../.env.dev
+    ports:
+      - "7474:7474"  # HTTP (dev only)
+      - "7687:7687"  # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:?NEO4J_PASSWORD must be set in .env.dev}
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_memory_pagecache_size=512M
+      - NEO4J_dbms_memory_heap_max__size=512M
+    volumes:
+      - neo4j-data-dev:/data
+      - neo4j-logs-dev:/logs
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_PASSWORD}", "RETURN 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - agentic-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  redis-dev:
+    image: redis:7-alpine
+    container_name: redis-dev
+    env_file:
+      - ../.env.dev
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env.dev} --appendonly yes
+    volumes:
+      - redis-data-dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - agentic-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  agentic-network:
+    driver: bridge
+
+volumes:
+  neo4j-data-dev:
+  neo4j-logs-dev:
+  redis-data-dev:

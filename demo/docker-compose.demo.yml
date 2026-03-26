@@ -1,0 +1,170 @@
+services:
+  # MariaDB for WordPress
+  demo-db:
+    image: mariadb:10.11
+    container_name: agentic-brain-demo-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DEMO_DB_ROOT_PASSWORD:-demo_root_pass_2026}
+      MYSQL_DATABASE: ${DEMO_DB_NAME:-wordpress_demo}
+      MYSQL_USER: ${DEMO_DB_USER:-wp_demo}
+      MYSQL_PASSWORD: ${DEMO_DB_PASSWORD:-demo_wp_pass_2026}
+    volumes:
+      - demo-db-data:/var/lib/mysql
+    networks:
+      - demo-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # WordPress with WooCommerce
+  demo-wordpress:
+    image: ${DEMO_WORDPRESS_IMAGE:-agentic-brain-demo-wordpress:local}
+    build:
+      context: ..
+      dockerfile: demo/Dockerfile.wordpress
+    container_name: agentic-brain-demo-wordpress
+    depends_on:
+      demo-db:
+        condition: service_healthy
+    ports:
+      - "${DEMO_WP_PORT:-8080}:80"
+    environment:
+      WORDPRESS_DB_HOST: demo-db:3306
+      WORDPRESS_DB_NAME: ${DEMO_DB_NAME:-wordpress_demo}
+      WORDPRESS_DB_USER: ${DEMO_DB_USER:-wp_demo}
+      WORDPRESS_DB_PASSWORD: ${DEMO_DB_PASSWORD:-demo_wp_pass_2026}
+      WORDPRESS_DEBUG: 'true'
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_DEBUG', true);
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+    volumes:
+      - demo-wp-data:/var/www/html
+    networks:
+      - demo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/wp-admin/install.php"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # WP-CLI container for setup automation
+  demo-wp-cli:
+    image: wordpress:cli-php8.2
+    container_name: agentic-brain-demo-wp-cli
+    depends_on:
+      demo-wordpress:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: demo-db:3306
+      WORDPRESS_DB_NAME: ${DEMO_DB_NAME:-wordpress_demo}
+      WORDPRESS_DB_USER: ${DEMO_DB_USER:-wp_demo}
+      WORDPRESS_DB_PASSWORD: ${DEMO_DB_PASSWORD:-demo_wp_pass_2026}
+    volumes:
+      - demo-wp-data:/var/www/html
+    networks:
+      - demo-network
+    user: "33:33"  # www-data user
+    command: ["tail", "-f", "/dev/null"]  # Keep container running
+
+  # Neo4j for knowledge graph
+  demo-neo4j:
+    image: neo4j:5.15
+    container_name: agentic-brain-demo-neo4j
+    ports:
+      - "${DEMO_NEO4J_HTTP_PORT:-7475}:7474"
+      - "${DEMO_NEO4J_BOLT_PORT:-7688}:7687"
+    environment:
+      NEO4J_AUTH: neo4j/${DEMO_NEO4J_PASSWORD:-demo_neo4j_2026}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      NEO4J_dbms_memory_heap_max__size: 512M
+    volumes:
+      - demo-neo4j-data:/data
+      - demo-neo4j-logs:/logs
+    networks:
+      - demo-network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${DEMO_NEO4J_PASSWORD:-demo_neo4j_2026}", "RETURN 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching
+  demo-redis:
+    image: redis:7-alpine
+    container_name: agentic-brain-demo-redis
+    ports:
+      - "${DEMO_REDIS_PORT:-6380}:6379"
+    command: redis-server --requirepass ${DEMO_REDIS_PASSWORD:-demo_redis_2026}
+    volumes:
+      - demo-redis-data:/data
+    networks:
+      - demo-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--pass", "${DEMO_REDIS_PASSWORD:-demo_redis_2026}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Agentic Brain API (Python FastAPI)
+  demo-api:
+    image: ${DEMO_API_IMAGE:-agentic-brain-demo-api:local}
+    build:
+      context: ..
+      dockerfile: demo/Dockerfile.api
+    container_name: agentic-brain-demo-api
+    depends_on:
+      demo-neo4j:
+        condition: service_healthy
+      demo-redis:
+        condition: service_healthy
+    ports:
+      - "${DEMO_API_PORT:-8000}:8000"
+    environment:
+      # API Settings
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      API_RELOAD: 'false'
+      
+      # Neo4j Connection
+      NEO4J_URI: bolt://demo-neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ${DEMO_NEO4J_PASSWORD:-demo_neo4j_2026}
+      
+      # Redis Connection
+      REDIS_HOST: demo-redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${DEMO_REDIS_PASSWORD:-demo_redis_2026}
+      REDIS_DB: 0
+      
+      # WordPress Integration
+      WORDPRESS_URL: http://demo-wordpress
+      WORDPRESS_API_URL: http://demo-wordpress/wp-json
+      
+      # Demo Mode
+      DEMO_MODE: 'true'
+      LOG_LEVEL: DEBUG
+    volumes:
+      - demo-api-logs:/app/logs
+    networks:
+      - demo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  demo-network:
+    driver: bridge
+
+volumes:
+  demo-db-data:
+  demo-wp-data:
+  demo-neo4j-data:
+  demo-neo4j-logs:
+  demo-redis-data:
+  demo-api-logs:

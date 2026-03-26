@@ -1,0 +1,13 @@
+# CODEOWNERS - Only repository owner can approve changes
+# This ensures all PRs require approval from joseph-webber
+
+# Default owner for everything
+* @joseph-webber
+
+# Critical files - extra protection
+/src/ @joseph-webber
+/.github/ @joseph-webber
+/docker-compose.yml @joseph-webber
+/Dockerfile @joseph-webber
+/pyproject.toml @joseph-webber
+/SECURITY.md @joseph-webber

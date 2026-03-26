@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Joseph Webber <joseph.webber@me.com>
+#
+# This file is part of Agentic Brain.
+
+name: Firebase Integration Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/agentic_brain/firebase/**'
+      - 'tests/test_firebase*.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/agentic_brain/firebase/**'
+      - 'tests/test_firebase*.py'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  firebase-emulator-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js (for Firebase Emulator)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e ".[test,firebase]"
+
+      - name: Start Firebase Emulator
+        run: |
+          # Create minimal firebase.json for emulator
+          echo '{"emulators":{"firestore":{"port":8080},"database":{"port":9000}}}' > firebase.json
+          firebase emulators:start --only firestore,database &
+          sleep 10  # Wait for emulator to start
+
+      - name: Run Firebase tests with emulator
+        env:
+          FIRESTORE_EMULATOR_HOST: localhost:8080
+          FIREBASE_DATABASE_EMULATOR_HOST: localhost:9000
+          AGENTIC_BRAIN_TEST_MODE: emulator
+        run: |
+          pytest tests/test_firebase*.py -v --tb=short
+
+      - name: Stop emulator
+        if: always()
+        run: |
+          pkill -f "firebase" || true

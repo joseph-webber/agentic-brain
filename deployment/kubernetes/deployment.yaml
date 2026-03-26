@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentic-brain
+  labels:
+    app: agentic-brain
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agentic-brain
+  template:
+    metadata:
+      labels:
+        app: agentic-brain
+    spec:
+      containers:
+        - name: agentic-brain
+          image: ghcr.io/joseph-webber/agentic-brain:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: NEO4J_URI
+              value: "bolt://neo4j:7687"
+            - name: SESSION_BACKEND
+              value: "redis"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5

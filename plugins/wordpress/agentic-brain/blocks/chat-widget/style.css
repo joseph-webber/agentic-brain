@@ -1,0 +1,76 @@
+.agentic-brain-chat-widget {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.agentic-brain-chat-widget.position-bottom-right {
+	position: fixed;
+	bottom: 20px;
+	right: 20px;
+	z-index: 9999;
+}
+
+.agentic-brain-chat-widget.position-bottom-left {
+	position: fixed;
+	bottom: 20px;
+	left: 20px;
+	z-index: 9999;
+}
+
+/* Editor Preview Styles */
+.wp-block-agentic-brain-chat-widget .chat-widget-preview {
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	overflow: hidden;
+	width: 300px;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+	background: #fff;
+}
+
+.chat-header {
+	padding: 12px;
+	color: #fff;
+	font-weight: bold;
+}
+
+.chat-body {
+	padding: 15px;
+	height: 150px;
+	background: #f9f9f9;
+}
+
+.chat-input {
+	padding: 10px;
+	border-top: 1px solid #eee;
+}
+
+.chat-input input {
+	width: 100%;
+	padding: 8px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+}
+
+/* Frontend Styles */
+.chat-launcher {
+	width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	border: none;
+	color: white;
+	cursor: pointer;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.2s;
+}
+
+.chat-launcher:hover {
+	transform: scale(1.05);
+}
+
+.chat-launcher .dashicons {
+	font-size: 24px;
+	width: 24px;
+	height: 24px;
+}

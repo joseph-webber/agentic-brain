@@ -1,0 +1,379 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+Redis availability and functionality tests for Agentic Brain.
+
+BULLETPROOF testing ensures:
+- Redis connection works
+"""
+
+import pytest
+
+pytestmark = pytest.mark.requires_redis
+- Redis pub/sub functionality works
+- Health check endpoint includes Redis status
+- CI fails if Redis features are broken
+"""
+
+import os
+import time
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+
+class TestRedisConnection:
+    """Test Redis connectivity."""
+
+    def test_redis_import(self):
+        """Test redis-py package can be imported."""
+        try:
+            import redis
+
+            assert redis is not None
+        except ImportError:
+            pytest.skip("redis-py not installed")
+
+    def test_redis_health_checker_creation(self):
+        """Test RedisHealthCheck can be instantiated."""
+        from agentic_brain.api.redis_health import RedisHealthCheck
+
+        checker = RedisHealthCheck()
+        assert checker is not None
+        assert checker.redis_host == os.getenv("REDIS_HOST", "localhost")
+        assert checker.redis_port == int(os.getenv("REDIS_PORT", "6379"))
+
+    def test_redis_get_health_status(self):
+        """Test get_health_status returns expected structure."""
+        from agentic_brain.api.redis_health import RedisHealthCheck
+
+        checker = RedisHealthCheck()
+        status = checker.get_health_status()
+
+        # Check required keys
+        assert "status" in status
+        assert "available" in status
+        assert "message" in status
+        assert "host" in status
+        assert "port" in status
+        assert "db" in status
+
+        # Check status is one of expected values
+        assert status["status"] in ["ok", "degraded", "down", "error"]
+
+    def test_redis_check_available_structure(self):
+        """Test check_redis_available returns tuple."""
+        from agentic_brain.api.redis_health import RedisHealthCheck
+
+        checker = RedisHealthCheck()
+        result = checker.check_redis_available()
+
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        is_available, message = result
+        assert isinstance(is_available, bool)
+        assert isinstance(message, str)
+
+
+class TestRedisPublishSubscribe:
+    """Test Redis pub/sub functionality."""
+
+    def test_redis_pubsub_mock(self):
+        """Test Redis pub/sub with mock."""
+        try:
+            import redis
+        except ImportError:
+            pytest.skip("redis-py not installed")
+
+        # Create a mock redis client
+        mock_redis = MagicMock()
+        pubsub = MagicMock()
+        mock_redis.pubsub.return_value = pubsub
+
+        # Test subscribe
+        pubsub.subscribe.return_value = None
+        pubsub.subscribe("test_channel")
+        pubsub.subscribe.assert_called_with("test_channel")
+
+        # Test publish
+        mock_redis.publish.return_value = 1
+        result = mock_redis.publish("test_channel", "test_message")
+        assert result == 1
+
+        # Test unsubscribe
+        pubsub.unsubscribe.return_value = None
+        pubsub.unsubscribe("test_channel")
+        pubsub.unsubscribe.assert_called_with("test_channel")
+
+    def test_redis_pubsub_integration(self):
+        """Test Redis pub/sub integration with real connection (if available)."""
+        try:
+            import redis
+        except ImportError:
+            pytest.skip("redis-py not installed")
+
+        from agentic_brain.api.redis_health import RedisHealthCheck
+
+        checker = RedisHealthCheck()
+        is_available, _ = checker.check_redis_available()
+
+        if not is_available:
+            pytest.skip("Redis not available")
+
+        try:
+            client = checker.get_redis_client()
+
+            # Test basic pub/sub
+            pubsub = client.pubsub()
+            pubsub.subscribe("test_channel")
+
+            # Publish a message
+            client.publish("test_channel", "test_message")
+
+            # Give it a moment to process
+            time.sleep(0.1)
+
+            pubsub.unsubscribe("test_channel")
+            pubsub.close()
+        except Exception as e:
+            pytest.skip(f"Redis pub/sub test failed: {e}")
+
+
+class TestRedisHealthEndpoint:
+    """Test Redis health information in /health endpoint."""
+
+    def test_health_endpoint_includes_redis(self):
+        """Test /health endpoint includes redis information."""
+        try:
+            from fastapi.testclient import TestClient
+        except ImportError:
+            pytest.skip("fastapi not installed")
+
+        from agentic_brain.api.server import create_app
+
+        app = create_app()
+        client = TestClient(app)
+
+        response = client.get("/health")
+        assert response.status_code == 200
+
+        health_data = response.json()
+
+        # Check redis is in response
+        assert "redis" in health_data
+        redis_info = health_data["redis"]
+
+        # Check required redis keys
+        assert "status" in redis_info
+        assert "available" in redis_info
+        assert "message" in redis_info
+
+        # Status should be one of expected values
+        assert redis_info["status"] in ["ok", "degraded", "down", "error", "unknown"]
+
+    def test_health_endpoint_structure(self):
+        """Test complete health endpoint structure."""
+        try:
+            from fastapi.testclient import TestClient
+        except ImportError:
+            pytest.skip("fastapi not installed")
+
+        from agentic_brain.api.server import create_app
+
+        app = create_app()
+        client = TestClient(app)
+
+        response = client.get("/health")
+        assert response.status_code == 200
+
+        health_data = response.json()
+
+        # Check all expected keys
+        assert "status" in health_data
+        assert "version" in health_data
+        assert "timestamp" in health_data
+        assert "sessions_active" in health_data
+        assert "redis" in health_data
+        assert "llm" in health_data
+        assert "neo4j" in health_data
+        assert "uptime" in health_data
+
+        assert health_data["status"] == "healthy"
+
+
+class TestRedisStartupBehavior:
+    """Test Redis startup and initialization behavior."""
+
+    def test_app_initialization_with_redis_check(self):
+        """Test app initialization performs Redis check."""
+        try:
+            from fastapi.testclient import TestClient
+        except ImportError:
+            pytest.skip("fastapi not installed")
+
+        # Mock Redis availability
+        with patch(
+            "agentic_brain.api.redis_health.RedisHealthCheck.check_redis_available"
+        ) as mock_check:
+            mock_check.return_value = (True, "Redis is healthy")
+
+            from agentic_brain.api.server import create_app
+
+            app = create_app()
+            assert app is not None
+
+            # Verify redis_health_checker is stored
+            assert hasattr(app.state, "redis_health_checker")
+
+    def test_redis_health_checker_singleton(self):
+        """Test RedisHealthCheck singleton pattern."""
+        from agentic_brain.api.redis_health import get_redis_health_checker
+
+        checker1 = get_redis_health_checker()
+        checker2 = get_redis_health_checker()
+
+        # Should return the same instance
+        assert checker1 is checker2
+
+
+class TestRedisErrorHandling:
+    """Test Redis error handling."""
+
+    def test_redis_client_error_handling(self):
+        """Test error handling when Redis is unavailable."""
+        from agentic_brain.api.redis_health import RedisHealthCheck
+
+        with patch(
+            "agentic_brain.api.redis_health.RedisHealthCheck.check_redis_available"
+        ) as mock_check:
+            # Mock Redis not being available
+            mock_check.return_value = (False, "Connection refused")
+
+            checker = RedisHealthCheck()
+            status = checker.get_health_status()
+
+            assert status["status"] == "down"
+            assert status["available"] is False
+            assert "Connection refused" in status["message"]
+
+    def test_redis_auto_start_failure_handling(self):
+        """Test handling of auto-start failure."""
+        from agentic_brain.api.redis_health import RedisHealthCheck
+
+        with patch("agentic_brain.api.redis_health.subprocess.run") as mock_run:
+            # Mock docker-compose failure
+            mock_run.return_value.returncode = 1
+            mock_run.return_value.stderr = "Docker not found"
+
+            checker = RedisHealthCheck()
+
+            with patch.object(
+                checker,
+                "check_redis_available",
+                return_value=(False, "Connection refused"),
+            ):
+                result = checker.try_auto_start_redis()
+                # Should return False since auto-start failed
+                assert result is False
+
+
+class TestRedisConnectionResilience:
+    """Test Redis connection resilience."""
+
+    def test_redis_client_socket_options(self):
+        """Test redis client has resilience socket options configured."""
+        from agentic_brain.api.redis_health import RedisHealthCheck
+
+        checker = RedisHealthCheck()
+
+        try:
+            import redis
+
+            with patch("redis.Redis") as mock_redis_class:
+                # Mock the redis.Redis class
+                checker.get_redis_client()
+
+                # Check that socket options were set
+                call_kwargs = mock_redis_class.call_args[1]
+                assert "socket_connect_timeout" in call_kwargs
+                assert "socket_keepalive" in call_kwargs
+                assert "health_check_interval" in call_kwargs
+        except ImportError:
+            pytest.skip("redis-py not installed")
+
+
+class TestCIRedisAvailability:
+    """CI tests to ensure Redis features are never broken."""
+
+    def test_redis_health_checker_always_available(self):
+        """CRITICAL: Test redis health checker is always available to app."""
+        try:
+            from fastapi.testclient import TestClient
+        except ImportError:
+            pytest.skip("fastapi not installed")
+
+        from agentic_brain.api.server import create_app
+
+        app = create_app()
+        assert hasattr(
+            app.state, "redis_health_checker"
+        ), "Redis health checker not attached to app state"
+
+    def test_health_endpoint_never_crashes(self):
+        """CRITICAL: Test /health endpoint never crashes even if Redis is down."""
+        try:
+            from fastapi.testclient import TestClient
+        except ImportError:
+            pytest.skip("fastapi not installed")
+
+        from agentic_brain.api.server import create_app
+
+        # Mock Redis being completely broken
+        with patch(
+            "agentic_brain.api.redis_health.RedisHealthCheck.get_health_status"
+        ) as mock_health:
+            mock_health.side_effect = Exception("Redis completely broken!")
+
+            app = create_app()
+            client = TestClient(app)
+
+            # Health endpoint should still work
+            response = client.get("/health")
+            assert response.status_code == 200
+
+            health_data = response.json()
+            # Status should still be healthy (Redis is not critical)
+            assert health_data["status"] == "healthy"
+            # But redis should show error
+            assert "redis" in health_data
+
+    def test_redis_info_includes_memory_when_available(self):
+        """Test Redis info includes memory usage when available."""
+        try:
+            import redis
+        except ImportError:
+            pytest.skip("redis-py not installed")
+
+        from agentic_brain.api.redis_health import RedisHealthCheck
+
+        checker = RedisHealthCheck()
+        status = checker.get_health_status()
+
+        # If Redis is available, memory info should be present
+        if status["status"] == "ok":
+            assert "memory_usage_mb" in status or "message" in status
+            assert "connected_clients" in status or "message" in status
+

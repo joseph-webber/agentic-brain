@@ -1,0 +1,15 @@
+{
+  "name": "agentic-brain-blocks",
+  "version": "1.0.0",
+  "description": "Gutenberg blocks for Agentic Brain",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "format": "wp-scripts format",
+    "lint:js": "wp-scripts lint-js",
+    "packages-update": "wp-scripts packages-update"
+  },
+  "devDependencies": {
+    "@wordpress/scripts": "^26.0.0"
+  }
+}

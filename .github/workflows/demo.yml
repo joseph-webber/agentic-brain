@@ -1,0 +1,217 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2026 Joseph Webber <joseph.webber@me.com>
+
+name: Demo Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to build for the demo bundle
+        required: false
+        default: main
+        type: string
+      image_tag:
+        description: Optional container tag override
+        required: false
+        default: ''
+        type: string
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  DEMO_API_IMAGE: ${{ github.repository }}/demo-api
+  DEMO_WORDPRESS_IMAGE: ${{ github.repository }}/demo-wordpress
+
+jobs:
+  build-demo:
+    name: Build Demo Stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Resolve demo metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            TAG="${{ inputs.image_tag }}"
+          else
+            TAG="demo-${GITHUB_RUN_NUMBER}"
+          fi
+
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "api_image=${{ env.REGISTRY }}/${{ env.DEMO_API_IMAGE }}:${TAG}" >> "$GITHUB_OUTPUT"
+          echo "wordpress_image=${{ env.REGISTRY }}/${{ env.DEMO_WORDPRESS_IMAGE }}:${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push demo API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: demo/Dockerfile.api
+          push: true
+          tags: ${{ steps.meta.outputs.api_image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push demo WordPress image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: demo/Dockerfile.wordpress
+          push: true
+          tags: ${{ steps.meta.outputs.wordpress_image }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create demo environment file
+        run: |
+          cat > .env.demo-ci <<EOF
+          DEMO_API_IMAGE=${{ steps.meta.outputs.api_image }}
+          DEMO_WORDPRESS_IMAGE=${{ steps.meta.outputs.wordpress_image }}
+          DEMO_WP_PORT=8080
+          DEMO_API_PORT=8000
+          DEMO_NEO4J_HTTP_PORT=7475
+          DEMO_NEO4J_BOLT_PORT=7688
+          DEMO_REDIS_PORT=6380
+          DEMO_DB_ROOT_PASSWORD=demo_root_pass_2026
+          DEMO_DB_NAME=wordpress_demo
+          DEMO_DB_USER=wp_demo
+          DEMO_DB_PASSWORD=demo_wp_pass_2026
+          DEMO_NEO4J_PASSWORD=demo_neo4j_2026
+          DEMO_REDIS_PASSWORD=demo_redis_2026
+          EOF
+
+      - name: Start demo stack
+        run: docker compose --env-file .env.demo-ci -f demo/docker-compose.demo.yml up -d --build
+
+      - name: Wait for services
+        run: |
+          set -euo pipefail
+          for target in \
+            "http://localhost:8000/health" \
+            "http://localhost:8080/wp-admin/install.php" \
+            "http://localhost:7475"; do
+            for attempt in $(seq 1 30); do
+              if curl -fsS "$target" >/dev/null; then
+                echo "Ready: $target"
+                break
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                echo "Timed out waiting for $target" >&2
+                exit 1
+              fi
+              sleep 5
+            done
+          done
+
+      - name: Configure WordPress demo
+        run: |
+          set -euo pipefail
+          wp_cli() {
+            docker compose --env-file .env.demo-ci -f demo/docker-compose.demo.yml exec -T demo-wp-cli wp "$@" --allow-root
+          }
+
+          wp_cli core is-installed || \
+            wp_cli core install \
+              --url="http://demo-wordpress" \
+              --title="Agentic Brain Demo Store" \
+              --admin_user="admin" \
+              --admin_password="Admin123!Demo" \
+              --admin_email="admin@agenticbrain.demo" \
+              --skip-email
+
+          wp_cli rewrite structure '/%postname%/' || true
+          wp_cli rewrite flush || true
+          wp_cli plugin activate woocommerce agentic-brain
+          wp_cli option update agbrain_api_url "http://demo-api:8000"
+          wp_cli option update agbrain_enabled_on "all"
+          wp_cli option update agbrain_welcome_message "Hi! I'm the Agentic Brain demo assistant."
+
+      - name: Run demo smoke tests
+        run: |
+          set -euo pipefail
+          docker compose --env-file .env.demo-ci -f demo/docker-compose.demo.yml exec -T demo-wp-cli wp plugin is-active woocommerce --allow-root
+          docker compose --env-file .env.demo-ci -f demo/docker-compose.demo.yml exec -T demo-wp-cli wp plugin is-active agentic-brain --allow-root
+          curl -fsS http://localhost:8000/health | tee /dev/stderr
+          curl -fsS http://localhost:8080/wp-json/ | tee /dev/stderr >/dev/null
+
+      - name: Create downloadable demo artifact
+        run: |
+          set -euo pipefail
+          PACKAGE_ROOT="dist-demo/agentic-brain-demo-${{ steps.meta.outputs.tag }}"
+
+          rm -rf dist-demo
+          mkdir -p "${PACKAGE_ROOT}/demo" "${PACKAGE_ROOT}/plugins" "${PACKAGE_ROOT}/sample-data"
+
+          cp demo/docker-compose.demo.yml demo/Dockerfile.api demo/Dockerfile.wordpress demo/setup-demo.sh "${PACKAGE_ROOT}/demo/"
+          cp .env.demo-ci "${PACKAGE_ROOT}/demo/.env.demo"
+          cp -R demo/sample-data/. "${PACKAGE_ROOT}/sample-data/"
+          cp -R plugins/wordpress/agentic-brain "${PACKAGE_ROOT}/plugins/agentic-brain"
+
+          (
+            cd "${PACKAGE_ROOT}/plugins"
+            zip -qr agentic-brain.zip agentic-brain
+          )
+
+          cat > "${PACKAGE_ROOT}/demo/manifest.json" <<EOF
+          {
+            "tag": "${{ steps.meta.outputs.tag }}",
+            "api_image": "${{ steps.meta.outputs.api_image }}",
+            "wordpress_image": "${{ steps.meta.outputs.wordpress_image }}"
+          }
+          EOF
+
+          chmod +x "${PACKAGE_ROOT}/demo/setup-demo.sh"
+          tar -czf "dist-demo/agentic-brain-demo-${{ steps.meta.outputs.tag }}.tar.gz" -C dist-demo "agentic-brain-demo-${{ steps.meta.outputs.tag }}"
+
+      - name: Upload demo artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-stack-${{ steps.meta.outputs.tag }}
+          path: dist-demo/agentic-brain-demo-${{ steps.meta.outputs.tag }}.tar.gz
+
+      - name: Capture demo logs
+        if: always()
+        run: |
+          mkdir -p dist-demo/logs
+          docker compose --env-file .env.demo-ci -f demo/docker-compose.demo.yml logs --no-color > dist-demo/logs/demo-compose.log || true
+
+      - name: Upload demo logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-logs-${{ steps.meta.outputs.tag }}
+          path: dist-demo/logs/demo-compose.log
+
+      - name: Stop demo stack
+        if: always()
+        run: docker compose --env-file .env.demo-ci -f demo/docker-compose.demo.yml down -v
+
+      - name: Summarize demo build
+        run: |
+          echo "## 🧪 Demo build complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API image: \`${{ steps.meta.outputs.api_image }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- WordPress image: \`${{ steps.meta.outputs.wordpress_image }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Artifact: \`agentic-brain-demo-${{ steps.meta.outputs.tag }}.tar.gz\`" >> "$GITHUB_STEP_SUMMARY"

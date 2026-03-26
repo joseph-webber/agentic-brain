@@ -1,0 +1,29 @@
+{
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "./Dockerfile"
+  },
+  "deploy": {
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  },
+  "services": [
+    {
+      "name": "agentic-brain",
+      "internalPort": 8000
+    },
+    {
+      "name": "neo4j",
+      "image": "neo4j:5-community",
+      "internalPort": 7687,
+      "volumes": ["/var/lib/neo4j/data"]
+    },
+    {
+      "name": "redis",
+      "image": "redis:7-alpine",
+      "internalPort": 6379
+    }
+  ]
+}

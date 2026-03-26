@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentic-brain
+  labels:
+    app: agentic-brain
+    app.kubernetes.io/name: agentic-brain
+    app.kubernetes.io/component: api
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: agentic-brain
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: agentic-brain
+  labels:
+    app: agentic-brain
+    app.kubernetes.io/name: agentic-brain

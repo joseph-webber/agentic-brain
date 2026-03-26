@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
+#
+# Docker Compose for Redis (standalone)
+# Used for bulletproof Redis availability in agentic-brain
+#
+# Start: docker-compose -f docker-compose-redis.yml up -d
+# Stop:  docker-compose -f docker-compose-redis.yml down
+
+version: '3.9'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: agentic-brain-redis
+    restart: always  # BULLETPROOF: Always restart on failure
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-brain_secure_2024}
+      --appendonly yes
+      --appendfsync everysec
+    ports:
+      - "6379:6379"
+    volumes:
+      # Persist Redis data across restarts
+      - agentic_brain_redis_data:/data
+    networks:
+      - agentic-brain-network
+    healthcheck:
+      # BULLETPROOF: Aggressive health checking
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-brain_secure_2024}", "ping"]
+      interval: 5s      # Check every 5 seconds
+      timeout: 3s       # Fail if no response in 3 seconds
+      retries: 3        # Fail after 3 failed checks (15 seconds total)
+      start_period: 10s # Wait 10 seconds before first check
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-brain_secure_2024}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  agentic_brain_redis_data:
+    driver: local
+
+networks:
+  agentic-brain-network:
+    driver: bridge

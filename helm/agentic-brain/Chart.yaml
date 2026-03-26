@@ -1,0 +1,23 @@
+apiVersion: v2
+name: agentic-brain
+description: A Helm chart for deploying Agentic Brain - Universal AI Agent Framework
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/joseph-webber/agentic-brain
+sources:
+  - https://github.com/joseph-webber/agentic-brain
+maintainers:
+  - name: Joseph Webber
+    email: joseph@webber.dev
+keywords:
+  - ai
+  - agent
+  - llm
+  - chatbot
+  - neo4j
+  - python
+annotations:
+  category: AI/ML
+  licenses: MIT
+dependencies: []

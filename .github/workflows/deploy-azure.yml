@@ -1,0 +1,155 @@
+# Azure Container Apps Deployment Workflow
+# JHipster-style cloud deployment
+#
+# Required secrets:
+#   - AZURE_CLIENT_ID
+#   - AZURE_CLIENT_SECRET
+#   - AZURE_TENANT_ID
+#   - AZURE_SUBSCRIPTION_ID
+#   - ACR_LOGIN_SERVER (e.g., myregistry.azurecr.io)
+
+name: Deploy to Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment (staging or production)'
+        required: true
+        type: string
+
+env:
+  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+  RESOURCE_GROUP: agentic-brain-${{ inputs.environment }}
+  CONTAINER_APP_NAME: agentic-brain
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build.outputs.image }}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        run: |
+          az acr login --name ${{ env.ACR_LOGIN_SERVER }}
+
+      - name: Build and push image
+        id: build
+        run: |
+          IMAGE_URI="${{ env.ACR_LOGIN_SERVER }}/agentic-brain:${{ env.IMAGE_TAG }}"
+          
+          docker build \
+            --build-arg ENVIRONMENT=${{ inputs.environment }} \
+            -t "$IMAGE_URI" \
+            -t "${{ env.ACR_LOGIN_SERVER }}/agentic-brain:latest" \
+            .
+          
+          docker push "$IMAGE_URI"
+          docker push "${{ env.ACR_LOGIN_SERVER }}/agentic-brain:latest"
+          
+          echo "image=$IMAGE_URI" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Container Apps
+        run: |
+          # Update container app with new image
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ needs.build-and-push.outputs.image }} \
+            --set-env-vars \
+              ENVIRONMENT=${{ inputs.environment }} \
+              DEBUG=false
+
+      - name: Wait for deployment
+        run: |
+          echo "Waiting for deployment to complete..."
+          sleep 30
+          
+          # Check revision status
+          REVISION=$(az containerapp revision list \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "[0].name" -o tsv)
+          
+          STATUS=$(az containerapp revision show \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --revision "$REVISION" \
+            --query "properties.healthState" -o tsv)
+          
+          if [ "$STATUS" = "Healthy" ]; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Deployment health check failed: $STATUS"
+            exit 1
+          fi
+
+      - name: Get application URL
+        run: |
+          URL=$(az containerapp show \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          
+          echo "🌐 Application URL: https://$URL"
+          echo "application_url=https://$URL" >> $GITHUB_OUTPUT
+
+  health-check:
+    needs: deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Health check
+        run: |
+          URL="https://${{ env.CONTAINER_APP_NAME }}.${{ inputs.environment }}.azurecontainerapps.io"
+          
+          for i in {1..5}; do
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health" || echo "000")
+            if [ "$RESPONSE" = "200" ]; then
+              echo "✅ Health check passed!"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $RESPONSE, retrying in 10s..."
+            sleep 10
+          done
+          
+          echo "❌ Health check failed after 5 attempts"
+          exit 1

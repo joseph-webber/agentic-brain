@@ -1,0 +1,6 @@
+Agentic Brain sprint notes
+-------------------------
+
+- Verify the onboarding experience end to end.
+- Document the accessibility findings for Joseph.
+- Schedule follow-up with Steve about the RAG rollout.

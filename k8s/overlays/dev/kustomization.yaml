@@ -1,0 +1,82 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: agentic-brain-dev
+
+resources:
+  - ../../base
+
+namePrefix: dev-
+
+commonLabels:
+  environment: development
+
+patches:
+  # Reduce replicas for dev
+  - target:
+      kind: Deployment
+      name: agentic-brain
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "128Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "50m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "256Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "250m"
+  
+  # Disable HPA for dev
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: agentic-brain
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 2
+
+  # Reduce PDB for dev
+  - target:
+      kind: PodDisruptionBudget
+      name: agentic-brain
+    patch: |
+      - op: replace
+        path: /spec/minAvailable
+        value: 0
+
+  # Dev ingress without TLS
+  - target:
+      kind: Ingress
+      name: agentic-brain
+    patch: |
+      - op: replace
+        path: /spec/rules/0/host
+        value: dev.agentic-brain.local
+      - op: remove
+        path: /spec/tls
+      - op: replace
+        path: /metadata/annotations/nginx.ingress.kubernetes.io~1ssl-redirect
+        value: "false"
+
+configMapGenerator:
+  - name: agentic-brain-config
+    behavior: merge
+    literals:
+      - LOG_LEVEL=DEBUG
+      - AUTH_ENABLED=false
+      - RATE_LIMIT_ENABLED=false
+      - CORS_ORIGINS=*
+
+images:
+  - name: ghcr.io/joseph-webber/agentic-brain
+    newTag: dev

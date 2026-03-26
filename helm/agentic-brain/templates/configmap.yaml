@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "agentic-brain.configmapName" . }}
+  labels:
+    {{- include "agentic-brain.labels" . | nindent 4 }}
+data:
+  # Logging
+  LOG_LEVEL: {{ .Values.logging.level | quote }}
+  LOG_FORMAT: {{ .Values.logging.format | quote }}
+  
+  # API Configuration
+  API_HOST: {{ .Values.api.host | quote }}
+  API_PORT: {{ .Values.api.port | quote }}
+  
+  # CORS Settings
+  CORS_ORIGINS: {{ .Values.cors.origins | quote }}
+  CORS_METHODS: {{ .Values.cors.methods | quote }}
+  CORS_HEADERS: {{ .Values.cors.headers | quote }}
+  
+  # Session Configuration
+  SESSION_BACKEND: {{ .Values.session.backend | quote }}
+  SESSION_TTL: {{ .Values.session.ttl | quote }}
+  
+  # Neo4j Configuration (non-sensitive)
+  NEO4J_URI: {{ .Values.neo4j.uri | quote }}
+  NEO4J_USER: {{ .Values.neo4j.user | quote }}
+  NEO4J_MAX_CONNECTIONS: {{ .Values.neo4j.maxConnections | quote }}
+  NEO4J_CONNECTION_TIMEOUT: {{ .Values.neo4j.connectionTimeout | quote }}
+  
+  # Redis Configuration (non-sensitive)
+  REDIS_DB: {{ .Values.redis.db | quote }}
+  REDIS_MAX_CONNECTIONS: {{ .Values.redis.maxConnections | quote }}
+  
+  # Authentication
+  AUTH_ENABLED: {{ .Values.auth.enabled | quote }}
+  JWT_ALGORITHM: {{ .Values.auth.jwtAlgorithm | quote }}
+  JWT_EXPIRY_HOURS: {{ .Values.auth.jwtExpiryHours | quote }}
+  
+  # Rate Limiting
+  RATE_LIMIT_ENABLED: {{ .Values.rateLimit.enabled | quote }}
+  RATE_LIMIT_REQUESTS: {{ .Values.rateLimit.requests | quote }}
+  RATE_LIMIT_WINDOW: {{ .Values.rateLimit.window | quote }}
+  
+  # Feature Flags
+  STREAMING_ENABLED: {{ .Values.features.streaming | quote }}
+  METRICS_ENABLED: {{ .Values.features.metrics | quote }}
+  
+  # LLM Configuration
+  OLLAMA_BASE_URL: {{ .Values.llm.ollamaBaseUrl | quote }}
+  DEFAULT_MODEL: {{ .Values.llm.defaultModel | quote }}

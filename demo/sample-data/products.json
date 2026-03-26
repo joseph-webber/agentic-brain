@@ -1,0 +1,388 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "Wireless Bluetooth Headphones",
+      "slug": "wireless-bluetooth-headphones",
+      "type": "simple",
+      "status": "publish",
+      "featured": true,
+      "catalog_visibility": "visible",
+      "description": "<p>Premium wireless headphones with active noise cancellation and 30-hour battery life. Perfect for music lovers and professionals.</p><h3>Features:</h3><ul><li>Active Noise Cancellation (ANC)</li><li>30-hour battery life</li><li>Bluetooth 5.0</li><li>Built-in microphone for calls</li><li>Foldable design with carrying case</li></ul>",
+      "short_description": "Premium wireless headphones with noise cancellation and 30-hour battery life.",
+      "sku": "WH-BT-001",
+      "price": "199.99",
+      "regular_price": "199.99",
+      "sale_price": "",
+      "on_sale": false,
+      "stock_status": "instock",
+      "stock_quantity": 50,
+      "manage_stock": true,
+      "categories": [
+        {
+          "id": 1,
+          "name": "Electronics",
+          "slug": "electronics"
+        }
+      ],
+      "tags": [
+        {
+          "name": "wireless"
+        },
+        {
+          "name": "headphones"
+        },
+        {
+          "name": "bluetooth"
+        },
+        {
+          "name": "noise-cancelling"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "Color",
+          "options": ["Black", "Silver", "Blue"]
+        },
+        {
+          "name": "Connectivity",
+          "options": ["Bluetooth 5.0"]
+        }
+      ],
+      "rating_count": 15,
+      "average_rating": "4.7"
+    },
+    {
+      "id": 2,
+      "name": "Smart Fitness Tracker",
+      "slug": "smart-fitness-tracker",
+      "type": "simple",
+      "status": "publish",
+      "featured": true,
+      "description": "<p>Track your health and fitness goals with this advanced fitness tracker. Monitor heart rate, sleep, steps, and more.</p><h3>Features:</h3><ul><li>Heart rate monitoring</li><li>Sleep tracking</li><li>Step counter and distance</li><li>Calorie tracking</li><li>7-day battery life</li><li>Water resistant (IP68)</li></ul>",
+      "short_description": "Track your health and fitness goals with advanced monitoring features.",
+      "sku": "FT-SM-001",
+      "price": "149.99",
+      "regular_price": "149.99",
+      "stock_status": "instock",
+      "stock_quantity": 35,
+      "categories": [
+        {
+          "name": "Electronics"
+        },
+        {
+          "name": "Fitness"
+        }
+      ],
+      "tags": [
+        {
+          "name": "fitness"
+        },
+        {
+          "name": "tracker"
+        },
+        {
+          "name": "health"
+        }
+      ],
+      "rating_count": 12,
+      "average_rating": "4.5"
+    },
+    {
+      "id": 3,
+      "name": "Organic Coffee Beans - Single Origin",
+      "slug": "organic-coffee-beans",
+      "type": "simple",
+      "status": "publish",
+      "featured": false,
+      "description": "<p>Premium single-origin organic coffee beans from Colombia. Medium roast with notes of chocolate and caramel.</p><h3>Details:</h3><ul><li>100% Arabica beans</li><li>USDA Organic certified</li><li>Fair Trade</li><li>Roasted fresh weekly</li><li>1lb bag</li></ul>",
+      "short_description": "Premium single-origin organic coffee beans with rich flavor.",
+      "sku": "CF-ORG-001",
+      "price": "24.99",
+      "regular_price": "29.99",
+      "sale_price": "24.99",
+      "on_sale": true,
+      "stock_status": "instock",
+      "stock_quantity": 100,
+      "categories": [
+        {
+          "name": "Food & Beverage"
+        }
+      ],
+      "tags": [
+        {
+          "name": "coffee"
+        },
+        {
+          "name": "organic"
+        },
+        {
+          "name": "fair-trade"
+        }
+      ],
+      "rating_count": 24,
+      "average_rating": "4.8"
+    },
+    {
+      "id": 4,
+      "name": "Premium Yoga Mat",
+      "slug": "premium-yoga-mat",
+      "type": "simple",
+      "status": "publish",
+      "featured": false,
+      "description": "<p>Non-slip eco-friendly yoga mat made from natural rubber. Perfect for all types of yoga and fitness exercises.</p><h3>Features:</h3><ul><li>6mm thickness for comfort</li><li>Non-slip surface</li><li>Eco-friendly materials</li><li>72\" x 24\" size</li><li>Comes with carrying strap</li></ul>",
+      "short_description": "Non-slip eco-friendly yoga mat for comfort and stability.",
+      "sku": "YM-PREM-001",
+      "price": "79.99",
+      "regular_price": "79.99",
+      "stock_status": "instock",
+      "stock_quantity": 40,
+      "categories": [
+        {
+          "name": "Fitness"
+        }
+      ],
+      "tags": [
+        {
+          "name": "yoga"
+        },
+        {
+          "name": "fitness"
+        },
+        {
+          "name": "eco-friendly"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "Color",
+          "options": ["Purple", "Blue", "Green", "Black"]
+        }
+      ],
+      "rating_count": 18,
+      "average_rating": "4.6"
+    },
+    {
+      "id": 5,
+      "name": "Stainless Steel Water Bottle",
+      "slug": "stainless-steel-water-bottle",
+      "type": "simple",
+      "status": "publish",
+      "featured": false,
+      "description": "<p>Double-walled insulated stainless steel water bottle keeps drinks cold for 24 hours or hot for 12 hours.</p><h3>Features:</h3><ul><li>750ml capacity</li><li>BPA-free</li><li>Leak-proof lid</li><li>Fits in car cup holders</li><li>Easy to clean</li></ul>",
+      "short_description": "Insulated 750ml water bottle keeps drinks cold or hot.",
+      "sku": "WB-SS-750",
+      "price": "34.99",
+      "regular_price": "34.99",
+      "stock_status": "instock",
+      "stock_quantity": 75,
+      "categories": [
+        {
+          "name": "Accessories"
+        }
+      ],
+      "tags": [
+        {
+          "name": "bottle"
+        },
+        {
+          "name": "water"
+        },
+        {
+          "name": "insulated"
+        }
+      ],
+      "rating_count": 30,
+      "average_rating": "4.9"
+    },
+    {
+      "id": 6,
+      "name": "Professional Running Shoes",
+      "slug": "professional-running-shoes",
+      "type": "variable",
+      "status": "publish",
+      "featured": true,
+      "description": "<p>Professional-grade running shoes designed for athletes. Lightweight with superior cushioning and support.</p><h3>Features:</h3><ul><li>Breathable mesh upper</li><li>Responsive cushioning</li><li>Durable rubber outsole</li><li>Arch support</li><li>Reflective details</li></ul>",
+      "short_description": "Professional running shoes for athletes with superior comfort.",
+      "sku": "RS-PRO-001",
+      "price": "159.99",
+      "regular_price": "159.99",
+      "stock_status": "instock",
+      "categories": [
+        {
+          "name": "Footwear"
+        },
+        {
+          "name": "Fitness"
+        }
+      ],
+      "tags": [
+        {
+          "name": "running"
+        },
+        {
+          "name": "shoes"
+        },
+        {
+          "name": "athletic"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "Size",
+          "options": ["7", "8", "9", "10", "11", "12"]
+        },
+        {
+          "name": "Color",
+          "options": ["Black", "Blue", "Gray"]
+        }
+      ],
+      "rating_count": 22,
+      "average_rating": "4.7"
+    },
+    {
+      "id": 7,
+      "name": "Whey Protein Powder - Vanilla",
+      "slug": "whey-protein-powder-vanilla",
+      "type": "simple",
+      "status": "publish",
+      "featured": false,
+      "description": "<p>High-quality whey protein powder for muscle recovery and growth. Delicious vanilla flavor.</p><h3>Details:</h3><ul><li>25g protein per serving</li><li>Low in sugar and carbs</li><li>30 servings per container</li><li>Mixes easily</li><li>No artificial flavors</li></ul>",
+      "short_description": "High-quality whey protein powder with 25g protein per serving.",
+      "sku": "PP-WHY-VAN",
+      "price": "49.99",
+      "regular_price": "49.99",
+      "stock_status": "instock",
+      "stock_quantity": 60,
+      "categories": [
+        {
+          "name": "Supplements"
+        },
+        {
+          "name": "Fitness"
+        }
+      ],
+      "tags": [
+        {
+          "name": "protein"
+        },
+        {
+          "name": "supplement"
+        },
+        {
+          "name": "fitness"
+        }
+      ],
+      "rating_count": 35,
+      "average_rating": "4.6"
+    },
+    {
+      "id": 8,
+      "name": "Laptop Backpack with USB Port",
+      "slug": "laptop-backpack-usb",
+      "type": "simple",
+      "status": "publish",
+      "featured": false,
+      "description": "<p>Durable laptop backpack with padded compartment, USB charging port, and multiple pockets.</p><h3>Features:</h3><ul><li>Fits laptops up to 17 inches</li><li>USB charging port</li><li>Water-resistant material</li><li>Padded shoulder straps</li><li>Multiple compartments</li></ul>",
+      "short_description": "Durable backpack with laptop compartment and USB charging port.",
+      "sku": "BP-LAP-USB",
+      "price": "89.99",
+      "regular_price": "89.99",
+      "stock_status": "instock",
+      "stock_quantity": 30,
+      "categories": [
+        {
+          "name": "Accessories"
+        }
+      ],
+      "tags": [
+        {
+          "name": "backpack"
+        },
+        {
+          "name": "laptop"
+        },
+        {
+          "name": "travel"
+        }
+      ],
+      "rating_count": 19,
+      "average_rating": "4.5"
+    },
+    {
+      "id": 9,
+      "name": "Ergonomic Wireless Mouse",
+      "slug": "ergonomic-wireless-mouse",
+      "type": "simple",
+      "status": "publish",
+      "featured": false,
+      "description": "<p>Ergonomic wireless mouse designed to reduce wrist strain. Perfect for long hours of work.</p><h3>Features:</h3><ul><li>2.4GHz wireless connection</li><li>Ergonomic design</li><li>Adjustable DPI (800-2400)</li><li>Long battery life</li><li>Works on most surfaces</li></ul>",
+      "short_description": "Ergonomic wireless mouse for comfortable all-day use.",
+      "sku": "MS-ERGO-WL",
+      "price": "39.99",
+      "regular_price": "39.99",
+      "stock_status": "instock",
+      "stock_quantity": 45,
+      "categories": [
+        {
+          "name": "Electronics"
+        },
+        {
+          "name": "Home Office"
+        }
+      ],
+      "tags": [
+        {
+          "name": "mouse"
+        },
+        {
+          "name": "wireless"
+        },
+        {
+          "name": "ergonomic"
+        }
+      ],
+      "rating_count": 28,
+      "average_rating": "4.4"
+    },
+    {
+      "id": 10,
+      "name": "LED Desk Lamp with USB Charging",
+      "slug": "led-desk-lamp-usb",
+      "type": "simple",
+      "status": "publish",
+      "featured": false,
+      "description": "<p>Adjustable LED desk lamp with multiple brightness levels and USB charging port. Energy-efficient and eye-friendly.</p><h3>Features:</h3><ul><li>5 brightness levels</li><li>3 color temperatures</li><li>USB charging port</li><li>Touch controls</li><li>Adjustable arm and head</li><li>Energy-efficient LED</li></ul>",
+      "short_description": "Adjustable LED desk lamp with USB charging and multiple settings.",
+      "sku": "DL-LED-USB",
+      "price": "59.99",
+      "regular_price": "59.99",
+      "stock_status": "instock",
+      "stock_quantity": 25,
+      "categories": [
+        {
+          "name": "Home Office"
+        },
+        {
+          "name": "Electronics"
+        }
+      ],
+      "tags": [
+        {
+          "name": "lamp"
+        },
+        {
+          "name": "led"
+        },
+        {
+          "name": "desk"
+        },
+        {
+          "name": "office"
+        }
+      ],
+      "rating_count": 16,
+      "average_rating": "4.7"
+    }
+  ]
+}

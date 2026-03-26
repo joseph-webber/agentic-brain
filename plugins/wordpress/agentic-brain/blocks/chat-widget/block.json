@@ -1,0 +1,22 @@
+{
+  "apiVersion": 3,
+  "name": "agentic-brain/chat-widget",
+  "title": "AI Chat Widget",
+  "category": "widgets",
+  "icon": "format-chat",
+  "description": "Add AI chatbot to your page",
+  "attributes": {
+    "position": {
+      "type": "string",
+      "default": "bottom-right"
+    },
+    "primaryColor": {
+      "type": "string",
+      "default": "#0073aa"
+    }
+  },
+  "textdomain": "agentic-brain",
+  "editorScript": "file:../../build/index.js",
+  "editorStyle": "file:../../build/index.css",
+  "style": "file:../../build/style-index.css"
+}

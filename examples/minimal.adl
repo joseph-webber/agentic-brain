@@ -1,0 +1,10 @@
+// examples/minimal.adl - Minimal working ADL example for CI validation
+
+application Minimal {
+  name "Minimal ADL Example"
+}
+
+llm Default {
+  provider OpenAI
+  model gpt-4o
+}

@@ -1,0 +1,35 @@
+app = "agentic-brain"
+primary_region = "syd"  # Sydney for Australia
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[services]]
+  internal_port = 8000
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = "15s"
+    timeout = "5s"
+    path = "/health"
+    method = "GET"
+
+[env]
+  SESSION_BACKEND = "redis"
+  LOG_LEVEL = "INFO"

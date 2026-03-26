@@ -1,0 +1,139 @@
+# Agentic Brain - Kubernetes Deployment
+# JHipster-style K8s manifest with health probes and resource limits
+#
+# Usage:
+#   kubectl apply -f k8s/deployment.yaml
+#
+# Prerequisites:
+#   - ConfigMap: agentic-brain-config (see configmap.yaml)
+#   - Secret: agentic-brain-secrets (see secret.yaml)
+#   - Neo4j deployed or external connection configured
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentic-brain
+  labels:
+    app: agentic-brain
+    app.kubernetes.io/name: agentic-brain
+    app.kubernetes.io/component: api
+    app.kubernetes.io/version: "2.11.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: agentic-brain
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: agentic-brain
+        app.kubernetes.io/name: agentic-brain
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: agentic-brain
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: agentic-brain
+          image: ghcr.io/joseph-webber/agentic-brain:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: ENVIRONMENT
+              value: "prod"
+            - name: SERVER_PORT
+              value: "8000"
+            - name: SERVER_WORKERS
+              value: "4"
+          envFrom:
+            - configMapRef:
+                name: agentic-brain-config
+            - secretRef:
+                name: agentic-brain-secrets
+          resources:
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+          # Liveness probe - is the container alive?
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # Readiness probe - can we receive traffic?
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Startup probe - give extra time on startup
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /app/.cache
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: agentic-brain
+                topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: agentic-brain
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: agentic-brain
+  labels:
+    app: agentic-brain

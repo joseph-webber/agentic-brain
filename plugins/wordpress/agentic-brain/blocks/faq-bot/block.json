@@ -1,0 +1,17 @@
+{
+  "apiVersion": 3,
+  "name": "agentic-brain/faq-bot",
+  "title": "FAQ Bot",
+  "category": "widgets",
+  "icon": "welcome-learn-more",
+  "description": "Auto-trained FAQ bot for WooCommerce",
+  "attributes": {
+    "title": { "type": "string", "default": "Frequently Asked Questions" },
+    "initialQuestion": { "type": "string", "default": "Ask me anything about our products!" },
+    "productSource": { "type": "string", "default": "all" },
+    "showAvatar": { "type": "boolean", "default": true }
+  },
+  "textdomain": "agentic-brain",
+  "editorScript": "file:../../build/index.js",
+  "style": "file:../../build/style-index.css"
+}

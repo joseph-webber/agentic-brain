@@ -1,0 +1,87 @@
+.agentic-brain-faq-bot {
+	border: 1px solid #e2e4e7;
+	border-radius: 8px;
+	background: #fff;
+	overflow: hidden;
+	box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.faq-header {
+	background: #f0f0f1;
+	padding: 15px;
+	border-bottom: 1px solid #e2e4e7;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.faq-header h3 {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.bot-avatar {
+	width: 32px;
+	height: 32px;
+	background: #0073aa;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: white;
+}
+
+.faq-conversation {
+	padding: 20px;
+	min-height: 200px;
+	max-height: 400px;
+	overflow-y: auto;
+	background: #fff;
+}
+
+.message {
+	margin-bottom: 15px;
+	max-width: 80%;
+}
+
+.bot-message {
+	margin-right: auto;
+}
+
+.bot-message .message-content {
+	background: #f0f6fc;
+	padding: 10px 15px;
+	border-radius: 0 15px 15px 15px;
+	color: #1d2327;
+}
+
+.faq-input-form {
+	padding: 15px;
+	border-top: 1px solid #e2e4e7;
+	display: flex;
+	gap: 10px;
+}
+
+.faq-input {
+	flex-grow: 1;
+	border: 1px solid #8c8f94;
+	border-radius: 4px;
+	padding: 8px 12px;
+}
+
+.faq-submit {
+	background: #0073aa;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	width: 40px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.faq-submit:hover {
+	background: #005177;
+}

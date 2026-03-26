@@ -1,0 +1,65 @@
+*.pyc
+*.egg-info/
+__pycache__/
+
+# Environment files - SECURITY: Never commit secrets
+.env
+.env*
+.env.local
+.env.*.local
+.env.docker
+!.env.example
+!.env.docker.example
+!.env.dev.example
+!.env.test.example
+!.env.prod.example
+.venv/
+
+# Cryptographic keys and certificates - SECURITY
+*.key
+*.pem
+*.p12
+*.pfx
+*.cer
+*.crt
+*.der
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+
+# Credentials and secrets - SECURITY
+*credentials*
+*secret*
+*password*
+*apikey*
+*api_key*
+.aws/
+.gcp/
+.azure/
+
+# Cache directories
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.benchmarks/
+.cache/
+
+# Security & Research (moved to private)
+findings/
+research/
+security-audit/
+
+# Security Reports
+security_report_*.md
+
+# Private user data - NEVER commit
+.user_data/
+user_profile.json
+*.private.json
+
+# User-specific environment - NEVER commit
+.env.user
+.env.local
+*.private
