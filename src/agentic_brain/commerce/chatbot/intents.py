@@ -20,11 +20,11 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 
-class CommerceUserType(str, Enum):
+class CommerceUserType(StrEnum):
     """Supported WooCommerce chatbot audiences."""
 
     ADMIN = "admin"
@@ -32,7 +32,7 @@ class CommerceUserType(str, Enum):
     GUEST = "guest"
 
 
-class CommerceIntent(str, Enum):
+class CommerceIntent(StrEnum):
     """Commerce-specific intents understood by the chatbot."""
 
     SHOW_SALES = "show_sales"

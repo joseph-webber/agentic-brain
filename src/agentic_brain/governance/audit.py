@@ -43,14 +43,14 @@ import logging
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime, timedelta, timezone
-from enum import Enum
+from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-class AuditOutcome(str, Enum):
+class AuditOutcome(StrEnum):
     """Outcome status for audit events."""
 
     SUCCESS = "success"
@@ -60,7 +60,7 @@ class AuditOutcome(str, Enum):
     PENDING = "pending"
 
 
-class AuditCategory(str, Enum):
+class AuditCategory(StrEnum):
     """Categories for audit events."""
 
     DATA_ACCESS = "data_access"

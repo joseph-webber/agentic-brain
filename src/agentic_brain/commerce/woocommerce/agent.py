@@ -300,10 +300,14 @@ class WooCommerceAgent:
     def create_product_sync(self, data: Dict[str, Any]) -> Dict[str, Any]:
         return self._request("POST", "products", json=data)
 
-    def update_product_sync(self, product_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def update_product_sync(
+        self, product_id: int, data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         return self._request("PUT", f"products/{product_id}", json=data)
 
-    def delete_product_sync(self, product_id: int, force: bool = False) -> Dict[str, Any]:
+    def delete_product_sync(
+        self, product_id: int, force: bool = False
+    ) -> Dict[str, Any]:
         return self._request(
             "DELETE", f"products/{product_id}", params={"force": str(force).lower()}
         )
@@ -311,14 +315,14 @@ class WooCommerceAgent:
     def get_variations_sync(
         self, product_id: int, params: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
-        return self._request(
-            "GET", f"products/{product_id}/variations", params=params
-        )
+        return self._request("GET", f"products/{product_id}/variations", params=params)
 
     def get_variation_sync(self, product_id: int, variation_id: int) -> Dict[str, Any]:
         return self._request("GET", f"products/{product_id}/variations/{variation_id}")
 
-    def create_variation_sync(self, product_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_variation_sync(
+        self, product_id: int, data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         return self._request("POST", f"products/{product_id}/variations", json=data)
 
     def update_variation_sync(

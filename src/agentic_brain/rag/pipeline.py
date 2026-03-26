@@ -495,6 +495,7 @@ Answer:"""
         relationship_types = kwargs.get("relationship_types") or kwargs.get(
             "relationships"
         )
+        graph_retriever = kwargs.get("graph_retriever")
         max_depth = int(kwargs.get("max_depth", 2))
         limit = int(kwargs.get("limit", kwargs.get("k", 20)))
         strategy = kwargs.get("strategy", TraversalStrategy.HYBRID)
@@ -510,7 +511,8 @@ Answer:"""
             strategy = inferred_strategy
 
         try:
-            graph_retriever = self._build_graph_retriever()
+            if graph_retriever is None:
+                graph_retriever = self._build_graph_retriever()
             context = await asyncio.to_thread(
                 graph_retriever.retrieve,
                 query=query,
@@ -548,6 +550,7 @@ Answer:"""
         relationship_types = kwargs.get("relationship_types") or kwargs.get(
             "relationships"
         )
+        graph_retriever = kwargs.get("graph_retriever")
         max_depth = int(kwargs.get("max_depth", 2))
         limit = int(kwargs.get("limit", kwargs.get("k", 20)))
         max_nodes = int(kwargs.get("max_nodes", 10))
@@ -564,7 +567,8 @@ Answer:"""
             strategy = inferred_strategy
 
         try:
-            graph_retriever = self._build_graph_retriever()
+            if graph_retriever is None:
+                graph_retriever = self._build_graph_retriever()
             context = await asyncio.to_thread(
                 graph_retriever.retrieve,
                 query=query,

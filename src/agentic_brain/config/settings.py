@@ -32,7 +32,7 @@ Configuration hierarchy (highest priority first):
 from __future__ import annotations
 
 import os
-from enum import Enum
+from enum import Enum, StrEnum
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -41,7 +41,7 @@ from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Environment(str, Enum):
+class Environment(StrEnum):
     """Application environment profiles (like JHipster Spring Profiles)."""
 
     DEV = "dev"

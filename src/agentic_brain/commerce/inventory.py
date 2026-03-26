@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta, timezone
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Protocol
 from uuid import uuid4
 
@@ -250,7 +250,7 @@ class InventoryManager:
     def list_warehouses(self) -> List[str]:
         """Return all warehouses that have local stock records."""
 
-        return sorted({wh for _, wh in self._local_stock.keys()})
+        return sorted({wh for _, wh in self._local_stock})
 
     def update_local_stock(
         self,
@@ -589,7 +589,7 @@ class ReservationNotFoundError(InventoryError):
     """Raised when a reservation cannot be found for a given identifier."""
 
 
-class StockEventType(str, Enum):
+class StockEventType(StrEnum):
     """Types of stock events recorded in the audit log."""
 
     ADJUSTMENT = "adjustment"
@@ -650,7 +650,7 @@ class StockReservation:
     expires_at: Optional[datetime] = None
 
 
-class AlertSeverity(str, Enum):
+class AlertSeverity(StrEnum):
     """Severity level for stock alerts."""
 
     INFO = "info"

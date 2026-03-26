@@ -19,7 +19,7 @@ import asyncio
 import logging
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime, timezone
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field
@@ -27,7 +27,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
-class HealthStatus(str, Enum):
+class HealthStatus(StrEnum):
     """
     Health status values matching Spring Boot Actuator.
 

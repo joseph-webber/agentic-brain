@@ -85,11 +85,12 @@ async def test_graph_search_returns_graph_results(
     """graph_search returns nodes and edges from traversal."""
     pipeline = _make_pipeline()
 
-    with patch("agentic_brain.rag.pipeline.GraphTraversalRetriever") as mock_retriever:
-        graph_retriever = mock_retriever.return_value
-        graph_retriever.retrieve.return_value = graph_context
+    graph_retriever = MagicMock()
+    graph_retriever.retrieve.return_value = graph_context
 
-        result = await pipeline.graph_search("Project Alpha", max_depth=2)
+    result = await pipeline.graph_search(
+        "Project Alpha", max_depth=2, graph_retriever=graph_retriever
+    )
 
     assert isinstance(result, GraphSearchResult)
     assert len(result.nodes) == 2
@@ -102,14 +103,13 @@ async def test_graph_query_generates_answer(graph_context: GraphContext) -> None
     """graph_query synthesizes an answer from graph context."""
     pipeline = _make_pipeline()
 
-    with patch("agentic_brain.rag.pipeline.GraphTraversalRetriever") as mock_retriever:
-        graph_retriever = mock_retriever.return_value
-        graph_retriever.retrieve.return_value = graph_context
+    graph_retriever = MagicMock()
+    graph_retriever.retrieve.return_value = graph_context
 
-        with patch.object(
-            pipeline, "_generate", return_value="Sam works on Project Alpha"
-        ):
-            result = await pipeline.graph_query("Who works on Project Alpha?")
+    with patch.object(pipeline, "_generate", return_value="Sam works on Project Alpha"):
+        result = await pipeline.graph_query(
+            "Who works on Project Alpha?", graph_retriever=graph_retriever
+        )
 
     assert isinstance(result, GraphQueryResult)
     assert result.answer == "Sam works on Project Alpha"
@@ -130,11 +130,12 @@ async def test_graph_query_handles_empty_context() -> None:
         max_depth=0,
     )
 
-    with patch("agentic_brain.rag.pipeline.GraphTraversalRetriever") as mock_retriever:
-        graph_retriever = mock_retriever.return_value
-        graph_retriever.retrieve.return_value = empty_context
+    graph_retriever = MagicMock()
+    graph_retriever.retrieve.return_value = empty_context
 
-        result = await pipeline.graph_query("Unknown entity?")
+    result = await pipeline.graph_query(
+        "Unknown entity?", graph_retriever=graph_retriever
+    )
 
     assert "couldn't find relevant graph context" in result.answer.lower()
     assert result.sources == []

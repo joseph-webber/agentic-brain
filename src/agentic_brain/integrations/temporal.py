@@ -45,7 +45,7 @@ import inspect
 import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta, timezone
-from enum import Enum
+from enum import Enum, StrEnum
 from functools import wraps
 from typing import Any, Callable, ParamSpec, TypeVar
 
@@ -57,7 +57,7 @@ R = TypeVar("R")
 T = TypeVar("T")
 
 
-class WorkflowStatus(str, Enum):
+class WorkflowStatus(StrEnum):
     """Status of a workflow execution"""
 
     PENDING = "pending"

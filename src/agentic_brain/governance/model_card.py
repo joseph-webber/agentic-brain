@@ -38,13 +38,13 @@ Example:
 from __future__ import annotations
 
 from datetime import UTC, datetime, timezone
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class RiskLevel(str, Enum):
+class RiskLevel(StrEnum):
     """Risk level classification for model deployment."""
 
     LOW = "low"

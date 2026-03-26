@@ -517,7 +517,7 @@ class SentenceTransformerEmbeddings(EmbeddingProvider):
 
         return [
             (int(idx), float(score))
-            for score, idx in zip(top_results.values, top_results.indices)
+            for score, idx in zip(top_results.values, top_results.indices, strict=False)
         ]
 
     def benchmark(self, n_texts: int = 10) -> dict[str, Any]:
@@ -915,7 +915,7 @@ class CachedEmbeddings(EmbeddingProvider):
         # Generate missing embeddings
         if uncached_texts:
             new_embeddings = self.provider.embed_batch(uncached_texts)
-            for idx, embedding in zip(uncached_indices, new_embeddings):
+            for idx, embedding in zip(uncached_indices, new_embeddings, strict=False):
                 results[idx] = embedding
                 self._set_cached(texts[idx], embedding)
 

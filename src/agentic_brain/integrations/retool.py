@@ -66,7 +66,7 @@ import logging
 import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timezone
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 import aiohttp
@@ -75,7 +75,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
-class WorkflowStatus(str, Enum):
+class WorkflowStatus(StrEnum):
     """Retool workflow execution status."""
 
     PENDING = "pending"

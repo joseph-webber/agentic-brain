@@ -28,13 +28,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
 
-class WorkflowState(str, Enum):
+class WorkflowState(StrEnum):
     """Workflow execution states."""
 
     PENDING = "pending"
@@ -45,7 +45,7 @@ class WorkflowState(str, Enum):
     CANCELLED = "cancelled"
 
 
-class TransitionType(str, Enum):
+class TransitionType(StrEnum):
     """Types of transitions between steps."""
 
     ALWAYS = "always"  # Always transition

@@ -30,14 +30,14 @@ from __future__ import annotations
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, StrEnum
 from threading import RLock
 from typing import Any, Callable, Protocol
 
 logger = logging.getLogger(__name__)
 
 
-class ExecutionStrategy(str, Enum):
+class ExecutionStrategy(StrEnum):
     """Agent execution strategies."""
 
     SEQUENTIAL = "sequential"  # Execute agents one by one
@@ -45,7 +45,7 @@ class ExecutionStrategy(str, Enum):
     HIERARCHICAL = "hierarchical"  # Manager agent coordinates
 
 
-class AgentRole(str, Enum):
+class AgentRole(StrEnum):
     """Pre-defined agent roles."""
 
     MANAGER = "manager"  # Coordinates and delegates

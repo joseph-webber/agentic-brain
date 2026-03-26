@@ -36,7 +36,7 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta, timezone
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -1050,7 +1050,7 @@ class SAMLAuthProvider(AuthProvider):
 # =============================================================================
 
 
-class APIKeyScope(str, Enum):
+class APIKeyScope(StrEnum):
     """Predefined API key scopes."""
 
     READ = "read"
@@ -1515,7 +1515,7 @@ class APIKeyAuthProvider(AuthProvider):
 # =============================================================================
 
 
-class MFAMethod(str, Enum):
+class MFAMethod(StrEnum):
     """MFA methods."""
 
     TOTP = "totp"

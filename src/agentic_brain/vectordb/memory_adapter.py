@@ -382,7 +382,7 @@ class MemoryVectorAdapter(VectorDBAdapter):
     def _python_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """Calculate similarity using pure Python."""
         if self.metric == "cosine":
-            dot = sum(a * b for a, b in zip(vec1, vec2))
+            dot = sum(a * b for a, b in zip(vec1, vec2, strict=False))
             norm1 = math.sqrt(sum(a * a for a in vec1))
             norm2 = math.sqrt(sum(b * b for b in vec2))
             if norm1 == 0 or norm2 == 0:
@@ -390,10 +390,10 @@ class MemoryVectorAdapter(VectorDBAdapter):
             return dot / (norm1 * norm2)
 
         elif self.metric == "dotproduct":
-            return sum(a * b for a, b in zip(vec1, vec2))
+            return sum(a * b for a, b in zip(vec1, vec2, strict=False))
 
         elif self.metric == "euclidean":
-            dist = math.sqrt(sum((a - b) ** 2 for a, b in zip(vec1, vec2)))
+            dist = math.sqrt(sum((a - b) ** 2 for a, b in zip(vec1, vec2, strict=False)))
             return -dist
 
         else:

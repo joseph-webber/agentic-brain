@@ -204,7 +204,9 @@ class WooCatalogSync:
                 if current and payload.items() <= dict(current).items():
                     results.append(current)
                     continue
-                results.append(await self._woo.update_variation(product_id, vid, payload))
+                results.append(
+                    await self._woo.update_variation(product_id, vid, payload)
+                )
                 continue
 
             key = str(desired.get(match_key) or "")
@@ -216,7 +218,9 @@ class WooCatalogSync:
             if current and current.get("id"):
                 vid = int(current["id"])
                 payload.pop("id", None)
-                results.append(await self._woo.update_variation(product_id, vid, payload))
+                results.append(
+                    await self._woo.update_variation(product_id, vid, payload)
+                )
             else:
                 payload.pop("id", None)
                 results.append(await self._woo.create_variation(product_id, payload))

@@ -20,7 +20,7 @@ import logging
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Callable, Dict, Optional
 
 import redis.asyncio as aioredis
@@ -40,7 +40,7 @@ import docker
 logger = logging.getLogger(__name__)
 
 
-class ServiceStatus(str, Enum):
+class ServiceStatus(StrEnum):
     """Service health status."""
 
     HEALTHY = "healthy"

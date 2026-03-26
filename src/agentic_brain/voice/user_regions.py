@@ -163,7 +163,7 @@ class UserRegionStorage:
 
         if len(words_original) == len(words_corrected):
             for _i, (orig_word, corr_word) in enumerate(
-                zip(words_original, words_corrected)
+                zip(words_original, words_corrected, strict=False)
             ):
                 if orig_word != corr_word:
                     self.learn_expression(orig_word, corr_word, confidence=0.9)

@@ -31,7 +31,7 @@ import os
 import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Optional
 
 import aiohttp
@@ -39,7 +39,7 @@ import aiohttp
 logger = logging.getLogger(__name__)
 
 
-class StreamProvider(str, Enum):
+class StreamProvider(StrEnum):
     """Supported streaming providers."""
 
     OLLAMA = "ollama"

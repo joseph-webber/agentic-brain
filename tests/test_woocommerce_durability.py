@@ -9,7 +9,11 @@ import hmac
 
 import pytest
 
-from agentic_brain.commerce.payments import PaymentMethodReference, PaymentRequest, PaymentResult
+from agentic_brain.commerce.payments import (
+    PaymentMethodReference,
+    PaymentRequest,
+    PaymentResult,
+)
 from agentic_brain.commerce.webhooks import WOO_EVENT_ORDER_CREATED
 from agentic_brain.commerce.woocommerce.inventory import (
     DurableInventoryManager,
@@ -141,7 +145,9 @@ async def test_payment_idempotency_returns_normalized_status() -> None:
         def __init__(self) -> None:
             self.calls = 0
 
-        def process_payment(self, request: PaymentRequest, gateway_name: str | None = None):
+        def process_payment(
+            self, request: PaymentRequest, gateway_name: str | None = None
+        ):
             self.calls += 1
             return PaymentResult(
                 gateway=gateway_name or "stripe",
@@ -151,7 +157,9 @@ async def test_payment_idempotency_returns_normalized_status() -> None:
                 currency=request.currency,
             )
 
-        def refund_payment(self, request, gateway_name: str | None = None):  # pragma: no cover
+        def refund_payment(
+            self, request, gateway_name: str | None = None
+        ):  # pragma: no cover
             raise NotImplementedError
 
     processor = DurablePaymentProcessor(ProcessorStub())

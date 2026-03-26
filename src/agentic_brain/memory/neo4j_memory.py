@@ -271,7 +271,7 @@ class ConversationMemory:
             )
 
             # Link to previous message (maintain conversation order)
-            result = session.run(
+            session.run(
                 """
                 MATCH (s:Session {id: $session_id})-[:CONTAINS]->(prev:Message)
                 WHERE NOT exists((prev)-[:NEXT]->())

@@ -20,13 +20,13 @@ Provides User, Token, and Credentials classes with Pydantic validation.
 """
 
 from datetime import UTC, datetime, timezone
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class AuthMethod(str, Enum):
+class AuthMethod(StrEnum):
     """Authentication methods."""
 
     JWT = "jwt"

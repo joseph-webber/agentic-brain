@@ -106,7 +106,11 @@ def _payment_state_from_result(result: PaymentResult) -> PaymentState:
 
     if normalized in {PaymentStatus.SUCCEEDED, PaymentStatus.COMPLETED}:
         return PaymentState.CAPTURED
-    if normalized in {PaymentStatus.CREATED, PaymentStatus.PENDING, PaymentStatus.ACTIVE}:
+    if normalized in {
+        PaymentStatus.CREATED,
+        PaymentStatus.PENDING,
+        PaymentStatus.ACTIVE,
+    }:
         return PaymentState.AUTHORIZED
     if normalized == PaymentStatus.REFUNDED:
         return PaymentState.REFUNDED
@@ -204,7 +208,11 @@ class DurablePaymentProcessor:
             self._records[request.order_id] = record
             await self._log(
                 request.order_id,
-                "payment_captured" if state == PaymentState.CAPTURED else "payment_authorized",
+                (
+                    "payment_captured"
+                    if state == PaymentState.CAPTURED
+                    else "payment_authorized"
+                ),
                 data={"transaction_id": result.transaction_id, "status": result.status},
             )
             return result

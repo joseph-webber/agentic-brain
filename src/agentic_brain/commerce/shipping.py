@@ -30,7 +30,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timezone
 from decimal import Decimal
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Iterable, Protocol
 
 from .models import WooAddress
@@ -56,7 +56,7 @@ def _as_decimal(value: float | str | Decimal) -> Decimal:
     return value if isinstance(value, Decimal) else Decimal(str(value))
 
 
-class ShipmentStatus(str, Enum):
+class ShipmentStatus(StrEnum):
     """Status values used to track shipment progress."""
 
     CREATED = "created"

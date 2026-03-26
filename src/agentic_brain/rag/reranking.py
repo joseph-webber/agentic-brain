@@ -144,7 +144,7 @@ class QueryDocumentSimilarityReranker(BaseReranker):
 
         # Score each chunk
         scored_chunks = []
-        for chunk, content_embedding in zip(chunks, chunk_embeddings):
+        for chunk, content_embedding in zip(chunks, chunk_embeddings, strict=False):
             similarity = self._cosine_similarity(query_embedding, content_embedding)
 
             # Create new chunk with updated score
@@ -236,7 +236,7 @@ class CrossEncoderReranker(BaseReranker):
 
         # Create reranked chunks
         reranked_chunks = []
-        for chunk, score in zip(chunks, scores):
+        for chunk, score in zip(chunks, scores, strict=False):
             reranked_chunk = RetrievedChunk(
                 content=chunk.content,
                 source=chunk.source,

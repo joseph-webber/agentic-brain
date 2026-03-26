@@ -327,7 +327,7 @@ class WorkflowState:
             )
 
             # Link to previous step if exists
-            result = session.run(
+            session.run(
                 """
                 MATCH (w:Workflow {id: $workflow_id})-[:CONTAINS]->(prev:Step)
                 WHERE NOT exists((prev)-[:NEXT]->())
