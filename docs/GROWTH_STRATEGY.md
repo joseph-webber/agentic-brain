@@ -4,8 +4,8 @@
 
 ## Current Position
 
-- **Version**: 2.6.0
-- **Tests**: 2,200+ passing
+- **Version**: 2.12.0
+- **Tests**: 4,700+ passing
 - **Code**: 63,000+ lines
 - **Core Dependencies**: 2 (aiohttp, questionary)
 - **Integrations**: 12 enterprise data loaders
