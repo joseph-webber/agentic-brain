@@ -9,6 +9,9 @@ LABEL org.opencontainers.image.source="https://github.com/joseph-webber/agentic-
 
 WORKDIR /build
 
+# Configure pip for corporate proxies (trusted hosts)
+RUN pip config set global.trusted-host "pypi.org pypi.python.org files.pythonhosted.org"
+
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \

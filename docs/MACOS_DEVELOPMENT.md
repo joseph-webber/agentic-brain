@@ -208,8 +208,11 @@ AUTH_ENABLED=false
 **If using Neo4j, Redis, or Redpanda:**
 
 ```bash
-# Option A: Docker Compose (all services)
-docker-compose -f docker-compose.dev.yml up -d
+# First, copy the environment template
+cp .env.dev.example .env.dev
+
+# Option A: Docker Compose (all services) - RECOMMENDED
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml up -d
 
 # Option B: Individual services via Homebrew
 # Neo4j
@@ -602,20 +605,23 @@ docker stop redpanda-dev && docker rm redpanda-dev
 **Start all services at once:**
 
 ```bash
+# Copy environment template (first time only)
+cp .env.dev.example .env.dev
+
 # Development mode (with hot reload)
-docker-compose -f docker-compose.dev.yml up -d
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml up -d
 
 # View logs
-docker-compose -f docker-compose.dev.yml logs -f
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml logs -f
 
 # Check status
-docker-compose -f docker-compose.dev.yml ps
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml ps
 
 # Stop all
-docker-compose -f docker-compose.dev.yml down
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml down
 
 # Stop and remove volumes (fresh start)
-docker-compose -f docker-compose.dev.yml down -v
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml down -v
 ```
 
 **Service URLs:**
@@ -643,7 +649,7 @@ git pull
 pip install -e ".[dev]"
 
 # 3. Start services (if using Docker)
-docker-compose -f docker-compose.dev.yml up -d
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml up -d
 
 # 4. Start API with hot reload
 uvicorn agentic_brain.api.main:app --reload
@@ -742,7 +748,7 @@ pytest tests/unit -n auto
 
 ```bash
 # Start services first
-docker-compose -f docker-compose.dev.yml up -d
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml up -d
 
 # Run integration tests
 pytest tests/integration -v -m integration
@@ -1132,7 +1138,7 @@ git push
 cp .env.prod .env
 
 # 2. Start all services
-docker-compose -f docker-compose.yml up -d
+docker compose -f docker-compose.yml up -d
 
 # 3. Initialize database
 agentic-brain db init
@@ -1150,7 +1156,7 @@ gunicorn agentic_brain.api.main:app \
 curl http://localhost:8000/health
 
 # 7. Stop demo
-docker-compose -f docker-compose.yml down
+docker compose -f docker-compose.yml down
 ```
 
 ### GitHub Pages Deployment
@@ -1180,11 +1186,11 @@ mkdocs gh-deploy --force
 # Build production image
 docker build -t agentic-brain:latest .
 
-# Run with docker-compose
-docker-compose -f docker-compose.yml up -d
+# Run with docker compose
+docker compose -f docker-compose.yml up -d
 
 # View logs
-docker-compose logs -f agentic-brain
+docker compose logs -f agentic-brain
 ```
 
 **2. Render.com (One-Click):**
@@ -1352,7 +1358,7 @@ pip install mlx
 tail -f logs/agentic-brain.log
 
 # Docker logs
-docker-compose logs -f
+docker compose logs -f
 
 # System logs
 log show --predicate 'process == "python3"' --last 5m

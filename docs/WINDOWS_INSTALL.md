@@ -29,55 +29,33 @@ cd agentic-brain/
 ./setup.sh
 ```
 
-**Step 2: Windows Dockerfile Fix**
+**Step 2: Configure Environment**
 
-Replace the default `Dockerfile` in the `agentic-brain/` folder with the Windows-compatible version below:
-
-```dockerfile
-# Windows-compatible Dockerfile for Agentic Brain
-FROM python:3.11-slim
-
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
-COPY . .
-
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Expose port
-EXPOSE 8000
-
-# Run the application
-CMD ["python", "-m", "agentic_brain.server"]
+Copy the example environment file and configure it:
+```bash
+cp .env.dev.example .env.dev
 ```
 
-**Step 3: Start Services**
+Edit `.env.dev` with your settings (Neo4j password, Redis password, etc.).
+
+**Step 3: Corporate Proxy Configuration (If Needed)**
+
+If you're behind a corporate proxy and encounter SSL/certificate errors during Docker builds, the Dockerfile already includes trusted-host configuration for pip. No additional action needed.
+
+**Step 4: Start Services**
 
 ```bash
-docker compose -f docker/docker-compose.dev.yml up -d
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml up -d
 ```
 
-**Step 4: Verify**
+**Step 5: Verify**
 
 ```bash
 # Check containers are running
 docker ps
 
 # View logs
-docker compose -f docker/docker-compose.dev.yml logs -f
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml logs -f
 ```
 
 ---

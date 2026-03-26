@@ -93,14 +93,17 @@ Install Docker Desktop:
 git clone https://github.com/joseph-webber/agentic-brain.git
 cd agentic-brain
 
+# Copy environment template and configure
+cp .env.dev.example .env.dev
+
 # Start everything (Neo4j + Agentic Brain)
-docker-compose up -d
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml up -d
 
 # Check status
-docker-compose ps
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml ps
 
 # View logs
-docker-compose logs -f
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml logs -f
 ```
 
 Access at: http://localhost:8000
@@ -119,13 +122,13 @@ docker-compose up -d
 
 ```bash
 # Stop
-docker-compose down
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml down
 
 # Stop and delete data (fresh start)
-docker-compose down -v
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml down -v
 
 # Restart
-docker-compose restart
+docker compose --env-file .env.dev -f docker/docker-compose.dev.yml restart
 ```
 
 ---
@@ -265,15 +268,18 @@ export NO_PROXY=localhost,127.0.0.1
 pip install --proxy http://proxy.company.com:8080 -e ".[all]"
 ```
 
-### SSL Certificate Issues
+### SSL Certificate Issues / Corporate Proxies
 
-If your company intercepts SSL:
+The Dockerfile already includes trusted-host configuration for pip to handle corporate proxy SSL interception. If you still have issues:
 
 ```bash
 # Option 1: Add corporate CA bundle
 export REQUESTS_CA_BUNDLE=/path/to/corporate-ca-bundle.crt
 
-# Option 2: Disable SSL verify (development only!)
+# Option 2: Add trusted hosts for pip (already done in Dockerfile)
+pip config set global.trusted-host "pypi.org pypi.python.org files.pythonhosted.org"
+
+# Option 3: Disable SSL verify (development only!)
 export SSL_VERIFY=false
 ```
 

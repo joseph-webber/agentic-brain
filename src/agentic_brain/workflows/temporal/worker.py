@@ -26,6 +26,7 @@ from typing import Any, Optional
 try:
     from temporalio.client import Client
     from temporalio.worker import Worker
+
     TEMPORALIO_AVAILABLE = True
 except ImportError:
     TEMPORALIO_AVAILABLE = False
@@ -69,7 +70,7 @@ class TemporalWorker:
             raise ImportError(
                 "temporalio is not installed. Install with: pip install temporalio"
             )
-        
+
         client = await self.client_wrapper.connect()
 
         logger.info(f"Starting worker on task queue: {self.task_queue}")

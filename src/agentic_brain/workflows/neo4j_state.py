@@ -176,7 +176,9 @@ class WorkflowState:
             return get_session()
         else:
             if not NEO4J_AVAILABLE or GraphDatabase is None:
-                raise ImportError("neo4j package is required. Install with: pip install neo4j")
+                raise ImportError(
+                    "neo4j package is required. Install with: pip install neo4j"
+                )
 
             driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", ""))
             return driver.session()

@@ -1169,7 +1169,7 @@ ab mode list             # See all 42 modes
 curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/setup.sh | bash
 
 # Or via Docker Compose
-docker-compose up -d
+docker compose up -d
 ```
 
 ---

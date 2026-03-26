@@ -22,19 +22,26 @@ from typing import Any
 # Optional dependency - graceful fallback if not installed
 try:
     from temporalio import activity
+
     TEMPORALIO_AVAILABLE = True
 except ImportError:
     TEMPORALIO_AVAILABLE = False
+
     # Create stub for activity decorator
     class _ActivityStub:
         @staticmethod
         def defn(fn):
             return fn
+
         class logger:
             @staticmethod
-            def info(msg): pass
+            def info(msg):
+                pass
+
         @staticmethod
-        def heartbeat(*args): pass
+        def heartbeat(*args):
+            pass
+
     activity = _ActivityStub()
 
 

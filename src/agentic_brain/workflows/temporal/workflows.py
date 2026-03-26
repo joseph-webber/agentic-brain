@@ -25,27 +25,35 @@ from typing import Any, Optional
 try:
     from temporalio import workflow
     from temporalio.common import RetryPolicy
+
     TEMPORALIO_AVAILABLE = True
 except ImportError:
     TEMPORALIO_AVAILABLE = False
+
     # Create stub for workflow decorators
     class _WorkflowStub:
         @staticmethod
         def defn(cls):
             return cls
+
         @staticmethod
         def run(fn):
             return fn
+
         @staticmethod
         def signal(name=None):
             def decorator(fn):
                 return fn
+
             return decorator
+
         @staticmethod
         def query(name=None):
             def decorator(fn):
                 return fn
+
             return decorator
+
     workflow = _WorkflowStub()
     RetryPolicy = None  # type: ignore
 

@@ -558,7 +558,9 @@ class DirectNeo4jConnection:
     def connect(self) -> None:
         """Establish connection."""
         if not NEO4J_AVAILABLE or GraphDatabase is None:
-            raise ImportError("neo4j package is required. Install with: pip install neo4j")
+            raise ImportError(
+                "neo4j package is required. Install with: pip install neo4j"
+            )
 
         self._driver = GraphDatabase.driver(
             self._uri,

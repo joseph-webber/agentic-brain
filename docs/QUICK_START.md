@@ -112,9 +112,9 @@ curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/se
 # Pull and run
 docker run -it agenticbrain/brain chat
 
-# Or with docker-compose
+# Or with docker compose
 curl -O https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/docker-compose.yml
-docker-compose up -d
+docker compose up -d
 
 # Access at http://localhost:8000
 ```
