@@ -298,7 +298,7 @@ class TestIntegration:
     @pytest.mark.timeout(10)
     @pytest.mark.skipif(
         os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
-        reason="Daemon test hangs on GitHub Actions CI - no audio device"
+        reason="Daemon test hangs on GitHub Actions CI - no audio device",
     )
     async def test_long_running_daemon(self):
         """Test daemon running for extended period"""
