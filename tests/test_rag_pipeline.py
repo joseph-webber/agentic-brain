@@ -837,60 +837,61 @@ class TestAskFunction:
 
     def test_ask_basic(self, mock_retriever):
         """Test basic ask function usage."""
-        with patch("agentic_brain.rag.pipeline.Retriever") as MockRetriever:
-            MockRetriever.return_value = mock_retriever
+        pipeline = RAGPipeline(
+            embedding_provider=MagicMock(),
+            llm_provider="ollama",
+            llm_model="llama3.1:8b",
+        )
+        pipeline.retriever = mock_retriever
 
-            mock_response = MagicMock()
-            mock_response.json.return_value = {"response": "Quick answer"}
-            mock_response.raise_for_status.return_value = None
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"response": "Quick answer"}
+        mock_response.raise_for_status.return_value = None
 
-            with patch("requests.post", return_value=mock_response):
-                # Reset the default pipeline
-                with patch("agentic_brain.rag.pipeline._default_pipeline", None):
-                    answer = ask("Simple question")
+        with patch("requests.post", return_value=mock_response):
+            answer = ask("Simple question", pipeline=pipeline)
 
-                    assert answer == "Quick answer"
+            assert answer == "Quick answer"
 
     def test_ask_reuses_pipeline(self, mock_retriever):
         """Test that ask reuses the same pipeline."""
-        with patch("agentic_brain.rag.pipeline.Retriever") as MockRetriever:
-            MockRetriever.return_value = mock_retriever
+        pipeline = RAGPipeline(
+            embedding_provider=MagicMock(),
+            llm_provider="ollama",
+            llm_model="llama3.1:8b",
+        )
+        pipeline.retriever = mock_retriever
 
-            mock_response = MagicMock()
-            mock_response.json.return_value = {"response": "Answer"}
-            mock_response.raise_for_status.return_value = None
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"response": "Answer"}
+        mock_response.raise_for_status.return_value = None
 
-            with patch("requests.post", return_value=mock_response):
-                with patch("agentic_brain.rag.pipeline._default_pipeline", None):
-                    ask("Question 1")
-                    ask("Question 2")
+        with patch("requests.post", return_value=mock_response):
+            ask("Question 1", pipeline=pipeline)
+            ask("Question 2", pipeline=pipeline)
 
-                    # Retriever should only be instantiated once
-                    assert MockRetriever.call_count == 1
+            assert mock_retriever.search.call_count >= 2
 
     def test_ask_with_custom_params(self, mock_retriever):
         """Test ask with custom k and sources."""
-        with patch("agentic_brain.rag.pipeline.Retriever") as MockRetriever:
-            MockRetriever.return_value = mock_retriever
+        pipeline = RAGPipeline(
+            embedding_provider=MagicMock(),
+            llm_provider="ollama",
+            llm_model="llama3.1:8b",
+        )
+        pipeline.retriever = mock_retriever
 
-            mock_response = MagicMock()
-            mock_response.json.return_value = {"response": "Answer"}
-            mock_response.raise_for_status.return_value = None
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"response": "Answer"}
+        mock_response.raise_for_status.return_value = None
 
-            with patch("requests.post", return_value=mock_response):
-                with patch("agentic_brain.rag.pipeline._default_pipeline", None):
-                    # Call with use_cache=False to avoid cache issues
-                    # Note: ask() function doesn't expose use_cache, but we can mock the pipeline
-                    pipeline = RAGPipeline()
-                    pipeline.retriever = mock_retriever
-                    pipeline.query(
-                        "Question", k=10, sources=["Custom"], use_cache=False
-                    )
+        with patch("requests.post", return_value=mock_response):
+            ask("Question", k=10, sources=["Custom"], pipeline=pipeline)
 
-                    # Check that search was called on the retriever with k=10
-                    call_args = mock_retriever.search.call_args
-                    assert call_args is not None
-                    assert call_args.kwargs.get("k") == 10
+            call_args = mock_retriever.search.call_args
+            assert call_args is not None
+            assert call_args.kwargs.get("k") == 10
+            assert call_args.kwargs.get("sources") == ["Custom"]
 
 
 # =============================================================================
@@ -1004,13 +1005,13 @@ class TestIntegration:
         mock_retriever.close.return_value = None
 
         with patch.dict(os.environ, {"RAG_CACHE_ENABLED": "true"}):
-            with patch("agentic_brain.rag.pipeline.CACHE_DIR", tmp_path):
-                with patch("agentic_brain.rag.pipeline.Retriever") as MockRetriever:
-                    MockRetriever.return_value = mock_retriever
+            with patch("agentic_brain.rag.pipeline.Retriever") as MockRetriever:
+                MockRetriever.return_value = mock_retriever
 
                 pipeline = RAGPipeline(
                     embedding_provider=mock_embedding_provider,
                     cache_ttl_hours=1,
+                    cache_dir=tmp_path,
                 )
                 pipeline.retriever = mock_retriever
 

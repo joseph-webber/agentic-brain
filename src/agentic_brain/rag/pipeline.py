@@ -198,6 +198,7 @@ class RAGPipeline:
         llm_base_url: Optional[str] = None,
         cache_ttl_hours: int = 4,
         document_store: Optional["DocumentStore"] = None,
+        cache_dir: Optional[Path] = None,
     ):
         embedding_provider = embedding_provider or get_embeddings()
         self._document_store = document_store
@@ -215,6 +216,8 @@ class RAGPipeline:
         )
         self.timeout = int(os.getenv("LLM_TIMEOUT", "60"))
         self.cache_ttl_hours = cache_ttl_hours
+        self.cache_dir = cache_dir or CACHE_DIR
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     def _cache_key(self, query: str, sources: list[str]) -> str:
         """Generate cache key."""
@@ -223,7 +226,7 @@ class RAGPipeline:
 
     def _get_cached(self, cache_key: str) -> Optional[RAGResult]:
         """Get cached result if valid."""
-        cache_file = CACHE_DIR / f"{cache_key}.json"
+        cache_file = self.cache_dir / f"{cache_key}.json"
         if cache_file.exists():
             try:
                 data = json.loads(cache_file.read_text())
@@ -250,7 +253,7 @@ class RAGPipeline:
 
     def _set_cached(self, cache_key: str, result: RAGResult) -> None:
         """Cache a result."""
-        cache_file = CACHE_DIR / f"{cache_key}.json"
+        cache_file = self.cache_dir / f"{cache_key}.json"
         data = {
             "query": result.query,
             "answer": result.answer,
@@ -945,7 +948,12 @@ Answer:"""
 _default_pipeline: Optional[RAGPipeline] = None
 
 
-def ask(query: str, k: int = 5, sources: Optional[list[str]] = None) -> str:
+def ask(
+    query: str,
+    k: int = 5,
+    sources: Optional[list[str]] = None,
+    pipeline: Optional["RAGPipeline"] = None,
+) -> str:
     """
     Quick RAG query - returns just the answer.
 
@@ -955,8 +963,10 @@ def ask(query: str, k: int = 5, sources: Optional[list[str]] = None) -> str:
     """
     global _default_pipeline
 
-    if _default_pipeline is None:
-        _default_pipeline = RAGPipeline()
+    if pipeline is None:
+        if _default_pipeline is None:
+            _default_pipeline = RAGPipeline()
+        pipeline = _default_pipeline
 
-    result = _default_pipeline.query(query, k=k, sources=sources)
+    result = pipeline.query(query, k=k, sources=sources)
     return result.answer

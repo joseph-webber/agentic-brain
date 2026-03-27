@@ -279,6 +279,8 @@ class TestMockedPlatforms:
         """Test macOS fallback chain setup"""
         with patch("agentic_brain.voice.resilient.detect_platform") as mock:
             mock.return_value = VoicePlatform.MACOS
+            ResilientVoice._platform = None
+            ResilientVoice._fallbacks = []
 
             voice = ResilientVoice()
 
@@ -292,6 +294,8 @@ class TestMockedPlatforms:
         """Test Windows fallback chain setup"""
         with patch("agentic_brain.voice.resilient.detect_platform") as mock:
             mock.return_value = VoicePlatform.WINDOWS
+            ResilientVoice._platform = None
+            ResilientVoice._fallbacks = []
 
             voice = ResilientVoice()
 
@@ -305,6 +309,8 @@ class TestMockedPlatforms:
         """Test Linux fallback chain setup"""
         with patch("agentic_brain.voice.resilient.detect_platform") as mock:
             mock.return_value = VoicePlatform.LINUX
+            ResilientVoice._platform = None
+            ResilientVoice._fallbacks = []
 
             voice = ResilientVoice()
 
