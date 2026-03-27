@@ -65,6 +65,8 @@ class TestVoiceFunctionality:
         # AudioConfig sets default_rate=175 by default
         config = AudioConfig(default_voice="Karen", default_rate=200)
         audio = Audio(config)
+        audio.platform = Platform.MACOS
+        audio._tts_available = True
 
         # Mock speak
         with patch.object(audio, "_speak_macos", return_value=True) as mock_speak:

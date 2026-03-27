@@ -71,8 +71,7 @@ class TestWebSocketConnection:
         with client.websocket_connect(f"/ws/chat?token={websocket_token}") as websocket:
             assert websocket is not None
 
-    @pytest.mark.asyncio
-    async def test_websocket_connect(self, client, websocket_token):
+    def test_websocket_connect(self, client, websocket_token):
         """Test WebSocket connection establishment"""
         tokens = [
             json.dumps({"token": "Hello", "is_end": False}),
@@ -95,8 +94,7 @@ class TestWebSocketConnection:
         session_id = next(iter(sessions))
         assert sessions[session_id]["message_count"] == 1
 
-    @pytest.mark.asyncio
-    async def test_websocket_send_message(self, client, websocket_token):
+    def test_websocket_send_message(self, client, websocket_token):
         """Test sending message over WebSocket"""
         tokens = [json.dumps({"token": "OK", "is_end": True})]
         session_id = "sess_test"
@@ -118,8 +116,7 @@ class TestWebSocketConnection:
         assert session_messages[session_id][0]["role"] == "user"
         assert session_messages[session_id][0]["content"] == "Hello"
 
-    @pytest.mark.asyncio
-    async def test_websocket_receive_message(self, client, websocket_token):
+    def test_websocket_receive_message(self, client, websocket_token):
         """Test receiving message over WebSocket"""
         tokens = [
             json.dumps({"token": "A", "is_end": False}),
@@ -142,8 +139,7 @@ class TestWebSocketConnection:
         assert session_messages[session_id][-1]["role"] == "assistant"
         assert session_messages[session_id][-1]["content"] == "AB"
 
-    @pytest.mark.asyncio
-    async def test_websocket_disconnect(self, client, websocket_token):
+    def test_websocket_disconnect(self, client, websocket_token):
         """Test graceful disconnect"""
         with client.websocket_connect(f"/ws/chat?token={websocket_token}") as websocket:
             assert websocket is not None
@@ -185,8 +181,7 @@ class TestWebSocketConnection:
         assert ws_one.send_json.call_count == 1
         assert ws_two.send_json.call_count == 1
 
-    @pytest.mark.asyncio
-    async def test_websocket_error_handling(self, client, websocket_token):
+    def test_websocket_error_handling(self, client, websocket_token):
         """Test error handling on bad messages"""
         with client.websocket_connect(f"/ws/chat?token={websocket_token}") as websocket:
             websocket.send_text("not-json")

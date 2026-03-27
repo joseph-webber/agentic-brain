@@ -422,7 +422,7 @@ class RateLimiter:
         # Clean old history
         self._cleanup_history(provider)
 
-    def record_rate_limit(self, provider: str) -> None:
+    def record_rate_limit(self, provider: str, now: datetime | None = None) -> None:
         """
         Record a 429 rate limit error.
 
@@ -437,13 +437,14 @@ class RateLimiter:
         if provider not in self.limits:
             return
 
-        now = time.time()
-        current_hour = datetime.now().hour
+        current_time = now or datetime.now()
+        timestamp = current_time.timestamp() if now else time.time()
+        current_hour = current_time.hour
         limits = self.limits[provider]
 
         # Record the 429
         record = RequestRecord(
-            timestamp=now,
+            timestamp=timestamp,
             provider=provider,
             success=False,
             status_code=429,
@@ -459,7 +460,7 @@ class RateLimiter:
 
         # Calculate cooldown with exponential backoff
         cooldown = limits.cooldown_seconds * limits.backoff_multiplier
-        self.cooldown_until[provider] = now + cooldown
+        self.cooldown_until[provider] = timestamp + cooldown
 
         logger.warning(
             f"🛑 Rate limited on {provider}! "

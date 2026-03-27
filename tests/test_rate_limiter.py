@@ -29,6 +29,7 @@ import asyncio
 import json
 import tempfile
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -265,18 +266,13 @@ class TestPatternLearning:
         """Learns peak hours from repeated 429s."""
         limiter = RateLimiter(auto_save=False)
 
-        # Simulate 3 429s at hour 14
-        # Create a proper mock that returns an int for hour and float for timestamp
-        mock_now = MagicMock()
-        mock_now.hour = 14
-        mock_now.timestamp.return_value = time.time()
+        # Simulate 3 429s at hour 14 using a real datetime (not MagicMock)
+        # to avoid xdist serialization issues
+        mock_now = datetime(2026, 3, 15, 14, 30, 0, tzinfo=timezone.utc)
 
-        with patch("agentic_brain.rate_limiter.datetime") as mock_dt:
-            mock_dt.now.return_value = mock_now
-            mock_dt.now.return_value.isoformat.return_value = "2024-01-01T14:00:00Z"
-            for _ in range(3):
-                limiter.record_rate_limit("github_copilot")
-                limiter.cooldown_until["github_copilot"] = 0
+        for _ in range(3):
+            limiter.record_rate_limit("github_copilot", now=mock_now)
+            limiter.cooldown_until["github_copilot"] = 0
 
         limits = limiter.limits["github_copilot"]
         assert 14 in limits.peak_hours
@@ -349,7 +345,7 @@ class TestStatePersistence:
                 mult1 = limiter1.limits["github_copilot"].learned_rpm_multiplier
 
                 # Second instance - should load state
-                limiter2 = RateLimiter(auto_save=False)
+                limiter2 = RateLimiter(auto_save=True)
                 mult2 = limiter2.limits["github_copilot"].learned_rpm_multiplier
 
                 assert mult1 == mult2
