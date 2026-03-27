@@ -40,6 +40,24 @@ from .windows import speak_windows
 logger = logging.getLogger(__name__)
 
 
+def _resolve_detect_platform():
+    """Resolve detect_platform from the currently-imported module.
+
+    Some tests clear `sys.modules` entries under `agentic_brain.*` to validate
+    lazy-loading, then patch `agentic_brain.voice.resilient.detect_platform`.
+    Resolving dynamically avoids patch drift across module reloads.
+    """
+
+
+    current_module = sys.modules.get("agentic_brain.voice.resilient")
+    if current_module is not None and hasattr(current_module, "detect_platform"):
+        return current_module.detect_platform
+
+    from agentic_brain.voice.platform import detect_platform as _detect_platform
+
+    return _detect_platform
+
+
 @dataclass
 class VoiceConfig:
     """Configuration for voice system"""
@@ -119,7 +137,7 @@ class ResilientVoice:
         if config is None:
             config = VoiceConfig()
         ResilientVoice._config = config
-        ResilientVoice._platform = detect_platform()
+        ResilientVoice._platform = _resolve_detect_platform()()
         self._setup_fallbacks()
 
     @classmethod
@@ -127,7 +145,7 @@ class ResilientVoice:
         """Initialize platform-specific fallback chain"""
         cls._fallbacks = []
         if cls._platform is None:
-            cls._platform = detect_platform()
+            cls._platform = _resolve_detect_platform()()
 
         if cls._platform == VoicePlatform.MACOS:
             # macOS fallback chain

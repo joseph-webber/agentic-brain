@@ -23,6 +23,27 @@ from .core import SmashMode, SmashResult, get_router
 from .workers import get_all_workers, get_worker
 
 
+def _resolve_worker_fns():
+    """Resolve worker factories from the currently-imported module.
+
+    Some tests intentionally clear `sys.modules` entries under `agentic_brain.*`
+    to validate lazy-loading. That can leave function objects alive while a new
+    module instance is imported and patched. Resolving factories dynamically
+    keeps patching/reload behavior deterministic.
+    """
+
+    import sys
+
+    current_module = sys.modules.get("agentic_brain.smart_router.coordinator")
+    if current_module is not None and hasattr(current_module, "get_worker"):
+        return (
+            current_module.get_worker,  # type: ignore[attr-defined]
+            current_module.get_all_workers,  # type: ignore[attr-defined]
+        )
+
+    return get_worker, get_all_workers
+
+
 class RedisCoordinator:
     """
     Redis-based coordination for distributed smashing.
@@ -88,11 +109,13 @@ async def turbo_smash(
     task_id = str(uuid4())
     router = get_router()
 
+    get_worker_fn, get_all_workers_fn = _resolve_worker_fns()
+
     # Get workers to fire
     if workers:
-        worker_instances = [get_worker(w) for w in workers]
+        worker_instances = [get_worker_fn(w) for w in workers]
     else:
-        worker_instances = get_all_workers()
+        worker_instances = get_all_workers_fn()
 
     async def fire_worker(worker):
         """Fire a single worker"""
@@ -192,9 +215,11 @@ async def cascade_smash(
     cascade_order = ["groq", "gemini", "local", "together", "openrouter", "openai"]
     task_id = str(uuid4())
 
+    get_worker_fn, _ = _resolve_worker_fns()
+
     for worker_name in cascade_order:
         try:
-            worker = get_worker(worker_name)
+            worker = get_worker_fn(worker_name)
             start = time.time()
             result_dict = await asyncio.wait_for(
                 worker.execute(prompt), timeout=timeout

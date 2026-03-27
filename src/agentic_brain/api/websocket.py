@@ -38,6 +38,25 @@ from .websocket_auth import WebSocketAuthenticator
 logger = logging.getLogger(__name__)
 
 
+def _resolve_streaming_response():
+    """Resolve StreamingResponse from the currently-imported module.
+
+    Some tests clear `sys.modules` entries under `agentic_brain.*` to validate
+    lazy-loading, then patch `agentic_brain.api.websocket.StreamingResponse`.
+    Resolving dynamically avoids patch drift across module reloads.
+    """
+
+    import sys
+
+    current_module = sys.modules.get("agentic_brain.api.websocket")
+    if current_module is not None and hasattr(current_module, "StreamingResponse"):
+        return current_module.StreamingResponse
+
+    from agentic_brain.streaming import StreamingResponse as _StreamingResponse
+
+    return _StreamingResponse
+
+
 def register_websocket_routes(app: FastAPI):
     """Register WebSocket routes with the FastAPI app."""
 
@@ -235,11 +254,22 @@ def register_websocket_routes(app: FastAPI):
 
                 try:
                     # Stream response tokens
-                    streamer = StreamingResponse(
-                        provider=provider,
-                        model=model,
-                        temperature=temperature,
+                    streamer_factory = getattr(
+                        app.state, "streaming_response_factory", None
                     )
+                    if streamer_factory is not None:
+                        streamer = streamer_factory(
+                            provider=provider,
+                            model=model,
+                            temperature=temperature,
+                        )
+                    else:
+                        streaming_response_cls = _resolve_streaming_response()
+                        streamer = streaming_response_cls(
+                            provider=provider,
+                            model=model,
+                            temperature=temperature,
+                        )
 
                     response_text = ""
                     async for token in streamer.stream_websocket(message, history[:-1]):

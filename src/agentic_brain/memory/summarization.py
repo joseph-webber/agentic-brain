@@ -870,3 +870,20 @@ Summary:"""
         """Generate unique summary ID."""
         data = f"{session_id}:{timestamp.isoformat()}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
+
+
+# Keep class identity stable across module reloads.
+# Some tests clear `sys.modules` entries under `agentic_brain.*` to validate
+# lazy-loading; rebinding avoids `isinstance()` mismatches after reload.
+import sys
+import types
+
+_singletons = sys.modules.get("_agentic_brain_singletons")
+if _singletons is None:
+    _singletons = types.ModuleType("_agentic_brain_singletons")
+    sys.modules["_agentic_brain_singletons"] = _singletons
+
+if hasattr(_singletons, "UnifiedSummarizer"):
+    UnifiedSummarizer = _singletons.UnifiedSummarizer
+else:
+    _singletons.UnifiedSummarizer = UnifiedSummarizer

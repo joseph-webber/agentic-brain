@@ -94,15 +94,26 @@ class RedisPoolManager:
             return
 
         if self._pool is None:
-            self._pool = redis.ConnectionPool(
-                host=self._config.host,
-                port=self._config.port,
-                password=self._config.password,
-                db=self._config.db,
-                decode_responses=self._config.decode_responses,
-                socket_connect_timeout=5,
-                socket_keepalive=True,
-            )
+            if hasattr(redis, "ConnectionPool"):
+                self._pool = redis.ConnectionPool(
+                    host=self._config.host,
+                    port=self._config.port,
+                    password=self._config.password,
+                    db=self._config.db,
+                    decode_responses=self._config.decode_responses,
+                    socket_connect_timeout=5,
+                    socket_keepalive=True,
+                )
+            else:
+                self._client = redis.Redis(
+                    host=self._config.host,
+                    port=self._config.port,
+                    password=self._config.password,
+                    db=self._config.db,
+                    decode_responses=self._config.decode_responses,
+                )
+                self._pool = getattr(self._client, "connection_pool", None)
+                return
 
         self._client = redis.Redis(connection_pool=self._pool)
 

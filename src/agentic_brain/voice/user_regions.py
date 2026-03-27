@@ -307,10 +307,31 @@ _storage: Optional[UserRegionStorage] = None
 
 
 def get_user_region_storage() -> UserRegionStorage:
-    """Get or create user region storage"""
+    """Get or create user region storage.
+
+    Some tests clear `sys.modules` entries under `agentic_brain.*` to validate
+    lazy-loading. That can leave function objects alive while a new module
+    instance is imported and mutated (e.g. setting `_storage`). By resolving the
+    global storage from the currently-imported module when present, we avoid
+    cross-module singleton drift.
+    """
+
+    import sys
+
     global _storage
+
+    current_module = sys.modules.get("agentic_brain.voice.user_regions")
+    if current_module is not None and hasattr(current_module, "_storage"):
+        current_storage = current_module._storage
+        if current_storage is not None:
+            _storage = current_storage
+            return current_storage
+
     if _storage is None:
         _storage = UserRegionStorage()
+        if current_module is not None and hasattr(current_module, "_storage"):
+            current_module._storage = _storage
+
     return _storage
 
 

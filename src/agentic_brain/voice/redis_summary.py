@@ -165,13 +165,17 @@ class RedisVoiceSummary:
         return " ".join(parts)
 
     async def speak_summary(
-        self, voice: str = "Karen (Premium)", rate: int = 155
+        self,
+        voice: str = "Karen (Premium)",
+        rate: int = 155,
+        speak_func=None,
     ) -> bool:
         """Get and speak the Redis summary."""
         summary = await self.get_summary()
         text = self._format_summary_text(summary)
 
-        return await ResilientVoice.speak(text, voice=voice, rate=rate)
+        speaker = speak_func or ResilientVoice.speak
+        return await speaker(text, voice=voice, rate=rate)
 
     async def get_voice_queue_status(self) -> str:
         """Get just voice queue status as speakable text."""

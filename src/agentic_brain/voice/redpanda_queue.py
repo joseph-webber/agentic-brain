@@ -129,6 +129,8 @@ class RedpandaVoiceQueue:
         *,
         backend: str = "auto",
         redis_url: Optional[str] = None,
+        redis_client=None,
+        speak_func=None,
     ) -> None:
         self._bootstrap = bootstrap_servers or os.getenv(
             "KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"
@@ -140,12 +142,13 @@ class RedpandaVoiceQueue:
 
         self._producer: Optional[AIOKafkaProducer] = None  # type: ignore[assignment]
         self._consumer: Optional[AIOKafkaConsumer] = None  # type: ignore[assignment]
-        self._redis = None
+        self._redis = redis_client
         self._redis_key = self.TOPIC
 
         self._processing: bool = False
         self._current_voice_task: Optional[asyncio.Task] = None
         self._memory_queue: List[VoiceMessage] = []
+        self._speak_func = speak_func or ResilientVoice.speak
 
     # ------------------------------------------------------------------
     # Backend setup
@@ -227,6 +230,10 @@ class RedpandaVoiceQueue:
         if target == "memory":
             self._backend = "memory"
             logger.info("Voice queue using in-memory backend (tests/dev)")
+            return
+
+        if target in {"auto", "redis"} and self._redis is not None:
+            self._backend = "redis"
             return
 
         # Prefer Redpanda unless explicitly disabled
@@ -333,7 +340,7 @@ class RedpandaVoiceQueue:
 
         # Delegate to resilient voice chain – this already ensures a single
         # active invocation within the process and handles all fallbacks.
-        await ResilientVoice.speak(message.text, message.voice, message.rate)
+        await self._speak_func(message.text, message.voice, message.rate)
 
     async def process_queue(self) -> None:
         """Process the voice queue – ONE message at a time.
