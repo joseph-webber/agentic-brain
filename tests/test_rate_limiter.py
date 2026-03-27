@@ -29,7 +29,7 @@ import asyncio
 import json
 import tempfile
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -160,7 +160,7 @@ class TestExponentialBackoff:
     def test_first_429_normal_cooldown(self):
         """First 429 uses normal cooldown."""
         limiter = RateLimiter(auto_save=False)
-        limiter.limits["github_copilot"].cooldown_seconds
+        _cooldown = limiter.limits["github_copilot"].cooldown_seconds  # noqa: F841
 
         limiter.record_rate_limit("github_copilot")
 
@@ -268,7 +268,7 @@ class TestPatternLearning:
 
         # Simulate 3 429s at hour 14 using a real datetime (not MagicMock)
         # to avoid xdist serialization issues
-        mock_now = datetime(2026, 3, 15, 14, 30, 0, tzinfo=timezone.utc)
+        mock_now = datetime(2026, 3, 15, 14, 30, 0, tzinfo=UTC)
 
         for _ in range(3):
             limiter.record_rate_limit("github_copilot", now=mock_now)
@@ -337,10 +337,9 @@ class TestStatePersistence:
             state_file = Path(tmpdir) / "state.json"
 
             with patch.object(RateLimiter, "STATE_FILE", state_file):
-                # First instance - learn something
-                limiter1 = RateLimiter(auto_save=False)
+                # First instance - learn something (auto_save=True so _save_state works)
+                limiter1 = RateLimiter(auto_save=True)
                 limiter1.record_rate_limit("github_copilot")
-                limiter1._save_state()
 
                 mult1 = limiter1.limits["github_copilot"].learned_rpm_multiplier
 

@@ -54,6 +54,10 @@ class TestVoiceConfig:
 class TestVoiceFunctionality:
     """Test voice functionality."""
 
+    @pytest.mark.skipif(
+        os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
+        reason="macOS-specific voice test - _speak_macos not available on Linux CI",
+    )
     @patch("agentic_brain.audio.subprocess.run")
     @patch("agentic_brain.audio.shutil.which", return_value="/usr/bin/say")
     @patch("agentic_brain.audio.Platform.current")
