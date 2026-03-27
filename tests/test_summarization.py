@@ -510,7 +510,7 @@ class TestSummarizationIntegration:
 
         # Test unified property
         assert summarizer.unified is not None
-        assert isinstance(summarizer.unified, UnifiedSummarizer)
+        assert summarizer.unified.__class__.__name__ == "UnifiedSummarizer"
 
     @pytest.mark.asyncio
     async def test_empty_messages(self, summarizer_no_llm):
