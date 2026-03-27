@@ -48,7 +48,6 @@ def _resolve_detect_platform():
     Resolving dynamically avoids patch drift across module reloads.
     """
 
-
     current_module = sys.modules.get("agentic_brain.voice.resilient")
     if current_module is not None and hasattr(current_module, "detect_platform"):
         return current_module.detect_platform

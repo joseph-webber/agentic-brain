@@ -68,8 +68,12 @@ class TestHealthCheck:
     """Test the health check endpoint."""
 
     def test_create_app_skips_redis_autostart_during_tests(self):
-        """Test Redis startup is skipped under pytest/CI."""
+        """Test Redis auto-start is skipped in pytest environments."""
         redis_checker = Mock()
+        redis_checker.check_redis_available.return_value = (
+            False,
+            "Redis connection failed",
+        )
 
         with (
             patch(

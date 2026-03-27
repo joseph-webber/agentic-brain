@@ -1005,34 +1005,36 @@ class TestIntegration:
         mock_retriever.close.return_value = None
 
         with patch.dict(os.environ, {"RAG_CACHE_ENABLED": "true"}):
-            with patch("agentic_brain.rag.pipeline.Retriever") as MockRetriever:
-                MockRetriever.return_value = mock_retriever
+            with patch("agentic_brain.rag.pipeline.CACHE_DIR", tmp_path):
+                with patch("agentic_brain.rag.pipeline.Retriever") as MockRetriever:
+                    MockRetriever.return_value = mock_retriever
 
-                pipeline = RAGPipeline(
-                    embedding_provider=mock_embedding_provider,
-                    cache_ttl_hours=1,
-                    cache_dir=tmp_path,
-                )
-                pipeline.retriever = mock_retriever
+                    pipeline = RAGPipeline(
+                        embedding_provider=mock_embedding_provider,
+                        cache_ttl_hours=1,
+                    )
+                    pipeline.retriever = mock_retriever
 
-                mock_response = MagicMock()
-                mock_response.json.return_value = {"response": "Cached answer"}
-                mock_response.raise_for_status.return_value = None
+                    mock_response = MagicMock()
+                    mock_response.json.return_value = {"response": "Cached answer"}
+                    mock_response.raise_for_status.return_value = None
 
-                with patch("requests.post", return_value=mock_response) as mock_post:
-                    # First query - hits LLM
-                    result1 = pipeline.query("Cache test query", use_cache=True)
-                    assert result1.cached is False
-                    call_count_after_first = mock_post.call_count
+                    with patch(
+                        "requests.post", return_value=mock_response
+                    ) as mock_post:
+                        # First query - hits LLM
+                        result1 = pipeline.query("Cache test query", use_cache=True)
+                        assert result1.cached is False
+                        call_count_after_first = mock_post.call_count
 
-                    # Second identical query - uses cache
-                    result2 = pipeline.query("Cache test query", use_cache=True)
-                    assert result2.cached is True
-                    assert mock_post.call_count == call_count_after_first
+                        # Second identical query - uses cache
+                        result2 = pipeline.query("Cache test query", use_cache=True)
+                        assert result2.cached is True
+                        assert mock_post.call_count == call_count_after_first
 
-                    # Different query - hits LLM again
-                    result3 = pipeline.query("Different query", use_cache=True)
-                    assert result3.cached is False
-                    assert mock_post.call_count > call_count_after_first
+                        # Different query - hits LLM again
+                        result3 = pipeline.query("Different query", use_cache=True)
+                        assert result3.cached is False
+                        assert mock_post.call_count > call_count_after_first
 
-                pipeline.close()
+                    pipeline.close()

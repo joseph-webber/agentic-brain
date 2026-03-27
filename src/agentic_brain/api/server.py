@@ -113,7 +113,7 @@ def create_app(
             logger.warning(f"⚠️  Redis not available: {status_msg}")
             logger.info("Attempting to auto-start Redis in background...")
 
-            def _bg_start() -> None:
+            def _bg_start():
                 if redis_checker.try_auto_start_redis():
                     logger.info("✅ Redis auto-started successfully")
                 else:
