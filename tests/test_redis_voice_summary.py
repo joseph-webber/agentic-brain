@@ -171,14 +171,14 @@ class TestRedisVoiceSummaryAsync:
             mock_get.return_value = RedisSummary(connected=True, queue_length=0)
 
             with patch(
-                "agentic_brain.voice.redis_summary.ResilientVoice"
-            ) as mock_voice:
-                mock_voice.speak = AsyncMock(return_value=True)
-
+                "agentic_brain.voice.redis_summary.ResilientVoice.speak",
+                new_callable=AsyncMock,
+            ) as mock_speak:
+                mock_speak.return_value = True
                 await summary.speak_summary()
 
-                mock_voice.speak.assert_called_once()
-                assert "Karen" in str(mock_voice.speak.call_args)
+                mock_speak.assert_called_once()
+                assert "Karen" in str(mock_speak.call_args)
 
 
 class TestAccessibility:
