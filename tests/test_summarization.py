@@ -36,7 +36,7 @@ from agentic_brain.memory.summarization import (
 # Skip flaky tests on CI - ConversationSummarizer wrapper test has import timing issues
 CI_SKIP = pytest.mark.skipif(
     os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
-    reason="Summarization integration test flaky on CI due to import timing"
+    reason="Summarization integration test flaky on CI due to import timing",
 )
 
 # =============================================================================
