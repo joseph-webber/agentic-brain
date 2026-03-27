@@ -74,6 +74,10 @@ class InvalidOrderTransitionError(RuntimeError):
     pass
 
 
+# Alias for backwards compatibility
+InvalidOrderTransition = InvalidOrderTransitionError
+
+
 @dataclass(slots=True)
 class OrderEvent:
     order_id: str

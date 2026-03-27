@@ -52,6 +52,10 @@ class RateLimitExceededError(Exception):
     pass
 
 
+# Alias for backwards compatibility
+RateLimitExceeded = RateLimitExceededError
+
+
 @dataclass
 class RateLimitConfig:
     """Configuration for rate limiting a loader or endpoint"""
@@ -540,6 +544,7 @@ __all__ = [
     "SmartRateLimiter",
     "RateLimitConfig",
     "RateLimitExceededError",
+    "RateLimitExceeded",
     "IPRateLimiter",
     "rate_limited",
     "get_rate_limiter",
