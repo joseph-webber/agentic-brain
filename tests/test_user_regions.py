@@ -304,7 +304,10 @@ class TestModuleFunctions:
         import agentic_brain.voice.user_regions as user_regions_module
 
         storage = UserRegionStorage(Path(temp_dir))
-        user_regions_module._storage = storage
+        monkeypatch.setattr(user_regions_module, "_storage", storage)
+        monkeypatch.setattr(
+            user_regions_module, "get_user_region_storage", lambda: storage
+        )
 
         storage.set_region("Adelaide", "South Australia")
         storage.add_expression("good", "heaps good")
