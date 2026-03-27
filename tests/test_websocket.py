@@ -82,16 +82,13 @@ class TestWebSocketConnection:
             json.dumps({"token": "Hello", "is_end": False}),
             json.dumps({"token": "!", "is_end": True}),
         ]
-        with patch(
-            "agentic_brain.api.websocket.StreamingResponse",
-            return_value=DummyStreamer(tokens),
-        ):
-            with client.websocket_connect(
-                f"/ws/chat?token={websocket_token}"
-            ) as websocket:
-                websocket.send_text(json.dumps({"message": "Hi"}))
-                first = websocket.receive_json()
-                second = websocket.receive_json()
+        client.app.state.streaming_response_factory = lambda **_kwargs: DummyStreamer(
+            tokens
+        )
+        with client.websocket_connect(f"/ws/chat?token={websocket_token}") as websocket:
+            websocket.send_text(json.dumps({"message": "Hi"}))
+            first = websocket.receive_json()
+            second = websocket.receive_json()
 
         assert first["token"] == "Hello"
         assert second["token"] == "!"
@@ -103,19 +100,16 @@ class TestWebSocketConnection:
         """Test sending message over WebSocket"""
         tokens = [json.dumps({"token": "OK", "is_end": True})]
         session_id = "sess_test"
-        with patch(
-            "agentic_brain.api.websocket.StreamingResponse",
-            return_value=DummyStreamer(tokens),
-        ):
-            with client.websocket_connect(
-                f"/ws/chat?token={websocket_token}"
-            ) as websocket:
-                websocket.send_text(
-                    json.dumps(
-                        {"message": "Hello", "session_id": session_id, "user_id": "u1"}
-                    )
+        client.app.state.streaming_response_factory = lambda **_kwargs: DummyStreamer(
+            tokens
+        )
+        with client.websocket_connect(f"/ws/chat?token={websocket_token}") as websocket:
+            websocket.send_text(
+                json.dumps(
+                    {"message": "Hello", "session_id": session_id, "user_id": "u1"}
                 )
-                websocket.receive_json()
+            )
+            websocket.receive_json()
 
         assert session_id in sessions
         assert session_messages[session_id][0]["role"] == "user"
@@ -127,16 +121,13 @@ class TestWebSocketConnection:
             json.dumps({"token": "A", "is_end": False}),
             json.dumps({"token": "B", "is_end": True}),
         ]
-        with patch(
-            "agentic_brain.api.websocket.StreamingResponse",
-            return_value=DummyStreamer(tokens),
-        ):
-            with client.websocket_connect(
-                f"/ws/chat?token={websocket_token}"
-            ) as websocket:
-                websocket.send_text(json.dumps({"message": "Ping"}))
-                first = websocket.receive_json()
-                second = websocket.receive_json()
+        client.app.state.streaming_response_factory = lambda **_kwargs: DummyStreamer(
+            tokens
+        )
+        with client.websocket_connect(f"/ws/chat?token={websocket_token}") as websocket:
+            websocket.send_text(json.dumps({"message": "Ping"}))
+            first = websocket.receive_json()
+            second = websocket.receive_json()
 
         assert first["token"] == "A"
         assert second["token"] == "B"

@@ -78,9 +78,7 @@ async def test_no_overlap_with_resilient_voice(monkeypatch: pytest.MonkeyPatch) 
         in_progress -= 1
         return True
 
-    monkeypatch.setattr(rq.ResilientVoice, "speak", fake_speak, raising=True)
-
-    queue = RedpandaVoiceQueue(backend="memory")
+    queue = RedpandaVoiceQueue(backend="memory", speak_func=fake_speak)
     await queue.connect()
 
     # Enqueue multiple messages with different priorities
@@ -139,16 +137,9 @@ async def test_redis_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
         async def close(self) -> None:  # pragma: no cover - no-op
             return None
 
-    async def fake_connect_redis(self) -> bool:
-        self._redis = FakeRedisClient()
-        self._backend = "redis"
-        return True
-
-    monkeypatch.setattr(
-        rq.RedpandaVoiceQueue, "_connect_redis", fake_connect_redis, raising=True
+    queue = RedpandaVoiceQueue(
+        backend="redis", redis_url="redis://fake", redis_client=FakeRedisClient()
     )
-
-    queue = RedpandaVoiceQueue(backend="redis", redis_url="redis://fake")
     await queue.connect()
 
     # Backend should be redis after connect
