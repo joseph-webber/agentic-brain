@@ -295,21 +295,27 @@ class TestIntegration:
         await daemon.stop()
 
     @pytest.mark.asyncio
+    @pytest.mark.timeout(30)
     async def test_long_running_daemon(self):
         """Test daemon running for extended period"""
         daemon = VoiceDaemon()
         await daemon.start()
 
-        # Queue many items
-        for i in range(10):
-            await daemon.speak(f"Message {i}")
+        # Mock ResilientVoice.speak to avoid hanging on CI (no audio device).
+        # We're testing daemon queue management, not actual speech synthesis.
+        with patch.object(
+            ResilientVoice, "speak", new_callable=AsyncMock, return_value=True
+        ):
+            # Queue many items
+            for i in range(10):
+                await daemon.speak(f"Message {i}")
 
-        # Wait longer
-        await asyncio.sleep(2)
+            # Wait for processing
+            await asyncio.sleep(2)
 
-        stats = daemon.get_stats()
-        # Daemon should still be running
-        assert stats["running"] is True
+            stats = daemon.get_stats()
+            # Daemon should still be running
+            assert stats["running"] is True
 
         await daemon.stop()
 
