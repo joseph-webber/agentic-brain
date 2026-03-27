@@ -39,6 +39,7 @@ License: Apache-2.0
 
 import logging
 import os
+import threading
 from datetime import UTC
 from typing import Optional
 
@@ -98,20 +99,34 @@ def create_app(
     # BULLETPROOF: Check Redis on startup
     logger.info("🔴 Checking Redis availability...")
     redis_checker = get_redis_health_checker()
-    is_available, status_msg = redis_checker.check_redis_available()
+    is_test_environment = (
+        os.getenv("TESTING", "").lower() in {"1", "true", "yes"}
+        or os.getenv("CI", "").lower() in {"1", "true", "yes"}
+        or "PYTEST_CURRENT_TEST" in os.environ
+    )
 
-    if not is_available:
-        logger.warning(f"⚠️  Redis not available: {status_msg}")
-        logger.info("Attempting to auto-start Redis...")
-        if redis_checker.try_auto_start_redis():
-            logger.info("✅ Redis auto-started successfully")
-        else:
-            logger.warning(
-                "⚠️  Could not auto-start Redis. "
-                "Start manually with: docker-compose -f docker-compose-redis.yml up -d"
-            )
+    if is_test_environment:
+        logger.info("Test environment detected — skipping Redis connectivity check")
     else:
-        logger.info(f"✅ Redis is available: {status_msg}")
+        is_available, status_msg = redis_checker.check_redis_available()
+        if not is_available:
+            logger.warning(f"⚠️  Redis not available: {status_msg}")
+            logger.info("Attempting to auto-start Redis in background...")
+
+            def _bg_start() -> None:
+                if redis_checker.try_auto_start_redis():
+                    logger.info("✅ Redis auto-started successfully")
+                else:
+                    logger.warning(
+                        "⚠️  Could not auto-start Redis. "
+                        "Start manually with: docker-compose -f docker-compose-redis.yml up -d"
+                    )
+
+            threading.Thread(
+                target=_bg_start, daemon=True, name="redis-autostart"
+            ).start()
+        else:
+            logger.info(f"✅ Redis is available: {status_msg}")
 
     app = FastAPI(
         title=title,

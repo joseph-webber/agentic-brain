@@ -67,6 +67,23 @@ def chat_session_setup(client):
 class TestHealthCheck:
     """Test the health check endpoint."""
 
+    def test_create_app_skips_redis_autostart_during_tests(self):
+        """Test Redis startup is skipped under pytest/CI."""
+        redis_checker = Mock()
+
+        with (
+            patch(
+                "agentic_brain.api.server.get_redis_health_checker",
+                return_value=redis_checker,
+            ),
+            patch("agentic_brain.api.server.threading.Thread") as mock_thread,
+        ):
+            create_app()
+
+        mock_thread.assert_not_called()
+        redis_checker.check_redis_available.assert_not_called()
+        redis_checker.try_auto_start_redis.assert_not_called()
+
     def test_health_returns_200(self, client):
         """Test that health check returns 200 OK."""
         response = client.get("/health")
