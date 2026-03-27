@@ -448,7 +448,7 @@ class TestIntegration:
 
         try:
 
-            @rate_limited("github", timeout=1)
+            @rate_limited("github", timeout=1, limiter=rl._rate_limiter)
             async def fetch_repo():
                 # Simulate API call
                 await asyncio.sleep(0.01)

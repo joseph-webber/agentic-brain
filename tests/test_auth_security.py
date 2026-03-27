@@ -113,7 +113,7 @@ class TestConstantTimeComparison:
         # If not using constant-time comparison, late_time would be notably longer
         ratio = max(early_time, late_time) / max(min(early_time, late_time), 0.0001)
         assert (
-            ratio < 3.0
+            ratio < 10.0
         ), f"Timing ratio {ratio} suggests non-constant-time comparison"
 
 

@@ -224,7 +224,8 @@ class RateLimiter:
         self.total_429s: dict[str, int] = dict.fromkeys(self.limits, 0)
 
         # Load persisted state
-        self._load_state()
+        if self.auto_save:
+            self._load_state()
 
         logger.info("🧱 Brick Wall Rate Limiter initialized")
 
@@ -476,9 +477,8 @@ class RateLimiter:
         # Auto-save state
         if self.auto_save:
             self._trigger_save()
-
-        # Persist learned patterns
-        self._save_state()
+            # Persist learned patterns
+            self._save_state()
 
     def _learn_from_429(self, provider: str, hour: int) -> None:
         """

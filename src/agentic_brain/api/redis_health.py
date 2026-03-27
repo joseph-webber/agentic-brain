@@ -35,12 +35,17 @@ logger = logging.getLogger(__name__)
 class RedisHealthCheck:
     """Redis health check and auto-start utilities."""
 
+    # Cache availability check for this many seconds to avoid hammering the socket.
+    _CACHE_TTL = 60.0
+
     def __init__(self):
         """Initialize Redis health checker."""
         self.redis_host = os.getenv("REDIS_HOST", "localhost")
         self.redis_port = int(os.getenv("REDIS_PORT", "6379"))
         self.redis_password = os.getenv("REDIS_PASSWORD", "brain_secure_2024")
         self.redis_db = int(os.getenv("REDIS_DB", "0"))
+        self._cached_result: tuple[bool, str] | None = None
+        self._cache_ts: float = 0.0
 
     def check_redis_available(self) -> tuple[bool, str]:
         """
@@ -49,6 +54,16 @@ class RedisHealthCheck:
         Returns:
             tuple[bool, str]: (is_available, status_message)
         """
+        now = time.monotonic()
+        if self._cached_result is not None and (now - self._cache_ts) < self._CACHE_TTL:
+            return self._cached_result
+        result = self._probe_redis()
+        self._cached_result = result
+        self._cache_ts = now
+        return result
+
+    def _probe_redis(self) -> tuple[bool, str]:
+        """Perform the actual Redis connectivity check (uncached)."""
         try:
             # Try to import redis
             import redis
@@ -59,7 +74,7 @@ class RedisHealthCheck:
                 port=self.redis_port,
                 password=self.redis_password,
                 db=self.redis_db,
-                socket_connect_timeout=5,
+                socket_connect_timeout=1,
                 socket_keepalive=True,
                 health_check_interval=30,
             )

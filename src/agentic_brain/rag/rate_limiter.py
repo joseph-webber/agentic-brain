@@ -427,7 +427,11 @@ class SmartRateLimiter:
 _rate_limiter = SmartRateLimiter()
 
 
-def rate_limited(loader_name: str, timeout: float = 60):
+def rate_limited(
+    loader_name: str,
+    timeout: float = 60,
+    limiter: Optional["SmartRateLimiter"] = None,
+):
     """Decorator to apply rate limiting to loader methods.
 
     Args:
@@ -447,14 +451,15 @@ def rate_limited(loader_name: str, timeout: float = 60):
             # Extract IP if available from kwargs
             ip_address = kwargs.get("ip_address")
 
-            if not await _rate_limiter.wait_for_slot(loader_name, ip_address, timeout):
+            active_limiter = limiter or _rate_limiter
+            if not await active_limiter.wait_for_slot(loader_name, ip_address, timeout):
                 raise RateLimitExceededError(
                     f"Rate limit exceeded for {loader_name} " f"(waited {timeout}s)"
                 )
 
             try:
                 result = await func(*args, **kwargs)
-                _rate_limiter.record_success(loader_name, ip_address)
+                active_limiter.record_success(loader_name, ip_address)
                 return result
             except Exception as e:
                 # Only trigger backoff for rate limit errors
@@ -463,10 +468,10 @@ def rate_limited(loader_name: str, timeout: float = 60):
                     or "429" in str(e)
                     or "too many requests" in str(e).lower()
                 )
-                _rate_limiter.record_failure(loader_name, ip_address, trigger_backoff)
+                active_limiter.record_failure(loader_name, ip_address, trigger_backoff)
                 raise
             finally:
-                _rate_limiter.release(loader_name, ip_address)
+                active_limiter.release(loader_name, ip_address)
 
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
