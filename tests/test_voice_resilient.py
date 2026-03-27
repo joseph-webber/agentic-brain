@@ -45,6 +45,10 @@ class TestVoiceConfig:
         assert config.timeout == 60
 
 
+@pytest.mark.skipif(
+    os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
+    reason="Voice tests call real speak() which hangs on CI without audio device",
+)
 class TestResilientVoice:
     """Test ResilientVoice with fallbacks"""
 
@@ -263,6 +267,10 @@ class TestConvenienceFunctions:
         assert "voice" in stats
 
 
+@pytest.mark.skipif(
+    os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
+    reason="Voice integration tests hang on CI without audio device",
+)
 class TestIntegration:
     """Integration tests"""
 
