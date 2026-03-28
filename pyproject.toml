@@ -112,6 +112,10 @@ dev = [
     "mongomock>=4.1.0,<5.0.0",  # For MongoDB mocking
     "responses>=0.25.0,<1.0.0",  # For HTTP mocking
     "numpy>=1.24.0,<3.0.0",  # For RAG/ADL tests needing numpy
+    # PDF Processing
+    "pypdf>=5.0.0",
+    "pdfplumber>=0.11.0",
+    "pypdfium2>=4.30.0",
 ]
 # Alias for dev (commonly used for CI)
 test = [
@@ -200,11 +204,88 @@ mlx = [
 explainability = [
     "shap>=0.42.0,<1.0.0",
     "lime>=0.2.0.1,<1.0.0",
+    "langdetect>=1.0.9",
+    "lingua-language-detector>=1.3.2",
 ]
 finetuning = [
     "peft>=0.7.0,<1.0.0",
     "transformers>=4.36.0,<5.0.0",
     "datasets>=2.16.0,<3.0.0",
+]
+# PDF Processing - Core
+pdf = [
+    "pypdf>=5.0.0",
+    "pdfplumber>=0.11.0",
+    "pypdfium2>=4.30.0",
+]
+# PDF Processing - OCR (includes GPU support)
+pdf-ocr = [
+    "easyocr>=1.7.0",
+    "rapidocr-onnxruntime>=1.4.0",
+]
+# PDF Processing - Writing/Generation
+pdf-write = [
+    "reportlab>=4.0.0",
+    "borb>=2.1.0",
+]
+# PDF Processing - Full suite
+pdf-full = [
+    "agentic-brain[pdf,pdf-ocr,pdf-write]",
+]
+# Document Processing - All formats
+documents = [
+    "agentic-brain[pdf-full]",
+    "ebooklib>=0.18",
+    "python-pptx>=0.6.23",
+    "python-docx>=1.0.0",
+    "odfpy>=1.4.0",
+    "docx2pdf>=0.1.8",  # DOCX to PDF conversion (Windows/macOS)
+    "mammoth>=1.6.0",   # DOCX to HTML/Markdown conversion
+    "openpyxl>=3.1.0",  # Excel spreadsheet operations
+    "striprtf>=0.0.26",
+    "mammoth>=1.6.0",
+    "python-docx>=1.0.0",
+    "openpyxl>=3.1.0",
+]
+# Office document processing
+office = [
+    "python-docx>=1.0.0",
+    "openpyxl>=3.1.0",
+    "python-pptx>=0.6.23",
+    "odfpy>=1.4.0",
+    "striprtf>=0.0.26",
+    "mammoth>=1.6.0",
+]
+# Security - PII detection and redaction
+security = [
+    "presidio-analyzer>=2.2.0",
+    "presidio-anonymizer>=2.2.0",
+]
+# Accessibility - Alt-text generation and image analysis
+accessibility = [
+    "Pillow>=10.0.0",  # Image processing
+    "numpy>=1.24.0,<3.0.0",  # Numerical operations
+    "langdetect>=1.0.9",  # Language detection for tagging
+    "lingua-language-detector>=1.3.2",  # Optional higher-accuracy detector
+]
+# Accessibility with MLX (Apple Silicon optimized)
+accessibility-mlx = [
+    "agentic-brain[accessibility]",
+    "mlx>=0.5.0,<1.0.0",
+]
+# Accessibility with BLIP (best quality)
+accessibility-blip = [
+    "agentic-brain[accessibility]",
+    "transformers>=4.36.0,<5.0.0",
+    "torch>=2.0.0,<3.0.0",
+]
+# Accessibility - Full suite (all backends)
+accessibility-full = [
+    "agentic-brain[accessibility,accessibility-mlx,accessibility-blip]",
+]
+# Print Processing - Preflight and production
+print = [
+    "Pillow>=10.0.0",  # Image color space conversion
 ]
 all = [
     # Memory
@@ -240,6 +321,22 @@ all = [
     # Enterprise
     "ldap3>=2.9.0,<3.0.0",
     "pyotp>=2.9.0,<3.0.0",
+    # PDF Processing
+    "pypdf>=5.0.0",
+    "pdfplumber>=0.11.0",
+    "pypdfium2>=4.30.0",
+    "easyocr>=1.7.0",
+    "rapidocr-onnxruntime>=1.4.0",
+    "reportlab>=4.0.0",
+    "borb>=2.1.0",
+    # Document Processing
+    "ebooklib>=0.18",
+    "python-pptx>=0.6.23",
+    "python-docx>=1.0.0",
+    "odfpy>=1.4.0",
+    "openpyxl>=3.1.0",
+    "striprtf>=0.0.26",
+    "mammoth>=1.6.0",
 ]
 
 [project.scripts]
@@ -287,9 +384,11 @@ asyncio_default_fixture_loop_scope = "function"
 addopts = "-v --tb=short --strict-markers"
 timeout = 60
 markers = [
+    "accessibility: Accessibility-focused tests for document processing",
     "unit: Unit tests (fast, no external deps)",
     "integration: Integration tests (may need services)",
     "e2e: End-to-end tests (full system)",
+    "gpu: Tests that require GPU acceleration or hardware detection",
     "commerce: Commerce and storefront tests",
     "woocommerce: WooCommerce-specific tests",
     "wordpress: WordPress-specific tests",
