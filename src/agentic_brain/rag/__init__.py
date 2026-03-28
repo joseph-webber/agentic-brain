@@ -307,23 +307,6 @@ except (ImportError, ModuleNotFoundError):
     ELASTICSEARCH_AVAILABLE = False
     REDIS_AVAILABLE = False
 
-# Legacy loaders still supported from monolith backup
-ZohoLoader = None
-JiraServiceDeskLoader = None
-SquareLoader = None
-BraintreeLoader = None
-BigCommerceLoader = None
-MagentoLoader = None
-with contextlib.suppress(ImportError, ModuleNotFoundError):
-    from .loaders._monolith_backup import (
-        BigCommerceLoader,
-        BraintreeLoader,
-        JiraServiceDeskLoader,
-        MagentoLoader,
-        SquareLoader,
-        ZohoLoader,
-    )
-
 # Multi-hop reasoning (chain of reasoning)
 from .multi_hop_reasoning import (
     GraphMultiHopReasoner,
@@ -481,10 +464,7 @@ __all__ = [
     "ServiceNowLoader",
     "WorkdayLoader",
     # CRM Loaders
-    "ZohoLoader",
     "Dynamics365Loader",
-    # Support Loaders
-    "JiraServiceDeskLoader",
     # Australian Business Loaders
     "MYOBLoader",
     "XeroLoader",
@@ -493,14 +473,10 @@ __all__ = [
     # Payment Gateway Loaders
     "StripeLoader",
     "PayPalLoader",
-    "SquareLoader",
     "AfterpayLoader",
-    "BraintreeLoader",
     # E-Commerce Platform Loaders
     "ShopifyLoader",
     "WooCommerceLoader",
-    "BigCommerceLoader",
-    "MagentoLoader",
     # Accounting Loaders
     "QuickBooksLoader",
     # Semantic Routing
