@@ -10,6 +10,8 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Connect your WordPress/WooCommerce store to an Agentic Brain AI backend for intelligent chat, product search, and RAG-powered content.
 
+Full repository documentation is available in `docs/WORDPRESS_PLUGIN.md`, with a GitHub-friendly summary in `plugins/wordpress/agentic-brain/README.md`.
+
 == Description ==
 
 **Agentic Brain** turns your WordPress site into an AI-powered storefront.

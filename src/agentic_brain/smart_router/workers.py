@@ -8,18 +8,17 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 """
-🔥 WORKER LLMs - The Heavy Lifters 🔥
+Worker implementations for SmartRouter.
 
-Each worker knows how to call its LLM API.
-Master (Claude) fires these in parallel.
+Each worker encapsulates the HTTP contract for a single provider so that the
+router can treat them uniformly while SmashMode determines how to coordinate
+them.
 """
 
-import asyncio
 import os
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 try:
     import httpx
@@ -28,17 +27,17 @@ except ImportError:
 
 
 class BaseWorker(ABC):
-    """Base class for all LLM workers"""
+    """Base class for all LLM workers."""
 
     name: str = "base"
 
     @abstractmethod
     async def execute(self, prompt: str, **kwargs) -> Dict[str, Any]:
-        """Execute prompt and return result"""
-        pass
+        """Execute prompt and return result."""
+        raise NotImplementedError
 
     def get_api_key(self, env_var: str) -> Optional[str]:
-        """Get API key from environment"""
+        """Get an API key from the environment."""
         return os.environ.get(env_var)
 
 
@@ -386,7 +385,7 @@ class OpenRouterWorker(BaseWorker):
 
 
 # Factory to get workers
-WORKERS = {
+WORKERS: Dict[str, type[BaseWorker]] = {
     "openai": OpenAIWorker,
     "azure_openai": AzureOpenAIWorker,
     "groq": GroqWorker,
@@ -399,13 +398,13 @@ WORKERS = {
 
 
 def get_worker(name: str) -> BaseWorker:
-    """Get a worker instance by name"""
+    """Return a worker instance by name."""
     worker_class = WORKERS.get(name)
     if worker_class:
         return worker_class()
     raise ValueError(f"Unknown worker: {name}")
 
 
-def get_all_workers() -> list[BaseWorker]:
-    """Get all worker instances"""
+def get_all_workers() -> List[BaseWorker]:
+    """Return new instances of every registered worker."""
     return [cls() for cls in WORKERS.values()]

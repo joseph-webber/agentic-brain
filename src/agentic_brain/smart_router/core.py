@@ -8,9 +8,27 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 """
-🔥 SMART ROUTER CORE - Master/Worker Architecture 🔥
+SmartRouter core primitives.
 
-The MASTER (Claude) orchestrates WORKER LLMs for maximum speed.
+SmartRouter is the “big hammer” router: it spins up multiple worker LLMs in
+parallel, enforces SmashMode semantics, and honors the currently selected
+SecurityPosture.  Reach for it when you need speed (fire many workers at once),
+resilience (automatic fallbacks), or posture-aware routing.
+
+How it compares to the other router layers:
+
+* **LLMRouter** (``agentic_brain.llm.router``) provides a predictable,
+  provider-agnostic chat surface.  Use it when you want deterministic retries,
+  message normalization, and per-request cost tracking for a single prompt.
+* **LLMRouterCore** is the minimal building block that powers LLMRouter’s alias
+  resolution and retry logic.  Use it when you are embedding router behaviour
+  inside another service and need full control.
+* **SmartRouter** sits above both: it coordinates many LLM workers at once,
+  keeps heat maps/cost awareness, and respects security posture constraints.
+
+In short: use SmartRouter for orchestration and SmashMode semantics, LLMRouter
+for consistent single-request routing, and LLMRouterCore when rolling your own
+lightweight adapter.
 """
 
 import asyncio
@@ -18,7 +36,7 @@ import os
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from uuid import uuid4
 
 from .workers import get_worker
@@ -28,17 +46,29 @@ if TYPE_CHECKING:
 
 
 class SmashMode(Enum):
-    """How to smash the workers"""
+    """Execution strategy used by SmartRouter.
 
-    TURBO = "turbo"  # Fire ALL, fastest wins
-    CONSENSUS = "consensus"  # Fire 3+, compare results
-    CASCADE = "cascade"  # FREE first, paid fallback
-    DEDICATED = "dedicated"  # Best worker for task type
+    The SmashMode determines how aggressively we fan out to workers:
+
+    * ``TURBO`` – fire every eligible worker in parallel and keep the first
+      successful response.
+    * ``CONSENSUS`` – race a curated subset and capture their outputs for human
+      comparison.
+    * ``CASCADE`` – walk through a prioritized list, preferring free/local
+      workers before falling back to paid clouds.
+    * ``DEDICATED`` – route to a single “best fit” worker sequence for the
+      requested task type.
+    """
+
+    TURBO = "turbo"
+    CONSENSUS = "consensus"
+    CASCADE = "cascade"
+    DEDICATED = "dedicated"
 
 
 @dataclass
 class SmashResult:
-    """Result from a worker smash"""
+    """Result produced by an individual smash attempt."""
 
     task_id: str
     provider: str
@@ -53,7 +83,7 @@ class SmashResult:
 
 @dataclass
 class WorkerConfig:
-    """Configuration for a worker LLM"""
+    """Configuration metadata for a worker LLM."""
 
     name: str
     model: str
@@ -79,7 +109,7 @@ class SmartRouter:
     """
 
     # Task type to best worker mapping
-    TASK_ROUTES = {
+    TASK_ROUTES: Dict[str, List[str]] = {
         "code": ["openai", "azure_openai", "groq", "local"],
         "fast": ["groq", "gemini", "local"],
         "free": ["gemini", "groq", "local", "together"],
@@ -88,14 +118,14 @@ class SmartRouter:
         "creative": ["openai", "gemini", "groq"],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.workers: Dict[str, WorkerConfig] = {}
         self.heat_map: Dict[str, float] = {}  # Track recent usage
-        self.stats: Dict[str, Dict] = {}
+        self.stats: Dict[str, Dict[str, Any]] = {}
         self._setup_default_workers()
 
-    def _setup_default_workers(self):
-        """Setup default worker configurations"""
+    def _setup_default_workers(self) -> None:
+        """Populate the default worker configurations."""
         defaults = [
             WorkerConfig(
                 "openai",
@@ -177,7 +207,7 @@ class SmartRouter:
             self.stats[w.name] = {"requests": 0, "successes": 0, "total_time": 0.0}
 
     def get_route(self, task_type: str) -> List[str]:
-        """Get ordered list of workers for a task type"""
+        """Get the preferred worker order for a task type."""
         return self.TASK_ROUTES.get(task_type, ["groq", "gemini", "local"])
 
     async def route(
@@ -273,21 +303,21 @@ class SmartRouter:
         )
 
     def get_coolest_workers(self, n: int = 3) -> List[str]:
-        """Get N least recently used workers"""
+        """Return the ``n`` least-used workers (lowest heat)."""
         sorted_workers = sorted(self.heat_map.items(), key=lambda x: x[1])
         return [w[0] for w in sorted_workers[:n] if self.workers[w[0]].enabled]
 
-    def add_heat(self, worker: str, amount: float = 1.0):
-        """Track worker usage (for load balancing)"""
+    def add_heat(self, worker: str, amount: float = 1.0) -> None:
+        """Increment heat for a worker to track recent usage."""
         self.heat_map[worker] = self.heat_map.get(worker, 0) + amount
 
-    def cool_down(self, rate: float = 0.1):
-        """Cool down all workers over time"""
+    def cool_down(self, rate: float = 0.1) -> None:
+        """Cool down all workers over time."""
         for w in self.heat_map:
             self.heat_map[w] = max(0, self.heat_map[w] - rate)
 
-    def record_result(self, result: SmashResult):
-        """Record stats from a worker result"""
+    def record_result(self, result: SmashResult) -> None:
+        """Record basic stats from a worker result."""
         stats = self.stats.setdefault(
             result.provider, {"requests": 0, "successes": 0, "total_time": 0.0}
         )
@@ -297,7 +327,7 @@ class SmartRouter:
         stats["total_time"] += result.elapsed
 
     def get_status(self) -> Dict[str, Any]:
-        """Get router status"""
+        """Expose heat/stats info for observability dashboards."""
         return {
             "workers": {
                 name: {
@@ -320,7 +350,7 @@ _router: Optional[SmartRouter] = None
 
 
 def get_router() -> SmartRouter:
-    """Get or create the singleton router"""
+    """Return the singleton SmartRouter instance."""
     global _router
     if _router is None:
         _router = SmartRouter()

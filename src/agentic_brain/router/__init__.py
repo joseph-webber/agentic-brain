@@ -1,70 +1,25 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 from __future__ import annotations
 
 """
-LLM router with fallback chains (fully async).
+High-level LLM router exports.
 
-Routes requests to appropriate LLM providers:
-- Cloud (OpenRouter, OpenAI, Anthropic)
-- Local (Ollama)
-- Automatic fallback on failure
+The router package exposes a three-tier hierarchy:
 
-Example:
-    >>> from agentic_brain.router import LLMRouter
-    >>> router = LLMRouter()
-    >>> response = await router.chat("Hello, how are you?")
+1. :class:`agentic_brain.llm.LLMRouterCore` – lightweight, dependency-light core
+2. :class:`LLMRouter` – the default production router most users need
+3. :class:`SmartRouter` – an autonomous supervisor with security postures
 
-This module provides backward-compatible imports for the router subpackage.
-All public APIs are available directly from `agentic_brain.router`.
-
-Import weight guide
--------------------
-All provider modules are imported **eagerly** here so that
-``from agentic_brain.router import LLMRouter`` resolves everything in one
-shot.  The actual HTTP client libraries (``openai``, ``anthropic``,
-``google-generativeai``, etc.) are **not** imported at module level — each
-``chat_*`` / ``stream_*`` function imports its client lazily on first call.
-
-The one exception is ``aiohttp`` which several providers import at the module
-level for type annotations.  Install cost is ~5 ms on Apple Silicon.
-
-If you only need a single provider, import it directly::
-
-    from agentic_brain.router.openai import chat_openai
-    from agentic_brain.router.ollama import chat_ollama
+Import :class:`LLMRouter` for everyday use, upgrade to :class:`SmartRouter`
+when you need compliance postures or multi-brain orchestration, and fall back
+to :mod:`agentic_brain.llm` only when you explicitly want the minimalist core.
 """
 
-# Re-export all public APIs for backward compatibility
-# Provider implementations (for advanced usage)
-from .anthropic import chat_anthropic, stream_anthropic
-from .azure_openai import chat_azure_openai, stream_azure_openai
+import importlib
+import warnings
+from types import MappingProxyType
+
 from .config import Message, Model, Provider, Response, RouterConfig
-from .google import chat_google, stream_google
-from .groq import chat_groq, stream_groq
-from .ollama import (
-    chat_ollama,
-    check_ollama_available,
-    check_ollama_sync,
-    list_models_async,
-    list_models_sync,
-    stream_ollama,
-)
-from .openai import chat_openai, stream_openai
-from .openrouter import chat_openrouter, stream_openrouter
 from .provider_checker import (
     ProviderChecker,
     ProviderStatus,
@@ -72,93 +27,113 @@ from .provider_checker import (
     format_provider_status_report,
     get_setup_help,
 )
-from .smart_router import (
-    PostureMode,
-    SecurityPosture,
-    SmartRouter,
-    SmashMode,
-    SmashResult,
+
+_LAZY_EXPORTS = MappingProxyType(
+    {
+        "LLMRouter": "agentic_brain.router.routing",
+        "chat": "agentic_brain.router.routing",
+        "chat_async": "agentic_brain.router.routing",
+        "get_router": "agentic_brain.router.routing",
+        "SmartRouter": "agentic_brain.router.smart_router",
+        "SmashMode": "agentic_brain.router.smart_router",
+        "SmashResult": "agentic_brain.router.smart_router",
+        "SecurityPosture": "agentic_brain.router.smart_router",
+        "PostureMode": "agentic_brain.router.smart_router",
+    }
 )
-from .together import chat_together, stream_together
-from .xai import chat_xai, stream_xai
 
 __all__ = [
-    # Main classes
+    # Primary routers
     "LLMRouter",
+    "SmartRouter",
+    # Convenience helpers
+    "chat",
+    "chat_async",
+    "get_router",
+    # Configuration + models
     "RouterConfig",
     "Provider",
     "Response",
     "Message",
     "Model",
-    # Provider checker (new)
+    # Smart router posture enums
+    "SmashMode",
+    "SmashResult",
+    "SecurityPosture",
+    "PostureMode",
+    # Diagnostics
     "ProviderChecker",
     "ProviderStatus",
     "format_error_message",
     "format_provider_status_report",
     "get_setup_help",
-    # Convenience functions
-    "get_router",
-    "chat_async",
-    "chat",
-    # Smart router
-    "SmartRouter",
-    "SmashMode",
-    "SmashResult",
-    "SecurityPosture",
-    "PostureMode",
-    # Ollama
-    "chat_ollama",
-    "stream_ollama",
-    "check_ollama_available",
-    "check_ollama_sync",
-    "list_models_async",
-    "list_models_sync",
-    # OpenAI
-    "chat_openai",
-    "stream_openai",
-    # Azure OpenAI
-    "chat_azure_openai",
-    "stream_azure_openai",
-    # Anthropic
-    "chat_anthropic",
-    "stream_anthropic",
-    # Google
-    "chat_google",
-    "stream_google",
-    # Groq
-    "chat_groq",
-    "stream_groq",
-    # OpenRouter
-    "chat_openrouter",
-    "stream_openrouter",
-    # Together
-    "chat_together",
-    "stream_together",
-    # xAI
-    "chat_xai",
-    "stream_xai",
 ]
 
-# --- Lazy imports for .routing to break circular dependency ---------------
-# routing.py imports agentic_brain.llm.router.LLMRouterCore, and llm/router.py
-# imports agentic_brain.router.config which triggers this __init__.  Deferring
-# the .routing import via __getattr__ (PEP 562) ensures llm/router.py is fully
-# loaded before routing.py tries to read LLMRouterCore from it.
-_ROUTING_ATTRS = {"LLMRouter", "chat", "chat_async", "get_router"}
+_DEPRECATED_EXPORTS = MappingProxyType(
+    {
+        # Old lightweight import path
+        "LLMRouterCore": "agentic_brain.llm",
+        # Provider-specific helpers (prefer direct module imports)
+        "chat_openai": "agentic_brain.router.openai",
+        "stream_openai": "agentic_brain.router.openai",
+        "chat_azure_openai": "agentic_brain.router.azure_openai",
+        "stream_azure_openai": "agentic_brain.router.azure_openai",
+        "chat_anthropic": "agentic_brain.router.anthropic",
+        "stream_anthropic": "agentic_brain.router.anthropic",
+        "chat_google": "agentic_brain.router.google",
+        "stream_google": "agentic_brain.router.google",
+        "chat_groq": "agentic_brain.router.groq",
+        "stream_groq": "agentic_brain.router.groq",
+        "chat_openrouter": "agentic_brain.router.openrouter",
+        "stream_openrouter": "agentic_brain.router.openrouter",
+        "chat_together": "agentic_brain.router.together",
+        "stream_together": "agentic_brain.router.together",
+        "chat_xai": "agentic_brain.router.xai",
+        "stream_xai": "agentic_brain.router.xai",
+        "chat_ollama": "agentic_brain.router.ollama",
+        "stream_ollama": "agentic_brain.router.ollama",
+        "check_ollama_available": "agentic_brain.router.ollama",
+        "check_ollama_sync": "agentic_brain.router.ollama",
+        "list_models_async": "agentic_brain.router.ollama",
+        "list_models_sync": "agentic_brain.router.ollama",
+    }
+)
+
+# Keep deprecated names discoverable via `from agentic_brain.router import *`
+__all__ += list(_DEPRECATED_EXPORTS.keys())
+
+_DEPRECATION_TEMPLATE = (
+    "`agentic_brain.router.{name}` is deprecated. Import it from `{target}` instead."
+)
 
 
 def __getattr__(name: str):
-    if name in _ROUTING_ATTRS:
-        from .routing import LLMRouter, chat, chat_async, get_router
-
-        _mapping = {
-            "LLMRouter": LLMRouter,
-            "chat": chat,
-            "chat_async": chat_async,
-            "get_router": get_router,
-        }
-        # Cache in module globals so __getattr__ is only called once per name
-        for attr_name, attr_val in _mapping.items():
-            globals()[attr_name] = attr_val
-        return _mapping[name]
+    if name in _LAZY_EXPORTS:
+        module = importlib.import_module(_LAZY_EXPORTS[name])
+        attr = getattr(module, name)
+        if name == "LLMRouter":
+            attr.__doc__ = (
+                "Main production router that balances local and cloud providers, "
+                "handles telemetry, caching, and fallbacks, and should be imported "
+                "via ``from agentic_brain.router import LLMRouter`` for most workloads."
+            )
+        elif name == "SmartRouter":
+            attr.__doc__ = (
+                "Advanced routing supervisor that layers posture modes, compliance "
+                "rules, and proactive heuristics on top of :class:`LLMRouter`. Use "
+                "this when you need adaptive routing decisions beyond the default router."
+            )
+        globals()[name] = attr
+        return attr
+    if name in _DEPRECATED_EXPORTS:
+        module_path = _DEPRECATED_EXPORTS[name]
+        warnings.warn(
+            _DEPRECATION_TEMPLATE.format(name=name, target=f"{module_path}.{name}"),
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        module = importlib.import_module(module_path)
+        attr = getattr(module, name)
+        globals()[name] = attr
+        return attr
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

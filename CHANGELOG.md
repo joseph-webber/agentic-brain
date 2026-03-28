@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.17.0] - 2026-03-28
+
+### Added
+
+- `docs/WOOCOMMERCE.md` - Comprehensive WooCommerce integration guide
+- `docs/WORDPRESS_PLUGIN.md` - Full WordPress plugin documentation
+- `docs/COMMERCE_API.md` - Complete API reference for WooCommerce & WordPress
+- `docs/COMMERCE_CHATBOT.md` - Commerce chatbot capabilities guide
+- `plugins/wordpress/agentic-brain/README.md` - Plugin installation guide
+
+### Improved
+
+- README.md now prominently features e-commerce capabilities
+- Commerce module properly documented (was 15,000 lines with no docs!)
+- Added code examples for all commerce operations
+
+### Documentation
+
+- Full coverage of WooCommerce API (products, orders, customers, coupons, shipping, taxes)
+- Full coverage of WordPress API (posts, pages, media, users, taxonomies)
+- Chatbot examples for natural language store management
+- Plugin developer guide with hooks and filters
+
 ## [2.16.0] - 2026-03-30
 
 ### Added

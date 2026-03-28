@@ -18,7 +18,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from typing import Any, Iterable, Sequence
+from typing import Any, Sequence
 
 import aiohttp
 
@@ -44,20 +44,32 @@ class ModelRoute:
 
 
 class LLMRouterCore:
-    """Lightweight router core for Anthropic, OpenAI, and Ollama."""
+    """Lightweight router core for Ollama, OpenAI, and Anthropic.
 
-    SUPPORTED_PROVIDERS = {
+    This module intentionally excludes OpenRouter because the full-featured
+    OpenRouter integration lives in ``agentic_brain.router.openrouter`` and the
+    heavier router stack under ``agentic_brain.router.routing``.
+
+    Cloud fallback routes are only added when the required API key is
+    configured, so the lightweight router does not queue requests it cannot
+    authenticate.
+    """
+
+    SUPPORTED_PROVIDERS: set[Provider] = {
         Provider.ANTHROPIC,
         Provider.OPENAI,
         Provider.OLLAMA,
-        Provider.OPENROUTER,
     }
 
     PROVIDER_DEFAULT_MODELS: dict[Provider, str] = {
         Provider.OLLAMA: "llama3.1:8b",
         Provider.OPENAI: "gpt-4o-mini",
         Provider.ANTHROPIC: "claude-3-haiku-20240307",
-        Provider.OPENROUTER: "meta-llama/llama-3-8b-instruct:free",
+    }
+
+    PROVIDER_API_KEY_ENV_VARS: dict[Provider, str] = {
+        Provider.OPENAI: "OPENAI_API_KEY",
+        Provider.ANTHROPIC: "ANTHROPIC_API_KEY",
     }
 
     FRIENDLY_ALIASES: dict[str, str] = {
@@ -96,7 +108,9 @@ class LLMRouterCore:
         self.config = config or RouterConfig()
         self._aliases = self._build_alias_map(aliases or self.config.model_aliases)
         configured_models = list(models or self.config.priority_models)
-        self.priority_models = self._resolve_routes(configured_models)
+        self.priority_models = self._configured_routes(
+            self._resolve_routes(configured_models)
+        )
         self._total_tokens = 0
         self._tokens_by_provider: dict[str, int] = {}
         self._estimated_cost_total = 0.0
@@ -104,6 +118,7 @@ class LLMRouterCore:
         self._request_history: list[dict[str, Any]] = []
 
     def _build_alias_map(self, custom_aliases: dict[str, str] | None) -> dict[str, str]:
+        """Build the case-insensitive alias map for supported lightweight providers."""
         alias_map = {key.lower(): value for key, value in self.FRIENDLY_ALIASES.items()}
         for alias, data in MODEL_ALIASES.items():
             provider_name = str(data.get("provider", "")).lower()
@@ -152,6 +167,7 @@ class LLMRouterCore:
         return "\n".join(f"{msg['role']}:{msg['content']}" for msg in messages)
 
     def _resolve_routes(self, models: Sequence[str]) -> list[ModelRoute]:
+        """Resolve a sequence of models into unique provider/model routes."""
         routes: list[ModelRoute] = []
         seen: set[tuple[Provider, str]] = set()
         for item in models:
@@ -193,7 +209,18 @@ class LLMRouterCore:
                     model=str(resolved["model"]),
                     alias=alias.upper(),
                 )
+            if route_provider == Provider.OPENROUTER:
+                raise ValueError(
+                    "OpenRouter is not supported by the lightweight LLM router. "
+                    "Use agentic_brain.router.openrouter or the full router instead."
+                )
             lookup = str(resolved["model"])
+
+        if self._looks_like_openrouter_model(lookup):
+            raise ValueError(
+                "OpenRouter models are not supported by the lightweight LLM router. "
+                "Use agentic_brain.router.openrouter or the full router instead."
+            )
 
         inferred_provider = provider or self._infer_provider(lookup)
         if inferred_provider not in self.SUPPORTED_PROVIDERS:
@@ -203,12 +230,49 @@ class LLMRouterCore:
         return ModelRoute(provider=inferred_provider, model=lookup)
 
     def _infer_provider(self, model: str) -> Provider:
+        """Infer the provider from a raw model name."""
         model_lower = model.lower()
         if model_lower.startswith("gpt-") or model_lower.startswith("o1"):
             return Provider.OPENAI
         if model_lower.startswith("claude-"):
             return Provider.ANTHROPIC
         return Provider.OLLAMA
+
+    def _looks_like_openrouter_model(self, model: str) -> bool:
+        """Return ``True`` when a raw model string appears to target OpenRouter."""
+        model_lower = model.lower()
+        return ":free" in model_lower or model_lower.startswith("openrouter/")
+
+    def _is_provider_configured(self, provider: Provider) -> bool:
+        """Check whether the provider can be used by this lightweight router."""
+        if provider == Provider.OLLAMA:
+            return True
+        if provider == Provider.OPENAI:
+            return bool(self.config.openai_key or os.getenv("OPENAI_API_KEY"))
+        if provider == Provider.ANTHROPIC:
+            return bool(self.config.anthropic_key or os.getenv("ANTHROPIC_API_KEY"))
+        return False
+
+    def _configured_routes(self, routes: Sequence[ModelRoute]) -> list[ModelRoute]:
+        """Filter fallback routes down to providers that are currently configured."""
+        configured: list[ModelRoute] = []
+        for route in routes:
+            if self._is_provider_configured(route.provider):
+                configured.append(route)
+                continue
+            logger.debug(
+                "Skipping unconfigured lightweight LLM route: provider=%s model=%s",
+                route.provider.value,
+                route.model,
+            )
+        return configured
+
+    def _configuration_error_for_provider(self, provider: Provider) -> ConfigurationError:
+        """Create a consistent configuration error for a provider."""
+        env_name = self.PROVIDER_API_KEY_ENV_VARS.get(provider)
+        if env_name:
+            return ConfigurationError(env_name, "configured API key")
+        return ConfigurationError(provider.value, "supported lightweight provider")
 
     def _routes_for_request(
         self,
@@ -217,14 +281,25 @@ class LLMRouterCore:
         model: str | None = None,
         models: Sequence[str] | None = None,
     ) -> list[ModelRoute]:
+        """Return ordered routes for the request, skipping unconfigured fallbacks."""
         if models:
-            return self._resolve_routes(models)
+            resolved_routes = self._resolve_routes(models)
+            available_routes = self._configured_routes(resolved_routes)
+            if available_routes:
+                return available_routes
+            if resolved_routes:
+                raise self._configuration_error_for_provider(resolved_routes[0].provider)
+            return []
+
         primary = self.resolve_model(model, provider) if (provider or model) else None
         ordered = [primary] if primary else []
         for route in self.priority_models:
             if route and route not in ordered:
                 ordered.append(route)
-        return [route for route in ordered if route is not None]
+        available_routes = [route for route in ordered if route is not None]
+        if primary and not self._is_provider_configured(primary.provider):
+            return available_routes
+        return self._configured_routes(available_routes)
 
     def _record_usage(
         self,
@@ -280,6 +355,7 @@ class LLMRouterCore:
         )
 
     def get_token_stats(self) -> dict[str, Any]:
+        """Return tracked token and cost statistics for this router instance."""
         return {
             "total_tokens": self._total_tokens,
             "by_provider": dict(self._tokens_by_provider),
@@ -292,6 +368,7 @@ class LLMRouterCore:
         }
 
     def reset_token_stats(self) -> None:
+        """Reset accumulated token and cost statistics."""
         self._total_tokens = 0
         self._tokens_by_provider = {}
         self._estimated_cost_total = 0.0
@@ -299,6 +376,7 @@ class LLMRouterCore:
         self._request_history = []
 
     async def _sleep(self, seconds: float) -> None:
+        """Sleep hook used by retry logic, kept overridable for tests."""
         await asyncio.sleep(seconds)
 
     def _retry_after_seconds(
@@ -343,6 +421,7 @@ class LLMRouterCore:
         return None
 
     def _backoff_seconds(self, attempt: int, retry_after: int | None = None) -> float:
+        """Calculate retry delay for the current attempt."""
         if retry_after is not None:
             return float(retry_after)
         return min(
@@ -408,6 +487,7 @@ class LLMRouterCore:
         temperature: float = 0.7,
         max_tokens: int | None = None,
     ) -> Response:
+        """Send normalized messages using the first route that succeeds."""
         routes = self._routes_for_request(provider=provider, model=model, models=models)
         last_error: Exception | None = None
         for route in routes:
@@ -444,6 +524,7 @@ class LLMRouterCore:
         temperature: float = 0.7,
         max_tokens: int | None = None,
     ) -> Response:
+        """Normalize inputs and execute a chat request."""
         normalized = self.normalize_messages(
             message=message, system=system, messages=messages
         )
@@ -457,6 +538,7 @@ class LLMRouterCore:
         )
 
     def chat_sync(self, **kwargs: Any) -> Response:
+        """Synchronous wrapper around :meth:`chat`."""
         return asyncio.run(self.chat(**kwargs))
 
     async def _dispatch_request(
@@ -467,6 +549,7 @@ class LLMRouterCore:
         temperature: float,
         max_tokens: int | None = None,
     ) -> Response:
+        """Dispatch a request to the provider-specific implementation."""
         if route.provider == Provider.OPENAI:
             return await self._dispatch_openai(route, messages, temperature, max_tokens)
         if route.provider == Provider.ANTHROPIC:
@@ -485,6 +568,7 @@ class LLMRouterCore:
         headers: dict[str, str] | None = None,
         timeout: float | None = None,
     ) -> tuple[int, dict[str, Any] | str, dict[str, str]]:
+        """POST JSON to a provider endpoint or a test override hook."""
         post_fn = getattr(self, "_post_request", None)
         if callable(post_fn):
             status, result = await post_fn(url, payload, headers, timeout)
@@ -507,6 +591,7 @@ class LLMRouterCore:
             return response.status, result, response_headers
 
     async def _ensure_ollama_available(self) -> None:
+        """Verify Ollama is reachable before sending a local request."""
         check_fn = getattr(self, "_is_ollama_available", None)
         if callable(check_fn):
             available = await check_fn()
@@ -529,6 +614,7 @@ class LLMRouterCore:
         )
 
     def _require_api_key(self, config_value: str | None, env_name: str) -> str:
+        """Return a required API key or raise a consistent configuration error."""
         api_key = config_value or os.getenv(env_name)
         if not api_key:
             raise ConfigurationError(env_name, "configured API key")
@@ -544,6 +630,7 @@ class LLMRouterCore:
         result: dict[str, Any] | str,
         headers: dict[str, str] | None = None,
     ) -> None:
+        """Translate HTTP error responses into router exceptions."""
         if status < 400:
             return
         if status == 429:
@@ -558,6 +645,20 @@ class LLMRouterCore:
             None,
         )
 
+    def _require_mapping_response(
+        self,
+        route: ModelRoute,
+        result: dict[str, Any] | str,
+    ) -> dict[str, Any]:
+        """Validate that the provider returned a JSON object payload."""
+        if isinstance(result, dict):
+            return result
+        raise LLMProviderError(
+            route.provider.value,
+            route.model,
+            TypeError(f"Unexpected response type: {type(result).__name__}"),
+        )
+
     def _response_with_usage(
         self,
         *,
@@ -568,6 +669,7 @@ class LLMRouterCore:
         output_tokens: int = 0,
         metadata: dict[str, Any] | None = None,
     ) -> Response:
+        """Create a response object and update usage accounting."""
         estimated_cost = self._record_usage(
             route,
             input_tokens=input_tokens,
@@ -620,10 +722,7 @@ class LLMRouterCore:
             result=result,
             headers=headers,
         )
-        if not isinstance(result, dict):
-            raise LLMProviderError(
-                route.provider.value, route.model, Exception("Unexpected response type")
-            )
+        result = self._require_mapping_response(route, result)
 
         choice = result["choices"][0]
         usage = result.get("usage", {})
@@ -677,10 +776,7 @@ class LLMRouterCore:
             result=result,
             headers=headers,
         )
-        if not isinstance(result, dict):
-            raise LLMProviderError(
-                route.provider.value, route.model, Exception("Unexpected response type")
-            )
+        result = self._require_mapping_response(route, result)
 
         usage = result.get("usage", {})
         content_blocks = result.get("content", [])
@@ -727,10 +823,7 @@ class LLMRouterCore:
             result=result,
             headers=headers,
         )
-        if not isinstance(result, dict):
-            raise LLMProviderError(
-                route.provider.value, route.model, Exception("Unexpected response type")
-            )
+        result = self._require_mapping_response(route, result)
 
         return self._response_with_usage(
             route=route,

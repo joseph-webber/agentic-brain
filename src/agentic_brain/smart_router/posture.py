@@ -8,9 +8,12 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 """
-🔒 SECURITY POSTURE MODES 🔒
+Security posture definitions for SmartRouter.
 
-Control how the router behaves based on security requirements.
+Security posture is the guard-rail concept that tells SmartRouter which
+providers are allowed, how aggressively we can spend money, and whether we need
+compliance logging.  Together with :class:`agentic_brain.smart_router.core.SmashMode`
+it lets us smash tasks while still respecting enterprise policies.
 """
 
 from dataclasses import dataclass
@@ -19,21 +22,32 @@ from typing import List, Optional
 
 
 class PostureMode(Enum):
-    """Security posture levels"""
+    """High-level posture categories understood by SmartRouter.
 
-    OPEN = "open"  # All workers, no restrictions
-    STANDARD = "standard"  # Default, balanced security
-    RESTRICTED = "restricted"  # Only approved workers
-    AIRGAPPED = "airgapped"  # Local only, no external APIs
-    COMPLIANCE = "compliance"  # Audit logging, approved only
+    * ``OPEN`` – allow every enabled worker, useful for exploration.
+    * ``STANDARD`` – default mode balancing safety and breadth.
+    * ``RESTRICTED`` – only explicitly approved workers (e.g. OpenAI + local).
+    * ``AIRGAPPED`` – local-only operation; never touch external APIs.
+    * ``COMPLIANCE`` – approved workers with mandatory prompt/response logging.
+    """
+
+    OPEN = "open"
+    STANDARD = "standard"
+    RESTRICTED = "restricted"
+    AIRGAPPED = "airgapped"
+    COMPLIANCE = "compliance"
 
 
 @dataclass
 class SecurityPosture:
     """
-    Security posture configuration for the router.
+    Declarative security contract for SmartRouter.
 
-    Controls which workers can be used and how.
+    A SecurityPosture combines the selected :class:`PostureMode` with
+    fine-grained worker allow/block lists, logging requirements, and cost / rate
+    guardrails.  SmartRouter consults this object before selecting workers so it
+    can keep sensitive workloads on compliant providers while still using
+    SmashMode for safe speed.
     """
 
     mode: PostureMode = PostureMode.STANDARD

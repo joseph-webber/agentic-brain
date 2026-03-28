@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from agentic_brain.exceptions import APIError, RateLimitError
+from agentic_brain.exceptions import APIError, ConfigurationError, RateLimitError
 from agentic_brain.llm.router import LLMRouter
 from agentic_brain.router.config import Provider, Response, RouterConfig
 
@@ -36,6 +36,31 @@ def test_resolve_friendly_alias_to_provider_and_model():
     assert route.alias == "CL"
 
 
+def test_resolve_model_rejects_openrouter_models():
+    router = LLMRouter()
+
+    with pytest.raises(ValueError, match="OpenRouter"):
+        router.resolve_model("meta-llama/llama-3-8b-instruct:free")
+
+
+def test_priority_models_skip_unconfigured_cloud_routes():
+    router = LLMRouter(
+        RouterConfig(openai_key=None, anthropic_key=None),
+        models=["L2", "OP2", "CL2"],
+    )
+
+    assert [(route.provider, route.model) for route in router.priority_models] == [
+        (Provider.OLLAMA, "llama3.1:8b")
+    ]
+
+
+def test_models_request_requires_configured_provider():
+    router = LLMRouter(RouterConfig(openai_key=None), models=["L2"])
+
+    with pytest.raises(ConfigurationError, match="OPENAI_API_KEY"):
+        router._routes_for_request(models=["OP2"])
+
+
 @pytest.mark.asyncio
 async def test_rate_limit_backoff_retries_same_route():
     router = LLMRouter(RouterConfig(max_retries=2, backoff_base_seconds=0.5))
@@ -64,7 +89,10 @@ async def test_rate_limit_backoff_retries_same_route():
 
 @pytest.mark.asyncio
 async def test_falls_back_to_next_model_on_provider_error():
-    router = LLMRouter(models=["OP2", "CL2"])
+    router = LLMRouter(
+        RouterConfig(openai_key="sk-openai", anthropic_key="sk-anthropic"),
+        models=["OP2", "CL2"],
+    )
 
     async def dispatch(route, **kwargs):
         if route.provider == Provider.OPENAI:

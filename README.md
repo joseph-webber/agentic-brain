@@ -55,16 +55,34 @@ pip install agentic-brain
 
 ---
 
-## 🛍️ Commerce & Chatbots
+## 🛒 E-commerce & WordPress Integration
 
-**Turn your WooCommerce store into an autonomous sales machine.**
+**WooCommerce + WordPress are first-class citizens in Agentic Brain.**
 
-- **WooCommerceAgent + CommerceHub**: Manage products, orders, customers, inventory, analytics, and webhooks from one commerce layer.
-- **WordPress plugin**: Ship the bundled plugin with settings, auto-sync, and storefront chat without rebuilding your site.
-- **AI chatbot**: `WooCommerceChatbot` supports admin, customer, and guest journeys for support and sales.
-- **RAG-powered product search**: Sync WooCommerce and WordPress content into GraphRAG for semantic catalog discovery.
+- **WooCommerce full API support** — products, orders, customers, coupons, taxes, shipping, and webhooks.
+- **WordPress CMS integration** — posts, pages, media, and taxonomy sync for content-aware commerce.
+- **Product sync & inventory management** — real-time catalog updates, variations, stock levels, and backorders.
+- **Order processing & fulfillment** — status updates, refunds, shipping tracking, and fulfillment workflows.
+- **Analytics & reporting** — sales summaries, inventory insights, and customer metrics.
+- **Natural language commerce chatbot** — `WooCommerceChatbot` for admin, customer, and guest journeys.
 
-[**Get Started with Commerce Integration →**](./docs/integrations/WOOCOMMERCE.md)
+[**Explore Commerce & WordPress Docs →**](./docs/integrations/WOOCOMMERCE.md)
+
+### 🔌 WordPress Plugin
+
+**Docs:** [WordPress Integration Guide](./docs/integrations/WORDPRESS.md) • [Plugin README](./plugins/wordpress/agentic-brain/readme.txt)
+
+**Quick install:**
+1. Download the plugin ZIP from [GitHub Releases](https://github.com/ecomlounge/agentic-brain/releases) or clone into `wp-content/plugins/agentic-brain`.
+2. Activate **Agentic Brain** in **Plugins → Installed Plugins**.
+3. Open **Settings → Agentic Brain** and add your API endpoint + API key.
+4. Click **Sync Now** to push products and posts to the AI backend.
+
+**Key features:**
+- AI chat widget with storefront-aware responses.
+- AI product search shortcode + Gutenberg block.
+- Real-time WooCommerce + WordPress RAG sync.
+- WCAG 2.1 AA accessibility baked in.
 
 ---
 
@@ -398,13 +416,17 @@ See [CI_FIX_SUMMARY.md](CI_FIX_SUMMARY.md) for detailed CI configuration.
 | <h3>🧭 Smart LLM Router</h3>**Modes: Turbo · Cascade · Consensus**<br/>Auto-selects optimal models (Groq, Claude, Gemini) based on latency, cost, and complexity benchmarks. | <h3>🧬 Polymorphic Personas</h3>Industry-specific AI operators (Defense, Healthcare, Legal, Finance) with pre-tuned guardrails, lexicons, and workflows. | <h3>📚 155+ RAG Loaders</h3>Expanded library covering documents, DevOps, commerce, enterprise systems, and event streams. |
 | <h3>🕸️ GraphRAG Architecture</h3>Hybrid retrieval combining vector search, graph traversal, safe Text2Cypher, and community-aware expansion for higher-precision answers. | <h3>⚡ Hardware Acceleration</h3>**Metal (MLX) · CUDA · ROCm**<br/>First-class acceleration for Apple Silicon, NVIDIA, and AMD. Switch targets per agent or per workload. | <h3>🛡️ Ethics & Safety</h3>Built-in AI safety layer with policy packs, automated content filtering, and human-in-the-loop review pipeline. |
 | <h3>📡 Event Streaming</h3>**Redpanda & Kafka**<br/>Real-time event bus for inter-agent communication, telemetry, and distributed state management. | <h3>🔌 Real-Time connectivity</h3>**WebSocket & Redis**<br/>Full-duplex WebSocket streaming for UI updates and Redis-backed pub/sub for instant bot-to-bot sync. | <h3>🔐 Enterprise Security</h3>**Firebase Auth, SSO (OAuth2/OIDC) & SAML**<br/>Production-ready authentication, role-based access control, and audit logging out of the box. |
+| <h3>🛍️ WooCommerce + WordPress</h3>Full REST coverage for products, orders, customers, coupons, webhooks, and CMS sync. | <h3>📦 Product & Inventory Sync</h3>Real-time catalog updates, stock management, variations, and fulfillment-ready workflows. | <h3>🤖 Commerce Chatbots & Analytics</h3>Natural language storefront assistant with sales analytics and reporting dashboards. |
 
 ### 🛒 E-Commerce
 
-- **WooCommerce integration** via `WooCommerceAgent` and `CommerceHub` for products, orders, customers, inventory, analytics, and webhooks.
-- **AI storefront chatbot** using `WooCommerceChatbot`, supporting admin, customer, and guest flows with WordPress widgets and shortcodes.
-- **WordPress plugin** in `plugins/wordpress/agentic-brain/` for drop-in chat, product sync, settings, and Gutenberg blocks.
-- **RAG-ready commerce search** with `WooCommerceLoader`, `WordPressLoader`, and plugin sync feeding semantic product discovery.
+- **WooCommerce full API support** via `WooCommerceAgent` + `CommerceHub` for products, orders, customers, coupons, analytics, and webhooks.
+- **WordPress CMS integration** with `WordPressLoader` for posts, pages, media, and taxonomy sync.
+- **Product sync & inventory management** for real-time stock, variations, and catalog updates.
+- **Order processing & fulfillment** including status updates, refunds, shipping, and webhook-driven flows.
+- **Analytics & reporting** for sales performance, inventory insights, and customer metrics.
+- **Natural language commerce chatbot** using `WooCommerceChatbot`, supporting admin, customer, and guest journeys.
+- **WordPress plugin** in `plugins/wordpress/agentic-brain/` for drop-in chat, product search, settings, and Gutenberg blocks.
 
 ## 🧠 Unified Brain Architecture — THE Key Differentiator
 
@@ -1139,6 +1161,15 @@ mood, _ = mood_detector.detect("This is broken AGAIN!!!")
 | **Conversation Summary** | Auto-summarize long conversation threads |
 
 📖 **[Full Chat Intelligence Guide →](./src/agentic_brain/chat/README.md)**
+
+**Commerce (WooCommerce SDK):**
+```python
+from agentic_brain.commerce import WooCommerce
+
+woo = WooCommerce(url="https://mystore.com", key="...", secret="...")
+products = woo.products.list()
+order = woo.orders.create(...)
+```
 
 **GraphRAG Pipeline:**
 ```python

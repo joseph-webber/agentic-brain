@@ -16,14 +16,21 @@
 from __future__ import annotations
 
 """
-Main LLMRouter class with routing logic.
+Production LLM router built on top of ``LLMRouterCore``.
 
-This is the main entry point for LLM routing. It:
-- Manages provider selection and fallback
-- Handles HTTP pooling
-- Tracks token usage
-- Provides both sync and async interfaces
-- Implements semantic prompt caching for cost reduction
+``agentic_brain.llm.router.LLMRouterCore`` is the lightweight, dependency-light
+core that owns message normalization, alias resolution, retry/backoff, and cost
+tracking for a small set of providers. This module layers production concerns
+on top of that core:
+
+- Streaming responses and additional cloud providers (Azure, Groq, Together,
+  Google, xAI)
+- Semantic prompt caching and Redis-based coordination
+- HTTP pooling integration
+- Smart routing heuristics and fallback chains
+
+Use ``LLMRouter`` from this module for the full-featured production router.
+Use ``LLMRouterCore`` when you need the smallest dependency surface area.
 """
 
 
@@ -32,13 +39,14 @@ import logging
 import os
 import time
 from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING, Any, Optional
+from types import ModuleType, TracebackType
+from typing import TYPE_CHECKING, Any
 
 from agentic_brain.llm.router import LLMRouterCore
 
 from .anthropic import stream_anthropic
 from .azure_openai import chat_azure_openai, stream_azure_openai
-from .config import Message, Model, Provider, Response, RouterConfig
+from .config import Message, Provider, Response, RouterConfig
 from .google import chat_google, stream_google
 from .groq import chat_groq, stream_groq
 from .http import get_request, post_request
@@ -50,11 +58,7 @@ from .ollama import (
 )
 from .openai import stream_openai
 from .openrouter import chat_openrouter, stream_openrouter
-from .provider_checker import (
-    ProviderChecker,
-    format_error_message,
-    format_provider_status_report,
-)
+from .provider_checker import ProviderChecker, format_error_message
 from .together import chat_together, stream_together
 from .xai import chat_xai, stream_xai
 
@@ -65,11 +69,12 @@ if TYPE_CHECKING:
     from .redis_cache import RedisInterBotComm, RedisRouterCache
 
 # Lazy import for cache to avoid circular dependencies
-_semantic_cache_module = None
-_unified_brain_module = None
+_MODULE_UNAVAILABLE = object()
+_semantic_cache_module: ModuleType | object | None = None
+_unified_brain_module: type["UnifiedBrain"] | object | None = None
 
 
-def _get_cache_module():
+def _get_cache_module() -> ModuleType | None:
     """Lazy import of cache module."""
     global _semantic_cache_module
     if _semantic_cache_module is None:
@@ -78,11 +83,13 @@ def _get_cache_module():
 
             _semantic_cache_module = cache_mod
         except ImportError:
-            _semantic_cache_module = False  # Mark as unavailable
-    return _semantic_cache_module if _semantic_cache_module else None
+            _semantic_cache_module = _MODULE_UNAVAILABLE  # Mark as unavailable
+    if _semantic_cache_module is _MODULE_UNAVAILABLE:
+        return None
+    return _semantic_cache_module
 
 
-def _get_unified_brain_class():
+def _get_unified_brain_class() -> type["UnifiedBrain"] | None:
     """Lazy import of UnifiedBrain to avoid hard dependency cycles."""
     global _unified_brain_module
     if _unified_brain_module is None:
@@ -91,8 +98,10 @@ def _get_unified_brain_class():
 
             _unified_brain_module = UnifiedBrainClass
         except ImportError:
-            _unified_brain_module = False
-    return _unified_brain_module if _unified_brain_module else None
+            _unified_brain_module = _MODULE_UNAVAILABLE
+    if _unified_brain_module is _MODULE_UNAVAILABLE:
+        return None
+    return _unified_brain_module
 
 
 logger = logging.getLogger(__name__)
@@ -104,7 +113,6 @@ __all__ = [
     "Provider",
     "Response",
     "Message",
-    "Model",
     "get_router",
     "chat_async",
     "chat",
@@ -113,14 +121,20 @@ __all__ = [
 
 class LLMRouter(LLMRouterCore):
     """
-    Intelligent LLM routing with automatic fallback (fully async).
+    Production-grade router that extends :class:`LLMRouterCore`.
+
+    ``LLMRouterCore`` provides the dependency-light baseline (message normalization,
+    alias resolution, retry/backoff, and cost tracking). ``LLMRouter`` builds on
+    that foundation to add streaming, semantic caching, Redis coordination, HTTP
+    pooling, and additional providers beyond the lightweight core.
 
     Features:
     - Local-first (Ollama) for privacy and cost
     - Automatic fallback to cloud on failure
-    - Multiple provider support
-    - Simple async chat interface
-    - Cached availability checks
+    - Extended provider support (Azure, Groq, Together, Google, xAI)
+    - Streaming responses and pooled HTTP transport
+    - Semantic + Redis caches for cost reduction
+    - Smart routing heuristics and UnifiedBrain integration
 
     Example:
         >>> router = LLMRouter()
@@ -143,7 +157,7 @@ class LLMRouter(LLMRouterCore):
     """
 
     # Fallback chain: try these in order
-    FALLBACK_CHAIN = [
+    FALLBACK_CHAIN: list[tuple[Provider, str]] = [
         (Provider.OLLAMA, "llama3.1:8b"),
         (Provider.GROQ, "llama-3.1-8b-instant"),
         (Provider.OPENROUTER, "meta-llama/llama-3-8b-instruct:free"),
@@ -152,7 +166,7 @@ class LLMRouter(LLMRouterCore):
         (Provider.TOGETHER, "meta-llama/Llama-3.1-8B-Instruct-Turbo"),
     ]
 
-    FASTEST_CHAIN = [
+    FASTEST_CHAIN: list[tuple[Provider, str]] = [
         (Provider.OLLAMA, "llama3.2:3b"),
         (Provider.GROQ, "llama-3.1-8b-instant"),
         (Provider.OPENROUTER, "meta-llama/llama-3-8b-instruct:free"),
@@ -163,19 +177,19 @@ class LLMRouter(LLMRouterCore):
         (Provider.XAI, "grok-2-mini"),
     ]
 
-    CODE_CHAIN = [
+    CODE_CHAIN: list[tuple[Provider, str]] = [
         (Provider.ANTHROPIC, "claude-3-5-sonnet-20241022"),
         (Provider.OPENAI, "gpt-4o"),
         (Provider.OLLAMA, "llama3.1:8b"),
     ]
 
-    REASONING_CHAIN = [
+    REASONING_CHAIN: list[tuple[Provider, str]] = [
         (Provider.ANTHROPIC, "claude-3-sonnet-20240229"),
         (Provider.OPENAI, "gpt-4o"),
         (Provider.OLLAMA, "llama3.1:8b"),
     ]
 
-    MODEL_PROVIDER_MAP = {
+    MODEL_PROVIDER_MAP: dict[str, Provider] = {
         "llama3.1:8b": Provider.OLLAMA,
         "llama3.2:3b": Provider.OLLAMA,
         "llama-3.1-8b-instant": Provider.GROQ,
@@ -205,9 +219,9 @@ class LLMRouter(LLMRouterCore):
             unified_brain: Optional UnifiedBrain instance for high-level routing
         """
         super().__init__(config=config)
-        self.redis_cache = redis_cache
+        self.redis_cache: RedisRouterCache | RedisInterBotComm | None = redis_cache
         self._prefer_brain_routing = unified_brain is not None
-        self.unified_brain = (
+        self.unified_brain: UnifiedBrain | None = (
             unified_brain if unified_brain is not None else self._build_unified_brain()
         )
 
@@ -217,7 +231,7 @@ class LLMRouter(LLMRouterCore):
         self._cache_ttl: float = 30.0  # seconds
 
         # HTTP pool reference (lazy loaded)
-        self._http_pool = None
+        self._http_pool: Any | None = None
 
         # HTTP pool usage metrics (use lists for mutability in closures)
         self._pool_requests: list[int] = [0]
@@ -227,10 +241,10 @@ class LLMRouter(LLMRouterCore):
         self._provider_usage: dict[str, int] = {}
 
         # Semantic prompt cache (lazy loaded)
-        self._semantic_cache = None
-        self._cache_initialized = False
+        self._semantic_cache: Any | None = None
+        self._cache_initialized: bool = False
 
-    def _build_unified_brain(self) -> Any | None:
+    def _build_unified_brain(self) -> UnifiedBrain | None:
         """Create UnifiedBrain if it is available."""
         brain_cls = _get_unified_brain_class()
         if brain_cls is None:
@@ -242,7 +256,7 @@ class LLMRouter(LLMRouterCore):
             logger.debug(f"UnifiedBrain unavailable: {exc}")
             return None
 
-    def _get_http_pool(self):
+    def _get_http_pool(self) -> Any | None:
         """Get HTTP pool if configured and available.
 
         Auto-starts the pool on first use if not already started.
@@ -277,7 +291,7 @@ class LLMRouter(LLMRouterCore):
 
         return None
 
-    async def _get_or_start_http_pool(self):
+    async def _get_or_start_http_pool(self) -> Any | None:
         """Async version: Get or start HTTP pool.
 
         This is the recommended way to use the HTTP pool from async contexts,
@@ -314,7 +328,7 @@ class LLMRouter(LLMRouterCore):
 
         return None
 
-    def get_pool_stats(self) -> dict:
+    def get_pool_stats(self) -> dict[str, int | bool]:
         """
         Get HTTP pool usage statistics.
 
@@ -335,24 +349,7 @@ class LLMRouter(LLMRouterCore):
             "requests_direct": self._direct_requests[0],
         }
 
-    def get_token_stats(self) -> dict:
-        """
-        Get token usage statistics.
-
-        Returns:
-            Dict with token counts:
-            {
-                'total_tokens': int,
-                'by_provider': {'ollama': int, 'openai': int, ...},
-            }
-        """
-        return super().get_token_stats()
-
-    def reset_token_stats(self) -> None:
-        """Reset token usage counters."""
-        super().reset_token_stats()
-
-    def _get_semantic_cache(self):
+    def _get_semantic_cache(self) -> Any | None:
         """Get or initialize semantic cache (lazy loading)."""
         if self._cache_initialized:
             return self._semantic_cache
@@ -388,7 +385,7 @@ class LLMRouter(LLMRouterCore):
             logger.warning(f"Failed to initialize semantic cache: {e}")
             return None
 
-    def get_cache_stats(self) -> dict | None:
+    def get_cache_stats(self) -> dict[str, Any] | None:
         """
         Get semantic cache statistics.
 
@@ -440,10 +437,8 @@ class LLMRouter(LLMRouterCore):
         if groq_key:
             routes.append((Provider.GROQ, "llama-3.1-8b-instant"))
 
-        self.config.openrouter_key or os.environ.get("OPENROUTER_API_KEY")
-        if True:
-            # OpenRouter free models are available even without an API key.
-            routes.append((Provider.OPENROUTER, "meta-llama/llama-3-8b-instruct:free"))
+        # OpenRouter free models are available even without an API key.
+        routes.append((Provider.OPENROUTER, "meta-llama/llama-3-8b-instruct:free"))
 
         openai_key = self.config.openai_key or os.environ.get("OPENAI_API_KEY")
         if openai_key:
@@ -688,10 +683,10 @@ class LLMRouter(LLMRouterCore):
     async def _post_request(
         self,
         url: str,
-        json_data: dict,
-        headers: dict | None = None,
+        json_data: dict[str, Any],
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
-    ) -> tuple[int, dict | str]:
+    ) -> tuple[int, dict[str, Any] | str]:
         """Make a POST request using HTTP pool if available."""
         timeout = timeout or self.config.timeout
         pool = self._get_http_pool()
@@ -708,9 +703,9 @@ class LLMRouter(LLMRouterCore):
     async def _get_request(
         self,
         url: str,
-        headers: dict | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
-    ) -> tuple[int, dict | str]:
+    ) -> tuple[int, dict[str, Any] | str]:
         """Make a GET request using HTTP pool if available."""
         timeout = timeout or self.config.timeout
         pool = self._get_http_pool()
@@ -1452,7 +1447,12 @@ class LLMRouter(LLMRouterCore):
             await self._get_or_start_http_pool()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Async context manager exit - cleanup."""
         # Reset pool reference (actual pool managed by PoolManager singleton)
         self._http_pool = None
@@ -1467,7 +1467,7 @@ class LLMRouter(LLMRouterCore):
         """Check if local LLM is available (async)."""
         return await self._is_ollama_available()
 
-    async def check_all_providers(self) -> dict:
+    async def check_all_providers(self) -> dict[str, dict[str, Any]]:
         """
         Check availability of all LLM providers.
 
@@ -1521,7 +1521,7 @@ class LLMRouter(LLMRouterCore):
 
         return result
 
-    def check_all_providers_sync(self) -> dict:
+    def check_all_providers_sync(self) -> dict[str, dict[str, Any]]:
         """Sync wrapper for check_all_providers."""
         return asyncio.run(self.check_all_providers())
 
@@ -1538,11 +1538,11 @@ def get_router() -> LLMRouter:
     return _default_router
 
 
-async def chat_async(message: str, **kwargs) -> Response:
+async def chat_async(message: str, **kwargs: Any) -> Response:
     """Quick async chat using default router."""
     return await get_router().chat(message, **kwargs)
 
 
-def chat(message: str, **kwargs) -> Response:
+def chat(message: str, **kwargs: Any) -> Response:
     """Quick sync chat using default router."""
     return get_router().chat_sync(message, **kwargs)

@@ -8,22 +8,32 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 """
-🚀 PARALLEL EXECUTION COORDINATOR 🚀
+Parallel execution helpers for SmartRouter.
 
-Fire ALL workers in parallel - FASTEST WINS!
-Optional Redis for distributed coordination.
+The coordinator is responsible for the SmashMode behaviours that involve more
+than one worker at a time (turbo, consensus, cascade, warmup pings).  It owns
+the “fire everything” orchestration and the optional Redis-backed coordination
+needed when multiple processes are smashing the same task.
 """
 
 import asyncio
 import time
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 from .core import SmashMode, SmashResult, get_router
 from .workers import get_all_workers, get_worker
 
+if TYPE_CHECKING:
+    from .workers import BaseWorker
 
-def _resolve_worker_fns():
+
+WorkerFactoryPair = Tuple[
+    Callable[[str], "BaseWorker"], Callable[[], List["BaseWorker"]]
+]
+
+
+def _resolve_worker_fns() -> WorkerFactoryPair:
     """Resolve worker factories from the currently-imported module.
 
     Some tests intentionally clear `sys.modules` entries under `agentic_brain.*`
@@ -117,8 +127,8 @@ async def turbo_smash(
     else:
         worker_instances = get_all_workers_fn()
 
-    async def fire_worker(worker):
-        """Fire a single worker"""
+    async def fire_worker(worker: "BaseWorker") -> SmashResult:
+        """Fire a single worker."""
         start = time.time()
         try:
             result_dict = await worker.execute(prompt)
@@ -247,7 +257,7 @@ async def cascade_smash(
     )
 
 
-async def warmup_ping() -> Dict[str, float]:
+async def warmup_ping() -> Dict[str, Optional[float]]:
     """
     🏁 WARMUP PING - Measure all worker response times
 

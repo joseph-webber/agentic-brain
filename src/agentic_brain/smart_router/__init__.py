@@ -8,40 +8,30 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 """
-🔥 SMART LLM ROUTER - MASTER/WORKER ARCHITECTURE 🔥
+SmartRouter package entrypoint.
 
-Claude is the MASTER THREAD - orchestrates, delegates, NEVER rate limited.
-Other LLMs are WORKER THREADS - they do the heavy lifting.
+The smart router is the “big hammer” for multi-provider orchestration: a fleet
+of worker LLMs (OpenAI, Groq, Gemini, local Ollama, etc.) coordinated by a
+single master (Claude/Copilot).  It focuses on parallelism, load shedding, and
+security posture enforcement so we can smash tasks across providers without
+hitting rate limits.
 
-Architecture:
-    MASTER (Claude/Copilot)
-        │
-        ├── Worker: OpenAI (gpt-4o) - Complex code
-        ├── Worker: Groq (llama-3.3) - FASTEST responses
-        ├── Worker: Gemini (2.0-flash) - FREE, fast
-        ├── Worker: DeepSeek (v3) - FREE credits
-        ├── Worker: Together (llama-3.3) - FREE credits
-        ├── Worker: Local Ollama - UNLIMITED
-        └── Worker: OpenRouter (50+ models) - Fallback
+This subpackage exposes three core areas:
 
-Modes:
-    - TURBO: Fire ALL workers, fastest wins
-    - CONSENSUS: Fire 3+, compare results
-    - CASCADE: Try FREE first, fall back to paid
-    - DEDICATED: Route to best worker for task type
+* `agentic_brain.smart_router.core` – routing logic, SmashMode, and result
+  structures.
+* `agentic_brain.smart_router.posture` – posture and security controls that
+  decide which workers can participate.
+* `agentic_brain.smart_router.workers` – concrete worker implementations for
+  each provider.
 
-Usage:
-    from agentic_brain.smart_router import SmartRouter, turbo_smash
-
-    router = SmartRouter()
-    result = await router.route("code", "Write a function...")
-
-    # Or fire all at once
-    result = await turbo_smash("Say hi!")
+Use these imports when you need to embed SmartRouter directly, or import
+`agentic_brain.router.smart_router` for the thin compatibility shim.
 """
 
-from .core import SmartRouter, SmashMode, SmashResult
-from .posture import PostureMode, SecurityPosture
+from .coordinator import warmup_ping
+from .core import SmartRouter, SmashMode, SmashResult, WorkerConfig, get_router
+from .posture import PostureMode, SecurityPosture, get_posture
 from .workers import (
     AzureOpenAIWorker,
     DeepSeekWorker,
@@ -51,6 +41,8 @@ from .workers import (
     OpenAIWorker,
     OpenRouterWorker,
     TogetherWorker,
+    get_all_workers,
+    get_worker,
 )
 
 
@@ -86,6 +78,8 @@ __all__ = [
     "SmartRouter",
     "SmashMode",
     "SmashResult",
+    "WorkerConfig",
+    "get_router",
     "OpenAIWorker",
     "AzureOpenAIWorker",
     "GroqWorker",
@@ -94,9 +88,13 @@ __all__ = [
     "OpenRouterWorker",
     "TogetherWorker",
     "DeepSeekWorker",
+    "get_worker",
+    "get_all_workers",
     "RedisCoordinator",
     "turbo_smash",
     "cascade_smash",
+    "warmup_ping",
     "SecurityPosture",
     "PostureMode",
+    "get_posture",
 ]
