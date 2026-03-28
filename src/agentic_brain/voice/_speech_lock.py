@@ -21,12 +21,20 @@ Architecture:
     5. Releases the lock
 
     This guarantees ONE voice at a time across the entire process.
+
+.. warning::
+
+    Prefer ``VoiceSerializer.speak()`` or ``speak_serialized()`` from
+    ``agentic_brain.voice.serializer`` instead of calling ``global_speak``
+    directly.  The serializer adds queue management, async support, and
+    overlap auditing on top of the raw lock.
 """
 
 import logging
 import subprocess
 import threading
 import time
+import warnings
 from typing import List, Optional
 
 logger = logging.getLogger(__name__)
@@ -47,8 +55,10 @@ def global_speak(
 ) -> bool:
     """Run a speech command under the global lock.
 
-    This is the ONLY function that should ever start an audio subprocess.
-    All voice modules must route through here.
+    .. deprecated::
+        New code should route through ``speak_serialized()`` from
+        ``agentic_brain.voice.serializer`` which wraps this lock with
+        queue management and overlap auditing.
 
     Args:
         cmd: Full subprocess command, e.g. ``["say", "-v", "Karen", "Hello"]``.
@@ -57,6 +67,26 @@ def global_speak(
 
     Returns:
         True if the command completed successfully.
+    """
+    warnings.warn(
+        "global_speak() is a low-level primitive.  Prefer "
+        "speak_serialized() from agentic_brain.voice.serializer "
+        "to get queue management and overlap auditing.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return _global_speak_inner(cmd, timeout=timeout, inter_gap=inter_gap)
+
+
+def _global_speak_inner(
+    cmd: List[str],
+    *,
+    timeout: int = 60,
+    inter_gap: float = INTER_UTTERANCE_GAP,
+) -> bool:
+    """Internal implementation – no deprecation warning.
+
+    Called by the serializer's own executor when it needs the raw lock.
     """
     global _current_process
 

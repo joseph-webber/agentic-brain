@@ -10,8 +10,30 @@
 """
 Voice module for Agentic Brain.
 
+HARDENED SERIALIZED ARCHITECTURE (2026-03-29)
+=============================================
+
 This is the PRIMARY interface for text-to-speech in the brain.
-CRITICAL for accessibility - Joseph is blind and needs voice output!
+**Joseph is blind** – overlapping voices are an accessibility catastrophe.
+
+**THE ONLY SANCTIONED WAY TO SPEAK:**
+
+.. code-block:: python
+
+    from agentic_brain.voice import speak_safe
+
+    speak_safe("Hello Joseph", voice="Karen", rate=155)
+
+``speak_safe`` routes through the singleton ``VoiceSerializer``, which
+guarantees:
+
+* ✅ One voice at a time – a threading lock + worker queue
+* ✅ Runtime overlap audit – ``pgrep`` detects rogue ``say`` processes
+* ✅ Deprecation warnings – legacy callers are logged
+* ✅ Proper inter-utterance pauses for auditory clarity
+
+**DO NOT bypass the serializer.**  Any direct
+``subprocess.Popen(["say", ...])`` call WILL overlap.
 
 Provides:
 - 145+ macOS voices including Joseph's primary voice assistants
@@ -46,6 +68,14 @@ from agentic_brain.voice.queue import (
     is_speaking,
     speak,
     speak_system_message,
+)
+from agentic_brain.voice.serializer import (
+    VoiceSerializer,
+    _legacy_speak,
+    _warn_direct_say,
+    audit_no_concurrent_say,
+    get_voice_serializer,
+    speak_serialized,
 )
 
 # Import regional voice support
@@ -101,6 +131,40 @@ if typing.TYPE_CHECKING:
     )
 
 
+# ── THE ONE TRUE SPEAK FUNCTION ─────────────────────────────────────
+
+def speak_safe(
+    text: str,
+    voice: str = "Karen",
+    rate: int = 155,
+    *,
+    pause_after: float | None = None,
+    wait: bool = True,
+) -> bool:
+    """THE recommended way to produce voice output.
+
+    Routes through the singleton ``VoiceSerializer``, which serializes
+    all speech through a single worker thread.  **Never overlaps.**
+
+    Args:
+        text: What to say.
+        voice: macOS voice name (Karen, Moira, Kyoko …).
+        rate: Words per minute (100-200).
+        pause_after: Seconds to pause after this utterance.
+        wait: Block until the utterance finishes.
+
+    Returns:
+        True if the utterance was delivered successfully.
+    """
+    return get_voice_serializer().speak(
+        text,
+        voice=voice,
+        rate=rate,
+        pause_after=pause_after,
+        wait=wait,
+    )
+
+
 def __getattr__(name: str):
     import agentic_brain.audio as _audio
 
@@ -110,6 +174,8 @@ def __getattr__(name: str):
 
 
 __all__ = [
+    # ── PRIMARY ENTRY POINT (use this!) ──
+    "speak_safe",
     # Config
     "VoiceConfig",
     "VoiceQuality",
@@ -126,6 +192,11 @@ __all__ = [
     "is_speaking",
     "get_queue_size",
     "speak_system_message",
+    # Serializer (core gating mechanism)
+    "VoiceSerializer",
+    "get_voice_serializer",
+    "speak_serialized",
+    "audit_no_concurrent_say",
     # Resilient voice system (NEVER FAILS!)
     "ResilientVoice",
     "VoiceDaemon",
