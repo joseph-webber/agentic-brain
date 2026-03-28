@@ -69,14 +69,6 @@ from agentic_brain.voice.queue import (
     speak,
     speak_system_message,
 )
-from agentic_brain.voice.serializer import (
-    VoiceSerializer,
-    _legacy_speak,
-    _warn_direct_say,
-    audit_no_concurrent_say,
-    get_voice_serializer,
-    speak_serialized,
-)
 
 # Import regional voice support
 from agentic_brain.voice.regional import (
@@ -98,6 +90,14 @@ from agentic_brain.voice.resilient import (
 from agentic_brain.voice.resilient import (
     speak as resilient_speak,
 )
+from agentic_brain.voice.serializer import (
+    VoiceSerializer,
+    _legacy_speak,
+    _warn_direct_say,
+    audit_no_concurrent_say,
+    get_voice_serializer,
+    speak_serialized,
+)
 
 # Import adaptive speed profiles (grow with Joseph's proficiency!)
 from agentic_brain.voice.speed_profiles import (
@@ -108,6 +108,12 @@ from agentic_brain.voice.speed_profiles import (
     get_adaptive_tracker,
     get_current_rate,
     get_speed_manager,
+)
+from agentic_brain.voice.stream import (
+    VoiceEventConsumer,
+    VoiceEventProducer,
+    get_voice_event_producer,
+    speak_async,
 )
 
 # Import user regional preferences and learning
@@ -220,7 +226,11 @@ __all__ = [
     "VoiceSerializer",
     "get_voice_serializer",
     "speak_serialized",
+    "speak_async",
     "audit_no_concurrent_say",
+    "VoiceEventProducer",
+    "VoiceEventConsumer",
+    "get_voice_event_producer",
     # Resilient voice system (NEVER FAILS!)
     "ResilientVoice",
     "VoiceDaemon",
@@ -249,6 +259,12 @@ __all__ = [
     "_lazy_speech_rates",
     "_lazy_tts_router",
     "_lazy_kokoro",
+    # ── PHASE 2: New Integration Components ──
+    "_lazy_watchdog",
+    "_lazy_daemon_gate",
+    "_lazy_live_mode",
+    "_lazy_stream_consumer",
+    "_lazy_unified",
     # Classes
     "Audio",
     "AudioConfig",
@@ -326,3 +342,40 @@ def _lazy_kokoro():
     """Lazy import for Kokoro neural TTS engine."""
     from agentic_brain.voice.kokoro_tts import KokoroTTS, kokoro_available
     return KokoroTTS, kokoro_available
+
+
+# ── PHASE 2 COMPONENTS (Voice Improvements 2026-03-30) ──────────────
+#
+# Four improvements built by parallel agents, integrated here:
+#   ① Worker Thread Watchdog    → watchdog.py (monitors & restarts worker)
+#   ② Daemon Overlap Gate       → daemon_gate.py (PID-file single-instance)
+#   ③ Live Voice Mode (Aria)    → live_mode.py (streaming LLM → speech)
+#   ④ Redpanda Stream Consumer  → stream_consumer.py (event-driven speech)
+#   ⑤ Unified Voice System      → unified.py (single entry point for all)
+#
+# All imports are lazy to avoid blocking MCP server startup.
+
+def _lazy_watchdog():
+    """Lazy import for the voice worker watchdog."""
+    from agentic_brain.voice.watchdog import VoiceWatchdog
+    return VoiceWatchdog
+
+def _lazy_daemon_gate():
+    """Lazy import for the daemon startup gate."""
+    from agentic_brain.voice.daemon_gate import DaemonGate, get_daemon_gate
+    return DaemonGate, get_daemon_gate
+
+def _lazy_live_mode():
+    """Lazy import for live voice mode (Project Aria)."""
+    from agentic_brain.voice.live_mode import LiveVoiceMode, get_live_mode
+    return LiveVoiceMode, get_live_mode
+
+def _lazy_stream_consumer():
+    """Lazy import for Redpanda voice stream consumer."""
+    from agentic_brain.voice.stream_consumer import VoiceStreamConsumer
+    return VoiceStreamConsumer
+
+def _lazy_unified():
+    """Lazy import for the unified voice system."""
+    from agentic_brain.voice.unified import UnifiedVoiceSystem, get_unified
+    return UnifiedVoiceSystem, get_unified
