@@ -63,6 +63,7 @@ classifiers = [
 
 dependencies = [
     "aiohttp>=3.9.0,<4.0.0",  # Required for LLM API calls (Ollama, OpenRouter)
+    "litellm>=1.52.0,<2.0.0",  # Unified LLM routing across Anthropic, OpenAI, Ollama
     "questionary>=2.0.0,<3.0.0",  # Interactive CLI prompts (new-config wizard)
     "pyttsx3>=2.90",  # Cross-platform TTS (Windows/Linux)
     "gTTS>=2.5.0",    # Google TTS (free cloud fallback)
@@ -74,15 +75,43 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Production memory and persistence (recommended)
+# Enhanced integrations bundle
+enhanced = [
+    "mem0ai>=0.1.0",
+    "litellm>=1.0.0",
+    "docling>=1.0.0",
+    "neo4j-graphrag>=0.3.0",
+    "chonkie>=0.1.0",
+]
+# Production memory integrations
 memory = [
-    "neo4j>=5.14.0,<6.0.0",
+    "mem0ai>=0.1.0",
+]
+llm-routing = [
+    "litellm>=1.0.0",
+]
+doc-parsing = [
+    "docling>=1.0.0",
+]
+graphrag = [
+    "neo4j-graphrag>=0.3.0",
+]
+chunking = [
+    "chonkie>=0.1.0",
 ]
 # Documentation generator
 docs = [
     "mkdocs>=1.5.0",
     "mkdocs-material>=9.5.0",
     "pymdown-extensions>=10.0.0,<11.0.0",
+]
+cloud_docs = [
+    "google-api-python-client>=2.100.0",
+    "google-auth>=2.23.0",
+    "google-auth-oauthlib>=1.1.0",
+    "msal>=1.24.0",
+    "msgraph-sdk>=1.0.0",
+    "azure-identity>=1.14.0",
 ]
 # Async file operations
 files = [
@@ -201,6 +230,13 @@ mlx = [
     "mlx>=0.5.0,<1.0.0",
     "numpy>=1.24.0,<3.0.0",
 ]
+# Fast chunking (Chonkie - 33x faster RAG preprocessing)
+chonkie = [
+    "chonkie>=1.0.0",
+]
+chonkie-semantic = [
+    "chonkie[semantic]>=1.0.0",
+]
 explainability = [
     "shap>=0.42.0,<1.0.0",
     "lime>=0.2.0.1,<1.0.0",
@@ -243,9 +279,12 @@ documents = [
     "mammoth>=1.6.0",   # DOCX to HTML/Markdown conversion
     "openpyxl>=3.1.0",  # Excel spreadsheet operations
     "striprtf>=0.0.26",
-    "mammoth>=1.6.0",
-    "python-docx>=1.0.0",
-    "openpyxl>=3.1.0",
+]
+docling = [
+    "docling>=2.31.0",
+]
+xml = [
+    "lxml>=4.9.0",
 ]
 # Office document processing
 office = [
@@ -283,11 +322,17 @@ accessibility-blip = [
 accessibility-full = [
     "agentic-brain[accessibility,accessibility-mlx,accessibility-blip]",
 ]
+# Ebook Processing (EPUB + MOBI/AZW)
+ebook = [
+    "ebooklib>=0.18",
+    "mobi>=0.3.1",
+]
 # Print Processing - Preflight and production
 print = [
     "Pillow>=10.0.0",  # Image color space conversion
 ]
 all = [
+    "agentic-brain[enhanced]",
     # Memory
     "neo4j>=5.14.0,<6.0.0",
     "aiofiles>=23.0.0,<25.0.0",
@@ -337,6 +382,13 @@ all = [
     "openpyxl>=3.1.0",
     "striprtf>=0.0.26",
     "mammoth>=1.6.0",
+    "google-api-python-client>=2.100.0",
+    "google-auth>=2.23.0",
+    "google-auth-oauthlib>=1.1.0",
+    "msal>=1.24.0",
+    "msgraph-sdk>=1.0.0",
+    "azure-identity>=1.14.0",
+    "lxml>=4.9.0",
 ]
 
 [project.scripts]

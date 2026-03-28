@@ -147,6 +147,7 @@ with contextlib.suppress(ImportError, ModuleNotFoundError):
 # Document store
 # Advanced chunking
 from .chunking import (
+    CHONKIE_AVAILABLE,
     BaseChunker,
     Chunk,
     ChunkingStrategy,
@@ -156,6 +157,10 @@ from .chunking import (
     SemanticChunker,
     create_chunker,
 )
+
+# Chonkie fast chunking (optional)
+if CHONKIE_AVAILABLE:
+    from .chunking import ChonkieChunker, ChonkieStrategy, benchmark_chunkers
 
 # Contextual compression (reduce chunk noise)
 from .contextual_compression import (
@@ -399,6 +404,11 @@ __all__ = [
     "RecursiveChunker",
     "MarkdownChunker",
     "create_chunker",
+    # Chonkie fast chunking
+    "CHONKIE_AVAILABLE",
+    "ChonkieChunker",
+    "ChonkieStrategy",
+    "benchmark_chunkers",
     # Reranking
     "BaseReranker",
     "RerankResult",
