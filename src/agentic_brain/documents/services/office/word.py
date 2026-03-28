@@ -147,7 +147,9 @@ class WordProcessor:
         self._last_wcag_report: WCAGReport | None = None
         self.table_extractor = TableExtractor()
         self.image_extractor = ImageExtractor()
-        self.accessibility_processor = accessibility_processor or OfficeAccessibilityProcessor()
+        self.accessibility_processor = (
+            accessibility_processor or OfficeAccessibilityProcessor()
+        )
         if path is not None:
             self.load(path)
 
@@ -183,7 +185,9 @@ class WordProcessor:
         document = self._ensure_document(path)
         source = self._coerce_source(path)
         paragraphs = self.extract_paragraphs()
-        structure = self.get_document_structure(include_accessibility=include_accessibility)
+        structure = self.get_document_structure(
+            include_accessibility=include_accessibility
+        )
         content = DocumentContent(
             format=OfficeFormat.DOCX,
             paragraphs=paragraphs,
@@ -197,10 +201,16 @@ class WordProcessor:
                 "paragraph_count": len(document.paragraphs),
                 "table_count": len(document.tables),
                 "heading_count": len(structure["headings"]),
-                "outline_depth": max((node["level"] for node in structure["headings"]), default=0),
+                "outline_depth": max(
+                    (node["level"] for node in structure["headings"]), default=0
+                ),
             },
         )
-        if source is not None and include_accessibility and structure.get("accessibility"):
+        if (
+            source is not None
+            and include_accessibility
+            and structure.get("accessibility")
+        ):
             content.document_properties.update(structure["accessibility"])
         return content
 
@@ -295,7 +305,10 @@ class WordProcessor:
 
         source = self._require_source(path)
         extracted = self.table_extractor.extract_tables(source)
-        return [self._convert_table(table, index) for index, table in enumerate(extracted, start=1)]
+        return [
+            self._convert_table(table, index)
+            for index, table in enumerate(extracted, start=1)
+        ]
 
     def extract_images(self, path: str | Path | None = None) -> list[Image]:
         """Extract images using the shared :class:`ImageExtractor` service."""
@@ -359,13 +372,27 @@ class WordProcessor:
                 italic=bool(getattr(font, "italic", False)),
                 underline=bool(getattr(font, "underline", False)),
                 strikethrough=bool(getattr(font, "strike", False)),
-                text_color=self._rgb_to_hex(getattr(getattr(font, "color", None), "rgb", None)),
-                alignment=self._alignment_name(getattr(paragraph_format, "alignment", None)),
-                line_spacing=self._float_value(getattr(paragraph_format, "line_spacing", None), 1.15),
-                spacing_before=self._pt_value(getattr(paragraph_format, "space_before", None), 0.0),
-                spacing_after=self._pt_value(getattr(paragraph_format, "space_after", None), 0.0),
-                indentation_left=self._pt_value(getattr(paragraph_format, "left_indent", None), 0.0),
-                indentation_right=self._pt_value(getattr(paragraph_format, "right_indent", None), 0.0),
+                text_color=self._rgb_to_hex(
+                    getattr(getattr(font, "color", None), "rgb", None)
+                ),
+                alignment=self._alignment_name(
+                    getattr(paragraph_format, "alignment", None)
+                ),
+                line_spacing=self._float_value(
+                    getattr(paragraph_format, "line_spacing", None), 1.15
+                ),
+                spacing_before=self._pt_value(
+                    getattr(paragraph_format, "space_before", None), 0.0
+                ),
+                spacing_after=self._pt_value(
+                    getattr(paragraph_format, "space_after", None), 0.0
+                ),
+                indentation_left=self._pt_value(
+                    getattr(paragraph_format, "left_indent", None), 0.0
+                ),
+                indentation_right=self._pt_value(
+                    getattr(paragraph_format, "right_indent", None), 0.0
+                ),
                 indentation_first_line=self._pt_value(
                     getattr(paragraph_format, "first_line_indent", None),
                     0.0,
@@ -374,7 +401,9 @@ class WordProcessor:
                     "style_name": style_name,
                     "style_id": getattr(style, "style_id", None),
                     "style_type": self._style_type_name(getattr(style, "type", None)),
-                    "base_style": getattr(getattr(style, "base_style", None), "name", None),
+                    "base_style": getattr(
+                        getattr(style, "base_style", None), "name", None
+                    ),
                 },
             )
 
@@ -414,7 +443,11 @@ class WordProcessor:
         source = self._coerce_source(path)
         if include_accessibility and source is not None:
             report = self._last_wcag_report
-            if report is None or report.document_path != source or report.level != wcag_level.upper():
+            if (
+                report is None
+                or report.document_path != source
+                or report.level != wcag_level.upper()
+            ):
                 try:
                     report = self.accessibility_processor.check_wcag_compliance(
                         source,
@@ -457,11 +490,17 @@ class WordProcessor:
         self._path = None
 
         normalized_content = self._normalize_content(content)
-        normalized_metadata = self._normalize_metadata(metadata) or normalized_content.metadata
+        normalized_metadata = (
+            self._normalize_metadata(metadata) or normalized_content.metadata
+        )
 
         if normalized_metadata.title is None:
             first_heading = next(
-                (paragraph.text_content() for paragraph in normalized_content.paragraphs if paragraph.is_heading),
+                (
+                    paragraph.text_content()
+                    for paragraph in normalized_content.paragraphs
+                    if paragraph.is_heading
+                ),
                 None,
             )
             normalized_metadata.title = first_heading or "Document"
@@ -527,14 +566,18 @@ class WordProcessor:
         paragraph_model = self._coerce_paragraph(paragraph)
         style = style_name or paragraph_model.style.styles.get("style_name")
         if paragraph_model.is_heading and paragraph_model.heading_level:
-            docx_paragraph = document.add_heading("", level=paragraph_model.heading_level)
+            docx_paragraph = document.add_heading(
+                "", level=paragraph_model.heading_level
+            )
         else:
             docx_paragraph = document.add_paragraph()
 
         if style and not paragraph_model.is_heading:
             try:
                 docx_paragraph.style = style
-            except Exception:  # pragma: no cover - style availability depends on template
+            except (
+                Exception
+            ):  # pragma: no cover - style availability depends on template
                 logger.debug("Word style %s unavailable in target document", style)
 
         self._apply_paragraph_style(docx_paragraph, paragraph_model.style)
@@ -560,8 +603,12 @@ class WordProcessor:
         if style_name:
             try:
                 docx_table.style = style_name
-            except Exception:  # pragma: no cover - style availability depends on template
-                logger.debug("Word table style %s unavailable in target document", style_name)
+            except (
+                Exception
+            ):  # pragma: no cover - style availability depends on template
+                logger.debug(
+                    "Word table style %s unavailable in target document", style_name
+                )
 
         for row_index, row in enumerate(table_model.rows):
             for col_index, cell in enumerate(row):
@@ -598,7 +645,9 @@ class WordProcessor:
         if image_model.description:
             try:
                 caption = document.add_paragraph(style="Caption")
-            except Exception:  # pragma: no cover - style availability depends on template
+            except (
+                Exception
+            ):  # pragma: no cover - style availability depends on template
                 caption = document.add_paragraph()
             caption.add_run(image_model.description)
 
@@ -648,7 +697,9 @@ class WordProcessor:
         if not source.exists():
             raise WordNotFoundError(f"Word document not found: {source}")
         if source.suffix.lower() != ".docx":
-            raise DocumentValidationError("Expected a .docx document", details=str(source))
+            raise DocumentValidationError(
+                "Expected a .docx document", details=str(source)
+            )
         return source
 
     def _coerce_source(self, path: str | Path | None = None) -> Path | None:
@@ -680,7 +731,9 @@ class WordProcessor:
             )
         return self._document
 
-    def _iter_block_items(self, document: DocxDocumentType) -> Iterator[DocxParagraph | DocxTable]:
+    def _iter_block_items(
+        self, document: DocxDocumentType
+    ) -> Iterator[DocxParagraph | DocxTable]:
         """Yield paragraphs and tables in body order."""
 
         body = document.element.body
@@ -701,13 +754,25 @@ class WordProcessor:
             italic=bool(getattr(base_font, "italic", False)),
             underline=bool(getattr(base_font, "underline", False)),
             strikethrough=bool(getattr(base_font, "strike", False)),
-            text_color=self._rgb_to_hex(getattr(getattr(base_font, "color", None), "rgb", None)),
+            text_color=self._rgb_to_hex(
+                getattr(getattr(base_font, "color", None), "rgb", None)
+            ),
             alignment=self._alignment_name(paragraph.alignment),
-            line_spacing=self._float_value(getattr(paragraph_format, "line_spacing", None), 1.15),
-            spacing_before=self._pt_value(getattr(paragraph_format, "space_before", None), 0.0),
-            spacing_after=self._pt_value(getattr(paragraph_format, "space_after", None), 0.0),
-            indentation_left=self._pt_value(getattr(paragraph_format, "left_indent", None), 0.0),
-            indentation_right=self._pt_value(getattr(paragraph_format, "right_indent", None), 0.0),
+            line_spacing=self._float_value(
+                getattr(paragraph_format, "line_spacing", None), 1.15
+            ),
+            spacing_before=self._pt_value(
+                getattr(paragraph_format, "space_before", None), 0.0
+            ),
+            spacing_after=self._pt_value(
+                getattr(paragraph_format, "space_after", None), 0.0
+            ),
+            indentation_left=self._pt_value(
+                getattr(paragraph_format, "left_indent", None), 0.0
+            ),
+            indentation_right=self._pt_value(
+                getattr(paragraph_format, "right_indent", None), 0.0
+            ),
             indentation_first_line=self._pt_value(
                 getattr(paragraph_format, "first_line_indent", None),
                 0.0,
@@ -726,7 +791,9 @@ class WordProcessor:
                 italic=bool(run.italic),
                 underline=bool(run.underline),
                 strikethrough=bool(getattr(font, "strike", False)),
-                text_color=self._rgb_to_hex(getattr(getattr(font, "color", None), "rgb", None)),
+                text_color=self._rgb_to_hex(
+                    getattr(getattr(font, "color", None), "rgb", None)
+                ),
                 background_color="#FFFFFF",
                 styles={
                     "highlight": str(getattr(font, "highlight_color", "")) or "",
@@ -770,7 +837,11 @@ class WordProcessor:
             rowspan=cell.rowspan,
             colspan=cell.colspan,
             style=DocumentStyle(styles=cell.style),
-            shading_color=str(cell.style.get("background_color")) if cell.style.get("background_color") else None,
+            shading_color=(
+                str(cell.style.get("background_color"))
+                if cell.style.get("background_color")
+                else None
+            ),
             cell_id=cell_id,
         )
 
@@ -830,7 +901,11 @@ class WordProcessor:
             comment_id = ref.get(qn("w:id"))
             if comment_id:
                 comment_ids.append(comment_id)
-        return [comment_map[comment_id] for comment_id in comment_ids if comment_id in comment_map]
+        return [
+            comment_map[comment_id]
+            for comment_id in comment_ids
+            if comment_id in comment_map
+        ]
 
     def _load_app_properties(self, path: Path | None) -> dict[str, Any]:
         if path is None:
@@ -882,13 +957,21 @@ class WordProcessor:
         sections: list[dict[str, Any]] = []
 
         for section_index, section in enumerate(document.sections, start=1):
-            start_paragraph, end_paragraph = boundaries[min(section_index - 1, len(boundaries) - 1)]
+            start_paragraph, end_paragraph = boundaries[
+                min(section_index - 1, len(boundaries) - 1)
+            ]
             section_headings = [
                 heading
                 for heading in headings
-                if start_paragraph <= self._heading_paragraph_index(heading) <= end_paragraph
+                if start_paragraph
+                <= self._heading_paragraph_index(heading)
+                <= end_paragraph
             ]
-            title = section_headings[0]["text"] if section_headings else f"Section {section_index}"
+            title = (
+                section_headings[0]["text"]
+                if section_headings
+                else f"Section {section_index}"
+            )
             sections.append(
                 {
                     "index": section_index,
@@ -903,8 +986,12 @@ class WordProcessor:
                     "right_margin": self._length_to_inches(section.right_margin),
                     "top_margin": self._length_to_inches(section.top_margin),
                     "bottom_margin": self._length_to_inches(section.bottom_margin),
-                    "header_linked": bool(getattr(section.header, "is_linked_to_previous", False)),
-                    "footer_linked": bool(getattr(section.footer, "is_linked_to_previous", False)),
+                    "header_linked": bool(
+                        getattr(section.header, "is_linked_to_previous", False)
+                    ),
+                    "footer_linked": bool(
+                        getattr(section.footer, "is_linked_to_previous", False)
+                    ),
                 }
             )
 
@@ -938,7 +1025,9 @@ class WordProcessor:
 
         return boundaries
 
-    def _build_outline(self, headings: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _build_outline(
+        self, headings: Sequence[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         stack: list[HeadingNode] = []
         roots: list[HeadingNode] = []
 
@@ -980,7 +1069,9 @@ class WordProcessor:
         if isinstance(content, DocumentContent):
             return content
         if isinstance(content, Mapping):
-            paragraphs = [self._coerce_paragraph(value) for value in content.get("paragraphs", [])]
+            paragraphs = [
+                self._coerce_paragraph(value) for value in content.get("paragraphs", [])
+            ]
             tables = [self._coerce_table(value) for value in content.get("tables", [])]
             images = [self._coerce_image(value) for value in content.get("images", [])]
             metadata = self._normalize_metadata(content.get("metadata"))
@@ -993,10 +1084,14 @@ class WordProcessor:
             )
         return DocumentContent(
             format=OfficeFormat.DOCX,
-            paragraphs=[Paragraph(runs=[TextRun(text=str(value))]) for value in content],
+            paragraphs=[
+                Paragraph(runs=[TextRun(text=str(value))]) for value in content
+            ],
         )
 
-    def _normalize_metadata(self, value: Metadata | Mapping[str, Any] | None) -> Metadata | None:
+    def _normalize_metadata(
+        self, value: Metadata | Mapping[str, Any] | None
+    ) -> Metadata | None:
         if value is None:
             return None
         if isinstance(value, Metadata):
@@ -1020,7 +1115,9 @@ class WordProcessor:
             )
         raise InvalidDocumentStructureError("Unsupported metadata payload")
 
-    def _coerce_paragraph(self, value: Paragraph | str | Mapping[str, Any]) -> Paragraph:
+    def _coerce_paragraph(
+        self, value: Paragraph | str | Mapping[str, Any]
+    ) -> Paragraph:
         if isinstance(value, Paragraph):
             return value
         if isinstance(value, str):
@@ -1031,19 +1128,21 @@ class WordProcessor:
         runs = value.get("runs")
         if runs:
             run_models = [
-                run
-                if isinstance(run, TextRun)
-                else TextRun(
-                    text=str(run.get("text", "")),
-                    style=DocumentStyle(
-                        font_family=run.get("font_family", "Calibri"),
-                        font_size=float(run.get("font_size", 12.0)),
-                        bold=bool(run.get("bold", False)),
-                        italic=bool(run.get("italic", False)),
-                        underline=bool(run.get("underline", False)),
-                    ),
-                    hyperlink=run.get("hyperlink"),
-                    language=run.get("language"),
+                (
+                    run
+                    if isinstance(run, TextRun)
+                    else TextRun(
+                        text=str(run.get("text", "")),
+                        style=DocumentStyle(
+                            font_family=run.get("font_family", "Calibri"),
+                            font_size=float(run.get("font_size", 12.0)),
+                            bold=bool(run.get("bold", False)),
+                            italic=bool(run.get("italic", False)),
+                            underline=bool(run.get("underline", False)),
+                        ),
+                        hyperlink=run.get("hyperlink"),
+                        language=run.get("language"),
+                    )
                 )
                 for run in runs
             ]
@@ -1051,8 +1150,12 @@ class WordProcessor:
             run_models = [TextRun(text=str(value.get("text", "")))]
 
         style_value = value.get("style")
-        style = style_value if isinstance(style_value, DocumentStyle) else DocumentStyle(
-            styles={"style_name": str(style_value)} if style_value else {}
+        style = (
+            style_value
+            if isinstance(style_value, DocumentStyle)
+            else DocumentStyle(
+                styles={"style_name": str(style_value)} if style_value else {}
+            )
         )
 
         heading_level = value.get("heading_level")
@@ -1081,7 +1184,9 @@ class WordProcessor:
                 text = str(cell_value) if cell_value is not None else ""
                 converted_row.append(
                     TableCell(
-                        paragraphs=[Paragraph(runs=[TextRun(text=text)])] if text else [],
+                        paragraphs=(
+                            [Paragraph(runs=[TextRun(text=text)])] if text else []
+                        ),
                         cell_id=f"generated-r{row_index + 1}-c{col_index + 1}",
                     )
                 )
@@ -1107,7 +1212,9 @@ class WordProcessor:
             path = Path(value["path"]).expanduser()
             data = path.read_bytes()
         else:
-            raise InvalidDocumentStructureError("Image payload requires 'data' or 'path'")
+            raise InvalidDocumentStructureError(
+                "Image payload requires 'data' or 'path'"
+            )
 
         return Image(
             data=data,
@@ -1132,7 +1239,9 @@ class WordProcessor:
         if metadata.modified_at is not None:
             core.modified = metadata.modified_at
 
-    def _apply_paragraph_style(self, paragraph: DocxParagraph, style: DocumentStyle) -> None:
+    def _apply_paragraph_style(
+        self, paragraph: DocxParagraph, style: DocumentStyle
+    ) -> None:
         if style.alignment:
             paragraph.alignment = self._docx_alignment(style.alignment)
         fmt = paragraph.paragraph_format
@@ -1249,10 +1358,19 @@ class WordProcessor:
         strict: bool,
     ) -> None:
         core = document.core_properties
-        for field_name in ("title", "subject", "author", "category", "comments", "keywords"):
+        for field_name in (
+            "title",
+            "subject",
+            "author",
+            "category",
+            "comments",
+            "keywords",
+        ):
             value = getattr(core, field_name, None)
             if isinstance(value, str) and value:
-                setattr(core, field_name, self._render_text(value, context, strict=strict))
+                setattr(
+                    core, field_name, self._render_text(value, context, strict=strict)
+                )
 
     def _render_text(
         self,
@@ -1302,7 +1420,9 @@ class WordProcessor:
             return current.get(key)
         if hasattr(current, key):
             return getattr(current, key)
-        if isinstance(current, Sequence) and not isinstance(current, (str, bytes, bytearray)):
+        if isinstance(current, Sequence) and not isinstance(
+            current, (str, bytes, bytearray)
+        ):
             try:
                 return current[int(key)]
             except Exception:
@@ -1316,7 +1436,9 @@ class WordProcessor:
             return value.isoformat(sep=" ", timespec="seconds")
         if isinstance(value, Mapping):
             return ", ".join(f"{k}={v}" for k, v in value.items())
-        if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        if isinstance(value, Sequence) and not isinstance(
+            value, (str, bytes, bytearray)
+        ):
             return "\n".join(self._stringify_template_value(item) for item in value)
         return str(value)
 
@@ -1335,7 +1457,9 @@ class WordProcessor:
             return None
         return int(match.group(1))
 
-    def _numbering_info(self, paragraph: DocxParagraph) -> tuple[int | None, str | None]:
+    def _numbering_info(
+        self, paragraph: DocxParagraph
+    ) -> tuple[int | None, str | None]:
         num_pr = paragraph._element.find(".//w:numPr", WORD_NS)
         if num_pr is None:
             return None, None
@@ -1356,7 +1480,11 @@ class WordProcessor:
         lang = run._element.find(".//w:lang", WORD_NS)
         if lang is None:
             return None
-        return lang.get(qn("w:val")) or lang.get(qn("w:eastAsia")) or lang.get(qn("w:bidi"))
+        return (
+            lang.get(qn("w:val"))
+            or lang.get(qn("w:eastAsia"))
+            or lang.get(qn("w:bidi"))
+        )
 
     def _run_hyperlink(self, run: DocxRun, document: DocxDocumentType) -> str | None:
         parent = run._element.getparent()
@@ -1394,7 +1522,9 @@ class WordProcessor:
             self._last_wcag_report = None
             return
         try:
-            self._last_wcag_report = self.accessibility_processor.check_wcag_compliance(path)
+            self._last_wcag_report = self.accessibility_processor.check_wcag_compliance(
+                path
+            )
         except Exception as exc:  # pragma: no cover - best effort integration
             logger.debug("Unable to generate WCAG report for %s: %s", path, exc)
             self._last_wcag_report = None

@@ -35,7 +35,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
-from striprtf.striprtf import rtf_to_text
+try:
+    from striprtf.striprtf import rtf_to_text as _striprtf_to_text
+
+    STRIPRTF_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    _striprtf_to_text = None
+    STRIPRTF_AVAILABLE = False
 
 from .models import (
     DocumentContent,
@@ -48,6 +54,26 @@ from .models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _fallback_rtf_to_text(raw: str) -> str:
+    """Best-effort plain text extraction when ``striprtf`` is unavailable."""
+    text = re.sub(r"\\'[0-9a-fA-F]{2}", " ", raw)
+    text = re.sub(r"\\u-?\d+\??", " ", text)
+    text = text.replace("\\par", "\n")
+    text = text.replace("\\line", "\n")
+    text = re.sub(r"\\[a-zA-Z]+-?\d* ?", "", text)
+    text = text.replace("{", "").replace("}", "")
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
+def _rtf_to_text(raw: str) -> str:
+    """Convert RTF to plain text with an optional dependency fallback."""
+    if _striprtf_to_text is not None:
+        return _striprtf_to_text(raw)
+    return _fallback_rtf_to_text(raw)
+
 
 # ---------------------------------------------------------------------------
 # Helper data structures
@@ -66,7 +92,7 @@ class _TextState:
     font_family: str = "Calibri"
     alignment: str = "left"
 
-    def clone(self) -> "_TextState":
+    def clone(self) -> _TextState:
         """Create a shallow copy for nested groups."""
         return _TextState(
             bold=self.bold,
@@ -218,9 +244,7 @@ class RTFDocument:
             parts.append(self._escape_text(paragraph.text))
             parts.append("\\par\n")
 
-            if paragraph.heading_level is not None:
-                parts.append("\\b0 ")
-            elif paragraph.bold:
+            if paragraph.heading_level is not None or paragraph.bold:
                 parts.append("\\b0 ")
             if paragraph.italic:
                 parts.append("\\i0 ")
@@ -296,11 +320,11 @@ class RTFProcessor:
         """
         if path is not None:
             raw = Path(path).read_text(encoding="latin-1", errors="ignore")
-            return rtf_to_text(raw)
+            return _rtf_to_text(raw)
 
         self._ensure_data_loaded()
         assert self._raw_text is not None
-        return rtf_to_text(self._raw_text)
+        return _rtf_to_text(self._raw_text)
 
     def extract_paragraphs(self) -> List[Paragraph]:
         """Return document paragraphs with basic formatting metadata."""
@@ -343,14 +367,16 @@ class RTFProcessor:
             return self._metadata_cache
 
         metadata = Metadata()
-        info_group = self._info_group or self._capture_group(self._raw_text or "", "info")
+        info_group = self._info_group or self._capture_group(
+            self._raw_text or "", "info"
+        )
         self._info_group = info_group
 
         def info_value(key: str) -> Optional[str]:
             block = self._capture_group(info_group or "", key)
             if not block:
                 return None
-            return rtf_to_text(block).strip()
+            return _rtf_to_text(block).strip()
 
         metadata.title = info_value("title") or (
             self._current_path.stem if self._current_path else None
@@ -484,7 +510,9 @@ class RTFProcessor:
             text_buffer.clear()
             if not text:
                 return
-            current_runs.append(TextRun(text=text, style=state.to_style(self._color_table)))
+            current_runs.append(
+                TextRun(text=text, style=state.to_style(self._color_table))
+            )
 
         def finalize_paragraph() -> None:
             flush_text()
@@ -540,7 +568,9 @@ class RTFProcessor:
                 continue
 
             if char == "\\":
-                i = self._handle_control_word(data, i + 1, state_stack, text_buffer, finalize_paragraph)
+                i = self._handle_control_word(
+                    data, i + 1, state_stack, text_buffer, finalize_paragraph
+                )
                 continue
 
             text_buffer.append(char)
@@ -573,7 +603,9 @@ class RTFProcessor:
         if char == "'":
             hex_digits = data[index + 1 : index + 3]
             try:
-                decoded = bytes.fromhex(hex_digits).decode(self._encoding, errors="ignore")
+                decoded = bytes.fromhex(hex_digits).decode(
+                    self._encoding, errors="ignore"
+                )
                 text_buffer.append(decoded)
             except ValueError:
                 logger.debug("Invalid hex escape: %s", hex_digits)
@@ -605,11 +637,7 @@ class RTFProcessor:
         param_start = index
         while index < len(data) and data[index].isdigit():
             index += 1
-        param = (
-            sign * int(data[param_start:index])
-            if index > param_start
-            else None
-        )
+        param = sign * int(data[param_start:index]) if index > param_start else None
 
         # A space terminates the control word
         if index < len(data) and data[index] == " ":
@@ -657,7 +685,12 @@ class RTFProcessor:
 
         # Alignment
         if word in {"ql", "qr", "qc", "qj"}:
-            alignment_map = {"ql": "left", "qr": "right", "qc": "center", "qj": "justify"}
+            alignment_map = {
+                "ql": "left",
+                "qr": "right",
+                "qc": "center",
+                "qj": "justify",
+            }
             state.alignment = alignment_map[word]
             return index
 
@@ -879,7 +912,9 @@ class RTFProcessor:
             return None
 
         header = body[:newline_index]
-        hex_data = body[newline_index:].replace("\n", "").replace("\r", "").replace(" ", "")
+        hex_data = (
+            body[newline_index:].replace("\n", "").replace("\r", "").replace(" ", "")
+        )
         if not hex_data:
             return None
 

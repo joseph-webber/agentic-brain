@@ -57,13 +57,17 @@ def test_image_anchor_paragraph_supports_inline_placement(sample_image) -> None:
     assert sample_image.anchor_paragraph == "p-1"
 
 
-def test_slide_background_and_images_are_independent(office_modules, sample_image) -> None:
+def test_slide_background_and_images_are_independent(
+    office_modules, sample_image
+) -> None:
     slide = office_modules.models.Slide(images=[sample_image], background="#112233")
     assert slide.background == "#112233"
     assert slide.images[0].description == "Accessible chart image"
 
 
-def test_shape_can_embed_text_alongside_images(office_modules, sample_paragraph) -> None:
+def test_shape_can_embed_text_alongside_images(
+    office_modules, sample_paragraph
+) -> None:
     shape = office_modules.models.Shape(
         shape_type="callout",
         path=[{"x": 0.0, "y": 0.0}],

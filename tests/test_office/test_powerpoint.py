@@ -48,7 +48,9 @@ def test_pptx_converter_registration(make_converter) -> None:
 
 
 @pytest.mark.parametrize("extension", [".pptx", ".ppt"])
-def test_presentation_format_detection(make_converter, tmp_path, extension: str) -> None:
+def test_presentation_format_detection(
+    make_converter, tmp_path, extension: str
+) -> None:
     converter = make_converter()
     path = tmp_path / f"slides{extension}"
     path.write_bytes(b"presentation")

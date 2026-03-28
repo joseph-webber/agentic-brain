@@ -58,7 +58,9 @@ try:  # pragma: no cover - import availability depends on environment
     from openpyxl.styles import Alignment, Font, PatternFill
     from openpyxl.utils import get_column_letter, range_boundaries
     from openpyxl.workbook.defined_name import DefinedName
-    from openpyxl.worksheet.datavalidation import DataValidation as OpenpyxlDataValidation
+    from openpyxl.worksheet.datavalidation import (
+        DataValidation as OpenpyxlDataValidation,
+    )
     from openpyxl.worksheet.worksheet import Worksheet as OpenpyxlWorksheet
 
     OPENPYXL_AVAILABLE = True
@@ -183,7 +185,9 @@ class ExcelProcessor:
         except FileNotFoundError as exc:
             raise ExcelNotFoundError(f"Workbook not found: {source}") from exc
         except Exception as exc:  # pragma: no cover - exercised with real files
-            raise ExcelCorruptedError(f"Failed to load workbook: {source}: {exc}") from exc
+            raise ExcelCorruptedError(
+                f"Failed to load workbook: {source}: {exc}"
+            ) from exc
 
         self._workbook = workbook
         self._formula_workbook = None
@@ -279,7 +283,9 @@ class ExcelProcessor:
                 "min_column": worksheet.min_column,
                 "max_column": worksheet.max_column,
             },
-            "frozen_panes": str(worksheet.freeze_panes) if worksheet.freeze_panes else None,
+            "frozen_panes": (
+                str(worksheet.freeze_panes) if worksheet.freeze_panes else None
+            ),
             "merged_cells": self.get_merged_cells(worksheet),
             "named_ranges": self.get_named_ranges(worksheet.title),
             "data_validations": self.get_data_validations(worksheet),
@@ -330,7 +336,9 @@ class ExcelProcessor:
                 try:
                     charts.append(self._chart_model(worksheet, chart))
                 except Exception as exc:  # pragma: no cover - defensive
-                    logger.warning("Failed to serialize chart on %s: %s", worksheet.title, exc)
+                    logger.warning(
+                        "Failed to serialize chart on %s: %s", worksheet.title, exc
+                    )
         return charts
 
     def extract_images(
@@ -352,7 +360,9 @@ class ExcelProcessor:
                 try:
                     images.append(self._image_model(worksheet, image))
                 except Exception as exc:  # pragma: no cover - defensive
-                    logger.warning("Failed to serialize image on %s: %s", worksheet.title, exc)
+                    logger.warning(
+                        "Failed to serialize image on %s: %s", worksheet.title, exc
+                    )
         return images
 
     def get_metadata(self) -> Metadata:
@@ -394,12 +404,16 @@ class ExcelProcessor:
             raise ExcelDependencyError("pandas is required for DataFrame conversion")
 
         worksheet = self._resolve_worksheet(sheet)
-        matrix = self._trim_matrix(self._sheet_matrix(worksheet, fill_merged=fill_merged))
+        matrix = self._trim_matrix(
+            self._sheet_matrix(worksheet, fill_merged=fill_merged)
+        )
         if not matrix:
             return pd.DataFrame()
 
         if header and self._looks_like_header(matrix[0]):
-            columns = [self._header_name(value, index) for index, value in enumerate(matrix[0])]
+            columns = [
+                self._header_name(value, index) for index, value in enumerate(matrix[0])
+            ]
             return pd.DataFrame(matrix[1:], columns=columns)
         return pd.DataFrame(matrix)
 
@@ -540,7 +554,9 @@ class ExcelProcessor:
 
         worksheet = self._resolve_worksheet(sheet)
         validations: list[dict[str, Any]] = []
-        data_validations = getattr(getattr(worksheet, "data_validations", None), "dataValidation", [])
+        data_validations = getattr(
+            getattr(worksheet, "data_validations", None), "dataValidation", []
+        )
 
         for validation in data_validations:
             validations.append(
@@ -551,7 +567,9 @@ class ExcelProcessor:
                     "formula1": getattr(validation, "formula1", None),
                     "formula2": getattr(validation, "formula2", None),
                     "allow_blank": bool(getattr(validation, "allowBlank", False)),
-                    "show_dropdown": not bool(getattr(validation, "showDropDown", False)),
+                    "show_dropdown": not bool(
+                        getattr(validation, "showDropDown", False)
+                    ),
                     "show_input_message": bool(
                         getattr(validation, "showInputMessage", False)
                     ),
@@ -627,11 +645,20 @@ class ExcelProcessor:
             cells=cells,
             column_widths=self._column_widths(worksheet),
             row_heights=self._row_heights(worksheet),
-            frozen_panes=str(worksheet.freeze_panes) if worksheet.freeze_panes else None,
-            tab_color=self._color_to_hex(getattr(worksheet.sheet_properties.tabColor, "rgb", None))
-            if getattr(worksheet.sheet_properties, "tabColor", None)
-            else None,
-            charts=[self._chart_model(worksheet, chart) for chart in getattr(worksheet, "_charts", [])],
+            frozen_panes=(
+                str(worksheet.freeze_panes) if worksheet.freeze_panes else None
+            ),
+            tab_color=(
+                self._color_to_hex(
+                    getattr(worksheet.sheet_properties.tabColor, "rgb", None)
+                )
+                if getattr(worksheet.sheet_properties, "tabColor", None)
+                else None
+            ),
+            charts=[
+                self._chart_model(worksheet, chart)
+                for chart in getattr(worksheet, "_charts", [])
+            ],
             protection=self._sheet_protection(worksheet),
         )
 
@@ -650,13 +677,21 @@ class ExcelProcessor:
         merge_info = merged_lookup.get(coordinate, {})
         anchor_coordinate = merge_info.get("anchor", coordinate)
         anchor_cell = worksheet[anchor_coordinate]
-        formula = self._cell_formula(anchor_cell) if merge_info.get("is_anchor", True) else None
-        comment = self._comment_model(anchor_cell.comment) if anchor_cell.comment else None
+        formula = (
+            self._cell_formula(anchor_cell)
+            if merge_info.get("is_anchor", True)
+            else None
+        )
+        comment = (
+            self._comment_model(anchor_cell.comment) if anchor_cell.comment else None
+        )
         validations = validation_map.get(coordinate, [])
 
         return Cell(
             reference=coordinate,
-            value=self._normalize_value(None if isinstance(raw_cell, MergedCell) else raw_cell.value),
+            value=self._normalize_value(
+                None if isinstance(raw_cell, MergedCell) else raw_cell.value
+            ),
             formula=formula,
             style=self._style_from_cell(anchor_cell),
             comment=comment,
@@ -684,9 +719,19 @@ class ExcelProcessor:
         merge_info = merged_lookup.get(coordinate, {})
         anchor_coordinate = merge_info.get("anchor", coordinate)
         anchor_cell = worksheet[anchor_coordinate]
-        value = None if isinstance(raw_cell, MergedCell) else self._normalize_value(raw_cell.value)
-        formula = self._cell_formula(anchor_cell) if merge_info.get("is_anchor", True) else None
-        comment = self._comment_model(anchor_cell.comment) if anchor_cell.comment else None
+        value = (
+            None
+            if isinstance(raw_cell, MergedCell)
+            else self._normalize_value(raw_cell.value)
+        )
+        formula = (
+            self._cell_formula(anchor_cell)
+            if merge_info.get("is_anchor", True)
+            else None
+        )
+        comment = (
+            self._comment_model(anchor_cell.comment) if anchor_cell.comment else None
+        )
 
         return {
             "coordinate": coordinate,
@@ -698,10 +743,14 @@ class ExcelProcessor:
             "python_type": type(value).__name__ if value is not None else None,
             "formula": formula,
             "number_format": getattr(anchor_cell, "number_format", None),
-            "hyperlink": getattr(getattr(anchor_cell, "hyperlink", None), "target", None)
+            "hyperlink": getattr(
+                getattr(anchor_cell, "hyperlink", None), "target", None
+            )
             or getattr(anchor_cell, "hyperlink", None),
             "has_comment": comment is not None,
-            "comment": {"author": comment.author, "text": comment.text} if comment else None,
+            "comment": (
+                {"author": comment.author, "text": comment.text} if comment else None
+            ),
             "merged": bool(merge_info),
             "merge_range": merge_info.get("range"),
             "merge_anchor": anchor_coordinate if merge_info else None,
@@ -716,7 +765,11 @@ class ExcelProcessor:
             chart_type=type(chart).__name__.replace("Chart", "").lower() or "chart",
             title=self._chart_title(chart),
             series=self._chart_series(chart),
-            legend={"position": self._string_or_none(getattr(getattr(chart, "legend", None), "position", None))},
+            legend={
+                "position": self._string_or_none(
+                    getattr(getattr(chart, "legend", None), "position", None)
+                )
+            },
             position={
                 "sheet": worksheet.title,
                 "anchor": self._chart_anchor(chart),
@@ -743,7 +796,11 @@ class ExcelProcessor:
             mime_type=mime_type,
             width=float(getattr(image, "width", 0) or 0) or None,
             height=float(getattr(image, "height", 0) or 0) or None,
-            position={"sheet": worksheet.title, "anchor": anchor} if anchor else {"sheet": worksheet.title},
+            position=(
+                {"sheet": worksheet.title, "anchor": anchor}
+                if anchor
+                else {"sheet": worksheet.title}
+            ),
         )
 
     # ------------------------------------------------------------------
@@ -782,7 +839,9 @@ class ExcelProcessor:
                         workbook,
                         DefinedName(
                             name=name,
-                            attr_text=self._qualify_reference(worksheet.title, reference),
+                            attr_text=self._qualify_reference(
+                                worksheet.title, reference
+                            ),
                         ),
                     )
             return
@@ -795,7 +854,10 @@ class ExcelProcessor:
         worksheet: OpenpyxlWorksheet,
         model: Worksheet,
     ) -> None:
-        for cell in sorted(model.cells.values(), key=lambda item: self._coordinate_sort_key(item.reference)):
+        for cell in sorted(
+            model.cells.values(),
+            key=lambda item: self._coordinate_sort_key(item.reference),
+        ):
             target = worksheet[cell.reference]
             target.value = cell.formula if cell.formula is not None else cell.value
             target.number_format = cell.number_format or target.number_format
@@ -920,7 +982,9 @@ class ExcelProcessor:
         for merged_range in source.merged_cells.ranges:
             target.merge_cells(str(merged_range))
 
-        for validation in getattr(getattr(source, "data_validations", None), "dataValidation", []):
+        for validation in getattr(
+            getattr(source, "data_validations", None), "dataValidation", []
+        ):
             target.add_data_validation(deepcopy(validation))
 
         raw_rules = getattr(source.conditional_formatting, "_cf_rules", {})
@@ -933,7 +997,7 @@ class ExcelProcessor:
             cloned_table = deepcopy(table)
             new_name = self._unique_defined_name(
                 getattr(cloned_table, "displayName", "Table"),
-                {name.lower() for name in getattr(target, "tables", {}).keys()},
+                {name.lower() for name in getattr(target, "tables", {})},
             )
             cloned_table.name = new_name
             cloned_table.displayName = new_name
@@ -947,7 +1011,10 @@ class ExcelProcessor:
 
         for image in getattr(source, "_images", []):
             try:
-                target.add_image(deepcopy(image), self._anchor_coordinate(getattr(image, "anchor", None)) or "A1")
+                target.add_image(
+                    deepcopy(image),
+                    self._anchor_coordinate(getattr(image, "anchor", None)) or "A1",
+                )
             except Exception as exc:  # pragma: no cover - defensive
                 logger.debug("Skipping image copy on %s: %s", source.title, exc)
 
@@ -959,14 +1026,18 @@ class ExcelProcessor:
         sheet_name_map: Mapping[str, str],
         namespace: str,
     ) -> None:
-        existing = {name.lower() for name in getattr(target_workbook, "defined_names", {}).keys()}
+        existing = {
+            name.lower() for name in getattr(target_workbook, "defined_names", {})
+        }
 
         for defined_name in self._iter_defined_names(source_workbook):
             reference = self._defined_name_text(defined_name)
             if not reference:
                 continue
 
-            rewritten_reference = self._rewrite_defined_name_reference(reference, sheet_name_map)
+            rewritten_reference = self._rewrite_defined_name_reference(
+                reference, sheet_name_map
+            )
             name = getattr(defined_name, "name", "Name")
             if name.lower() in existing:
                 name = self._unique_defined_name(f"{namespace}_{name}", existing)
@@ -975,7 +1046,9 @@ class ExcelProcessor:
             if local_sheet_id is not None:
                 try:
                     source_sheet_name = source_workbook.sheetnames[int(local_sheet_id)]
-                    target_sheet_name = sheet_name_map.get(source_sheet_name, source_sheet_name)
+                    target_sheet_name = sheet_name_map.get(
+                        source_sheet_name, source_sheet_name
+                    )
                     local_sheet_id = target_workbook.sheetnames.index(target_sheet_name)
                 except (IndexError, TypeError, ValueError):
                     local_sheet_id = None
@@ -1001,7 +1074,9 @@ class ExcelProcessor:
 
     def _require_workbook(self) -> OpenpyxlWorkbook:
         if self._workbook is None:
-            raise ExcelProcessorError("No workbook loaded. Call load(), parse(), or create_workbook() first.")
+            raise ExcelProcessorError(
+                "No workbook loaded. Call load(), parse(), or create_workbook() first."
+            )
         return self._workbook
 
     def _require_path(self) -> Path:
@@ -1094,7 +1169,9 @@ class ExcelProcessor:
             bold=bool(getattr(font, "bold", False)),
             italic=bool(getattr(font, "italic", False)),
             underline=bool(getattr(font, "underline", False)),
-            text_color=self._color_to_hex(getattr(getattr(font, "color", None), "rgb", None))
+            text_color=self._color_to_hex(
+                getattr(getattr(font, "color", None), "rgb", None)
+            )
             or "#000000",
             background_color=self._color_to_hex(
                 getattr(getattr(fill, "fgColor", None), "rgb", None)
@@ -1129,7 +1206,9 @@ class ExcelProcessor:
         )
 
     def _comment_model(self, comment: Any) -> Comment:
-        return Comment(author=getattr(comment, "author", ""), text=getattr(comment, "text", ""))
+        return Comment(
+            author=getattr(comment, "author", ""), text=getattr(comment, "text", "")
+        )
 
     def _cell_formula(self, cell: Any) -> str | None:
         value = getattr(cell, "value", None)
@@ -1234,7 +1313,9 @@ class ExcelProcessor:
 
     def _trim_matrix(self, matrix: list[list[Any]]) -> list[list[Any]]:
         trimmed = [list(row) for row in matrix]
-        while trimmed and not any(value is not None and value != "" for value in trimmed[-1]):
+        while trimmed and not any(
+            value is not None and value != "" for value in trimmed[-1]
+        ):
             trimmed.pop()
         if not trimmed:
             return []
@@ -1379,7 +1460,9 @@ class ExcelProcessor:
         except (IndexError, TypeError, ValueError):
             return "Workbook"
 
-    def _defined_name_matches_sheet(self, reference: str, sheet: str, scope: str) -> bool:
+    def _defined_name_matches_sheet(
+        self, reference: str, sheet: str, scope: str
+    ) -> bool:
         if scope not in {"Workbook", sheet}:
             return False
         return f"'{sheet}'!" in reference or f"{sheet}!" in reference or scope == sheet

@@ -170,7 +170,9 @@ class OfficeDocumentPipeline:
         processor = self.get_processor(office_format)
         processor_name = type(processor).__name__
 
-        logger.debug("Processing %s as %s via %s", path.name, office_format, processor_name)
+        logger.debug(
+            "Processing %s as %s via %s", path.name, office_format, processor_name
+        )
 
         content = processor.parse(path)
         text = self._render_text(content)
@@ -180,7 +182,9 @@ class OfficeDocumentPipeline:
 
         warnings: list[str] = []
         security_result = self._maybe_run_security(path, office_format, warnings)
-        accessibility_report = self._maybe_run_accessibility(path, office_format, warnings)
+        accessibility_report = self._maybe_run_accessibility(
+            path, office_format, warnings
+        )
 
         return OfficeDocumentResult(
             path=path,
@@ -209,7 +213,9 @@ class OfficeDocumentPipeline:
                 resolved = Path(candidate).expanduser()
                 message = str(exc)
                 logger.exception("Pipeline failed for %s: %s", resolved, exc)
-                errors.append(PipelineError(path=resolved, message=message, exception=exc))
+                errors.append(
+                    PipelineError(path=resolved, message=message, exception=exc)
+                )
 
         return BatchProcessingResult(results=results, errors=errors)
 
@@ -261,7 +267,11 @@ class OfficeDocumentPipeline:
                     return OfficeFormat.PPTX
                 if "mimetype" in names:
                     try:
-                        mimetype = archive.read("mimetype").decode("utf-8", errors="ignore").strip()
+                        mimetype = (
+                            archive.read("mimetype")
+                            .decode("utf-8", errors="ignore")
+                            .strip()
+                        )
                     except Exception:
                         mimetype = ""
                     detected = self._ODF_MIME_MAP.get(mimetype.lower())
@@ -292,7 +302,9 @@ class OfficeDocumentPipeline:
         if self.security_service is None:
             return None
         if office_format not in self._SECURITY_FORMATS:
-            warnings.append(f"Security scanning skipped for {office_format.value.upper()}.")
+            warnings.append(
+                f"Security scanning skipped for {office_format.value.upper()}."
+            )
             return None
 
         result = SecurityScanResult()
@@ -328,7 +340,9 @@ class OfficeDocumentPipeline:
         if self.accessibility_processor is None:
             return None
         if office_format not in self._ACCESSIBILITY_FORMATS:
-            warnings.append(f"Accessibility report skipped for {office_format.value.upper()}.")
+            warnings.append(
+                f"Accessibility report skipped for {office_format.value.upper()}."
+            )
             return None
 
         try:
@@ -367,7 +381,9 @@ class OfficeDocumentPipeline:
                 if rendered:
                     blocks.append(rendered)
 
-        worksheets = getattr(content, "worksheets", None) or getattr(content, "sheets", None)
+        worksheets = getattr(content, "worksheets", None) or getattr(
+            content, "sheets", None
+        )
         if worksheets:
             for worksheet in worksheets:
                 rendered = self._worksheet_text(worksheet)
@@ -430,7 +446,9 @@ class OfficeDocumentPipeline:
         body = getattr(slide, "body", None) or getattr(slide, "content", None) or []
         notes = getattr(slide, "notes", None) or []
 
-        lines = [f"Slide {index}: {self._paragraph_text(title_paragraph) or 'Untitled'}"]
+        lines = [
+            f"Slide {index}: {self._paragraph_text(title_paragraph) or 'Untitled'}"
+        ]
 
         for paragraph in body:
             text = self._paragraph_text(paragraph)
@@ -447,7 +465,11 @@ class OfficeDocumentPipeline:
         return "\n".join(lines).strip()
 
     def _worksheet_text(self, worksheet: Any, max_rows: int = 50) -> str:
-        name = getattr(worksheet, "name", None) or getattr(worksheet, "title", None) or "Sheet"
+        name = (
+            getattr(worksheet, "name", None)
+            or getattr(worksheet, "title", None)
+            or "Sheet"
+        )
         lines = [f"Worksheet: {name}"]
 
         cells = getattr(worksheet, "cells", None)

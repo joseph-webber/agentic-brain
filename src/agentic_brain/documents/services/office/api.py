@@ -300,7 +300,9 @@ def extract_tables(path: Path | str) -> list[NormalizedTable]:
     return _safe_extract_tables(_resolve_path(path))
 
 
-def extract_images(path: Path | str, output_dir: Path | str | None = None) -> list[ExtractedImage]:
+def extract_images(
+    path: Path | str, output_dir: Path | str | None = None
+) -> list[ExtractedImage]:
     images = _safe_extract_images(_resolve_path(path))
     if output_dir:
         target_dir = Path(output_dir).expanduser()
@@ -366,7 +368,9 @@ def process_keynote(path: Path | str) -> DocumentContent:
 
 def convert_to_pdf(path: Path | str, output_path: Path | str | None = None) -> Path:
     resolved = _resolve_path(path)
-    destination = Path(output_path).expanduser() if output_path else resolved.with_suffix(".pdf")
+    destination = (
+        Path(output_path).expanduser() if output_path else resolved.with_suffix(".pdf")
+    )
     destination.parent.mkdir(parents=True, exist_ok=True)
     return _get_converter().to_pdf(resolved, destination)
 
@@ -433,9 +437,15 @@ def check_accessibility(path: Path | str) -> AccessibilityReport:
             temp.unlink()
 
 
-def remediate_accessibility(path: Path | str, output_path: Path | str | None = None) -> RemediationResult:
+def remediate_accessibility(
+    path: Path | str, output_path: Path | str | None = None
+) -> RemediationResult:
     pdf_path, temp = _ensure_pdf(path)
-    target = Path(output_path) if output_path else pdf_path.with_name(f"{pdf_path.stem}.accessible.pdf")
+    target = (
+        Path(output_path)
+        if output_path
+        else pdf_path.with_name(f"{pdf_path.stem}.accessible.pdf")
+    )
     try:
         return make_accessible(pdf_path, target)
     finally:
@@ -468,7 +478,9 @@ def load_for_rag(path: Path | str, chunk_size: int = 512) -> list[RagDocument]:
 # --------------------------------------------------------------------------- #
 
 
-def process_directory(path: Path | str, recursive: bool = True) -> dict[str, DocumentContent]:
+def process_directory(
+    path: Path | str, recursive: bool = True
+) -> dict[str, DocumentContent]:
     root = _resolve_path(path)
     results: dict[str, DocumentContent] = {}
     candidates = root.rglob("*") if recursive else root.glob("*")

@@ -125,7 +125,9 @@ def test_document_content_can_represent_word_table_and_image_workflow(
         metadata=office_modules.models.Metadata(title="Quarterly report"),
     )
     assert document.metadata.title == "Quarterly report"
-    assert document.tables[0].cell_grid["A1"].paragraphs[0].runs[0].text == "Hello office"
+    assert (
+        document.tables[0].cell_grid["A1"].paragraphs[0].runs[0].text == "Hello office"
+    )
     assert document.images[0].alternate_text == "Quarterly revenue chart"
 
 
@@ -180,7 +182,9 @@ def test_rag_excel_loader_can_process_office_fixture(
     "fixture_name",
     ["empty_docx", "corrupted_docx", "large_docx"],
 )
-def test_edge_case_fixtures_exist_for_integration(sample_office_files, fixture_name: str) -> None:
+def test_edge_case_fixtures_exist_for_integration(
+    sample_office_files, fixture_name: str
+) -> None:
     path = getattr(sample_office_files, fixture_name)
     assert path.exists()
     if fixture_name == "large_docx":
@@ -201,6 +205,8 @@ def test_edge_case_fixtures_exist_for_integration(sample_office_files, fixture_n
         ("odt", "docx"),
     ],
 )
-def test_supported_conversion_matrix(make_converter, source_format: str, target_format: str) -> None:
+def test_supported_conversion_matrix(
+    make_converter, source_format: str, target_format: str
+) -> None:
     converter = make_converter()
     assert converter.is_conversion_supported(source_format, target_format) is True

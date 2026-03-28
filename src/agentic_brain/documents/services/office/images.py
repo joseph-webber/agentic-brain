@@ -187,7 +187,9 @@ class ImageExtractor:
                     if not target.startswith("ppt/media/"):
                         continue
                     meta = metadata.get(rid, {})
-                    image = self._read_zip_image(zip_file, target, meta, slide_index=index)
+                    image = self._read_zip_image(
+                        zip_file, target, meta, slide_index=index
+                    )
                     if image:
                         images.append(image)
             if not images:
@@ -263,7 +265,9 @@ class ImageExtractor:
                     images.append(image)
             if not images:
                 images.extend(
-                    self._extract_simple_media(zip_file, f"{root}/media/", sheet_index=None)
+                    self._extract_simple_media(
+                        zip_file, f"{root}/media/", sheet_index=None
+                    )
                 )
         return images
 
@@ -331,9 +335,7 @@ class ImageExtractor:
                 }
         return drawing_map
 
-    def _sheet_drawings(
-        self, zip_file: zipfile.ZipFile, sheet_path: str
-    ) -> List[str]:
+    def _sheet_drawings(self, zip_file: zipfile.ZipFile, sheet_path: str) -> List[str]:
         """Return drawing part paths referenced by a worksheet."""
         rel_path = self._rels_path(sheet_path)
         rels = self._parse_relationships(zip_file, rel_path)
@@ -350,9 +352,9 @@ class ImageExtractor:
         if drawing is None:
             return {}
         metadata: Dict[str, Dict[str, object]] = {}
-        anchors = drawing.findall("xdr:twoCellAnchor", SPREADSHEET_NS) + drawing.findall(
-            "xdr:oneCellAnchor", SPREADSHEET_NS
-        )
+        anchors = drawing.findall(
+            "xdr:twoCellAnchor", SPREADSHEET_NS
+        ) + drawing.findall("xdr:oneCellAnchor", SPREADSHEET_NS)
         for anchor in anchors:
             pic = anchor.find("xdr:pic", SPREADSHEET_NS)
             if pic is None:
@@ -368,8 +370,12 @@ class ImageExtractor:
             width = _emu_to_px(ext.attrib.get("cx") if ext is not None else None)
             height = _emu_to_px(ext.attrib.get("cy") if ext is not None else None)
             anchor_from = anchor.find("xdr:from", SPREADSHEET_NS)
-            col = anchor_from.findtext("xdr:col", default="0", namespaces=SPREADSHEET_NS)
-            row = anchor_from.findtext("xdr:row", default="0", namespaces=SPREADSHEET_NS)
+            col = anchor_from.findtext(
+                "xdr:col", default="0", namespaces=SPREADSHEET_NS
+            )
+            row = anchor_from.findtext(
+                "xdr:row", default="0", namespaces=SPREADSHEET_NS
+            )
             metadata[rid] = {
                 "alt_text": doc_pr.attrib.get("descr") if doc_pr is not None else None,
                 "caption": doc_pr.attrib.get("name") if doc_pr is not None else None,
@@ -421,9 +427,7 @@ class ImageExtractor:
             target_prefix = "Data/"
             if not any(name.startswith(target_prefix) for name in zip_file.namelist()):
                 target_prefix = "QuickLook/"
-            return self._extract_simple_media(
-                zip_file, target_prefix, sheet_index=None
-            )
+            return self._extract_simple_media(zip_file, target_prefix, sheet_index=None)
 
     def _extract_simple_media(
         self,
@@ -472,9 +476,7 @@ class ImageExtractor:
             index = (
                 page_index
                 if page_index is not None
-                else slide_index
-                if slide_index is not None
-                else sheet_index
+                else slide_index if slide_index is not None else sheet_index
             )
             position = (index, 0.0, 0.0)
         return Image(

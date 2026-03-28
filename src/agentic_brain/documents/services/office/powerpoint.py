@@ -192,7 +192,9 @@ class PowerPointProcessor:
             document_properties={
                 "slide_count": len(slides),
                 "slide_width_pt": _pt(getattr(self._presentation, "slide_width", None)),
-                "slide_height_pt": _pt(getattr(self._presentation, "slide_height", None)),
+                "slide_height_pt": _pt(
+                    getattr(self._presentation, "slide_height", None)
+                ),
                 "hyperlink_count": len(self.extract_hyperlinks()),
                 "animation_count": len(self.detect_animations()),
                 "media_count": len(self.detect_embedded_media()),
@@ -334,7 +336,9 @@ class PowerPointProcessor:
                         "name": layout_name or f"Layout {layout_index}",
                         "shape_count": len(layout.shapes),
                         "placeholder_count": len(layout.placeholders),
-                        "used_by_count": len(getattr(layout, "used_by_slides", ()) or ()),
+                        "used_by_count": len(
+                            getattr(layout, "used_by_slides", ()) or ()
+                        ),
                     }
                 )
         return layouts
@@ -466,20 +470,28 @@ class PowerPointProcessor:
                             {
                                 "slide_index": slide_index,
                                 "shape_index": shape_index,
-                                "shape_name": self._none_if_blank(getattr(shape, "name", None)),
+                                "shape_name": self._none_if_blank(
+                                    getattr(shape, "name", None)
+                                ),
                                 "kind": "shape",
                                 "address": address,
-                                "target_slide_id": getattr(target_slide, "slide_id", None),
+                                "target_slide_id": getattr(
+                                    target_slide, "slide_id", None
+                                ),
                             }
                         )
 
                 if not getattr(shape, "has_text_frame", False):
                     continue
 
-                for paragraph_index, paragraph in enumerate(shape.text_frame.paragraphs):
+                for paragraph_index, paragraph in enumerate(
+                    shape.text_frame.paragraphs
+                ):
                     for run_index, run in enumerate(paragraph.runs):
                         hyperlink = getattr(run, "hyperlink", None)
-                        address = self._none_if_blank(getattr(hyperlink, "address", None))
+                        address = self._none_if_blank(
+                            getattr(hyperlink, "address", None)
+                        )
                         if not address:
                             continue
                         hyperlinks.append(
@@ -521,9 +533,13 @@ class PowerPointProcessor:
 
                 if media_kind is None and target_ref:
                     target_lower = str(target_ref).lower()
-                    if any(target_lower.endswith(ext) for ext in (".mp4", ".mov", ".avi")):
+                    if any(
+                        target_lower.endswith(ext) for ext in (".mp4", ".mov", ".avi")
+                    ):
                         media_kind = "video"
-                    elif any(target_lower.endswith(ext) for ext in (".mp3", ".wav", ".m4a")):
+                    elif any(
+                        target_lower.endswith(ext) for ext in (".mp3", ".wav", ".m4a")
+                    ):
                         media_kind = "audio"
 
                 if media_kind is None:
@@ -663,7 +679,9 @@ class PowerPointProcessor:
 
         for row_index, row in enumerate(data):
             for col_index, value in enumerate(row):
-                table.cell(row_index, col_index).text = "" if value is None else str(value)
+                table.cell(row_index, col_index).text = (
+                    "" if value is None else str(value)
+                )
 
         self._invalidate_caches()
         return graphic_frame
@@ -724,7 +742,9 @@ class PowerPointProcessor:
 
         text_frame.clear()
         for index, line in enumerate(lines):
-            paragraph = text_frame.paragraphs[0] if index == 0 else text_frame.add_paragraph()
+            paragraph = (
+                text_frame.paragraphs[0] if index == 0 else text_frame.add_paragraph()
+            )
             paragraph.text = line
 
         self._invalidate_caches()
@@ -811,7 +831,9 @@ class PowerPointProcessor:
             return None
 
         title_style = paragraphs[0].style if paragraphs else DocumentStyle()
-        return Paragraph(runs=combined_runs, style=title_style, is_heading=True, heading_level=1)
+        return Paragraph(
+            runs=combined_runs, style=title_style, is_heading=True, heading_level=1
+        )
 
     def _extract_notes_paragraphs(self, slide: Any) -> list[Paragraph]:
         """Extract speaker notes from a slide without forcing empty note creation."""
@@ -863,7 +885,9 @@ class PowerPointProcessor:
         if font is None:
             return style
 
-        style.font_family = self._none_if_blank(getattr(font, "name", None)) or style.font_family
+        style.font_family = (
+            self._none_if_blank(getattr(font, "name", None)) or style.font_family
+        )
         font_size = getattr(font, "size", None)
         if font_size is not None:
             try:
@@ -873,7 +897,9 @@ class PowerPointProcessor:
         style.bold = bool(getattr(font, "bold", False))
         style.italic = bool(getattr(font, "italic", False))
         style.underline = bool(getattr(font, "underline", False))
-        style.text_color = self._extract_color(getattr(font, "color", None)) or style.text_color
+        style.text_color = (
+            self._extract_color(getattr(font, "color", None)) or style.text_color
+        )
         return style
 
     def _extract_paragraph_style(self, paragraph: Any) -> DocumentStyle:
@@ -963,7 +989,8 @@ class PowerPointProcessor:
             values = self._extract_series_values(series)
             series_payload.append(
                 {
-                    "name": self._none_if_blank(getattr(series, "name", None)) or "Series",
+                    "name": self._none_if_blank(getattr(series, "name", None))
+                    or "Series",
                     "values": values,
                 }
             )
@@ -1043,7 +1070,9 @@ class PowerPointProcessor:
         if image_obj is None:
             return None
 
-        mime_type = getattr(image_obj, "content_type", None) or "application/octet-stream"
+        mime_type = (
+            getattr(image_obj, "content_type", None) or "application/octet-stream"
+        )
         description = self._extract_alt_text(shape)
         return Image(
             data=getattr(image_obj, "blob", b""),
@@ -1134,7 +1163,9 @@ class PowerPointProcessor:
         """Normalize user-friendly positional input into EMU lengths."""
 
         if Inches is None and Emu is None:
-            raise DocumentValidationError("python-pptx length utilities are unavailable")
+            raise DocumentValidationError(
+                "python-pptx length utilities are unavailable"
+            )
 
         unit = "in"
         if isinstance(position, Mapping):
@@ -1389,7 +1420,9 @@ class PowerPointProcessor:
             return {}
 
         properties: dict[str, Any] = {}
-        for prop in root.findall(".//{http://schemas.openxmlformats.org/officeDocument/2006/custom-properties}property"):
+        for prop in root.findall(
+            ".//{http://schemas.openxmlformats.org/officeDocument/2006/custom-properties}property"
+        ):
             name = prop.get("name")
             if not name:
                 continue
@@ -1435,7 +1468,9 @@ class PowerPointProcessor:
         draw.rectangle((0, 0, size[0], 30), fill=accent)
         draw.text((12, 8), f"Slide {slide_index + 1}", fill=(255, 255, 255), font=font)
 
-        title = self._paragraph_to_plain_text(slide.title).strip() if slide.title else ""
+        title = (
+            self._paragraph_to_plain_text(slide.title).strip() if slide.title else ""
+        )
         body_lines = [
             self._paragraph_to_plain_text(paragraph).strip()
             for paragraph in slide.body

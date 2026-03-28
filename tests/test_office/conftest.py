@@ -14,9 +14,7 @@ from types import SimpleNamespace
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-OFFICE_ROOT = (
-    REPO_ROOT / "src" / "agentic_brain" / "documents" / "services" / "office"
-)
+OFFICE_ROOT = REPO_ROOT / "src" / "agentic_brain" / "documents" / "services" / "office"
 FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures"
 _TEST_PACKAGE = "_office_testpkg"
 
@@ -47,7 +45,9 @@ OFFICE_CONVERTER = _load_module(
     f"{_TEST_PACKAGE}.converter", OFFICE_ROOT / "converter.py"
 )
 OFFICE_EXCEL = _load_module(f"{_TEST_PACKAGE}.excel", OFFICE_ROOT / "excel.py")
-OFFICE_PAGES = _load_module(f"{_TEST_PACKAGE}.apple_pages", OFFICE_ROOT / "apple_pages.py")
+OFFICE_PAGES = _load_module(
+    f"{_TEST_PACKAGE}.apple_pages", OFFICE_ROOT / "apple_pages.py"
+)
 
 
 @pytest.fixture(scope="session")

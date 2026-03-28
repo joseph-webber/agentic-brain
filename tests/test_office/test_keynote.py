@@ -44,7 +44,9 @@ def test_keynote_to_pdf_surfaces_conversion_error(
             office_modules.converter.ConversionError("keynote failed")
         ),
     )
-    with pytest.raises(office_modules.converter.ConversionError, match="keynote failed"):
+    with pytest.raises(
+        office_modules.converter.ConversionError, match="keynote failed"
+    ):
         converter.keynote_to_pdf(sample_office_files.key, tmp_path / "out.pdf")
 
 

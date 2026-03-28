@@ -222,9 +222,7 @@ class _IWAParser:
                 output.extend(snappy.decompress(data[4:]))
             elif chunk_type == 0x01:
                 output.extend(data[4:])
-            elif chunk_type == 0xFF:
-                continue
-            elif 0x80 <= chunk_type <= 0xFE:
+            elif chunk_type == 0xFF or 0x80 <= chunk_type <= 0xFE:
                 continue
 
         return bytes(output)
@@ -257,7 +255,9 @@ class _ProtoDecoder:
             except ValueError:
                 break
 
-            fields.append(_ProtoField(number=field_number, wire_type=wire_type, value=value))
+            fields.append(
+                _ProtoField(number=field_number, wire_type=wire_type, value=value)
+            )
 
         return fields
 
@@ -334,7 +334,9 @@ class PagesProcessor:
 
         try:
             with zipfile.ZipFile(source, "r") as archive:
-                document_messages = self._read_iwa_messages(archive, "Index/Document.iwa")
+                document_messages = self._read_iwa_messages(
+                    archive, "Index/Document.iwa"
+                )
                 index_strings = self._extract_index_strings(archive, document_messages)
                 paragraphs = self._extract_paragraphs(index_strings)
                 tables = self._extract_tables_from_archive(archive)
@@ -403,7 +405,11 @@ class PagesProcessor:
         if not parts:
             for table in document.tables:
                 for row in table.rows:
-                    row_text = " | ".join(cell.text_content().strip() for cell in row if cell.text_content().strip())
+                    row_text = " | ".join(
+                        cell.text_content().strip()
+                        for cell in row
+                        if cell.text_content().strip()
+                    )
                     if row_text:
                         parts.append(row_text)
 
@@ -497,7 +503,9 @@ class PagesProcessor:
             if self._document is None or self._source_path != requested:
                 return self.parse(requested)
         if self._document is None:
-            raise PagesError("No Pages document has been parsed yet. Call parse(path) first.")
+            raise PagesError(
+                "No Pages document has been parsed yet. Call parse(path) first."
+            )
         return self._document
 
     def _validate_path(self, path: Path) -> Path:
@@ -580,14 +588,17 @@ class PagesProcessor:
             tables.append(
                 Table(
                     rows=rows,
-                    has_header_row=len(rows) > 1 and all(cell.text_content().strip() for cell in rows[0]),
+                    has_header_row=len(rows) > 1
+                    and all(cell.text_content().strip() for cell in rows[0]),
                     table_id=f"table-{index}",
                 )
             )
 
         return tables
 
-    def _rows_from_table_messages(self, messages: Sequence[bytes]) -> list[list[TableCell]]:
+    def _rows_from_table_messages(
+        self, messages: Sequence[bytes]
+    ) -> list[list[TableCell]]:
         delimited_rows: list[list[str]] = []
         row_candidates: list[list[str]] = []
 
@@ -601,7 +612,9 @@ class PagesProcessor:
 
             delimited_rows.extend(self._delimited_rows_from_strings(strings))
 
-            compact = [value for value in strings if "\n" not in value][:MAX_TABLE_COLUMNS]
+            compact = [value for value in strings if "\n" not in value][
+                :MAX_TABLE_COLUMNS
+            ]
             if 1 < len(compact) <= MAX_TABLE_COLUMNS:
                 row_candidates.append(compact)
 
@@ -613,9 +626,11 @@ class PagesProcessor:
 
         flattened: list[str] = []
         for message in messages:
-            flattened.extend(self._clean_text_values(self._strings_from_message(message)))
+            flattened.extend(
+                self._clean_text_values(self._strings_from_message(message))
+            )
 
-        flattened = flattened[:MAX_TABLE_COLUMNS * 32]
+        flattened = flattened[: MAX_TABLE_COLUMNS * 32]
         if len(flattened) < 2:
             return []
 
@@ -630,7 +645,10 @@ class PagesProcessor:
 
         for name in archive.namelist():
             path = Path(name)
-            if not name.startswith("Data/") or path.suffix.lower() not in IMAGE_EXTENSIONS:
+            if (
+                not name.startswith("Data/")
+                or path.suffix.lower() not in IMAGE_EXTENSIONS
+            ):
                 continue
 
             mime_type = mimetypes.guess_type(name)[0] or "application/octet-stream"
@@ -714,34 +732,48 @@ class PagesProcessor:
         if app_version is not None:
             metadata.custom_properties.setdefault("app_version", app_version)
 
-        metadata.custom_properties.setdefault("archive_entry_count", len(archive.namelist()))
-        metadata.custom_properties.setdefault("preview_available", self._extract_preview(archive) is not None)
+        metadata.custom_properties.setdefault(
+            "archive_entry_count", len(archive.namelist())
+        )
+        metadata.custom_properties.setdefault(
+            "preview_available", self._extract_preview(archive) is not None
+        )
         return metadata
 
-    def _apply_plist_metadata(self, metadata: Metadata, value: Any, *, origin: str) -> None:
+    def _apply_plist_metadata(
+        self, metadata: Metadata, value: Any, *, origin: str
+    ) -> None:
         for key, item in self._flatten_plist(value).items():
             normalized = key.lower()
-            if metadata.title is None and normalized.endswith(("title", "documenttitle")):
+            if metadata.title is None and normalized.endswith(
+                ("title", "documenttitle")
+            ):
                 metadata.title = str(item)
             elif metadata.author is None and normalized.endswith(("author", "creator")):
                 metadata.author = str(item)
-            elif metadata.subject is None and normalized.endswith(("subject", "description")):
+            elif metadata.subject is None and normalized.endswith(
+                ("subject", "description")
+            ):
                 metadata.subject = str(item)
             elif metadata.company is None and normalized.endswith("company"):
                 metadata.company = str(item)
             elif normalized.endswith(("category",)):
                 metadata.category = metadata.category or str(item)
-            elif normalized.endswith(("keyword", "keywords", "tag", "tags")) and isinstance(item, str):
+            elif normalized.endswith(
+                ("keyword", "keywords", "tag", "tags")
+            ) and isinstance(item, str):
                 metadata.keywords.extend(
-                    part.strip()
-                    for part in re.split(r"[;,]", item)
-                    if part.strip()
+                    part.strip() for part in re.split(r"[;,]", item) if part.strip()
                 )
-            elif metadata.created_at is None and normalized.endswith(("created", "creationdate")):
+            elif metadata.created_at is None and normalized.endswith(
+                ("created", "creationdate")
+            ):
                 converted = self._coerce_datetime(item)
                 if converted is not None:
                     metadata.created_at = converted
-            elif metadata.modified_at is None and normalized.endswith(("modified", "modificationdate")):
+            elif metadata.modified_at is None and normalized.endswith(
+                ("modified", "modificationdate")
+            ):
                 converted = self._coerce_datetime(item)
                 if converted is not None:
                     metadata.modified_at = converted
@@ -774,7 +806,14 @@ class PagesProcessor:
             return False
 
         result = subprocess.run(
-            [textutil_path, "-convert", "pdf", "-output", str(output_path), str(source)],
+            [
+                textutil_path,
+                "-convert",
+                "pdf",
+                "-output",
+                str(output_path),
+                str(source),
+            ],
             capture_output=True,
             text=True,
             timeout=PDF_TIMEOUT,
@@ -782,9 +821,13 @@ class PagesProcessor:
         )
         return result.returncode == 0 and output_path.exists()
 
-    def _export_pdf_with_pages_automation(self, source: Path, output_path: Path) -> Path:
+    def _export_pdf_with_pages_automation(
+        self, source: Path, output_path: Path
+    ) -> Path:
         if shutil.which("osascript") is None:
-            raise DocumentValidationError("osascript is not available for Pages automation")
+            raise DocumentValidationError(
+                "osascript is not available for Pages automation"
+            )
 
         escaped_input = self._escape_applescript_string(str(source))
         escaped_output = self._escape_applescript_string(str(output_path))
@@ -805,13 +848,19 @@ class PagesProcessor:
         )
         if result.returncode != 0:
             raise InvalidDocumentStructureError(
-                result.stderr.strip() or result.stdout.strip() or "Pages automation export failed"
+                result.stderr.strip()
+                or result.stdout.strip()
+                or "Pages automation export failed"
             )
         if not output_path.exists():
-            raise InvalidDocumentStructureError("Pages export finished without creating a PDF")
+            raise InvalidDocumentStructureError(
+                "Pages export finished without creating a PDF"
+            )
         return output_path
 
-    def _package_strings(self, archive: zipfile.ZipFile, *, include_tables: bool) -> list[str]:
+    def _package_strings(
+        self, archive: zipfile.ZipFile, *, include_tables: bool
+    ) -> list[str]:
         strings: list[str] = []
         for name in archive.namelist():
             if not name.endswith(".iwa"):
@@ -840,7 +889,9 @@ class PagesProcessor:
     def _split_paragraph_candidates(self, value: str) -> list[str]:
         blocks: list[str] = []
         for block in re.split(r"\n\s*\n", value):
-            candidate = " ".join(line.strip() for line in block.splitlines() if line.strip()).strip()
+            candidate = " ".join(
+                line.strip() for line in block.splitlines() if line.strip()
+            ).strip()
             if candidate:
                 blocks.append(candidate)
         return blocks or [value.strip()]
@@ -851,7 +902,9 @@ class PagesProcessor:
 
         paragraphs: list[Paragraph] = []
         for block in re.split(r"\n\s*\n", text):
-            candidate = " ".join(line.strip() for line in block.splitlines() if line.strip()).strip()
+            candidate = " ".join(
+                line.strip() for line in block.splitlines() if line.strip()
+            ).strip()
             if not candidate:
                 continue
             paragraph = self._make_paragraph(candidate)
@@ -880,7 +933,9 @@ class PagesProcessor:
                 runs=[TextRun(text=value, style=DEFAULT_PARAGRAPH_STYLE)],
                 style=DEFAULT_PARAGRAPH_STYLE,
             )
-            cells.append(TableCell(paragraphs=[paragraph], style=DEFAULT_PARAGRAPH_STYLE))
+            cells.append(
+                TableCell(paragraphs=[paragraph], style=DEFAULT_PARAGRAPH_STYLE)
+            )
         return cells
 
     def _delimited_rows_from_strings(self, strings: Sequence[str]) -> list[list[str]]:
@@ -931,9 +986,11 @@ class PagesProcessor:
             return False
         if not paragraphs:
             return True
-        if len(paragraphs) == 1 and len(self._paragraph_text(paragraphs[0])) < 20 and not tables:
-            return True
-        return False
+        return (
+            len(paragraphs) == 1
+            and len(self._paragraph_text(paragraphs[0])) < 20
+            and not tables
+        )
 
     def _clean_text_values(self, values: Iterable[str]) -> list[str]:
         cleaned: list[str] = []
@@ -950,11 +1007,12 @@ class PagesProcessor:
             return False
         if not _is_meaningful_string(candidate):
             return False
-        if candidate.lower().startswith(("http://", "https://")) and len(candidate) > 120:
+        if (
+            candidate.lower().startswith(("http://", "https://"))
+            and len(candidate) > 120
+        ):
             return False
-        if re.fullmatch(r"[A-Fa-f0-9]{24,}", candidate):
-            return False
-        return True
+        return not re.fullmatch(r"[A-Fa-f0-9]{24,}", candidate)
 
     def _dedupe_paragraphs(self, paragraphs: Sequence[Paragraph]) -> list[Paragraph]:
         deduped: list[Paragraph] = []
@@ -1043,7 +1101,11 @@ def _pick_numeric_value(int_value: int, float_value: float) -> int | float:
     """Choose the more human-useful view of a numeric protobuf field."""
 
     if math.isfinite(float_value) and not math.isnan(float_value):
-        if abs(float_value) > 0 and abs(float_value) < 1e12 and not float_value.is_integer():
+        if (
+            abs(float_value) > 0
+            and abs(float_value) < 1e12
+            and not float_value.is_integer()
+        ):
             return float_value
     return int_value
 
@@ -1126,9 +1188,9 @@ def _is_meaningful_string(text: str) -> bool:
         return False
 
     normalized = cleaned.replace("\t", " ").replace("\r", " ").replace("\n", " ")
-    printable_ratio = sum(char.isprintable() or char.isspace() for char in normalized) / len(
-        normalized
-    )
+    printable_ratio = sum(
+        char.isprintable() or char.isspace() for char in normalized
+    ) / len(normalized)
     if printable_ratio < 0.9:
         return False
 
@@ -1138,7 +1200,9 @@ def _is_meaningful_string(text: str) -> bool:
     if cleaned.lower() in {"true", "false", "yes", "no"}:
         return True
 
-    return bool(re.fullmatch(r"[-+]?\d+(?:\.\d+)?%?", cleaned)) and not DATE_RE.match(cleaned)
+    return bool(re.fullmatch(r"[-+]?\d+(?:\.\d+)?%?", cleaned)) and not DATE_RE.match(
+        cleaned
+    )
 
 
 def _extract_authorish_string(values: Sequence[str]) -> str | None:
@@ -1166,7 +1230,9 @@ def _dedupe_preserve_order(values: Iterable[Any]) -> list[Any]:
     seen: set[Any] = set()
     deduped: list[Any] = []
     for value in values:
-        key = value if isinstance(value, (str, int, float, bool, tuple)) else repr(value)
+        key = (
+            value if isinstance(value, (str, int, float, bool, tuple)) else repr(value)
+        )
         if key in seen:
             continue
         seen.add(key)

@@ -382,7 +382,9 @@ class _ProtoDecoder:
             except ValueError:
                 break
 
-            fields.append(_ProtoField(number=field_number, wire_type=wire_type, value=value))
+            fields.append(
+                _ProtoField(number=field_number, wire_type=wire_type, value=value)
+            )
 
         return fields
 
@@ -463,7 +465,9 @@ class NumbersProcessor:
                 logger.debug("textutil fallback failed: %s", exc)
             else:
                 if fallback_document.sheets:
-                    native_document = self._merge_fallback(native_document, fallback_document)
+                    native_document = self._merge_fallback(
+                        native_document, fallback_document
+                    )
 
         self._current_document = native_document
         return native_document
@@ -587,7 +591,9 @@ class NumbersProcessor:
                     document_numbers.extend(_collect_numbers(fields))
 
         table_files = sorted(
-            name for name in archive_entries if name.startswith("Index/Tables/") and name.endswith(".iwa")
+            name
+            for name in archive_entries
+            if name.startswith("Index/Tables/") and name.endswith(".iwa")
         )
 
         sheet_names = self._derive_sheet_names(document_strings, len(table_files))
@@ -620,7 +626,9 @@ class NumbersProcessor:
         self._attach_charts_to_sheets(worksheets, charts)
 
         if not any(sheet.tables for sheet in worksheets) and document_strings:
-            worksheets = [self._build_textual_fallback_sheet(workbook_path, document_strings)]
+            worksheets = [
+                self._build_textual_fallback_sheet(workbook_path, document_strings)
+            ]
             all_cells = worksheets[0].all_cells()
             formulas = self._formula_map_for_sheet(worksheets[0])
 
@@ -707,7 +715,9 @@ class NumbersProcessor:
 
         cells: list[Cell] = []
 
-        def visit(message_fields: list[_ProtoField], path: tuple[int, ...] = ()) -> None:
+        def visit(
+            message_fields: list[_ProtoField], path: tuple[int, ...] = ()
+        ) -> None:
             direct_strings: list[str] = []
             direct_numbers: list[int | float] = []
             formatting: dict[str, Any] = {}
@@ -752,7 +762,11 @@ class NumbersProcessor:
         if not meaningful_strings and not numbers:
             return None
 
-        small_ints = [int(value) for value in numbers if isinstance(value, int) and 0 <= value <= 1_000_000]
+        small_ints = [
+            int(value)
+            for value in numbers
+            if isinstance(value, int) and 0 <= value <= 1_000_000
+        ]
         coordinates = [value for value in small_ints if 0 <= value <= 10_000]
         if len(coordinates) < 2:
             return None
@@ -762,7 +776,9 @@ class NumbersProcessor:
         if row > 50_000 or column > 16_384:
             return None
 
-        formula = next((item for item in meaningful_strings if _looks_like_formula(item)), None)
+        formula = next(
+            (item for item in meaningful_strings if _looks_like_formula(item)), None
+        )
         non_formula_strings = [item for item in meaningful_strings if item != formula]
 
         value: Any = None
@@ -788,7 +804,9 @@ class NumbersProcessor:
 
         merged_range = None
         if len(coordinates) >= 4:
-            merged_range = _normalize_range(coordinates[0], coordinates[2], coordinates[1], coordinates[3])
+            merged_range = _normalize_range(
+                coordinates[0], coordinates[2], coordinates[1], coordinates[3]
+            )
 
         raw = {
             "proto_path": list(path),
@@ -932,7 +950,9 @@ class NumbersProcessor:
         for index, value in enumerate(clean_values):
             row = index // column_count
             column = index % column_count
-            formula = value if isinstance(value, str) and _looks_like_formula(value) else None
+            formula = (
+                value if isinstance(value, str) and _looks_like_formula(value) else None
+            )
             cells.append(
                 Cell(
                     sheet_name=sheet_name,
@@ -985,7 +1005,9 @@ class NumbersProcessor:
         grid = [["" for _ in range(max_col + 1)] for _ in range(max_row + 1)]
 
         for cell in cells:
-            grid[cell.row][cell.column] = cell.value if cell.value is not None else cell.display_value
+            grid[cell.row][cell.column] = (
+                cell.value if cell.value is not None else cell.display_value
+            )
 
         while grid and all(item in ("", None) for item in grid[-1]):
             grid.pop()
@@ -1040,14 +1062,20 @@ class NumbersProcessor:
         """Extract basic chart metadata from workbook strings and assets."""
 
         charts: list[Chart] = []
-        chart_like_strings = [text for text in document_strings if CHART_TYPE_RE.search(text)]
+        chart_like_strings = [
+            text for text in document_strings if CHART_TYPE_RE.search(text)
+        ]
 
         for index, text in enumerate(chart_like_strings):
             match = CHART_TYPE_RE.search(text)
             if not match:
                 continue
             chart_type = match.group(1).lower()
-            sheet_name = sheet_names[min(index, len(sheet_names) - 1)] if sheet_names else DEFAULT_SHEET_NAME
+            sheet_name = (
+                sheet_names[min(index, len(sheet_names) - 1)]
+                if sheet_names
+                else DEFAULT_SHEET_NAME
+            )
             charts.append(
                 Chart(
                     sheet_name=sheet_name,
@@ -1067,8 +1095,14 @@ class NumbersProcessor:
             if "chart" not in lower_name:
                 continue
             chart_type_match = CHART_TYPE_RE.search(lower_name)
-            chart_type = chart_type_match.group(1).lower() if chart_type_match else "chart"
-            sheet_name = sheet_names[min(index, len(sheet_names) - 1)] if sheet_names else DEFAULT_SHEET_NAME
+            chart_type = (
+                chart_type_match.group(1).lower() if chart_type_match else "chart"
+            )
+            sheet_name = (
+                sheet_names[min(index, len(sheet_names) - 1)]
+                if sheet_names
+                else DEFAULT_SHEET_NAME
+            )
             charts.append(
                 Chart(
                     sheet_name=sheet_name,
@@ -1105,7 +1139,11 @@ class NumbersProcessor:
         if table is None:
             table = TableBlock(
                 name="Table 1",
-                rows=[[text] for text in _dedupe_preserve_order(document_strings) if _is_meaningful_string(text)],
+                rows=[
+                    [text]
+                    for text in _dedupe_preserve_order(document_strings)
+                    if _is_meaningful_string(text)
+                ],
             )
             table.cells = self._cells_from_rows(
                 sheet_name=workbook_path.stem or DEFAULT_SHEET_NAME,
@@ -1173,7 +1211,9 @@ class NumbersProcessor:
             raw_metadata=raw_metadata,
         )
 
-    def _read_plist_metadata(self, archive: zipfile.ZipFile, name: str) -> dict[str, Any]:
+    def _read_plist_metadata(
+        self, archive: zipfile.ZipFile, name: str
+    ) -> dict[str, Any]:
         """Read plist metadata from a ZIP entry."""
 
         try:
@@ -1196,7 +1236,8 @@ class NumbersProcessor:
         for name in archive.namelist():
             lower_name = name.lower()
             if lower_name == "preview.jpg" or (
-                "preview" in lower_name and lower_name.endswith((".jpg", ".jpeg", ".png"))
+                "preview" in lower_name
+                and lower_name.endswith((".jpg", ".jpeg", ".png"))
             ):
                 try:
                     return archive.read(name)
@@ -1204,7 +1245,9 @@ class NumbersProcessor:
                     return None
         return None
 
-    def _derive_sheet_names(self, document_strings: list[str], table_count: int) -> list[str]:
+    def _derive_sheet_names(
+        self, document_strings: list[str], table_count: int
+    ) -> list[str]:
         """Infer sheet names from Document.iwa strings."""
 
         candidates: list[str] = []
@@ -1224,7 +1267,9 @@ class NumbersProcessor:
 
         if len(candidates) < table_count:
             start = len(candidates) + 1
-            candidates.extend(f"Sheet {index}" for index in range(start, table_count + 1))
+            candidates.extend(
+                f"Sheet {index}" for index in range(start, table_count + 1)
+            )
 
         return candidates[:table_count] if table_count else candidates
 
@@ -1234,13 +1279,19 @@ class NumbersProcessor:
         stem = Path(table_file).stem
         suffix = stem.split("Tile-", 1)[-1]
         suffix = suffix.replace("-", "_")
-        return f"Table {index + 1}" if not suffix or suffix == stem else f"Table {index + 1} ({suffix})"
+        return (
+            f"Table {index + 1}"
+            if not suffix or suffix == stem
+            else f"Table {index + 1} ({suffix})"
+        )
 
     def _parse_with_textutil(self, workbook_path: Path) -> DocumentContent:
         """Fallback parser using macOS textutil output."""
 
         if not self.is_macos or not self.use_textutil_fallback:
-            raise NumbersUnsupportedError("textutil fallback is only available on macOS")
+            raise NumbersUnsupportedError(
+                "textutil fallback is only available on macOS"
+            )
 
         textutil_path = shutil.which("textutil")
         if not textutil_path:
@@ -1254,7 +1305,9 @@ class NumbersProcessor:
             check=False,
         )
         if result.returncode != 0:
-            raise NumbersCorruptedError(result.stderr or result.stdout or "textutil failed")
+            raise NumbersCorruptedError(
+                result.stderr or result.stdout or "textutil failed"
+            )
 
         text = result.stdout.strip()
         sheet = self._worksheet_from_text(text, workbook_path)
@@ -1283,7 +1336,9 @@ class NumbersProcessor:
     def _worksheet_from_text(self, text: str, workbook_path: Path) -> Worksheet:
         """Create a worksheet from textutil output."""
 
-        blocks = [block.strip() for block in re.split(r"\n\s*\n", text) if block.strip()]
+        blocks = [
+            block.strip() for block in re.split(r"\n\s*\n", text) if block.strip()
+        ]
         tables: list[TableBlock] = []
 
         for index, block in enumerate(blocks, start=1):
@@ -1361,7 +1416,11 @@ class NumbersProcessor:
         cells: list[Cell] = []
         for row_index, row in enumerate(rows):
             for col_index, value in enumerate(row):
-                formula = value if isinstance(value, str) and _looks_like_formula(value) else None
+                formula = (
+                    value
+                    if isinstance(value, str) and _looks_like_formula(value)
+                    else None
+                )
                 cells.append(
                     Cell(
                         sheet_name=sheet_name,
@@ -1394,8 +1453,11 @@ class NumbersProcessor:
             cells=fallback_document.cells or native_document.cells,
             formulas=fallback_document.formulas or native_document.formulas,
             charts=native_document.charts,
-            metadata=self._merged_metadata(native_document.metadata, fallback_document.metadata),
-            preview_image=native_document.preview_image or fallback_document.preview_image,
+            metadata=self._merged_metadata(
+                native_document.metadata, fallback_document.metadata
+            ),
+            preview_image=native_document.preview_image
+            or fallback_document.preview_image,
         )
 
     def _merged_metadata(self, primary: Metadata, fallback: Metadata) -> Metadata:
@@ -1441,13 +1503,17 @@ class NumbersProcessor:
                 f"Expected a .numbers file, got: {workbook_path.suffix or '<no extension>'}"
             )
         if not zipfile.is_zipfile(workbook_path):
-            raise NumbersCorruptedError(f"Not a valid Numbers ZIP package: {workbook_path}")
+            raise NumbersCorruptedError(
+                f"Not a valid Numbers ZIP package: {workbook_path}"
+            )
 
     def _require_document(self) -> DocumentContent:
         """Require that parse() has already been called."""
 
         if self._current_document is None:
-            raise NumbersError("No workbook has been parsed yet. Call parse(path) first.")
+            raise NumbersError(
+                "No workbook has been parsed yet. Call parse(path) first."
+            )
         return self._current_document
 
     def _coerce_sheet(self, sheet: str | Worksheet) -> Worksheet:
@@ -1760,7 +1826,9 @@ def _dedupe_preserve_order(values: Iterable[Any]) -> list[Any]:
     seen: set[Any] = set()
     result: list[Any] = []
     for value in values:
-        key = value if isinstance(value, (str, int, float, bool, tuple)) else repr(value)
+        key = (
+            value if isinstance(value, (str, int, float, bool, tuple)) else repr(value)
+        )
         if key in seen:
             continue
         seen.add(key)

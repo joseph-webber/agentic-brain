@@ -5,7 +5,9 @@
 from __future__ import annotations
 
 
-def test_table_cell_can_store_multiple_paragraphs(office_modules, sample_paragraph) -> None:
+def test_table_cell_can_store_multiple_paragraphs(
+    office_modules, sample_paragraph
+) -> None:
     second = office_modules.models.Paragraph(
         runs=[office_modules.models.TextRun(text="Second line")]
     )
@@ -17,7 +19,9 @@ def test_table_cell_can_store_multiple_paragraphs(office_modules, sample_paragra
 
 
 def test_table_cell_supports_row_and_column_spans(office_modules) -> None:
-    cell = office_modules.models.TableCell(rowspan=3, colspan=2, width=120.0, height=44.0)
+    cell = office_modules.models.TableCell(
+        rowspan=3, colspan=2, width=120.0, height=44.0
+    )
     assert cell.rowspan == 3
     assert cell.colspan == 2
     assert cell.width == 120.0

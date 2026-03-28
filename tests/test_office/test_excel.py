@@ -238,7 +238,9 @@ def test_xlsx_to_csv_with_real_openpyxl(make_converter, tmp_path) -> None:
 
 
 @pytest.mark.skipif(not OPENPYXL_LIBRARY_AVAILABLE, reason="openpyxl not installed")
-def test_excel_processor_extracts_structured_sheet_data(office_modules, tmp_path) -> None:
+def test_excel_processor_extracts_structured_sheet_data(
+    office_modules, tmp_path
+) -> None:
     import openpyxl
     from openpyxl.chart import BarChart, Reference
     from openpyxl.formatting.rule import CellIsRule
@@ -304,10 +306,7 @@ def test_excel_processor_extracts_structured_sheet_data(office_modules, tmp_path
     assert structured["data_validations"][0]["range"] == "C2:C3"
     assert structured["conditional_formatting"][0]["range"] == "B2:B3"
 
-    cell_map = {
-        cell["coordinate"]: cell
-        for cell in structured["cells"]
-    }
+    cell_map = {cell["coordinate"]: cell for cell in structured["cells"]}
     assert cell_map["B2"]["data_type"] == "number"
     assert cell_map["B4"]["formula"] == "=SUM(B2:B3)"
     assert cell_map["A6"]["merged"] is True
@@ -315,7 +314,9 @@ def test_excel_processor_extracts_structured_sheet_data(office_modules, tmp_path
 
 @pytest.mark.skipif(not OPENPYXL_LIBRARY_AVAILABLE, reason="openpyxl not installed")
 @pytest.mark.skipif(not PANDAS_LIBRARY_AVAILABLE, reason="pandas not installed")
-def test_excel_processor_to_dataframe_fills_merged_cells(office_modules, tmp_path) -> None:
+def test_excel_processor_to_dataframe_fills_merged_cells(
+    office_modules, tmp_path
+) -> None:
     import openpyxl
 
     workbook = openpyxl.Workbook()

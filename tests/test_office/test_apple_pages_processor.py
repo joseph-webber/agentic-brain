@@ -118,7 +118,9 @@ def test_pages_processor_to_pdf_uses_textutil_on_macos(
 
     monkeypatch.setattr(module.subprocess, "run", fake_run)
 
-    processor = module.PagesProcessor(use_textutil_fallback=True, use_pages_automation=False)
+    processor = module.PagesProcessor(
+        use_textutil_fallback=True, use_pages_automation=False
+    )
     output = tmp_path / "out.pdf"
 
     result = processor.to_pdf(package, output)

@@ -130,7 +130,11 @@ class ODFDocumentContent(DocumentContent):
 
         if self.paragraphs:
             return "\n".join(
-                text for text in (paragraph.text_content().strip() for paragraph in self.paragraphs) if text
+                text
+                for text in (
+                    paragraph.text_content().strip() for paragraph in self.paragraphs
+                )
+                if text
             )
 
         if self.slides:
@@ -218,7 +222,9 @@ class OpenDocumentProcessor:
         try:
             self._document = opendocument.load(str(source))
         except Exception as exc:  # pragma: no cover - dependency/library boundary
-            raise OpenDocumentCorruptedError(f"Failed to open ODF document: {source}") from exc
+            raise OpenDocumentCorruptedError(
+                f"Failed to open ODF document: {source}"
+            ) from exc
 
         self._path = source
         self._styles_cache = None
@@ -248,7 +254,11 @@ class OpenDocumentProcessor:
                     "table_count": len(tables),
                     "image_count": len(images),
                 },
-                sections=[paragraph.text_content() for paragraph in paragraphs if paragraph.is_heading],
+                sections=[
+                    paragraph.text_content()
+                    for paragraph in paragraphs
+                    if paragraph.is_heading
+                ],
                 _processor=self,
             )
         elif format_name == OfficeFormat.ODS:
@@ -349,15 +359,24 @@ class OpenDocumentProcessor:
 
         if format_name == OfficeFormat.ODT:
             extracted = self.table_extractor.extract_tables(source)
-            return [self._convert_table(table_model, index) for index, table_model in enumerate(extracted, start=1)]
+            return [
+                self._convert_table(table_model, index)
+                for index, table_model in enumerate(extracted, start=1)
+            ]
 
         if format_name == OfficeFormat.ODS:
             extracted = self._extract_ods_tables(path)
-            return [self._convert_table(table_model, index) for index, table_model in enumerate(extracted, start=1)]
+            return [
+                self._convert_table(table_model, index)
+                for index, table_model in enumerate(extracted, start=1)
+            ]
 
         if format_name == OfficeFormat.ODP:
             extracted = self._extract_odp_tables(path)
-            return [self._convert_table(table_model, index) for index, table_model in enumerate(extracted, start=1)]
+            return [
+                self._convert_table(table_model, index)
+                for index, table_model in enumerate(extracted, start=1)
+            ]
 
         raise UnsupportedOfficeFormatError(format_name)
 
@@ -396,14 +415,17 @@ class OpenDocumentProcessor:
                     }
                     if first_ref.get("slide_index"):
                         try:
-                            properties["slide_index"] = float(str(first_ref["slide_index"]))
+                            properties["slide_index"] = float(
+                                str(first_ref["slide_index"])
+                            )
                         except (TypeError, ValueError):
                             pass
                     if reference_data:
                         frame_names = [
                             ref["frame_name"]
                             for ref in reference_data
-                            if isinstance(ref.get("frame_name"), str) and ref["frame_name"]
+                            if isinstance(ref.get("frame_name"), str)
+                            and ref["frame_name"]
                         ]
                         if frame_names:
                             properties["frame_names"] = ", ".join(frame_names)
@@ -415,8 +437,11 @@ class OpenDocumentProcessor:
                             description=self._clean_text(first_ref.get("description")),
                             width=self._safe_float(first_ref.get("width")),
                             height=self._safe_float(first_ref.get("height")),
-                            title=self._clean_text(first_ref.get("name")) or Path(entry).name,
-                            alternate_text=self._clean_text(first_ref.get("alternate_text")),
+                            title=self._clean_text(first_ref.get("name"))
+                            or Path(entry).name,
+                            alternate_text=self._clean_text(
+                                first_ref.get("alternate_text")
+                            ),
                             properties=properties,
                         )
                     )
@@ -434,7 +459,9 @@ class OpenDocumentProcessor:
             return metadata
 
         for child in getattr(document.meta, "childNodes", []):
-            tag_name = _local_name(getattr(child, "tagName", "")) or _qname_local_name(child)
+            tag_name = _local_name(getattr(child, "tagName", "")) or _qname_local_name(
+                child
+            )
             value = self._clean_text(extractText(child))
             if not tag_name:
                 continue
@@ -443,7 +470,11 @@ class OpenDocumentProcessor:
                 metadata.title = value
             elif tag_name == "subject" and value:
                 metadata.subject = value
-            elif tag_name in {"creator", "initial-creator"} and value and metadata.author is None:
+            elif (
+                tag_name in {"creator", "initial-creator"}
+                and value
+                and metadata.author is None
+            ):
                 metadata.author = value
             elif tag_name == "keyword" and value:
                 metadata.keywords.extend(self._split_keywords(value))
@@ -468,14 +499,18 @@ class OpenDocumentProcessor:
                 property_name = self._get_attribute(child, "name")
                 property_type = self._get_attribute(child, "valuetype")
                 if property_name and value:
-                    metadata.custom_properties[property_name] = self._coerce_metadata_value(value, property_type)
+                    metadata.custom_properties[property_name] = (
+                        self._coerce_metadata_value(value, property_type)
+                    )
 
         metadata.keywords = list(dict.fromkeys(metadata.keywords))
         metadata.company = self._first_present(
             metadata.custom_properties,
             ("Company", "company", "Organisation", "organization", "organisation"),
         )
-        metadata.category = self._first_present(metadata.custom_properties, ("Category", "category"))
+        metadata.category = self._first_present(
+            metadata.custom_properties, ("Category", "category")
+        )
         return metadata
 
     def extract_worksheets(self, path: str | Path | None = None) -> list[Worksheet]:
@@ -483,7 +518,9 @@ class OpenDocumentProcessor:
 
         self._ensure_spreadsheet(path)
         sheets: list[Worksheet] = []
-        for sheet_index, sheet_element in enumerate(self._sheet_elements(path), start=1):
+        for sheet_index, sheet_element in enumerate(
+            self._sheet_elements(path), start=1
+        ):
             name = self._get_attribute(sheet_element, "name") or f"Sheet {sheet_index}"
             worksheet = Worksheet(name=name)
             normalized_table = self._parse_odf_table_element(
@@ -492,7 +529,9 @@ class OpenDocumentProcessor:
                 source={"sheet_name": name, "sheet_index": sheet_index},
             )
             if normalized_table is not None:
-                worksheet.tables.append(self._convert_table(normalized_table, sheet_index))
+                worksheet.tables.append(
+                    self._convert_table(normalized_table, sheet_index)
+                )
                 self._populate_worksheet_cells(worksheet, normalized_table)
             sheets.append(worksheet)
         return sheets
@@ -501,23 +540,33 @@ class OpenDocumentProcessor:
         """Extract Impress slides into the shared slide model."""
 
         presentation = self._ensure_presentation(path)
-        all_tables = self.extract_tables(path) if self._ensure_format(path) == OfficeFormat.ODP else []
+        all_tables = (
+            self.extract_tables(path)
+            if self._ensure_format(path) == OfficeFormat.ODP
+            else []
+        )
         image_map = self._group_slide_images(self.extract_images(path))
         table_map = self._group_slide_tables(all_tables)
         slides: list[Slide] = []
 
-        for slide_index, page in enumerate(self._presentation_pages(presentation), start=1):
+        for slide_index, page in enumerate(
+            self._presentation_pages(presentation), start=1
+        ):
             title_paragraph: Paragraph | None = None
             body: list[Paragraph] = []
             notes: list[Paragraph] = []
 
             for frame in self._iter_elements(page, allowed={"frame"}):
-                frame_class = self._clean_text(self._get_attribute(frame, "presentationclass")).lower()
+                frame_class = self._clean_text(
+                    self._get_attribute(frame, "presentationclass")
+                ).lower()
                 paragraphs = self._paragraphs_from_frame(frame, slide_index)
                 if not paragraphs:
                     continue
 
-                if frame_class == "title" or (title_paragraph is None and self._frame_looks_like_title(frame)):
+                if frame_class == "title" or (
+                    title_paragraph is None and self._frame_looks_like_title(frame)
+                ):
                     title_paragraph = paragraphs[0]
                     body.extend(paragraphs[1:])
                 elif frame_class in {"notes", "subtitle-notes"}:
@@ -532,8 +581,14 @@ class OpenDocumentProcessor:
                     notes=notes,
                     images=image_map.get(slide_index, []),
                     tables=table_map.get(slide_index, []),
-                    layout_name=self._clean_text(self._get_attribute(page, "style-name")) or None,
-                    master_slide_name=self._clean_text(self._get_attribute(page, "master-page-name")) or None,
+                    layout_name=self._clean_text(
+                        self._get_attribute(page, "style-name")
+                    )
+                    or None,
+                    master_slide_name=self._clean_text(
+                        self._get_attribute(page, "master-page-name")
+                    )
+                    or None,
                 )
             )
 
@@ -565,20 +620,28 @@ class OpenDocumentProcessor:
                         parts.append(" | ".join(row_values))
         return "\n\n".join(parts)
 
-    def _extract_odt_paragraphs(self, path: str | Path | None = None) -> list[Paragraph]:
+    def _extract_odt_paragraphs(
+        self, path: str | Path | None = None
+    ) -> list[Paragraph]:
         body = self._ensure_text_document(path)
         paragraphs: list[Paragraph] = []
-        for index, element in enumerate(self._iter_elements(body, allowed={"h", "p"}), start=1):
+        for index, element in enumerate(
+            self._iter_elements(body, allowed={"h", "p"}), start=1
+        ):
             text_value = self._clean_text(self._element_text(element))
             if not text_value:
                 continue
             tag_name = _qname_local_name(element)
-            style_name = self._get_attribute(element, "stylename") or self._get_attribute(element, "style-name")
+            style_name = self._get_attribute(
+                element, "stylename"
+            ) or self._get_attribute(element, "style-name")
             heading_level = None
             is_heading = tag_name == "h"
             if is_heading:
                 try:
-                    heading_level = int(self._get_attribute(element, "outlinelevel") or "1")
+                    heading_level = int(
+                        self._get_attribute(element, "outlinelevel") or "1"
+                    )
                 except ValueError:
                     heading_level = 1
 
@@ -603,7 +666,9 @@ class OpenDocumentProcessor:
             row_map: dict[int, dict[int, str]] = {}
             for cell in worksheet.iter_cells():
                 row_index, col_index = _cell_reference_to_indexes(cell.reference)
-                row_map.setdefault(row_index, {})[col_index] = str(cell.value) if cell.value is not None else ""
+                row_map.setdefault(row_index, {})[col_index] = (
+                    str(cell.value) if cell.value is not None else ""
+                )
             for row_index in sorted(row_map):
                 row = row_map[row_index]
                 max_col = max(row, default=-1)
@@ -613,13 +678,17 @@ class OpenDocumentProcessor:
             parts.append("")
         return "\n".join(parts).strip()
 
-    def _extract_ods_paragraphs(self, path: str | Path | None = None) -> list[Paragraph]:
+    def _extract_ods_paragraphs(
+        self, path: str | Path | None = None
+    ) -> list[Paragraph]:
         paragraphs: list[Paragraph] = []
         for worksheet in self.extract_worksheets(path):
             row_map: dict[int, dict[int, str]] = {}
             for cell in worksheet.iter_cells():
                 row_index, col_index = _cell_reference_to_indexes(cell.reference)
-                row_map.setdefault(row_index, {})[col_index] = str(cell.value) if cell.value is not None else ""
+                row_map.setdefault(row_index, {})[col_index] = (
+                    str(cell.value) if cell.value is not None else ""
+                )
 
             for row_index in sorted(row_map):
                 row = row_map[row_index]
@@ -631,16 +700,27 @@ class OpenDocumentProcessor:
                 paragraphs.append(
                     Paragraph(
                         runs=[TextRun(text="\t".join(values).strip())],
-                        style=DocumentStyle(styles={"sheet_name": worksheet.name, "row_index": row_index + 1}),
+                        style=DocumentStyle(
+                            styles={
+                                "sheet_name": worksheet.name,
+                                "row_index": row_index + 1,
+                            }
+                        ),
                         paragraph_id=f"{worksheet.name}-row-{row_index + 1}",
                     )
                 )
         return paragraphs
 
-    def _extract_ods_tables(self, path: str | Path | None = None) -> list[ExtractedTable]:
+    def _extract_ods_tables(
+        self, path: str | Path | None = None
+    ) -> list[ExtractedTable]:
         tables: list[ExtractedTable] = []
-        for sheet_index, sheet_element in enumerate(self._sheet_elements(path), start=1):
-            sheet_name = self._get_attribute(sheet_element, "name") or f"Sheet {sheet_index}"
+        for sheet_index, sheet_element in enumerate(
+            self._sheet_elements(path), start=1
+        ):
+            sheet_name = (
+                self._get_attribute(sheet_element, "name") or f"Sheet {sheet_index}"
+            )
             normalized = self._parse_odf_table_element(
                 sheet_element,
                 source_format="ods",
@@ -680,7 +760,9 @@ class OpenDocumentProcessor:
             parts.append("")
         return "\n".join(parts).strip()
 
-    def _extract_odp_paragraphs(self, path: str | Path | None = None) -> list[Paragraph]:
+    def _extract_odp_paragraphs(
+        self, path: str | Path | None = None
+    ) -> list[Paragraph]:
         paragraphs: list[Paragraph] = []
         for slide_index, slide in enumerate(self.extract_slides(path), start=1):
             if slide.title:
@@ -690,19 +772,29 @@ class OpenDocumentProcessor:
                 title.heading_level = 1
                 paragraphs.append(title)
             for paragraph_index, paragraph in enumerate(slide.body, start=1):
-                paragraph.paragraph_id = paragraph.paragraph_id or f"slide-{slide_index}-p-{paragraph_index}"
+                paragraph.paragraph_id = (
+                    paragraph.paragraph_id or f"slide-{slide_index}-p-{paragraph_index}"
+                )
                 paragraphs.append(paragraph)
             for note_index, paragraph in enumerate(slide.notes, start=1):
-                paragraph.paragraph_id = paragraph.paragraph_id or f"slide-{slide_index}-note-{note_index}"
+                paragraph.paragraph_id = (
+                    paragraph.paragraph_id or f"slide-{slide_index}-note-{note_index}"
+                )
                 paragraph.style.styles.setdefault("notes", True)
                 paragraphs.append(paragraph)
         return paragraphs
 
-    def _extract_odp_tables(self, path: str | Path | None = None) -> list[ExtractedTable]:
+    def _extract_odp_tables(
+        self, path: str | Path | None = None
+    ) -> list[ExtractedTable]:
         presentation = self._ensure_presentation(path)
         tables: list[ExtractedTable] = []
-        for slide_index, page in enumerate(self._presentation_pages(presentation), start=1):
-            for table_index, table_element in enumerate(self._iter_elements(page, allowed={"table"}), start=1):
+        for slide_index, page in enumerate(
+            self._presentation_pages(presentation), start=1
+        ):
+            for table_index, table_element in enumerate(
+                self._iter_elements(page, allowed={"table"}), start=1
+            ):
                 normalized = self._parse_odf_table_element(
                     table_element,
                     source_format="odp",
@@ -727,7 +819,9 @@ class OpenDocumentProcessor:
         active_rowspans: dict[int, int] = {}
 
         for row_element in self._direct_children(table_element, allowed={"table-row"}):
-            repeat_rows = self._safe_int(self._get_attribute(row_element, "numberrowsrepeated"), default=1)
+            repeat_rows = self._safe_int(
+                self._get_attribute(row_element, "numberrowsrepeated"), default=1
+            )
             base_row = self._parse_odf_row(row_element, active_rowspans)
             if not base_row and not active_rowspans:
                 continue
@@ -738,7 +832,9 @@ class OpenDocumentProcessor:
         if not logical_rows:
             return None
 
-        style_name = self._get_attribute(table_element, "stylename") or self._get_attribute(table_element, "style-name")
+        style_name = self._get_attribute(
+            table_element, "stylename"
+        ) or self._get_attribute(table_element, "style-name")
         table_name = self._get_attribute(table_element, "name")
         return ExtractedTable(
             rows=logical_rows,
@@ -767,7 +863,9 @@ class OpenDocumentProcessor:
                 active_rowspans.pop(column_index, None)
             column_index += 1
 
-        for cell_element in self._direct_children(row_element, allowed={"table-cell", "covered-table-cell"}):
+        for cell_element in self._direct_children(
+            row_element, allowed={"table-cell", "covered-table-cell"}
+        ):
             while active_rowspans.get(column_index, 0) > 0:
                 row.append(ExtractedCell(text="", is_placeholder=True))
                 active_rowspans[column_index] -= 1
@@ -775,15 +873,23 @@ class OpenDocumentProcessor:
                     active_rowspans.pop(column_index, None)
                 column_index += 1
 
-            repeated = self._safe_int(self._get_attribute(cell_element, "numbercolumnsrepeated"), default=1)
-            rowspan = self._safe_int(self._get_attribute(cell_element, "numberrowsspanned"), default=1)
-            colspan = self._safe_int(self._get_attribute(cell_element, "numbercolumnsspanned"), default=1)
+            repeated = self._safe_int(
+                self._get_attribute(cell_element, "numbercolumnsrepeated"), default=1
+            )
+            rowspan = self._safe_int(
+                self._get_attribute(cell_element, "numberrowsspanned"), default=1
+            )
+            colspan = self._safe_int(
+                self._get_attribute(cell_element, "numbercolumnsspanned"), default=1
+            )
             is_covered = _qname_local_name(cell_element) == "covered-table-cell"
             text_value = self._clean_text(self._element_text(cell_element))
             style_name = self._get_attribute(cell_element, "stylename")
             value_type = self._get_attribute(cell_element, "valuetype")
             formula = self._get_attribute(cell_element, "formula")
-            raw_value = self._extract_table_cell_value(cell_element, value_type, text_value)
+            raw_value = self._extract_table_cell_value(
+                cell_element, value_type, text_value
+            )
 
             for _ in range(max(repeated, 1)):
                 cell = ExtractedCell(
@@ -816,7 +922,9 @@ class OpenDocumentProcessor:
 
     def _paragraphs_from_frame(self, frame: Any, slide_index: int) -> list[Paragraph]:
         paragraphs: list[Paragraph] = []
-        for paragraph_index, paragraph_element in enumerate(self._iter_elements(frame, allowed={"p", "h"}), start=1):
+        for paragraph_index, paragraph_element in enumerate(
+            self._iter_elements(frame, allowed={"p", "h"}), start=1
+        ):
             text_value = self._clean_text(self._element_text(paragraph_element))
             if not text_value:
                 continue
@@ -825,7 +933,9 @@ class OpenDocumentProcessor:
             heading_level = None
             is_heading = tag_name == "h"
             if is_heading:
-                heading_level = self._safe_int(self._get_attribute(paragraph_element, "outlinelevel"), default=1)
+                heading_level = self._safe_int(
+                    self._get_attribute(paragraph_element, "outlinelevel"), default=1
+                )
 
             paragraphs.append(
                 Paragraph(
@@ -838,12 +948,16 @@ class OpenDocumentProcessor:
             )
         return paragraphs
 
-    def _collect_image_references(self, path: str | Path | None = None) -> dict[str, list[dict[str, str]]]:
+    def _collect_image_references(
+        self, path: str | Path | None = None
+    ) -> dict[str, list[dict[str, str]]]:
         document = self._ensure_document(path)
         references: dict[str, list[dict[str, str]]] = {}
 
         current_slide = 0
-        for element in self._iter_elements(document, allowed={"page", "frame", "image"}):
+        for element in self._iter_elements(
+            document, allowed={"page", "frame", "image"}
+        ):
             tag_name = _qname_local_name(element)
             if tag_name == "page":
                 current_slide += 1
@@ -859,7 +973,9 @@ class OpenDocumentProcessor:
             reference = {
                 "name": self._clean_text(self._get_attribute(frame, "name")),
                 "frame_name": self._clean_text(self._get_attribute(frame, "name")),
-                "description": self._clean_text(self._get_attribute(frame, "description")),
+                "description": self._clean_text(
+                    self._get_attribute(frame, "description")
+                ),
                 "alternate_text": self._clean_text(self._get_attribute(frame, "title")),
                 "width": self._clean_text(self._get_attribute(frame, "width")),
                 "height": self._clean_text(self._get_attribute(frame, "height")),
@@ -883,8 +999,12 @@ class OpenDocumentProcessor:
             container = getattr(document, container_name, None)
             if container is None:
                 continue
-            for style_element in self._iter_elements(container, allowed={"style", "default-style"}):
-                style_name = self._get_attribute(style_element, "name") or self._get_attribute(style_element, "family")
+            for style_element in self._iter_elements(
+                container, allowed={"style", "default-style"}
+            ):
+                style_name = self._get_attribute(
+                    style_element, "name"
+                ) or self._get_attribute(style_element, "family")
                 if not style_name:
                     continue
 
@@ -892,16 +1012,31 @@ class OpenDocumentProcessor:
                 for child in getattr(style_element, "childNodes", []):
                     if not hasattr(child, "attributes"):
                         continue
-                    for attribute_name, attribute_value in getattr(child, "attributes", {}).items():
+                    for attribute_name, attribute_value in getattr(
+                        child, "attributes", {}
+                    ).items():
                         properties[str(attribute_name)] = str(attribute_value)
 
                 style_model = DocumentStyle(styles=properties)
-                style_model.font_family = str(properties.get("fontname", style_model.font_family))
-                style_model.alignment = str(properties.get("textalign", style_model.alignment))
-                style_model.bold = str(properties.get("fontweight", "")).lower() == "bold"
-                style_model.italic = str(properties.get("fontstyle", "")).lower() == "italic"
-                style_model.underline = "underline" in str(properties.get("textunderline-style", "")).lower()
-                style_model.text_color = str(properties.get("color", style_model.text_color))
+                style_model.font_family = str(
+                    properties.get("fontname", style_model.font_family)
+                )
+                style_model.alignment = str(
+                    properties.get("textalign", style_model.alignment)
+                )
+                style_model.bold = (
+                    str(properties.get("fontweight", "")).lower() == "bold"
+                )
+                style_model.italic = (
+                    str(properties.get("fontstyle", "")).lower() == "italic"
+                )
+                style_model.underline = (
+                    "underline"
+                    in str(properties.get("textunderline-style", "")).lower()
+                )
+                style_model.text_color = str(
+                    properties.get("color", style_model.text_color)
+                )
                 style_model.background_color = str(
                     properties.get("background-color", style_model.background_color)
                 )
@@ -918,7 +1053,9 @@ class OpenDocumentProcessor:
         style_map = self._load_styles()
         base = style_map.get(style_name or "")
         if base is None:
-            return DocumentStyle(styles={"style_name": style_name} if style_name else {})
+            return DocumentStyle(
+                styles={"style_name": style_name} if style_name else {}
+            )
         return DocumentStyle(
             font_family=base.font_family,
             font_size=base.font_size,
@@ -957,7 +1094,9 @@ class OpenDocumentProcessor:
         return Table(
             rows=rows,
             alignment="left",
-            style=DocumentStyle(styles={**dict(table_model.style), **dict(table_model.source)}),
+            style=DocumentStyle(
+                styles={**dict(table_model.style), **dict(table_model.source)}
+            ),
             has_header_row=table_model.header_row_count > 0,
             cell_grid=cell_grid,
             table_id=f"table-{index}",
@@ -968,7 +1107,9 @@ class OpenDocumentProcessor:
             runs=[TextRun(text=cell.text)],
             style=DocumentStyle(styles={"source_data_type": cell.data_type}),
         )
-        shading_color = cell.style.get("background_color") if isinstance(cell.style, dict) else None
+        shading_color = (
+            cell.style.get("background_color") if isinstance(cell.style, dict) else None
+        )
         return TableCell(
             paragraphs=[paragraph] if cell.text else [],
             rowspan=cell.rowspan,
@@ -978,7 +1119,9 @@ class OpenDocumentProcessor:
             cell_id=cell_id,
         )
 
-    def _populate_worksheet_cells(self, worksheet: Worksheet, normalized_table: ExtractedTable) -> None:
+    def _populate_worksheet_cells(
+        self, worksheet: Worksheet, normalized_table: ExtractedTable
+    ) -> None:
         for row_index, row in enumerate(normalized_table.rows, start=1):
             for col_index, cell in enumerate(row, start=1):
                 if cell.is_placeholder and not cell.text:
@@ -987,12 +1130,22 @@ class OpenDocumentProcessor:
                 worksheet.set_cell(
                     Cell(
                         reference=reference,
-                        value=cell.value if cell.value is not None else (cell.text or None),
+                        value=(
+                            cell.value
+                            if cell.value is not None
+                            else (cell.text or None)
+                        ),
                         formula=cell.formula,
                         style=DocumentStyle(styles=dict(cell.style)),
                         merged=cell.rowspan > 1 or cell.colspan > 1,
                         merge_range=(
-                            _merge_range(reference, row_index - 1, col_index - 1, cell.rowspan, cell.colspan)
+                            _merge_range(
+                                reference,
+                                row_index - 1,
+                                col_index - 1,
+                                cell.rowspan,
+                                cell.colspan,
+                            )
                             if cell.rowspan > 1 or cell.colspan > 1
                             else None
                         ),
@@ -1033,7 +1186,9 @@ class OpenDocumentProcessor:
             with zipfile.ZipFile(source) as archive:
                 if "mimetype" not in archive.namelist():
                     return None
-                mimetype_value = archive.read("mimetype").decode("utf-8", errors="ignore").strip()
+                mimetype_value = (
+                    archive.read("mimetype").decode("utf-8", errors="ignore").strip()
+                )
         except Exception:
             return None
         return ODF_MIMETYPE_TO_FORMAT.get(mimetype_value)
@@ -1103,7 +1258,9 @@ class OpenDocumentProcessor:
                 stats[name] = value
         return stats
 
-    def _extract_table_cell_value(self, element: Any, value_type: str | None, text_value: str) -> Any:
+    def _extract_table_cell_value(
+        self, element: Any, value_type: str | None, text_value: str
+    ) -> Any:
         if value_type in {"float", "percentage", "currency"}:
             raw_value = self._get_attribute(element, "value")
             try:
@@ -1122,7 +1279,9 @@ class OpenDocumentProcessor:
             return self._get_attribute(element, "timevalue") or text_value
         return text_value
 
-    def _coerce_metadata_value(self, value: str, value_type: str | None) -> str | int | float | bool | datetime:
+    def _coerce_metadata_value(
+        self, value: str, value_type: str | None
+    ) -> str | int | float | bool | datetime:
         normalized = value.strip()
         if value_type == "boolean":
             return normalized.lower() in {"true", "1", "yes"}
@@ -1330,7 +1489,9 @@ class OpenDocumentProcessor:
         if value is None:
             return ""
         text_value = str(value).replace("\xa0", " ")
-        lines = [WHITESPACE_RE.sub(" ", line).strip() for line in text_value.splitlines()]
+        lines = [
+            WHITESPACE_RE.sub(" ", line).strip() for line in text_value.splitlines()
+        ]
         return "\n".join(line for line in lines if line)
 
     def _first_present(
@@ -1403,10 +1564,14 @@ def _cell_reference_to_indexes(reference: str) -> tuple[int, int]:
     return int(numbers) - 1, column - 1
 
 
-def _merge_range(reference: str, row_index: int, col_index: int, rowspan: int, colspan: int) -> str:
+def _merge_range(
+    reference: str, row_index: int, col_index: int, rowspan: int, colspan: int
+) -> str:
     """Build an A1 merge range from a top-left reference and span lengths."""
 
     if rowspan <= 1 and colspan <= 1:
         return reference
-    end_reference = _indexes_to_cell_reference(row_index + rowspan - 1, col_index + colspan - 1)
+    end_reference = _indexes_to_cell_reference(
+        row_index + rowspan - 1, col_index + colspan - 1
+    )
     return f"{reference}:{end_reference}"

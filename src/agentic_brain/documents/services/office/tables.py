@@ -106,7 +106,9 @@ class Cell:
 
     def to_json(self) -> dict[str, Any]:
         """Convert the cell to a JSON-serializable dictionary."""
-        value = self.value.isoformat() if isinstance(self.value, datetime) else self.value
+        value = (
+            self.value.isoformat() if isinstance(self.value, datetime) else self.value
+        )
         return {
             "value": value,
             "text": self.text,
@@ -194,7 +196,9 @@ class Table:
             padded = row + [""] * max(0, len(headers) - len(row))
             lines.append(
                 "| "
-                + " | ".join(_escape_markdown(value) for value in padded[: len(headers)])
+                + " | ".join(
+                    _escape_markdown(value) for value in padded[: len(headers)]
+                )
                 + " |"
             )
         return "\n".join(lines)
@@ -244,7 +248,8 @@ class Table:
             "has_merged_cells": self.has_merged_cells,
             "rows": [[cell.to_json() for cell in row] for row in self.rows],
             "records": [
-                dict(zip(headers, row, strict=False)) for row in self._body_value_matrix()
+                dict(zip(headers, row, strict=False))
+                for row in self._body_value_matrix()
             ],
             "style": self.style,
             "source": self.source,
@@ -295,8 +300,7 @@ class TableExtractor:
     def extract_all_tables(self, paths: list[str | Path]) -> dict[str, list[Table]]:
         """Extract tables from multiple documents."""
         return {
-            str(self._resolve_path(path)): self.extract_tables(path)
-            for path in paths
+            str(self._resolve_path(path)): self.extract_tables(path) for path in paths
         }
 
     def extract_tables_from_docx(self, path: str | Path) -> list[Table]:
@@ -308,7 +312,9 @@ class TableExtractor:
             document_root = ET.fromstring(archive.read("word/document.xml"))
             style_names = self._read_docx_style_names(archive)
 
-            for index, table_element in enumerate(document_root.findall(".//w:tbl", W_NS), start=1):
+            for index, table_element in enumerate(
+                document_root.findall(".//w:tbl", W_NS), start=1
+            ):
                 table_style_id = self._find_attr(
                     table_element.find("w:tblPr/w:tblStyle", W_NS),
                     "val",
@@ -322,7 +328,11 @@ class TableExtractor:
                 grid = self._parse_docx_table(table_element)
                 finalized = self._finalize_table(
                     grid,
-                    source={"path": str(document_path), "format": "docx", "table_index": index},
+                    source={
+                        "path": str(document_path),
+                        "format": "docx",
+                        "table_index": index,
+                    },
                     style=table_style,
                 )
                 if finalized:
@@ -337,7 +347,9 @@ class TableExtractor:
 
         with zipfile.ZipFile(workbook_path) as archive:
             workbook_root = ET.fromstring(archive.read("xl/workbook.xml"))
-            workbook_rels = self._read_relationships(archive, "xl/_rels/workbook.xml.rels")
+            workbook_rels = self._read_relationships(
+                archive, "xl/_rels/workbook.xml.rels"
+            )
             shared_strings = self._read_shared_strings(archive)
             style_map = self._read_xlsx_styles(archive)
 
@@ -346,16 +358,16 @@ class TableExtractor:
                 start=1,
             ):
                 name = sheet.get("name", f"Sheet{sheet_index}")
-                relation_id = self._find_attr(
-                    sheet, "id", namespace=X_NS["r"]
-                )
+                relation_id = self._find_attr(sheet, "id", namespace=X_NS["r"])
                 target = workbook_rels.get(relation_id or "")
                 if not target:
                     continue
                 target_path = "xl/" + target.lstrip("/")
                 sheet_root = ET.fromstring(archive.read(target_path))
                 grid = self._parse_xlsx_sheet(sheet_root, shared_strings, style_map)
-                for table_number, table_grid in enumerate(self._split_grid_into_tables(grid), start=1):
+                for table_number, table_grid in enumerate(
+                    self._split_grid_into_tables(grid), start=1
+                ):
                     finalized = self._finalize_table(
                         table_grid,
                         source={
@@ -396,9 +408,11 @@ class TableExtractor:
                         if getattr(cell, "is_spanned", False):
                             normalized_row.append(
                                 Cell(
-                                    text=cell.text_frame.text.strip()
-                                    if cell.text_frame is not None
-                                    else "",
+                                    text=(
+                                        cell.text_frame.text.strip()
+                                        if cell.text_frame is not None
+                                        else ""
+                                    ),
                                     is_placeholder=True,
                                     source={"format": "pptx", "merged": True},
                                 )
@@ -407,7 +421,9 @@ class TableExtractor:
 
                         cell_style = self._extract_pptx_style(cell)
                         normalized = Cell(
-                            text=self._clean_text(cell.text_frame.text if cell.text_frame else ""),
+                            text=self._clean_text(
+                                cell.text_frame.text if cell.text_frame else ""
+                            ),
                             rowspan=getattr(cell, "span_height", 1) or 1,
                             colspan=getattr(cell, "span_width", 1) or 1,
                             style=cell_style,
@@ -435,7 +451,10 @@ class TableExtractor:
                         "slide_index": slide_index,
                         "shape_index": shape_index,
                     },
-                    style={"format": "pptx", "shape_name": getattr(shape, "name", None)},
+                    style={
+                        "format": "pptx",
+                        "shape_name": getattr(shape, "name", None),
+                    },
                 )
                 if finalized:
                     tables.append(finalized)
@@ -457,11 +476,15 @@ class TableExtractor:
 
         with zipfile.ZipFile(document_path) as archive:
             root = ET.fromstring(archive.read("content.xml"))
-            for index, table_element in enumerate(root.findall(".//table:table", ODF_NS), start=1):
+            for index, table_element in enumerate(
+                root.findall(".//table:table", ODF_NS), start=1
+            ):
                 logical_rows: list[list[dict[str, Any]]] = []
                 for row_element in table_element.findall("table:table-row", ODF_NS):
                     repeat_rows = int(
-                        row_element.get(f"{{{ODF_NS['table']}}}number-rows-repeated", "1")
+                        row_element.get(
+                            f"{{{ODF_NS['table']}}}number-rows-repeated", "1"
+                        )
                     )
                     row_cells: list[dict[str, Any]] = []
                     for cell_element in list(row_element):
@@ -487,7 +510,9 @@ class TableExtractor:
                                 "1",
                             )
                         )
-                        style_name = cell_element.get(f"{{{ODF_NS['table']}}}style-name")
+                        style_name = cell_element.get(
+                            f"{{{ODF_NS['table']}}}style-name"
+                        )
                         text_value = self._clean_text(" ".join(cell_element.itertext()))
 
                         if tag_name == "covered-table-cell":
@@ -519,10 +544,16 @@ class TableExtractor:
                 grid = self._logical_rows_to_grid(logical_rows, source_format="odt")
                 finalized = self._finalize_table(
                     grid,
-                    source={"path": str(document_path), "format": "odt", "table_index": index},
+                    source={
+                        "path": str(document_path),
+                        "format": "odt",
+                        "table_index": index,
+                    },
                     style={
                         "format": "odt",
-                        "style_name": table_element.get(f"{{{ODF_NS['table']}}}style-name"),
+                        "style_name": table_element.get(
+                            f"{{{ODF_NS['table']}}}style-name"
+                        ),
                         "table_name": table_element.get(f"{{{ODF_NS['table']}}}name"),
                     },
                 )
@@ -615,13 +646,19 @@ class TableExtractor:
                     if vmerge_element is not None
                     else None
                 )
-                text_value = self._clean_text("".join(text.text or "" for text in cell_element.findall(".//w:t", W_NS)))
+                text_value = self._clean_text(
+                    "".join(
+                        text.text or "" for text in cell_element.findall(".//w:t", W_NS)
+                    )
+                )
                 cell_style = self._extract_docx_cell_style(cell_element)
 
                 if vmerge_element is not None and vmerge_value in {None, "continue"}:
                     anchor = active_vertical.get(col_index)
                     if anchor is None:
-                        anchor = Cell(text=text_value, style=cell_style, source={"format": "docx"})
+                        anchor = Cell(
+                            text=text_value, style=cell_style, source={"format": "docx"}
+                        )
                     anchor.rowspan += 1
                     row.append(
                         Cell(
@@ -702,7 +739,9 @@ class TableExtractor:
                 cell_type = cell_element.get("t")
                 style_id = int(cell_element.get("s", "0"))
                 formula = (
-                    self._clean_text(cell_element.findtext("x:f", default="", namespaces=X_NS))
+                    self._clean_text(
+                        cell_element.findtext("x:f", default="", namespaces=X_NS)
+                    )
                     or None
                 )
                 value = self._parse_xlsx_value(
@@ -711,16 +750,24 @@ class TableExtractor:
                     shared_strings,
                     style_map.get(style_id, {}),
                 )
-                text_value = value.isoformat(sep=" ", timespec="seconds") if isinstance(
-                    value, datetime
-                ) else ("" if value is None else str(value))
+                text_value = (
+                    value.isoformat(sep=" ", timespec="seconds")
+                    if isinstance(value, datetime)
+                    else ("" if value is None else str(value))
+                )
                 raw_cells[(row_number, col_number)] = Cell(
                     value=value,
                     text=text_value,
-                    data_type=self._xlsx_data_type(value, cell_type, style_map.get(style_id, {})),
+                    data_type=self._xlsx_data_type(
+                        value, cell_type, style_map.get(style_id, {})
+                    ),
                     formula=formula,
                     style=style_map.get(style_id, {}),
-                    source={"format": "xlsx", "reference": reference, "style_id": style_id},
+                    source={
+                        "format": "xlsx",
+                        "reference": reference,
+                        "style_id": style_id,
+                    },
                 )
 
         for merge in sheet_root.findall("x:mergeCells/x:mergeCell", X_NS):
@@ -844,8 +891,13 @@ class TableExtractor:
     ) -> list[Table]:
         text_payload = payload.decode("utf-8", errors="ignore")
         parsed_rows = list(csv.reader(text_payload.splitlines(), delimiter=delimiter))
-        grid = [[Cell(text=self._clean_text(value), source=source) for value in row] for row in parsed_rows]
-        finalized = self._finalize_table(grid, source=source, style={"format": source["format"]})
+        grid = [
+            [Cell(text=self._clean_text(value), source=source) for value in row]
+            for row in parsed_rows
+        ]
+        finalized = self._finalize_table(
+            grid, source=source, style={"format": source["format"]}
+        )
         return [finalized] if finalized else []
 
     def _tables_from_html(self, html_text: str, source: dict[str, Any]) -> list[Table]:
@@ -853,7 +905,9 @@ class TableExtractor:
         parser.feed(html_text)
         tables: list[Table] = []
         for index, logical_rows in enumerate(parser.tables, start=1):
-            grid = self._logical_rows_to_grid(logical_rows, source_format=source["format"])
+            grid = self._logical_rows_to_grid(
+                logical_rows, source_format=source["format"]
+            )
             finalized = self._finalize_table(
                 grid,
                 source={**source, "table_index": index},
@@ -910,7 +964,9 @@ class TableExtractor:
             if not logical_rows:
                 continue
 
-            grid = self._logical_rows_to_grid(logical_rows, source_format=source["format"])
+            grid = self._logical_rows_to_grid(
+                logical_rows, source_format=source["format"]
+            )
             finalized = self._finalize_table(
                 grid,
                 source={**source, "table_index": index},
@@ -952,12 +1008,16 @@ class TableExtractor:
             return []
 
         active_rows = [
-            index for index, row in enumerate(grid) if any(self._cell_occupies_space(cell) for cell in row)
+            index
+            for index, row in enumerate(grid)
+            if any(self._cell_occupies_space(cell) for cell in row)
         ]
         if not active_rows:
             return []
 
-        trimmed_rows = [grid[index] for index in range(active_rows[0], active_rows[-1] + 1)]
+        trimmed_rows = [
+            grid[index] for index in range(active_rows[0], active_rows[-1] + 1)
+        ]
         max_cols = max((len(row) for row in trimmed_rows), default=0)
         active_cols = [
             col
@@ -1009,7 +1069,10 @@ class TableExtractor:
             components.append(component)
 
         tables: list[list[list[Cell]]] = []
-        for component in sorted(components, key=lambda items: (min(r for r, _ in items), min(c for _, c in items))):
+        for component in sorted(
+            components,
+            key=lambda items: (min(r for r, _ in items), min(c for _, c in items)),
+        ):
             min_row = min(row for row, _ in component)
             max_row = max(row for row, _ in component)
             min_col = min(col for _, col in component)
@@ -1018,9 +1081,11 @@ class TableExtractor:
             for row_number in range(min_row, max_row + 1):
                 subgrid.append(
                     [
-                        grid[row_number][col_number]
-                        if col_number < len(grid[row_number])
-                        else Cell()
+                        (
+                            grid[row_number][col_number]
+                            if col_number < len(grid[row_number])
+                            else Cell()
+                        )
                         for col_number in range(min_col, max_col + 1)
                     ]
                 )
@@ -1032,7 +1097,12 @@ class TableExtractor:
             return 0
 
         max_candidates = min(3, len(grid))
-        scores = [self._header_score(grid[index], grid[index + 1] if index + 1 < len(grid) else None) for index in range(max_candidates)]
+        scores = [
+            self._header_score(
+                grid[index], grid[index + 1] if index + 1 < len(grid) else None
+            )
+            for index in range(max_candidates)
+        ]
         if not scores or max(scores) < 0.45:
             return 0
 
@@ -1050,22 +1120,39 @@ class TableExtractor:
         if not visible_cells:
             return 0.0
 
-        text_ratio = sum(cell.data_type == "text" for cell in visible_cells) / len(visible_cells)
-        unique_ratio = len({cell.text.casefold() for cell in visible_cells}) / len(visible_cells)
-        compact_ratio = sum(len(cell.text.split()) <= 5 for cell in visible_cells) / len(visible_cells)
-        numeric_ratio = sum(cell.data_type in {"int", "float"} for cell in visible_cells) / len(visible_cells)
-        score = (text_ratio * 0.45) + (unique_ratio * 0.2) + (compact_ratio * 0.2) - (
-            numeric_ratio * 0.35
+        text_ratio = sum(cell.data_type == "text" for cell in visible_cells) / len(
+            visible_cells
+        )
+        unique_ratio = len({cell.text.casefold() for cell in visible_cells}) / len(
+            visible_cells
+        )
+        compact_ratio = sum(
+            len(cell.text.split()) <= 5 for cell in visible_cells
+        ) / len(visible_cells)
+        numeric_ratio = sum(
+            cell.data_type in {"int", "float"} for cell in visible_cells
+        ) / len(visible_cells)
+        score = (
+            (text_ratio * 0.45)
+            + (unique_ratio * 0.2)
+            + (compact_ratio * 0.2)
+            - (numeric_ratio * 0.35)
         )
 
         if next_row:
-            next_cells = [cell for cell in next_row if not cell.is_placeholder and cell.text]
+            next_cells = [
+                cell for cell in next_row if not cell.is_placeholder and cell.text
+            ]
             if next_cells:
-                next_numeric = sum(cell.data_type in {"int", "float"} for cell in next_cells) / len(next_cells)
+                next_numeric = sum(
+                    cell.data_type in {"int", "float"} for cell in next_cells
+                ) / len(next_cells)
                 score += next_numeric * 0.15
         return score
 
-    def _build_headers(self, grid: list[list[Cell]], header_row_count: int) -> list[str]:
+    def _build_headers(
+        self, grid: list[list[Cell]], header_row_count: int
+    ) -> list[str]:
         if not grid:
             return []
         if header_row_count <= 0:
@@ -1100,7 +1187,9 @@ class TableExtractor:
 
         for style in styles_root.findall("w:style", W_NS):
             style_id = self._find_attr(style, "styleId", namespace=W_NS["w"])
-            style_name = self._find_attr(style.find("w:name", W_NS), "val", namespace=W_NS["w"])
+            style_name = self._find_attr(
+                style.find("w:name", W_NS), "val", namespace=W_NS["w"]
+            )
             if style_id and style_name:
                 style_names[style_id] = style_name
         return style_names
@@ -1123,7 +1212,9 @@ class TableExtractor:
             "background_color": self._find_attr(
                 tc_pr.find("w:shd", W_NS), "fill", namespace=W_NS["w"]
             ),
-            "width": self._find_attr(tc_pr.find("w:tcW", W_NS), "w", namespace=W_NS["w"]),
+            "width": self._find_attr(
+                tc_pr.find("w:tcW", W_NS), "w", namespace=W_NS["w"]
+            ),
         }
 
     def _read_relationships(
@@ -1173,8 +1264,12 @@ class TableExtractor:
                 "format_code": format_code,
                 "is_date": num_fmt_id in BUILTIN_DATE_FORMATS
                 or bool(DATE_HINT_RE.search(format_code)),
-                "horizontal": alignment.get("horizontal") if alignment is not None else None,
-                "vertical": alignment.get("vertical") if alignment is not None else None,
+                "horizontal": (
+                    alignment.get("horizontal") if alignment is not None else None
+                ),
+                "vertical": (
+                    alignment.get("vertical") if alignment is not None else None
+                ),
             }
         return style_map
 
@@ -1188,7 +1283,11 @@ class TableExtractor:
         raw_value = cell_element.findtext("x:v", default="", namespaces=X_NS)
         if raw_value == "":
             inline = cell_element.find("x:is", X_NS)
-            return self._clean_text("".join(inline.itertext())) if inline is not None else None
+            return (
+                self._clean_text("".join(inline.itertext()))
+                if inline is not None
+                else None
+            )
         if cell_type == "s":
             index = int(raw_value)
             return shared_strings[index] if index < len(shared_strings) else raw_value
@@ -1257,7 +1356,11 @@ class TableExtractor:
             ]
         if zipfile.is_zipfile(path):
             with zipfile.ZipFile(path) as archive:
-                return [(name, archive.read(name)) for name in archive.namelist() if not name.endswith("/")]
+                return [
+                    (name, archive.read(name))
+                    for name in archive.namelist()
+                    if not name.endswith("/")
+                ]
         raise ValueError(f"Unsupported package container for {path}")
 
     def _resolve_path(self, path: str | Path) -> Path:
@@ -1309,7 +1412,12 @@ class TableExtractor:
         return " ".join(value.replace("\xa0", " ").split())
 
     def _cell_occupies_space(self, cell: Cell) -> bool:
-        return cell.is_placeholder or bool(cell.text) or cell.rowspan > 1 or cell.colspan > 1
+        return (
+            cell.is_placeholder
+            or bool(cell.text)
+            or cell.rowspan > 1
+            or cell.colspan > 1
+        )
 
 
 class _HTMLTableParser(HTMLParser):
@@ -1347,7 +1455,11 @@ class _HTMLTableParser(HTMLParser):
             self._current_cell["text"] += data
 
     def handle_endtag(self, tag: str) -> None:
-        if tag in {"td", "th"} and self._current_cell is not None and self._current_row is not None:
+        if (
+            tag in {"td", "th"}
+            and self._current_cell is not None
+            and self._current_row is not None
+        ):
             self._current_cell["text"] = " ".join(self._current_cell["text"].split())
             self._current_row.append(self._current_cell)
             self._current_cell = None

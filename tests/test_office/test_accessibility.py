@@ -63,7 +63,9 @@ def test_chart_titles_support_audio_summaries(office_modules) -> None:
     "document_format",
     ["DOCX", "PPTX", "PAGES", "KEYNOTE", "RTF"],
 )
-def test_document_content_supports_accessible_formats(office_modules, document_format: str) -> None:
+def test_document_content_supports_accessible_formats(
+    office_modules, document_format: str
+) -> None:
     document = office_modules.models.DocumentContent(
         format=getattr(office_modules.models.OfficeFormat, document_format)
     )
@@ -79,7 +81,9 @@ def test_styles_map_can_hold_semantic_heading_styles(office_modules) -> None:
     assert document.styles["Heading1"].font_size == 18.0
 
 
-def test_table_cell_shading_and_borders_can_support_visual_contrast(office_modules) -> None:
+def test_table_cell_shading_and_borders_can_support_visual_contrast(
+    office_modules,
+) -> None:
     cell = office_modules.models.TableCell(
         shading_color="#000000",
         borders={"bottom": {"color": "#FFFFFF", "width": 1.0}},

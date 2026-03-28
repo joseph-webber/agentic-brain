@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+
 # Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -202,7 +203,7 @@ class _IWAParser:
             if end > len(self._data):
                 break
 
-            chunk = self._data[self._position:end]
+            chunk = self._data[self._position : end]
             self._position = end
 
             if SNAPPY_AVAILABLE:
@@ -294,7 +295,9 @@ class _ProtobufScanner:
                 continue
 
             if depth < max_depth and len(segment) <= 16384:
-                cls._scan_message(segment, strings, depth=depth + 1, max_depth=max_depth)
+                cls._scan_message(
+                    segment, strings, depth=depth + 1, max_depth=max_depth
+                )
 
     @staticmethod
     def _read_varint(data: bytes, position: int) -> tuple[int, int]:
@@ -320,7 +323,9 @@ class _ProtobufScanner:
 
         if len(text) < 2:
             return False
-        printable_ratio = sum(1 for char in text if char.isprintable() or char.isspace()) / max(
+        printable_ratio = sum(
+            1 for char in text if char.isprintable() or char.isspace()
+        ) / max(
             len(text),
             1,
         )
@@ -379,7 +384,9 @@ class KeynoteProcessor:
             with zipfile.ZipFile(source, "r") as archive:
                 metadata = self._extract_metadata_from_archive(archive, source)
                 master_names = self._extract_master_slide_names(archive)
-                slide_records = self._extract_slide_records(archive, master_names=master_names)
+                slide_records = self._extract_slide_records(
+                    archive, master_names=master_names
+                )
                 images = self._extract_image_assets(archive)
                 preview_image = self._extract_preview_image(archive)
                 thumbnails = self._extract_slide_thumbnail_images(archive)
@@ -390,28 +397,30 @@ class KeynoteProcessor:
                         automated = self._extract_text_with_keynote_automation(source)
                         self._merge_automation_slide_data(slide_records, automated)
                     except Exception as exc:  # pragma: no cover - platform dependent
-                        logger.debug("Keynote automation text extraction failed: %s", exc)
+                        logger.debug(
+                            "Keynote automation text extraction failed: %s", exc
+                        )
 
         except zipfile.BadZipFile as exc:
             raise InvalidDocumentStructureError(
                 "Invalid Keynote package; expected a ZIP-based .key archive"
             ) from exc
 
-        slides = [self._record_to_slide(record, images=images) for record in slide_records]
+        slides = [
+            self._record_to_slide(record, images=images) for record in slide_records
+        ]
         shapes = [shape for slide in slides for shape in slide.shapes]
         flattened_paragraphs = self._flatten_slide_paragraphs(slides)
 
         if not flattened_paragraphs and self.use_textutil_fallback and self.is_macos:
             fallback_text = self._extract_text_with_textutil(source)
             if fallback_text:
-                flattened_paragraphs = self._paragraphs_from_lines(fallback_text.splitlines())
+                flattened_paragraphs = self._paragraphs_from_lines(
+                    fallback_text.splitlines()
+                )
 
         embedded_video_paths = sorted(
-            {
-                ref
-                for record in slide_records
-                for ref in record.video_refs
-            }
+            {ref for record in slide_records for ref in record.video_refs}
         )
 
         document = DocumentContent(
@@ -431,7 +440,9 @@ class KeynoteProcessor:
                 "shape_count": len(shapes),
                 "master_slide_count": len(master_names),
                 "has_builds": any(record.build_count for record in slide_records),
-                "has_transitions": any(record.transition_name for record in slide_records),
+                "has_transitions": any(
+                    record.transition_name for record in slide_records
+                ),
                 "embedded_video_count": len(embedded_video_paths),
                 "embedded_video_paths": "\n".join(embedded_video_paths),
                 "thumbnail_count": len(thumbnails),
@@ -553,25 +564,33 @@ class KeynoteProcessor:
             raise InvalidDocumentStructureError(
                 f"Unable to export Keynote presentation to PDF: {last_error}"
             ) from last_error
-        raise InvalidDocumentStructureError("Unable to export Keynote presentation to PDF")
+        raise InvalidDocumentStructureError(
+            "Unable to export Keynote presentation to PDF"
+        )
 
     def _ensure_parsed(self) -> None:
         if self._document is None:
-            raise DocumentValidationError("Call parse(path) before accessing presentation data")
+            raise DocumentValidationError(
+                "Call parse(path) before accessing presentation data"
+            )
 
     def _validate_path(self, path: Path) -> Path:
         source = Path(path).expanduser().resolve()
         if not source.exists():
             raise DocumentValidationError("Keynote file not found", details=str(source))
         if not source.is_file():
-            raise DocumentValidationError("Keynote path is not a file", details=str(source))
+            raise DocumentValidationError(
+                "Keynote path is not a file", details=str(source)
+            )
         if source.suffix.lower() not in {".key", ".keynote"}:
             raise DocumentValidationError(
                 "Unsupported file extension for Keynote processor",
                 details=source.suffix or "<none>",
             )
         if not zipfile.is_zipfile(source):
-            raise DocumentValidationError("Expected a ZIP-based Keynote package", details=str(source))
+            raise DocumentValidationError(
+                "Expected a ZIP-based Keynote package", details=str(source)
+            )
         return source
 
     def _extract_slide_records(
@@ -646,7 +665,9 @@ class KeynoteProcessor:
             )
 
         if not records:
-            raise InvalidDocumentStructureError("No slide archives found in Keynote package")
+            raise InvalidDocumentStructureError(
+                "No slide archives found in Keynote package"
+            )
         return records
 
     def _extract_master_slide_names(self, archive: zipfile.ZipFile) -> list[str]:
@@ -670,7 +691,10 @@ class KeynoteProcessor:
             candidates = [
                 value
                 for value in cleaned
-                if any(token in value.lower() for token in ("title", "photo", "master", "layout"))
+                if any(
+                    token in value.lower()
+                    for token in ("title", "photo", "master", "layout")
+                )
                 or len(value.split()) <= 6
             ]
             if candidates:
@@ -688,7 +712,11 @@ class KeynoteProcessor:
         slide_shapes = self._build_slide_shapes(record, title_text, body_texts)
 
         transition: dict[str, str | float] | None = None
-        if record.transition_name or record.transition_duration is not None or record.build_count:
+        if (
+            record.transition_name
+            or record.transition_duration is not None
+            or record.build_count
+        ):
             transition = {}
             if record.transition_name:
                 transition["name"] = record.transition_name
@@ -768,7 +796,10 @@ class KeynoteProcessor:
         images: list[Image] = []
         for name in archive.namelist():
             path = Path(name)
-            if not name.startswith("Data/") or path.suffix.lower() not in IMAGE_EXTENSIONS:
+            if (
+                not name.startswith("Data/")
+                or path.suffix.lower() not in IMAGE_EXTENSIONS
+            ):
                 continue
 
             mime_type = mimetypes.guess_type(name)[0] or "application/octet-stream"
@@ -786,7 +817,9 @@ class KeynoteProcessor:
             )
         return images
 
-    def _extract_metadata_from_archive(self, archive: zipfile.ZipFile, source: Path) -> Metadata:
+    def _extract_metadata_from_archive(
+        self, archive: zipfile.ZipFile, source: Path
+    ) -> Metadata:
         metadata = Metadata(
             title=source.stem,
             modified_at=datetime.fromtimestamp(source.stat().st_mtime, tz=UTC),
@@ -804,24 +837,34 @@ class KeynoteProcessor:
 
         if "Index/Document.iwa" in archive.namelist():
             try:
-                document_strings = _ProtobufScanner.extract_strings(archive.read("Index/Document.iwa"))
+                document_strings = _ProtobufScanner.extract_strings(
+                    archive.read("Index/Document.iwa")
+                )
                 inferred_title = self._extract_document_title(document_strings)
-                if inferred_title and (metadata.title is None or metadata.title == source.stem):
+                if inferred_title and (
+                    metadata.title is None or metadata.title == source.stem
+                ):
                     metadata.title = inferred_title
             except Exception:
                 logger.debug("Failed to infer metadata from Index/Document.iwa")
 
         return metadata
 
-    def _apply_plist_metadata(self, metadata: Metadata, value: Any, *, origin: str) -> None:
+    def _apply_plist_metadata(
+        self, metadata: Metadata, value: Any, *, origin: str
+    ) -> None:
         flattened = self._flatten_plist(value)
         for key, item in flattened.items():
             normalized = key.lower()
-            if metadata.title is None and normalized.endswith(("title", "documenttitle")):
+            if metadata.title is None and normalized.endswith(
+                ("title", "documenttitle")
+            ):
                 metadata.title = str(item)
             elif metadata.author is None and normalized.endswith(("author", "creator")):
                 metadata.author = str(item)
-            elif metadata.subject is None and normalized.endswith(("subject", "description")):
+            elif metadata.subject is None and normalized.endswith(
+                ("subject", "description")
+            ):
                 metadata.subject = str(item)
             elif normalized.endswith("company") and metadata.company is None:
                 metadata.company = str(item)
@@ -832,11 +875,17 @@ class KeynoteProcessor:
                         for keyword in re.split(r"[;,]", item)
                         if keyword.strip()
                     )
-            elif normalized.endswith(("created", "creationdate")) and metadata.created_at is None:
+            elif (
+                normalized.endswith(("created", "creationdate"))
+                and metadata.created_at is None
+            ):
                 converted = self._coerce_datetime(item)
                 if converted:
                     metadata.created_at = converted
-            elif normalized.endswith(("modified", "modificationdate")) and metadata.modified_at is None:
+            elif (
+                normalized.endswith(("modified", "modificationdate"))
+                and metadata.modified_at is None
+            ):
                 converted = self._coerce_datetime(item)
                 if converted:
                     metadata.modified_at = converted
@@ -855,7 +904,8 @@ class KeynoteProcessor:
         preview_names = [
             name
             for name in archive.namelist()
-            if "preview" in name.lower() and Path(name).suffix.lower() in {".jpg", ".jpeg", ".png"}
+            if "preview" in name.lower()
+            and Path(name).suffix.lower() in {".jpg", ".jpeg", ".png"}
         ]
         preview_names.sort(key=self._natural_sort_key)
         return archive.read(preview_names[0]) if preview_names else None
@@ -892,16 +942,8 @@ class KeynoteProcessor:
         for value in strings:
             refs.extend(MEDIA_REF_RE.findall(value))
 
-        images = [
-            ref
-            for ref in refs
-            if Path(ref).suffix.lower() in IMAGE_EXTENSIONS
-        ]
-        videos = [
-            ref
-            for ref in refs
-            if Path(ref).suffix.lower() in VIDEO_EXTENSIONS
-        ]
+        images = [ref for ref in refs if Path(ref).suffix.lower() in IMAGE_EXTENSIONS]
+        videos = [ref for ref in refs if Path(ref).suffix.lower() in VIDEO_EXTENSIONS]
         return {
             "images": self._dedupe_paths(images),
             "videos": self._dedupe_paths(videos),
@@ -929,7 +971,9 @@ class KeynoteProcessor:
                 animations.append(value.strip())
 
             if duration is None:
-                duration_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:sec|secs|second|seconds|s)\b", lowered)
+                duration_match = re.search(
+                    r"(\d+(?:\.\d+)?)\s*(?:sec|secs|second|seconds|s)\b", lowered
+                )
                 if duration_match:
                     duration = float(duration_match.group(1))
 
@@ -938,7 +982,10 @@ class KeynoteProcessor:
     def _extract_layout_name(self, strings: list[str]) -> str | None:
         for value in strings:
             lowered = value.lower()
-            if any(token in lowered for token in ("layout", "master", "title &", "photo", "bullet")):
+            if any(
+                token in lowered
+                for token in ("layout", "master", "title &", "photo", "bullet")
+            ):
                 return value
         return None
 
@@ -1002,14 +1049,19 @@ class KeynoteProcessor:
     def _paragraph_text(self, paragraph: Paragraph) -> str:
         return "".join(run.text for run in paragraph.runs)
 
-    def _match_images_to_slide(self, record: _SlideRecord, images: list[Image]) -> list[Image]:
+    def _match_images_to_slide(
+        self, record: _SlideRecord, images: list[Image]
+    ) -> list[Image]:
         if not record.image_refs:
             return []
 
         matched: list[Image] = []
         for image in images:
             internal_path = str(image.properties.get("internal_path", ""))
-            if any(ref == internal_path or Path(ref).name == Path(internal_path).name for ref in record.image_refs):
+            if any(
+                ref == internal_path or Path(ref).name == Path(internal_path).name
+                for ref in record.image_refs
+            ):
                 matched.append(image)
         return matched
 
@@ -1039,10 +1091,10 @@ class KeynoteProcessor:
             return False
         if not any(char.isalpha() for char in value):
             return False
-        noise_ratio = sum(1 for char in value if char.isalnum() or char.isspace()) / max(len(value), 1)
-        if noise_ratio < 0.6:
-            return False
-        return True
+        noise_ratio = sum(
+            1 for char in value if char.isalnum() or char.isspace()
+        ) / max(len(value), 1)
+        return not noise_ratio < 0.6
 
     def _merge_automation_slide_data(
         self,
@@ -1146,7 +1198,9 @@ class KeynoteProcessor:
 
     def _export_pdf_with_keynote(self, source: Path, output_path: Path) -> Path:
         if shutil.which("osascript") is None:
-            raise DocumentValidationError("osascript is not available for Keynote automation")
+            raise DocumentValidationError(
+                "osascript is not available for Keynote automation"
+            )
 
         escaped_input = self._escape_applescript_string(str(source))
         escaped_output = self._escape_applescript_string(str(output_path))
@@ -1168,10 +1222,14 @@ class KeynoteProcessor:
         if result.returncode != 0:
             raise InvalidDocumentStructureError(
                 "Keynote automation export failed",
-                element_id=result.stderr.strip() or result.stdout.strip() or "osascript",
+                element_id=result.stderr.strip()
+                or result.stdout.strip()
+                or "osascript",
             )
         if not output_path.exists():
-            raise InvalidDocumentStructureError("Keynote export finished without creating a PDF")
+            raise InvalidDocumentStructureError(
+                "Keynote export finished without creating a PDF"
+            )
         return output_path
 
     def _export_pdf_with_textutil(self, source: Path, output_path: Path) -> bool:

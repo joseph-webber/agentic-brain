@@ -11,7 +11,9 @@ def test_model_office_format_includes_rtf(office_modules) -> None:
     assert office_modules.models.OfficeFormat.RTF.value == "rtf"
 
 
-def test_document_content_can_represent_rtf_documents(office_modules, sample_paragraph) -> None:
+def test_document_content_can_represent_rtf_documents(
+    office_modules, sample_paragraph
+) -> None:
     document = office_modules.models.DocumentContent(
         format=office_modules.models.OfficeFormat.RTF,
         paragraphs=[sample_paragraph],

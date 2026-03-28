@@ -58,7 +58,9 @@ def test_docx_loader_extract_text_reads_paragraphs_and_tables(
     assert loader._extract_text(b"docx-bytes") == "Heading\n\nBody\n\nA1 | B1"
 
 
-def test_docx_loader_load_document_returns_none_for_missing_file(rag_modules, tmp_path) -> None:
+def test_docx_loader_load_document_returns_none_for_missing_file(
+    rag_modules, tmp_path
+) -> None:
     loader = rag_modules.docx.DocxLoader(base_path=str(tmp_path))
     assert loader.load_document("missing.docx") is None
 
@@ -89,7 +91,9 @@ def test_docx_loader_load_folder_recursive_includes_nested_docs(
     monkeypatch.setattr(
         loader,
         "load_document",
-        lambda doc_id: SimpleNamespace(filename=BytesIO(str(doc_id).encode()).getvalue().decode()),
+        lambda doc_id: SimpleNamespace(
+            filename=BytesIO(str(doc_id).encode()).getvalue().decode()
+        ),
     )
     docs = loader.load_folder(".", recursive=True)
     filenames = sorted(doc.filename for doc in docs)
@@ -168,7 +172,10 @@ def test_excel_loader_returns_placeholder_when_no_parser_available(
     loader = rag_modules.csv_loader.ExcelLoader()
     monkeypatch.setattr(rag_modules.csv_loader, "PANDAS_AVAILABLE", False)
     monkeypatch.setattr(rag_modules.csv_loader, "OPENPYXL_AVAILABLE", False)
-    assert loader._excel_to_text(b"excel") == "[Excel content - install pandas or openpyxl]"
+    assert (
+        loader._excel_to_text(b"excel")
+        == "[Excel content - install pandas or openpyxl]"
+    )
 
 
 def test_excel_loader_rejects_non_excel_files(rag_modules, tmp_path) -> None:

@@ -68,6 +68,7 @@ except ImportError:  # pragma: no cover - optional dependency
     PptxPresentation = None
     HAS_PPTX = False
 
+
 class ConversionError(RuntimeError):
     """Raised when a conversion workflow fails."""
 
@@ -98,7 +99,9 @@ class OfficeConverter:
         "keynote": OfficeFormat.KEYNOTE,
     }
 
-    def __init__(self, libreoffice_path: Optional[Union[str, Path]] = None, timeout: int = 120) -> None:
+    def __init__(
+        self, libreoffice_path: Optional[str | Path] = None, timeout: int = 120
+    ) -> None:
         self.platform = platform.system()
         self.timeout = timeout
         self.libreoffice_path = (
@@ -115,11 +118,15 @@ class OfficeConverter:
         if not self.libreoffice_path:
             logger.debug("LibreOffice not detected. Some conversions will be limited.")
         if self.platform == "Darwin" and not self.textutil_path:
-            logger.debug("textutil not available. iWork conversions will rely on LibreOffice.")
+            logger.debug(
+                "textutil not available. iWork conversions will rely on LibreOffice."
+            )
 
     # ------------------------------------------------------------------ Public API
 
-    def to_pdf(self, input_path: Union[str, Path], output_path: Optional[Union[str, Path]] = None) -> Path:
+    def to_pdf(
+        self, input_path: str | Path, output_path: Optional[str | Path] = None
+    ) -> Path:
         """Convert a document into PDF."""
 
         source = self._normalize_input(input_path)
@@ -133,7 +140,9 @@ class OfficeConverter:
                 try:
                     return self._convert_with_docx2pdf(source, target)
                 except ConversionError as exc:
-                    logger.debug("docx2pdf failed (%s); falling back to LibreOffice", exc)
+                    logger.debug(
+                        "docx2pdf failed (%s); falling back to LibreOffice", exc
+                    )
             return self._convert_with_libreoffice(source, target, "pdf")
 
         if extension in self.IWORK_EXTENSIONS and self.textutil_path:
@@ -147,8 +156,8 @@ class OfficeConverter:
 
     def to_text(
         self,
-        input_path: Union[str, Path],
-        output_path: Optional[Union[str, Path]] = None,
+        input_path: str | Path,
+        output_path: Optional[str | Path] = None,
         *,
         encoding: str = "utf-8",
     ) -> Path:
@@ -167,8 +176,8 @@ class OfficeConverter:
 
     def to_html(
         self,
-        input_path: Union[str, Path],
-        output_path: Optional[Union[str, Path]] = None,
+        input_path: str | Path,
+        output_path: Optional[str | Path] = None,
         *,
         encoding: str = "utf-8",
     ) -> Path:
@@ -193,8 +202,8 @@ class OfficeConverter:
 
     def to_markdown(
         self,
-        input_path: Union[str, Path],
-        output_path: Optional[Union[str, Path]] = None,
+        input_path: str | Path,
+        output_path: Optional[str | Path] = None,
         *,
         encoding: str = "utf-8",
     ) -> Path:
@@ -228,9 +237,9 @@ class OfficeConverter:
 
     def batch_convert(
         self,
-        input_files: Sequence[Union[str, Path]],
+        input_files: Sequence[str | Path],
         target_format: str,
-        output_dir: Optional[Union[str, Path]] = None,
+        output_dir: Optional[str | Path] = None,
     ) -> List[Path]:
         """Convert multiple files to the same target format."""
 
@@ -309,7 +318,9 @@ class OfficeConverter:
         """Extract text using python-docx with LibreOffice fallback."""
 
         if not HAS_PYTHON_DOCX:
-            logger.debug("python-docx unavailable; using LibreOffice for text extraction")
+            logger.debug(
+                "python-docx unavailable; using LibreOffice for text extraction"
+            )
             return self._extract_via_libreoffice_text(source)
 
         doc = DocxDocument(str(source))
@@ -322,7 +333,9 @@ class OfficeConverter:
 
         for table in doc.tables:
             for row in table.rows:
-                row_text = "\t".join(cell.text.strip() for cell in row.cells if cell.text.strip())
+                row_text = "\t".join(
+                    cell.text.strip() for cell in row.cells if cell.text.strip()
+                )
                 if row_text:
                     lines.append(row_text)
 
@@ -353,7 +366,9 @@ class OfficeConverter:
         """Extract text from PPT/PPTX using python-pptx."""
 
         if not HAS_PPTX:
-            logger.debug("python-pptx unavailable; using LibreOffice for text extraction")
+            logger.debug(
+                "python-pptx unavailable; using LibreOffice for text extraction"
+            )
             return self._extract_via_libreoffice_text(source)
 
         presentation = PptxPresentation(str(source))
@@ -375,7 +390,9 @@ class OfficeConverter:
         if self.textutil_path:
             return self._convert_textutil_to_string(source, "txt")
 
-        logger.debug("textutil unavailable; using LibreOffice for iWork text extraction")
+        logger.debug(
+            "textutil unavailable; using LibreOffice for iWork text extraction"
+        )
         return self._extract_via_libreoffice_text(source)
 
     def _extract_via_libreoffice_text(self, source: Path) -> str:
@@ -402,7 +419,9 @@ class OfficeConverter:
             raise ConversionError(f"docx2pdf failed: {exc}") from exc
         return target
 
-    def _convert_with_libreoffice(self, source: Path, target: Path, target_format: str) -> Path:
+    def _convert_with_libreoffice(
+        self, source: Path, target: Path, target_format: str
+    ) -> Path:
         """Invoke LibreOffice headless mode for conversion."""
 
         if not self.libreoffice_path:
@@ -430,7 +449,9 @@ class OfficeConverter:
         )
 
         if result.returncode != 0:
-            raise ConversionError(result.stderr or result.stdout or "LibreOffice conversion failed.")
+            raise ConversionError(
+                result.stderr or result.stdout or "LibreOffice conversion failed."
+            )
 
         produced = target.parent / f"{source.stem}.{target_format.split(':', 1)[0]}"
         if produced != target:
@@ -441,7 +462,9 @@ class OfficeConverter:
 
         return target
 
-    def _convert_with_textutil(self, source: Path, target: Path, target_format: str) -> Path:
+    def _convert_with_textutil(
+        self, source: Path, target: Path, target_format: str
+    ) -> Path:
         """Use macOS textutil for Pages/Numbers/Keynote exports."""
 
         if not self.textutil_path:
@@ -468,7 +491,9 @@ class OfficeConverter:
         )
 
         if result.returncode != 0:
-            raise ConversionError(result.stderr or result.stdout or "textutil conversion failed.")
+            raise ConversionError(
+                result.stderr or result.stdout or "textutil conversion failed."
+            )
 
         if not target.exists():
             raise ConversionError(f"textutil reported success but {target} is missing.")
@@ -515,7 +540,7 @@ class OfficeConverter:
 
     # ------------------------------------------------------------------ Utilities
 
-    def _normalize_input(self, input_path: Union[str, Path]) -> Path:
+    def _normalize_input(self, input_path: str | Path) -> Path:
         """Validate and normalise the incoming path."""
 
         path = Path(input_path).expanduser()
@@ -526,13 +551,17 @@ class OfficeConverter:
     def _prepare_output(
         self,
         source: Path,
-        output_path: Optional[Union[str, Path]],
+        output_path: Optional[str | Path],
         *,
         suffix: str,
     ) -> Path:
         """Return a writable output path, creating parent directories as needed."""
 
-        target = Path(output_path).expanduser() if output_path else source.with_suffix(suffix)
+        target = (
+            Path(output_path).expanduser()
+            if output_path
+            else source.with_suffix(suffix)
+        )
         target.parent.mkdir(parents=True, exist_ok=True)
         return target
 
@@ -581,7 +610,9 @@ class OfficeConverter:
             return parser.handle(html)
 
         # Lightweight fallback: strip tags and normalise whitespace
-        text = re.sub(r"<(script|style)[^>]*>.*?</\1>", "", html, flags=re.IGNORECASE | re.DOTALL)
+        text = re.sub(
+            r"<(script|style)[^>]*>.*?</\1>", "", html, flags=re.IGNORECASE | re.DOTALL
+        )
         text = re.sub(r"<[^>]+>", "", text)
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text.strip()

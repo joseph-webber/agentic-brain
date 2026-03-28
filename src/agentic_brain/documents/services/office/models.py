@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Dict, List, Optional, Sequence, Union
+from enum import StrEnum
+from typing import Dict, List, Optional, Sequence
 
 
-class OfficeFormat(str, Enum):
+class OfficeFormat(StrEnum):
     """Supported office document container formats."""
 
     DOCX = "docx"
@@ -44,7 +44,8 @@ class DocumentStyle:
     indentation_left: float = 0.0
     indentation_right: float = 0.0
     indentation_first_line: float = 0.0
-    styles: Dict[str, Union[str, float, bool]] = field(default_factory=dict)
+    styles: Dict[str, str | float | bool] = field(default_factory=dict)
+
 
 @dataclass(slots=True)
 class Metadata:
@@ -60,7 +61,7 @@ class Metadata:
     modified_at: Optional[datetime] = None
     last_printed_at: Optional[datetime] = None
     revision: Optional[str] = None
-    custom_properties: Dict[str, Union[str, int, float, bool, datetime]] = field(
+    custom_properties: Dict[str, str | int | float | bool | datetime] = field(
         default_factory=dict
     )
 
@@ -87,7 +88,7 @@ class Paragraph:
     numbering_id: Optional[str] = None
     is_heading: bool = False
     heading_level: Optional[int] = None
-    comments: List["Comment"] = field(default_factory=list)
+    comments: List[Comment] = field(default_factory=list)
     bookmarked: bool = False
     bookmark_id: Optional[str] = None
 
@@ -113,7 +114,7 @@ class TableCell:
     height: Optional[float] = None
     style: DocumentStyle = field(default_factory=DocumentStyle)
     shading_color: Optional[str] = None
-    borders: Dict[str, Dict[str, Union[str, float]]] = field(default_factory=dict)
+    borders: Dict[str, Dict[str, str | float]] = field(default_factory=dict)
     cell_id: Optional[str] = None
 
     def add_paragraph(self, paragraph: Paragraph) -> None:
@@ -150,8 +151,7 @@ class Table:
         """Yield all cells in row-major order."""
 
         for row in self.rows:
-            for cell in row:
-                yield cell
+            yield from row
 
     def get_cell(self, row_index: int, column_index: int) -> Optional[TableCell]:
         """Return cell by zero-based coordinates."""
@@ -177,7 +177,7 @@ class Image:
     alternate_text: Optional[str] = None
     anchor_paragraph: Optional[str] = None
     position: Dict[str, float] = field(default_factory=dict)
-    properties: Dict[str, Union[str, float, bool]] = field(default_factory=dict)
+    properties: Dict[str, str | float | bool] = field(default_factory=dict)
 
     def as_data_uri(self) -> Optional[str]:
         """Return base64 encoded data URI if possible."""
@@ -198,13 +198,13 @@ class Shape:
     """Vector shape primitive (lines, rectangles, connectors, etc.)."""
 
     shape_type: str
-    path: Sequence[Dict[str, Union[str, float]]]
+    path: Sequence[Dict[str, str | float]]
     fill_color: Optional[str] = None
     stroke_color: Optional[str] = None
     stroke_width: float = 1.0
     text: Optional[Paragraph] = None
     style: DocumentStyle = field(default_factory=DocumentStyle)
-    properties: Dict[str, Union[str, float, bool]] = field(default_factory=dict)
+    properties: Dict[str, str | float | bool] = field(default_factory=dict)
     rotation: float = 0.0
     z_index: int = 0
 
@@ -215,20 +215,24 @@ class Chart:
 
     chart_type: str
     title: Optional[str] = None
-    series: List[Dict[str, Union[str, float, List[float], List[str]]]] = field(
+    series: List[Dict[str, str | float | List[float] | List[str]]] = field(
         default_factory=list
     )
     categories: List[str] = field(default_factory=list)
-    legend: Dict[str, Union[str, bool]] = field(default_factory=dict)
+    legend: Dict[str, str | bool] = field(default_factory=dict)
     style: DocumentStyle = field(default_factory=DocumentStyle)
     position: Dict[str, float] = field(default_factory=dict)
-    axis_titles: Dict[str, Optional[str]] = field(default_factory=lambda: {"x": None, "y": None})
+    axis_titles: Dict[str, Optional[str]] = field(
+        default_factory=lambda: {"x": None, "y": None}
+    )
     data_range: Optional[str] = None
 
-    def add_series(self, name: str, values: Sequence[float], colors: Optional[Sequence[str]] = None) -> None:
+    def add_series(
+        self, name: str, values: Sequence[float], colors: Optional[Sequence[str]] = None
+    ) -> None:
         """Append a series definition."""
 
-        entry: Dict[str, Union[str, float, List[float], List[str]]] = {
+        entry: Dict[str, str | float | List[float] | List[str]] = {
             "name": name,
             "values": list(values),
         }
@@ -245,11 +249,11 @@ class Comment:
     text: str
     created_at: datetime = field(default_factory=datetime.utcnow)
     resolved: bool = False
-    replies: List["Comment"] = field(default_factory=list)
+    replies: List[Comment] = field(default_factory=list)
     target_id: Optional[str] = None
-    metadata: Dict[str, Union[str, int, bool]] = field(default_factory=dict)
+    metadata: Dict[str, str | int | bool] = field(default_factory=dict)
 
-    def add_reply(self, reply: "Comment") -> None:
+    def add_reply(self, reply: Comment) -> None:
         """Attach a reply to this comment."""
 
         self.replies.append(reply)
@@ -265,18 +269,18 @@ class Cell:
     """Spreadsheet cell with value and formula metadata."""
 
     reference: str
-    value: Optional[Union[str, float, int, bool, datetime]] = None
+    value: Optional[str | float | int | bool | datetime] = None
     formula: Optional[str] = None
     style: DocumentStyle = field(default_factory=DocumentStyle)
     comment: Optional[Comment] = None
-    data_validation: Dict[str, Union[str, float, bool]] = field(default_factory=dict)
+    data_validation: Dict[str, str | float | bool] = field(default_factory=dict)
     hyperlink: Optional[str] = None
     merged: bool = False
     merge_range: Optional[str] = None
     number_format: Optional[str] = None
     errors: List[str] = field(default_factory=list)
 
-    def set_value(self, value: Union[str, float, int, bool, datetime, None]) -> None:
+    def set_value(self, value: str | float | int | bool | datetime | None) -> None:
         """Update the cell value and clear any errors."""
 
         self.value = value
@@ -300,7 +304,7 @@ class Worksheet:
     tab_color: Optional[str] = None
     charts: List[Chart] = field(default_factory=list)
     tables: List[Table] = field(default_factory=list)
-    protection: Dict[str, Union[str, bool]] = field(default_factory=dict)
+    protection: Dict[str, str | bool] = field(default_factory=dict)
 
     def set_cell(self, cell: Cell) -> None:
         """Insert or replace a cell."""
@@ -331,10 +335,10 @@ class Slide:
     charts: List[Chart] = field(default_factory=list)
     background: Optional[str] = None
     layout_name: Optional[str] = None
-    transition: Optional[Dict[str, Union[str, float]]] = None
+    transition: Optional[Dict[str, str | float]] = None
     master_slide_name: Optional[str] = None
 
-    def all_elements(self) -> List["DocumentElement"]:
+    def all_elements(self) -> List[DocumentElement]:
         """Return a flattened list of all slide elements."""
 
         elements: List[DocumentElement] = []
@@ -364,19 +368,12 @@ class DocumentContent:
     comments: List[Comment] = field(default_factory=list)
     metadata: Metadata = field(default_factory=Metadata)
     styles: Dict[str, DocumentStyle] = field(default_factory=dict)
-    document_properties: Dict[str, Union[str, float, bool]] = field(default_factory=dict)
+    document_properties: Dict[str, str | float | bool] = field(default_factory=dict)
     resources: Dict[str, bytes] = field(default_factory=dict)
     sections: List[str] = field(default_factory=list)
 
 
 # Convenience alias for mixed content collections used in serializers and processors.
-DocumentElement = Union[
-    Paragraph,
-    Table,
-    Image,
-    Shape,
-    Slide,
-    Worksheet,
-    Chart,
-    Comment,
-]
+DocumentElement = (
+    Paragraph | Table | Image | Shape | Slide | Worksheet | Chart | Comment
+)

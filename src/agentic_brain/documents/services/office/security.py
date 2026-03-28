@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+
 # Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -145,7 +146,9 @@ class OfficeSecurityService:
     ) -> None:
         self.confidence_threshold = confidence_threshold
         self.redaction_style = redaction_style
-        self.detector = detector or PIIDetector(confidence_threshold=confidence_threshold)
+        self.detector = detector or PIIDetector(
+            confidence_threshold=confidence_threshold
+        )
         self.audit_log = audit_log or AuditLog()
 
     def scan_for_pii(
@@ -181,7 +184,9 @@ class OfficeSecurityService:
         pii_types: Sequence[str | PIIType] | None = None,
     ) -> dict[str, int]:
         source = Path(input_path)
-        destination = Path(output_path or source.with_name(f"{source.stem}.redacted{source.suffix}"))
+        destination = Path(
+            output_path or source.with_name(f"{source.stem}.redacted{source.suffix}")
+        )
         matches = self.scan_for_pii(source, pii_types)
 
         replacements = {
@@ -190,7 +195,9 @@ class OfficeSecurityService:
         }
 
         with zipfile.ZipFile(source, "r") as archive:
-            with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED) as target:
+            with zipfile.ZipFile(
+                destination, "w", compression=zipfile.ZIP_DEFLATED
+            ) as target:
                 for entry in archive.infolist():
                     data = archive.read(entry.filename)
                     if entry.filename.endswith(".xml") and replacements:
@@ -222,17 +229,24 @@ class OfficeSecurityService:
             macro_parts = [
                 name
                 for name in archive.namelist()
-                if "vbaProject.bin" in name.lower() or name.lower().endswith(".bin") and "vba" in name.lower()
+                if "vbaProject.bin" in name.lower()
+                or name.lower().endswith(".bin")
+                and "vba" in name.lower()
             ]
 
             for part in macro_parts:
-                findings.append(MacroFinding(part=part, description="Embedded VBA project"))
+                findings.append(
+                    MacroFinding(part=part, description="Embedded VBA project")
+                )
 
             if remove and macro_parts:
                 destination = Path(
-                    output_path or document.with_name(f"{document.stem}.nomacro{document.suffix}")
+                    output_path
+                    or document.with_name(f"{document.stem}.nomacro{document.suffix}")
                 )
-                with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED) as target:
+                with zipfile.ZipFile(
+                    destination, "w", compression=zipfile.ZIP_DEFLATED
+                ) as target:
                     for entry in archive.infolist():
                         if entry.filename in macro_parts:
                             continue
@@ -243,7 +257,10 @@ class OfficeSecurityService:
         self._log_event(
             document,
             "check_macros",
-            {"macros_found": len(findings), "macros_removed": bool(remove and findings)},
+            {
+                "macros_found": len(findings),
+                "macros_removed": bool(remove and findings),
+            },
         )
 
         return MacroCheckResult(
@@ -290,12 +307,16 @@ class OfficeSecurityService:
         remove_custom_properties: bool = True,
     ) -> MetadataSanitizationReport:
         document = Path(path)
-        destination = Path(output_path or document.with_name(f"{document.stem}.clean{document.suffix}"))
+        destination = Path(
+            output_path or document.with_name(f"{document.stem}.clean{document.suffix}")
+        )
         metadata = self._read_metadata(document)
         removed: dict[str, str] = {}
 
         with zipfile.ZipFile(document, "r") as archive:
-            with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED) as target:
+            with zipfile.ZipFile(
+                destination, "w", compression=zipfile.ZIP_DEFLATED
+            ) as target:
                 for entry in archive.infolist():
                     data = archive.read(entry.filename)
 
@@ -326,7 +347,10 @@ class OfficeSecurityService:
                                 elem.text = ""
                         data = ET.tostring(root, encoding="utf-8", xml_declaration=True)
 
-                    elif remove_custom_properties and entry.filename == "docProps/custom.xml":
+                    elif (
+                        remove_custom_properties
+                        and entry.filename == "docProps/custom.xml"
+                    ):
                         continue
 
                     target.writestr(entry, data)
@@ -353,10 +377,14 @@ class OfficeSecurityService:
     ) -> EncryptionResult:
         """Wrap the OOXML package in an AES-encrypted container."""
         if not PYZIPPER_AVAILABLE:  # pragma: no cover - dependency guard
-            raise RuntimeError("pyzipper is required for encrypt_document(). Install 'pyzipper>=0.3'.")
+            raise RuntimeError(
+                "pyzipper is required for encrypt_document(). Install 'pyzipper>=0.3'."
+            )
 
         document = Path(path)
-        destination = Path(output_path or document.with_suffix(f"{document.suffix}.aes"))
+        destination = Path(
+            output_path or document.with_suffix(f"{document.suffix}.aes")
+        )
 
         with zipfile.ZipFile(document, "r") as archive:
             with pyzipper.AESZipFile(
@@ -373,7 +401,11 @@ class OfficeSecurityService:
         self._log_event(
             document,
             "encrypt_document",
-            {"output": str(destination), "algorithm": "zip-aes", "strength": strength_bits},
+            {
+                "output": str(destination),
+                "algorithm": "zip-aes",
+                "strength": strength_bits,
+            },
         )
         return EncryptionResult(
             input_path=document,
@@ -423,19 +455,43 @@ class OfficeSecurityService:
         with zipfile.ZipFile(path, "r") as archive:
             if kind == OfficeDocumentKind.DOCX:
                 targets = ["word/document.xml"]
-                targets += [name for name in archive.namelist() if name.startswith("word/header")]
-                targets += [name for name in archive.namelist() if name.startswith("word/footer")]
-                targets += [name for name in archive.namelist() if name.startswith("word/comments")]
+                targets += [
+                    name
+                    for name in archive.namelist()
+                    if name.startswith("word/header")
+                ]
+                targets += [
+                    name
+                    for name in archive.namelist()
+                    if name.startswith("word/footer")
+                ]
+                targets += [
+                    name
+                    for name in archive.namelist()
+                    if name.startswith("word/comments")
+                ]
 
             elif kind == OfficeDocumentKind.XLSX:
-                targets = [name for name in archive.namelist() if name.startswith("xl/worksheets/sheet")]
+                targets = [
+                    name
+                    for name in archive.namelist()
+                    if name.startswith("xl/worksheets/sheet")
+                ]
                 shared = "xl/sharedStrings.xml"
                 if shared in archive.namelist():
                     targets.append(shared)
 
             else:  # PPTX
-                targets = [name for name in archive.namelist() if name.startswith("ppt/slides/slide")]
-                targets += [name for name in archive.namelist() if name.startswith("ppt/notesSlides/notesSlide")]
+                targets = [
+                    name
+                    for name in archive.namelist()
+                    if name.startswith("ppt/slides/slide")
+                ]
+                targets += [
+                    name
+                    for name in archive.namelist()
+                    if name.startswith("ppt/notesSlides/notesSlide")
+                ]
 
             for name in targets:
                 try:
@@ -460,7 +516,9 @@ class OfficeSecurityService:
                 chunks.append(node.text.strip())
         return "\n".join(chunks)
 
-    def _normalise_pii_types(self, pii_types: Sequence[str | PIIType] | None) -> set[str] | None:
+    def _normalise_pii_types(
+        self, pii_types: Sequence[str | PIIType] | None
+    ) -> set[str] | None:
         if not pii_types:
             return None
         return {
@@ -475,25 +533,46 @@ class OfficeSecurityService:
             try:
                 core = archive.read("docProps/core.xml")
                 root = ET.fromstring(core)
-                metadata.author = root.findtext("dc:creator", default=None, namespaces=self._CORE_NS)
-                metadata.subject = root.findtext("dc:subject", default=None, namespaces=self._CORE_NS)
-                metadata.title = root.findtext("dc:title", default=None, namespaces=self._CORE_NS)
+                metadata.author = root.findtext(
+                    "dc:creator", default=None, namespaces=self._CORE_NS
+                )
+                metadata.subject = root.findtext(
+                    "dc:subject", default=None, namespaces=self._CORE_NS
+                )
+                metadata.title = root.findtext(
+                    "dc:title", default=None, namespaces=self._CORE_NS
+                )
                 metadata.keywords = [
                     kw.strip()
-                    for kw in (root.findtext("cp:keywords", default="", namespaces=self._CORE_NS) or "").split(",")
+                    for kw in (
+                        root.findtext(
+                            "cp:keywords", default="", namespaces=self._CORE_NS
+                        )
+                        or ""
+                    ).split(",")
                     if kw.strip()
                 ]
-                metadata.modified_at = self._parse_datetime(root.findtext("dcterms:modified", namespaces=self._CORE_NS))
-                metadata.created_at = self._parse_datetime(root.findtext("dcterms:created", namespaces=self._CORE_NS))
+                metadata.modified_at = self._parse_datetime(
+                    root.findtext("dcterms:modified", namespaces=self._CORE_NS)
+                )
+                metadata.created_at = self._parse_datetime(
+                    root.findtext("dcterms:created", namespaces=self._CORE_NS)
+                )
             except KeyError:
                 pass
 
             try:
                 app = archive.read("docProps/app.xml")
                 root = ET.fromstring(app)
-                ns = {"ep": "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"}
-                metadata.company = root.findtext("ep:Company", default=None, namespaces=ns)
-                metadata.category = root.findtext("ep:Category", default=None, namespaces=ns)
+                ns = {
+                    "ep": "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"
+                }
+                metadata.company = root.findtext(
+                    "ep:Company", default=None, namespaces=ns
+                )
+                metadata.category = root.findtext(
+                    "ep:Category", default=None, namespaces=ns
+                )
             except KeyError:
                 pass
 

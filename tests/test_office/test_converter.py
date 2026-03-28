@@ -60,7 +60,9 @@ def test_find_libreoffice_returns_none_when_unavailable(
     assert converter._find_libreoffice() is None
 
 
-def test_check_dependencies_marks_available_modules(office_modules, monkeypatch) -> None:
+def test_check_dependencies_marks_available_modules(
+    office_modules, monkeypatch
+) -> None:
     converter = office_modules.converter.OfficeConverter.__new__(
         office_modules.converter.OfficeConverter
     )
@@ -187,9 +189,7 @@ def test_run_libreoffice_conversion_handles_timeout(
             subprocess.TimeoutExpired(cmd="soffice", timeout=60)
         ),
     )
-    with pytest.raises(
-        office_modules.converter.ConversionError, match="timed out"
-    ):
+    with pytest.raises(office_modules.converter.ConversionError, match="timed out"):
         converter._run_libreoffice_conversion(
             sample_office_files.docx, "pdf", tmp_path / "exports"
         )
@@ -247,7 +247,7 @@ def test_run_macos_automation_success(
     assert result == tmp_path / "exports" / "pages.pdf"
     assert seen["cmd"][0] == "osascript"
     assert seen["cmd"][1] == "-e"
-    assert "tell application \"Pages\"" in seen["cmd"][2]
+    assert 'tell application "Pages"' in seen["cmd"][2]
     assert "export to outputFile as PDF" in seen["cmd"][2]
 
 
@@ -417,7 +417,12 @@ def test_convert_folder_recursive_includes_nested_supported_files(
     captured: list[str] = []
 
     def fake_convert_batch(input_files, output_format, output_dir):
-        captured.extend(sorted(path.relative_to(sample_office_files.root).as_posix() for path in input_files))
+        captured.extend(
+            sorted(
+                path.relative_to(sample_office_files.root).as_posix()
+                for path in input_files
+            )
+        )
         return []
 
     monkeypatch.setattr(converter, "convert_batch", fake_convert_batch)

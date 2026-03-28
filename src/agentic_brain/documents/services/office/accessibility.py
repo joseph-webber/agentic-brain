@@ -292,7 +292,11 @@ class OfficeAccessibilityProcessor:
         """Write alt text for a specific Office image."""
         source = self._validate_path(path)
         record = next(
-            (candidate for candidate in self._iter_images(source) if candidate.image_id == image_id),
+            (
+                candidate
+                for candidate in self._iter_images(source)
+                if candidate.image_id == image_id
+            ),
             None,
         )
         if record is None:
@@ -500,7 +504,11 @@ class OfficeAccessibilityProcessor:
         source = self._validate_path(path)
         fixes: list[ContrastFix] = []
         for candidate in self._collect_contrast_candidates(source):
-            text_level = TextSize.LARGE if candidate.text_size is TextSize.LARGE else TextSize.NORMAL
+            text_level = (
+                TextSize.LARGE
+                if candidate.text_size is TextSize.LARGE
+                else TextSize.NORMAL
+            )
             current = self.contrast_checker.check_contrast(
                 candidate.foreground,
                 candidate.background,
@@ -543,7 +551,9 @@ class OfficeAccessibilityProcessor:
             category_counts[key] = category_counts.get(key, 0) + 1
             if issue.remediation_hint and issue.remediation_hint not in recommendations:
                 recommendations.append(issue.remediation_hint)
-        is_compliant = report.score >= (92.0 if requested_level == "AAA" else 85.0) and not any(
+        is_compliant = report.score >= (
+            92.0 if requested_level == "AAA" else 85.0
+        ) and not any(
             issue.severity in {IssueSeverity.CRITICAL, IssueSeverity.MAJOR}
             for issue in report.issues
         )
@@ -602,7 +612,9 @@ class OfficeAccessibilityProcessor:
         suggestions: list[Suggestion] = []
         for issue in self._collect_all_issues(source):
             priority = issue.severity.value.upper()
-            message = issue.remediation_hint or issue.description or issue.issue_type.value
+            message = (
+                issue.remediation_hint or issue.description or issue.issue_type.value
+            )
             suggestions.append(
                 Suggestion(
                     category=issue.issue_type.value,
@@ -677,7 +689,9 @@ class OfficeAccessibilityProcessor:
                     bbox=(0.0, 0.0, 0.0, 0.0),
                     alt_text=record.alt_text or record.title or "",
                     confidence=1.0 if (record.alt_text or record.title) else 0.0,
-                    description_type="extracted" if (record.alt_text or record.title) else "missing",
+                    description_type=(
+                        "extracted" if (record.alt_text or record.title) else "missing"
+                    ),
                 )
             )
         return images
@@ -760,7 +774,9 @@ class OfficeAccessibilityProcessor:
                 style_name = (paragraph.style.name if paragraph.style else "").lower()
                 element_type = "heading" if style_name.startswith("heading") else "text"
                 if element_type == "heading" and saw_body_text:
-                    issues.append("Heading appears after body content; verify document outline flow.")
+                    issues.append(
+                        "Heading appears after body content; verify document outline flow."
+                    )
                 if element_type == "text":
                     saw_body_text = True
                 items.append(
@@ -776,7 +792,11 @@ class OfficeAccessibilityProcessor:
                 order += 1
             elif tag == "tbl":
                 table = DocxTableElement(child, document)
-                preview = " | ".join(cell.text.strip() for cell in table.rows[0].cells[:4]) if table.rows else ""
+                preview = (
+                    " | ".join(cell.text.strip() for cell in table.rows[0].cells[:4])
+                    if table.rows
+                    else ""
+                )
                 items.append(
                     ReadingOrderItem(
                         element_id=f"docx-tbl-{order + 1}",
@@ -806,11 +826,18 @@ class OfficeAccessibilityProcessor:
         issues: list[str] = []
         order = 0
         for slide_index, slide in enumerate(presentation.slides, start=1):
-            readable_shapes = [shape for shape in slide.shapes if self._shape_is_readable(shape)]
-            expected_ids = [shape.shape_id for shape in sorted(readable_shapes, key=self._ppt_shape_sort_key)]
+            readable_shapes = [
+                shape for shape in slide.shapes if self._shape_is_readable(shape)
+            ]
+            expected_ids = [
+                shape.shape_id
+                for shape in sorted(readable_shapes, key=self._ppt_shape_sort_key)
+            ]
             current_ids = [shape.shape_id for shape in readable_shapes]
             if current_ids != expected_ids:
-                issues.append(f"Slide {slide_index} shape order does not match expected reading order.")
+                issues.append(
+                    f"Slide {slide_index} shape order does not match expected reading order."
+                )
             for shape in readable_shapes:
                 items.append(
                     ReadingOrderItem(
@@ -840,12 +867,16 @@ class OfficeAccessibilityProcessor:
         items: list[ReadingOrderItem] = []
         issues: list[str] = []
         order = 0
-        visible_sheets = [ws for ws in workbook.worksheets if ws.sheet_state == "visible"]
+        visible_sheets = [
+            ws for ws in workbook.worksheets if ws.sheet_state == "visible"
+        ]
         if not visible_sheets:
             issues.append("Workbook contains no visible worksheets.")
         for index, sheet in enumerate(workbook.worksheets, start=1):
             if sheet.sheet_state != "visible" and index == 1:
-                issues.append("The first worksheet is hidden; assistive navigation may be confusing.")
+                issues.append(
+                    "The first worksheet is hidden; assistive navigation may be confusing."
+                )
             items.append(
                 ReadingOrderItem(
                     element_id=f"sheet-{index}",
@@ -1001,7 +1032,9 @@ class OfficeAccessibilityProcessor:
                         )
         return issues
 
-    def _iter_table_matrices(self, path: Path) -> Iterable[tuple[int, str, list[list[str]]]]:
+    def _iter_table_matrices(
+        self, path: Path
+    ) -> Iterable[tuple[int, str, list[list[str]]]]:
         """Yield table matrices across supported Office formats."""
         file_type = self._detect_file_type(path)
         if file_type == "docx":
@@ -1022,7 +1055,8 @@ class OfficeAccessibilityProcessor:
                         continue
                     table_index += 1
                     yield slide_index, f"pptx-slide-{slide_index}-table-{table_index}", [
-                        [cell.text.strip() for cell in row.cells] for row in shape.table.rows
+                        [cell.text.strip() for cell in row.cells]
+                        for row in shape.table.rows
                     ]
             return
         if file_type == "xlsx":
@@ -1041,7 +1075,9 @@ class OfficeAccessibilityProcessor:
                         max_col=max_col,
                     ):
                         matrix.append([self._cell_to_text(cell.value) for cell in row])
-                    yield workbook.worksheets.index(sheet) + 1, f"xlsx:{sheet.title}:{display_name}", matrix
+                    yield workbook.worksheets.index(
+                        sheet
+                    ) + 1, f"xlsx:{sheet.title}:{display_name}", matrix
 
     def _add_docx_table_headers(
         self,
@@ -1054,7 +1090,9 @@ class OfficeAccessibilityProcessor:
         self._require_dependency(DOCX_AVAILABLE, "python-docx", "docx")
         match = re.fullmatch(r"docx-table-(\d+)", table_id)
         if not match:
-            raise DocumentValidationError("Invalid DOCX table identifier", details=table_id)
+            raise DocumentValidationError(
+                "Invalid DOCX table identifier", details=table_id
+            )
         table_index = int(match.group(1)) - 1
         document = DocxDocument(path)
         if table_index < 0 or table_index >= len(document.tables):
@@ -1080,7 +1118,9 @@ class OfficeAccessibilityProcessor:
         self._require_dependency(PPTX_AVAILABLE, "python-pptx", "pptx")
         match = re.fullmatch(r"pptx-slide-(\d+)-table-(\d+)", table_id)
         if not match:
-            raise DocumentValidationError("Invalid PPTX table identifier", details=table_id)
+            raise DocumentValidationError(
+                "Invalid PPTX table identifier", details=table_id
+            )
         slide_index = int(match.group(1)) - 1
         wanted_table = int(match.group(2))
         presentation = Presentation(path)
@@ -1112,7 +1152,9 @@ class OfficeAccessibilityProcessor:
         self._require_dependency(OPENPYXL_AVAILABLE, "openpyxl", "xlsx")
         match = re.fullmatch(r"xlsx:([^:]+):(.+)", table_id)
         if not match:
-            raise DocumentValidationError("Invalid XLSX table identifier", details=table_id)
+            raise DocumentValidationError(
+                "Invalid XLSX table identifier", details=table_id
+            )
         sheet_name, display_name = match.group(1), match.group(2)
         workbook = load_workbook(path)
         if sheet_name not in workbook.sheetnames:
@@ -1181,7 +1223,11 @@ class OfficeAccessibilityProcessor:
                 foreground = self._docx_run_color(run)
                 if not foreground or not run.text.strip():
                     continue
-                size = TextSize.LARGE if run.font.size and run.font.size.pt >= 18 else TextSize.NORMAL
+                size = (
+                    TextSize.LARGE
+                    if run.font.size and run.font.size.pt >= 18
+                    else TextSize.NORMAL
+                )
                 candidates.append(
                     _ContrastCandidate(
                         element_id=f"paragraph-{paragraph_index}-run-{run_index}",
@@ -1204,10 +1250,15 @@ class OfficeAccessibilityProcessor:
                 for cell in row:
                     if not isinstance(cell.value, str) or not cell.value.strip():
                         continue
-                    foreground = self._openpyxl_color_to_hex(getattr(cell.font, "color", None))
+                    foreground = self._openpyxl_color_to_hex(
+                        getattr(cell.font, "color", None)
+                    )
                     if not foreground:
                         continue
-                    background = self._openpyxl_fill_to_hex(getattr(cell, "fill", None)) or "#FFFFFF"
+                    background = (
+                        self._openpyxl_fill_to_hex(getattr(cell, "fill", None))
+                        or "#FFFFFF"
+                    )
                     candidates.append(
                         _ContrastCandidate(
                             element_id=f"{sheet.title}!{cell.coordinate}",
@@ -1233,7 +1284,11 @@ class OfficeAccessibilityProcessor:
                 slide.shapes,
                 key=self._ppt_shape_sort_key,
             )
-            desired = [shape.element for shape in ordered_shapes if shape.element in shape_elements]
+            desired = [
+                shape.element
+                for shape in ordered_shapes
+                if shape.element in shape_elements
+            ]
             if not desired:
                 continue
             for element in shape_elements:
@@ -1256,13 +1311,17 @@ class OfficeAccessibilityProcessor:
                 return self._extract_pptx_images(archive)
             return self._extract_xlsx_images(archive)
 
-    def _extract_docx_images(self, archive: zipfile.ZipFile) -> list[_OfficeImageRecord]:
+    def _extract_docx_images(
+        self, archive: zipfile.ZipFile
+    ) -> list[_OfficeImageRecord]:
         """Extract image metadata from WordprocessingML parts."""
         records: list[_OfficeImageRecord] = []
         part_names = [
             name
             for name in archive.namelist()
-            if name.startswith("word/") and name.endswith(".xml") and "/_rels/" not in name
+            if name.startswith("word/")
+            and name.endswith(".xml")
+            and "/_rels/" not in name
         ]
         for part_name in part_names:
             rels = self._load_relationships(archive, part_name)
@@ -1272,7 +1331,9 @@ class OfficeAccessibilityProcessor:
                 parent = self._find_parent_with_blip(root, docpr)
                 if parent is not None:
                     blip = parent.find(".//a:blip", NS)
-                    rel_id = blip.get(f"{{{NS['r']}}}embed") if blip is not None else None
+                    rel_id = (
+                        blip.get(f"{{{NS['r']}}}embed") if blip is not None else None
+                    )
                 if not rel_id or rel_id not in rels:
                     continue
                 media_target = rels[rel_id]
@@ -1297,11 +1358,15 @@ class OfficeAccessibilityProcessor:
                 )
         return records
 
-    def _extract_pptx_images(self, archive: zipfile.ZipFile) -> list[_OfficeImageRecord]:
+    def _extract_pptx_images(
+        self, archive: zipfile.ZipFile
+    ) -> list[_OfficeImageRecord]:
         """Extract image metadata from PresentationML slides."""
         records: list[_OfficeImageRecord] = []
         slide_parts = sorted(
-            name for name in archive.namelist() if name.startswith("ppt/slides/slide") and name.endswith(".xml")
+            name
+            for name in archive.namelist()
+            if name.startswith("ppt/slides/slide") and name.endswith(".xml")
         )
         for index, part_name in enumerate(slide_parts, start=1):
             rels = self._load_relationships(archive, part_name)
@@ -1335,12 +1400,16 @@ class OfficeAccessibilityProcessor:
                 )
         return records
 
-    def _extract_xlsx_images(self, archive: zipfile.ZipFile) -> list[_OfficeImageRecord]:
+    def _extract_xlsx_images(
+        self, archive: zipfile.ZipFile
+    ) -> list[_OfficeImageRecord]:
         """Extract image metadata from SpreadsheetML drawings."""
         records: list[_OfficeImageRecord] = []
         drawing_to_sheet = self._xlsx_drawing_sheet_map(archive)
         drawing_parts = sorted(
-            name for name in archive.namelist() if name.startswith("xl/drawings/drawing") and name.endswith(".xml")
+            name
+            for name in archive.namelist()
+            if name.startswith("xl/drawings/drawing") and name.endswith(".xml")
         )
         for part_name in drawing_parts:
             rels = self._load_relationships(archive, part_name)
@@ -1362,7 +1431,9 @@ class OfficeAccessibilityProcessor:
                     _OfficeImageRecord(
                         image_id=f"{part_name}:{xml_id}",
                         xml_id=xml_id,
-                        display_name=c_nv_pr.get("name", media_target.rsplit("/", 1)[-1]),
+                        display_name=c_nv_pr.get(
+                            "name", media_target.rsplit("/", 1)[-1]
+                        ),
                         part_name=part_name,
                         media_target=media_target,
                         location=sheet_name,
@@ -1382,11 +1453,14 @@ class OfficeAccessibilityProcessor:
     ) -> Path:
         """Write alt-text updates back into an OOXML archive."""
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        with zipfile.ZipFile(source, "r") as src_zip, zipfile.ZipFile(
-            output_path,
-            "w",
-            compression=zipfile.ZIP_DEFLATED,
-        ) as dst_zip:
+        with (
+            zipfile.ZipFile(source, "r") as src_zip,
+            zipfile.ZipFile(
+                output_path,
+                "w",
+                compression=zipfile.ZIP_DEFLATED,
+            ) as dst_zip,
+        ):
             for info in src_zip.infolist():
                 data = src_zip.read(info.filename)
                 if info.filename in updates:
@@ -1416,7 +1490,9 @@ class OfficeAccessibilityProcessor:
                 result = self.alt_text_generator.generate(image=image.convert("RGB"))
                 return result.text.strip() or f"Image: {record.display_name}"
         except Exception as exc:  # pragma: no cover - defensive fallback
-            logger.warning("Alt-text generation failed for %s: %s", record.image_id, exc)
+            logger.warning(
+                "Alt-text generation failed for %s: %s", record.image_id, exc
+            )
             return f"Image: {record.display_name.replace('_', ' ').replace('-', ' ')}".strip()
 
     def _get_document_title(self, path: Path) -> str:
@@ -1455,7 +1531,9 @@ class OfficeAccessibilityProcessor:
                 mapping[rels[rel_id]] = sheet_name
         return mapping
 
-    def _load_relationships(self, archive: zipfile.ZipFile, part_name: str) -> dict[str, str]:
+    def _load_relationships(
+        self, archive: zipfile.ZipFile, part_name: str
+    ) -> dict[str, str]:
         """Load OOXML relationships for a part."""
         rels_path = self._relationships_path(part_name)
         if rels_path not in archive.namelist():
@@ -1500,7 +1578,9 @@ class OfficeAccessibilityProcessor:
         if not source.exists():
             raise FileNotFoundError(f"Office document not found: {source}")
         if source.is_dir():
-            raise DocumentValidationError("Expected Office document file, got directory")
+            raise DocumentValidationError(
+                "Expected Office document file, got directory"
+            )
         extension = source.suffix.lower().lstrip(".")
         if extension not in OOXML_EXTENSIONS:
             raise UnsupportedOfficeFormatError(extension)
@@ -1537,7 +1617,9 @@ class OfficeAccessibilityProcessor:
         match = re.search(r"heading\s*(\d+)", style_name, re.IGNORECASE)
         return int(match.group(1)) if match else None
 
-    def _require_dependency(self, available: bool, package: str, file_type: str) -> None:
+    def _require_dependency(
+        self, available: bool, package: str, file_type: str
+    ) -> None:
         """Raise a readable error for missing optional Office dependencies."""
         if not available:
             raise DocumentValidationError(
@@ -1552,7 +1634,9 @@ class OfficeAccessibilityProcessor:
         """Extract local name from an XML tag."""
         return tag.rsplit("}", 1)[-1]
 
-    def _find_parent_with_blip(self, root: ET.Element, target: ET.Element) -> Optional[ET.Element]:
+    def _find_parent_with_blip(
+        self, root: ET.Element, target: ET.Element
+    ) -> Optional[ET.Element]:
         """Find a nearby drawing container for a given docPr element."""
         for candidate in root.iter():
             if target not in list(candidate):
@@ -1560,7 +1644,10 @@ class OfficeAccessibilityProcessor:
             if candidate.find(".//a:blip", NS) is not None:
                 return candidate
         for candidate in root.iter():
-            if target in list(candidate.iter()) and candidate.find(".//a:blip", NS) is not None:
+            if (
+                target in list(candidate.iter())
+                and candidate.find(".//a:blip", NS) is not None
+            ):
                 return candidate
         return None
 
@@ -1569,7 +1656,8 @@ class OfficeAccessibilityProcessor:
         return (
             getattr(shape, "has_text_frame", False)
             or getattr(shape, "has_table", False)
-            or getattr(shape, "shape_type", None) == getattr(MSO_SHAPE_TYPE, "PICTURE", None)
+            or getattr(shape, "shape_type", None)
+            == getattr(MSO_SHAPE_TYPE, "PICTURE", None)
         )
 
     def _ppt_shape_sort_key(self, shape: Any) -> tuple[int, int, int, int]:
@@ -1599,7 +1687,9 @@ class OfficeAccessibilityProcessor:
             return "heading"
         if getattr(shape, "has_table", False):
             return "table"
-        if getattr(shape, "shape_type", None) == getattr(MSO_SHAPE_TYPE, "PICTURE", None):
+        if getattr(shape, "shape_type", None) == getattr(
+            MSO_SHAPE_TYPE, "PICTURE", None
+        ):
             return "image"
         return "text"
 

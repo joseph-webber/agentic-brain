@@ -44,7 +44,9 @@ def test_numbers_to_pdf_surfaces_conversion_error(
             office_modules.converter.ConversionError("numbers failed")
         ),
     )
-    with pytest.raises(office_modules.converter.ConversionError, match="numbers failed"):
+    with pytest.raises(
+        office_modules.converter.ConversionError, match="numbers failed"
+    ):
         converter.numbers_to_pdf(sample_office_files.numbers, tmp_path / "out.pdf")
 
 
