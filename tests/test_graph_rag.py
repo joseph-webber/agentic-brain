@@ -9,6 +9,24 @@ import pytest
 from agentic_brain.rag.graph_rag import GraphRAG, GraphRAGConfig, SearchStrategy
 
 
+class FakeGraphEmbedder:
+    @staticmethod
+    def is_available():
+        return True
+
+    @staticmethod
+    def provider_name():
+        return "sentence_transformers/all-MiniLM-L6-v2@mps"
+
+    @staticmethod
+    def dimensions():
+        return 384
+
+    @staticmethod
+    def embed(text: str):
+        return [float(len(text))] * 384
+
+
 class AsyncContextManager:
     def __init__(self, return_value):
         self.return_value = return_value
@@ -58,10 +76,15 @@ async def test_ingest_mock(graph_rag):
         }
     ]
 
-    stats = await graph_rag.ingest(documents)
+    with patch(
+        "agentic_brain.rag.graph_rag.detect_communities_async",
+        new=AsyncMock(return_value={1: ["Alpha"], 2: ["Beta"]}),
+    ):
+        stats = await graph_rag.ingest(documents)
 
     assert stats["entities"] == 2
     assert stats["relationships"] == 1
+    assert stats["communities"] == 2
     # Check if cypher queries were run
     assert session.run.call_count >= 3
 
@@ -76,6 +99,39 @@ async def test_vector_search_strategy(graph_rag):
 
 
 @pytest.mark.asyncio
+async def test_ingest_uses_real_entity_embeddings(mock_driver):
+    session = AsyncMock()
+    mock_driver.session.return_value = AsyncContextManager(session)
+
+    with (
+        patch("agentic_brain.rag.graph_rag.AsyncGraphDatabase") as mock_db,
+        patch("agentic_brain.rag.graph_rag._get_mlx_embeddings", return_value=FakeGraphEmbedder),
+    ):
+        mock_db.driver.return_value = mock_driver
+        rag = GraphRAG(GraphRAGConfig(embedding_dim=768))
+        await rag.ingest(
+            [
+                {
+                    "entities": [
+                        {
+                            "id": "e1",
+                            "type": "Concept",
+                            "description": "GraphRAG embedding search",
+                        }
+                    ],
+                    "relationships": [],
+                }
+            ]
+        )
+
+    assert rag.config.embedding_dim == 384
+    entity_call = session.run.await_args_list[0]
+    embedding = entity_call.kwargs["embedding"]
+    assert len(embedding) == 384
+    assert embedding != [0.1] * 384
+
+
+@pytest.mark.asyncio
 async def test_hybrid_search_strategy(graph_rag):
     results = await graph_rag.search("test query", strategy=SearchStrategy.HYBRID)
     assert isinstance(results, list)
@@ -83,6 +139,19 @@ async def test_hybrid_search_strategy(graph_rag):
     # Hybrid search should add context from graph expansion
     assert "context" in results[0]
     assert "graph_score" in results[0]
+
+
+@pytest.mark.asyncio
+async def test_community_search_strategy(graph_rag):
+    with patch(
+        "agentic_brain.rag.graph_rag.detect_communities_async",
+        new=AsyncMock(return_value={1: ["Alpha", "Beta"]}),
+    ):
+        results = await graph_rag.search("Alpha", strategy=SearchStrategy.COMMUNITY)
+
+    assert isinstance(results, list)
+    assert results
+    assert results[0]["strategy"] == "community"
 
 
 @pytest.mark.asyncio

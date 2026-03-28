@@ -10,12 +10,12 @@
 """
 Enhanced Graph RAG with vector similarity and knowledge graph construction.
 
-Provides production-ready graph-based retrieval augmented generation:
-- Native Neo4j vector similarity search
-- Entity extraction and relationship mapping
-- Knowledge graph construction from documents
-- Multi-strategy retrieval (vector, graph, hybrid)
-- Context-aware graph traversal
+Highlights (v2.16.0):
+- **Native Neo4j vector search** with async driver support and transaction retries.
+- **Real MLX embeddings** on Apple Silicon with deterministic fallback only when MLX is unavailable.
+- **Batched UNWIND writes** for documents, chunks, entities, and relationships — no more N+1 ingest queries.
+- **Hybrid retrieval with reciprocal-rank fusion (RRF)** blending vector, keyword, and graph expansion scores.
+- **Community-aware retrieval** with GDS Leiden metadata persisted directly on Entity nodes.
 
 Example:
     >>> from agentic_brain.rag.graph import EnhancedGraphRAG
@@ -80,6 +80,19 @@ def _get_embedding_dimension(default_dim: int = 384) -> int:
     if embedder is not None:
         return int(embedder.dimensions())
     return default_dim
+
+
+def _validate_embedding(
+    embedding: list[float], expected_dim: int, *, context: str
+) -> list[float]:
+    """Ensure embeddings stored in Neo4j match the configured vector dimension."""
+    values = [float(value) for value in embedding]
+    if len(values) != expected_dim:
+        raise ValueError(
+            f"{context} embedding dimension mismatch: "
+            f"expected {expected_dim}, got {len(values)}"
+        )
+    return values
 
 
 try:
@@ -335,7 +348,12 @@ class EnhancedGraphRAG:
             chunks = self._chunk_content(content)
             if embedding:
                 # Caller provided a single embedding — reuse for all chunks
-                chunk_embeddings = [embedding] * len(chunks)
+                validated = _validate_embedding(
+                    embedding,
+                    self.config.embedding_dimension,
+                    context="chunk",
+                )
+                chunk_embeddings = [validated] * len(chunks)
             else:
                 # Compute real embeddings per chunk
                 embedder = _get_mlx_embeddings()
@@ -348,6 +366,14 @@ class EnhancedGraphRAG:
                         _fallback_embedding(ct, self.config.embedding_dimension)
                         for ct in chunks
                     ]
+            chunk_embeddings = [
+                _validate_embedding(
+                    chunk_embedding,
+                    self.config.embedding_dimension,
+                    context="chunk",
+                )
+                for chunk_embedding in chunk_embeddings
+            ]
             chunk_params = [
                 {
                     "chunk_id": f"{doc_id}_chunk_{i}",
@@ -727,8 +753,8 @@ class EnhancedGraphRAG:
         """
         Retrieve using community detection for broader context.
 
-        This is a placeholder for community-based retrieval.
-        In production, implement using Neo4j GDS community detection algorithms.
+        Uses Neo4j GDS community detection to identify clusters of related entities
+        and then retrieves chunks connected to the most relevant communities.
 
         Args:
             query: Query text
@@ -737,9 +763,88 @@ class EnhancedGraphRAG:
         Returns:
             List of results from relevant communities
         """
-        # Placeholder - in production use Neo4j GDS
-        logger.info("Community retrieval not yet implemented - falling back to hybrid")
-        return await self._hybrid_retrieve(query, top_k)
+        query_terms = {term.lower() for term in query.split() if term.strip()}
+        if not query_terms:
+            logger.info("Community retrieval has no query terms - falling back to hybrid")
+            return await self._hybrid_retrieve(query, top_k)
+
+        with self._get_session() as session:
+            try:
+                from .community_detection import detect_communities
+
+                communities = detect_communities(session)
+            except Exception as exc:
+                logger.warning(f"Community detection failed: {exc}")
+                return await self._hybrid_retrieve(query, top_k)
+
+            if not communities:
+                logger.info("No communities detected - falling back to hybrid")
+                return await self._hybrid_retrieve(query, top_k)
+
+            entity_to_community: Dict[str, int] = {}
+            matched_entities: List[str] = []
+            for cid, entities in communities.items():
+                for entity in entities:
+                    entity_to_community[entity] = cid
+                if any(term in entity.lower() for entity in entities for term in query_terms):
+                    matched_entities.extend(entities)
+
+            matched_entities = sorted({entity for entity in matched_entities})
+            if not matched_entities:
+                logger.info("Community retrieval found no matches - falling back to hybrid")
+                return await self._hybrid_retrieve(query, top_k)
+
+            results = self._run_query(
+                session,
+                """
+                MATCH (e:Entity)
+                WHERE e.name IN $entities
+                MATCH (e)<-[:MENTIONS]-(c:Chunk)<-[:CONTAINS]-(d:Document)
+                WITH c, d, collect(DISTINCT e.name) AS entities,
+                     count(DISTINCT e) AS community_score
+                RETURN c.id AS chunk_id,
+                       coalesce(c.content, c.text) AS content,
+                       c.position AS position,
+                       d.id AS doc_id,
+                       d.metadata AS metadata,
+                       community_score,
+                       entities
+                ORDER BY community_score DESC, c.position ASC
+                LIMIT $top_k
+                """,
+                entities=matched_entities,
+                top_k=top_k,
+            )
+
+        formatted = []
+        for record in results:
+            entities = record.get("entities") or []
+            community_ids = sorted(
+                {
+                    entity_to_community.get(entity)
+                    for entity in entities
+                    if entity in entity_to_community
+                }
+            )
+            formatted.append(
+                {
+                    "chunk_id": record.get("chunk_id"),
+                    "content": record.get("content"),
+                    "position": record.get("position"),
+                    "doc_id": record.get("doc_id"),
+                    "metadata": record.get("metadata"),
+                    "score": float(record.get("community_score", 0.0)),
+                    "entities": entities,
+                    "community_ids": community_ids,
+                    "strategy": "community",
+                }
+            )
+
+        if not formatted:
+            logger.info("Community retrieval returned no results - falling back to hybrid")
+            return await self._hybrid_retrieve(query, top_k)
+
+        return formatted[:top_k]
 
     async def _fallback_text_search(
         self, query: str, top_k: int

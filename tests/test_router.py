@@ -265,11 +265,11 @@ class TestLLMRouterFallback:
 
         with (
             patch.object(
-                router, "_chat_ollama", side_effect=Exception("Primary failed")
+                router, "_chat_messages", side_effect=Exception("Primary failed")
             ),
             pytest.raises(Exception, match="Primary failed"),
         ):
-            await router.chat("Hello", provider=Provider.OLLAMA)
+            await router.chat("Hello", provider=Provider.OLLAMA, model="llama3.1:8b")
 
     @pytest.mark.asyncio
     async def test_fallback_works(self):
@@ -278,10 +278,13 @@ class TestLLMRouterFallback:
         router._ollama_available = True
         router._ollama_check_time = 9999999999
 
+        async def fake_chat_messages(messages, *, provider, model, temperature, **kwargs):
+            if provider == Provider.OLLAMA:
+                raise Exception("Ollama failed")
+            raise AssertionError(f"Unexpected provider: {provider}")
+
         with (
-            patch.object(
-                router, "_chat_ollama", side_effect=Exception("Ollama failed")
-            ),
+            patch.object(router, "_chat_messages", side_effect=fake_chat_messages),
             patch.object(
                 router,
                 "_chat_openrouter",
@@ -292,10 +295,50 @@ class TestLLMRouterFallback:
                 ),
             ),
         ):
-            response = await router.chat("Hello")
+            response = await router.chat(
+                "Hello",
+                provider=Provider.OLLAMA,
+                model="llama3.1:8b",
+            )
 
         assert response.content == "OpenRouter response"
         assert response.provider == Provider.OPENROUTER
+
+    @pytest.mark.asyncio
+    async def test_code_fallback_prefers_claude_then_gpt_then_ollama(self):
+        """Code requests should prefer OpenAI before dropping to local Ollama."""
+        router = LLMRouter()
+        router._ollama_available = True
+        router._ollama_check_time = 9999999999
+
+        seen_providers = []
+
+        async def fake_chat_messages(messages, *, provider, model, temperature, **kwargs):
+            seen_providers.append(provider)
+            if provider == Provider.ANTHROPIC:
+                raise Exception("Anthropic failed")
+            if provider == Provider.OPENAI:
+                return Response(
+                    content="OpenAI code fallback",
+                    model="gpt-4o",
+                    provider=Provider.OPENAI,
+                )
+            raise AssertionError(f"Unexpected provider: {provider}")
+
+        with (
+            patch.object(router, "_chat_messages", side_effect=fake_chat_messages),
+            patch.object(router, "_chat_ollama") as mock_ollama,
+        ):
+            response = await router.chat(
+                "Debug this Python function and fix the failing test",
+                provider=Provider.ANTHROPIC,
+                model="claude-3-5-sonnet-20241022",
+            )
+
+        assert response.content == "OpenAI code fallback"
+        assert response.provider == Provider.OPENAI
+        assert seen_providers == [Provider.ANTHROPIC, Provider.OPENAI]
+        mock_ollama.assert_not_called()
 
 
 @pytest.mark.asyncio

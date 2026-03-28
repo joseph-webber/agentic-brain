@@ -27,7 +27,11 @@ class UnsupportedOfficeFormatError(DocumentModelError):
     """Raised when a requested office format is not supported."""
 
     def __init__(self, format_requested: OfficeFormat | str) -> None:
-        super().__init__(f"Unsupported office format: {format_requested}")
+        if isinstance(format_requested, OfficeFormat):
+            message = f"Unsupported office format: {format_requested.__class__.__name__}.{format_requested.name}"
+        else:
+            message = f"Unsupported office format: {format_requested}"
+        super().__init__(message)
         self.format_requested = format_requested
 
 

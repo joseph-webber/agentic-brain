@@ -16,6 +16,28 @@ from agentic_brain.rag.graph import (
 from agentic_brain.rag.hybrid import reciprocal_rank_fusion
 
 
+class FakeGraphEmbedder:
+    @staticmethod
+    def is_available():
+        return True
+
+    @staticmethod
+    def provider_name():
+        return "sentence_transformers/all-MiniLM-L6-v2@mps"
+
+    @staticmethod
+    def dimensions():
+        return 384
+
+    @staticmethod
+    def embed(text: str):
+        return [float(len(text))] * 384
+
+    @staticmethod
+    def embed_batch(texts: list[str]):
+        return [[float(index + 1)] * 384 for index, _ in enumerate(texts)]
+
+
 @pytest.fixture
 def config():
     """Create test configuration."""
@@ -69,6 +91,41 @@ async def test_index_document(graph_rag, mock_session):
         assert doc_id == "doc1"
         # Verify document creation
         assert mock_session.run.call_count >= 1
+
+
+@pytest.mark.asyncio
+async def test_index_document_uses_real_chunk_embeddings(mock_session):
+    """Chunk embeddings should come from the real embedder, not mock [0.1] values."""
+    with (
+        patch("agentic_brain.rag.graph._get_mlx_embeddings", return_value=FakeGraphEmbedder),
+        patch("agentic_brain.core.neo4j_pool.get_session") as mock_get_session,
+    ):
+        mock_get_session.return_value.__enter__.return_value = mock_session
+        rag = EnhancedGraphRAG(GraphRAGConfig())
+
+        await rag.index_document(
+            content="Python powers GraphRAG on Apple Silicon. Neo4j stores vectors.",
+            doc_id="doc-real-embeddings",
+        )
+
+    chunk_calls = [call for call in mock_session.run.call_args_list if "chunks" in call.kwargs]
+    assert chunk_calls
+    chunk_params = chunk_calls[-1].kwargs["chunks"]
+    assert chunk_params
+    first_embedding = chunk_params[0]["embedding"]
+    assert len(first_embedding) == 384
+    assert first_embedding != [0.1] * 384
+    assert first_embedding == [1.0] * 384
+
+
+def test_init_aligns_vector_dimension_with_embedder():
+    """Graph config should match the active embedder dimension."""
+    with patch(
+        "agentic_brain.rag.graph._get_mlx_embeddings", return_value=FakeGraphEmbedder
+    ):
+        rag = EnhancedGraphRAG(GraphRAGConfig(embedding_dimension=768))
+
+    assert rag.config.embedding_dimension == 384
 
 
 @pytest.mark.asyncio
@@ -211,10 +268,42 @@ async def test_retrieve_strategies(graph_rag, mock_session):
 
         graph_rag._initialized = True
 
+        graph_rag._community_retrieve = AsyncMock(return_value=[])
+
         # Test each strategy
-        for strategy in ["vector", "graph", "hybrid"]:
+        for strategy in ["vector", "graph", "hybrid", "community"]:
             results = await graph_rag.retrieve("test query", strategy=strategy)
             assert isinstance(results, list)
+
+
+@pytest.mark.asyncio
+async def test_community_retrieve(graph_rag, mock_session):
+    """Test community-based retrieval."""
+    with patch("agentic_brain.rag.graph.detect_communities") as mock_detect:
+        mock_detect.return_value = {1: ["Python", "Java"]}
+        with patch("agentic_brain.core.neo4j_pool.get_session") as mock_get_session:
+            mock_get_session.return_value.__enter__.return_value = mock_session
+
+            graph_rag._initialized = True
+            graph_rag._run_query = Mock(
+                return_value=[
+                    {
+                        "chunk_id": "chunk-1",
+                        "content": "Python content",
+                        "position": 0,
+                        "doc_id": "doc-1",
+                        "metadata": {"source": "community"},
+                        "community_score": 2,
+                        "entities": ["Python", "Java"],
+                    }
+                ]
+            )
+
+            results = await graph_rag._community_retrieve("Python", top_k=5)
+
+    assert results
+    assert results[0]["strategy"] == "community"
+    assert results[0]["community_ids"] == [1]
 
 
 @pytest.mark.asyncio

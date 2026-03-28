@@ -59,20 +59,63 @@ Use the layer that matches your job:
 
 ### Vector + graph hybrid search
 
-GraphRAG combines two ranking signals:
+GraphRAG combines multiple ranking signals:
 
 - **Vector similarity** answers “what is semantically close to this query?”
+- **Keyword/BM25** surfaces literal matches (documents, tags, identifiers)
 - **Graph traversal** answers “what is structurally connected to the matched entities or chunks?”
 
-`EnhancedGraphRAG` merges both via **reciprocal rank fusion (RRF)**. This rewards chunks that score well in both lists.
+`EnhancedGraphRAG` merges all three via **reciprocal rank fusion (RRF)**. This rewards chunks that score well in multiple lists and reduces single-signal bias.
+
+```text
+rrf_score = Σ 1 / (k + rank_i)
+```
+
+Where `rank_i` is the position inside the vector, keyword, or graph result list and `k` (default 60) keeps scores bounded.
+
+You can inspect `vector_rank`, `graph_rank`, `keyword_rank`, and `rrf_score` on every retrieval result.
+
+### Batched Neo4j writes (UNWIND)
+
+Both `GraphRAG` and `EnhancedGraphRAG` eliminate N+1 write queries by batching Cypher operations:
+
+```cypher
+UNWIND $entities AS ent
+MERGE (e:Entity {id: ent.id})
+SET e += {
+  type: ent.type,
+  description: ent.description,
+  embedding: ent.embedding
+}
+```
+
+- documents, chunks, entities, relationships, and community links all use the same pattern
+- ingest throughput stays flat even when inserting thousands of nodes per batch
+- transaction retries wrap each batch, so transient Neo4j timeouts automatically re-run
+
+### Hardware-accelerated MLX embeddings
+
+Embedded Apple Silicon deployments now call the real `MLXEmbeddings` class (Metal kernels) whenever it is available:
+
+```python
+from agentic_brain.rag.graph import EnhancedGraphRAG
+
+rag = EnhancedGraphRAG()
+rag._embed_text("Vectorized by MLX on M3 Max")
+```
+
+- Automatically falls back to deterministic `_fallback_embedding()` only when MLX is unavailable
+- No more mocked vectors: cosine similarity, ANN search, and cache fingerprints now use production-grade embeddings locally
+- Works inside `GraphRAG`, `EnhancedGraphRAG`, and `KnowledgeExtractor`
 
 ### Community detection (Leiden)
 
 Community detection groups related entities into higher-level topics or themes. Agentic Brain's graph schema is compatible with Neo4j GDS, so you can run **Leiden** or **Louvain** after ingestion.
 
 - `GraphRAGConfig.enable_communities` controls whether the pipeline should include the community-analysis stage
-- `GraphRAGConfig.community_algorithm` lets you record the intended algorithm name
+- `GraphRAGConfig.community_algorithm` defaults to `"leiden"` so RAG pipelines document which algorithm produced each `communityId`
 - `EnhancedGraphRAG` exposes a `community` retrieval strategy placeholder that can be upgraded with GDS-backed clustering
+- `docs/neo4j.md` shows how to persist community metadata and hydrate it back into prompts
 
 **Recommendation:** use **Leiden** in production because it generally yields cleaner, more stable communities on dense graphs.
 
@@ -257,11 +300,44 @@ This gives you a natural-language interface without trusting arbitrary generated
 `EnhancedGraphRAG.retrieve(strategy="hybrid")` runs:
 
 1. vector search against Neo4j chunk embeddings
-2. graph retrieval from matched entities/documents
-3. reciprocal-rank fusion
-4. reranked results with `vector_score`, `graph_score`, `rrf_score`, and `fusion_method`
+2. keyword/BM25 search via Neo4j fulltext indexes
+3. graph retrieval from matched entities/documents
+4. reciprocal-rank fusion (RRF) to combine the ranks
+5. reranked results with `vector_score`, `graph_score`, `keyword_score`, `rrf_score`, and `fusion_method`
 
 This is the most complete retrieval path currently documented in the codebase.
+
+### Async Neo4j + transaction retries
+
+All ingestion and retrieval flows use the async Neo4j driver (where available) plus resilient retry envelopes:
+
+```python
+from agentic_brain.rag.graph_rag import GraphRAG
+
+rag = GraphRAG()
+
+async with rag._driver.session() as session:
+    await rag._retry_query(
+        session,
+        "UNWIND $ids AS id MATCH (d:Document {id: id}) RETURN d LIMIT 25",
+        ids=batch,
+    )
+```
+
+- Async driver keeps ingestion responsive even when a single document expands to thousands of nodes
+- Retry envelope (with exponential backoff) handles `TransientError`, `ServiceUnavailable`, and leadership changes gracefully
+- Synchronous helpers delegate to the same retry core so CLI utilities benefit automatically
+
+### Transaction retries
+
+`agentic_brain.core.neo4j_utils.resilient_query_sync()` and its async companion wrap Neo4j transactions with:
+
+- default 3 attempts (configurable)
+- exponential backoff jitter
+- logging hooks when a retry occurs
+- automatic driver reset when the server force-closes sessions
+
+Use these helpers whenever you run custom Cypher so your features match GraphRAG’s reliability posture.
 
 ### Community detection with Leiden
 

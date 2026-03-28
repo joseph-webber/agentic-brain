@@ -5,6 +5,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.16.0] - 2026-03-30
+
+### Added
+
+- **🧠 GraphRAG Upgrades**
+  - Real MLX embeddings throughout `graph.py`, `graph_rag.py`, and `knowledge_extractor.py` — Apple Silicon deployments now generate production vectors locally.
+  - Neo4j GDS Leiden community detection is the documented default via `GraphRAGConfig.community_algorithm`.
+  - Hybrid retrieval now surfaces reciprocal-rank fusion (RRF) metadata (`vector_rank`, `keyword_rank`, `graph_rank`, `rrf_score`) in every result.
+  - Async Neo4j driver path is documented with examples plus guidance in `docs/GRAPHRAG.md` and the new `docs/neo4j.md`.
+  - Transaction retry helpers (`resilient_query_sync` and async equivalents) highlighted so every custom Cypher call inherits the same resilience profile.
+
+### Fixed
+
+- **⚡ N+1 Query Fixes**
+  - Documented the new `UNWIND` batching pipelines across GraphRAG modules to make the ingest behavior transparent.
+
+### Improved
+
+- **📚 Documentation**
+  - README GraphRAG section now highlights the 2.16.0 improvements and links to deeper documentation.
+  - `docs/GRAPHRAG.md` expanded with sections on MLX embeddings, RRF scoring, async Neo4j usage, and transaction retries.
+  - Added `docs/neo4j.md` as the canonical integration guide covering community detection, hybrid search, and operational best practices.
+
+## [2.15.0] - 2026-03-28
+
+### Added
+
+- **🧠 GraphRAG Improvements**
+  - GDS community detection via Louvain algorithm in `graph_rag.py` for entity clustering
+  - Hybrid search with Reciprocal Rank Fusion (RRF) in `hybrid.py` — combines vector and keyword results
+  - `MLXEmbeddings` provider in `rag/embeddings.py` — Apple Silicon native embedding generation
+  - Semantic router (`SemanticRouter`) for intelligent query routing across RAG strategies
+
+### Fixed
+
+- **⚡ N+1 Query Fixes**
+  - Batched `UNWIND` for entity extraction in `neo4j_memory.py` — eliminates per-entity round trips
+  - `embed_batch()` in `UnifiedMemory` — batch embedding generation instead of one-at-a-time
+  - Eager fetching patterns in memory and pooling modules
+
+- **🔧 Async/Sync Fixes**
+  - Synchronous wrappers for async memory operations in `unified.py`
+  - Correct event loop handling across memory and RAG pipelines
+
+- **🔍 Router Fixes**
+  - Semantic router route matching with cached embeddings
+  - Proper fallback when no route matches query threshold
+
+### Improved
+
+- **📈 Index Improvements**
+  - Vector and fulltext index strategies in `graph_rag.py`
+  - Search strategy enum (VECTOR, HYBRID, GRAPH, FULLTEXT) for flexible retrieval
+
+- **📦 Office Document Processing** (Phase 5)
+  - 15 new office format loaders (Word, Excel, PowerPoint, Pages, Keynote, Numbers, RTF, ODF, images)
+  - Layout analysis, table extraction, unified markdown/JSON export
+  - Accessibility module for document processing
+
+- **🧠 Enhanced Memory System**
+  - Mem0-inspired memory patterns with zero external dependencies
+  - Chonkie-powered fast chunking for RAG pipelines with token-accuracy benchmarks
+
+### Removed
+
+- Removed 14K-line `_monolith_backup.py` dead code
+- Removed `docling` dependency — replaced by 102 built-in loaders
+- Removed `mem0ai` dependency — replaced by built-in `UnifiedMemory`
+
 ## [2.12.0] - 2026-03-26
 
 ### Added

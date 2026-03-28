@@ -1,6 +1,6 @@
 [project]
 name = "agentic-brain"
-version = "2.12.0"
+version = "2.16.0"
 description = "Enterprise-grade AI Agent Platform. Production-ready orchestration with GraphRAG, Multi-LLM support, and 155+ RAG loaders. Python, GPU-accelerated, Secure."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -76,8 +76,13 @@ dependencies = [
 [project.optional-dependencies]
 # Enhanced integrations bundle
 enhanced = [
+    "mem0ai>=0.1.0",
     "neo4j-graphrag>=1.14.1,<2.0.0",
     "chonkie>=1.0.0",
+]
+# Production memory integrations
+memory = [
+    "mem0ai>=0.1.0",
 ]
 doc-parsing = [
     "agentic-brain[documents]",

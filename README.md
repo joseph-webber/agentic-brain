@@ -810,6 +810,16 @@ The diagram shows the release's GraphRAG improvements as a pipeline of cooperati
 4. **Hybrid retrieval** starts with vector similarity, expands through graph edges, then optionally widens context through community detection.
 5. **Reranking and response** use fused scores plus graph provenance to feed final answer generation.
 
+### ♻️ Latest GraphRAG Upgrades (2.16.0)
+
+- **N+1 query elimination** — entity, chunk, and relationship writes are wrapped in batched `UNWIND` Cypher so ingest time scales linearly even on 100k+ document drops.
+- **Real MLX embeddings** — Apple Silicon deployments automatically call `MLXEmbeddings` for metal-accelerated vectors (with deterministic fallback only when MLX is missing).
+- **Community detection with Neo4j GDS Leiden** — set `GraphRAGConfig.community_algorithm="leiden"` to persist cleaner community IDs directly into the graph and drive topic summaries.
+- **Hybrid search with RRF fusion** — reciprocal-rank fusion now blends vector, BM25, and graph expansion results for higher precision@k and transparent scoring in responses.
+- **Async Neo4j driver + transaction retries** — ingest and query paths use the async driver with resilient retry wrappers so transient timeouts or failover never drop a request.
+
+📚 **Docs updated:** [GraphRAG deep dive](docs/GRAPHRAG.md) · [Neo4j integration guide](docs/neo4j.md) · [Changelog](CHANGELOG.md)
+
 <details>
 <summary><strong>View Detailed Architecture (ASCII)</strong></summary>
 

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2024-2026 Joseph Webber
 
-"""Neo4j knowledge extraction with a lightweight built-in GraphRAG path."""
+"""Neo4j knowledge extraction with a lightweight built-in GraphRAG path (batched UNWIND writes, MLX embeddings, async-friendly drivers)."""
 
 from __future__ import annotations
 

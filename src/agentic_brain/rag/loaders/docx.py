@@ -132,80 +132,87 @@ class DocxLoader(BaseLoader):
         """No authentication needed for local files."""
         return True
 
-    def _extract_text(self, docx_bytes: bytes) -> tuple[str, dict[str, Any]]:
-        """Extract text from DOCX bytes with structural awareness.
-
-        Returns:
-            Tuple of (content_string, extra_metadata).
-        """
-        extra_meta: dict[str, Any] = {}
+    def _extract_text(self, docx_bytes: bytes) -> str:
+        """Extract text from DOCX bytes with structural awareness."""
+        self._last_metadata = {}
 
         if not DOCX_AVAILABLE:
             logger.warning("python-docx not installed")
-            return "[DOCX content - install python-docx]", extra_meta
+            return "[DOCX content - install python-docx]"
 
         try:
             document = docx.Document(BytesIO(docx_bytes))
             parts: list[str] = []
             sections: list[dict[str, Any]] = []
-            current_section: Optional[str] = None
 
-            # Iterate over document body elements to preserve order
-            for element in document.element.body:
-                tag = element.tag.split("}")[-1]  # strip namespace
+            if hasattr(document, "element") and hasattr(document.element, "body"):
+                # Iterate over document body elements to preserve order
+                for element in document.element.body:
+                    tag = element.tag.split("}")[-1]  # strip namespace
 
-                if tag == "p":
-                    # It's a paragraph
-                    para = None
-                    for p in document.paragraphs:
-                        if p._element is element:
-                            para = p
-                            break
-                    if para is None or not para.text.strip():
-                        continue
+                    if tag == "p":
+                        para = None
+                        for p in document.paragraphs:
+                            if p._element is element:
+                                para = p
+                                break
+                        if para is None or not para.text.strip():
+                            continue
 
-                    style_name = para.style.name if para.style else ""
-                    md_prefix = _HEADING_MAP.get(style_name, "")
+                        style_name = para.style.name if para.style else ""
+                        md_prefix = _HEADING_MAP.get(style_name, "")
 
-                    if md_prefix:
-                        heading_text = f"{md_prefix} {para.text.strip()}"
-                        parts.append(heading_text)
-                        current_section = para.text.strip()
-                        sections.append(
-                            {"heading": current_section, "level": len(md_prefix)}
-                        )
-                    elif style_name.startswith("List"):
-                        parts.append(f"- {para.text.strip()}")
-                    else:
-                        parts.append(para.text.strip())
+                        if md_prefix:
+                            heading_text = f"{md_prefix} {para.text.strip()}"
+                            parts.append(heading_text)
+                            sections.append(
+                                {"heading": para.text.strip(), "level": len(md_prefix)}
+                            )
+                        elif style_name.startswith("List"):
+                            parts.append(f"- {para.text.strip()}")
+                        else:
+                            parts.append(para.text.strip())
 
-                elif tag == "tbl" and self.extract_tables:
-                    # It's a table
-                    for tbl in document.tables:
-                        if tbl._element is element:
-                            md_table = _table_to_markdown(tbl)
-                            if md_table:
-                                parts.append(md_table)
-                            break
+                    elif tag == "tbl" and self.extract_tables:
+                        for tbl in document.tables:
+                            if tbl._element is element:
+                                md_table = _table_to_markdown(tbl)
+                                if md_table:
+                                    parts.append(md_table)
+                                break
+            else:
+                for para in getattr(document, "paragraphs", []):
+                    text = getattr(para, "text", "").strip()
+                    if text:
+                        parts.append(text)
+                if self.extract_tables:
+                    for table in getattr(document, "tables", []):
+                        for row in getattr(table, "rows", []):
+                            cells = [
+                                getattr(cell, "text", "").strip()
+                                for cell in getattr(row, "cells", [])
+                                if getattr(cell, "text", "").strip()
+                            ]
+                            if cells:
+                                parts.append(" | ".join(cells))
 
-            # Extract structured tables into metadata
             if self.extract_tables:
                 structured_tables: list[dict[str, Any]] = []
-                for i, tbl in enumerate(document.tables):
+                for i, tbl in enumerate(getattr(document, "tables", [])):
                     s = _table_to_structured(tbl)
                     s["caption"] = f"Table {i + 1}"
                     structured_tables.append(s)
                 if structured_tables:
-                    extra_meta["tables"] = structured_tables
-                    extra_meta["table_count"] = len(structured_tables)
+                    self._last_metadata["tables"] = structured_tables
+                    self._last_metadata["table_count"] = len(structured_tables)
 
             if sections:
-                extra_meta["sections"] = sections
+                self._last_metadata["sections"] = sections
 
-            return "\n\n".join(parts), extra_meta
+            return "\n\n".join(parts)
         except Exception as e:
             logger.error(f"DOCX extraction failed: {e}")
-            return "", extra_meta
+            return ""
 
     def load_document(self, doc_id: str) -> Optional[LoadedDocument]:
         """Load a single DOCX document."""
@@ -225,7 +232,12 @@ class DocxLoader(BaseLoader):
             with open(path, "rb") as f:
                 docx_bytes = f.read()
 
-            content, extra_meta = self._extract_text(docx_bytes)
+            result = self._extract_text(docx_bytes)
+            if isinstance(result, tuple):
+                content, extra_meta = result
+            else:
+                content = result
+                extra_meta = getattr(self, "_last_metadata", {})
 
             metadata: dict[str, Any] = {"path": str(path)}
             metadata.update(extra_meta)

@@ -34,20 +34,21 @@ import time
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Any, Optional
 
-from .anthropic import chat_anthropic, stream_anthropic
+from agentic_brain.llm.router import LLMRouterCore
+
+from .anthropic import stream_anthropic
 from .azure_openai import chat_azure_openai, stream_azure_openai
 from .config import Message, Model, Provider, Response, RouterConfig
 from .google import chat_google, stream_google
 from .groq import chat_groq, stream_groq
 from .http import get_request, post_request
 from .ollama import (
-    chat_ollama,
     check_ollama_sync,
     list_models_async,
     list_models_sync,
     stream_ollama,
 )
-from .openai import chat_openai, stream_openai
+from .openai import stream_openai
 from .openrouter import chat_openrouter, stream_openrouter
 from .provider_checker import (
     ProviderChecker,
@@ -110,7 +111,7 @@ __all__ = [
 ]
 
 
-class LLMRouter:
+class LLMRouter(LLMRouterCore):
     """
     Intelligent LLM routing with automatic fallback (fully async).
 
@@ -203,7 +204,7 @@ class LLMRouter:
             redis_cache: Optional Redis-backed cache for inter-bot coordination
             unified_brain: Optional UnifiedBrain instance for high-level routing
         """
-        self.config = config or RouterConfig()
+        super().__init__(config=config)
         self.redis_cache = redis_cache
         self._prefer_brain_routing = unified_brain is not None
         self.unified_brain = (
@@ -222,9 +223,6 @@ class LLMRouter:
         self._pool_requests: list[int] = [0]
         self._direct_requests: list[int] = [0]
 
-        # Token usage tracking
-        self._total_tokens: int = 0
-        self._tokens_by_provider: dict[str, int] = {}
         self._provider_rr_index: int = 0
         self._provider_usage: dict[str, int] = {}
 
@@ -348,15 +346,11 @@ class LLMRouter:
                 'by_provider': {'ollama': int, 'openai': int, ...},
             }
         """
-        return {
-            "total_tokens": self._total_tokens,
-            "by_provider": dict(self._tokens_by_provider),
-        }
+        return super().get_token_stats()
 
     def reset_token_stats(self) -> None:
         """Reset token usage counters."""
-        self._total_tokens = 0
-        self._tokens_by_provider = {}
+        super().reset_token_stats()
 
     def _get_semantic_cache(self):
         """Get or initialize semantic cache (lazy loading)."""
@@ -542,6 +536,40 @@ class LLMRouter:
             if self._provider_is_configured(route[0]):
                 return route
         return candidates[-1] if candidates else self.FALLBACK_CHAIN[0]
+
+    @staticmethod
+    def _merge_route_lists(
+        *route_groups: list[tuple[Provider, str]],
+    ) -> list[tuple[Provider, str]]:
+        """Merge route groups while preserving order and removing duplicates."""
+        merged: list[tuple[Provider, str]] = []
+        seen: set[tuple[Provider, str]] = set()
+
+        for group in route_groups:
+            for route in group:
+                if route not in seen:
+                    merged.append(route)
+                    seen.add(route)
+
+        return merged
+
+    def _fallback_routes_for(
+        self,
+        provider: Provider,
+        model: str,
+        message: str,
+    ) -> list[tuple[Provider, str]]:
+        """Build an ordered fallback list for the current request."""
+        primary_route = (provider, model)
+        prioritized_routes: list[tuple[Provider, str]] = []
+
+        if primary_route in self.REASONING_CHAIN:
+            prioritized_routes = self.REASONING_CHAIN
+        elif primary_route in self.CODE_CHAIN or self._is_code_task(message):
+            prioritized_routes = self.CODE_CHAIN
+
+        merged_routes = self._merge_route_lists(prioritized_routes, self.FALLBACK_CHAIN)
+        return [route for route in merged_routes if route != primary_route]
 
     def _route_from_brain(self, message: str) -> tuple[Provider, str] | None:
         """Use UnifiedBrain to choose a route when available."""
@@ -787,6 +815,7 @@ class LLMRouter:
         self,
         message: str,
         system: str | None = None,
+        messages: list[dict[str, str] | Message] | None = None,
         provider: Provider | None = None,
         model: str | None = None,
         temperature: float = 0.7,
@@ -815,6 +844,9 @@ class LLMRouter:
         # Smart routing if no provider/model specified
         if provider is None and model is None:
             provider, model = self.smart_route(message)
+        else:
+            route = self.resolve_model(model, provider)
+            provider, model = route.provider, route.model
 
         provider = provider or self.config.default_provider
         model = model or self.config.default_model
@@ -830,13 +862,18 @@ class LLMRouter:
             else:
                 logger.warning(f"Persona '{persona}' not found")
 
+        normalized_messages = self.normalize_messages(
+            message=message, system=system, messages=messages
+        )
+        prompt_text = self.prompt_text(normalized_messages)
+
         # Check semantic cache first
         cache = self._get_semantic_cache() if use_cache else None
         cache_key = None
 
         if cache is not None:
             cache_key = cache.create_key(
-                prompt=message,
+                prompt=prompt_text,
                 system=system,
                 model=model,
                 temperature=temperature,
@@ -857,7 +894,7 @@ class LLMRouter:
         # Check Redis InterBot Cache if available (secondary cache)
         if use_cache and self.redis_cache and hasattr(self.redis_cache, "get_cached"):
             try:
-                cached_data = self.redis_cache.get_cached(message)
+                cached_data = self.redis_cache.get_cached(prompt_text)
                 if cached_data:
                     logger.info("Redis InterBot Cache HIT")
                     return Response(
@@ -880,7 +917,18 @@ class LLMRouter:
         # Try primary provider (uses internal methods for testability)
         response = None
         try:
-            if provider == Provider.OLLAMA:
+            if messages is not None and provider in {
+                Provider.OLLAMA,
+                Provider.OPENAI,
+                Provider.ANTHROPIC,
+            }:
+                response = await self._chat_messages(
+                    normalized_messages,
+                    provider=provider,
+                    model=model,
+                    temperature=temperature,
+                )
+            elif provider == Provider.OLLAMA:
                 response = await self._chat_ollama(message, system, model, temperature)
             elif provider == Provider.OPENAI:
                 response = await self._chat_openai(message, system, model, temperature)
@@ -923,7 +971,7 @@ class LLMRouter:
                 if self.redis_cache and hasattr(self.redis_cache, "cache_response"):
                     try:
                         self.redis_cache.cache_response(
-                            prompt=message,
+                            prompt=prompt_text,
                             response=response.content,
                             model=model or "unknown",
                         )
@@ -943,9 +991,9 @@ class LLMRouter:
                 raise
 
         # Fallback chain (uses internal methods for testability)
-        for fallback_provider, fallback_model in self.FALLBACK_CHAIN:
-            if fallback_provider == provider:
-                continue  # Skip the one that just failed
+        for fallback_provider, fallback_model in self._fallback_routes_for(
+            provider, model, message
+        ):
 
             try:
                 logger.info(
@@ -953,7 +1001,18 @@ class LLMRouter:
                     f"model={fallback_model}"
                 )
 
-                if fallback_provider == Provider.OLLAMA:
+                if messages is not None and fallback_provider in {
+                    Provider.OLLAMA,
+                    Provider.OPENAI,
+                    Provider.ANTHROPIC,
+                }:
+                    response = await self._chat_messages(
+                        normalized_messages,
+                        provider=fallback_provider,
+                        model=fallback_model,
+                        temperature=temperature,
+                    )
+                elif fallback_provider == Provider.OLLAMA:
                     response = await self._chat_ollama(
                         message, system, fallback_model, temperature
                     )
@@ -1037,16 +1096,7 @@ class LLMRouter:
         temperature: float,
     ) -> Response:
         """Internal Ollama chat method (for testing)."""
-        return await chat_ollama(
-            message,
-            system,
-            model,
-            temperature,
-            self.config,
-            self._is_ollama_available,
-            self._post_request,
-            self._track_tokens,
-        )
+        return await super()._chat_ollama(message, system, model, temperature)
 
     async def _chat_openai(
         self,
@@ -1056,15 +1106,7 @@ class LLMRouter:
         temperature: float,
     ) -> Response:
         """Internal OpenAI chat method (for testing)."""
-        return await chat_openai(
-            message,
-            system,
-            model,
-            temperature,
-            self.config,
-            self._post_request,
-            self._track_tokens,
-        )
+        return await super()._chat_openai(message, system, model, temperature)
 
     async def _chat_azure_openai(
         self,
@@ -1092,15 +1134,7 @@ class LLMRouter:
         temperature: float,
     ) -> Response:
         """Internal Anthropic chat method (for testing)."""
-        return await chat_anthropic(
-            message,
-            system,
-            model,
-            temperature,
-            self.config,
-            self._post_request,
-            self._track_tokens,
-        )
+        return await super()._chat_anthropic(message, system, model, temperature)
 
     async def _chat_openrouter(
         self,
