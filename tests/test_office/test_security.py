@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Security and validation tests for office document handling."""
 
 from __future__ import annotations

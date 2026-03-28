@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for PowerPoint-focused conversion behavior."""
 
 from __future__ import annotations

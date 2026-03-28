@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for image-oriented office document structures."""
 
 from __future__ import annotations

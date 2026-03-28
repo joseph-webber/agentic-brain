@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Enterprise DOCX processing built on top of python-docx.
 
 This module provides a production-oriented :class:`WordProcessor` for modern

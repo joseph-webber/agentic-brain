@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for office table models and extraction-oriented structures."""
 
 from __future__ import annotations

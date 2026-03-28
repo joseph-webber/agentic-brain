@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Accessibility support for Office documents.
 
 This module integrates the Phase 3 accessibility stack with Office documents,

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Public convenience API for office document workflows.
 
 This module wraps the lower-level processors that live in

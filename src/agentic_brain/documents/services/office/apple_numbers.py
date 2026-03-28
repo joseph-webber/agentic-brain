@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Apple Numbers spreadsheet processor for agentic-brain.
 
 Provides best-effort parsing support for Apple Numbers ``.numbers`` packages.

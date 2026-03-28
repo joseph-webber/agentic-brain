@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Custom exceptions for office document services."""
 
 from __future__ import annotations

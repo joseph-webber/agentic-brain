@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for RTF handling in office models and validation."""
 
 from __future__ import annotations

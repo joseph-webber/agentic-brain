@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Unified image extraction utilities for Office-style document containers."""
 
 from __future__ import annotations

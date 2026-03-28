@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Excel workbook processor built on top of ``openpyxl``.
 
 This module provides a structured Excel processor for modern XLSX-family

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """PowerPoint processing built on top of python-pptx.
 
 This module provides a high-level, structured PowerPoint processor capable of

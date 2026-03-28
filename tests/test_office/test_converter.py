@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for OfficeConverter helpers and orchestration."""
 
 from __future__ import annotations

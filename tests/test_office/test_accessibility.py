@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Accessibility-oriented tests for office document structures."""
 
 from __future__ import annotations

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """End-to-end office module integration tests."""
 
 from __future__ import annotations

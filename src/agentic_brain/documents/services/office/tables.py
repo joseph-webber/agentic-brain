@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Unified table extraction across office document formats.
 
 This module provides a single table extraction service that works across common

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """OpenDocument processing built on top of odfpy.
 
 This module implements :class:`OpenDocumentProcessor`, a shared processor for

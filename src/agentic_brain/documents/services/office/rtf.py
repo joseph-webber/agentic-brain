@@ -1,4 +1,6 @@
-"""Rich Text Format processing utilities for agentic-brain.
+# SPDX-License-Identifier: Apache-2.0
+
+r"""Rich Text Format processing utilities for agentic-brain.
 
 This module focuses on providing reliable RTF ingestion and basic authoring
 capabilities. While RTF is an older format, it is still encountered in many

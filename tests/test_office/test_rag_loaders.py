@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Tests for RAG loaders used with office documents."""
 
 from __future__ import annotations

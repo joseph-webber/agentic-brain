@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 """Apple Pages document processor.
 
 Modern ``.pages`` files are ZIP-based iWork packages containing protobuf-like
