@@ -30,6 +30,7 @@ Complete reference for the Agentic Brain documentation.
 - [**Platform Support**](PLATFORM_SUPPORT.md) - Supported OS, CPU, and hardware combinations
 
 ## 🔌 Integrations
+- [**Enhanced Integrations**](INTEGRATIONS.md) - Mem0, LiteLLM, Docling, neo4j-graphrag, Chonkie
 - [**Voice Integration Guide**](VOICE_INTEGRATION_GUIDE.md) - Adding speech capabilities
 - [**Neo4j Integration**](integrations/NEO4J.md) - Neo4j integration details
 - [**JHipster Integration**](integrations/JHIPSTER.md) - JHipster integration guidance
