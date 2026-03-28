@@ -449,40 +449,113 @@ class TestBenchmark:
 
 
 # ---------------------------------------------------------------------------
-# Performance smoke test
+# Performance & token-accuracy benchmarks
 # ---------------------------------------------------------------------------
 
 
 @needs_chonkie
 class TestPerformanceSmoke:
-    """Quick smoke test to verify Chonkie is meaningfully faster."""
+    """Verify Chonkie delivers adequate throughput."""
 
-    def test_chonkie_token_faster_than_builtin(self):
-        """Chonkie token chunking should be comparable or faster on large text."""
-        from agentic_brain.rag.chunking import ChonkieChunker, SemanticChunker
+    def test_chonkie_throughput_above_threshold(self):
+        """Chonkie token chunking should process ≥1M chars/sec on large text."""
+        from agentic_brain.rag.chunking import ChonkieChunker
 
-        # Use a very large text to amortise Chonkie's Rust overhead
+        # Dense text without paragraph breaks (worst case for tokenizer)
         text = LONG_TEXT * 5
         iterations = 5
 
-        # Built-in
-        builtin = SemanticChunker(chunk_size=512, overlap=50)
+        chunker = ChonkieChunker(strategy="token", chunk_size=128, overlap=16)
+
+        # Warm up
+        chunker.chunk(text[:500])
+
         start = time.perf_counter()
         for _ in range(iterations):
-            builtin.chunk(text)
-        builtin_time = time.perf_counter() - start
+            chunker.chunk(text)
+        elapsed = time.perf_counter() - start
 
-        # Chonkie token
-        chonkie = ChonkieChunker(strategy="token", chunk_size=128, overlap=16)
-        start = time.perf_counter()
-        for _ in range(iterations):
-            chonkie.chunk(text)
-        chonkie_time = time.perf_counter() - start
+        avg_sec = elapsed / iterations
+        chars_per_sec = len(text) / avg_sec if avg_sec > 0 else 0
 
-        # On very large texts Chonkie is faster; on small texts the pure-Python
-        # built-in can win due to lower call overhead.  We just verify it isn't
-        # catastrophically slower (< 20x).
-        assert chonkie_time < builtin_time * 20, (
-            f"Chonkie ({chonkie_time:.3f}s) is too slow "
-            f"compared to built-in ({builtin_time:.3f}s)"
+        assert chars_per_sec > 1_000_000, (
+            f"Chonkie throughput {chars_per_sec:,.0f} chars/sec is below "
+            f"1M chars/sec threshold (avg {avg_sec * 1000:.1f} ms for "
+            f"{len(text):,} chars)"
         )
+
+
+@needs_chonkie
+class TestTokenAccuracy:
+    """Prove Chonkie's token-accurate chunking is superior to char-based."""
+
+    def test_token_count_consistency(self):
+        """Chonkie token chunks should have much lower token-count variance."""
+        import statistics
+
+        from agentic_brain.rag.chunking import ChonkieChunker, FixedChunker
+
+        # Single block of text (no easy paragraph splits)
+        sentence = (
+            "Artificial intelligence has transformed the technology landscape. "
+            "Machine learning models can now process natural language accurately. "
+        )
+        text = sentence * 200  # ~30k chars, no paragraph breaks
+
+        # Chonkie: real tokenizer
+        chonkie = ChonkieChunker(strategy="token", chunk_size=128, overlap=16)
+        chonkie_chunks = chonkie.chunk(text)
+
+        # Built-in: character-based estimation
+        fixed = FixedChunker(chunk_size=512, overlap=50)
+        fixed_chunks = fixed.chunk(text)
+
+        # Extract token counts
+        chonkie_tokens = [
+            c.metadata.get("token_count", c.token_count) for c in chonkie_chunks
+        ]
+        fixed_tokens = [c.token_count for c in fixed_chunks]
+
+        assert len(chonkie_tokens) > 1, "Need multiple chunks to measure variance"
+        assert len(fixed_tokens) > 1, "Need multiple chunks to measure variance"
+
+        chonkie_stddev = statistics.stdev(chonkie_tokens)
+        fixed_stddev = statistics.stdev(fixed_tokens)
+
+        # Chonkie's token counts should be significantly more consistent
+        # (lower standard deviation) than the character-based estimator
+        assert chonkie_stddev < fixed_stddev, (
+            f"Chonkie token stddev ({chonkie_stddev:.1f}) should be lower than "
+            f"built-in ({fixed_stddev:.1f}) — Chonkie uses a real tokenizer"
+        )
+
+    def test_all_chunks_have_token_metadata(self):
+        """Every Chonkie chunk must carry a real token_count in metadata."""
+        from agentic_brain.rag.chunking import ChonkieChunker
+
+        chunker = ChonkieChunker(strategy="token", chunk_size=128, overlap=16)
+        chunks = chunker.chunk(LONG_TEXT)
+
+        for chunk in chunks:
+            assert "token_count" in chunk.metadata, (
+                f"Chunk {chunk.chunk_index} missing token_count metadata"
+            )
+            assert chunk.metadata["token_count"] > 0
+
+    def test_chunk_sizes_respect_token_limit(self):
+        """Chonkie chunks should not wildly exceed the requested token size."""
+        from agentic_brain.rag.chunking import ChonkieChunker
+
+        target_tokens = 128
+        chunker = ChonkieChunker(
+            strategy="token", chunk_size=target_tokens, overlap=16
+        )
+        chunks = chunker.chunk(LONG_TEXT)
+
+        for chunk in chunks:
+            token_count = chunk.metadata.get("token_count", 0)
+            # Allow some tolerance (tokenizers may slightly exceed)
+            assert token_count <= target_tokens * 1.5, (
+                f"Chunk {chunk.chunk_index} has {token_count} tokens, "
+                f"exceeds 1.5× target of {target_tokens}"
+            )
