@@ -26,15 +26,16 @@ import asyncio
 import json
 import logging
 import os
-import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional
 
 from .cloud_tts import speak_cloud
 from .linux import speak_linux
 from .platform import VoicePlatform, check_voice_available, detect_platform
+from .serializer import VoiceMessage as SerializedVoiceMessage
+from .serializer import get_voice_serializer
 from .windows import speak_windows
 
 logger = logging.getLogger(__name__)
@@ -192,17 +193,18 @@ class ResilientVoice:
     ) -> bool:
         """macOS say command with voice and rate"""
         try:
-            safe_text = text.replace('"', '\\"').replace("'", "'\\''")
-            cmd = f"say -v '{voice}' -r {rate} '{safe_text}'"
-            result = await asyncio.wait_for(
-                asyncio.create_subprocess_shell(
-                    cmd,
-                    stdout=asyncio.subprocess.DEVNULL,
-                    stderr=asyncio.subprocess.DEVNULL,
-                ),
-                timeout=cls._config.timeout,
+            proc = await asyncio.create_subprocess_exec(
+                "say",
+                "-v",
+                voice,
+                "-r",
+                str(rate),
+                text,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
             )
-            return result.returncode == 0 or result is not None
+            returncode = await asyncio.wait_for(proc.wait(), timeout=cls._config.timeout)
+            return returncode == 0
         except TimeoutError:
             logger.warning("say_with_voice timeout")
             return False
@@ -216,17 +218,14 @@ class ResilientVoice:
     ) -> bool:
         """macOS say command with default voice"""
         try:
-            safe_text = text.replace('"', '\\"').replace("'", "'\\''")
-            cmd = f"say '{safe_text}'"
-            result = await asyncio.wait_for(
-                asyncio.create_subprocess_shell(
-                    cmd,
-                    stdout=asyncio.subprocess.DEVNULL,
-                    stderr=asyncio.subprocess.DEVNULL,
-                ),
-                timeout=cls._config.timeout,
+            proc = await asyncio.create_subprocess_exec(
+                "say",
+                text,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
             )
-            return result.returncode == 0 or result is not None
+            returncode = await asyncio.wait_for(proc.wait(), timeout=cls._config.timeout)
+            return returncode == 0
         except TimeoutError:
             logger.warning("say_default timeout")
             return False
@@ -244,16 +243,15 @@ class ResilientVoice:
             script = (
                 f'tell application "System Events" to say "{safe_text}" using "{voice}"'
             )
-            cmd = f"osascript -e '{script}'"
-            result = await asyncio.wait_for(
-                asyncio.create_subprocess_shell(
-                    cmd,
-                    stdout=asyncio.subprocess.DEVNULL,
-                    stderr=asyncio.subprocess.DEVNULL,
-                ),
-                timeout=cls._config.timeout,
+            proc = await asyncio.create_subprocess_exec(
+                "osascript",
+                "-e",
+                script,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
             )
-            return result.returncode == 0 or result is not None
+            returncode = await asyncio.wait_for(proc.wait(), timeout=cls._config.timeout)
+            return returncode == 0
         except TimeoutError:
             logger.warning("osascript_voice timeout")
             return False
@@ -269,16 +267,15 @@ class ResilientVoice:
         try:
             safe_text = text.replace('"', '\\"')
             script = f'say "{safe_text}"'
-            cmd = f"osascript -e '{script}'"
-            result = await asyncio.wait_for(
-                asyncio.create_subprocess_shell(
-                    cmd,
-                    stdout=asyncio.subprocess.DEVNULL,
-                    stderr=asyncio.subprocess.DEVNULL,
-                ),
-                timeout=cls._config.timeout,
+            proc = await asyncio.create_subprocess_exec(
+                "osascript",
+                "-e",
+                script,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
             )
-            return result.returncode == 0 or result is not None
+            returncode = await asyncio.wait_for(proc.wait(), timeout=cls._config.timeout)
+            return returncode == 0
         except TimeoutError:
             logger.warning("osascript_default timeout")
             return False
@@ -293,16 +290,14 @@ class ResilientVoice:
         """Play alert sound as final fallback"""
         try:
             if os.path.exists(cls._config.fallback_sound):
-                cmd = f"afplay '{cls._config.fallback_sound}'"
-                result = await asyncio.wait_for(
-                    asyncio.create_subprocess_shell(
-                        cmd,
-                        stdout=asyncio.subprocess.DEVNULL,
-                        stderr=asyncio.subprocess.DEVNULL,
-                    ),
-                    timeout=5,
+                proc = await asyncio.create_subprocess_exec(
+                    "afplay",
+                    cls._config.fallback_sound,
+                    stdout=asyncio.subprocess.DEVNULL,
+                    stderr=asyncio.subprocess.DEVNULL,
                 )
-                return result.returncode == 0 or result is not None
+                returncode = await asyncio.wait_for(proc.wait(), timeout=5)
+                return returncode == 0
             return False
         except Exception as e:
             logger.debug(f"alert_sound error: {e}")
@@ -352,6 +347,31 @@ class ResilientVoice:
 
         voice = voice or cls._config.default_voice
         rate = rate or cls._config.default_rate
+        serializer = get_voice_serializer()
+        message = SerializedVoiceMessage(text=text, voice=voice, rate=rate)
+
+        return await serializer.run_serialized_async(
+            message,
+            executor=lambda queued_message: cls._run_serialized_fallbacks(queued_message),
+        )
+
+    @classmethod
+    def _run_serialized_fallbacks(cls, message: SerializedVoiceMessage) -> bool:
+        """Run the fallback chain inside the global voice serializer."""
+        return asyncio.run(
+            cls._speak_with_fallbacks(message.text, message.voice, message.rate)
+        )
+
+    @classmethod
+    async def _speak_with_fallbacks(
+        cls,
+        text: str,
+        voice: str,
+        rate: int,
+    ) -> bool:
+        """Internal fallback chain executed while the serializer lock is held."""
+        if not cls._config:
+            cls(VoiceConfig())
 
         logger.info(f"Speaking: '{text[:50]}...' (voice={voice}, rate={rate})")
 
@@ -512,16 +532,13 @@ class SoundEffects:
             return False
 
         try:
-            cmd = f"afplay '{sound_file}'"
-            result = await asyncio.wait_for(
-                asyncio.create_subprocess_shell(
-                    cmd,
-                    stdout=asyncio.subprocess.DEVNULL,
-                    stderr=asyncio.subprocess.DEVNULL,
-                ),
-                timeout=5,
+            from agentic_brain.voice._speech_lock import global_speak
+
+            cmd = ["afplay", sound_file]
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(
+                None, lambda: global_speak(cmd, timeout=5)
             )
-            return result.returncode == 0 or result is not None
         except Exception as e:
             logger.debug(f"Sound effect error: {e}")
             return False

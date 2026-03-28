@@ -193,10 +193,12 @@ class VoiceOverCoordinator:
             if not self.wait_for_voiceover(timeout=5.0):
                 logger.warning("Proceeding despite VoiceOver timeout")
 
-        # Speak using macOS say
+        # Speak using global speech lock (NEVER overlaps!)
         try:
-            subprocess.run(["say", "-v", voice, "-r", str(rate), text], check=True)
-            return True
+            from agentic_brain.voice._speech_lock import global_speak
+
+            cmd = ["say", "-v", voice, "-r", str(rate), text]
+            return global_speak(cmd, timeout=60)
         except subprocess.CalledProcessError as e:
             logger.error(f"Speech failed: {e}")
             return False

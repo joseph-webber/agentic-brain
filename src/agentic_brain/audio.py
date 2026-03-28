@@ -410,37 +410,21 @@ class Audio:
 
     def _speak_macos(self, text: str, voice: str, rate: int, wait: bool) -> bool:
         """macOS native TTS using Neural Engine."""
-        # Sanitize text for shell
-        text = text.replace('"', '\\"').replace("'", "\\'")
-
-        # If voice name contains (Premium) but system doesn't use it, strip it?
-        # Actually `say` command usually handles "Karen (Premium)" fine if installed.
-        # But if user configures "Premium" quality, we might want to ensure we use the premium voice.
-
-        # Check if we should enforce premium quality based on config
-        if self.config.voice_config.quality == VoiceQuality.PREMIUM:
-            # If voice doesn't have (Premium) suffix but a premium version exists, try appending it
-            # This is a bit tricky without knowing exactly what's installed.
-            # For now, trust the voice name provided or configured.
-            pass
+        from agentic_brain.voice._speech_lock import global_speak
 
         voice_norm = (voice or "").strip().lower()
         if voice_norm in {"auto", "default", "system", ""}:
-            # Use macOS system default voice
             cmd = ["say", "-r", str(rate), text]
         else:
             cmd = ["say", "-v", voice, "-r", str(rate), text]
 
-        if wait:
-            result = subprocess.run(cmd, capture_output=True)
-            return result.returncode == 0
-        else:
-            subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return True
+        # Always use global_speak to prevent overlap - even for wait=False
+        return global_speak(cmd, timeout=60)
 
     def _speak_windows(self, text: str, rate: int, wait: bool) -> bool:
         """Windows SAPI TTS."""
-        # PowerShell command for Windows TTS
+        from agentic_brain.voice._speech_lock import global_speak
+
         ps_script = f"""
         Add-Type -AssemblyName System.Speech
         $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
@@ -449,31 +433,17 @@ class Audio:
         """
 
         cmd = ["powershell", "-Command", ps_script]
-
-        if wait:
-            result = subprocess.run(cmd, capture_output=True)
-            return result.returncode == 0
-        else:
-            subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return True
+        return global_speak(cmd, timeout=60)
 
     def _speak_linux(self, text: str, rate: int, wait: bool) -> bool:
         """Linux TTS using espeak or festival."""
-        # Try espeak-ng first, then espeak
+        from agentic_brain.voice._speech_lock import global_speak
+
         espeak = shutil.which("espeak-ng") or shutil.which("espeak")
 
         if espeak:
-            # Convert rate to espeak format (default 175 -> 175)
             cmd = [espeak, "-s", str(rate), text]
-
-            if wait:
-                result = subprocess.run(cmd, capture_output=True)
-                return result.returncode == 0
-            else:
-                subprocess.Popen(
-                    cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-                )
-                return True
+            return global_speak(cmd, timeout=60)
 
         # Try festival
         festival = shutil.which("festival")
@@ -521,6 +491,8 @@ class Audio:
 
     def _sound_macos(self, name: str, wait: bool) -> bool:
         """Play macOS system sound."""
+        from agentic_brain.voice._speech_lock import global_speak
+
         sound_name = self.MACOS_SOUNDS.get(name, name)
         sound_path = f"/System/Library/Sounds/{sound_name}.aiff"
 
@@ -529,13 +501,7 @@ class Audio:
             return False
 
         cmd = ["afplay", sound_path]
-
-        if wait:
-            result = subprocess.run(cmd, capture_output=True)
-            return result.returncode == 0
-        else:
-            subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            return True
+        return global_speak(cmd, timeout=10)
 
     def announce(
         self,

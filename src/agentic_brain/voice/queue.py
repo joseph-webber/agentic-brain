@@ -21,7 +21,9 @@ import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, List, Optional
+from typing import Callable, List, Optional
+
+from agentic_brain.voice.serializer import get_voice_serializer
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +181,8 @@ class VoiceQueue:
             self._speaking = False
             self._queue.clear()
             self._history.clear()
-            logger.info("VoiceQueue reset")
+        get_voice_serializer().reset()
+        logger.info("VoiceQueue reset")
 
     def add_error_callback(self, callback: Callable[[str, Exception], None]) -> None:
         """Register callback for errors."""
@@ -301,24 +304,21 @@ class VoiceQueue:
                 f"🔊 Speaking [{message.voice}] @{message.rate}wpm: {text[:60]}..."
             )
 
-            # Run say command
-            cmd = ["say", "-v", message.voice, "-r", str(message.rate), text]
-            self._current_process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+            serializer = get_voice_serializer()
+            success = serializer.speak(
+                text,
+                voice=message.voice,
+                rate=message.rate,
+                pause_after=message.pause_after,
             )
-
-            # Wait for completion
-            self._current_process.wait(timeout=60)
+            self._current_process = serializer.current_process
+            if not success:
+                raise RuntimeError(f"Voice serializer failed for {message.voice}")
 
             # Add to history
             self._history.append(message)
             if len(self._history) > self._max_history:
                 self._history.pop(0)
-
-            # Pause before next message
-            time.sleep(message.pause_after)
 
         except subprocess.TimeoutExpired:
             error_msg = f"Voice timeout for {message.voice}"
@@ -455,7 +455,7 @@ class VoiceQueue:
 
     def is_speaking(self) -> bool:
         """Check if currently speaking."""
-        return self._speaking
+        return self._speaking or get_voice_serializer().is_speaking()
 
     def get_history(self, limit: Optional[int] = None) -> List[VoiceMessage]:
         """Get recent speech history."""

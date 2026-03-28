@@ -21,6 +21,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from tests.fixtures.voice_test_phrases import pick_voice_phrase
+
 from agentic_brain.audio import (
     Audio,
     AudioConfig,
@@ -129,24 +131,34 @@ class TestAudio:
         """Test disabled audio doesn't speak."""
         audio = Audio(AudioConfig(enabled=False))
 
-        result = audio.speak("Hello")
+        result = audio.speak(pick_voice_phrase("test_disabled_audio", "technology_quotes"))
         assert result is False
 
-    @patch("subprocess.run")
+    @patch("agentic_brain.voice._speech_lock.subprocess.Popen")
     @patch("shutil.which")
-    def test_speak_macos(self, mock_which, mock_run):
-        """Test macOS speaking."""
+    def test_speak_macos(self, mock_which, mock_popen):
+        """Test macOS speaking routes through global speech lock."""
         mock_which.return_value = "/usr/bin/say"
-        mock_run.return_value = MagicMock(returncode=0)
+        proc = MagicMock()
+        proc.poll.return_value = None
+        proc.wait.return_value = None
+        proc.returncode = 0
+        mock_popen.return_value = proc
 
         audio = Audio()
         audio.platform = Platform.MACOS
         audio._tts_available = True
 
-        result = audio._speak_macos("Hello", "Karen", 175, wait=True)
+        result = audio._speak_macos(
+            pick_voice_phrase("test_speak_macos", "multilingual_greetings"),
+            "Karen",
+            175,
+            wait=True,
+        )
 
         assert result is True
-        mock_run.assert_called_once()
+        mock_popen.assert_called_once()
+        proc.wait.assert_called_once()
 
     @patch("subprocess.run")
     @patch("shutil.which")
@@ -193,7 +205,12 @@ class TestAudio:
         audio = Audio(AudioConfig(enabled=False))
 
         # Just verify it doesn't crash when disabled
-        result = audio.announce("Test message", sound="success")
+        result = audio.announce(
+            pick_voice_phrase(
+                "test_announce_combines_sound_and_speech", "status_updates"
+            ),
+            sound="success",
+        )
         assert result is False
 
 
@@ -210,9 +227,12 @@ class TestConvenienceFunctions:
     @pytest.mark.parametrize(
         "func,args",
         [
-            (speak, ("Hello",)),
+            (speak, (pick_voice_phrase("test_convenience_speak", "poetry_snippets"),)),
             (sound, ("success",)),
-            (announce, ("Hello",)),
+            (
+                announce,
+                (pick_voice_phrase("test_convenience_announce", "technology_quotes"),),
+            ),
         ],
     )
     def test_convenience_functions_disabled(self, func, args):

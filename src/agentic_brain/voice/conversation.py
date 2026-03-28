@@ -31,17 +31,14 @@ Examples:
 
 import asyncio
 import logging
-import os
 import re
-import shutil
-import subprocess
-import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-from agentic_brain.voice.registry import VoiceMetadata, VoiceQuality, get_voice
+from agentic_brain.voice.registry import get_voice
+from agentic_brain.voice.serializer import get_voice_serializer
 
 logger = logging.getLogger(__name__)
 
@@ -274,6 +271,7 @@ class ConversationalVoice:
         voice: Optional[str] = None,
         rate: Optional[int] = None,
         wait: bool = True,
+        pause_after: Optional[float] = None,
     ) -> bool:
         """
         Speak text with natural pacing and intonation.
@@ -311,31 +309,24 @@ class ConversationalVoice:
         # Get natural rate
         speaking_rate = self.get_speaking_rate(voice, rate)
 
-        # Speak using macOS `say`
-        try:
-            if shutil.which("say") is None:
-                logger.warning("macOS 'say' command not available")
-                return False
-            cmd = ["say", "-v", full_voice_name, "-r", str(speaking_rate), text]
-
-            if wait:
-                subprocess.run(cmd, check=True)
-            else:
-                subprocess.Popen(cmd)
-
+        success = get_voice_serializer().speak(
+            text,
+            voice=full_voice_name,
+            rate=speaking_rate,
+            pause_after=pause_after,
+            wait=wait,
+        )
+        if success:
             self.last_speaker = voice
             logger.info(f"Spoke with {voice}: {text[:50]}...")
-            return True
-
-        except FileNotFoundError:
-            logger.warning("macOS 'say' command not available")
-            return False
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Speech failed: {e}")
-            return False
+        return success
 
     async def speak_async(
-        self, text: str, voice: Optional[str] = None, rate: Optional[int] = None
+        self,
+        text: str,
+        voice: Optional[str] = None,
+        rate: Optional[int] = None,
+        pause_after: Optional[float] = None,
     ) -> bool:
         """Async version of speak."""
         if self.config.mode == VoiceMode.QUIET:
@@ -344,7 +335,14 @@ class ConversationalVoice:
         # Run in executor to avoid blocking
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
-            None, lambda: self.speak(text, voice, rate, wait=True)
+            None,
+            lambda: self.speak(
+                text,
+                voice,
+                rate,
+                wait=True,
+                pause_after=pause_after,
+            ),
         )
 
     def conversation(
@@ -383,14 +381,10 @@ class ConversationalVoice:
                 )
                 voice = available[0] if available else "Karen"
 
-            # Speak
-            if not self.speak(text, voice=voice):
+            pause_after = pause if i < len(messages) - 1 else 0.0
+            if not self.speak(text, voice=voice, pause_after=pause_after):
                 success = False
                 break
-
-            # Pause between speakers (except after last message)
-            if i < len(messages) - 1:
-                time.sleep(pause)
 
         return success
 
@@ -409,12 +403,8 @@ class ConversationalVoice:
             if voice not in available:
                 voice = available[0] if available else "Karen"
 
-            # Speak
-            await self.speak_async(text, voice=voice)
-
-            # Pause between speakers
-            if i < len(messages) - 1:
-                await asyncio.sleep(pause)
+            pause_after = pause if i < len(messages) - 1 else 0.0
+            await self.speak_async(text, voice=voice, pause_after=pause_after)
 
         return True
 

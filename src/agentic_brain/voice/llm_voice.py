@@ -232,8 +232,8 @@ def _split_completed_sentences(buffer: str) -> Tuple[List[str], str]:
 def _speak_sentence(text: str, voice: str) -> None:
     """Speak a single sentence using the main audio system when available.
 
-    Falls back to macOS `say` if the audio subsystem is not available. This is
-    kept synchronous on purpose so we do not overlap voices.
+    Falls back to macOS `say` via the global speech lock if the audio
+    subsystem is not available. This ensures we never overlap voices.
     """
 
     try:
@@ -242,20 +242,15 @@ def _speak_sentence(text: str, voice: str) -> None:
         audio_speak(text, voice=voice)
         return
     except Exception:
-        # Fall back to direct macOS TTS if available.
+        # Fall back to direct macOS TTS via global lock.
         try:
-            import platform
-            import subprocess
+            import platform as _platform
 
-            if platform.system() == "Darwin":
-                subprocess.run(
-                    ["say", "-v", voice, text],
-                    check=False,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
+            if _platform.system() == "Darwin":
+                from agentic_brain.voice._speech_lock import global_speak
+
+                global_speak(["say", "-v", voice, text], timeout=60)
         except Exception:
-            # Last-resort: swallow errors, as voice is best-effort.
             return
 
 
