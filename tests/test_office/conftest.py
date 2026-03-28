@@ -15,8 +15,7 @@ import pytest
 
 # Skip all office tests until implementation is aligned with test expectations
 pytestmark = pytest.mark.skipif(
-    True,
-    reason="Office tests need refactoring to match actual implementation"
+    True, reason="Office tests need refactoring to match actual implementation"
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
