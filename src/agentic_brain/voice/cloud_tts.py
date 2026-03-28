@@ -265,6 +265,11 @@ async def speak_cloud(
     """
     Speak using cloud TTS with automatic provider fallback.
 
+    WARNING: This function does NOT acquire the voice serializer lock.
+    It must only be called from within the serializer's executor (e.g.
+    via ``ResilientVoice._cloud_tts``).  Calling it directly from
+    application code will bypass overlap protection.
+
     Tries providers in order:
     1. Google TTS (free, no key needed)
     2. Azure Speech (if configured)

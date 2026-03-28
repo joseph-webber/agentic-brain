@@ -199,6 +199,11 @@ async def speak_linux(text: str, voice: Optional[str] = None, rate: int = 150) -
     """
     Speak on Linux using best available method.
 
+    WARNING: This function does NOT acquire the voice serializer lock.
+    It must only be called from within the serializer's executor (e.g.
+    via ``ResilientVoice._linux_voice``).  Calling it directly from
+    application code will bypass overlap protection.
+
     Tries methods in order:
     1. pyttsx3 (preferred)
     2. espeak/espeak-ng

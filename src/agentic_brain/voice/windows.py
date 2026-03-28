@@ -137,6 +137,11 @@ async def speak_windows(
     """
     Speak on Windows using best available method.
 
+    WARNING: This function does NOT acquire the voice serializer lock.
+    It must only be called from within the serializer's executor (e.g.
+    via ``ResilientVoice._windows_voice``).  Calling it directly from
+    application code will bypass overlap protection.
+
     Tries methods in order:
     1. pyttsx3 (preferred)
     2. PowerShell SAPI

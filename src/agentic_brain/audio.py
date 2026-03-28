@@ -445,18 +445,26 @@ class Audio:
             cmd = [espeak, "-s", str(rate), text]
             return global_speak(cmd, timeout=60)
 
-        # Try festival
+        # Try festival — must go through global_speak to prevent overlap
         festival = shutil.which("festival")
         if festival:
-            cmd = ["festival", "--tts"]
-            proc = subprocess.Popen(
-                cmd,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+
+            def _festival_speak(msg: object) -> bool:
+                proc = subprocess.Popen(
+                    ["festival", "--tts"],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                proc.communicate(input=text.encode(), timeout=60)
+                return proc.returncode == 0
+
+            from agentic_brain.voice.serializer import VoiceMessage, get_voice_serializer
+
+            return get_voice_serializer().run_serialized(
+                VoiceMessage(text=text, voice="festival", rate=rate),
+                executor=_festival_speak,
             )
-            proc.communicate(input=text.encode())
-            return proc.returncode == 0
 
         return False
 
