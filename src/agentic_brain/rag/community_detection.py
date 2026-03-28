@@ -10,7 +10,7 @@
 """Community detection helpers powered by Neo4j Graph Data Science."""
 
 
-def detect_communities(session) -> dict:
+def detect_communities(session) -> dict[int, list[str]]:
     # Project graph
     session.run(
         """
@@ -28,7 +28,7 @@ def detect_communities(session) -> dict:
     """
     )
 
-    communities = {}
+    communities: dict[int, list[str]] = {}
     for record in result:
         cid = record["communityId"]
         if cid not in communities:
@@ -40,7 +40,7 @@ def detect_communities(session) -> dict:
     return communities
 
 
-async def detect_communities_async(session) -> dict:
+async def detect_communities_async(session) -> dict[int, list[str]]:
     """Async wrapper for community detection using Neo4j GDS."""
     await session.run(
         """
@@ -57,7 +57,7 @@ async def detect_communities_async(session) -> dict:
     """
     )
 
-    communities = {}
+    communities: dict[int, list[str]] = {}
     async for record in result:
         cid = record["communityId"]
         if cid not in communities:

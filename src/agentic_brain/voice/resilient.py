@@ -144,11 +144,7 @@ class ResilientVoice:
         """Initialize platform-specific fallback chain"""
         cls._fallbacks = []
         cls._platform = _resolve_detect_platform()()
-        platform_value = (
-            cls._platform.value
-            if isinstance(cls._platform, VoicePlatform)
-            else str(cls._platform)
-        )
+        platform_value = getattr(cls._platform, "value", str(cls._platform))
 
         if platform_value == VoicePlatform.MACOS.value:
             # macOS fallback chain
