@@ -254,6 +254,8 @@ class AudioConfig:
     enabled: bool = True
     default_voice: str = "Karen"
     default_rate: int = 175
+    earcons_enabled: bool = True
+    earcon_volume: float = 0.3
     sounds_dir: Path | None = None
     on_speak: Callable[[str], None] | None = None
     on_error: Callable[[str], None] | None = None
@@ -298,6 +300,7 @@ class Audio:
         self.platform = Platform.current()
         self._speaking = False
         self._airpods_manager = None
+        self._earcon_player = None
         self._tts_available = self._check_tts()
         if not self._tts_available:
             logger.warning("No TTS engine available on this platform")
@@ -349,6 +352,13 @@ class Audio:
         manager = self._get_airpods_manager()
         if manager:
             manager.finish_speech()
+
+    def _get_earcon_player(self):
+        if self._earcon_player is None:
+            from .earcons import EarconPlayer
+
+            self._earcon_player = EarconPlayer(volume=self.config.earcon_volume)
+        return self._earcon_player
 
     def speak(
         self,
@@ -450,6 +460,18 @@ class Audio:
             logger.error("Sound error: %s", exc)
             return False
 
+    def earcon(self, name: str, blocking: bool = False) -> bool:
+        if not self.config.enabled or not self.config.earcons_enabled:
+            return False
+
+        try:
+            return self._get_earcon_player().play(name, blocking=blocking)
+        except ValueError:
+            raise
+        except Exception as exc:  # pragma: no cover - defensive callback path
+            logger.error("Earcon error: %s", exc)
+            return False
+
     def _sound_macos(self, name: str, wait: bool) -> bool:
         from agentic_brain.voice._speech_lock import global_speak
 
@@ -498,6 +520,7 @@ _default_audio: Audio | None = None
 _default_registry: VoiceRegistry | None = None
 _default_queue: VoiceQueue | None = None
 _default_airpods: AirPodsManager | None = None
+_default_earcons: Any | None = None
 
 
 def get_audio() -> Audio:
@@ -528,6 +551,15 @@ def get_airpods() -> AirPodsManager:
     return _default_airpods
 
 
+def get_earcon_player():
+    global _default_earcons
+    if _default_earcons is None:
+        from .earcons import EarconPlayer
+
+        _default_earcons = EarconPlayer()
+    return _default_earcons
+
+
 def list_voices(search: str | None = None) -> list[dict[str, Any]]:
     return get_registry().list_voices(search)
 
@@ -553,6 +585,10 @@ def play_queue():
 
 def sound(name: str, **kwargs) -> bool:
     return get_audio().sound(name, **kwargs)
+
+
+def earcon(name: str, **kwargs) -> bool:
+    return get_audio().earcon(name, **kwargs)
 
 
 def announce(message: str, **kwargs) -> bool:

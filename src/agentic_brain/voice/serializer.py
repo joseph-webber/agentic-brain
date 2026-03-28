@@ -34,10 +34,7 @@ from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
 from agentic_brain.cache.voice_cache import VoiceCache, VoiceState
-from agentic_brain.voice._speech_lock import (
-    RedisVoiceLock,
-    get_global_lock as _get_global_lock,
-)
+from agentic_brain.voice._speech_lock import get_global_lock as _get_global_lock
 from agentic_brain.voice.redis_queue import RedisVoiceQueue, VoiceJob
 
 logger = logging.getLogger(__name__)
@@ -139,11 +136,11 @@ class VoiceSerializer:
     Never call ``subprocess.Popen(["say", ...])`` directly.
     """
 
-    _instance: Optional["VoiceSerializer"] = None
+    _instance: Optional[VoiceSerializer] = None
     _instance_lock = threading.Lock()
     _initialized: bool = False
 
-    def __new__(cls) -> "VoiceSerializer":
+    def __new__(cls) -> VoiceSerializer:
         with cls._instance_lock:
             if cls._instance is not None:
                 return cls._instance
@@ -301,9 +298,30 @@ class VoiceSerializer:
         """Run a speech job through the singleton queue."""
         job = _SpeechJob(message=message, executor=executor or self._speak_with_say)
         with self._queue_ready:
-            self._queue.append(job)
+            if self._redis_queue is None:
+                self._queue.append(job)
+            else:
+                try:
+                    queued_job = VoiceJob(
+                        text=message.text,
+                        voice=message.voice,
+                        rate=message.rate,
+                        priority="normal",
+                        pause_after=message.pause_after,
+                    )
+                    self._pending_jobs[queued_job.job_id] = job
+                    self._redis_queue.enqueue(queued_job)
+                except Exception:
+                    logger.debug(
+                        "Unable to enqueue speech in Redis - falling back to memory",
+                        exc_info=True,
+                    )
+                    if "queued_job" in locals():
+                        self._pending_jobs.pop(queued_job.job_id, None)
+                    self._queue.append(job)
+            queue_depth = max(len(self._queue), len(self._pending_jobs))
+            self._sync_voice_cache_state(queue_depth_override=queue_depth)
             self._queue_ready.notify()
-        self._sync_voice_cache_state()
 
         if not wait:
             return True
@@ -328,10 +346,7 @@ class VoiceSerializer:
 
     def _worker_loop(self) -> None:
         while True:
-            with self._queue_ready:
-                while not self._queue:
-                    self._queue_ready.wait()
-                job = self._queue.popleft()
+            job = self._next_job()
 
             with self._speech_lock:
                 with self._state_lock:
@@ -360,6 +375,35 @@ class VoiceSerializer:
                         time.sleep(pause_after)
 
                     job.done.set()
+
+    def _next_job(self) -> _SpeechJob:
+        while True:
+            if self._redis_queue is not None:
+                try:
+                    redis_job = self._redis_queue.dequeue()
+                except Exception:
+                    logger.debug("Unable to dequeue from Redis voice queue", exc_info=True)
+                    redis_job = None
+
+                if redis_job is not None:
+                    with self._queue_ready:
+                        pending = self._pending_jobs.pop(redis_job.job_id, None)
+                    if pending is not None:
+                        return pending
+                    return _SpeechJob(
+                        message=VoiceMessage(
+                            text=redis_job.text,
+                            voice=redis_job.voice,
+                            rate=redis_job.rate,
+                            pause_after=redis_job.pause_after,
+                        ),
+                        executor=self._speak_with_say,
+                    )
+
+            with self._queue_ready:
+                if self._queue:
+                    return self._queue.pop(0)
+                self._queue_ready.wait(timeout=0.25)
 
     def _speak_with_say(self, message: VoiceMessage) -> bool:
         """Speak using macOS ``say``, waiting for completion.
@@ -429,7 +473,14 @@ class VoiceSerializer:
             logger.debug("Voice cache unavailable - continuing without Redis", exc_info=True)
             return None
 
-    def _sync_voice_cache_state(self) -> None:
+    def _create_redis_queue(self) -> Optional[RedisVoiceQueue]:
+        try:
+            return RedisVoiceQueue()
+        except Exception:
+            logger.debug("Redis voice queue unavailable - falling back to memory", exc_info=True)
+            return None
+
+    def _sync_voice_cache_state(self, queue_depth_override: Optional[int] = None) -> None:
         if self._voice_cache is None:
             return
 
@@ -443,7 +494,11 @@ class VoiceSerializer:
                     is_speaking=is_speaking,
                     current_text=current_message.text if current_message else "",
                     current_voice=current_message.voice if current_message else "Karen",
-                    queue_depth=self.queue_size(),
+                    queue_depth=(
+                        self.queue_size()
+                        if queue_depth_override is None
+                        else queue_depth_override
+                    ),
                 )
             )
         except Exception:

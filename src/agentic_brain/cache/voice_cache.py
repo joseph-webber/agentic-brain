@@ -49,7 +49,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from agentic_brain.core.redis_pool import RedisConfig, RedisPoolManager
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -253,7 +252,7 @@ class VoiceCache:
         return self.client.delete(self._audio_key(text, voice)) > 0
 
     def _audio_key(self, text: str, voice: str) -> str:
-        digest = hashlib.md5(f"{text}:{voice}".encode("utf-8")).hexdigest()
+        digest = hashlib.md5(f"{text}:{voice}".encode()).hexdigest()
         return f"{self.audio_prefix}{digest}"
 
     # ------------------------------------------------------------------
@@ -351,15 +350,17 @@ class VoiceCache:
     def set_state(self, state: VoiceState) -> None:
         """Persist the current voice state in Redis."""
 
+        updated_at = time.time() if state.updated_at is None else state.updated_at
         self.client.hset(
             self.state_key,
             mapping={
                 "is_speaking": "true" if state.is_speaking else "false",
                 "current_text": state.current_text,
                 "current_voice": state.current_voice,
+                "current_lady": state.current_voice,
                 "queue_depth": str(state.queue_depth),
                 "message_id": state.message_id,
-                "updated_at": str(time.time()),
+                "updated_at": str(updated_at),
             },
         )
 

@@ -70,11 +70,17 @@ dependencies = [
     "typer>=0.9.0,<0.10.0",  # Pin older version for Python 3.14 compatibility
     "click>=8.0.0",
     "numpy>=1.24.0,<3.0.0",  # Core numerical computations
+    "scipy>=1.11.0,<2.0.0",  # Earcon waveform rendering
     "firebase-admin>=6.0.0,<7.0.0",  # Firebase auth, Firestore, RTDB, and Storage
     "temporalio>=1.4.0,<2.0.0",  # Durable workflow execution
 ]
 
 [project.optional-dependencies]
+voice-kokoro = [
+    "kokoro>=0.9.2",
+    "soundfile>=0.12.1",
+    "huggingface-hub>=0.29.0",
+]
 # Enhanced integrations bundle
 enhanced = [
     "mem0ai>=0.1.0",
@@ -402,7 +408,12 @@ where = ["src"]
 include = ["agentic_brain*"]
 
 [tool.setuptools.package-data]
-"agentic_brain.audio" = ["native/*.swift", "native/*.m", "native/*.cpp"]
+"agentic_brain.audio" = [
+    "native/*.swift",
+    "native/*.m",
+    "native/*.cpp",
+    "earcons/*.wav",
+]
 
 [tool.black]
 line-length = 88

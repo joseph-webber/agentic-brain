@@ -65,7 +65,7 @@ class TestVoiceMessage:
 
     def test_voice_message_invalid_rate(self):
         """Test invalid rate raises ValueError."""
-        with pytest.raises(ValueError, match="100-200"):
+        with pytest.raises(ValueError, match="100-500"):
             VoiceMessage(
                 text=pick_voice_phrase(
                     "test_voice_message_invalid_rate", "australia_facts"
