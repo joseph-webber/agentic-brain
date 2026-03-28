@@ -36,12 +36,56 @@ Usage:
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
 from .embeddings import EmbeddingProvider, get_embeddings
 from .retriever import RetrievedChunk
+
+
+def _get_result_id(item: dict[str, Any]) -> str:
+    """Return a stable identifier for an RRF result item."""
+    item_id = item.get("id") or item.get("chunk_id")
+    if not item_id:
+        raise KeyError("RRF result item must include 'id' or 'chunk_id'")
+    return str(item_id)
+
+
+def reciprocal_rank_fusion(
+    vector_results: list[dict[str, Any]],
+    graph_results: list[dict[str, Any]],
+    keyword_results: Optional[list[dict[str, Any]]] = None,
+    k: int = 60,
+) -> list[dict[str, Any]]:
+    """
+    Combine multiple ranked lists using Reciprocal Rank Fusion.
+
+    RRF score = sum(1 / (k + rank)) for each ranked list where the item appears.
+    """
+    scores: dict[str, float] = {}
+    merged_items: dict[str, dict[str, Any]] = {}
+
+    ranked_lists = [vector_results, graph_results]
+    if keyword_results:
+        ranked_lists.append(keyword_results)
+
+    for results in ranked_lists:
+        for rank, item in enumerate(results):
+            item_id = _get_result_id(item)
+            merged_items[item_id] = {**merged_items.get(item_id, {}), **item}
+            scores[item_id] = scores.get(item_id, 0.0) + 1.0 / (k + rank + 1)
+
+    sorted_ids = sorted(scores.keys(), key=lambda item_id: scores[item_id], reverse=True)
+
+    return [
+        {
+            **merged_items[item_id],
+            "id": item_id,
+            "rrf_score": scores[item_id],
+        }
+        for item_id in sorted_ids
+    ]
 
 
 @dataclass

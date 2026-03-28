@@ -4,7 +4,7 @@
 """Tests for Enhanced Graph RAG."""
 
 from datetime import datetime
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -13,6 +13,7 @@ from agentic_brain.rag.graph import (
     GraphRAGConfig,
     RetrievalStrategy,
 )
+from agentic_brain.rag.hybrid import reciprocal_rank_fusion
 
 
 @pytest.fixture
@@ -132,17 +133,70 @@ async def test_graph_retrieve(graph_rag, mock_session):
 @pytest.mark.asyncio
 async def test_hybrid_retrieve(graph_rag, mock_session):
     """Test hybrid vector+graph retrieval."""
-    mock_result = MagicMock()
-    mock_result.__iter__ = lambda self: iter([])
-    mock_session.run.return_value = mock_result
+    graph_rag._initialized = True
+    graph_rag._vector_retrieve = AsyncMock(
+        return_value=[
+            {
+                "chunk_id": "chunk-a",
+                "content": "Vector-only result",
+                "position": 0,
+                "doc_id": "doc-a",
+                "metadata": {"source": "vector"},
+                "score": 0.99,
+                "strategy": "vector",
+            },
+            {
+                "chunk_id": "chunk-b",
+                "content": "Shared result",
+                "position": 1,
+                "doc_id": "doc-b",
+                "metadata": {"source": "vector"},
+                "score": 0.5,
+                "strategy": "vector",
+            },
+        ]
+    )
+    graph_rag._graph_retrieve = AsyncMock(
+        return_value=[
+            {
+                "chunk_id": "chunk-b",
+                "content": "Shared result",
+                "position": 1,
+                "doc_id": "doc-b",
+                "metadata": {"source": "graph"},
+                "score": 0.2,
+                "entities": ["Shared"],
+                "strategy": "graph",
+            }
+        ]
+    )
 
-    with patch("agentic_brain.core.neo4j_pool.get_session") as mock_get_session:
-        mock_get_session.return_value.__enter__.return_value = mock_session
+    results = await graph_rag._hybrid_retrieve("test query", top_k=5)
 
-        graph_rag._initialized = True
-        results = await graph_rag._hybrid_retrieve("test query", top_k=5)
+    assert isinstance(results, list)
+    assert [result["chunk_id"] for result in results[:2]] == ["chunk-b", "chunk-a"]
+    assert results[0]["vector_score"] == 0.5
+    assert results[0]["graph_score"] == 0.2
+    assert results[0]["score"] == results[0]["rrf_score"]
+    assert results[0]["fusion_method"] == "rrf"
 
-        assert isinstance(results, list)
+
+def test_reciprocal_rank_fusion_prefers_consensus_hits():
+    """RRF should reward items that rank well across multiple sources."""
+    fused = reciprocal_rank_fusion(
+        vector_results=[
+            {"id": "chunk-a", "content": "Vector-only"},
+            {"id": "chunk-b", "content": "Shared"},
+        ],
+        graph_results=[
+            {"id": "chunk-b", "content": "Shared", "entities": ["Shared"]},
+            {"id": "chunk-c", "content": "Graph-only"},
+        ],
+    )
+
+    assert [item["id"] for item in fused[:3]] == ["chunk-b", "chunk-a", "chunk-c"]
+    assert fused[0]["rrf_score"] > fused[1]["rrf_score"]
+    assert fused[0]["entities"] == ["Shared"]
 
 
 @pytest.mark.asyncio

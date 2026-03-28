@@ -38,7 +38,7 @@ from agentic_brain.rag.chunking import (
     create_chunker,
 )
 from agentic_brain.rag.evaluation import EvalDataset, RAGEvaluator
-from agentic_brain.rag.hybrid import BM25Index, HybridSearch
+from agentic_brain.rag.hybrid import BM25Index, HybridSearch, reciprocal_rank_fusion
 from agentic_brain.rag.reranking import (
     CombinedReranker,
     MMRReranker,
@@ -331,6 +331,23 @@ class TestHybridSearch:
         results = index.search("machine learning", k=2)
         assert len(results) <= 2
         assert all(isinstance(r, tuple) and len(r) == 2 for r in results)
+
+    def test_reciprocal_rank_fusion_prefers_consensus_hits(self):
+        """RRF should rank shared hits ahead of single-source hits."""
+        fused = reciprocal_rank_fusion(
+            vector_results=[
+                {"id": "chunk-a", "content": "Vector-only"},
+                {"id": "chunk-b", "content": "Shared"},
+            ],
+            graph_results=[
+                {"id": "chunk-b", "content": "Shared", "entities": ["Shared"]},
+                {"id": "chunk-c", "content": "Graph-only"},
+            ],
+        )
+
+        assert [item["id"] for item in fused[:3]] == ["chunk-b", "chunk-a", "chunk-c"]
+        assert fused[0]["rrf_score"] > fused[1]["rrf_score"]
+        assert fused[0]["entities"] == ["Shared"]
 
     @requires_sentence_transformers
     def test_hybrid_search_basic(self, sample_chunks):

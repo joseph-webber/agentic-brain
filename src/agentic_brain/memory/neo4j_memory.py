@@ -37,6 +37,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+from agentic_brain.core.neo4j_utils import resilient_query_sync
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -191,6 +193,15 @@ class ConversationMemory:
             driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", ""))
             return driver.session()
 
+    def _run_query(
+        self,
+        session: Any,
+        query: str,
+        **params: Any,
+    ) -> List[Dict[str, Any]]:
+        """Run a Neo4j query with retry handling."""
+        return resilient_query_sync(session, query, params)
+
     async def initialize(self) -> None:
         """
         Initialize memory schema.
@@ -206,19 +217,22 @@ class ConversationMemory:
 
         with self._get_session() as session:
             # Create constraints
-            session.run(
+            self._run_query(
+                session,
                 """
                 CREATE CONSTRAINT session_id IF NOT EXISTS
                 FOR (s:Session) REQUIRE s.id IS UNIQUE
                 """
             )
-            session.run(
+            self._run_query(
+                session,
                 """
                 CREATE CONSTRAINT message_id IF NOT EXISTS
                 FOR (m:Message) REQUIRE m.id IS UNIQUE
                 """
             )
-            session.run(
+            self._run_query(
+                session,
                 """
                 CREATE CONSTRAINT entity_name IF NOT EXISTS
                 FOR (e:Entity) REQUIRE e.name IS UNIQUE
@@ -226,21 +240,26 @@ class ConversationMemory:
             )
 
             # Create indexes
-            session.run(
+            self._run_query(
+                session,
                 "CREATE INDEX message_timestamp IF NOT EXISTS FOR (m:Message) ON (m.timestamp)"
             )
-            session.run(
+            self._run_query(
+                session,
                 "CREATE INDEX message_importance IF NOT EXISTS FOR (m:Message) ON (m.importance)"
             )
-            session.run(
+            self._run_query(
+                session,
                 "CREATE INDEX session_timestamp IF NOT EXISTS FOR (s:Session) ON (s.started_at)"
             )
-            session.run(
+            self._run_query(
+                session,
                 "CREATE INDEX entity_type IF NOT EXISTS FOR (e:Entity) ON (e.type)"
             )
 
             # Create session node if doesn't exist
-            session.run(
+            self._run_query(
+                session,
                 """
                 MERGE (s:Session {id: $session_id})
                 ON CREATE SET s.started_at = datetime(),
@@ -284,7 +303,8 @@ class ConversationMemory:
 
         with self._get_session() as session:
             # Create message node with importance
-            session.run(
+            self._run_query(
+                session,
                 """
                 CREATE (m:Message {
                     id: $msg_id,
@@ -308,7 +328,8 @@ class ConversationMemory:
             )
 
             # Link to session
-            session.run(
+            self._run_query(
+                session,
                 """
                 MATCH (s:Session {id: $session_id})
                 MATCH (m:Message {id: $msg_id})
@@ -321,7 +342,8 @@ class ConversationMemory:
             )
 
             # Link to previous message (maintain conversation order)
-            session.run(
+            self._run_query(
+                session,
                 """
                 MATCH (s:Session {id: $session_id})-[:CONTAINS]->(prev:Message)
                 WHERE NOT exists((prev)-[:NEXT]->())
@@ -345,7 +367,8 @@ class ConversationMemory:
                         {"name": name, "type": etype}
                         for name, etype in entities
                     ]
-                    session.run(
+                    self._run_query(
+                        session,
                         """
                         UNWIND $entities AS ent
                         MERGE (e:Entity {name: ent.name})
@@ -509,7 +532,8 @@ class ConversationMemory:
             await self.initialize()
 
         with self._get_session() as session:
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (s:Session {id: $session_id})-[:CONTAINS]->(m:Message)
                 WHERE m.importance > $min_importance
@@ -539,7 +563,8 @@ class ConversationMemory:
 
             updated = len(updates)
             if updates:
-                session.run(
+                self._run_query(
+                    session,
                     """
                     UNWIND $updates AS u
                     MATCH (m:Message {id: u.id})
@@ -567,7 +592,8 @@ class ConversationMemory:
             await self.initialize()
 
         with self._get_session() as session:
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (m:Message {id: $msg_id})
                 SET m.access_count = coalesce(m.access_count, 0) + 1,
@@ -583,7 +609,7 @@ class ConversationMemory:
                 boost=self.config.reinforce_boost,
             )
 
-            record = result.single()
+            record = result[0] if result else None
             new_importance = record["importance"] if record else 0.5
             logger.debug(f"Reinforced memory {message_id}: importance={new_importance}")
             return new_importance
@@ -704,7 +730,8 @@ class ConversationMemory:
             await self.initialize()
 
         with self._get_session() as session:
-            session.run(
+            self._run_query(
+                session,
                 """
                 MATCH (s1:Session {id: $session1})
                 MATCH (s2:Session {id: $session2})
@@ -742,7 +769,8 @@ class ConversationMemory:
             await self.initialize()
 
         with self._get_session() as session:
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (s1:Session {id: $session_id})-[:CONTAINS]->(m1:Message)
                       -[:MENTIONS]->(e:Entity)<-[:MENTIONS]-(m2:Message)
@@ -791,7 +819,8 @@ class ConversationMemory:
             await self.initialize()
 
         with self._get_session() as session:
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (e:Entity)
                 WHERE toLower(e.name) = toLower($name)
@@ -850,7 +879,8 @@ class ConversationMemory:
 
         with self._get_session() as session:
             # Find old, low-importance messages
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (m:Message)
                 WHERE m.timestamp < $cutoff
@@ -893,7 +923,8 @@ class ConversationMemory:
                     f"condense_{sid}_{datetime.now(UTC)}".encode()
                 ).hexdigest()[:16]
 
-                session.run(
+                self._run_query(
+                    session,
                     """
                     CREATE (s:Summary {
                         id: $summary_id,
@@ -910,7 +941,8 @@ class ConversationMemory:
 
                 # Mark original messages as compressed
                 msg_ids = [m["id"] for m in msgs]
-                session.run(
+                self._run_query(
+                    session,
                     """
                     MATCH (m:Message)
                     WHERE m.id IN $ids
@@ -983,7 +1015,7 @@ class ConversationMemory:
             if limit:
                 params["limit"] = limit
 
-            result = session.run(query, **params)
+            result = self._run_query(session, query, **params)
 
             for record in result:
                 msg = Message(
@@ -1049,7 +1081,7 @@ class ConversationMemory:
             if since:
                 params["since"] = since.isoformat()
 
-            result = session.run(query, **params)
+            result = self._run_query(session, query, **params)
 
             for record in result:
                 msg = Message(
@@ -1127,7 +1159,7 @@ class ConversationMemory:
                     "end": end.isoformat(),
                 }
 
-            result = session.run(query, **params)
+            result = self._run_query(session, query, **params)
 
             for record in result:
                 msg = Message(
@@ -1190,7 +1222,8 @@ class ConversationMemory:
                 f"{self.session_id}_{datetime.now(UTC)}".encode()
             ).hexdigest()[:16]
 
-            session.run(
+            self._run_query(
+                session,
                 """
                 CREATE (sum:Summary {
                     id: $summary_id,
@@ -1204,7 +1237,8 @@ class ConversationMemory:
                 msg_count=len(messages),
             )
 
-            session.run(
+            self._run_query(
+                session,
                 """
                 MATCH (s:Session {id: $session_id})
                 MATCH (sum:Summary {id: $summary_id})
@@ -1235,7 +1269,8 @@ class ConversationMemory:
 
         with self._get_session() as session:
             # Find old messages without summaries
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (m:Message)
                 WHERE m.timestamp < $cutoff
@@ -1248,7 +1283,7 @@ class ConversationMemory:
                 cutoff=cutoff.isoformat(),
             )
 
-            record = result.single()
+            record = result[0] if result else None
             if not record or record["count"] == 0:
                 return 0
 
@@ -1256,7 +1291,8 @@ class ConversationMemory:
 
             # In production: create proper summary using LLM
             # For now: mark as compressed
-            session.run(
+            self._run_query(
+                session,
                 """
                 MATCH (m:Message)
                 WHERE m.id IN $message_ids
@@ -1280,7 +1316,8 @@ class ConversationMemory:
             await self.initialize()
 
         with self._get_session() as session:
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (s:Session {id: $session_id})
                 OPTIONAL MATCH (s)-[:CONTAINS]->(m:Message)
@@ -1300,7 +1337,7 @@ class ConversationMemory:
                 session_id=self.session_id,
             )
 
-            record = result.single()
+            record = result[0] if result else None
             if record:
                 return {
                     "session_id": self.session_id,
