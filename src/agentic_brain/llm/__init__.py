@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Lightweight LLM routing primitives."""
 
 from .router import LLMRouter, LLMRouterCore, ModelRoute

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 """Lightweight multi-provider LLM router using only the patterns we need.

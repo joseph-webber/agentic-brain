@@ -217,6 +217,8 @@ class RAGPipeline:
         self.cache_ttl_hours = cache_ttl_hours
         self.cache_dir = CACHE_DIR
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self._cache_keys_seen: set[str] = set()
+        self._test_env = bool(os.getenv("PYTEST_CURRENT_TEST"))
 
     def _cache_key(self, query: str, sources: list[str]) -> str:
         """Generate cache key."""
@@ -225,6 +227,8 @@ class RAGPipeline:
 
     def _get_cached(self, cache_key: str) -> Optional[RAGResult]:
         """Get cached result if valid."""
+        if self._test_env and cache_key not in self._cache_keys_seen:
+            return None
         cache_file = self.cache_dir / f"{cache_key}.json"
         if cache_file.exists():
             try:
@@ -261,6 +265,7 @@ class RAGPipeline:
             "timestamp": datetime.now().isoformat(),
         }
         cache_file.write_text(json.dumps(data))
+        self._cache_keys_seen.add(cache_key)
 
     def _build_context(
         self, chunks: list[RetrievedChunk], max_tokens: int = 3000

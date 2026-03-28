@@ -144,8 +144,13 @@ class ResilientVoice:
         """Initialize platform-specific fallback chain"""
         cls._fallbacks = []
         cls._platform = _resolve_detect_platform()()
+        platform_value = (
+            cls._platform.value
+            if isinstance(cls._platform, VoicePlatform)
+            else str(cls._platform)
+        )
 
-        if cls._platform == VoicePlatform.MACOS:
+        if platform_value == VoicePlatform.MACOS.value:
             # macOS fallback chain
             cls._fallbacks = [
                 VoiceFallback("say_with_voice", 1, cls._say_with_voice),
@@ -156,7 +161,7 @@ class ResilientVoice:
                 VoiceFallback("alert_sound", 6, cls._play_alert),
             ]
 
-        elif cls._platform == VoicePlatform.WINDOWS:
+        elif platform_value == VoicePlatform.WINDOWS.value:
             # Windows fallback chain
             cls._fallbacks = [
                 VoiceFallback("windows_voice", 1, cls._windows_voice),
@@ -164,7 +169,7 @@ class ResilientVoice:
                 VoiceFallback("alert_sound", 3, cls._play_alert),
             ]
 
-        elif cls._platform == VoicePlatform.LINUX:
+        elif platform_value == VoicePlatform.LINUX.value:
             # Linux fallback chain
             cls._fallbacks = [
                 VoiceFallback("linux_voice", 1, cls._linux_voice),
