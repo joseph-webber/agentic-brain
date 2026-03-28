@@ -345,6 +345,10 @@ class ResilientVoice:
         if not cls._config:
             cls(VoiceConfig())
 
+        if not text or not text.strip():
+            logger.debug("Skipping resilient voice request with empty text")
+            return False
+
         voice = voice or cls._config.default_voice
         rate = rate or cls._config.default_rate
         serializer = get_voice_serializer()

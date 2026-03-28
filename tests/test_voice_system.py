@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
+
 from agentic_brain.voice.conversation import (
     ConversationalVoice,
     ConversationConfig,
@@ -293,7 +295,10 @@ class TestVoiceIntegration:
 
         # Speak should work (though may not produce audio in test)
         # We're testing the logic, not actual audio output
-        result = conv.speak("Test message", voice="Karen")
+        result = conv.speak(
+            pick_voice_phrase("test_work_mode_flow", "technology_quotes"),
+            voice="Karen",
+        )
         assert isinstance(result, bool)
 
     def test_life_mode_conversation(self):
@@ -306,10 +311,11 @@ class TestVoiceIntegration:
         assert len(available) >= 5
 
         # Conversation structure
+        phrases = pick_voice_phrases("test_life_mode_conversation", 3)
         messages = [
-            ("Karen", "Starting task"),
-            ("Moira", "Working on it"),
-            ("Karen", "Complete!"),
+            ("Karen", phrases[0]),
+            ("Moira", phrases[1]),
+            ("Karen", phrases[2]),
         ]
 
         # Should handle conversation structure

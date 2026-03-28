@@ -14,6 +14,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from tests.fixtures.voice_test_phrases import pick_voice_phrase
+
 # Add source to path for imports to work correctly in test runner
 sys.path.append(os.path.join(os.path.dirname(__file__), "../src"))
 
@@ -73,10 +75,11 @@ class TestVoiceFunctionality:
         audio._tts_available = True
 
         # Mock speak
+        phrase = pick_voice_phrase("test_voice_rate_adjustment", "technology_quotes")
         with patch.object(audio, "_speak_macos", return_value=True) as mock_speak:
-            audio.speak("Test rate")
+            audio.speak(phrase)
             # Verify rate passed to _speak_macos
-            mock_speak.assert_called_with("Test rate", "Karen", 200, True)
+            mock_speak.assert_called_with(phrase, "Karen", 200, True)
 
     def test_voice_disabled_mode(self):
         """Test disabled mode."""
@@ -89,7 +92,9 @@ class TestVoiceFunctionality:
         # But my AudioConfig implementation syncs enabled to voice_config.enabled.
 
         with patch("agentic_brain.audio.subprocess.run") as mock_run:
-            result = audio.speak("Should not speak")
+            result = audio.speak(
+                pick_voice_phrase("test_voice_disabled_mode", "poetry_snippets")
+            )
             assert result is False
             assert not mock_run.called
 

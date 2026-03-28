@@ -19,6 +19,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
+
 from agentic_brain.voice.australian_regions import (
     AUSTRALIAN_CITIES,
     get_local_knowledge,
@@ -57,7 +59,13 @@ class TestVoiceLatency:
         start = time.perf_counter()
         await queue.connect()
         await queue.enqueue(
-            DurableVoiceMessage(text="Quick latency test", voice="Karen", rate=155)
+            DurableVoiceMessage(
+                text=pick_voice_phrase(
+                    "test_voice_queue_latency_under_100ms", "pronunciation_practice"
+                ),
+                voice="Karen",
+                rate=155,
+            )
         )
         elapsed_ms = (time.perf_counter() - start) * 1000
 
@@ -84,7 +92,11 @@ class TestVoiceLatency:
             fb.method = fast_fallback
 
         start = time.perf_counter()
-        result = await resilient_speak("Fallback latency check")
+        result = await resilient_speak(
+            pick_voice_phrase(
+                "test_voice_fallback_latency_under_500ms", "technology_quotes"
+            )
+        )
         elapsed_ms = (time.perf_counter() - start) * 1000
 
         assert isinstance(result, bool)
@@ -100,21 +112,21 @@ class TestVoicePriority:
         """CRITICAL messages jump the queue ahead of others."""
         now = time.time()
         normal = DurableVoiceMessage(
-            text="normal",
+            text=pick_voice_phrase("test_critical_priority_normal", "poetry_snippets"),
             voice="Karen",
             rate=155,
             priority=VoicePriority.NORMAL,
             timestamp=now,
         )
         critical = DurableVoiceMessage(
-            text="critical",
+            text=pick_voice_phrase("test_critical_priority_critical", "status_updates"),
             voice="Karen",
             rate=155,
             priority=VoicePriority.CRITICAL,
             timestamp=now - 10,  # older, but higher priority
         )
         high = DurableVoiceMessage(
-            text="high",
+            text=pick_voice_phrase("test_critical_priority_high", "australia_facts"),
             voice="Karen",
             rate=155,
             priority=VoicePriority.HIGH,
@@ -130,21 +142,21 @@ class TestVoicePriority:
         """Messages ordered by priority then timestamp (FIFO within same priority)."""
         now = time.time()
         low_early = DurableVoiceMessage(
-            text="low early",
+            text=pick_voice_phrase("test_priority_order_low_early", "poetry_snippets"),
             voice="Karen",
             rate=155,
             priority=VoicePriority.LOW,
             timestamp=now - 5,
         )
         low_late = DurableVoiceMessage(
-            text="low late",
+            text=pick_voice_phrase("test_priority_order_low_late", "multilingual_greetings"),
             voice="Karen",
             rate=155,
             priority=VoicePriority.LOW,
             timestamp=now + 5,
         )
         high = DurableVoiceMessage(
-            text="high",
+            text=pick_voice_phrase("test_priority_order_high", "technology_quotes"),
             voice="Karen",
             rate=155,
             priority=VoicePriority.HIGH,
@@ -177,8 +189,11 @@ class TestVoiceNeverOverlap:
         queue.reset()
 
         # Two sequential messages with explicit pauses
-        queue.speak("First message", voice="Karen", pause_after=0.5)
-        queue.speak("Second message", voice="Karen", pause_after=0.75)
+        phrases = pick_voice_phrases(
+            "test_sequential_voices_have_gap", 2, "tongue_twisters"
+        )
+        queue.speak(phrases[0], voice="Karen", pause_after=0.5)
+        queue.speak(phrases[1], voice="Karen", pause_after=0.75)
 
         # sleep() should be called for each message with configured pauses
         pauses = [call.args[0] for call in sleep_mock.call_args_list]
@@ -204,7 +219,13 @@ class TestVoiceNeverOverlap:
             threads = []
             for i in range(5):
                 t = threading.Thread(
-                    target=lambda idx=i: queue.speak(f"Message {idx}", voice="Karen")
+                    target=lambda idx=i: queue.speak(
+                        pick_voice_phrase(
+                            f"test_concurrent_requests_queue_properly_{idx}",
+                            "pronunciation_practice",
+                        ),
+                        voice="Karen",
+                    )
                 )
                 threads.append(t)
                 t.start()
@@ -290,7 +311,10 @@ class TestVoiceRobotHuman:
         queue = LocalVoiceQueue.get_instance()
         queue.reset()
 
-        message = queue.speak("Thinking about the next step...", voice="Karen")
+        message = queue.speak(
+            pick_voice_phrase("test_thinking_announcement", "thinking_updates"),
+            voice="Karen",
+        )
         assert isinstance(message, VoiceMessage)
         assert "thinking" in message.text.lower()
 

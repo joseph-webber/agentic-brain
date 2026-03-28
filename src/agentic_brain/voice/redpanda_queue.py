@@ -51,6 +51,12 @@ try:  # Redis is provided via optional ``redis`` extra
 except Exception:  # pragma: no cover - import fallback
     aioredis = None  # type: ignore[assignment]
 
+from agentic_brain.events.voice_events import (
+    VoiceEventProducer,
+    VoiceRequest,
+    VoiceStatus,
+    get_voice_event_producer,
+)
 from agentic_brain.voice.resilient import ResilientVoice
 
 logger = logging.getLogger(__name__)
@@ -131,6 +137,7 @@ class RedpandaVoiceQueue:
         redis_url: Optional[str] = None,
         redis_client=None,
         speak_func=None,
+        event_producer: Optional[VoiceEventProducer] = None,
     ) -> None:
         self._bootstrap = bootstrap_servers or os.getenv(
             "KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"
@@ -149,6 +156,7 @@ class RedpandaVoiceQueue:
         self._current_voice_task: Optional[asyncio.Task] = None
         self._memory_queue: List[VoiceMessage] = []
         self._speak_func = speak_func or ResilientVoice.speak
+        self._event_producer = event_producer or get_voice_event_producer()
 
     # ------------------------------------------------------------------
     # Backend setup
@@ -264,10 +272,12 @@ class RedpandaVoiceQueue:
 
         if self._backend == "memory":
             self._memory_queue.append(message)
+            self._publish_request_event(message)
             return
 
         if self._backend == "redis" and self._redis is not None:
             await self._redis.rpush(self._redis_key, message.to_json())
+            self._publish_request_event(message)
             return
 
         # Default: Redpanda (or best-effort if producer is None)
@@ -276,9 +286,11 @@ class RedpandaVoiceQueue:
             logger.warning("Producer not available – enqueueing to memory backend")
             self._backend = "memory"
             self._memory_queue.append(message)
+            self._publish_request_event(message)
             return
 
         await self._producer.send_and_wait(self.TOPIC, message.to_json())
+        self._publish_request_event(message)
 
     async def speak(
         self,
@@ -335,12 +347,85 @@ class RedpandaVoiceQueue:
             for msg in msgs:
                 pending.append(VoiceMessage.from_json(msg.value))
 
-    async def _play_message(self, message: VoiceMessage) -> None:
+    @staticmethod
+    def _to_event_priority(priority: VoicePriority) -> int:
+        mapping = {
+            VoicePriority.LOW: 20,
+            VoicePriority.NORMAL: 50,
+            VoicePriority.HIGH: 70,
+            VoicePriority.URGENT: 85,
+            VoicePriority.CRITICAL: 100,
+        }
+        return mapping.get(priority, 50)
+
+    def _publish_request_event(self, message: VoiceMessage) -> None:
+        if self._event_producer is None:
+            return
+
+        try:
+            self._event_producer.request_speech(
+                VoiceRequest(
+                    text=message.text,
+                    voice=message.voice,
+                    rate=message.rate,
+                    priority=self._to_event_priority(message.priority),
+                    metadata={
+                        "source": "redpanda_queue",
+                        "backend": self._backend,
+                        "queued_at": message.timestamp,
+                    },
+                )
+            )
+        except Exception:  # pragma: no cover - eventing is best-effort
+            logger.debug("Failed to publish voice request event", exc_info=True)
+
+    def _publish_status_event(
+        self,
+        event: str,
+        message: VoiceMessage,
+        *,
+        queue_depth: int,
+        error: Optional[str] = None,
+    ) -> None:
+        if self._event_producer is None:
+            return
+
+        try:
+            self._event_producer.publish_status(
+                VoiceStatus(
+                    event=event,
+                    text=message.text,
+                    voice=message.voice,
+                    queue_depth=max(queue_depth, 0),
+                    error=error,
+                    metadata={
+                        "source": "redpanda_queue",
+                        "backend": self._backend,
+                        "priority": int(message.priority),
+                    },
+                )
+            )
+        except Exception:  # pragma: no cover - eventing is best-effort
+            logger.debug("Failed to publish voice status event", exc_info=True)
+
+    async def _play_message(self, message: VoiceMessage, *, queue_depth: int = 0) -> None:
         """Play a single message via the resilient voice system."""
 
         # Delegate to resilient voice chain – this already ensures a single
         # active invocation within the process and handles all fallbacks.
-        await self._speak_func(message.text, message.voice, message.rate)
+        self._publish_status_event("started", message, queue_depth=queue_depth)
+        try:
+            await self._speak_func(message.text, message.voice, message.rate)
+        except Exception as exc:
+            self._publish_status_event(
+                "error",
+                message,
+                queue_depth=queue_depth,
+                error=str(exc),
+            )
+            raise
+        else:
+            self._publish_status_event("completed", message, queue_depth=queue_depth)
 
     async def process_queue(self) -> None:
         """Process the voice queue – ONE message at a time.
@@ -369,7 +454,7 @@ class RedpandaVoiceQueue:
                     current = pending.pop(0)
 
                     # SPEAK - blocking (from queue point of view) until complete
-                    await self._play_message(current)
+                    await self._play_message(current, queue_depth=len(pending))
 
                     # Small gap between voices to avoid perceived overlap
                     await asyncio.sleep(0.5)
@@ -415,6 +500,9 @@ class RedpandaVoiceQueue:
             except Exception:  # pragma: no cover
                 pass
             self._redis = None
+
+        if self._event_producer is not None:
+            self._event_producer.close()
 
     # ------------------------------------------------------------------
     # Introspection helpers

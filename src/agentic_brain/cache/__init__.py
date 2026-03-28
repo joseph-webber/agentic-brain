@@ -55,6 +55,15 @@ from .semantic_cache import (
     VectorSemanticCache,
     VectorSQLiteBackend,
 )
+from .voice_cache import (
+    Priority,
+    VoiceCache,
+    VoicePreferences,
+    VoiceQueueItem,
+    VoiceState,
+    VoiceRedisCache,
+    get_voice_cache,
+)
 
 __all__ = [
     "SemanticCache",
@@ -69,4 +78,12 @@ __all__ = [
     "VectorMemoryBackend",
     "VectorSQLiteBackend",
     "VectorSemanticCache",
+    # Voice cache
+    "VoiceCache",
+    "VoiceState",
+    "VoiceRedisCache",
+    "VoiceQueueItem",
+    "VoicePreferences",
+    "Priority",
+    "get_voice_cache",
 ]

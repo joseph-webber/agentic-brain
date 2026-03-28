@@ -16,6 +16,7 @@
 """Import tests for agentic_brain modules named 'manager'."""
 
 import importlib
+from unittest.mock import patch
 
 MODULES = [
     "agentic_brain.pooling.manager",
@@ -36,3 +37,22 @@ def test_module_imports():
 def test_basic_functionality():
     """Test basic functionality placeholder."""
     assert MODULES
+
+
+def test_mode_manager_announcements_use_serializer():
+    """Mode announcements must route through the shared voice serializer."""
+    from agentic_brain.modes.manager import ModeManager
+    from agentic_brain.modes.registry import get_mode
+
+    manager = ModeManager()
+    mode = get_mode("developer")
+
+    with patch("agentic_brain.modes.manager.speak_serialized") as mock_speak:
+        manager._announce_mode_change(mode)
+
+    mock_speak.assert_called_once_with(
+        "Switched to Developer mode",
+        voice=mode.config.voice.primary_voice,
+        rate=mode.config.voice.speech_rate,
+        wait=False,
+    )

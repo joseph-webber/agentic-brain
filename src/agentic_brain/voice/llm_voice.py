@@ -13,10 +13,13 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import uuid
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import httpx
+
+from agentic_brain.events.voice_events import get_voice_event_producer
 
 
 @dataclass
@@ -274,6 +277,15 @@ async def stream_voice_response(prompt: str, voice: str = "Karen (Premium)") -> 
     }
 
     buffer = ""
+    stream_id = str(uuid.uuid4())
+    event_producer = get_voice_event_producer()
+    event_producer.publish_llm_stream(
+        "",
+        request_id=stream_id,
+        voice=voice,
+        done=False,
+        metadata={"phase": "started", "prompt_preview": prompt[:160]},
+    )
 
     try:
         async with httpx.AsyncClient(timeout=None) as client:
@@ -297,6 +309,13 @@ async def stream_voice_response(prompt: str, voice: str = "Karen (Premium)") -> 
                         continue
 
                     buffer += chunk
+                    event_producer.publish_llm_stream(
+                        chunk,
+                        request_id=stream_id,
+                        voice=voice,
+                        done=False,
+                        metadata={"phase": "chunk"},
+                    )
                     sentences, buffer = _split_completed_sentences(buffer)
                     for sentence in sentences:
                         _speak_sentence(sentence, voice)
@@ -304,9 +323,31 @@ async def stream_voice_response(prompt: str, voice: str = "Karen (Premium)") -> 
         # Speak any remaining text.
         if buffer.strip():
             _speak_sentence(buffer.strip(), voice)
+            event_producer.publish_llm_stream(
+                buffer.strip(),
+                request_id=stream_id,
+                voice=voice,
+                done=False,
+                metadata={"phase": "tail"},
+            )
 
-    except Exception:
+        event_producer.publish_llm_stream(
+            "",
+            request_id=stream_id,
+            voice=voice,
+            done=True,
+            metadata={"phase": "completed"},
+        )
+
+    except Exception as exc:
         # Streaming is best-effort; failures should not crash the brain.
+        event_producer.publish_llm_stream(
+            "",
+            request_id=stream_id,
+            voice=voice,
+            done=True,
+            metadata={"phase": "error", "error": str(exc)},
+        )
         return
 
 

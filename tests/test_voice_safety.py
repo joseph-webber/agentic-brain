@@ -21,6 +21,8 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
+from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
+
 # Add source to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
@@ -42,15 +44,19 @@ class TestVoiceMessage:
 
     def test_voice_message_creation(self):
         """Test creating a voice message."""
-        msg = VoiceMessage(text="Hello Joseph", voice="Karen", rate=155)
-        assert msg.text == "Hello Joseph"
+        phrase = pick_voice_phrase("test_voice_message_creation", "multilingual_greetings")
+        msg = VoiceMessage(text=phrase, voice="Karen", rate=155)
+        assert msg.text == phrase
         assert msg.voice == "Karen"
         assert msg.rate == 155
 
     def test_voice_message_whitespace_normalization(self):
         """Test whitespace is normalized."""
-        msg = VoiceMessage(text="  Hello   Joseph  ")
-        assert msg.text == "Hello   Joseph"
+        phrase = pick_voice_phrase(
+            "test_voice_message_whitespace_normalization", "poetry_snippets"
+        )
+        msg = VoiceMessage(text=f"  {phrase}  ")
+        assert msg.text == phrase
 
     def test_voice_message_empty_text_raises(self):
         """Test empty text raises ValueError."""
@@ -60,11 +66,17 @@ class TestVoiceMessage:
     def test_voice_message_invalid_rate(self):
         """Test invalid rate raises ValueError."""
         with pytest.raises(ValueError, match="100-200"):
-            VoiceMessage(text="Hello", rate=50)
+            VoiceMessage(
+                text=pick_voice_phrase(
+                    "test_voice_message_invalid_rate", "australia_facts"
+                ),
+                rate=50,
+            )
 
     def test_voice_message_with_pause_after(self):
         """Test pause_after setting."""
-        msg = VoiceMessage(text="Hello", pause_after=2.5)
+        phrase = pick_voice_phrase("test_voice_message_with_pause_after", "status_updates")
+        msg = VoiceMessage(text=phrase, pause_after=2.5)
         assert msg.pause_after == 2.5
 
 
@@ -104,9 +116,15 @@ class TestVoiceQueueSafety:
         queue = VoiceQueue.get_instance()
 
         # Queue multiple messages
-        msg1 = queue.speak("First message", voice="Karen", rate=155, pause_after=0.1)
-        msg2 = queue.speak("Second message", voice="Kyoko", rate=145, pause_after=0.1)
-        msg3 = queue.speak("Third message", voice="Moira", rate=150, pause_after=0.1)
+        phrases = pick_voice_phrases(
+            "test_only_one_voice_at_time",
+            3,
+            "technology_quotes",
+            "tongue_twisters",
+        )
+        msg1 = queue.speak(phrases[0], voice="Karen", rate=155, pause_after=0.1)
+        msg2 = queue.speak(phrases[1], voice="Kyoko", rate=145, pause_after=0.1)
+        msg3 = queue.speak(phrases[2], voice="Moira", rate=150, pause_after=0.1)
 
         # All should be queued
         assert msg1 is not None
@@ -133,9 +151,15 @@ class TestVoiceQueueSafety:
         queue = VoiceQueue.get_instance()
 
         # Queue messages in specific order
-        queue.speak("Alpha", voice="Karen", pause_after=0.05)
-        queue.speak("Beta", voice="Kyoko", pause_after=0.05)
-        queue.speak("Gamma", voice="Moira", pause_after=0.05)
+        phrases = pick_voice_phrases(
+            "test_queue_order_preserved",
+            3,
+            "australia_facts",
+            "multilingual_greetings",
+        )
+        queue.speak(phrases[0], voice="Karen", pause_after=0.05)
+        queue.speak(phrases[1], voice="Kyoko", pause_after=0.05)
+        queue.speak(phrases[2], voice="Moira", pause_after=0.05)
 
         time.sleep(0.3)
 
@@ -148,8 +172,7 @@ class TestVoiceQueueSafety:
 
         # Verify order (accounting for mocking delays)
         if len(text_spoken) >= 2:
-            # Alpha should come before Beta
-            assert text_spoken[0] in ["Alpha", "Beta", "Gamma"]
+            assert text_spoken[0] in phrases
 
     @patch("subprocess.Popen")
     def test_pause_between_speakers(self, mock_popen):
@@ -170,8 +193,9 @@ class TestVoiceQueueSafety:
         mock_popen.side_effect = record_speak
 
         # Queue messages with 0.2s pause
-        queue.speak("First", pause_after=0.2)
-        queue.speak("Second", pause_after=0.2)
+        phrases = pick_voice_phrases("test_pause_between_speakers", 2, "poetry_snippets")
+        queue.speak(phrases[0], pause_after=0.2)
+        queue.speak(phrases[1], pause_after=0.2)
 
         # Wait for processing
         time.sleep(0.5)
@@ -202,8 +226,9 @@ class TestVoiceQueueSafety:
         queue.add_error_callback(error_callback)
 
         # Queue messages
-        queue.speak("First (will fail)")
-        queue.speak("Second (should succeed)")
+        phrases = pick_voice_phrases("test_error_recovery", 2, "status_updates")
+        queue.speak(phrases[0])
+        queue.speak(phrases[1])
 
         time.sleep(0.3)
 
@@ -220,8 +245,9 @@ class TestVoiceQueueSafety:
         queue = VoiceQueue.get_instance()
 
         # Queue some messages
-        queue.speak("Message 1", pause_after=0.05)
-        queue.speak("Message 2", pause_after=0.05)
+        phrases = pick_voice_phrases("test_queue_reset", 2, "technology_quotes")
+        queue.speak(phrases[0], pause_after=0.05)
+        queue.speak(phrases[1], pause_after=0.05)
 
         # Give it a moment to process
         time.sleep(0.1)
@@ -336,15 +362,17 @@ class TestConvenienceFunctions:
     def test_speak_function(self):
         """Test speak() convenience function."""
         with patch("subprocess.Popen"):
-            msg = speak("Test message", voice="Karen")
-            assert msg.text == "Test message"
+            phrase = pick_voice_phrase("test_speak_function", "tongue_twisters")
+            msg = speak(phrase, voice="Karen")
+            assert msg.text == phrase
             assert msg.voice == "Karen"
 
     def test_clear_queue_function(self):
         """Test clear_queue() function."""
         with patch("subprocess.Popen"):
-            speak("Message 1")
-            speak("Message 2")
+            phrases = pick_voice_phrases("test_clear_queue_function", 2, "status_updates")
+            speak(phrases[0])
+            speak(phrases[1])
             clear_queue()
             assert get_queue_size() == 0
 
@@ -354,15 +382,16 @@ class TestConvenienceFunctions:
         assert not is_speaking()
         # After adding message (but mocked won't actually speak)
         with patch("subprocess.Popen"):
-            speak("Test")
+            speak(pick_voice_phrase("test_is_speaking_function", "technology_quotes"))
             # Depending on mock timing, might be speaking or not
 
     def test_get_queue_size_function(self):
         """Test get_queue_size() function."""
         assert get_queue_size() == 0
         with patch("subprocess.Popen"):
-            speak("Message 1")
-            speak("Message 2")
+            phrases = pick_voice_phrases("test_get_queue_size_function", 2, "poetry_snippets")
+            speak(phrases[0])
+            speak(phrases[1])
             size = get_queue_size()
             assert size >= 0  # Depends on processing speed
 
@@ -378,7 +407,9 @@ class TestAccessibilityCompliance:
         mock_popen.return_value = mock_process
 
         queue = VoiceQueue.get_instance()
-        msg = queue.speak("Hello Joseph")
+        msg = queue.speak(
+            pick_voice_phrase("test_default_voice_is_karen", "multilingual_greetings")
+        )
 
         assert msg.voice == "Karen"
 
@@ -390,7 +421,10 @@ class TestAccessibilityCompliance:
         mock_popen.return_value = mock_process
 
         queue = VoiceQueue.get_instance()
-        msg = queue.speak("Test", voice="Karen")
+        msg = queue.speak(
+            pick_voice_phrase("test_karen_rate_for_clarity", "australia_facts"),
+            voice="Karen",
+        )
 
         assert msg.rate == 155  # Optimal for clarity and accessibility
 
@@ -409,7 +443,10 @@ class TestAccessibilityCompliance:
 
         queue.add_speech_callback(on_speech)
 
-        queue.speak("Test", voice="Moira")
+        queue.speak(
+            pick_voice_phrase("test_callbacks_for_notifications", "technology_quotes"),
+            voice="Moira",
+        )
         time.sleep(0.1)
 
         assert "Moira" in callbacks_fired
@@ -443,9 +480,14 @@ class TestThreadSafety:
         threads = []
         for i in range(5):
             voices = ["Karen", "Kyoko", "Moira", "Yuna", "Zosia"]
+            phrase = pick_voice_phrase(
+                f"test_concurrent_speak_calls_{i}",
+                "pronunciation_practice",
+                "multilingual_greetings",
+            )
             t = threading.Thread(
                 target=speaker_thread,
-                args=(voices[i], f"Message {i}", i),
+                args=(voices[i], phrase, i),
             )
             threads.append(t)
             t.start()

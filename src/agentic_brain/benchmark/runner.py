@@ -30,6 +30,8 @@ from typing import Any
 
 import aiohttp
 
+from agentic_brain.voice._speech_lock import global_speak
+
 from .metrics import (
     METRIC_DEFINITIONS,
     BenchmarkConfig,
@@ -464,6 +466,19 @@ class BrainBenchmark:
 
         return None
 
+    def _run_voice_command(self, command: list[str], timeout: int) -> bool:
+        if command and command[0] == "say":
+            return global_speak(command, timeout=timeout, inter_gap=0)
+
+        completed = subprocess.run(
+            command,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=timeout,
+            check=False,
+        )
+        return completed.returncode == 0
+
     def _benchmark_voice_synthesis(self) -> MetricSeries:
         definition = METRIC_DEFINITIONS["voice_synthesis_latency"]
         if not self.config.enable_voice:
@@ -490,24 +505,15 @@ class BrainBenchmark:
         latencies: list[float] = []
         try:
             for _ in range(self.config.warmup_iterations):
-                subprocess.run(
-                    command,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    timeout=max(5, self.config.timeout),
-                    check=False,
-                )
+                self._run_voice_command(command, timeout=max(5, self.config.timeout))
 
             for _ in range(self.config.iterations):
                 start = time.perf_counter()
-                completed = subprocess.run(
+                success = self._run_voice_command(
                     command,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
                     timeout=max(5, self.config.timeout),
-                    check=False,
                 )
-                if completed.returncode == 0:
+                if success:
                     latencies.append(time.perf_counter() - start)
 
             total = self.config.iterations

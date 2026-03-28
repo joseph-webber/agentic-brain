@@ -33,11 +33,12 @@ the 42 operational modes of Agentic Brain. It handles:
 
 import json
 import logging
-import subprocess
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
+
+from agentic_brain.voice.serializer import speak_serialized
 
 from .base import Mode, ModeCategory
 from .registry import (
@@ -362,12 +363,7 @@ class ModeManager:
             rate = mode.config.voice.speech_rate
             message = f"Switched to {mode.name} mode"
 
-            # Use macOS say command - non-blocking with Popen
-            subprocess.Popen(
-                ["say", "-v", voice, "-r", str(rate), message],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+            speak_serialized(message, voice=voice, rate=rate, wait=False)
         except Exception as e:
             logger.debug(f"Voice announcement failed: {e}")
 

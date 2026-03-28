@@ -20,6 +20,7 @@ Provides text-to-speech and sound effects with:
 - Native Apple Neural Engine TTS on macOS
 - Generic fallback for Windows/Linux
 - Accessibility-first design
+- Optional AirPods-aware routing and spatial voice control
 
 Example:
     >>> from agentic_brain import Audio
@@ -39,7 +40,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable
 
-from agentic_brain.voice.config import VoiceConfig, VoiceQuality
+from agentic_brain.voice.config import VoiceConfig
 
 logger = logging.getLogger(__name__)
 
@@ -62,13 +63,14 @@ class VoiceInfo:
         return self.name
 
 
-# Known macOS voices for registry bootstrapping
 MACOS_VOICES = {
     "karen": VoiceInfo("Karen", "en-AU", "Australia", "Lead host", True),
     "moira": VoiceInfo("Moira", "en-IE", "Ireland", "Creative", True),
     "kyoko": VoiceInfo("Kyoko", "ja-JP", "Japan", "Japanese", True),
     "tingting": VoiceInfo("Ting-Ting", "zh-CN", "China", "Chinese", True),
-    "damayanti": VoiceInfo("Damayanti", "id-ID", "Indonesia", "Indonesian", True),
+    "damayanti": VoiceInfo(
+        "Damayanti", "id-ID", "Indonesia", "Indonesian", True
+    ),
     "zosia": VoiceInfo("Zosia", "pl-PL", "Poland", "Polish", True),
     "yuna": VoiceInfo("Yuna", "ko-KR", "Korea", "Korean", True),
     "linh": VoiceInfo("Linh", "vi-VN", "Vietnam", "Vietnamese", True),
@@ -97,9 +99,9 @@ class Platform(Enum):
     def current(cls) -> Platform:
         """Detect current platform."""
         system = platform.system()
-        for p in cls:
-            if p.value == system:
-                return p
+        for candidate in cls:
+            if candidate.value == system:
+                return candidate
         return cls.UNKNOWN
 
 
@@ -132,34 +134,29 @@ class VoiceRegistry:
     """Registry of available voices."""
 
     def __init__(self):
-        """Initialize registry."""
         self._voices: dict[str, Any] = {}
         self._scan_voices()
 
     def __len__(self) -> int:
         return len(self._voices)
 
-    def __getitem__(self, name: str) -> dict[str, Any]:
+    def __getitem__(self, name: str) -> dict[str, Any] | None:
         return self.get_voice(name)
 
     def __contains__(self, name: str) -> bool:
         return name.lower() in self._voices
 
     def list_voices(self, search: str | None = None) -> list[dict[str, Any]]:
-        """List all available voices."""
         if not search:
             return list(self._voices.values())
 
         search = search.lower()
-        return [v for k, v in self._voices.items() if search in k]
+        return [voice for key, voice in self._voices.items() if search in key]
 
     def get_voice(self, name: str) -> dict[str, Any] | None:
-        """Get voice by name (case-insensitive)."""
         return self._voices.get(name.lower())
 
     def _scan_voices(self):
-        """Scan system for available voices."""
-        # Start with built-in knowledge base
         for key, info in MACOS_VOICES.items():
             self._voices[key] = {
                 "name": info.name,
@@ -174,12 +171,9 @@ class VoiceRegistry:
             return
 
         try:
-            # Parse `say -v ?` output
-            # Format: Voice Name          Language    # Description
             result = subprocess.run(
                 ["say", "-v", "?"], capture_output=True, text=True, check=False
             )
-
             if result.returncode != 0:
                 return
 
@@ -189,34 +183,22 @@ class VoiceRegistry:
 
                 parts = line.split("#", 1)
                 desc = parts[1].strip() if len(parts) > 1 else ""
-
                 meta = parts[0].strip().split()
                 if len(meta) < 2:
                     continue
 
                 lang = meta[-1]
-                name_parts = meta[:-1]
-                name = " ".join(name_parts)
-
-                # Check for premium
-                is_premium = False
-                if "(Premium)" in name:
-                    # Clean up name but keep premium flag
-                    # But tests expect 'Karen (Premium)' in full_name
-                    is_premium = True
-
-                # Normalize key
+                name = " ".join(meta[:-1])
+                is_premium = "(Premium)" in name
                 key = name.lower().replace(" (premium)", "")
-
                 self._voices[key] = {
-                    "name": key.title(),  # Heuristic
+                    "name": key.title(),
                     "language": lang,
                     "region": "Unknown",
                     "description": desc,
                     "premium": is_premium,
                     "full_name": name,
                 }
-
         except (FileNotFoundError, OSError):
             pass
 
@@ -238,39 +220,29 @@ class VoiceQueue:
         return len(self._queue)
 
     def add(self, text: str, voice: str | None = None, **kwargs):
-        """Add item to queue."""
-        self._queue.append(
-            {"text": text, "voice": voice or self._default_voice, **kwargs}
-        )
+        self._queue.append({"text": text, "voice": voice or self._default_voice, **kwargs})
 
     def clear(self):
-        """Clear the queue."""
         self._queue.clear()
         self._is_playing = False
 
     def play_all(self, pause_between: float = 0.5) -> bool:
-        """Play all queued items sequentially."""
         if self._is_playing:
             return False
 
         self._is_playing = True
         audio = get_audio()
-
         try:
             while self._queue:
                 item = self._queue.pop(0)
                 audio.speak(item["text"], voice=item["voice"])
-                # In real implementation we'd sleep here
-
             return True
         finally:
             self._is_playing = False
 
     def play_next(self) -> bool:
-        """Play next item in queue."""
         if not self._queue:
             return False
-
         item = self._queue.pop(0)
         return get_audio().speak(item["text"], voice=item["voice"])
 
@@ -286,9 +258,20 @@ class AudioConfig:
     on_speak: Callable[[str], None] | None = None
     on_error: Callable[[str], None] | None = None
     voice_config: VoiceConfig = field(default_factory=VoiceConfig)
+    auto_route_to_airpods: bool = False
+    adaptive_transparency: bool = False
+    preferred_output_device: str | None = None
+    airpods_name_patterns: tuple[str, ...] = (
+        "AirPods Max",
+        "AirPods Pro Max",
+        "AirPods Pro",
+        "AirPods",
+    )
+    head_tracking_mode: str = "fixed"
+    fixed_listener_space: bool = True
+    low_battery_threshold: int = 20
 
     def __post_init__(self):
-        # Sync simple fields to voice_config if provided differently
         if self.default_voice != "Karen":
             self.voice_config.voice_name = self.default_voice
         if self.default_rate != 175:
@@ -298,23 +281,8 @@ class AudioConfig:
 
 
 class Audio:
-    """
-    Cross-platform audio engine with accessibility focus.
+    """Cross-platform audio engine with accessibility focus."""
 
-    Features:
-    - Text-to-speech with platform-native engines
-    - Apple Neural Engine acceleration on macOS
-    - Sound effects for notifications
-    - Queue management (no overlapping speech)
-
-    Example:
-        >>> audio = Audio()
-        >>> audio.speak("Processing your request")
-        >>> audio.sound("success")
-        >>> audio.speak("Done!", voice="Moira", rate=160)
-    """
-
-    # Built-in sound mappings for macOS
     MACOS_SOUNDS = {
         "success": "Glass",
         "error": "Basso",
@@ -326,37 +294,61 @@ class Audio:
     }
 
     def __init__(self, config: AudioConfig | None = None):
-        """
-        Initialize audio engine.
-
-        Args:
-            config: Audio configuration. Uses defaults if not provided.
-        """
         self.config = config or AudioConfig()
         self.platform = Platform.current()
         self._speaking = False
-
-        # Check available TTS engines
+        self._airpods_manager = None
         self._tts_available = self._check_tts()
-
         if not self._tts_available:
             logger.warning("No TTS engine available on this platform")
 
     def _check_tts(self) -> bool:
-        """Check if TTS is available on current platform."""
         if self.platform == Platform.MACOS:
             return shutil.which("say") is not None
-        elif self.platform == Platform.WINDOWS:
-            # Windows has built-in SAPI
+        if self.platform == Platform.WINDOWS:
             return True
-        elif self.platform == Platform.LINUX:
-            # Check for espeak or festival
-            return (
-                shutil.which("espeak") is not None
-                or shutil.which("festival") is not None
-                or shutil.which("espeak-ng") is not None
+        if self.platform == Platform.LINUX:
+            return any(
+                shutil.which(cmd) is not None
+                for cmd in ("espeak", "festival", "espeak-ng")
             )
         return False
+
+    def _get_airpods_manager(self):
+        if self.platform != Platform.MACOS:
+            return None
+        if self._airpods_manager is None:
+            from .airpods import AirPodsManager, HeadTrackingMode
+
+            try:
+                head_tracking_mode = HeadTrackingMode(self.config.head_tracking_mode)
+            except ValueError:
+                head_tracking_mode = HeadTrackingMode.FIXED
+
+            self._airpods_manager = AirPodsManager(
+                target_name_patterns=self.config.airpods_name_patterns,
+                low_battery_threshold=self.config.low_battery_threshold,
+                adaptive_transparency=self.config.adaptive_transparency,
+                head_tracking_mode=head_tracking_mode,
+                fixed_listener_space=self.config.fixed_listener_space,
+            )
+        return self._airpods_manager
+
+    def _prepare_airpods_for_speech(self, text: str):
+        manager = self._get_airpods_manager()
+        if not manager:
+            return
+        preferred_device = self.config.preferred_output_device
+        if preferred_device:
+            manager.route_audio(device_name=preferred_device)
+            return
+        if self.config.auto_route_to_airpods:
+            manager.ensure_brain_audio_ready(text)
+
+    def _restore_airpods_after_speech(self):
+        manager = self._get_airpods_manager()
+        if manager:
+            manager.finish_speech()
 
     def speak(
         self,
@@ -365,51 +357,35 @@ class Audio:
         rate: int | None = None,
         wait: bool = True,
     ) -> bool:
-        """
-        Speak text using platform-native TTS.
-
-        Args:
-            text: Text to speak
-            voice: Voice name (platform-specific)
-            rate: Speech rate (words per minute)
-            wait: Wait for speech to complete
-
-        Returns:
-            True if speech started successfully
-
-        Example:
-            >>> audio.speak("Hello world")
-            >>> audio.speak("G'day mate!", voice="Karen", rate=160)
-        """
         if not self.config.enabled or not self._tts_available:
-            logger.debug(f"TTS disabled or unavailable: {text}")
+            logger.debug("TTS disabled or unavailable: %s", text)
             return False
 
         voice = voice or self.config.voice_config.voice_name
         rate = rate or self.config.voice_config.rate
 
-        # Callback hook
         if self.config.on_speak:
             self.config.on_speak(text)
 
+        self._prepare_airpods_for_speech(text)
         try:
             if self.platform == Platform.MACOS:
                 return self._speak_macos(text, voice, rate, wait)
-            elif self.platform == Platform.WINDOWS:
+            if self.platform == Platform.WINDOWS:
                 return self._speak_windows(text, rate, wait)
-            elif self.platform == Platform.LINUX:
+            if self.platform == Platform.LINUX:
                 return self._speak_linux(text, rate, wait)
-            else:
-                logger.warning(f"Unsupported platform: {self.platform}")
-                return False
-        except Exception as e:
-            logger.error(f"TTS error: {e}")
-            if self.config.on_error:
-                self.config.on_error(str(e))
+            logger.warning("Unsupported platform: %s", self.platform)
             return False
+        except Exception as exc:  # pragma: no cover - defensive callback path
+            logger.error("TTS error: %s", exc)
+            if self.config.on_error:
+                self.config.on_error(str(exc))
+            return False
+        finally:
+            self._restore_airpods_after_speech()
 
     def _speak_macos(self, text: str, voice: str, rate: int, wait: bool) -> bool:
-        """macOS native TTS using Neural Engine."""
         from agentic_brain.voice._speech_lock import global_speak
 
         voice_norm = (voice or "").strip().lower()
@@ -417,35 +393,26 @@ class Audio:
             cmd = ["say", "-r", str(rate), text]
         else:
             cmd = ["say", "-v", voice, "-r", str(rate), text]
-
-        # Always use global_speak to prevent overlap - even for wait=False
         return global_speak(cmd, timeout=60)
 
     def _speak_windows(self, text: str, rate: int, wait: bool) -> bool:
-        """Windows SAPI TTS."""
         from agentic_brain.voice._speech_lock import global_speak
 
-        ps_script = f"""
+        ps_script = f'''
         Add-Type -AssemblyName System.Speech
         $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
         $synth.Rate = {(rate - 175) // 25}
         $synth.Speak("{text}")
-        """
-
-        cmd = ["powershell", "-Command", ps_script]
-        return global_speak(cmd, timeout=60)
+        '''
+        return global_speak(["powershell", "-Command", ps_script], timeout=60)
 
     def _speak_linux(self, text: str, rate: int, wait: bool) -> bool:
-        """Linux TTS using espeak or festival."""
         from agentic_brain.voice._speech_lock import global_speak
 
         espeak = shutil.which("espeak-ng") or shutil.which("espeak")
-
         if espeak:
-            cmd = [espeak, "-s", str(rate), text]
-            return global_speak(cmd, timeout=60)
+            return global_speak([espeak, "-s", str(rate), text], timeout=60)
 
-        # Try festival — must go through global_speak to prevent overlap
         festival = shutil.which("festival")
         if festival:
 
@@ -459,57 +426,39 @@ class Audio:
                 proc.communicate(input=text.encode(), timeout=60)
                 return proc.returncode == 0
 
-            from agentic_brain.voice.serializer import VoiceMessage, get_voice_serializer
+            from agentic_brain.voice.serializer import (
+                VoiceMessage,
+                get_voice_serializer,
+            )
 
             return get_voice_serializer().run_serialized(
                 VoiceMessage(text=text, voice="festival", rate=rate),
                 executor=_festival_speak,
             )
-
         return False
 
     def sound(self, name: str, wait: bool = False) -> bool:
-        """
-        Play a notification sound.
-
-        Args:
-            name: Sound name (success, error, warning, notification, etc.)
-            wait: Wait for sound to complete
-
-        Returns:
-            True if sound played successfully
-
-        Example:
-            >>> audio.sound("success")
-            >>> audio.sound("error")
-        """
         if not self.config.enabled:
             return False
 
         try:
             if self.platform == Platform.MACOS:
                 return self._sound_macos(name, wait)
-            else:
-                # Generic beep for other platforms
-                print("\a", end="", flush=True)
-                return True
-        except Exception as e:
-            logger.error(f"Sound error: {e}")
+            print("\a", end="", flush=True)
+            return True
+        except Exception as exc:  # pragma: no cover - defensive callback path
+            logger.error("Sound error: %s", exc)
             return False
 
     def _sound_macos(self, name: str, wait: bool) -> bool:
-        """Play macOS system sound."""
         from agentic_brain.voice._speech_lock import global_speak
 
         sound_name = self.MACOS_SOUNDS.get(name, name)
         sound_path = f"/System/Library/Sounds/{sound_name}.aiff"
-
         if not Path(sound_path).exists():
-            logger.warning(f"Sound not found: {sound_path}")
+            logger.warning("Sound not found: %s", sound_path)
             return False
-
-        cmd = ["afplay", sound_path]
-        return global_speak(cmd, timeout=10)
+        return global_speak(["afplay", sound_path], timeout=10)
 
     def announce(
         self,
@@ -517,86 +466,41 @@ class Audio:
         sound: str | None = "notification",
         voice: str | None = None,
     ) -> bool:
-        """
-        Play sound then speak message (accessibility pattern).
-
-        Args:
-            message: Message to speak
-            sound: Sound to play first (None to skip)
-            voice: Voice to use
-
-        Example:
-            >>> audio.announce("Task completed successfully", sound="success")
-        """
         if sound:
             self.sound(sound, wait=True)
         return self.speak(message, voice=voice)
 
-    def progress(
-        self,
-        current: int,
-        total: int,
-        task: str = "Processing",
-    ) -> bool:
-        """
-        Announce progress (accessibility helper).
-
-        Only announces at 25%, 50%, 75%, 100%.
-
-        Args:
-            current: Current item number
-            total: Total items
-            task: Task description
-
-        Example:
-            >>> for i in range(100):
-            ...     audio.progress(i + 1, 100, "Indexing files")
-        """
+    def progress(self, current: int, total: int, task: str = "Processing") -> bool:
         if total <= 0:
             return False
-
         percent = (current * 100) // total
-
-        # Only announce at milestones
         if percent in (25, 50, 75, 100) and current == (percent * total) // 100:
             return self.speak(f"{task}: {percent} percent complete")
-
         return False
 
     @property
     def available_voices(self) -> list[str]:
-        """List available voices on current platform."""
         if self.platform == Platform.MACOS:
             try:
-                result = subprocess.run(
-                    ["say", "-v", "?"],
-                    capture_output=True,
-                    text=True,
-                )
+                result = subprocess.run(["say", "-v", "?"], capture_output=True, text=True)
                 voices = []
                 for line in result.stdout.strip().split("\n"):
                     if line:
-                        voice_name = line.split()[0]
-                        voices.append(voice_name)
+                        voices.append(line.split()[0])
                 return voices
-            except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
-                # subprocess.CalledProcessError: command failed
-                # FileNotFoundError: 'say' command not found
-                # OSError: subprocess error
-                logger.debug(f"Failed to query available voices: {e}")
+            except (subprocess.CalledProcessError, FileNotFoundError, OSError) as exc:
+                logger.debug("Failed to query available voices: %s", exc)
                 return ["Karen", "Samantha", "Daniel", "Moira"]
-
         return ["default"]
 
 
-# Convenience functions for quick access
 _default_audio: Audio | None = None
 _default_registry: VoiceRegistry | None = None
 _default_queue: VoiceQueue | None = None
+_default_airpods: AirPodsManager | None = None
 
 
 def get_audio() -> Audio:
-    """Get or create default audio instance."""
     global _default_audio
     if _default_audio is None:
         _default_audio = Audio()
@@ -604,7 +508,6 @@ def get_audio() -> Audio:
 
 
 def get_registry() -> VoiceRegistry:
-    """Get or create singleton voice registry."""
     global _default_registry
     if _default_registry is None:
         _default_registry = VoiceRegistry()
@@ -612,65 +515,63 @@ def get_registry() -> VoiceRegistry:
 
 
 def get_queue() -> VoiceQueue:
-    """Get or create singleton voice queue."""
     global _default_queue
     if _default_queue is None:
         _default_queue = VoiceQueue()
     return _default_queue
 
 
+def get_airpods() -> AirPodsManager:
+    global _default_airpods
+    if _default_airpods is None:
+        _default_airpods = AirPodsManager()
+    return _default_airpods
+
+
 def list_voices(search: str | None = None) -> list[dict[str, Any]]:
-    """List available voices."""
     return get_registry().list_voices(search)
 
 
 def speak(text: str, regionalize: bool = True, **kwargs) -> bool:
-    """
-    Quick speak using default audio.
-
-    Args:
-        text: Text to speak
-        regionalize: Apply regional expressions (default True)
-        **kwargs: Additional arguments passed to Audio.speak()
-
-    Returns:
-        True if successful
-    """
-    # Apply regional expressions if enabled
     if regionalize:
         try:
             from agentic_brain.voice.regional import get_regional_voice
 
-            rv = get_regional_voice()
-            text = rv.regionalize(text)
-        except Exception as e:
-            logger.debug(f"Could not regionalize text: {e}")
-            # Continue with original text
-
+            text = get_regional_voice().regionalize(text)
+        except Exception as exc:  # pragma: no cover - defensive fallback path
+            logger.debug("Could not regionalize text: %s", exc)
     return get_audio().speak(text, **kwargs)
 
 
 def queue_speak(text: str, **kwargs):
-    """Add to speech queue."""
     get_queue().add(text, **kwargs)
 
 
 def play_queue():
-    """Play all queued items."""
     get_queue().play_all()
 
 
 def sound(name: str, **kwargs) -> bool:
-    """Quick sound using default audio."""
     return get_audio().sound(name, **kwargs)
 
 
 def announce(message: str, **kwargs) -> bool:
-    """Quick announce using default audio."""
     return get_audio().announce(message, **kwargs)
 
 
 def test_voice():
-    """Test voice subsystem."""
     print("Testing voice subsystem...")
     speak("Testing voice subsystem")
+
+
+from .airpods import (
+    AirPodsDevice,
+    AirPodsManager,
+    AirPodsStatus,
+    BatteryLevels,
+    HeadTrackingMode,
+    HeadTrackingPose,
+    NoiseControlMode,
+    SpatialAudioScene,
+    SpatialVoicePosition,
+)

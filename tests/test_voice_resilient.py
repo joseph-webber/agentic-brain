@@ -15,6 +15,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
+
 from agentic_brain.voice.resilient import (
     ResilientVoice,
     SoundEffects,
@@ -69,7 +71,9 @@ class TestResilientVoice:
         config = VoiceConfig()
         ResilientVoice(config)
 
-        result = await speak("Hello World")
+        result = await speak(
+            pick_voice_phrase("test_speak_with_default_voice", "technology_quotes")
+        )
         # Should succeed (or at least try all fallbacks)
         assert isinstance(result, bool)
 
@@ -79,7 +83,11 @@ class TestResilientVoice:
         config = VoiceConfig()
         ResilientVoice(config)
 
-        result = await speak("Hello Moira", voice="Moira", rate=140)
+        result = await speak(
+            pick_voice_phrase("test_speak_with_custom_voice", "poetry_snippets"),
+            voice="Moira",
+            rate=140,
+        )
         assert isinstance(result, bool)
 
     @pytest.mark.asyncio
@@ -135,7 +143,9 @@ class TestResilientVoice:
         config = VoiceConfig(enable_fallbacks=False)
         ResilientVoice(config)
 
-        result = await speak("Testing without fallbacks")
+        result = await speak(
+            pick_voice_phrase("test_speak_without_fallbacks", "australia_facts")
+        )
         assert isinstance(result, bool)
 
 
@@ -169,9 +179,10 @@ class TestVoiceDaemon:
         await daemon.start()
 
         # Queue some speech
-        await daemon.speak("Test 1")
-        await daemon.speak("Test 2", voice="Moira")
-        await daemon.speak("Test 3", rate=140)
+        phrases = pick_voice_phrases("test_daemon_queue_speak", 3)
+        await daemon.speak(phrases[0])
+        await daemon.speak(phrases[1], voice="Moira")
+        await daemon.speak(phrases[2], rate=140)
 
         # Give daemon time to process
         await asyncio.sleep(1)
@@ -189,7 +200,10 @@ class TestVoiceDaemon:
 
         # Queue invalid input
         await daemon.speak("")
-        await daemon.speak("Testing", voice="InvalidVoice")
+        await daemon.speak(
+            pick_voice_phrase("test_daemon_error_handling", "tongue_twisters"),
+            voice="InvalidVoice",
+        )
 
         await asyncio.sleep(0.5)
 
@@ -263,13 +277,17 @@ class TestConvenienceFunctions:
     @pytest.mark.asyncio
     async def test_speak_function(self):
         """Test global speak function"""
-        result = await speak("Testing convenience function")
+        result = await speak(
+            pick_voice_phrase("test_speak_function", "multilingual_greetings")
+        )
         assert isinstance(result, bool)
 
     @pytest.mark.asyncio
     async def test_speak_via_daemon_function(self):
         """Test daemon speak function"""
-        await speak_via_daemon("Testing daemon function")
+        await speak_via_daemon(
+            pick_voice_phrase("test_speak_via_daemon_function", "status_updates")
+        )
         # Should not raise
 
     @pytest.mark.asyncio
@@ -302,7 +320,7 @@ class TestIntegration:
     async def test_speak_and_sound(self):
         """Test speaking and playing sound"""
         # Speak
-        await speak("Process complete")
+        await speak(pick_voice_phrase("test_speak_and_sound", "status_updates"))
 
         # Play sound
         await play_sound("success")
@@ -316,10 +334,11 @@ class TestIntegration:
         await daemon.start()
 
         # Queue multiple at once
+        phrases = pick_voice_phrases("test_daemon_multiple_speakers", 3, "status_updates")
         tasks = [
-            daemon.speak("Karen speaking"),
-            daemon.speak("Moira speaking", voice="Moira"),
-            daemon.speak("Tingting speaking", voice="Tingting"),
+            daemon.speak(phrases[0]),
+            daemon.speak(phrases[1], voice="Moira"),
+            daemon.speak(phrases[2], voice="Tingting"),
         ]
         await asyncio.gather(*tasks)
 
@@ -344,7 +363,13 @@ class TestIntegration:
         ):
             # Queue many items
             for i in range(10):
-                await daemon.speak(f"Message {i}")
+                await daemon.speak(
+                    pick_voice_phrase(
+                        f"test_long_running_daemon_{i}",
+                        "technology_quotes",
+                        "australia_facts",
+                    )
+                )
 
             # Wait for processing
             await asyncio.sleep(2)
@@ -366,7 +391,9 @@ class TestIntegration:
             fallback.method = AsyncMock(return_value=False)
 
         # Should still return True (best effort)
-        result = await speak("All fallbacks failed")
+        result = await speak(
+            pick_voice_phrase("test_fallback_exhaustion", "status_updates")
+        )
         assert result is True
 
 
@@ -379,7 +406,9 @@ class TestErrorHandling:
         config = VoiceConfig(timeout=0.001)  # Very short timeout
         ResilientVoice(config)
 
-        result = await speak("This might timeout")
+        result = await speak(
+            pick_voice_phrase("test_timeout_handling", "pronunciation_practice")
+        )
         # Should still try fallbacks
         assert isinstance(result, bool)
 
@@ -405,16 +434,19 @@ async def test_full_workflow():
     await daemon.start()
 
     # Speak
-    await speak("Voice system initialized")
+    await speak(pick_voice_phrase("test_full_workflow_init", "status_updates"))
 
     # Queue in daemon
-    await daemon.speak("Task starting", voice="Moira")
+    await daemon.speak(
+        pick_voice_phrase("test_full_workflow_daemon", "technology_quotes"),
+        voice="Moira",
+    )
 
     # Play sound
     await play_sound("notification")
 
     # More speech
-    await speak("Task complete")
+    await speak(pick_voice_phrase("test_full_workflow_complete", "poetry_snippets"))
     await play_sound("success")
 
     # Get stats

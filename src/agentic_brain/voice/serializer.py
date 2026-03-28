@@ -65,6 +65,8 @@ def audit_no_concurrent_say() -> None:
         pass
     except subprocess.TimeoutExpired:
         logger.debug("audit_no_concurrent_say: pgrep timed out, skipping")
+    except ValueError:
+        logger.debug("audit_no_concurrent_say: subprocess mocked, skipping")
 
 
 # ── Deprecation helper ───────────────────────────────────────────────
