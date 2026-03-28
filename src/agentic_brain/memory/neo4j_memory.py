@@ -31,6 +31,8 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import math
+import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
@@ -57,6 +59,8 @@ class Message:
     session_id: str
     metadata: Dict[str, Any] = field(default_factory=dict)
     entities: List[str] = field(default_factory=list)
+    importance: float = 0.5
+    access_count: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dict for serialization."""
@@ -68,6 +72,8 @@ class Message:
             "session_id": self.session_id,
             "metadata": self.metadata,
             "entities": self.entities,
+            "importance": self.importance,
+            "access_count": self.access_count,
         }
 
 
@@ -94,6 +100,39 @@ class MemoryConfig:
     # Retrieval
     max_history: int = 100
     include_metadata: bool = True
+
+    # Importance scoring (Mem0-inspired)
+    importance_keywords: List[str] = field(
+        default_factory=lambda: [
+            "important",
+            "critical",
+            "urgent",
+            "remember",
+            "always",
+            "never",
+            "must",
+            "password",
+            "key",
+            "secret",
+            "deadline",
+            "decision",
+            "agreed",
+            "confirmed",
+            "preference",
+            "birthday",
+            "error",
+            "bug",
+            "fix",
+            "deploy",
+        ]
+    )
+    base_importance: float = 0.5
+
+    # Memory decay (Mem0-inspired)
+    decay_enabled: bool = True
+    decay_rate: float = 0.01  # importance lost per day
+    min_importance: float = 0.1  # floor - memories never fully disappear
+    reinforce_boost: float = 0.15  # boost when memory is accessed
 
 
 class ConversationMemory:
@@ -158,8 +197,9 @@ class ConversationMemory:
 
         Creates:
         - Node labels: Session, Message, Entity, Summary
-        - Relationships: CONTAINS, NEXT, MENTIONS, DISCUSSED_IN, SUMMARIZED_BY
-        - Indexes for performance
+        - Relationships: CONTAINS, NEXT, MENTIONS, DISCUSSED_IN, SUMMARIZED_BY,
+                         LINKS_TO (cross-session)
+        - Indexes for performance (including importance for decay queries)
         """
         if self._initialized:
             return
@@ -188,6 +228,9 @@ class ConversationMemory:
             # Create indexes
             session.run(
                 "CREATE INDEX message_timestamp IF NOT EXISTS FOR (m:Message) ON (m.timestamp)"
+            )
+            session.run(
+                "CREATE INDEX message_importance IF NOT EXISTS FOR (m:Message) ON (m.importance)"
             )
             session.run(
                 "CREATE INDEX session_timestamp IF NOT EXISTS FOR (s:Session) ON (s.started_at)"
@@ -236,8 +279,11 @@ class ConversationMemory:
         timestamp = datetime.now(UTC).isoformat()
         metadata = metadata or {}
 
+        # Score importance (Mem0-inspired)
+        importance = self._score_importance(content, role, metadata)
+
         with self._get_session() as session:
-            # Create message node
+            # Create message node with importance
             session.run(
                 """
                 CREATE (m:Message {
@@ -246,7 +292,10 @@ class ConversationMemory:
                     content: $content,
                     timestamp: $timestamp,
                     session_id: $session_id,
-                    metadata: $metadata
+                    metadata: $metadata,
+                    importance: $importance,
+                    access_count: 0,
+                    last_accessed: $timestamp
                 })
                 """,
                 msg_id=msg_id,
@@ -255,6 +304,7 @@ class ConversationMemory:
                 timestamp=timestamp,
                 session_id=self.session_id,
                 metadata=metadata,
+                importance=importance,
             )
 
             # Link to session
@@ -342,11 +392,225 @@ class ConversationMemory:
         logger.debug(f"Added message {msg_id} to session {self.session_id}")
         return msg_id
 
+    # =========================================================================
+    # IMPORTANCE SCORING (Mem0-inspired)
+    # =========================================================================
+
+    def _score_importance(
+        self,
+        content: str,
+        role: str,
+        metadata: Dict[str, Any],
+    ) -> float:
+        """
+        Score memory importance based on content signals.
+
+        Inspired by Mem0's relevance scoring: analyses keyword presence,
+        content length, role, and metadata hints to assign a 0.0-1.0 score.
+
+        Args:
+            content: Message text
+            role: Message role
+            metadata: Additional metadata
+
+        Returns:
+            Importance score between 0.0 and 1.0
+        """
+        score = self.config.base_importance
+        text_lower = content.lower()
+
+        # Keyword boost - high-signal words increase importance
+        keyword_hits = sum(
+            1 for kw in self.config.importance_keywords if kw in text_lower
+        )
+        score += min(keyword_hits * 0.08, 0.3)
+
+        # Length signal - very short messages are less important
+        word_count = len(content.split())
+        if word_count < 5:
+            score -= 0.1
+        elif word_count > 50:
+            score += 0.1
+
+        # Questions are important (user asking = needs answer)
+        if "?" in content:
+            score += 0.05
+
+        # Code blocks are important (technical content)
+        if "```" in content or "def " in content or "class " in content:
+            score += 0.1
+
+        # Entity density - more entities = more important
+        entities = self._extract_entities(content)
+        if len(entities) >= 3:
+            score += 0.1
+
+        # Metadata overrides
+        if metadata.get("importance"):
+            try:
+                score = float(metadata["importance"])
+            except (ValueError, TypeError):
+                pass
+        if metadata.get("pinned"):
+            score = max(score, 0.9)
+
+        return max(0.0, min(1.0, score))
+
+    # =========================================================================
+    # MEMORY DECAY (Mem0-inspired)
+    # =========================================================================
+
+    def _calculate_decayed_importance(
+        self,
+        base_importance: float,
+        created_at: datetime,
+        access_count: int = 0,
+        last_accessed: Optional[datetime] = None,
+    ) -> float:
+        """
+        Apply time-based decay to importance score.
+
+        Memories fade over time unless reinforced by access. This mirrors
+        Mem0's approach where older memories naturally become less relevant
+        but can be boosted by retrieval (spaced repetition effect).
+
+        Args:
+            base_importance: Original importance score
+            created_at: When the memory was created
+            access_count: How many times this memory has been accessed
+            last_accessed: When the memory was last accessed
+
+        Returns:
+            Decayed importance score
+        """
+        if not self.config.decay_enabled:
+            return base_importance
+
+        now = datetime.now(UTC)
+
+        # Calculate days since last relevant interaction
+        reference_time = last_accessed or created_at
+        if isinstance(reference_time, str):
+            reference_time = datetime.fromisoformat(reference_time)
+        if reference_time.tzinfo is None:
+            reference_time = reference_time.replace(tzinfo=UTC)
+
+        days_elapsed = max(0.0, (now - reference_time).total_seconds() / 86400)
+
+        # Exponential decay from last access
+        decay = math.exp(-self.config.decay_rate * days_elapsed)
+        decayed = base_importance * decay
+
+        # Reinforcement bonus: more accesses = slower decay
+        if access_count > 0:
+            reinforcement = min(access_count * 0.02, 0.2)
+            decayed += reinforcement
+
+        return max(self.config.min_importance, min(1.0, decayed))
+
+    async def apply_decay(self) -> int:
+        """
+        Apply memory decay to all messages in the current session.
+
+        Returns:
+            Number of messages updated
+        """
+        if not self._initialized:
+            await self.initialize()
+
+        with self._get_session() as session:
+            result = session.run(
+                """
+                MATCH (s:Session {id: $session_id})-[:CONTAINS]->(m:Message)
+                WHERE m.importance > $min_importance
+                RETURN m.id AS id, m.importance AS importance,
+                       m.timestamp AS timestamp, m.access_count AS access_count,
+                       m.last_accessed AS last_accessed
+                """,
+                session_id=self.session_id,
+                min_importance=self.config.min_importance,
+            )
+
+            updated = 0
+            for record in result:
+                created = datetime.fromisoformat(record["timestamp"])
+                new_importance = self._calculate_decayed_importance(
+                    base_importance=record["importance"],
+                    created_at=created,
+                    access_count=record["access_count"] or 0,
+                    last_accessed=(
+                        datetime.fromisoformat(record["last_accessed"])
+                        if record["last_accessed"]
+                        else None
+                    ),
+                )
+                if abs(new_importance - record["importance"]) > 0.001:
+                    session.run(
+                        """
+                        MATCH (m:Message {id: $msg_id})
+                        SET m.importance = $importance
+                        """,
+                        msg_id=record["id"],
+                        importance=new_importance,
+                    )
+                    updated += 1
+
+            logger.info(f"Applied decay to {updated} messages")
+            return updated
+
+    async def reinforce_memory(self, message_id: str) -> float:
+        """
+        Reinforce a memory (boost importance on access).
+
+        Call this when a memory is retrieved/used to prevent decay.
+
+        Args:
+            message_id: ID of the message to reinforce
+
+        Returns:
+            New importance score
+        """
+        if not self._initialized:
+            await self.initialize()
+
+        with self._get_session() as session:
+            result = session.run(
+                """
+                MATCH (m:Message {id: $msg_id})
+                SET m.access_count = coalesce(m.access_count, 0) + 1,
+                    m.last_accessed = $now,
+                    m.importance = CASE
+                        WHEN m.importance + $boost > 1.0 THEN 1.0
+                        ELSE m.importance + $boost
+                    END
+                RETURN m.importance AS importance
+                """,
+                msg_id=message_id,
+                now=datetime.now(UTC).isoformat(),
+                boost=self.config.reinforce_boost,
+            )
+
+            record = result.single()
+            new_importance = record["importance"] if record else 0.5
+            logger.debug(f"Reinforced memory {message_id}: importance={new_importance}")
+            return new_importance
+
+    # =========================================================================
+    # ENTITY EXTRACTION (Enhanced, Mem0-inspired)
+    # =========================================================================
+
     def _extract_entities(self, text: str) -> List[Tuple[str, str]]:
         """
-        Extract entities from text.
+        Extract entities from text using pattern matching.
 
-        Simple implementation - in production use NER model.
+        Enhanced extraction inspired by Mem0's entity identification:
+        - Capitalized words → PERSON/CONCEPT
+        - Email patterns → EMAIL
+        - URL patterns → URL
+        - Ticket patterns (SD-1234) → TICKET
+        - Multi-word proper nouns → PERSON/ORGANIZATION
+        - File paths → FILE
+        - Technology names → TECHNOLOGY
 
         Args:
             text: Input text
@@ -354,23 +618,324 @@ class ConversationMemory:
         Returns:
             List of (entity_name, entity_type) tuples
         """
-        entities = []
-        words = text.split()
+        entities: List[Tuple[str, str]] = []
 
-        for word in words:
-            cleaned = word.strip(".,!?;:")
-            if len(cleaned) >= self.config.min_entity_length and cleaned[0].isupper():
-                # Simple heuristic - in production use spaCy/transformers
+        # Email addresses
+        for match in re.finditer(r"[\w.+-]+@[\w-]+\.[\w.-]+", text):
+            entities.append((match.group(), "EMAIL"))
+
+        # URLs
+        for match in re.finditer(r"https?://[^\s<>\"']+", text):
+            entities.append((match.group(), "URL"))
+
+        # JIRA-style tickets (SD-1234, PROJ-456)
+        for match in re.finditer(r"\b[A-Z]{2,6}-\d{1,6}\b", text):
+            entities.append((match.group(), "TICKET"))
+
+        # File paths
+        for match in re.finditer(
+            r"(?:~/|/[\w]+/|\./)[\w/.-]+\.\w+", text
+        ):
+            entities.append((match.group(), "FILE"))
+
+        # Technology names (common patterns)
+        tech_patterns = re.compile(
+            r"\b(Python|JavaScript|TypeScript|Java|Neo4j|Docker|Redis|React|"
+            r"Angular|Vue|Node\.js|FastAPI|Django|Flask|PostgreSQL|MySQL|"
+            r"MongoDB|Kubernetes|AWS|Azure|GCP|Git|GitHub|Bitbucket|JIRA|"
+            r"Safari|Chrome|macOS|Linux|Windows|VoiceOver)\b",
+            re.IGNORECASE,
+        )
+        for match in tech_patterns.finditer(text):
+            entities.append((match.group(), "TECHNOLOGY"))
+
+        # Multi-word proper nouns (e.g., "Steve Taylor", "Joseph Webber")
+        for match in re.finditer(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b", text):
+            name = match.group()
+            # Skip common phrases
+            if name.lower() not in {"the end", "the other"}:
+                entities.append((name, "PERSON"))
+
+        # Single capitalized words (concepts, organizations)
+        for word in text.split():
+            cleaned = word.strip(".,!?;:()[]{}\"'")
+            if (
+                len(cleaned) >= self.config.min_entity_length
+                and cleaned[0].isupper()
+                and not cleaned.isupper()  # skip ALL CAPS (likely acronyms already caught)
+                and cleaned not in {"The", "This", "That", "These", "Those", "When",
+                                    "Where", "What", "Which", "How", "Who", "Why",
+                                    "But", "And", "For", "Not", "With", "From"}
+            ):
+                # Classify based on suffix
                 entity_type = "CONCEPT"
-                if "@" in cleaned:
-                    entity_type = "EMAIL"
-                elif cleaned.endswith("Corp") or cleaned.endswith("Inc"):
+                if cleaned.endswith(("Corp", "Inc", "Ltd", "LLC", "Pty")):
                     entity_type = "ORGANIZATION"
-
                 entities.append((cleaned, entity_type))
 
-        # Deduplicate
-        return list(set(entities))
+        # Deduplicate (keep first occurrence's type)
+        seen: set[str] = set()
+        unique: List[Tuple[str, str]] = []
+        for name, etype in entities:
+            key = name.lower()
+            if key not in seen:
+                seen.add(key)
+                unique.append((name, etype))
+        return unique
+
+    # =========================================================================
+    # CROSS-SESSION MEMORY LINKING (Mem0-inspired)
+    # =========================================================================
+
+    async def link_related_sessions(
+        self,
+        other_session_id: str,
+        relationship: str = "RELATED_TO",
+        shared_entities: Optional[List[str]] = None,
+    ) -> bool:
+        """
+        Link two sessions that share context or entities.
+
+        Inspired by Mem0's cross-memory linking: sessions that discuss
+        the same entities or topics are connected for better retrieval.
+
+        Args:
+            other_session_id: Session to link to
+            relationship: Relationship type
+            shared_entities: Entities both sessions discuss
+
+        Returns:
+            True if link was created
+        """
+        if not self._initialized:
+            await self.initialize()
+
+        with self._get_session() as session:
+            session.run(
+                """
+                MATCH (s1:Session {id: $session1})
+                MATCH (s2:Session {id: $session2})
+                MERGE (s1)-[r:LINKS_TO]->(s2)
+                SET r.relationship = $rel,
+                    r.shared_entities = $entities,
+                    r.linked_at = datetime()
+                """,
+                session1=self.session_id,
+                session2=other_session_id,
+                rel=relationship,
+                entities=shared_entities or [],
+            )
+            logger.info(
+                f"Linked session {self.session_id} -> {other_session_id} ({relationship})"
+            )
+            return True
+
+    async def find_related_sessions(
+        self,
+        min_shared_entities: int = 1,
+        limit: int = 10,
+    ) -> List[Dict[str, Any]]:
+        """
+        Find sessions related to the current one via shared entities.
+
+        Args:
+            min_shared_entities: Minimum shared entities to count as related
+            limit: Maximum sessions to return
+
+        Returns:
+            List of related session dicts with shared entity info
+        """
+        if not self._initialized:
+            await self.initialize()
+
+        with self._get_session() as session:
+            result = session.run(
+                """
+                MATCH (s1:Session {id: $session_id})-[:CONTAINS]->(m1:Message)
+                      -[:MENTIONS]->(e:Entity)<-[:MENTIONS]-(m2:Message)
+                      <-[:CONTAINS]-(s2:Session)
+                WHERE s2.id <> $session_id
+                WITH s2, collect(DISTINCT e.name) AS shared_entities
+                WHERE size(shared_entities) >= $min_shared
+                RETURN s2.id AS session_id,
+                       s2.started_at AS started_at,
+                       s2.message_count AS message_count,
+                       shared_entities
+                ORDER BY size(shared_entities) DESC
+                LIMIT $limit
+                """,
+                session_id=self.session_id,
+                min_shared=min_shared_entities,
+                limit=limit,
+            )
+
+            return [
+                {
+                    "session_id": r["session_id"],
+                    "started_at": r["started_at"],
+                    "message_count": r["message_count"],
+                    "shared_entities": r["shared_entities"],
+                }
+                for r in result
+            ]
+
+    async def get_entity_timeline(
+        self,
+        entity_name: str,
+        limit: int = 20,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get the timeline of an entity across all sessions.
+
+        Args:
+            entity_name: Entity to trace
+            limit: Max results
+
+        Returns:
+            Timeline of mentions across sessions
+        """
+        if not self._initialized:
+            await self.initialize()
+
+        with self._get_session() as session:
+            result = session.run(
+                """
+                MATCH (e:Entity)
+                WHERE toLower(e.name) = toLower($name)
+                WITH e
+                MATCH (m:Message)-[:MENTIONS]->(e)
+                RETURN m.id AS message_id,
+                       m.content AS content,
+                       m.timestamp AS timestamp,
+                       m.session_id AS session_id,
+                       m.importance AS importance
+                ORDER BY m.timestamp DESC
+                LIMIT $limit
+                """,
+                name=entity_name,
+                limit=limit,
+            )
+
+            return [
+                {
+                    "message_id": r["message_id"],
+                    "content": r["content"],
+                    "timestamp": r["timestamp"],
+                    "session_id": r["session_id"],
+                    "importance": r["importance"],
+                }
+                for r in result
+            ]
+
+    # =========================================================================
+    # MEMORY SUMMARIZATION (Enhanced, Mem0-inspired)
+    # =========================================================================
+
+    async def summarize_and_condense(
+        self,
+        older_than_days: int = 7,
+        importance_threshold: float = 0.3,
+    ) -> Dict[str, Any]:
+        """
+        Condense old, low-importance memories into summaries.
+
+        Mem0-inspired: instead of just compressing, this creates proper
+        summaries that preserve key information while removing noise.
+        High-importance memories are preserved regardless of age.
+
+        Args:
+            older_than_days: Only condense memories older than this
+            importance_threshold: Only condense memories below this importance
+
+        Returns:
+            Dict with condensation stats
+        """
+        if not self._initialized:
+            await self.initialize()
+
+        cutoff = (datetime.now(UTC) - timedelta(days=older_than_days)).isoformat()
+
+        with self._get_session() as session:
+            # Find old, low-importance messages
+            result = session.run(
+                """
+                MATCH (m:Message)
+                WHERE m.timestamp < $cutoff
+                  AND m.importance < $threshold
+                  AND NOT coalesce(m.compressed, false)
+                WITH m
+                ORDER BY m.timestamp
+                RETURN m.id AS id, m.content AS content,
+                       m.role AS role, m.session_id AS session_id,
+                       m.importance AS importance
+                """,
+                cutoff=cutoff,
+                threshold=importance_threshold,
+            )
+
+            messages = [dict(r) for r in result]
+            if not messages:
+                return {"condensed": 0, "preserved": 0, "summary_created": False}
+
+            # Group by session for summarization
+            by_session: Dict[str, list] = {}
+            for msg in messages:
+                sid = msg["session_id"]
+                by_session.setdefault(sid, []).append(msg)
+
+            condensed_count = 0
+            for sid, msgs in by_session.items():
+                # Create condensed summary
+                content_parts = [
+                    f"{m['role']}: {m['content'][:200]}" for m in msgs[:20]
+                ]
+                summary_text = (
+                    f"Condensed {len(msgs)} messages: "
+                    + " | ".join(content_parts[:5])
+                )
+                if len(msgs) > 5:
+                    summary_text += f" [... and {len(msgs) - 5} more]"
+
+                summary_id = hashlib.sha256(
+                    f"condense_{sid}_{datetime.now(UTC)}".encode()
+                ).hexdigest()[:16]
+
+                session.run(
+                    """
+                    CREATE (s:Summary {
+                        id: $summary_id,
+                        content: $summary,
+                        message_count: $count,
+                        timestamp: datetime(),
+                        summary_type: 'condensation'
+                    })
+                    """,
+                    summary_id=summary_id,
+                    summary=summary_text[:2000],
+                    count=len(msgs),
+                )
+
+                # Mark original messages as compressed
+                msg_ids = [m["id"] for m in msgs]
+                session.run(
+                    """
+                    MATCH (m:Message)
+                    WHERE m.id IN $ids
+                    SET m.compressed = true,
+                        m.compressed_at = datetime(),
+                        m.condensed_into = $summary_id
+                    """,
+                    ids=msg_ids,
+                    summary_id=summary_id,
+                )
+                condensed_count += len(msgs)
+
+            logger.info(f"Condensed {condensed_count} old memories across {len(by_session)} sessions")
+            return {
+                "condensed": condensed_count,
+                "sessions": len(by_session),
+                "summary_created": True,
+            }
 
     async def get_conversation_history(
         self,
