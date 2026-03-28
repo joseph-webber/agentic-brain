@@ -25,6 +25,34 @@ from typing import Any, Dict, List, Optional, Tuple
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Lazy-loaded real embeddings
+_mlx_embeddings = None
+
+
+def _get_mlx_embeddings():
+    """Return the MLXEmbeddings class, or None if unavailable."""
+    global _mlx_embeddings
+    if _mlx_embeddings is None:
+        try:
+            from .mlx_embeddings import MLXEmbeddings
+
+            if MLXEmbeddings.is_available():
+                _mlx_embeddings = MLXEmbeddings
+        except Exception:
+            pass
+    return _mlx_embeddings
+
+
+def _embed_text(text: str, fallback_dim: int = 384) -> list[float]:
+    """Embed text using MLXEmbeddings with deterministic fallback."""
+    embedder = _get_mlx_embeddings()
+    if embedder is not None:
+        return embedder.embed(text)
+    from .embeddings import _fallback_embedding
+
+    return _fallback_embedding(text, fallback_dim)
+
+
 try:
     from neo4j import AsyncGraphDatabase
 
@@ -122,16 +150,49 @@ class GraphRAG:
         if not self._driver:
             return stats
 
-        # Mocking the ingestion process for now as full implementation
-        # requires an embedding model and LLM for extraction
+        from agentic_brain.rag.graphrag.knowledge_extractor import KnowledgeExtractor
+
+        extractor = getattr(self, "_knowledge_extractor", None)
+        if extractor is None:
+            extractor = KnowledgeExtractor()
+            self._knowledge_extractor = extractor
+
         async with self._driver.session() as session:
             for doc in documents:
-                # Mock extraction
-                entities = doc.get("entities", [])
-                relationships = doc.get("relationships", [])
+                text = doc.get("content") or doc.get("text") or doc.get("page_content")
+                if text:
+                    extraction = extractor.extract_graph_only(text)
+                    entities = [
+                        {
+                            "id": entity.id,
+                            "type": entity.type,
+                            "description": entity.name,
+                        }
+                        for entity in extraction.entities
+                    ]
+                    relationships = [
+                        {
+                            "source": rel.source_entity_id,
+                            "target": rel.target_entity_id,
+                            "type": rel.type,
+                            "weight": rel.weight,
+                        }
+                        for rel in extraction.relationships[: self.config.max_relationships]
+                    ]
+                else:
+                    entities = doc.get("entities", [])
+                    relationships = doc.get("relationships", [])
 
                 # Store entities
                 for entity in entities:
+                    entity_embedding = entity.get("embedding")
+                    if entity_embedding is None:
+                        desc = entity.get("description", "")
+                        entity_embedding = (
+                            _embed_text(desc, self.config.embedding_dim)
+                            if desc
+                            else [0.0] * self.config.embedding_dim
+                        )
                     await session.run(
                         """
                         MERGE (e:Entity {id: $id})
@@ -140,9 +201,7 @@ class GraphRAG:
                         id=entity["id"],
                         type=entity.get("type", "Thing"),
                         desc=entity.get("description", ""),
-                        embedding=entity.get(
-                            "embedding", [0.0] * self.config.embedding_dim
-                        ),
+                        embedding=entity_embedding,
                     )
                     stats["entities"] += 1
 
@@ -199,12 +258,8 @@ class GraphRAG:
 
     async def _vector_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """Perform vector search using embeddings."""
-        # In a real implementation, this would embed the query using an embedding model
-        # and search the Neo4j vector index.
-        # Here we mock the result structure.
-
-        # Mock embedding query
-        [0.1] * self.config.embedding_dim
+        # Compute real query embedding
+        query_embedding = _embed_text(query, self.config.embedding_dim)
 
         results = []
         if self._driver:

@@ -17,6 +17,8 @@ from datetime import UTC, datetime
 from itertools import combinations
 from typing import Any, Optional, Sequence
 
+from agentic_brain.core.neo4j_utils import resilient_query_sync
+from agentic_brain.core.neo4j_schema import VECTOR_INDEX_NAME, ensure_indexes_sync
 from agentic_brain.core.neo4j_pool import configure_pool as configure_neo4j_pool
 from agentic_brain.core.neo4j_pool import get_driver as get_neo4j_driver
 from agentic_brain.core.neo4j_pool import get_session as get_neo4j_session
@@ -163,6 +165,7 @@ class KnowledgeExtractorConfig:
     database: str = field(default_factory=lambda: os.getenv("NEO4J_DATABASE", "neo4j"))
     use_connection_pool: bool = True
     create_schema: bool = True
+    vector_index_name: str = VECTOR_INDEX_NAME
     perform_entity_resolution: bool = True
     on_error: str = "IGNORE"
     max_entities: int = 50
@@ -210,6 +213,19 @@ class KnowledgeExtractor:
         self._embedder = embedder
         self._initialized = False
 
+    def _get_embedder(self) -> Any | None:
+        """Return the embedder, lazily defaulting to MLXEmbeddings."""
+        if self._embedder is not None:
+            return self._embedder
+        try:
+            from agentic_brain.rag.mlx_embeddings import MLXEmbeddings
+
+            if MLXEmbeddings.is_available():
+                self._embedder = MLXEmbeddings
+        except Exception:
+            pass
+        return self._embedder
+
     def initialize(self) -> None:
         """Prepare the Neo4j connection and create graph schema if needed."""
         if self._initialized:
@@ -239,6 +255,37 @@ class KnowledgeExtractor:
             self._driver = None
             self._initialized = False
 
+    def extract_graph_only(
+        self,
+        text: str,
+        *,
+        document_id: Optional[str] = None,
+        metadata: Optional[dict[str, Any]] = None,
+        use_graphrag_pipeline: bool = True,
+    ) -> KnowledgeExtractionResult:
+        """Extract entities/relationships without persisting to Neo4j."""
+        normalized_text = text.strip()
+        if not normalized_text:
+            raise ValueError("text must not be empty")
+
+        metadata = dict(metadata or {})
+        document_id = document_id or self._build_document_id(normalized_text)
+
+        entities, relationships, pipeline_used = self._extract_graph_payload(
+            normalized_text,
+            document_id=document_id,
+            metadata=metadata,
+            use_graphrag_pipeline=use_graphrag_pipeline,
+        )
+
+        return KnowledgeExtractionResult(
+            document_id=document_id,
+            entities=entities,
+            relationships=relationships,
+            pipeline_used=pipeline_used,
+            metadata=metadata,
+        )
+
     async def extract_from_text(
         self,
         text: str,
@@ -257,30 +304,12 @@ class KnowledgeExtractor:
         document_id = document_id or self._build_document_id(normalized_text)
         timestamp = datetime.now(UTC).isoformat()
 
-        pipeline_used = False
-        if use_graphrag_pipeline and self._llm is not None:
-            try:
-                entities, relationships = self._extract_graph_with_llm(normalized_text)
-                pipeline_used = True
-                metadata.setdefault("pipeline", "builtin_llm")
-            except Exception as exc:
-                logger.warning(
-                    "LLM graph extraction failed for %s, falling back to heuristics: %s",
-                    document_id,
-                    exc,
-                )
-                if self.config.on_error.upper() != "IGNORE":
-                    raise KnowledgeExtractorError(
-                        f"LLM graph extraction failed: {exc}"
-                    ) from exc
-                metadata["llm_extraction_error"] = str(exc)
-                entities = self._extract_entities(normalized_text)
-                relationships = self._extract_relationships(normalized_text, entities)
-                metadata.setdefault("pipeline", "heuristic")
-        else:
-            entities = self._extract_entities(normalized_text)
-            relationships = self._extract_relationships(normalized_text, entities)
-            metadata.setdefault("pipeline", "heuristic")
+        entities, relationships, pipeline_used = self._extract_graph_payload(
+            normalized_text,
+            document_id=document_id,
+            metadata=metadata,
+            use_graphrag_pipeline=use_graphrag_pipeline,
+        )
 
         self._persist_extraction(
             document_id=document_id,
@@ -298,6 +327,38 @@ class KnowledgeExtractor:
             pipeline_used=pipeline_used,
             metadata=metadata,
         )
+
+    def _extract_graph_payload(
+        self,
+        text: str,
+        *,
+        document_id: str,
+        metadata: dict[str, Any],
+        use_graphrag_pipeline: bool,
+    ) -> tuple[list[ExtractedEntity], list[ExtractedRelationship], bool]:
+        pipeline_used = False
+        if use_graphrag_pipeline and self._llm is not None:
+            try:
+                entities, relationships = self._extract_graph_with_llm(text)
+                pipeline_used = True
+                metadata.setdefault("pipeline", "builtin_llm")
+                return entities, relationships, pipeline_used
+            except Exception as exc:
+                logger.warning(
+                    "LLM graph extraction failed for %s, falling back to heuristics: %s",
+                    document_id,
+                    exc,
+                )
+                if self.config.on_error.upper() != "IGNORE":
+                    raise KnowledgeExtractorError(
+                        f"LLM graph extraction failed: {exc}"
+                    ) from exc
+                metadata["llm_extraction_error"] = str(exc)
+
+        entities = self._extract_entities(text)
+        relationships = self._extract_relationships(text, entities)
+        metadata.setdefault("pipeline", "heuristic")
+        return entities, relationships, pipeline_used
 
     def extract_from_text_sync(
         self,
@@ -401,6 +462,15 @@ class KnowledgeExtractor:
         finally:
             session.close()
 
+    def _run_query(
+        self,
+        session: Any,
+        query: str,
+        **params: Any,
+    ) -> list[dict[str, Any]]:
+        """Run a Neo4j query with retry handling."""
+        return resilient_query_sync(session, query, params)
+
     def _ensure_schema(self) -> None:
         statements = [
             """
@@ -423,7 +493,8 @@ class KnowledgeExtractor:
         try:
             with self._session_scope() as session:
                 for statement in statements:
-                    session.run(statement)
+                    self._run_query(session, statement)
+                ensure_indexes_sync(session)
         except Neo4jError as exc:
             raise KnowledgeExtractorError(
                 f"Failed to initialize GraphRAG schema: {exc}"
@@ -444,7 +515,8 @@ class KnowledgeExtractor:
 
         try:
             with self._session_scope() as session:
-                session.run(
+                self._run_query(
+                    session,
                     """
                     MERGE (d:SourceDocument {id: $document_id})
                     SET d.content = $text,
@@ -459,7 +531,8 @@ class KnowledgeExtractor:
                 )
 
                 if entity_payload:
-                    session.run(
+                    self._run_query(
+                        session,
                         """
                         MATCH (d:SourceDocument {id: $document_id})
                         UNWIND $entities AS entity
@@ -482,7 +555,8 @@ class KnowledgeExtractor:
                     )
 
                 if relationship_payload:
-                    session.run(
+                    self._run_query(
+                        session,
                         """
                         UNWIND $relationships AS rel
                         MATCH (source:Entity {id: rel.source_entity_id})
@@ -631,7 +705,8 @@ class KnowledgeExtractor:
             terms = [question.lower()]
 
         with self._session_scope() as session:
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (d:SourceDocument)-[:MENTIONS]->(e:Entity)
                 WHERE any(term IN $terms WHERE
@@ -655,7 +730,7 @@ class KnowledgeExtractor:
                 terms=terms,
                 limit=limit,
             )
-            records = [dict(record) for record in result]
+            records = list(result)
 
         return GraphQueryResult(
             query=question,
@@ -691,7 +766,7 @@ class KnowledgeExtractor:
             raise KnowledgeExtractorError("LLM generated unsafe Cypher")
 
         with self._session_scope() as session:
-            results = [dict(record) for record in session.run(cypher, **params)]
+            results = self._run_query(session, cypher, **params)
 
         return GraphQueryResult(
             query=question,

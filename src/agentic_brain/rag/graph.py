@@ -33,6 +33,12 @@ from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+from agentic_brain.core.neo4j_utils import resilient_query_sync
+from agentic_brain.core.neo4j_schema import (
+    VECTOR_INDEX_NAME,
+    ensure_indexes_sync,
+)
+
 logger = logging.getLogger(__name__)
 
 # Lazy-loaded real embeddings (avoids import-time model load)
@@ -65,11 +71,11 @@ def _embed_text(text: str, fallback_dim: int = 384) -> list[float]:
 
 
 try:
-    from neo4j import GraphDatabase
+    from neo4j import AsyncGraphDatabase
 
     NEO4J_AVAILABLE = True
 except ImportError:  # pragma: no cover
-    GraphDatabase = None  # type: ignore
+    AsyncGraphDatabase = None  # type: ignore
     NEO4J_AVAILABLE = False
 
 
@@ -91,7 +97,7 @@ class GraphRAGConfig:
 
     # Vector settings
     embedding_dimension: int = 384
-    vector_index_name: str = "document_embeddings"
+    vector_index_name: str = VECTOR_INDEX_NAME
     similarity_threshold: float = 0.7
 
     # Entity extraction
@@ -164,6 +170,15 @@ class EnhancedGraphRAG:
             driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", ""))
             return driver.session()
 
+    def _run_query(
+        self,
+        session: Any,
+        query: str,
+        **params: Any,
+    ) -> List[Dict[str, Any]]:
+        """Run a Neo4j query with retry handling."""
+        return resilient_query_sync(session, query, params)
+
     async def initialize(self) -> None:
         """
         Initialize the graph database schema and vector indexes.
@@ -179,51 +194,33 @@ class EnhancedGraphRAG:
 
         with self._get_session() as session:
             # Create constraints for uniqueness
-            session.run(
+            self._run_query(
+                session,
                 """
                 CREATE CONSTRAINT document_id IF NOT EXISTS
                 FOR (d:Document) REQUIRE d.id IS UNIQUE
                 """
             )
-            session.run(
+            self._run_query(
+                session,
                 """
                 CREATE CONSTRAINT entity_id IF NOT EXISTS
                 FOR (e:Entity) REQUIRE e.id IS UNIQUE
                 """
             )
-            session.run(
+            self._run_query(
+                session,
                 """
                 CREATE CONSTRAINT chunk_id IF NOT EXISTS
                 FOR (c:Chunk) REQUIRE c.id IS UNIQUE
                 """
             )
 
-            # Create vector index (Neo4j 5.11+)
-            # Note: This requires Neo4j with vector support
             try:
-                session.run(
-                    f"""
-                    CREATE VECTOR INDEX {self.config.vector_index_name} IF NOT EXISTS
-                    FOR (c:Chunk) ON (c.embedding)
-                    OPTIONS {{
-                        indexConfig: {{
-                            `vector.dimensions`: {self.config.embedding_dimension},
-                            `vector.similarity_function`: 'cosine'
-                        }}
-                    }}
-                    """
-                )
+                ensure_indexes_sync(session)
             except Exception as e:
-                logger.warning(f"Could not create vector index: {e}")
+                logger.warning(f"Could not create Neo4j indexes: {e}")
                 logger.info("Vector search will be disabled or use fallback")
-
-            # Create indexes for faster queries
-            session.run(
-                "CREATE INDEX entity_type IF NOT EXISTS FOR (e:Entity) ON (e.type)"
-            )
-            session.run(
-                "CREATE INDEX document_timestamp IF NOT EXISTS FOR (d:Document) ON (d.timestamp)"
-            )
 
         self._initialized = True
         logger.info("Enhanced Graph RAG initialized")
@@ -267,7 +264,8 @@ class EnhancedGraphRAG:
 
         with self._get_session() as session:
             # 1. Create Document node
-            session.run(
+            self._run_query(
+                session,
                 """
                 MERGE (d:Document {id: $doc_id})
                 SET d.content = $content,
@@ -297,7 +295,8 @@ class EnhancedGraphRAG:
                     }
                     for e in entities
                 ]
-                session.run(
+                self._run_query(
+                    session,
                     """
                     UNWIND $entities AS ent
                     MERGE (e:Entity {id: ent.entity_id})
@@ -344,12 +343,15 @@ class EnhancedGraphRAG:
                 for i, chunk_text in enumerate(chunks)
             ]
             if chunk_params:
-                session.run(
+                self._run_query(
+                    session,
                     """
                     UNWIND $chunks AS ch
                     MERGE (c:Chunk {id: ch.chunk_id})
                     SET c.text = ch.text,
+                        c.content = ch.text,
                         c.position = ch.position,
+                        c.document_id = $doc_id,
                         c.embedding = ch.embedding
                     WITH c, ch
                     MATCH (d:Document {id: $doc_id})
@@ -370,7 +372,8 @@ class EnhancedGraphRAG:
                             {"chunk_id": chunk_id, "entity_id": entity_id}
                         )
                 if chunk_entity_links:
-                    session.run(
+                    self._run_query(
+                        session,
                         """
                         UNWIND $links AS link
                         MATCH (c:Chunk {id: link.chunk_id})
@@ -386,58 +389,51 @@ class EnhancedGraphRAG:
         return doc_id
 
     def _extract_entities(self, text: str) -> List[Dict[str, Any]]:
+        """Extract entities from text via :class:`KnowledgeExtractor`.
+
+        ``EnhancedGraphRAG`` stores entities in its own schema, but delegates the
+        extraction logic to the GraphRAG `KnowledgeExtractor` so we maintain a
+        single source of truth.
         """
-        Extract entities from text.
+        from agentic_brain.rag.graphrag.knowledge_extractor import (
+            KnowledgeExtractor,
+            KnowledgeExtractorConfig,
+        )
 
-        This is a simplified implementation. In production, use:
-        - spaCy for NER
-        - LLM-based extraction
-        - Custom domain-specific extractors
-
-        Args:
-            text: Input text
-
-        Returns:
-            List of entity dicts with name, type, count, positions
-        """
-        # Simple word-based extraction (demo purposes)
-        # In production: use spaCy, transformers, or LLM
-        words = text.split()
-        entities = []
-
-        # Extract capitalized words as potential entities
-        for i, word in enumerate(words):
-            cleaned = word.strip(".,!?;:")
-            if (
-                len(cleaned) >= self.config.min_entity_length
-                and cleaned[0].isupper()
-                and cleaned.isalpha()
-            ):
-                # Determine type (simplified)
-                entity_type = "CONCEPT"  # Default
-                if cleaned.endswith("Corp") or cleaned.endswith("Inc"):
-                    entity_type = "ORGANIZATION"
-
-                entities.append(
-                    {
-                        "name": cleaned,
-                        "type": entity_type,
-                        "count": 1,
-                        "positions": [i],
-                    }
+        extractor = getattr(self, "_knowledge_extractor", None)
+        if extractor is None:
+            extractor = KnowledgeExtractor(
+                config=KnowledgeExtractorConfig(
+                    create_schema=False,
                 )
+            )
+            self._knowledge_extractor = extractor
 
-        # Deduplicate and aggregate
-        entity_map = {}
-        for entity in entities:
-            key = entity["name"]
-            if key in entity_map:
-                entity_map[key]["count"] += 1
-                entity_map[key]["positions"].extend(entity["positions"])
-            else:
-                entity_map[key] = entity
+        result = extractor.extract_graph_only(text, use_graphrag_pipeline=True)
 
-        return list(entity_map.values())[: self.config.max_entities_per_doc]
+        type_map = {
+            "Person": "PERSON",
+            "Organization": "ORGANIZATION",
+            "Location": "LOCATION",
+            "Concept": "CONCEPT",
+            "Entity": "CONCEPT",
+        }
+
+        entities: list[dict[str, Any]] = []
+        for entity in result.entities:
+            entity_type = type_map.get(entity.type, str(entity.type).upper())
+            if self.config.entity_types and entity_type not in self.config.entity_types:
+                continue
+            entities.append(
+                {
+                    "name": entity.name,
+                    "type": entity_type,
+                    "count": entity.mention_count,
+                    "positions": [],
+                }
+            )
+
+        return entities[: self.config.max_entities_per_doc]
 
     def _chunk_content(self, content: str, chunk_size: int = 500) -> List[str]:
         """
@@ -530,7 +526,8 @@ class EnhancedGraphRAG:
             # Vector similarity search using Neo4j vector index
             # Note: Requires Neo4j 5.11+ with vector support
             try:
-                result = session.run(
+                result = self._run_query(
+                    session,
                     """
                     CALL db.index.vector.queryNodes(
                         $index_name,
@@ -540,7 +537,7 @@ class EnhancedGraphRAG:
                     YIELD node AS chunk, score
                     MATCH (d:Document)-[:CONTAINS]->(chunk)
                     RETURN chunk.id AS chunk_id,
-                           chunk.text AS content,
+                           coalesce(chunk.content, chunk.text) AS content,
                            chunk.position AS position,
                            d.id AS doc_id,
                            d.metadata AS metadata,
@@ -597,7 +594,8 @@ class EnhancedGraphRAG:
             query_words = [w.strip(".,!?;:") for w in query.split()]
             entity_pattern = "|".join(query_words)
 
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (e:Entity)
                 WHERE e.name =~ $pattern
@@ -607,7 +605,7 @@ class EnhancedGraphRAG:
                      e.mention_count AS entity_importance
                 RETURN DISTINCT
                        c.id AS chunk_id,
-                       c.text AS content,
+                       coalesce(c.content, c.text) AS content,
                        c.position AS position,
                        d.id AS doc_id,
                        d.metadata AS metadata,
@@ -655,7 +653,7 @@ class EnhancedGraphRAG:
         Strategy:
         1. Get vector results
         2. Get graph results
-        3. Merge and rerank by combined score
+        3. Merge and rerank with Reciprocal Rank Fusion
         4. Return top-k
 
         Args:
@@ -668,14 +666,20 @@ class EnhancedGraphRAG:
             List of results sorted by hybrid score
         """
         # Get both vector and graph results
+        from .hybrid import reciprocal_rank_fusion
+
         vector_results = await self._vector_retrieve(query, top_k * 2, query_embedding)
         graph_results = await self._graph_retrieve(query, top_k * 2, filters)
+        fused_results = reciprocal_rank_fusion(
+            [{"id": result["chunk_id"], **result} for result in vector_results],
+            [{"id": result["chunk_id"], **result} for result in graph_results],
+        )
 
         # Merge results by chunk_id
         merged = {}
         for result in vector_results:
             chunk_id = result["chunk_id"]
-            merged[chunk_id] = result
+            merged[chunk_id] = result.copy()
             merged[chunk_id]["vector_score"] = result["score"]
             merged[chunk_id]["graph_score"] = 0.0
 
@@ -685,23 +689,24 @@ class EnhancedGraphRAG:
                 merged[chunk_id]["graph_score"] = result["score"]
                 merged[chunk_id]["entities"] = result.get("entities", [])
             else:
-                merged[chunk_id] = result
+                merged[chunk_id] = result.copy()
                 merged[chunk_id]["vector_score"] = 0.0
                 merged[chunk_id]["graph_score"] = result["score"]
 
-        # Calculate hybrid score (weighted combination)
-        for _chunk_id, result in merged.items():
-            vector_weight = 0.6
-            graph_weight = 0.4
-            hybrid_score = vector_weight * result.get(
-                "vector_score", 0.0
-            ) + graph_weight * result.get("graph_score", 0.0)
-            result["score"] = hybrid_score
-            result["strategy"] = "hybrid"
+        ranked_results = []
+        for fused in fused_results:
+            chunk_id = fused["id"]
+            if chunk_id not in merged:
+                continue
 
-        # Sort by hybrid score and return top-k
-        sorted_results = sorted(merged.values(), key=lambda x: x["score"], reverse=True)
-        return sorted_results[:top_k]
+            result = merged[chunk_id]
+            result["rrf_score"] = fused["rrf_score"]
+            result["score"] = fused["rrf_score"]
+            result["strategy"] = "hybrid"
+            result["fusion_method"] = "rrf"
+            ranked_results.append(result)
+
+        return ranked_results[:top_k]
 
     async def _community_retrieve(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """
@@ -736,12 +741,13 @@ class EnhancedGraphRAG:
         """
         results = []
         with self._get_session() as session:
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (c:Chunk)<-[:CONTAINS]-(d:Document)
-                WHERE toLower(c.text) CONTAINS toLower($query)
+                WHERE toLower(coalesce(c.content, c.text)) CONTAINS toLower($query)
                 RETURN c.id AS chunk_id,
-                       c.text AS content,
+                       coalesce(c.content, c.text) AS content,
                        c.position AS position,
                        d.id AS doc_id,
                        d.metadata AS metadata
@@ -784,7 +790,8 @@ class EnhancedGraphRAG:
             weight: Relationship weight/strength
         """
         with self._get_session() as session:
-            session.run(
+            self._run_query(
+                session,
                 """
                 MATCH (s:Entity {name: $source})
                 MATCH (t:Entity {name: $target})
@@ -816,7 +823,8 @@ class EnhancedGraphRAG:
             Dict with entity info, neighbors, documents, and relationships
         """
         with self._get_session() as session:
-            result = session.run(
+            result = self._run_query(
+                session,
                 """
                 MATCH (e:Entity {name: $name})
                 OPTIONAL MATCH path = (e)-[*1..$max_hops]-(neighbor)
@@ -835,7 +843,7 @@ class EnhancedGraphRAG:
                 max_hops=max_hops,
             )
 
-            record = result.single()
+            record = result[0] if result else None
             if record:
                 return {
                     "entity": {
