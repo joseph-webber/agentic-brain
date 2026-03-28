@@ -4,7 +4,7 @@ This guide documents the **new optional integrations** bundled under the `enhanc
 
 - **Mem0** (`mem0ai`) — persistent memory service
 - **LiteLLM** (`litellm`) — unified LLM routing + fallbacks + cost tracking
-- **neo4j-graphrag** (`neo4j-graphrag`) — knowledge extraction + GraphRAG workflows
+- **neo4j-graphrag** (`neo4j-graphrag`) — optional official Neo4j GraphRAG pipeline + Text2Cypher
 - **Chonkie** (`chonkie`) — fast chunking for RAG preprocessing
 
 > These are **optional dependencies**. Install only what you need.
@@ -227,6 +227,16 @@ pip install "agentic-brain[documents]"
 ### What it does
 `neo4j-graphrag` helps you build a **knowledge graph in Neo4j** from raw text, then answer questions using **GraphRAG** (graph + vector retrieval grounded generation).
 
+Agentic Brain already ships a simpler in-house extractor that can:
+- extract entities and relationships with lightweight heuristics
+- persist them with raw Cypher through the shared `neo4j_pool`
+- answer basic graph questions with keyword-based Cypher queries
+
+Install `agentic-brain[graphrag]` when you want the **official Neo4j-maintained extras**:
+- `SimpleKGPipeline` for LLM-driven graph construction and entity resolution
+- `Text2CypherRetriever` for natural-language-to-Cypher generation
+- Neo4j-maintained prompts, retrievers, and upgrade path
+
 Typical phases:
 1. **Extract entities + relations** into Neo4j
 2. **Retrieve context** (vector/hybrid + graph traversal)
@@ -241,7 +251,7 @@ URI = "neo4j://localhost:7687"
 AUTH = ("neo4j", "your-password")
 driver = GraphDatabase.driver(URI, auth=AUTH)
 
-from neo4j_graphrag.experimental.builders import SimpleKGPipeline
+from neo4j_graphrag.experimental.pipeline.kg_builder import SimpleKGPipeline
 from neo4j_graphrag.llm import OpenAILLM
 
 llm = OpenAILLM(model_name="gpt-4o-mini", model_params={"temperature": 0})

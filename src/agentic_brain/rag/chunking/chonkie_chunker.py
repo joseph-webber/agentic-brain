@@ -14,10 +14,12 @@
 # limitations under the License.
 
 """
-Chonkie-powered fast chunking for RAG pipelines.
+Chonkie-powered token-aware chunking for RAG pipelines.
 
 Wraps the Chonkie library (https://github.com/chonkie-inc/chonkie) to provide
-33x faster chunking with support for token, sentence, and semantic strategies.
+**token-accurate** chunking with support for token, sentence, and semantic
+strategies.  Unlike the built-in character-based chunkers, Chonkie uses a real
+tokenizer so chunk sizes match LLM context windows precisely.
 
 Designed as a drop-in replacement for the built-in chunkers, returning the same
 ``Chunk`` dataclass used throughout the agentic-brain RAG pipeline.
@@ -113,9 +115,11 @@ class BenchmarkResult:
 
 class ChonkieChunker(BaseChunker):
     """
-    Fast chunking powered by the Chonkie library.
+    Token-aware chunking powered by the Chonkie library.
 
-    Drop-in replacement for built-in chunkers with 33x speed improvement.
+    Drop-in replacement for built-in chunkers with **accurate token counting**.
+    The built-in chunkers use character-based splitting (fast but imprecise);
+    Chonkie uses a real tokenizer so chunk sizes align with LLM token limits.
     Supports token, sentence, and semantic chunking strategies.
     Returns standard ``Chunk`` objects compatible with the full RAG pipeline.
 
