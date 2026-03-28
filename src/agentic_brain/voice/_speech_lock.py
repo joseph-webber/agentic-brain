@@ -132,6 +132,16 @@ def _global_speak_inner(
         return success
 
 
+def get_global_lock() -> threading.Lock:
+    """Return the process-wide speech lock.
+
+    Other modules (e.g. ``VoiceSerializer``) **must** use this lock when
+    spawning ``say`` sub-processes so that every speech path in the
+    process is gated by the same mutex.
+    """
+    return _speech_lock
+
+
 def is_speech_active() -> bool:
     """Check if a speech process is currently running."""
     return _current_process is not None and _current_process.poll() is None

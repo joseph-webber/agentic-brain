@@ -25,6 +25,12 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Optional
 
+from agentic_brain.events.voice_events import (
+    VoiceRequest,
+    VoiceStatus,
+    get_voice_event_producer,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -193,14 +199,58 @@ class VoiceOverCoordinator:
             if not self.wait_for_voiceover(timeout=5.0):
                 logger.warning("Proceeding despite VoiceOver timeout")
 
-        # Speak using global speech lock (NEVER overlaps!)
-        try:
-            from agentic_brain.voice._speech_lock import global_speak
+        event_producer = get_voice_event_producer()
+        request = VoiceRequest(
+            text=text,
+            voice=voice,
+            rate=rate,
+            priority=int(priority.value),
+            wait_for_voiceover=wait_for_vo,
+            metadata={"source": "voiceover"},
+        )
+        event_producer.request_speech(request)
+        event_producer.publish_status(
+            VoiceStatus(
+                event="started",
+                text=text,
+                voice=voice,
+                queue_depth=0,
+                request_id=request.request_id,
+                metadata={"source": "voiceover"},
+            )
+        )
 
-            cmd = ["say", "-v", voice, "-r", str(rate), text]
-            return global_speak(cmd, timeout=60)
-        except subprocess.CalledProcessError as e:
+        # Speak using the voice serializer (NEVER overlaps!)
+        # Routes through the same global lock as all other speech paths.
+        try:
+            from agentic_brain.voice.serializer import speak_serialized
+
+            result = speak_serialized(text, voice=voice, rate=rate)
+            event_producer.publish_status(
+                VoiceStatus(
+                    event="completed" if result else "error",
+                    text=text,
+                    voice=voice,
+                    queue_depth=0,
+                    request_id=request.request_id,
+                    error=None if result else "speech command returned false",
+                    metadata={"source": "voiceover"},
+                )
+            )
+            return result
+        except Exception as e:
             logger.error(f"Speech failed: {e}")
+            event_producer.publish_status(
+                VoiceStatus(
+                    event="error",
+                    text=text,
+                    voice=voice,
+                    queue_depth=0,
+                    request_id=request.request_id,
+                    error=str(e),
+                    metadata={"source": "voiceover"},
+                )
+            )
             return False
 
     def send_notification(self, message: str):

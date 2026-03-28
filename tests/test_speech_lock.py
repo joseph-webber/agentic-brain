@@ -222,12 +222,14 @@ class TestVoiceModulesUseGlobalLock:
         cmd = mock_popen.call_args[0][0]
         assert cmd[0] == "say"
 
-    @patch("agentic_brain.voice._speech_lock.subprocess.Popen")
-    def test_voiceover_uses_global_lock(self, mock_popen):
-        """VoiceOverCoordinator.speak_coordinated() routes through global_speak."""
+    @patch("agentic_brain.voice.serializer.subprocess.Popen")
+    @patch("agentic_brain.voice.serializer.audit_no_concurrent_say")
+    def test_voiceover_uses_global_lock(self, mock_audit, mock_popen):
+        """VoiceOverCoordinator.speak_coordinated() routes through serializer
+        which now shares the ONE global lock from _speech_lock.py."""
         proc = MagicMock()
         proc.poll.return_value = None
-        proc.wait.return_value = None
+        proc.wait.return_value = 0
         proc.returncode = 0
         mock_popen.return_value = proc
 
@@ -240,6 +242,11 @@ class TestVoiceModulesUseGlobalLock:
         mock_popen.assert_called()
         cmd = mock_popen.call_args[0][0]
         assert cmd[0] == "say"
+
+        # Verify the serializer's lock IS the global lock from _speech_lock
+        from agentic_brain.voice._speech_lock import get_global_lock
+        from agentic_brain.voice.serializer import get_voice_serializer
+        assert get_voice_serializer()._speech_lock is get_global_lock()
 
     @patch("agentic_brain.voice._speech_lock.subprocess.Popen")
     def test_audio_speak_uses_global_lock(self, mock_popen):
@@ -280,3 +287,87 @@ class TestVoiceModulesUseGlobalLock:
         # Must still call Popen + wait (via global_speak), NOT fire-and-forget
         mock_popen.assert_called()
         proc.wait.assert_called()
+
+
+class TestUnifiedLockIdentity:
+    """Verify every speech path shares the ONE global lock."""
+
+    def test_serializer_uses_global_lock(self):
+        """VoiceSerializer._speech_lock is the global lock from _speech_lock.py."""
+        from agentic_brain.voice._speech_lock import get_global_lock
+        from agentic_brain.voice.serializer import get_voice_serializer
+
+        assert get_voice_serializer()._speech_lock is get_global_lock()
+
+    def test_global_speak_uses_same_lock(self):
+        """_global_speak_inner uses the same lock object as the serializer."""
+        from agentic_brain.voice._speech_lock import _speech_lock, get_global_lock
+        from agentic_brain.voice.serializer import get_voice_serializer
+
+        assert get_voice_serializer()._speech_lock is _speech_lock
+        assert get_global_lock() is _speech_lock
+
+    @patch("agentic_brain.voice.serializer.subprocess.Popen")
+    @patch("agentic_brain.voice.serializer.audit_no_concurrent_say")
+    def test_concurrent_serializer_and_global_speak_no_overlap(
+        self, mock_audit, mock_popen
+    ):
+        """Simultaneous calls through serializer and global_speak never overlap."""
+        import threading
+        from agentic_brain.voice._speech_lock import _global_speak_inner
+        from agentic_brain.voice.serializer import get_voice_serializer
+
+        execution_log = []
+        log_lock = threading.Lock()
+
+        def mock_subprocess(*args, **kwargs):
+            proc = MagicMock()
+            proc.poll.return_value = None
+
+            def fake_wait(timeout=None):
+                with log_lock:
+                    execution_log.append(("start", threading.current_thread().name))
+                import time
+                time.sleep(0.05)
+                with log_lock:
+                    execution_log.append(("end", threading.current_thread().name))
+                return 0
+
+            proc.wait.side_effect = fake_wait
+            proc.returncode = 0
+            return proc
+
+        mock_popen.side_effect = mock_subprocess
+
+        # Also mock Popen in _speech_lock for global_speak path
+        with patch("agentic_brain.voice._speech_lock.subprocess.Popen") as mock_gs_popen:
+            mock_gs_popen.side_effect = mock_subprocess
+
+            def call_serializer():
+                get_voice_serializer().speak("via serializer", wait=True)
+
+            def call_global_speak():
+                _global_speak_inner(
+                    ["say", "-v", "Karen", "via global_speak"], timeout=60
+                )
+
+            t1 = threading.Thread(target=call_serializer, name="serializer-thread")
+            t2 = threading.Thread(target=call_global_speak, name="global-speak-thread")
+
+            t1.start()
+            import time
+            time.sleep(0.01)  # slight stagger
+            t2.start()
+
+            t1.join(timeout=5)
+            t2.join(timeout=5)
+
+        # Verify no overlapping execution windows
+        starts = [i for i, (ev, _) in enumerate(execution_log) if ev == "start"]
+        ends = [i for i, (ev, _) in enumerate(execution_log) if ev == "end"]
+        assert len(starts) == 2, f"Expected 2 starts, got {starts} in {execution_log}"
+        assert len(ends) == 2, f"Expected 2 ends, got {ends} in {execution_log}"
+        # First must end before second starts
+        assert ends[0] < starts[1], (
+            f"Overlap detected! Log: {execution_log}"
+        )

@@ -34,6 +34,9 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Callable, Deque, List, Optional
 
+from agentic_brain.cache.voice_cache import VoiceCache, VoiceState
+from agentic_brain.voice._speech_lock import get_global_lock as _get_global_lock
+
 logger = logging.getLogger(__name__)
 
 # ── Overlap detection ────────────────────────────────────────────────
@@ -151,7 +154,10 @@ class VoiceSerializer:
         self._initialize()
 
     def _initialize(self) -> None:
-        self._speech_lock = threading.Lock()
+        # Use the ONE TRUE LOCK from _speech_lock.py so that every
+        # speech path in the process (serializer, voiceover, global_speak,
+        # resilient, llm_voice) is gated by the same mutex.
+        self._speech_lock = _get_global_lock()
         self._state_lock = threading.Lock()
         self._queue_lock = threading.Lock()
         self._queue_ready = threading.Condition(self._queue_lock)
@@ -162,12 +168,14 @@ class VoiceSerializer:
         self._audit_enabled = os.environ.get(
             "VOICE_AUDIT_DISABLED", ""
         ).lower() not in ("1", "true", "yes")
+        self._voice_cache = self._create_voice_cache()
         self._worker = threading.Thread(
             target=self._worker_loop,
             name="voice-serializer",
             daemon=True,
         )
         self._worker.start()
+        self._sync_voice_cache_state()
 
     @property
     def pause_between(self) -> float:
@@ -211,6 +219,7 @@ class VoiceSerializer:
         with self._state_lock:
             self._current_message = None
             self._current_process = None
+        self._sync_voice_cache_state()
 
     def wait_until_idle(self, timeout: float = 5.0) -> bool:
         """Wait until no message is queued or speaking."""
@@ -275,6 +284,7 @@ class VoiceSerializer:
         with self._queue_ready:
             self._queue.append(job)
             self._queue_ready.notify()
+        self._sync_voice_cache_state()
 
         if not wait:
             return True
@@ -308,6 +318,7 @@ class VoiceSerializer:
                 with self._state_lock:
                     self._current_message = job.message
                     self._current_process = None
+                self._sync_voice_cache_state()
 
                 try:
                     job.result = job.executor(job.message)
@@ -319,6 +330,7 @@ class VoiceSerializer:
                     with self._state_lock:
                         self._current_message = None
                         self._current_process = None
+                    self._sync_voice_cache_state()
 
                     pause_after = (
                         self._pause_between
@@ -362,6 +374,61 @@ class VoiceSerializer:
             self._current_process = process
 
         return process.wait() == 0
+
+    def cache_audio(
+        self,
+        text: str,
+        voice: str,
+        audio_bytes: bytes,
+        ttl: int = 86400,
+    ) -> Optional[str]:
+        """Store synthesized audio in Redis if voice caching is available."""
+
+        if self._voice_cache is None:
+            return None
+        try:
+            return self._voice_cache.cache_audio(text, voice, audio_bytes, ttl=ttl)
+        except Exception:
+            logger.debug("Unable to cache synthesized audio", exc_info=True)
+            return None
+
+    def get_cached_audio(self, text: str, voice: str) -> Optional[bytes]:
+        """Load synthesized audio from Redis if available."""
+
+        if self._voice_cache is None:
+            return None
+        try:
+            return self._voice_cache.get_cached_audio(text, voice)
+        except Exception:
+            logger.debug("Unable to load synthesized audio", exc_info=True)
+            return None
+
+    def _create_voice_cache(self) -> Optional[VoiceCache]:
+        try:
+            return VoiceCache()
+        except Exception:
+            logger.debug("Voice cache unavailable - continuing without Redis", exc_info=True)
+            return None
+
+    def _sync_voice_cache_state(self) -> None:
+        if self._voice_cache is None:
+            return
+
+        try:
+            with self._state_lock:
+                current_message = self._current_message
+                is_speaking = current_message is not None
+
+            self._voice_cache.set_state(
+                VoiceState(
+                    is_speaking=is_speaking,
+                    current_text=current_message.text if current_message else "",
+                    current_voice=current_message.voice if current_message else "Karen",
+                    queue_depth=self.queue_size(),
+                )
+            )
+        except Exception:
+            logger.debug("Unable to sync voice state to Redis", exc_info=True)
 
 
 _serializer = VoiceSerializer()
