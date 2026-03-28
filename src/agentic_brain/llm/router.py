@@ -49,12 +49,14 @@ class LLMRouterCore:
         Provider.ANTHROPIC,
         Provider.OPENAI,
         Provider.OLLAMA,
+        Provider.OPENROUTER,
     }
 
     PROVIDER_DEFAULT_MODELS: dict[Provider, str] = {
         Provider.OLLAMA: "llama3.1:8b",
         Provider.OPENAI: "gpt-4o-mini",
         Provider.ANTHROPIC: "claude-3-haiku-20240307",
+        Provider.OPENROUTER: "meta-llama/llama-3-8b-instruct:free",
     }
 
     FRIENDLY_ALIASES: dict[str, str] = {
@@ -108,7 +110,9 @@ class LLMRouterCore:
                 continue
             alias_map[alias.lower()] = alias
         if custom_aliases:
-            alias_map.update({key.lower(): value for key, value in custom_aliases.items()})
+            alias_map.update(
+                {key.lower(): value for key, value in custom_aliases.items()}
+            )
         return alias_map
 
     def normalize_messages(
@@ -122,9 +126,15 @@ class LLMRouterCore:
         if messages:
             normalized: list[dict[str, str]] = []
             for item in messages:
-                role = item.role if isinstance(item, Message) else str(item.get("role", "user"))
+                role = (
+                    item.role
+                    if isinstance(item, Message)
+                    else str(item.get("role", "user"))
+                )
                 content = (
-                    item.content if isinstance(item, Message) else str(item.get("content", ""))
+                    item.content
+                    if isinstance(item, Message)
+                    else str(item.get("content", ""))
                 )
                 normalized.append({"role": role, "content": content})
             return normalized
@@ -158,11 +168,16 @@ class LLMRouterCore:
     ) -> ModelRoute:
         """Resolve a friendly alias or raw model ID into a concrete route."""
         if provider and not model:
-            return ModelRoute(provider=provider, model=self.PROVIDER_DEFAULT_MODELS[provider])
+            return ModelRoute(
+                provider=provider, model=self.PROVIDER_DEFAULT_MODELS[provider]
+            )
 
         if not model:
             default_provider = provider or self.config.default_provider
-            default_model = self.config.default_model or self.PROVIDER_DEFAULT_MODELS[default_provider]
+            default_model = (
+                self.config.default_model
+                or self.PROVIDER_DEFAULT_MODELS[default_provider]
+            )
             return self.resolve_model(default_model, default_provider)
 
         lookup = model.strip()
@@ -245,7 +260,9 @@ class LLMRouterCore:
         )
         return estimated_cost
 
-    def _estimate_cost(self, route: ModelRoute, input_tokens: int, output_tokens: int) -> float:
+    def _estimate_cost(
+        self, route: ModelRoute, input_tokens: int, output_tokens: int
+    ) -> float:
         if route.provider == Provider.OLLAMA:
             return 0.0
 
@@ -255,7 +272,11 @@ class LLMRouterCore:
                 price_key = candidate
                 break
         input_rate, output_rate = self.COST_PER_1K_TOKENS.get(price_key, (0.0, 0.0))
-        return round(((input_tokens / 1000) * input_rate) + ((output_tokens / 1000) * output_rate), 8)
+        return round(
+            ((input_tokens / 1000) * input_rate)
+            + ((output_tokens / 1000) * output_rate),
+            8,
+        )
 
     def get_token_stats(self) -> dict[str, Any]:
         return {
@@ -263,7 +284,8 @@ class LLMRouterCore:
             "by_provider": dict(self._tokens_by_provider),
             "estimated_cost_total": round(self._estimated_cost_total, 8),
             "estimated_cost_by_provider": {
-                key: round(value, 8) for key, value in self._estimated_cost_by_provider.items()
+                key: round(value, 8)
+                for key, value in self._estimated_cost_by_provider.items()
             },
             "requests": list(self._request_history),
         }
@@ -297,7 +319,9 @@ class LLMRouterCore:
                 retry_dt = parsedate_to_datetime(retry_after)
                 if retry_dt.tzinfo is None:
                     retry_dt = retry_dt.replace(tzinfo=timezone.utc)
-                return max(0, int((retry_dt - datetime.now(timezone.utc)).total_seconds()))
+                return max(
+                    0, int((retry_dt - datetime.now(timezone.utc)).total_seconds())
+                )
             except Exception:
                 return None
 
@@ -346,12 +370,23 @@ class LLMRouterCore:
                 last_error = exc
                 if attempt >= self.config.max_retries:
                     raise
-                retry_after = exc.debug_info.get("retry_after") if hasattr(exc, "debug_info") else None
+                retry_after = (
+                    exc.debug_info.get("retry_after")
+                    if hasattr(exc, "debug_info")
+                    else None
+                )
                 await self._sleep(self._backoff_seconds(attempt, retry_after))
             except APIError as exc:
                 last_error = exc
-                status = exc.debug_info.get("status_code") if hasattr(exc, "debug_info") else None
-                if status not in self.RETRYABLE_STATUS_CODES or attempt >= self.config.max_retries:
+                status = (
+                    exc.debug_info.get("status_code")
+                    if hasattr(exc, "debug_info")
+                    else None
+                )
+                if (
+                    status not in self.RETRYABLE_STATUS_CODES
+                    or attempt >= self.config.max_retries
+                ):
                     raise
                 await self._sleep(self._backoff_seconds(attempt))
             except aiohttp.ClientError as exc:
@@ -408,7 +443,9 @@ class LLMRouterCore:
         temperature: float = 0.7,
         max_tokens: int | None = None,
     ) -> Response:
-        normalized = self.normalize_messages(message=message, system=system, messages=messages)
+        normalized = self.normalize_messages(
+            message=message, system=system, messages=messages
+        )
         return await self._chat_messages(
             normalized,
             provider=provider,
@@ -432,7 +469,9 @@ class LLMRouterCore:
         if route.provider == Provider.OPENAI:
             return await self._dispatch_openai(route, messages, temperature, max_tokens)
         if route.provider == Provider.ANTHROPIC:
-            return await self._dispatch_anthropic(route, messages, temperature, max_tokens)
+            return await self._dispatch_anthropic(
+                route, messages, temperature, max_tokens
+            )
         if route.provider == Provider.OLLAMA:
             return await self._dispatch_ollama(route, messages, temperature, max_tokens)
         raise ValueError(f"Unsupported provider: {route.provider.value}")
@@ -482,7 +521,11 @@ class LLMRouterCore:
         ):
             if response.status == 200:
                 return
-        raise LLMProviderError("ollama", self.PROVIDER_DEFAULT_MODELS[Provider.OLLAMA], Exception("Ollama is not running"))
+        raise LLMProviderError(
+            "ollama",
+            self.PROVIDER_DEFAULT_MODELS[Provider.OLLAMA],
+            Exception("Ollama is not running"),
+        )
 
     def _require_api_key(self, config_value: str | None, env_name: str) -> str:
         api_key = config_value or os.getenv(env_name)
@@ -504,8 +547,15 @@ class LLMRouterCore:
             return
         if status == 429:
             retry_after = self._retry_after_seconds(headers, result)
-            raise RateLimitError(limit=1, window="request window", retry_after=retry_after or 1)
-        raise APIError(url, status, json.dumps(result) if isinstance(result, dict) else str(result), None)
+            raise RateLimitError(
+                limit=1, window="request window", retry_after=retry_after or 1
+            )
+        raise APIError(
+            url,
+            status,
+            json.dumps(result) if isinstance(result, dict) else str(result),
+            None,
+        )
 
     def _response_with_usage(
         self,
@@ -570,7 +620,9 @@ class LLMRouterCore:
             headers=headers,
         )
         if not isinstance(result, dict):
-            raise LLMProviderError(route.provider.value, route.model, Exception("Unexpected response type"))
+            raise LLMProviderError(
+                route.provider.value, route.model, Exception("Unexpected response type")
+            )
 
         choice = result["choices"][0]
         usage = result.get("usage", {})
@@ -625,11 +677,15 @@ class LLMRouterCore:
             headers=headers,
         )
         if not isinstance(result, dict):
-            raise LLMProviderError(route.provider.value, route.model, Exception("Unexpected response type"))
+            raise LLMProviderError(
+                route.provider.value, route.model, Exception("Unexpected response type")
+            )
 
         usage = result.get("usage", {})
         content_blocks = result.get("content", [])
-        text = "".join(block.get("text", "") for block in content_blocks if isinstance(block, dict))
+        text = "".join(
+            block.get("text", "") for block in content_blocks if isinstance(block, dict)
+        )
         return self._response_with_usage(
             route=route,
             content=text,
@@ -671,7 +727,9 @@ class LLMRouterCore:
             headers=headers,
         )
         if not isinstance(result, dict):
-            raise LLMProviderError(route.provider.value, route.model, Exception("Unexpected response type"))
+            raise LLMProviderError(
+                route.provider.value, route.model, Exception("Unexpected response type")
+            )
 
         return self._response_with_usage(
             route=route,

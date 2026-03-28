@@ -97,7 +97,10 @@ async def test_index_document(graph_rag, mock_session):
 async def test_index_document_uses_real_chunk_embeddings(mock_session):
     """Chunk embeddings should come from the real embedder, not mock [0.1] values."""
     with (
-        patch("agentic_brain.rag.graph._get_mlx_embeddings", return_value=FakeGraphEmbedder),
+        patch(
+            "agentic_brain.rag.graph._get_mlx_embeddings",
+            return_value=FakeGraphEmbedder,
+        ),
         patch("agentic_brain.core.neo4j_pool.get_session") as mock_get_session,
     ):
         mock_get_session.return_value.__enter__.return_value = mock_session
@@ -108,7 +111,9 @@ async def test_index_document_uses_real_chunk_embeddings(mock_session):
             doc_id="doc-real-embeddings",
         )
 
-    chunk_calls = [call for call in mock_session.run.call_args_list if "chunks" in call.kwargs]
+    chunk_calls = [
+        call for call in mock_session.run.call_args_list if "chunks" in call.kwargs
+    ]
     assert chunk_calls
     chunk_params = chunk_calls[-1].kwargs["chunks"]
     assert chunk_params

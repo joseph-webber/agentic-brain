@@ -227,21 +227,21 @@ class EnhancedGraphRAG:
                 """
                 CREATE CONSTRAINT document_id IF NOT EXISTS
                 FOR (d:Document) REQUIRE d.id IS UNIQUE
-                """
+                """,
             )
             self._run_query(
                 session,
                 """
                 CREATE CONSTRAINT entity_id IF NOT EXISTS
                 FOR (e:Entity) REQUIRE e.id IS UNIQUE
-                """
+                """,
             )
             self._run_query(
                 session,
                 """
                 CREATE CONSTRAINT chunk_id IF NOT EXISTS
                 FOR (c:Chunk) REQUIRE c.id IS UNIQUE
-                """
+                """,
             )
 
             try:
@@ -315,7 +315,9 @@ class EnhancedGraphRAG:
             if entities:
                 entity_params = [
                     {
-                        "entity_id": hashlib.sha256(e["name"].encode()).hexdigest()[:16],
+                        "entity_id": hashlib.sha256(e["name"].encode()).hexdigest()[
+                            :16
+                        ],
                         "name": e["name"],
                         "type": e["type"],
                         "count": e["count"],
@@ -408,7 +410,9 @@ class EnhancedGraphRAG:
                     chunk_id = f"{doc_id}_chunk_{i}"
                     chunk_entities = self._extract_entities(chunk_text)
                     for entity in chunk_entities:
-                        entity_id = hashlib.sha256(entity["name"].encode()).hexdigest()[:16]
+                        entity_id = hashlib.sha256(entity["name"].encode()).hexdigest()[
+                            :16
+                        ]
                         chunk_entity_links.append(
                             {"chunk_id": chunk_id, "entity_id": entity_id}
                         )
@@ -765,7 +769,9 @@ class EnhancedGraphRAG:
         """
         query_terms = {term.lower() for term in query.split() if term.strip()}
         if not query_terms:
-            logger.info("Community retrieval has no query terms - falling back to hybrid")
+            logger.info(
+                "Community retrieval has no query terms - falling back to hybrid"
+            )
             return await self._hybrid_retrieve(query, top_k)
 
         with self._get_session() as session:
@@ -786,12 +792,18 @@ class EnhancedGraphRAG:
             for cid, entities in communities.items():
                 for entity in entities:
                     entity_to_community[entity] = cid
-                if any(term in entity.lower() for entity in entities for term in query_terms):
+                if any(
+                    term in entity.lower()
+                    for entity in entities
+                    for term in query_terms
+                ):
                     matched_entities.extend(entities)
 
             matched_entities = sorted({entity for entity in matched_entities})
             if not matched_entities:
-                logger.info("Community retrieval found no matches - falling back to hybrid")
+                logger.info(
+                    "Community retrieval found no matches - falling back to hybrid"
+                )
                 return await self._hybrid_retrieve(query, top_k)
 
             results = self._run_query(
@@ -841,7 +853,9 @@ class EnhancedGraphRAG:
             )
 
         if not formatted:
-            logger.info("Community retrieval returned no results - falling back to hybrid")
+            logger.info(
+                "Community retrieval returned no results - falling back to hybrid"
+            )
             return await self._hybrid_retrieve(query, top_k)
 
         return formatted[:top_k]

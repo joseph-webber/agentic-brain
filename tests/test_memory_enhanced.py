@@ -404,14 +404,18 @@ class TestMemoryCondensation:
         conn = store._get_conn()
         old_time = (datetime.now(UTC) - timedelta(days=10)).isoformat()
         for i in range(5):
-            entry = store.store(f"Old message {i}", importance=0.2, session_id="old_sess")
+            entry = store.store(
+                f"Old message {i}", importance=0.2, session_id="old_sess"
+            )
             conn.execute(
                 "UPDATE memories SET timestamp = ? WHERE id = ?",
                 (old_time, entry.id),
             )
         conn.commit()
 
-        result = store.condense_old_memories(older_than_days=7, importance_threshold=0.3)
+        result = store.condense_old_memories(
+            older_than_days=7, importance_threshold=0.3
+        )
         assert result["condensed"] == 5
         assert result["summary_created"] is True
 
@@ -426,13 +430,17 @@ class TestMemoryCondensation:
         )
         conn.commit()
 
-        result = store.condense_old_memories(older_than_days=7, importance_threshold=0.3)
+        result = store.condense_old_memories(
+            older_than_days=7, importance_threshold=0.3
+        )
         assert result["condensed"] == 0  # High importance preserved
 
     def test_recent_memories_preserved(self, store):
         """Recent memories are not condensed regardless of importance."""
         store.store("Recent low importance", importance=0.1)
-        result = store.condense_old_memories(older_than_days=7, importance_threshold=0.3)
+        result = store.condense_old_memories(
+            older_than_days=7, importance_threshold=0.3
+        )
         assert result["condensed"] == 0
 
 
@@ -524,7 +532,9 @@ class TestMemoryEntryEffectiveImportance:
             last_accessed=old,
             access_count=10,
         )
-        assert entry_accessed.effective_importance > entry_no_access.effective_importance
+        assert (
+            entry_accessed.effective_importance > entry_no_access.effective_importance
+        )
 
 
 # =========================================================================

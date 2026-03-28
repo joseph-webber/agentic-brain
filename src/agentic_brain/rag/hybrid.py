@@ -76,7 +76,9 @@ def reciprocal_rank_fusion(
             merged_items[item_id] = {**merged_items.get(item_id, {}), **item}
             scores[item_id] = scores.get(item_id, 0.0) + 1.0 / (k + rank + 1)
 
-    sorted_ids = sorted(scores.keys(), key=lambda item_id: scores[item_id], reverse=True)
+    sorted_ids = sorted(
+        scores.keys(), key=lambda item_id: scores[item_id], reverse=True
+    )
 
     return [
         {

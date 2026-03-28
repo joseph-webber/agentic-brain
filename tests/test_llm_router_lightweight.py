@@ -67,7 +67,9 @@ async def test_falls_back_to_next_model_on_provider_error():
 
     async def dispatch(route, **kwargs):
         if route.provider == Provider.OPENAI:
-            raise APIError("https://api.openai.com/v1/chat/completions", 500, "boom", None)
+            raise APIError(
+                "https://api.openai.com/v1/chat/completions", 500, "boom", None
+            )
         return router._response_with_usage(
             route=route,
             content="fallback worked",

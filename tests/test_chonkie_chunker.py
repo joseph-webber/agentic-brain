@@ -190,7 +190,9 @@ class TestChonkieChunkerWithMocks:
         mock.token_count = token_count
         return mock
 
-    @patch.dict("sys.modules", {"chonkie": MagicMock(), "chonkie.embeddings": MagicMock()})
+    @patch.dict(
+        "sys.modules", {"chonkie": MagicMock(), "chonkie.embeddings": MagicMock()}
+    )
     def test_chonkie_chunker_import_error_message(self):
         """When chonkie is missing, a clear error message is raised."""
         # Reload module to pick up the mock
@@ -537,9 +539,9 @@ class TestTokenAccuracy:
         chunks = chunker.chunk(LONG_TEXT)
 
         for chunk in chunks:
-            assert "token_count" in chunk.metadata, (
-                f"Chunk {chunk.chunk_index} missing token_count metadata"
-            )
+            assert (
+                "token_count" in chunk.metadata
+            ), f"Chunk {chunk.chunk_index} missing token_count metadata"
             assert chunk.metadata["token_count"] > 0
 
     def test_chunk_sizes_respect_token_limit(self):
@@ -547,9 +549,7 @@ class TestTokenAccuracy:
         from agentic_brain.rag.chunking import ChonkieChunker
 
         target_tokens = 128
-        chunker = ChonkieChunker(
-            strategy="token", chunk_size=target_tokens, overlap=16
-        )
+        chunker = ChonkieChunker(strategy="token", chunk_size=target_tokens, overlap=16)
         chunks = chunker.chunk(LONG_TEXT)
 
         for chunk in chunks:

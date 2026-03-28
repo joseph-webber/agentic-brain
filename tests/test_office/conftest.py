@@ -49,15 +49,29 @@ HTML2TEXT_AVAILABLE = _check_available("html2text")
 DOCX2PDF_AVAILABLE = _check_available("docx2pdf")
 
 # Convenience skip markers for use in test files
-requires_docx = pytest.mark.skipif(not DOCX_AVAILABLE, reason="python-docx not installed")
-requires_openpyxl = pytest.mark.skipif(not OPENPYXL_AVAILABLE, reason="openpyxl not installed")
-requires_pptx = pytest.mark.skipif(not PPTX_AVAILABLE, reason="python-pptx not installed")
-requires_mammoth = pytest.mark.skipif(not MAMMOTH_AVAILABLE, reason="mammoth not installed")
+requires_docx = pytest.mark.skipif(
+    not DOCX_AVAILABLE, reason="python-docx not installed"
+)
+requires_openpyxl = pytest.mark.skipif(
+    not OPENPYXL_AVAILABLE, reason="openpyxl not installed"
+)
+requires_pptx = pytest.mark.skipif(
+    not PPTX_AVAILABLE, reason="python-pptx not installed"
+)
+requires_mammoth = pytest.mark.skipif(
+    not MAMMOTH_AVAILABLE, reason="mammoth not installed"
+)
 requires_odf = pytest.mark.skipif(not ODF_AVAILABLE, reason="odfpy not installed")
-requires_striprtf = pytest.mark.skipif(not STRIPRTF_AVAILABLE, reason="striprtf not installed")
+requires_striprtf = pytest.mark.skipif(
+    not STRIPRTF_AVAILABLE, reason="striprtf not installed"
+)
 requires_pil = pytest.mark.skipif(not PIL_AVAILABLE, reason="Pillow not installed")
-requires_snappy = pytest.mark.skipif(not SNAPPY_AVAILABLE, reason="python-snappy not installed")
-requires_pandas = pytest.mark.skipif(not PANDAS_AVAILABLE, reason="pandas not installed")
+requires_snappy = pytest.mark.skipif(
+    not SNAPPY_AVAILABLE, reason="python-snappy not installed"
+)
+requires_pandas = pytest.mark.skipif(
+    not PANDAS_AVAILABLE, reason="pandas not installed"
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 OFFICE_ROOT = REPO_ROOT / "src" / "agentic_brain" / "documents" / "services" / "office"

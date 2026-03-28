@@ -17,7 +17,10 @@ INDEXES = [
     "CREATE INDEX chunk_doc_id IF NOT EXISTS FOR (c:Chunk) ON (c.document_id)",
     "CREATE INDEX document_timestamp IF NOT EXISTS FOR (d:Document) ON (d.timestamp)",
     # Vector index (standardized name)
-    f"CREATE VECTOR INDEX {VECTOR_INDEX_NAME} IF NOT EXISTS FOR (c:Chunk) ON (c.embedding) OPTIONS {{indexConfig: {{`vector.dimensions`: 384, `vector.similarity_function`: 'cosine'}}}}",
+    "CREATE VECTOR INDEX "
+    + VECTOR_INDEX_NAME
+    + " IF NOT EXISTS FOR (c:Chunk) ON (c.embedding) OPTIONS "
+    + "{indexConfig: {`vector.dimensions`: 384, `vector.similarity_function`: 'cosine'}}",
 ]
 
 

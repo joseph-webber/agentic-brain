@@ -278,7 +278,9 @@ class TestLLMRouterFallback:
         router._ollama_available = True
         router._ollama_check_time = 9999999999
 
-        async def fake_chat_messages(messages, *, provider, model, temperature, **kwargs):
+        async def fake_chat_messages(
+            messages, *, provider, model, temperature, **kwargs
+        ):
             if provider == Provider.OLLAMA:
                 raise Exception("Ollama failed")
             raise AssertionError(f"Unexpected provider: {provider}")
@@ -313,7 +315,9 @@ class TestLLMRouterFallback:
 
         seen_providers = []
 
-        async def fake_chat_messages(messages, *, provider, model, temperature, **kwargs):
+        async def fake_chat_messages(
+            messages, *, provider, model, temperature, **kwargs
+        ):
             seen_providers.append(provider)
             if provider == Provider.ANTHROPIC:
                 raise Exception("Anthropic failed")

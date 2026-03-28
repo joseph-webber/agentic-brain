@@ -237,17 +237,11 @@ class LoadedDocument:
 
                 parts.append(f"### {caption}\n")
                 if headers:
-                    parts.append(
-                        "| " + " | ".join(str(h) for h in headers) + " |"
-                    )
-                    parts.append(
-                        "| " + " | ".join("---" for _ in headers) + " |"
-                    )
+                    parts.append("| " + " | ".join(str(h) for h in headers) + " |")
+                    parts.append("| " + " | ".join("---" for _ in headers) + " |")
                 for row in rows:
                     if isinstance(row, (list, tuple)):
-                        parts.append(
-                            "| " + " | ".join(str(c) for c in row) + " |"
-                        )
+                        parts.append("| " + " | ".join(str(c) for c in row) + " |")
 
         return "\n\n".join(parts) + "\n"
 

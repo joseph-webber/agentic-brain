@@ -288,9 +288,7 @@ class ChonkieChunker(BaseChunker):
             )
             return fallback.chunk(text, metadata)
 
-        chunks = [
-            self._convert_chunk(c, idx, text) for idx, c in enumerate(raw_chunks)
-        ]
+        chunks = [self._convert_chunk(c, idx, text) for idx, c in enumerate(raw_chunks)]
 
         self._add_metadata(chunks, metadata)
         return chunks

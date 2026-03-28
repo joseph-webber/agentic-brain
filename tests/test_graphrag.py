@@ -184,6 +184,7 @@ def test_query_falls_back_to_keyword_search_when_llm_is_unsafe(
             {"related_entity": "Acme Corp", "relationship_type": "WORKS_AT"}
         ],
     }
+
     def run_side_effect(query, **kwargs):
         if "d.id AS document_id" in query:
             return [mock_record]

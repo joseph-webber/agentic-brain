@@ -647,9 +647,16 @@ class KnowledgeExtractor:
         for item in payload.get("relationships", []):
             if not isinstance(item, dict):
                 continue
-            source_name = self._normalize_entity_name(str(item.get("source", "")).strip())
-            target_name = self._normalize_entity_name(str(item.get("target", "")).strip())
-            if source_name not in entities_by_name or target_name not in entities_by_name:
+            source_name = self._normalize_entity_name(
+                str(item.get("source", "")).strip()
+            )
+            target_name = self._normalize_entity_name(
+                str(item.get("target", "")).strip()
+            )
+            if (
+                source_name not in entities_by_name
+                or target_name not in entities_by_name
+            ):
                 continue
             relationship_type = self._sanitize_relationship_type(
                 str(item.get("type") or "RELATED_TO")
@@ -665,7 +672,9 @@ class KnowledgeExtractor:
             )
 
         if not relationships:
-            relationships = self._extract_relationships(text, list(entities_by_name.values()))
+            relationships = self._extract_relationships(
+                text, list(entities_by_name.values())
+            )
 
         return list(entities_by_name.values()), relationships
 
@@ -754,7 +763,9 @@ class KnowledgeExtractor:
         response = self._generate_with_llm(prompt, temperature=0)
         payload = self._parse_llm_json(response)
         cypher = str(payload.get("cypher", "")).strip()
-        params = payload.get("params") if isinstance(payload.get("params"), dict) else {}
+        params = (
+            payload.get("params") if isinstance(payload.get("params"), dict) else {}
+        )
         params = dict(params)
         params["limit"] = limit
 

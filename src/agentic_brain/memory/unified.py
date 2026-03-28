@@ -107,7 +107,9 @@ class MemoryEntry:
             "score": self.score,
             "importance": self.importance,
             "access_count": self.access_count,
-            "last_accessed": self.last_accessed.isoformat() if self.last_accessed else None,
+            "last_accessed": (
+                self.last_accessed.isoformat() if self.last_accessed else None
+            ),
             "entities": self.entities,
         }
 
@@ -353,14 +355,19 @@ class SQLiteMemoryStore:
     def _migrate_schema(self, conn: sqlite3.Connection) -> None:
         """Add new columns to existing databases (safe migration)."""
         columns = {
-            row[1]
-            for row in conn.execute("PRAGMA table_info(memories)").fetchall()
+            row[1] for row in conn.execute("PRAGMA table_info(memories)").fetchall()
         }
         migrations = [
-            ("access_count", "ALTER TABLE memories ADD COLUMN access_count INTEGER DEFAULT 0"),
+            (
+                "access_count",
+                "ALTER TABLE memories ADD COLUMN access_count INTEGER DEFAULT 0",
+            ),
             ("last_accessed", "ALTER TABLE memories ADD COLUMN last_accessed TEXT"),
             ("entities", "ALTER TABLE memories ADD COLUMN entities TEXT"),
-            ("importance", "ALTER TABLE memories ADD COLUMN importance REAL DEFAULT 0.5"),
+            (
+                "importance",
+                "ALTER TABLE memories ADD COLUMN importance REAL DEFAULT 0.5",
+            ),
         ]
         for col, sql in migrations:
             if col not in columns:
@@ -608,9 +615,7 @@ class SQLiteMemoryStore:
                 )
                 # Combine FTS score + semantic score + importance boost
                 entry.score = (
-                    0.4 * entry.score
-                    + 0.4 * semantic_score
-                    + 0.2 * entry.importance
+                    0.4 * entry.score + 0.4 * semantic_score + 0.2 * entry.importance
                 )
 
         results.sort(key=lambda x: x.score, reverse=True)
@@ -627,6 +632,7 @@ class SQLiteMemoryStore:
 
     def _row_to_entry(self, row: sqlite3.Row) -> MemoryEntry:
         """Convert SQLite row to MemoryEntry."""
+
         # Safely read columns that may not exist in older databases
         def _safe(col: str, default=None):
             try:
@@ -713,9 +719,23 @@ class SQLiteMemoryStore:
 
     # High-signal keywords that indicate important content
     _IMPORTANCE_KEYWORDS = {
-        "error", "bug", "fix", "critical", "urgent", "important",
-        "decision", "agreed", "remember", "always", "never", "rule",
-        "password", "secret", "key", "credential", "preference",
+        "error",
+        "bug",
+        "fix",
+        "critical",
+        "urgent",
+        "important",
+        "decision",
+        "agreed",
+        "remember",
+        "always",
+        "never",
+        "rule",
+        "password",
+        "secret",
+        "key",
+        "credential",
+        "preference",
     }
 
     def _score_importance(
@@ -773,7 +793,24 @@ class SQLiteMemoryStore:
                 clean
                 and clean[0].isupper()
                 and len(clean) > 1
-                and clean.lower() not in {"the", "this", "that", "it", "he", "she", "we", "they", "is", "are", "was", "were", "i", "a", "an"}
+                and clean.lower()
+                not in {
+                    "the",
+                    "this",
+                    "that",
+                    "it",
+                    "he",
+                    "she",
+                    "we",
+                    "they",
+                    "is",
+                    "are",
+                    "was",
+                    "were",
+                    "i",
+                    "a",
+                    "an",
+                }
                 and clean.lower() not in seen
             ):
                 seen.add(clean.lower())
@@ -787,9 +824,9 @@ class SQLiteMemoryStore:
         """Persist extracted entities to the entity tracking tables."""
         now = datetime.now(UTC).isoformat()
         for ent in entities:
-            eid = hashlib.sha256(
-                f"{ent['name']}:{ent['type']}".encode()
-            ).hexdigest()[:16]
+            eid = hashlib.sha256(f"{ent['name']}:{ent['type']}".encode()).hexdigest()[
+                :16
+            ]
 
             conn.execute(
                 """
@@ -931,12 +968,33 @@ class SQLiteMemoryStore:
     # =========================================================================
 
     # High-signal keywords that boost importance
-    IMPORTANCE_KEYWORDS = frozenset({
-        "important", "critical", "urgent", "remember", "always", "never",
-        "must", "password", "key", "secret", "deadline", "decision",
-        "agreed", "confirmed", "preference", "birthday", "error", "bug",
-        "fix", "deploy", "production", "breaking", "security",
-    })
+    IMPORTANCE_KEYWORDS = frozenset(
+        {
+            "important",
+            "critical",
+            "urgent",
+            "remember",
+            "always",
+            "never",
+            "must",
+            "password",
+            "key",
+            "secret",
+            "deadline",
+            "decision",
+            "agreed",
+            "confirmed",
+            "preference",
+            "birthday",
+            "error",
+            "bug",
+            "fix",
+            "deploy",
+            "production",
+            "breaking",
+            "security",
+        }
+    )
 
     def _score_importance(
         self,
@@ -1050,9 +1108,24 @@ class SQLiteMemoryStore:
 
         # Single capitalized words
         skip_words = {
-            "the", "this", "that", "these", "those", "when", "where",
-            "what", "which", "how", "who", "why", "but", "and", "for",
-            "not", "with", "from",
+            "the",
+            "this",
+            "that",
+            "these",
+            "those",
+            "when",
+            "where",
+            "what",
+            "which",
+            "how",
+            "who",
+            "why",
+            "but",
+            "and",
+            "for",
+            "not",
+            "with",
+            "from",
         }
         for word in text.split():
             cleaned = word.strip(".,!?;:()[]{}\"'")
@@ -1078,9 +1151,9 @@ class SQLiteMemoryStore:
         """Store extracted entities and link to memory."""
         now = datetime.now(UTC).isoformat()
         for ent in entities:
-            eid = hashlib.sha256(
-                f"{ent['name']}:{ent['type']}".encode()
-            ).hexdigest()[:16]
+            eid = hashlib.sha256(f"{ent['name']}:{ent['type']}".encode()).hexdigest()[
+                :16
+            ]
 
             conn.execute(
                 """
@@ -1102,7 +1175,9 @@ class SQLiteMemoryStore:
     # MEMORY DECAY & REINFORCEMENT (Mem0-inspired)
     # =========================================================================
 
-    def reinforce_memory(self, memory_id: str, boost: float = 0.15) -> Optional[MemoryEntry]:
+    def reinforce_memory(
+        self, memory_id: str, boost: float = 0.15
+    ) -> Optional[MemoryEntry]:
         """
         Reinforce a memory (boost importance on access).
 
@@ -1162,7 +1237,9 @@ class SQLiteMemoryStore:
             days = max(0.0, (now - ref_time).total_seconds() / 86400)
             decay = math.exp(-decay_rate * days)
             access_bonus = min((row["access_count"] or 0) * 0.02, 0.2)
-            new_importance = max(min_importance, min(1.0, row["importance"] * decay + access_bonus))
+            new_importance = max(
+                min_importance, min(1.0, row["importance"] * decay + access_bonus)
+            )
 
             if abs(new_importance - row["importance"]) > 0.001:
                 conn.execute(
@@ -1237,7 +1314,11 @@ class SQLiteMemoryStore:
 
         conn.commit()
         logger.info(f"Condensed {condensed_count} old memories")
-        return {"condensed": condensed_count, "sessions": len(by_session), "summary_created": True}
+        return {
+            "condensed": condensed_count,
+            "sessions": len(by_session),
+            "summary_created": True,
+        }
 
     # =========================================================================
     # CROSS-SESSION LINKING (Mem0-inspired)
@@ -1308,11 +1389,13 @@ class SQLiteMemoryStore:
                 (session_id, r["session_id"]),
             ).fetchall()
 
-            results.append({
-                "session_id": r["session_id"],
-                "shared_entity_count": r["shared_count"],
-                "shared_entities": [er["name"] for er in entity_rows],
-            })
+            results.append(
+                {
+                    "session_id": r["session_id"],
+                    "shared_entity_count": r["shared_count"],
+                    "shared_entities": [er["name"] for er in entity_rows],
+                }
+            )
         return results
 
     def get_entity_timeline(self, entity_name: str, limit: int = 20) -> list[dict]:
@@ -1614,7 +1697,9 @@ class UnifiedMemory:
 
     # Mem0-inspired methods delegated to SQLite store
 
-    def reinforce_memory(self, memory_id: str, boost: float = 0.15) -> Optional[MemoryEntry]:
+    def reinforce_memory(
+        self, memory_id: str, boost: float = 0.15
+    ) -> Optional[MemoryEntry]:
         """Reinforce a memory (boost importance on access)."""
         return self._sqlite.reinforce_memory(memory_id, boost)
 

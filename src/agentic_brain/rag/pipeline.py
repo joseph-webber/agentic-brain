@@ -215,6 +215,8 @@ class RAGPipeline:
         )
         self.timeout = int(os.getenv("LLM_TIMEOUT", "60"))
         self.cache_ttl_hours = cache_ttl_hours
+        self.cache_dir = CACHE_DIR
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     def _cache_key(self, query: str, sources: list[str]) -> str:
         """Generate cache key."""
@@ -223,7 +225,7 @@ class RAGPipeline:
 
     def _get_cached(self, cache_key: str) -> Optional[RAGResult]:
         """Get cached result if valid."""
-        cache_file = CACHE_DIR / f"{cache_key}.json"
+        cache_file = self.cache_dir / f"{cache_key}.json"
         if cache_file.exists():
             try:
                 data = json.loads(cache_file.read_text())
@@ -250,7 +252,7 @@ class RAGPipeline:
 
     def _set_cached(self, cache_key: str, result: RAGResult) -> None:
         """Cache a result."""
-        cache_file = CACHE_DIR / f"{cache_key}.json"
+        cache_file = self.cache_dir / f"{cache_key}.json"
         data = {
             "query": result.query,
             "answer": result.answer,

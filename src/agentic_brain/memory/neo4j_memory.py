@@ -222,39 +222,39 @@ class ConversationMemory:
                 """
                 CREATE CONSTRAINT session_id IF NOT EXISTS
                 FOR (s:Session) REQUIRE s.id IS UNIQUE
-                """
+                """,
             )
             self._run_query(
                 session,
                 """
                 CREATE CONSTRAINT message_id IF NOT EXISTS
                 FOR (m:Message) REQUIRE m.id IS UNIQUE
-                """
+                """,
             )
             self._run_query(
                 session,
                 """
                 CREATE CONSTRAINT entity_name IF NOT EXISTS
                 FOR (e:Entity) REQUIRE e.name IS UNIQUE
-                """
+                """,
             )
 
             # Create indexes
             self._run_query(
                 session,
-                "CREATE INDEX message_timestamp IF NOT EXISTS FOR (m:Message) ON (m.timestamp)"
+                "CREATE INDEX message_timestamp IF NOT EXISTS FOR (m:Message) ON (m.timestamp)",
             )
             self._run_query(
                 session,
-                "CREATE INDEX message_importance IF NOT EXISTS FOR (m:Message) ON (m.importance)"
+                "CREATE INDEX message_importance IF NOT EXISTS FOR (m:Message) ON (m.importance)",
             )
             self._run_query(
                 session,
-                "CREATE INDEX session_timestamp IF NOT EXISTS FOR (s:Session) ON (s.started_at)"
+                "CREATE INDEX session_timestamp IF NOT EXISTS FOR (s:Session) ON (s.started_at)",
             )
             self._run_query(
                 session,
-                "CREATE INDEX entity_type IF NOT EXISTS FOR (e:Entity) ON (e.type)"
+                "CREATE INDEX entity_type IF NOT EXISTS FOR (e:Entity) ON (e.type)",
             )
 
             # Create session node if doesn't exist
@@ -364,8 +364,7 @@ class ConversationMemory:
                 entities = self._extract_entities(content)
                 if entities:
                     entity_params = [
-                        {"name": name, "type": etype}
-                        for name, etype in entities
+                        {"name": name, "type": etype} for name, etype in entities
                     ]
                     self._run_query(
                         session,
@@ -652,9 +651,7 @@ class ConversationMemory:
             entities.append((match.group(), "TICKET"))
 
         # File paths
-        for match in re.finditer(
-            r"(?:~/|/[\w]+/|\./)[\w/.-]+\.\w+", text
-        ):
+        for match in re.finditer(r"(?:~/|/[\w]+/|\./)[\w/.-]+\.\w+", text):
             entities.append((match.group(), "FILE"))
 
         # Technology names (common patterns)
@@ -682,9 +679,27 @@ class ConversationMemory:
                 len(cleaned) >= self.config.min_entity_length
                 and cleaned[0].isupper()
                 and not cleaned.isupper()  # skip ALL CAPS (likely acronyms already caught)
-                and cleaned not in {"The", "This", "That", "These", "Those", "When",
-                                    "Where", "What", "Which", "How", "Who", "Why",
-                                    "But", "And", "For", "Not", "With", "From"}
+                and cleaned
+                not in {
+                    "The",
+                    "This",
+                    "That",
+                    "These",
+                    "Those",
+                    "When",
+                    "Where",
+                    "What",
+                    "Which",
+                    "How",
+                    "Who",
+                    "Why",
+                    "But",
+                    "And",
+                    "For",
+                    "Not",
+                    "With",
+                    "From",
+                }
             ):
                 # Classify based on suffix
                 entity_type = "CONCEPT"
@@ -912,9 +927,8 @@ class ConversationMemory:
                 content_parts = [
                     f"{m['role']}: {m['content'][:200]}" for m in msgs[:20]
                 ]
-                summary_text = (
-                    f"Condensed {len(msgs)} messages: "
-                    + " | ".join(content_parts[:5])
+                summary_text = f"Condensed {len(msgs)} messages: " + " | ".join(
+                    content_parts[:5]
                 )
                 if len(msgs) > 5:
                     summary_text += f" [... and {len(msgs) - 5} more]"
@@ -955,7 +969,9 @@ class ConversationMemory:
                 )
                 condensed_count += len(msgs)
 
-            logger.info(f"Condensed {condensed_count} old memories across {len(by_session)} sessions")
+            logger.info(
+                f"Condensed {condensed_count} old memories across {len(by_session)} sessions"
+            )
             return {
                 "condensed": condensed_count,
                 "sessions": len(by_session),

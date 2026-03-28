@@ -105,7 +105,10 @@ async def test_ingest_uses_real_entity_embeddings(mock_driver):
 
     with (
         patch("agentic_brain.rag.graph_rag.AsyncGraphDatabase") as mock_db,
-        patch("agentic_brain.rag.graph_rag._get_mlx_embeddings", return_value=FakeGraphEmbedder),
+        patch(
+            "agentic_brain.rag.graph_rag._get_mlx_embeddings",
+            return_value=FakeGraphEmbedder,
+        ),
     ):
         mock_db.driver.return_value = mock_driver
         rag = GraphRAG(GraphRAGConfig(embedding_dim=768))

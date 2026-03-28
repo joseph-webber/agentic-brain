@@ -24,7 +24,9 @@ async def test_resilient_query_retries_transient_error():
         FakeAsyncResult([{"value": 1}]),
     ]
 
-    with patch("agentic_brain.core.neo4j_utils.asyncio.sleep", new=AsyncMock()) as sleep:
+    with patch(
+        "agentic_brain.core.neo4j_utils.asyncio.sleep", new=AsyncMock()
+    ) as sleep:
         result = await resilient_query(session, "RETURN 1 AS value")
 
     assert result == [{"value": 1}]

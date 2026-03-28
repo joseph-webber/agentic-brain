@@ -211,7 +211,9 @@ class GraphRAG:
                             "type": rel.type,
                             "weight": rel.weight,
                         }
-                        for rel in extraction.relationships[: self.config.max_relationships]
+                        for rel in extraction.relationships[
+                            : self.config.max_relationships
+                        ]
                     ]
                 else:
                     entities = doc.get("entities", [])
@@ -320,7 +322,9 @@ class GraphRAG:
         ranked = []
         for cid, entities in communities.items():
             match_count = sum(
-                1 for entity in entities if any(term in entity.lower() for term in query_terms)
+                1
+                for entity in entities
+                if any(term in entity.lower() for term in query_terms)
             )
             if match_count:
                 ranked.append(
@@ -338,7 +342,6 @@ class GraphRAG:
 
         ranked.sort(key=lambda item: item["score"], reverse=True)
         return ranked[:top_k]
-
 
     async def _vector_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """Perform vector search using embeddings."""

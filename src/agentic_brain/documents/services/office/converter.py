@@ -17,7 +17,12 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
-from .models import DocumentContent, OfficeFormat as ModelOfficeFormat, Paragraph, TextRun
+from .models import (
+    DocumentContent,
+    OfficeFormat as ModelOfficeFormat,
+    Paragraph,
+    TextRun,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +206,9 @@ class OfficeConverter:
                 target.write_text("\n".join(lines), encoding="utf-8")
                 return target
             except Exception as exc:
-                logger.debug("python-docx failed (%s); falling back to LibreOffice", exc)
+                logger.debug(
+                    "python-docx failed (%s); falling back to LibreOffice", exc
+                )
 
         converted = self._run_libreoffice_conversion(source, "txt", target.parent)
         return self._rename_if_needed(converted, target)
@@ -284,9 +291,7 @@ class OfficeConverter:
             try:
                 openpyxl = builtins.__import__("openpyxl")
                 workbook = openpyxl.load_workbook(str(source), data_only=True)
-                worksheet = (
-                    workbook[sheet] if sheet is not None else workbook.active
-                )
+                worksheet = workbook[sheet] if sheet is not None else workbook.active
                 with target.open("w", encoding="utf-8", newline="") as handle:
                     writer = csv.writer(handle)
                     for row in worksheet.iter_rows(values_only=True):
@@ -937,11 +942,15 @@ class OfficeConverter:
 
         if result.returncode != 0:
             message = result.stderr or result.stdout or "LibreOffice conversion failed."
-            raise ConversionError(f"Conversion failed: LibreOffice conversion failed: {message}")
+            raise ConversionError(
+                f"Conversion failed: LibreOffice conversion failed: {message}"
+            )
 
         output_path = output_dir / f"{source.stem}.{output_format}"
         if not output_path.exists():
-            raise ConversionError("Conversion failed: LibreOffice output file not found")
+            raise ConversionError(
+                "Conversion failed: LibreOffice output file not found"
+            )
         return output_path
 
     def _run_macos_automation(

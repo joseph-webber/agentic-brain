@@ -29,6 +29,8 @@ def test_ensure_indexes_sync_runs_all_statements():
     ensure_indexes_sync(session)
 
     assert session.run.call_count == len(INDEXES)
-    assert session.run.call_args_list[-1].args[0].startswith(
-        f"CREATE VECTOR INDEX {VECTOR_INDEX_NAME}"
+    assert (
+        session.run.call_args_list[-1]
+        .args[0]
+        .startswith(f"CREATE VECTOR INDEX {VECTOR_INDEX_NAME}")
     )

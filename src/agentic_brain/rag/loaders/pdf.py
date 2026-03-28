@@ -68,9 +68,7 @@ def _detect_columns(text_lines: list[str], page_width: float = 612) -> bool:
     return short_lines > len(text_lines) * 0.4
 
 
-def _strip_headers_footers(
-    pages: list[str], threshold: float = 0.7
-) -> list[str]:
+def _strip_headers_footers(pages: list[str], threshold: float = 0.7) -> list[str]:
     """Remove repeated headers/footers across pages.
 
     If the first or last line of a page appears on more than ``threshold``
