@@ -267,7 +267,9 @@ class LLMRouterCore:
             )
         return configured
 
-    def _configuration_error_for_provider(self, provider: Provider) -> ConfigurationError:
+    def _configuration_error_for_provider(
+        self, provider: Provider
+    ) -> ConfigurationError:
         """Create a consistent configuration error for a provider."""
         env_name = self.PROVIDER_API_KEY_ENV_VARS.get(provider)
         if env_name:
@@ -288,7 +290,9 @@ class LLMRouterCore:
             if available_routes:
                 return available_routes
             if resolved_routes:
-                raise self._configuration_error_for_provider(resolved_routes[0].provider)
+                raise self._configuration_error_for_provider(
+                    resolved_routes[0].provider
+                )
             return []
 
         primary = self.resolve_model(model, provider) if (provider or model) else None
