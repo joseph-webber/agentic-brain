@@ -249,9 +249,9 @@ class TestConvenienceFunctions:
             except Exception:
                 pass
         resilient_module._daemon_instance = None
-        
+
         yield
-        
+
         # Cleanup after test
         if resilient_module._daemon_instance is not None:
             try:
