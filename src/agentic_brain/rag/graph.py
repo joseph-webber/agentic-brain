@@ -46,7 +46,7 @@ _mlx_embeddings = None
 
 
 def _get_mlx_embeddings():
-    """Return the MLXEmbeddings singleton, or None if unavailable."""
+    """Return the GraphRAG embedding provider class, or None if unavailable."""
     global _mlx_embeddings
     if _mlx_embeddings is None:
         try:
@@ -54,13 +54,17 @@ def _get_mlx_embeddings():
 
             if MLXEmbeddings.is_available():
                 _mlx_embeddings = MLXEmbeddings
-        except Exception:
-            pass
+                logger.info(
+                    "GraphRAG using embedding provider %s",
+                    MLXEmbeddings.provider_name(),
+                )
+        except Exception as exc:
+            logger.warning("GraphRAG real embeddings unavailable: %s", exc)
     return _mlx_embeddings
 
 
 def _embed_text(text: str, fallback_dim: int = 384) -> list[float]:
-    """Embed text using MLXEmbeddings with deterministic fallback."""
+    """Embed text using real GraphRAG embeddings with deterministic fallback."""
     embedder = _get_mlx_embeddings()
     if embedder is not None:
         return embedder.embed(text)
@@ -68,6 +72,14 @@ def _embed_text(text: str, fallback_dim: int = 384) -> list[float]:
     from .embeddings import _fallback_embedding
 
     return _fallback_embedding(text, fallback_dim)
+
+
+def _get_embedding_dimension(default_dim: int = 384) -> int:
+    """Return the active GraphRAG embedding dimension."""
+    embedder = _get_mlx_embeddings()
+    if embedder is not None:
+        return int(embedder.dimensions())
+    return default_dim
 
 
 try:
@@ -152,6 +164,9 @@ class EnhancedGraphRAG:
             config: Configuration object. Uses defaults if not provided.
         """
         self.config = config or GraphRAGConfig()
+        self.config.embedding_dimension = _get_embedding_dimension(
+            self.config.embedding_dimension
+        )
         self._initialized = False
 
     def _get_session(self):
