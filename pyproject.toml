@@ -64,6 +64,7 @@ classifiers = [
 dependencies = [
     "aiohttp>=3.9.0,<4.0.0",  # Required for LLM API calls (Ollama, OpenRouter)
     "litellm>=1.52.0,<2.0.0",  # Unified LLM routing across Anthropic, OpenAI, Ollama
+    "neo4j-graphrag>=1.14.1,<2.0.0",  # Neo4j GraphRAG knowledge extraction + NL graph queries
     "questionary>=2.0.0,<3.0.0",  # Interactive CLI prompts (new-config wizard)
     "pyttsx3>=2.90",  # Cross-platform TTS (Windows/Linux)
     "gTTS>=2.5.0",    # Google TTS (free cloud fallback)
@@ -79,7 +80,6 @@ dependencies = [
 enhanced = [
     "mem0ai>=0.1.0",
     "litellm>=1.0.0",
-    "docling>=1.0.0",
     "neo4j-graphrag>=0.3.0",
     "chonkie>=0.1.0",
 ]
@@ -91,7 +91,7 @@ llm-routing = [
     "litellm>=1.0.0",
 ]
 doc-parsing = [
-    "docling>=1.0.0",
+    "agentic-brain[documents]",
 ]
 graphrag = [
     "neo4j-graphrag>=0.3.0",
@@ -279,9 +279,6 @@ documents = [
     "mammoth>=1.6.0",   # DOCX to HTML/Markdown conversion
     "openpyxl>=3.1.0",  # Excel spreadsheet operations
     "striprtf>=0.0.26",
-]
-docling = [
-    "docling>=2.31.0",
 ]
 xml = [
     "lxml>=4.9.0",

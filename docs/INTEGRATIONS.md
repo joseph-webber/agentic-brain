@@ -4,7 +4,6 @@ This guide documents the **new optional integrations** bundled under the `enhanc
 
 - **Mem0** (`mem0ai`) — persistent memory service
 - **LiteLLM** (`litellm`) — unified LLM routing + fallbacks + cost tracking
-- **Docling** (`docling`) — document parsing / conversion
 - **neo4j-graphrag** (`neo4j-graphrag`) — knowledge extraction + GraphRAG workflows
 - **Chonkie** (`chonkie`) — fast chunking for RAG preprocessing
 
@@ -29,7 +28,7 @@ Install individually:
 ```bash
 pip install "agentic-brain[memory]"       # Mem0
 pip install "agentic-brain[llm-routing]"  # LiteLLM
-pip install "agentic-brain[docling]"      # Docling
+pip install "agentic-brain[documents]"    # PDF, DOCX, PPTX, XLSX, etc.
 pip install "agentic-brain[graphrag]"     # neo4j-graphrag
 pip install "agentic-brain[chonkie]"      # Chonkie
 ```
@@ -194,56 +193,31 @@ asyncio.run(main())
 
 ---
 
-## 3) Docling — Document parsing
+## 3) Document Parsing — Built-in loaders
 
 ### What it does
-Docling converts documents into structured representations and exports (commonly **Markdown**), with optional OCR and table structure extraction.
+Agentic Brain includes **102 built-in loader classes** in `src/agentic_brain/rag/loaders/` covering all major document formats without heavy external dependencies.
 
 ### Supported formats
-Docling supports many formats (PDF, Office files, HTML, images, etc.). The exact list depends on your Docling version and installed backends.
+PDF (PyPDF2 + pdfplumber + OCR fallback), DOCX, PPTX, XLSX, CSV, JSON, YAML, HTML, XML, RTF, ODF, EPUB, and many more.
 
 ### Usage patterns
 
-#### Convert one file → Markdown
-
 ```python
-from docling.document_converter import DocumentConverter
+from agentic_brain.rag.loaders.pdf import PDFLoader
+from agentic_brain.rag.loaders.docx import DocxLoader
 
-converter = DocumentConverter()
-result = converter.convert("report.pdf")
+pdf_loader = PDFLoader(ocr_enabled=True)
+doc = pdf_loader.load_document("report.pdf")
 
-markdown = result.document.export_to_markdown()
-print(markdown)
+docx_loader = DocxLoader()
+doc = docx_loader.load_document("report.docx")
 ```
 
-#### Batch conversion
+Install all document format support:
 
-```python
-from docling.document_converter import DocumentConverter
-
-converter = DocumentConverter()
-results = converter.convert_all(["a.pdf", "b.docx", "c.png"])
-
-for r in results:
-    print(r.document.export_to_markdown()[:200])
-```
-
-### Export options
-Common exports:
-- `result.document.export_to_markdown()`
-- (Depending on Docling version) JSON exports / structured objects for tables, pages, etc.
-
-### Example code (OCR + better tables)
-Docling exposes pipeline options; the API surface can vary by version.
-
-```python
-from docling.document_converter import DocumentConverter
-
-# Many Docling builds allow enabling OCR/table structure via pipeline options.
-# See Docling docs for the exact option classes for your version.
-converter = DocumentConverter()
-result = converter.convert("scanned.pdf")
-print(result.document.export_to_markdown())
+```bash
+pip install "agentic-brain[documents]"
 ```
 
 ---
