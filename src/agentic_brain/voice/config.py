@@ -13,6 +13,15 @@ from enum import Enum
 from typing import Dict, List, Optional
 
 
+def _env_flag(name: str, default: str) -> bool:
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def stereo_pan_enabled() -> bool:
+    """Return whether stereo panning is enabled for lady voices."""
+    return _env_flag("AGENTIC_BRAIN_STEREO_PAN_ENABLED", "true")
+
+
 class VoiceQuality(Enum):
     STANDARD = "standard"  # System voices
     PREMIUM = "premium"  # macOS Premium voices
@@ -31,13 +40,12 @@ class VoiceConfig:
     provider: str = os.getenv(
         "AGENTIC_BRAIN_VOICE_PROVIDER", "system"
     )  # system, azure, google, aws, elevenlabs
-    enabled: bool = (
-        os.getenv("AGENTIC_BRAIN_VOICE_ENABLED", "true").lower() == "true"
-    )  # False for CI/servers
+    enabled: bool = _env_flag("AGENTIC_BRAIN_VOICE_ENABLED", "true")  # False for CI/servers
     fallback_voice: str = "Samantha"
     quality: VoiceQuality = VoiceQuality(
         os.getenv("AGENTIC_BRAIN_VOICE_QUALITY", "premium")
     )
+    stereo_pan_enabled: bool = stereo_pan_enabled()
     regional_map: Dict[str, str] = field(default_factory=dict)
     robot_voices: List[str] = field(default_factory=list)
 

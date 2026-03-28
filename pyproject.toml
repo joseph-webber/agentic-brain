@@ -1,6 +1,6 @@
 [project]
 name = "agentic-brain"
-version = "2.18.0"
+version = "2.19.0"
 description = "Enterprise-grade AI Agent Platform. Production-ready orchestration with GraphRAG, Multi-LLM support, and 155+ RAG loaders. Python, GPU-accelerated, Secure."
 readme = "README.md"
 requires-python = ">=3.11"
