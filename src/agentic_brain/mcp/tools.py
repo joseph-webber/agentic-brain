@@ -809,6 +809,64 @@ def get_analytics(days: int = 7) -> str:
     )
 
 
+# ── Live Voice tools (Project Aria) ──────────────────────────────────
+
+def voice_live_start(
+    voice: str = "Karen",
+    rate: int = 155,
+    require_wake_word: bool = True,
+    session_timeout: float = 30.0,
+) -> str:
+    """Start a live voice conversation session.
+
+    Joseph speaks, the brain listens, transcribes, thinks, and responds
+    — all with voice.  Uses whisper.cpp for local offline transcription.
+
+    Args:
+        voice: macOS voice name (Karen, Moira, …).
+        rate: Speech rate in words per minute.
+        require_wake_word: If True, wait for "Hey Karen" / "Hey Brain".
+        session_timeout: Seconds of silence before auto-stop.
+
+    Returns:
+        JSON status of the new session.
+    """
+    try:
+        from agentic_brain.voice.live_session import start_live_session
+        result = start_live_session(
+            voice=voice,
+            rate=rate,
+            require_wake_word=require_wake_word,
+            session_timeout=session_timeout,
+        )
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        logger.error("voice_live_start error: %s", e, exc_info=True)
+        return json.dumps({"error": str(e)})
+
+
+def voice_live_stop() -> str:
+    """Stop the live voice conversation session and return final metrics."""
+    try:
+        from agentic_brain.voice.live_session import stop_live_session
+        result = stop_live_session()
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        logger.error("voice_live_stop error: %s", e, exc_info=True)
+        return json.dumps({"error": str(e)})
+
+
+def voice_live_status() -> str:
+    """Get the current live voice session status and metrics."""
+    try:
+        from agentic_brain.voice.live_session import live_session_status
+        result = live_session_status()
+        return json.dumps(result, indent=2)
+    except Exception as e:
+        logger.error("voice_live_status error: %s", e, exc_info=True)
+        return json.dumps({"error": str(e)})
+
+
 # =============================================================================
 # Tool Registry
 # =============================================================================
@@ -872,6 +930,19 @@ TOOLS = {
     "get_analytics": {
         "function": get_analytics,
         "description": "Get usage analytics for the past N days",
+    },
+    # ── Live Voice (Project Aria) ────────────────────────────────
+    "voice_live_start": {
+        "function": voice_live_start,
+        "description": "Start a live voice conversation session (Project Aria)",
+    },
+    "voice_live_stop": {
+        "function": voice_live_stop,
+        "description": "Stop the live voice conversation session",
+    },
+    "voice_live_status": {
+        "function": voice_live_status,
+        "description": "Get live voice session status and metrics",
     },
 }
 

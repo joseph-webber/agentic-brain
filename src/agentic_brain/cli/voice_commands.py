@@ -613,7 +613,177 @@ def voice_command(args: argparse.Namespace) -> int:
     print("  ab voice speed focused")
     print("  ab voice location adelaide")
     print("  ab voice regionalize 'That is very great!'")
+    print()
+    print("🔧 Phase 2 Commands:")
+    print("  ab voice watchdog          Show worker thread watchdog status")
+    print("  ab voice live start        Start live voice mode (streaming)")
+    print("  ab voice live stop         Stop live voice mode")
+    print("  ab voice live status       Show live mode status")
+    print("  ab voice stream            Show Redpanda stream consumer status")
+    print("  ab voice health            Full unified voice system health")
     return 0
+
+
+def voice_watchdog_command(args: argparse.Namespace) -> int:
+    """Show voice worker watchdog status."""
+    try:
+        from agentic_brain.voice.unified import get_unified
+
+        uv = get_unified()
+        status = uv.watchdog_status()
+
+        print("\n🐕 Voice Worker Watchdog")
+        print("=" * 50)
+
+        if not status.get("available"):
+            print(f"   Status: UNAVAILABLE ({status.get('reason', 'unknown')})")
+            return 0
+
+        running = status.get("running", False)
+        alive = status.get("worker_alive", False)
+        restarts = status.get("total_restarts", 0)
+        hb_age = status.get("last_heartbeat_age_s", -1)
+
+        icon = "✅" if running and alive else "⚠️"
+        print(f"   {icon} Running: {running}")
+        print(f"   Worker alive: {alive}")
+        print(f"   Total restarts: {restarts}")
+        print(f"   Last heartbeat: {hb_age}s ago")
+
+        if restarts > 0:
+            print(f"\n   ⚠️  Worker has been restarted {restarts} time(s)")
+
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+
+def voice_live_command(args: argparse.Namespace) -> int:
+    """Start/stop/status for live voice conversation (Project Aria).
+
+    This connects to the bidirectional live session (listen + respond)
+    powered by whisper.cpp for local offline transcription.
+    """
+    action = getattr(args, "action", "status").lower()
+
+    try:
+        from agentic_brain.voice.live_session import (
+            live_session_status,
+            start_live_session,
+            stop_live_session,
+        )
+
+        if action == "start":
+            voice = getattr(args, "voice", "Karen")
+            rate = getattr(args, "rate", 160)
+            result = start_live_session(
+                voice=voice,
+                rate=rate,
+                require_wake_word=True,
+                session_timeout=30.0,
+            )
+            if "error" in result:
+                print(f"❌ {result['error']}")
+                return 1
+            state = result.get("state", "unknown")
+            print(f"✅ Live voice session started (state={state}, voice={voice}, rate={rate})")
+            print("   Say 'Hey Karen' or 'Hey Brain' to begin conversation.")
+            print("   Session auto-stops after 30s of silence.")
+            return 0
+
+        elif action == "stop":
+            result = stop_live_session()
+            state = result.get("state", "idle")
+            metrics = result.get("metrics", {})
+            print("✅ Live voice session stopped")
+            print(f"   Utterances: {metrics.get('utterances_heard', 0)}")
+            print(f"   Responses: {metrics.get('responses_given', 0)}")
+            print(f"   Interrupts: {metrics.get('interrupts', 0)}")
+            latency = metrics.get("avg_response_latency_ms", 0)
+            if latency:
+                print(f"   Avg latency: {latency:.0f}ms")
+            return 0
+
+        else:
+            result = live_session_status()
+            print("\n🎙️  Live Voice Session (Project Aria)")
+            print("=" * 50)
+            state = result.get("state", "idle")
+            icon = "🟢" if state not in ("idle", "error") else "⚪"
+            print(f"   {icon} State: {state}")
+
+            config = result.get("config", {})
+            if config:
+                print(f"   Voice: {config.get('voice', 'Karen')}")
+                print(f"   Rate: {config.get('rate', 155)}")
+                wake = config.get("wake_words", [])
+                print(f"   Wake words: {', '.join(wake)}")
+
+            metrics = result.get("metrics", {})
+            if metrics and metrics.get("utterances_heard", 0) > 0:
+                print(f"   Utterances: {metrics.get('utterances_heard', 0)}")
+                print(f"   Responses: {metrics.get('responses_given', 0)}")
+                print(f"   Avg latency: {metrics.get('avg_response_latency_ms', 0):.0f}ms")
+            return 0
+
+    except ImportError as e:
+        print(f"❌ Missing dependency: {e}")
+        print("   Install: pip install pyaudio pywhispercpp")
+        return 1
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+
+def voice_stream_command(args: argparse.Namespace) -> int:
+    """Show Redpanka voice stream consumer status."""
+    try:
+        from agentic_brain.voice.unified import get_unified
+
+        uv = get_unified()
+        status = uv.stream_status()
+
+        print("\n📡 Voice Stream Consumer (Redpanda)")
+        print("=" * 50)
+
+        if not status.get("available"):
+            print(f"   Status: UNAVAILABLE ({status.get('reason', 'unknown')})")
+            print("   Install aiokafka: pip install aiokafka")
+            return 0
+
+        running = status.get("running", False)
+        icon = "🟢" if running else "⚪"
+        print(f"   {icon} Running: {running}")
+        print(f"   Topic: {status.get('topic', 'N/A')}")
+        print(f"   Bootstrap: {status.get('bootstrap', 'N/A')}")
+        print(f"   Messages received: {status.get('messages_received', 0)}")
+        print(f"   Messages spoken: {status.get('messages_spoken', 0)}")
+        print(f"   Messages failed: {status.get('messages_failed', 0)}")
+        print(f"   Uptime: {status.get('uptime_s', 0)}s")
+
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+
+def voice_health_command(args: argparse.Namespace) -> int:
+    """Show unified voice system health."""
+    try:
+        from agentic_brain.voice.unified import get_unified
+
+        uv = get_unified()
+        report = uv.status()
+
+        print()
+        print(report["summary"])
+        print()
+
+        return 0
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
 
 
 def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
@@ -863,3 +1033,54 @@ def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
 
     # Default for bare 'ab voice'
     voice_parser.set_defaults(func=voice_command)
+
+    # ── Phase 2 CLI Commands ─────────────────────────────────────────
+
+    # voice watchdog
+    watchdog_parser = voice_subparsers.add_parser(
+        "watchdog",
+        help="Show voice worker watchdog status",
+    )
+    watchdog_parser.set_defaults(func=voice_watchdog_command)
+
+    # voice live
+    live_parser = voice_subparsers.add_parser(
+        "live",
+        help="Start/stop live voice mode (Project Aria)",
+    )
+    live_parser.add_argument(
+        "action",
+        nargs="?",
+        type=str,
+        default="status",
+        help="Action: start, stop, status (default: status)",
+    )
+    live_parser.add_argument(
+        "-v",
+        "--voice",
+        type=str,
+        default="Karen",
+        help="Voice for live mode (default: Karen)",
+    )
+    live_parser.add_argument(
+        "-r",
+        "--rate",
+        type=int,
+        default=160,
+        help="Speech rate for live mode (default: 160)",
+    )
+    live_parser.set_defaults(func=voice_live_command)
+
+    # voice stream
+    stream_parser = voice_subparsers.add_parser(
+        "stream",
+        help="Show Redpanda voice stream consumer status",
+    )
+    stream_parser.set_defaults(func=voice_stream_command)
+
+    # voice health
+    health_parser = voice_subparsers.add_parser(
+        "health",
+        help="Show unified voice system health",
+    )
+    health_parser.set_defaults(func=voice_health_command)
