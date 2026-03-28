@@ -40,14 +40,14 @@ class PersonaAwareRouter(LLMRouter):
         super().__init__(*args, **kwargs)
         self.last_system_prompt = None
 
-    async def _chat_openrouter(
+    async def _chat_openai(
         self, message: str, system: str | None, model: str, temperature: float
     ) -> Response:
         self.last_system_prompt = system
         return Response(
-            content=f"[openrouter] {message}",
+            content=f"[openai] {message}",
             model=model,
-            provider=Provider.OPENROUTER,
+            provider=Provider.OPENAI,
             tokens_used=0,
         )
 
@@ -103,8 +103,8 @@ class TestEcosystemIntegration(unittest.TestCase):
 
         router = PersonaAwareRouter(
             config=RouterConfig(
-                default_provider=Provider.OPENROUTER,
-                default_model="meta-llama/llama-3-8b-instruct:free",
+                default_provider=Provider.OPENAI,
+                default_model="gpt-4o-mini",
                 fallback_enabled=False,
                 cache_enabled=False,
                 use_http_pool=False,
@@ -118,8 +118,8 @@ class TestEcosystemIntegration(unittest.TestCase):
             router.chat(
                 "I have a headache.",
                 persona=persona_name,
-                provider=Provider.OPENROUTER,
-                model="meta-llama/llama-3-8b-instruct:free",
+                provider=Provider.OPENAI,
+                model="gpt-4o-mini",
                 use_cache=False,
             )
         )
