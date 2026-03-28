@@ -582,4 +582,3 @@ class ImageExtractor:
             image.save(candidate)
             saved_paths.append(str(candidate))
         return saved_paths
-

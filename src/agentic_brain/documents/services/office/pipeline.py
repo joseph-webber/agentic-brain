@@ -29,7 +29,16 @@ import zipfile
 
 from .accessibility import AccessibilityReport, OfficeAccessibilityProcessor
 from .exceptions import UnsupportedOfficeFormatError
-from .models import Table, TableCell, Paragraph, Image, Slide, Worksheet, Chart, OfficeFormat
+from .models import (
+    Table,
+    TableCell,
+    Paragraph,
+    Image,
+    Slide,
+    Worksheet,
+    Chart,
+    OfficeFormat,
+)
 from .word import WordProcessor
 from .excel import ExcelProcessor
 from .powerpoint import PowerPointProcessor
