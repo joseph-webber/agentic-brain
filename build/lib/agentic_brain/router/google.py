@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """
 Google AI Studio provider implementation - Gemini models FREE.
 """
@@ -189,7 +188,7 @@ async def chat_google(
         )
     except aiohttp.ClientError as e:
         raise LLMProviderError("google", model, e)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise AgenticTimeoutError("Google chat", config.google_timeout, None)
     except (KeyError, TypeError) as e:
         raise LLMProviderError(

@@ -44,8 +44,8 @@ import asyncio
 import inspect
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from enum import Enum
+from datetime import UTC, datetime, timedelta, timezone
+from enum import Enum, StrEnum
 from functools import wraps
 from typing import Any, Callable, ParamSpec, TypeVar
 
@@ -57,7 +57,7 @@ R = TypeVar("R")
 T = TypeVar("T")
 
 
-class WorkflowStatus(str, Enum):
+class WorkflowStatus(StrEnum):
     """Status of a workflow execution"""
 
     PENDING = "pending"
@@ -276,7 +276,7 @@ class TemporalOrchestrator:
 
         workflow_id = workflow_id or f"{workflow_name}-{uuid.uuid4().hex[:8]}"
         task_queue = task_queue or self.task_queue
-        started_at = datetime.now(timezone.utc)
+        started_at = datetime.now(UTC)
 
         try:
             if self._connected and self._client:
@@ -303,7 +303,7 @@ class TemporalOrchestrator:
                     status=WorkflowStatus.COMPLETED,
                     result=result,
                     started_at=started_at,
-                    completed_at=datetime.now(timezone.utc),
+                    completed_at=datetime.now(UTC),
                 )
             else:
                 # Local fallback - execute workflow directly
@@ -311,14 +311,14 @@ class TemporalOrchestrator:
                     workflow_name, args, workflow_id, timeout, started_at
                 )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return WorkflowExecution(
                 workflow_id=workflow_id,
                 run_id="",
                 status=WorkflowStatus.TIMED_OUT,
                 error=f"Workflow timed out after {timeout}s",
                 started_at=started_at,
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
             )
         except Exception as e:
             logger.error(f"Workflow {workflow_id} failed: {e}")
@@ -328,7 +328,7 @@ class TemporalOrchestrator:
                 status=WorkflowStatus.FAILED,
                 error=str(e),
                 started_at=started_at,
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
             )
 
     async def _run_local_workflow(
@@ -367,7 +367,7 @@ class TemporalOrchestrator:
             status=WorkflowStatus.COMPLETED,
             result=result,
             started_at=started_at,
-            completed_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(UTC),
         )
 
     async def start_workflow(
@@ -403,7 +403,7 @@ class TemporalOrchestrator:
             # Start in background task
             asyncio.create_task(
                 self._run_local_workflow(
-                    workflow_name, args, workflow_id, 3600, datetime.now(timezone.utc)
+                    workflow_name, args, workflow_id, 3600, datetime.now(UTC)
                 )
             )
 
@@ -607,7 +607,7 @@ def activity(
                     else:
                         return fn(*args, **kwargs)
 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     last_error = TimeoutError(
                         f"Activity {name or fn.__name__} timed out after {timeout}s"
                     )

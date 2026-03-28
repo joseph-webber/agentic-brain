@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """
 xAI Grok provider implementation - OpenAI-compatible API.
 
@@ -155,7 +154,7 @@ async def chat_xai(
         )
     except aiohttp.ClientError as e:
         raise LLMProviderError("xai", model, e)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise AgenticTimeoutError("xAI chat", config.xai_timeout, None)
     except (KeyError, TypeError) as e:
         raise LLMProviderError(

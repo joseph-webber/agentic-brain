@@ -29,13 +29,13 @@ Features:
 """
 
 import asyncio
-import inspect
 import functools
+import inspect
 import time
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
 
@@ -265,17 +265,17 @@ class TracingInterceptor(WorkflowInterceptor, ActivityInterceptor):
             "parent_span_id": context.parent_span_id,
             "name": context.activity_name or "workflow",
             "workflow_id": context.workflow_id,
-            "start_time": datetime.now(timezone.utc).isoformat(),
+            "start_time": datetime.now(UTC).isoformat(),
             "status": "running",
         }
 
         try:
             result = await next_fn()
-            span["end_time"] = datetime.now(timezone.utc).isoformat()
+            span["end_time"] = datetime.now(UTC).isoformat()
             span["status"] = "ok"
             return result
         except Exception as e:
-            span["end_time"] = datetime.now(timezone.utc).isoformat()
+            span["end_time"] = datetime.now(UTC).isoformat()
             span["status"] = "error"
             span["error"] = str(e)
             raise

@@ -65,8 +65,8 @@ import asyncio
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime, timezone
+from enum import Enum, StrEnum
 from typing import Any
 
 import aiohttp
@@ -75,7 +75,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
-class WorkflowStatus(str, Enum):
+class WorkflowStatus(StrEnum):
     """Retool workflow execution status."""
 
     PENDING = "pending"
@@ -286,7 +286,7 @@ class RetoolClient:
         }
 
         try:
-            started_at = datetime.now(timezone.utc)
+            started_at = datetime.now(UTC)
 
             async with session.post(
                 f"/api/v1/workflows/{workflow_id}/run",
@@ -320,7 +320,7 @@ class RetoolClient:
                 execution_id="",
                 workflow_id=workflow_id,
                 status=WorkflowStatus.FAILED,
-                started_at=datetime.now(timezone.utc),
+                started_at=datetime.now(UTC),
                 error=str(e),
             )
 
@@ -354,9 +354,7 @@ class RetoolClient:
                             workflow_id=data.get("workflowId", ""),
                             status=status,
                             started_at=datetime.fromisoformat(
-                                data.get(
-                                    "startedAt", datetime.now(timezone.utc).isoformat()
-                                )
+                                data.get("startedAt", datetime.now(UTC).isoformat())
                             ),
                             completed_at=(
                                 datetime.fromisoformat(data["completedAt"])
@@ -378,7 +376,7 @@ class RetoolClient:
             execution_id=execution_id,
             workflow_id="",
             status=WorkflowStatus.RUNNING,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
             error=f"Timeout after {timeout}s",
         )
 
@@ -409,7 +407,7 @@ class RetoolClient:
                     workflow_id=data.get("workflowId", ""),
                     status=WorkflowStatus(data.get("status", "running")),
                     started_at=datetime.fromisoformat(
-                        data.get("startedAt", datetime.now(timezone.utc).isoformat())
+                        data.get("startedAt", datetime.now(UTC).isoformat())
                     ),
                     completed_at=(
                         datetime.fromisoformat(data["completedAt"])
@@ -576,7 +574,7 @@ class RetoolClient:
         """
         await self.push_session_data(
             "brain_metrics",
-            [{"timestamp": datetime.now(timezone.utc).isoformat(), **metrics}],
+            [{"timestamp": datetime.now(UTC).isoformat(), **metrics}],
         )
 
 

@@ -30,6 +30,22 @@ Production-ready RAG with:
 For advanced RAG features (multi-tenant isolation, streaming),
 see: https://github.com/joseph-webber/brain-core
 
+Import weight guide
+-------------------
+``rag.pipeline``    — medium  (imports neo4j driver, core retrieval)
+``rag.embeddings``  — heavy   (sentence-transformers, optional MLX/CUDA;
+                                hardware-accelerated variants guarded by
+                                try/except and only loaded when available)
+``rag.loaders``     — heavy   (54 optional cloud/DB connectors; each guarded
+                                by its own availability flag — unused loaders
+                                add zero runtime cost)
+``rag.graphql_api`` — heavy   (strawberry-graphql; guarded by STRAWBERRY_AVAILABLE)
+
+If startup time matters, import pipeline components directly::
+
+    from agentic_brain.rag.pipeline import RAGPipeline
+    from agentic_brain.rag.chunking import create_chunker
+
 Usage:
     from agentic_brain.rag import RAGPipeline, ask
 
@@ -71,7 +87,14 @@ Usage:
 import contextlib
 
 from .embeddings import EmbeddingProvider, get_embeddings
-from .pipeline import RAGPipeline, RAGResult, ask
+from .pipeline import (
+    GraphQueryResult,
+    GraphSearchResult,
+    IngestResult,
+    RAGPipeline,
+    RAGResult,
+    ask,
+)
 from .retriever import RetrievedChunk, Retriever
 
 # Hardware-accelerated embeddings
@@ -124,6 +147,7 @@ with contextlib.suppress(ImportError, ModuleNotFoundError):
 # Document store
 # Advanced chunking
 from .chunking import (
+    CHONKIE_AVAILABLE,
     BaseChunker,
     Chunk,
     ChunkingStrategy,
@@ -133,6 +157,10 @@ from .chunking import (
     SemanticChunker,
     create_chunker,
 )
+
+# Chonkie fast chunking (optional)
+if CHONKIE_AVAILABLE:
+    from .chunking import ChonkieChunker, ChonkieStrategy, benchmark_chunkers
 
 # Contextual compression (reduce chunk noise)
 from .contextual_compression import (
@@ -150,6 +178,11 @@ from .evaluation import (
     EvalQuery,
     EvalResults,
     RAGEvaluator,
+)
+from .graph_rag import (
+    GraphRAG,
+    GraphRAGConfig,
+    SearchStrategy,
 )
 
 # Graph traversal (Neo4j relationship-aware retrieval)
@@ -260,6 +293,25 @@ from .loaders import (
     with_rate_limit,
 )
 
+# Additional availability flags exposed by loader modules
+try:
+    from .loaders.cloud import AZURE_BLOB_AVAILABLE, GCS_AVAILABLE
+except (ImportError, ModuleNotFoundError):
+    AZURE_BLOB_AVAILABLE = False
+    GCS_AVAILABLE = False
+
+try:
+    from .loaders.database import MYSQL_AVAILABLE, POSTGRES_AVAILABLE
+except (ImportError, ModuleNotFoundError):
+    MYSQL_AVAILABLE = False
+    POSTGRES_AVAILABLE = False
+
+try:
+    from .loaders.nosql import ELASTICSEARCH_AVAILABLE, REDIS_AVAILABLE
+except (ImportError, ModuleNotFoundError):
+    ELASTICSEARCH_AVAILABLE = False
+    REDIS_AVAILABLE = False
+
 # Multi-hop reasoning (chain of reasoning)
 from .multi_hop_reasoning import (
     GraphMultiHopReasoner,
@@ -315,6 +367,9 @@ __all__ = [
     # Core
     "RAGPipeline",
     "RAGResult",
+    "IngestResult",
+    "GraphSearchResult",
+    "GraphQueryResult",
     "ask",
     "Retriever",
     "RetrievedChunk",
@@ -349,6 +404,11 @@ __all__ = [
     "RecursiveChunker",
     "MarkdownChunker",
     "create_chunker",
+    # Chonkie fast chunking
+    "CHONKIE_AVAILABLE",
+    "ChonkieChunker",
+    "ChonkieStrategy",
+    "benchmark_chunkers",
     # Reranking
     "BaseReranker",
     "RerankResult",
@@ -414,10 +474,7 @@ __all__ = [
     "ServiceNowLoader",
     "WorkdayLoader",
     # CRM Loaders
-    "ZohoLoader",
     "Dynamics365Loader",
-    # Support Loaders
-    "JiraServiceDeskLoader",
     # Australian Business Loaders
     "MYOBLoader",
     "XeroLoader",
@@ -426,14 +483,10 @@ __all__ = [
     # Payment Gateway Loaders
     "StripeLoader",
     "PayPalLoader",
-    "SquareLoader",
     "AfterpayLoader",
-    "BraintreeLoader",
     # E-Commerce Platform Loaders
     "ShopifyLoader",
     "WooCommerceLoader",
-    "BigCommerceLoader",
-    "MagentoLoader",
     # Accounting Loaders
     "QuickBooksLoader",
     # Semantic Routing
@@ -473,6 +526,14 @@ __all__ = [
     "GraphNode",
     "GraphContext",
     "TraversalStrategy",
+    # Advanced GraphRAG
+    "GraphRAG",
+    "GraphRAGConfig",
+    "SearchStrategy",
+    # Enhanced Graph RAG
+    "EnhancedGraphRAG",
+    "EnhancedGraphRAGConfig",
+    "RetrievalStrategy",
     # GraphQL API
     "STRAWBERRY_AVAILABLE",
     "create_graphql_app",

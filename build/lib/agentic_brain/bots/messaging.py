@@ -43,8 +43,15 @@ import logging
 import os
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any
+
+from agentic_brain.core.neo4j_pool import (
+    configure_pool as configure_neo4j_pool,
+)
+from agentic_brain.core.neo4j_pool import (
+    get_driver as get_shared_neo4j_driver,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +76,7 @@ class BotMessage:
     to_bot: str = ""
     message: str = ""
     data: dict[str, Any] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     read: bool = False
 
     def to_dict(self) -> dict[str, Any]:
@@ -112,7 +119,7 @@ class BotHandoff:
     to_bot: str = ""
     data: dict[str, Any] = field(default_factory=dict)
     message: str = ""
-    created: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created: datetime = field(default_factory=lambda: datetime.now(UTC))
     claimed: bool = False
     claimed_by: str | None = None
     claimed_at: datetime | None = None
@@ -190,13 +197,11 @@ class BotMessaging:
     def _setup_neo4j(self) -> None:
         """Set up Neo4j connection if no memory instance provided."""
         try:
-            from neo4j import GraphDatabase
-
             uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
             user = os.getenv("NEO4J_USER", "neo4j")
             password = os.getenv("NEO4J_PASSWORD", "")
-            auth = (user, password)
-            self._driver = GraphDatabase.driver(uri, auth=auth)
+            configure_neo4j_pool(uri=uri, user=user, password=password)
+            self._driver = get_shared_neo4j_driver()
             logger.debug(f"BotMessaging connected to Neo4j at {uri}")
         except ImportError:
             logger.warning(
@@ -664,7 +669,7 @@ class BotMessaging:
                     {
                         "id": handoff_id,
                         "bot_id": self.bot_id,
-                        "claimed_at": datetime.now(timezone.utc).isoformat(),
+                        "claimed_at": datetime.now(UTC).isoformat(),
                     },
                 )
 

@@ -33,7 +33,7 @@ import inspect
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
@@ -172,7 +172,7 @@ class CancellationScopeManager:
             return False
 
         scope.state = CancellationState.CANCELLING
-        scope.cancelled_at = datetime.now(timezone.utc)
+        scope.cancelled_at = datetime.now(UTC)
         scope.cancel_reason = reason
 
         # Cancel children (unless shielded)

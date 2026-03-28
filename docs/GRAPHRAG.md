@@ -2,6 +2,8 @@
 
 Comprehensive guide to Agentic Brain's GraphRAG stack.
 
+For the underlying Neo4j reference model, see [Neo4j Architecture](./NEO4J_ARCHITECTURE.md) and [Neo4j Zones](./NEO4J_ZONES.md).
+
 Agentic Brain exposes GraphRAG through **three complementary layers**:
 
 1. **`agentic_brain.rag.graphrag.KnowledgeExtractor`** — lightweight entity extraction, relationship persistence, and safe natural-language graph queries

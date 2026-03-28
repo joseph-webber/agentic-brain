@@ -4,18 +4,21 @@
 """Tests for JHipster-style configuration management."""
 
 import os
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from agentic_brain.config import (
     CacheSettings,
+    ConfigLoader,
     Environment,
     LLMSettings,
     Neo4jSettings,
     ObservabilitySettings,
     SecuritySettings,
     Settings,
+    UnifiedConfig,
     get_settings,
 )
 
@@ -157,3 +160,62 @@ class TestGetSettings:
         settings = get_settings()
         assert isinstance(settings, Settings)
         get_settings.cache_clear()
+
+
+class TestUnifiedConfigLoader:
+    """Tests for centralized YAML configuration loading."""
+
+    PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+    def test_loads_example_yaml(self):
+        """Example YAML should load into the unified config model."""
+        loader = ConfigLoader(self.PROJECT_ROOT / "brain-config.example.yaml")
+        config = loader.load()
+
+        assert isinstance(config, UnifiedConfig)
+        assert config.llm.default_provider == "ollama"
+        assert config.voice.default_voice == "Karen"
+        assert config.neo4j.uri == "bolt://localhost:7687"
+        assert config.api.port == 8000
+        assert config.features.rag_enabled is True
+
+    def test_environment_overrides_yaml(self, monkeypatch: pytest.MonkeyPatch):
+        """Environment variables should take precedence over YAML values."""
+        monkeypatch.setenv("LLM_DEFAULT_MODEL", "claude-sonnet-4.5")
+        monkeypatch.setenv("VOICE_RATE", "145")
+        monkeypatch.setenv("CORS_ORIGINS", "https://example.com,https://portal.example")
+
+        loader = ConfigLoader(self.PROJECT_ROOT / "brain-config.example.yaml")
+        config = loader.load()
+
+        assert config.llm.default_model == "claude-sonnet-4.5"
+        assert config.voice.rate == 145
+        assert config.api.cors_origins == [
+            "https://example.com",
+            "https://portal.example",
+        ]
+        assert config.security.allowed_origins == [
+            "https://example.com",
+            "https://portal.example",
+        ]
+
+    def test_missing_file_uses_defaults(self):
+        """Missing YAML should fall back to built-in defaults."""
+        loader = ConfigLoader(
+            self.PROJECT_ROOT / "tests" / "fixtures" / "does-not-exist.yaml"
+        )
+        config = loader.load()
+
+        assert config.llm.default_provider == "ollama"
+        assert config.api.base_path == "/api"
+
+    def test_blank_required_value_fails_validation(self):
+        """Blank required YAML values should be rejected."""
+        loader = ConfigLoader(
+            self.PROJECT_ROOT / "tests" / "fixtures" / "brain-config.invalid.yaml"
+        )
+
+        with pytest.raises(
+            ValueError, match="Missing required configuration values: llm.default_model"
+        ):
+            loader.load()

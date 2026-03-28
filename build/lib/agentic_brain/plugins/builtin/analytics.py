@@ -17,7 +17,7 @@
 
 import logging
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Optional
 
 from agentic_brain.plugins.base import Plugin, PluginConfig
@@ -98,7 +98,7 @@ class AnalyticsPlugin(Plugin):
             self.stats["users"][kwargs["user_id"]] += 1
 
         # Track last message time instead of unbounded timestamps list (prevents memory leak)
-        self.stats["last_message_time"] = datetime.now(timezone.utc).isoformat()
+        self.stats["last_message_time"] = datetime.now(UTC).isoformat()
 
         # Log stats periodically
         if self.stats["message_count"] % self.buffer_size == 0:

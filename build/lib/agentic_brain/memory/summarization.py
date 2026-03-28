@@ -52,9 +52,9 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -603,7 +603,7 @@ Entities:"""
                 # Try to parse JSON from response
                 response = response.strip()
                 if response.startswith("["):
-                    return json.loads(response)
+                    return cast(list[dict[str, str]], json.loads(response))
             except Exception as e:
                 logger.warning(f"Entity extraction failed: {e}")
 
@@ -675,9 +675,7 @@ Key facts:"""
 
         try:
             # Find old sessions without summaries
-            cutoff = (
-                datetime.now(timezone.utc) - timedelta(days=older_than_days)
-            ).isoformat()
+            cutoff = (datetime.now(UTC) - timedelta(days=older_than_days)).isoformat()
 
             if hasattr(self.memory, "query_async"):
                 old_sessions = await self.memory.query_async(
@@ -744,7 +742,7 @@ Summary:"""
             # Fallback: extractive summary
             content = self._extractive_summary(messages)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Extract timestamps from messages if available
         start_time = now
@@ -872,3 +870,20 @@ Summary:"""
         """Generate unique summary ID."""
         data = f"{session_id}:{timestamp.isoformat()}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
+
+
+# Keep class identity stable across module reloads.
+# Some tests clear `sys.modules` entries under `agentic_brain.*` to validate
+# lazy-loading; rebinding avoids `isinstance()` mismatches after reload.
+import sys
+import types
+
+_singletons = sys.modules.get("_agentic_brain_singletons")
+if _singletons is None:
+    _singletons = types.ModuleType("_agentic_brain_singletons")
+    sys.modules["_agentic_brain_singletons"] = _singletons
+
+if hasattr(_singletons, "UnifiedSummarizer"):
+    UnifiedSummarizer = _singletons.UnifiedSummarizer
+else:
+    _singletons.UnifiedSummarizer = UnifiedSummarizer

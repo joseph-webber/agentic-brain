@@ -71,7 +71,7 @@ When handing off, the context packet includes:
 - What the user needs
 
 Copyright (C) 2025-2026 Joseph Webber / Iris Lumina
-SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-License-Identifier: Apache-2.0
 """
 
 import asyncio
@@ -710,7 +710,7 @@ class HandoffManager:
 
             return HandoffStatus.ACCEPTED
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(f"Handoff timeout: {packet.handoff_id}")
             return HandoffStatus.TIMEOUT
         except Exception as e:

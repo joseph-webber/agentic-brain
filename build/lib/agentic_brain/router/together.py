@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """
 Together.ai provider implementation - FREE tier with generous credits.
 """
@@ -153,7 +152,7 @@ async def chat_together(
         )
     except aiohttp.ClientError as e:
         raise LLMProviderError("together", model, e)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise AgenticTimeoutError("Together chat", config.together_timeout, None)
     except (KeyError, TypeError) as e:
         raise LLMProviderError(

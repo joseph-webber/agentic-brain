@@ -21,21 +21,31 @@ application-{profile}.yml pattern. Supports dev, staging, and prod environments.
 
 Usage:
     from agentic_brain.config import settings
-    
+
     print(settings.environment)  # "dev", "staging", or "prod"
     print(settings.neo4j.uri)    # Database URI for current environment
 """
 
 from .settings import (
+    CacheSettings,
+    Environment,
+    LLMSettings,
+    Neo4jSettings,
+    ObservabilitySettings,
+    SecuritySettings,
     Settings,
     get_settings,
     settings,
-    Environment,
-    Neo4jSettings,
-    LLMSettings,
-    SecuritySettings,
-    ObservabilitySettings,
-    CacheSettings,
+)
+from .unified_config import (
+    APISection,
+    ConfigLoader,
+    FeatureSection,
+    Neo4jSection,
+    SecuritySection,
+    UnifiedConfig,
+    UnifiedLLMSection,
+    VoiceSection,
 )
 
 __all__ = [
@@ -48,4 +58,12 @@ __all__ = [
     "SecuritySettings",
     "ObservabilitySettings",
     "CacheSettings",
+    "UnifiedConfig",
+    "ConfigLoader",
+    "UnifiedLLMSection",
+    "VoiceSection",
+    "Neo4jSection",
+    "APISection",
+    "SecuritySection",
+    "FeatureSection",
 ]

@@ -25,6 +25,15 @@ Features:
 - At-least-once delivery guarantees
 - Dead letter queues for failed tasks
 - Task visibility timeout (requeue if not acknowledged)
+
+Kafka client stack: ``aiokafka`` (lazy import)
+----------------------------------------------
+Imported inside methods so the module is usable without ``aiokafka`` installed
+(falls back to an in-memory queue). ``aiokafka`` is chosen here because this
+module is entirely async and ``aiokafka`` integrates cleanly with asyncio event
+loops — no thread bridging needed.
+
+See: docs/KAFKA_CLIENTS.md for the full client comparison.
 """
 
 import asyncio
@@ -34,7 +43,7 @@ import time
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
@@ -74,7 +83,7 @@ class Task:
     status: TaskStatus = TaskStatus.PENDING
 
     # Timing (timezone-aware for proper comparisons)
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     claimed_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
 
@@ -131,7 +140,7 @@ class Task:
             created_at=(
                 datetime.fromisoformat(data["created_at"])
                 if data.get("created_at")
-                else datetime.now(timezone.utc)
+                else datetime.now(UTC)
             ),
             claimed_at=(
                 datetime.fromisoformat(data["claimed_at"])
@@ -306,7 +315,7 @@ class TaskQueue:
                 while self._pending_tasks[priority] and len(tasks) < max_tasks:
                     task = self._pending_tasks[priority].pop(0)
                     task.status = TaskStatus.CLAIMED
-                    task.claimed_at = datetime.now(timezone.utc)
+                    task.claimed_at = datetime.now(UTC)
                     task.worker_id = worker_id
                     self._claimed_tasks[task.task_id] = task
                     tasks.append(task)
@@ -324,12 +333,12 @@ class TaskQueue:
                     for msg in messages:
                         task = Task.from_dict(msg.value)
                         task.status = TaskStatus.CLAIMED
-                        task.claimed_at = datetime.now(timezone.utc)
+                        task.claimed_at = datetime.now(UTC)
                         task.worker_id = worker_id
                         self._claimed_tasks[task.task_id] = task
                         tasks.append(task)
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
         if tasks:
@@ -348,7 +357,7 @@ class TaskQueue:
             return False
 
         task.status = TaskStatus.COMPLETED
-        task.completed_at = datetime.now(timezone.utc)
+        task.completed_at = datetime.now(UTC)
         task.result = result
 
         del self._claimed_tasks[task_id]
@@ -419,7 +428,7 @@ class TaskQueue:
 
     async def check_visibility_timeouts(self) -> int:
         """Check for tasks past visibility timeout and requeue them"""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         requeued = 0
 
         for task_id, task in list(self._claimed_tasks.items()):

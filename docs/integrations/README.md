@@ -74,6 +74,10 @@ response = await agent.chat(customer_query)
 ### [Neo4j - The Knowledge Graph](./NEO4J.md)
 **GraphRAG: Our Core Innovation**
 
+Reference architecture:
+- [Neo4j Architecture](../NEO4J_ARCHITECTURE.md)
+- [Neo4j Zones](../NEO4J_ZONES.md)
+
 While competitors use flat vector stores, we use Neo4j's native graph database with vector search. This means:
 - **Entity relationships** as first-class data
 - **Multi-hop reasoning** across connections

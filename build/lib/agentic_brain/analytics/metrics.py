@@ -40,8 +40,8 @@ from __future__ import annotations
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime, timezone
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -159,7 +159,7 @@ class MetricsCollector:
             ResponseMetric object
         """
         metric_id = str(uuid.uuid4())
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
 
         # Calculate cost
         cost = self._calculate_cost(model, tokens_in, tokens_out)
@@ -244,7 +244,7 @@ class MetricsCollector:
             ErrorMetric object
         """
         error_id = str(uuid.uuid4())
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
 
         error = ErrorMetric(
             error_id=error_id,
@@ -328,7 +328,7 @@ class MetricsCollector:
                         "session_id": session_id,
                         "duration_ms": duration_ms,
                         "message_count": message_count,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                     },
                 )
         except Exception as e:
@@ -374,7 +374,7 @@ class MetricsCollector:
                 result = session.run(query, {"session_id": session_id})
                 record = result.single()
                 if record:
-                    return record["metrics"]
+                    return cast(dict[str, Any], record["metrics"])
         except Exception as e:
             logger.error(f"Failed to get session metrics: {e}")
 
@@ -439,7 +439,7 @@ class MetricsCollector:
                 result = session.run(query, params)
                 record = result.single()
                 if record:
-                    return record["summary"]
+                    return cast(dict[str, Any], record["summary"])
         except Exception as e:
             logger.error(f"Failed to get metrics summary: {e}")
 

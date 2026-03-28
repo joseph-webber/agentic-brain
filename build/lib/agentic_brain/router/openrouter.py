@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """
 OpenRouter provider implementation.
 """
@@ -145,7 +144,7 @@ async def chat_openrouter(
         )
     except aiohttp.ClientError as e:
         raise LLMProviderError("openrouter", model, e)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise AgenticTimeoutError("OpenRouter chat", config.timeout, None)
     except (KeyError, TypeError) as e:
         raise LLMProviderError(

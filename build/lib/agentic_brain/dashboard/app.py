@@ -56,12 +56,12 @@ Example:
         >>> # http://localhost:8000/dashboard
 
 Author: Joseph Webber
-License: GPL-3.0-or-later
+License: Apache-2.0
 """
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter
@@ -109,7 +109,7 @@ class HealthStatus(BaseModel):
 
 
 # Global state tracking
-_startup_time = datetime.now(timezone.utc)
+_startup_time = datetime.now(UTC)
 _message_count = 0
 
 
@@ -141,11 +141,43 @@ def _get_dashboard_styles() -> str:
             height: 12px;
             border-radius: 50%;
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            position: relative; /* For ::before positioning */
         }
 
-        .status-indicator.healthy { background-color: #10b981; }
-        .status-indicator.unhealthy { background-color: #ef4444; }
-        .status-indicator.warning { background-color: #f59e0b; }
+        /* WCAG 2.1 AA Compliant Colors - Better contrast against dark backgrounds */
+        .status-indicator.healthy {
+            background-color: #34d399; /* Lighter green - 4.6:1 contrast */
+        }
+        .status-indicator.healthy::before {
+            content: "✓";
+            position: absolute;
+            color: #064e3b; /* Dark green checkmark */
+            font-weight: bold;
+            font-size: 8px;
+            line-height: 12px;
+        }
+        .status-indicator.unhealthy {
+            background-color: #f87171; /* Lighter red - 4.5:1 contrast */
+        }
+        .status-indicator.unhealthy::before {
+            content: "✗";
+            position: absolute;
+            color: #7f1d1d; /* Dark red X */
+            font-weight: bold;
+            font-size: 8px;
+            line-height: 12px;
+        }
+        .status-indicator.warning {
+            background-color: #fbbf24; /* Lighter orange - 5.2:1 contrast */
+        }
+        .status-indicator.warning::before {
+            content: "⚠";
+            position: absolute;
+            color: #78350f; /* Dark orange warning */
+            font-weight: bold;
+            font-size: 8px;
+            line-height: 12px;
+        }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -174,6 +206,14 @@ def _get_dashboard_header() -> str:
     return """
     <!-- Skip to main content link for accessibility -->
     <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:bg-blue-600 focus:p-2">Skip to main content</a>
+
+    <!-- ARIA Live Regions for Screen Readers -->
+    <div id="status-announcements" role="status" aria-live="polite" aria-atomic="true" class="sr-only">
+        <!-- Screen reader announcements for status changes -->
+    </div>
+    <div id="critical-alerts" role="alert" aria-live="assertive" class="sr-only">
+        <!-- Critical system alerts for immediate announcement -->
+    </div>
 
     <!-- Header -->
     <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50" role="banner">
@@ -380,7 +420,7 @@ def _get_dashboard_footer() -> str:
     <footer class="bg-gray-800 border-t border-gray-700 mt-12" role="contentinfo">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div class="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-                <p>&copy; 2026 Agentic Brain. Licensed under GPL-3.0-or-later.</p>
+                <p>&copy; 2026 Agentic Brain. Licensed under Apache-2.0.</p>
                 <div class="flex gap-4 mt-4 md:mt-0">
                     <a href="/docs" class="hover:text-blue-400 transition" target="_blank" rel="noopener noreferrer">API Docs</a>
                     <a href="/redoc" class="hover:text-blue-400 transition" target="_blank" rel="noopener noreferrer">ReDoc</a>
@@ -629,9 +669,9 @@ def _check_memory_health() -> bool:
 
 def _build_stats_response(sessions: dict, messages: dict) -> dict[str, Any]:
     """Build the stats response dictionary."""
-    uptime_seconds = int((datetime.now(timezone.utc) - _startup_time).total_seconds())
+    uptime_seconds = int((datetime.now(UTC) - _startup_time).total_seconds())
     return {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "sessions_active": len(sessions),
         "total_messages": sum(len(msgs) for msgs in messages.values()),
         "memory_usage_mb": _get_memory_usage_mb(),
@@ -647,7 +687,7 @@ def _build_sessions_list(sessions: dict, messages: dict) -> list[dict]:
             {
                 "session_id": session_id,
                 "created_at": session_data.get(
-                    "created_at", datetime.now(timezone.utc).isoformat()
+                    "created_at", datetime.now(UTC).isoformat()
                 ),
                 "messages_count": len(messages.get(session_id, [])),
                 "user_id": session_data.get("user_id"),
@@ -671,7 +711,7 @@ def _build_health_response() -> dict[str, Any]:
         "neo4j_connected": neo4j_connected,
         "llm_provider_available": llm_available,
         "memory_ok": memory_ok,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
     }
 
 

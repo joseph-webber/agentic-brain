@@ -37,6 +37,18 @@ from .utils import utc_now as _utc_now
 
 logger = logging.getLogger(__name__)
 
+try:
+    import firebase_admin
+    from firebase_admin import credentials as firebase_credentials
+    from firebase_admin import db as firebase_db
+
+    FIREBASE_AVAILABLE = True
+except ImportError:
+    FIREBASE_AVAILABLE = False
+    firebase_admin = None  # type: ignore[assignment]
+    firebase_credentials = None  # type: ignore[assignment]
+    firebase_db = None  # type: ignore[assignment]
+
 
 class PresenceStatus(Enum):
     """User presence status."""
@@ -547,13 +559,14 @@ class FirebasePresence(PresenceManager):
         self._db = None
         self._initialized = False
 
+        if not FIREBASE_AVAILABLE:
+            logger.warning("Firebase SDK not installed, using local presence only")
+            return
+
         # Try to initialize Firebase
         try:
-            import firebase_admin
-            from firebase_admin import credentials, db
-
             if credentials_path:
-                cred = credentials.Certificate(credentials_path)
+                cred = firebase_credentials.Certificate(credentials_path)
                 try:
                     firebase_admin.get_app("presence")
                 except ValueError:
@@ -561,11 +574,9 @@ class FirebasePresence(PresenceManager):
                         cred, {"databaseURL": database_url}, name="presence"
                     )
 
-                self._db = db
+                self._db = firebase_db
                 self._initialized = True
                 logger.info("Firebase presence initialized")
-        except ImportError:
-            logger.warning("Firebase SDK not installed, using local presence only")
         except Exception as e:
             logger.warning(f"Firebase initialization failed: {e}")
 

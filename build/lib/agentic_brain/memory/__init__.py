@@ -42,11 +42,29 @@ Exports:
 from ._neo4j_memory import (
     DataScope,
     InMemoryStore,
-    Memory as MemoryDataclass,
     MemoryConfig,
     Neo4jMemory,
     get_memory_backend,
     reset_memory_backend,
+)
+from ._neo4j_memory import (
+    Memory as MemoryDataclass,
+)
+
+# Export Neo4j conversation memory
+from .neo4j_memory import (
+    ConversationMemory,
+    Message,
+)
+from .neo4j_memory import (
+    MemoryConfig as ConversationMemoryConfig,
+)
+
+# Export summarization classes
+from .summarization import (
+    ConversationSummary,
+    SummaryType,
+    UnifiedSummarizer,
 )
 from .unified import (
     Memory,
@@ -56,13 +74,6 @@ from .unified import (
     SQLiteMemoryStore,
     UnifiedMemory,
     get_unified_memory,
-)
-
-# Export summarization classes
-from .summarization import (
-    ConversationSummary,
-    SummaryType,
-    UnifiedSummarizer,
 )
 
 __all__ = [
@@ -82,6 +93,10 @@ __all__ = [
     "get_memory_backend",
     "reset_memory_backend",
     "get_unified_memory",
+    # Neo4j conversation memory
+    "ConversationMemory",
+    "ConversationMemoryConfig",
+    "Message",
     # Summarization exports
     "ConversationSummary",
     "SummaryType",

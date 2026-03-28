@@ -18,7 +18,7 @@ import hashlib
 import logging
 import secrets
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
@@ -34,7 +34,7 @@ class RefreshTokenData(BaseModel):
     user_id: str
     user_login: str
     family_id: str  # Token family for rotation tracking
-    issued_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    issued_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     expires_at: datetime
     revoked: bool = False
     revoked_at: Optional[datetime] = None
@@ -49,7 +49,7 @@ class RefreshTokenData(BaseModel):
     @property
     def is_expired(self) -> bool:
         """Check if token has expired."""
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     @property
     def is_valid(self) -> bool:
@@ -70,7 +70,9 @@ class RefreshTokenResult(BaseModel):
     error_description: Optional[str] = None
 
     @classmethod
-    def failed(cls, error: str, description: Optional[str] = None) -> "RefreshTokenResult":
+    def failed(
+        cls, error: str, description: Optional[str] = None
+    ) -> "RefreshTokenResult":
         return cls(success=False, error=error, error_description=description)
 
 
@@ -95,9 +97,7 @@ class RefreshTokenStore(ABC):
         pass
 
     @abstractmethod
-    async def revoke(
-        self, token_hash: str, reason: str = "manual"
-    ) -> bool:
+    async def revoke(self, token_hash: str, reason: str = "manual") -> bool:
         """Revoke a specific token."""
         pass
 
@@ -153,7 +153,7 @@ class InMemoryRefreshTokenStore(RefreshTokenStore):
         token = self._tokens.get(token_hash)
         if token and not token.revoked:
             token.revoked = True
-            token.revoked_at = datetime.now(timezone.utc)
+            token.revoked_at = datetime.now(UTC)
             token.revoked_reason = reason
             return True
         return False
@@ -178,10 +178,7 @@ class InMemoryRefreshTokenStore(RefreshTokenStore):
 
     async def cleanup_expired(self) -> int:
         """Remove expired tokens from memory."""
-        expired_hashes = [
-            h for h, t in self._tokens.items()
-            if t.is_expired
-        ]
+        expired_hashes = [h for h, t in self._tokens.items() if t.is_expired]
         for token_hash in expired_hashes:
             token = self._tokens.pop(token_hash, None)
             if token:
@@ -264,7 +261,7 @@ class RefreshTokenService:
             token_hash = self._hash_token(refresh_token)
             family_id = str(uuid4())
 
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             # Store refresh token metadata
             token_data = RefreshTokenData(
@@ -280,7 +277,9 @@ class RefreshTokenService:
 
             await self.store.save(token_data)
 
-            logger.debug(f"Created refresh token family {family_id} for user {user_login}")
+            logger.debug(
+                f"Created refresh token family {family_id} for user {user_login}"
+            )
 
             return RefreshTokenResult(
                 success=True,
@@ -325,9 +324,7 @@ class RefreshTokenService:
         # Token not found
         if not token_data:
             logger.warning("Refresh token not found - possible theft attempt")
-            return RefreshTokenResult.failed(
-                "invalid_token", "Refresh token not found"
-            )
+            return RefreshTokenResult.failed("invalid_token", "Refresh token not found")
 
         # Token already revoked
         if token_data.revoked:
@@ -340,7 +337,7 @@ class RefreshTokenService:
             await self.store.revoke_family(token_data.family_id, "reuse_attack")
             return RefreshTokenResult.failed(
                 "token_reused",
-                "Refresh token was already used. All sessions revoked for security."
+                "Refresh token was already used. All sessions revoked for security.",
             )
 
         # Token expired
@@ -359,7 +356,7 @@ class RefreshTokenService:
             await self.store.revoke_family(token_data.family_id, "reuse_attack")
             return RefreshTokenResult.failed(
                 "token_reused",
-                "This refresh token was already used. All sessions revoked for security."
+                "This refresh token was already used. All sessions revoked for security.",
             )
 
         # Client binding validation (if enabled)
@@ -384,7 +381,7 @@ class RefreshTokenService:
         if self.rotate_on_refresh:
             new_refresh_token = self._generate_token()
             new_token_hash = self._hash_token(new_refresh_token)
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             # Create new token in same family
             new_token_data = RefreshTokenData(

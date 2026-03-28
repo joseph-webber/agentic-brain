@@ -31,7 +31,7 @@ import os
 import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any, Optional
 
 import aiohttp
@@ -39,7 +39,7 @@ import aiohttp
 logger = logging.getLogger(__name__)
 
 
-class StreamProvider(str, Enum):
+class StreamProvider(StrEnum):
     """Supported streaming providers."""
 
     OLLAMA = "ollama"
@@ -207,54 +207,54 @@ class StreamingResponse:
         total_tokens = 0
 
         try:
-            async with (
-                aiohttp.ClientSession() as session,
-                session.post(
+            async with aiohttp.ClientSession() as session:
+                resp = await session.post(
                     url,
                     json=payload,
                     timeout=aiohttp.ClientTimeout(
                         total=300, sock_read=30, sock_connect=10
                     ),
-                ) as resp,
-            ):
-                if resp.status != 200:
-                    error_text = await resp.text()
-                    logger.error(f"Failed to connect to ollama: HTTP {resp.status}")
-                    raise Exception(f"Ollama error {resp.status}: {error_text}")
-
-                logger.debug("Connected to ollama API")
-                is_first = True
-                async for line in resp.content:
-                    if not line:
-                        continue
-
-                    try:
-                        data = json.loads(line)
-                        token_text = data.get("message", {}).get("content", "")
-
-                        if token_text:
-                            logger.debug(f"Received token: {token_text[:20]}...")
-                            total_tokens += 1
-                            yield StreamToken(
-                                token=token_text,
-                                is_start=is_first,
-                                is_end=data.get("done", False),
-                                finish_reason="stop" if data.get("done") else None,
-                                metadata={
-                                    "provider": "ollama",
-                                    "model": self.model,
-                                },
-                            )
-                            is_first = False
-                    except json.JSONDecodeError as e:
-                        logger.error(f"Failed to parse ollama response: {str(e)}")
-                        continue
-
-                duration = time.time() - start_time
-                logger.info(
-                    f"Stream complete: {total_tokens} tokens in {duration:.2f}s"
                 )
-        except asyncio.TimeoutError:
+
+                async with resp:
+                    if resp.status != 200:
+                        error_text = await resp.text()
+                        logger.error(f"Failed to connect to ollama: HTTP {resp.status}")
+                        raise Exception(f"Ollama error {resp.status}: {error_text}")
+
+                    logger.debug("Connected to ollama API")
+                    is_first = True
+                    async for line in resp.content:
+                        if not line:
+                            continue
+
+                        try:
+                            data = json.loads(line)
+                            token_text = data.get("message", {}).get("content", "")
+
+                            if token_text:
+                                logger.debug(f"Received token: {token_text[:20]}...")
+                                total_tokens += 1
+                                yield StreamToken(
+                                    token=token_text,
+                                    is_start=is_first,
+                                    is_end=data.get("done", False),
+                                    finish_reason="stop" if data.get("done") else None,
+                                    metadata={
+                                        "provider": "ollama",
+                                        "model": self.model,
+                                    },
+                                )
+                                is_first = False
+                        except json.JSONDecodeError as e:
+                            logger.error(f"Failed to parse ollama response: {str(e)}")
+                            continue
+
+                    duration = time.time() - start_time
+                    logger.info(
+                        f"Stream complete: {total_tokens} tokens in {duration:.2f}s"
+                    )
+        except TimeoutError:
             logger.error("Stream timeout after 300s")
             yield StreamToken(
                 token="", finish_reason="error", metadata={"error": "timeout"}
@@ -362,7 +362,7 @@ class StreamingResponse:
                             f"Stream complete: {total_tokens} tokens in {duration:.2f}s"
                         )
                         break
-            except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+            except (TimeoutError, aiohttp.ClientError) as e:
                 attempt += 1
                 if attempt < max_retries:
                     logger.warning(
@@ -497,7 +497,7 @@ class StreamingResponse:
                             f"Stream complete: {total_tokens} tokens in {duration:.2f}s"
                         )
                         break
-            except (asyncio.TimeoutError, aiohttp.ClientError) as e:
+            except (TimeoutError, aiohttp.ClientError) as e:
                 attempt += 1
                 if attempt < max_retries:
                     logger.warning(

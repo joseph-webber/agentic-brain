@@ -41,7 +41,7 @@ import os
 import subprocess
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from typing import Any
 
@@ -73,7 +73,7 @@ class HealthCheckResult:
     service: str
     status: bool
     message: str
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     duration_ms: float = 0.0
 
 
@@ -92,7 +92,7 @@ class RunRecord:
     status: str
     duration: float
     error: str | None = None
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 class BotHealth:
@@ -203,7 +203,7 @@ class BotHealth:
                 "Connected" if success else "Connection failed",
             )
             return success
-        except asyncio.TimeoutError:
+        except TimeoutError:
             duration = (time.time() - start) * 1000
             self._record_check("neo4j", False, duration, "Timeout")
             return False
@@ -274,7 +274,7 @@ class BotHealth:
                 "Available" if success else "Not responding",
             )
             return success
-        except asyncio.TimeoutError:
+        except TimeoutError:
             duration = (time.time() - start) * 1000
             self._record_check("ollama", False, duration, "Timeout")
             return False
@@ -507,7 +507,7 @@ class BotHealth:
         if not self.history:
             return True
 
-        cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
+        cutoff = datetime.now(UTC) - timedelta(minutes=5)
         recent_failures = [
             h for h in self.history if not h.status and h.timestamp > cutoff
         ]
@@ -543,7 +543,7 @@ class BotHealth:
         """
         lines = [
             f"Bot Health Report: {self.bot_id}",
-            f"Timestamp: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Timestamp: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S')}",
             f"Overall Status: {self.get_health_status().value.upper()}",
             "",
         ]

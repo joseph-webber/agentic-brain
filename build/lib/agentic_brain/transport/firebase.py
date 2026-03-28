@@ -33,7 +33,7 @@ import threading
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -84,7 +84,7 @@ class OfflineMessage:
 
     id: str
     message: TransportMessage
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     retry_count: int = 0
 
 
@@ -147,7 +147,7 @@ class OfflineQueue:
                     message.content,
                     message.timestamp.isoformat(),
                     json.dumps(message.metadata),
-                    datetime.now(timezone.utc).isoformat(),
+                    datetime.now(UTC).isoformat(),
                 ),
             )
             conn.commit()
@@ -446,7 +446,7 @@ class FirebaseTransport(BaseTransport):
 
             self._connection_state = ConnectionState.CONNECTED
             self.connected = True
-            self._stats.last_connected_at = datetime.now(timezone.utc)
+            self._stats.last_connected_at = datetime.now(UTC)
             self._current_reconnect_delay = self.MIN_RECONNECT_DELAY
 
             logger.info(f"Firebase connected: session={self.session_id}")
@@ -609,7 +609,7 @@ class FirebaseTransport(BaseTransport):
 
         self._connection_state = ConnectionState.DISCONNECTED
         self.connected = False
-        self._stats.last_disconnected_at = datetime.now(timezone.utc)
+        self._stats.last_disconnected_at = datetime.now(UTC)
 
         logger.info("Firebase disconnected")
 
@@ -701,11 +701,11 @@ class FirebaseTransport(BaseTransport):
                         timestamp=(
                             datetime.fromisoformat(data["timestamp"])
                             if "timestamp" in data
-                            else datetime.now(timezone.utc)
+                            else datetime.now(UTC)
                         ),
                         metadata=data.get("metadata", {}),
                     )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             except asyncio.CancelledError:
                 break
@@ -730,7 +730,7 @@ class FirebaseTransport(BaseTransport):
                     self._state_queue.get(), timeout=self.config.timeout
                 )
                 yield state
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             except asyncio.CancelledError:
                 break
@@ -792,7 +792,7 @@ class FirebaseTransport(BaseTransport):
             health_ref = self._ref.parent.child("_health")
             health_ref.set(
                 {
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "session_id": self.session_id,
                 }
             )
@@ -825,7 +825,7 @@ class FirebaseTransport(BaseTransport):
                                 timestamp=(
                                     datetime.fromisoformat(data["timestamp"])
                                     if "timestamp" in data
-                                    else datetime.now(timezone.utc)
+                                    else datetime.now(UTC)
                                 ),
                                 metadata=data.get("metadata", {}),
                             )

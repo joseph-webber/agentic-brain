@@ -41,10 +41,11 @@ import json
 import logging
 import math
 import os
+import re
 import sqlite3
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Optional, Protocol, Union
@@ -75,6 +76,10 @@ class MemoryEntry:
         embedding: Vector embedding (for semantic search)
         session_id: Session this belongs to (for session memory)
         score: Relevance score (set during search)
+        importance: Importance level 0.0-1.0 (affects search ranking and retention)
+        access_count: Times this memory has been retrieved (reinforcement)
+        last_accessed: When this memory was last accessed
+        entities: Extracted entities from content
     """
 
     id: str
@@ -85,6 +90,10 @@ class MemoryEntry:
     embedding: Optional[list[float]] = None
     session_id: Optional[str] = None
     score: float = 0.0
+    importance: float = 0.5
+    access_count: int = 0
+    last_accessed: Optional[datetime] = None
+    entities: list[dict[str, str]] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""
@@ -96,10 +105,33 @@ class MemoryEntry:
             "metadata": self.metadata,
             "session_id": self.session_id,
             "score": self.score,
+            "importance": self.importance,
+            "access_count": self.access_count,
+            "last_accessed": (
+                self.last_accessed.isoformat() if self.last_accessed else None
+            ),
+            "entities": self.entities,
         }
 
+    @property
+    def effective_importance(self) -> float:
+        """
+        Get importance with time-decay applied (Mem0-inspired).
+
+        Memories fade over time unless reinforced by access.
+        """
+        ref_time = self.last_accessed or self.timestamp
+        if isinstance(ref_time, str):
+            ref_time = datetime.fromisoformat(ref_time)
+        if ref_time.tzinfo is None:
+            ref_time = ref_time.replace(tzinfo=UTC)
+        days = max(0.0, (datetime.now(UTC) - ref_time).total_seconds() / 86400)
+        decay = math.exp(-0.01 * days)
+        reinforcement = min(self.access_count * 0.02, 0.2) if self.access_count else 0.0
+        return max(0.1, min(1.0, self.importance * decay + reinforcement))
+
     @classmethod
-    def from_dict(cls, data: dict) -> "MemoryEntry":
+    def from_dict(cls, data: dict) -> MemoryEntry:
         """Create from dictionary."""
         return cls(
             id=data["id"],
@@ -108,12 +140,20 @@ class MemoryEntry:
             timestamp=(
                 datetime.fromisoformat(data["timestamp"])
                 if isinstance(data.get("timestamp"), str)
-                else data.get("timestamp", datetime.now(timezone.utc))
+                else data.get("timestamp", datetime.now(UTC))
             ),
             metadata=data.get("metadata", {}),
             embedding=data.get("embedding"),
             session_id=data.get("session_id"),
             score=data.get("score", 0.0),
+            importance=data.get("importance", 0.5),
+            access_count=data.get("access_count", 0),
+            last_accessed=(
+                datetime.fromisoformat(data["last_accessed"])
+                if data.get("last_accessed")
+                else None
+            ),
+            entities=data.get("entities", []),
         )
 
 
@@ -221,36 +261,40 @@ class SQLiteMemoryStore:
                 timestamp TEXT NOT NULL,
                 metadata TEXT,
                 embedding TEXT,
-                session_id TEXT
+                session_id TEXT,
+                importance REAL DEFAULT 0.5,
+                access_count INTEGER DEFAULT 0,
+                last_accessed TEXT,
+                entities TEXT
             );
-            
+
             CREATE INDEX IF NOT EXISTS idx_memory_type ON memories(memory_type);
             CREATE INDEX IF NOT EXISTS idx_session_id ON memories(session_id);
             CREATE INDEX IF NOT EXISTS idx_timestamp ON memories(timestamp);
-            
+
             -- Full-text search
             CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
                 content,
                 content='memories',
                 content_rowid='rowid'
             );
-            
+
             -- Triggers to keep FTS in sync
             CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
-                INSERT INTO memories_fts(rowid, content) 
+                INSERT INTO memories_fts(rowid, content)
                 SELECT rowid, content FROM memories WHERE id = NEW.id;
             END;
-            
+
             CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
                 DELETE FROM memories_fts WHERE rowid = OLD.rowid;
             END;
-            
+
             CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
                 DELETE FROM memories_fts WHERE rowid = OLD.rowid;
-                INSERT INTO memories_fts(rowid, content) 
+                INSERT INTO memories_fts(rowid, content)
                 SELECT rowid, content FROM memories WHERE id = NEW.id;
             END;
-            
+
             -- Session context table
             CREATE TABLE IF NOT EXISTS session_context (
                 session_id TEXT PRIMARY KEY,
@@ -259,7 +303,7 @@ class SQLiteMemoryStore:
                 created_at TEXT,
                 updated_at TEXT
             );
-            
+
             -- Event timeline for episodic memory
             CREATE TABLE IF NOT EXISTS events (
                 id TEXT PRIMARY KEY,
@@ -268,11 +312,76 @@ class SQLiteMemoryStore:
                 timestamp TEXT NOT NULL,
                 session_id TEXT
             );
-            
+
             CREATE INDEX IF NOT EXISTS idx_event_type ON events(event_type);
             CREATE INDEX IF NOT EXISTS idx_event_time ON events(timestamp);
+
+            -- Entity tracking table (Mem0-inspired)
+            CREATE TABLE IF NOT EXISTS entities (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                entity_type TEXT NOT NULL,
+                first_seen TEXT NOT NULL,
+                last_seen TEXT NOT NULL,
+                mention_count INTEGER DEFAULT 1
+            );
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_entity_unique
+                ON entities(name, entity_type);
+            CREATE INDEX IF NOT EXISTS idx_entity_name ON entities(name);
+
+            -- Memory-entity associations
+            CREATE TABLE IF NOT EXISTS memory_entities (
+                memory_id TEXT NOT NULL,
+                entity_id TEXT NOT NULL,
+                PRIMARY KEY (memory_id, entity_id)
+            );
+
+            -- Cross-session links (Mem0-inspired)
+            CREATE TABLE IF NOT EXISTS session_links (
+                session1 TEXT NOT NULL,
+                session2 TEXT NOT NULL,
+                relationship TEXT DEFAULT 'RELATED_TO',
+                shared_entities TEXT,
+                linked_at TEXT NOT NULL,
+                PRIMARY KEY (session1, session2)
+            );
         """
         )
+        conn.commit()
+        # Migrate existing DBs that don't have new columns
+        self._migrate_schema(conn)
+
+    def _migrate_schema(self, conn: sqlite3.Connection) -> None:
+        """Add new columns to existing databases (safe migration)."""
+        columns = {
+            row[1] for row in conn.execute("PRAGMA table_info(memories)").fetchall()
+        }
+        migrations = [
+            (
+                "access_count",
+                "ALTER TABLE memories ADD COLUMN access_count INTEGER DEFAULT 0",
+            ),
+            ("last_accessed", "ALTER TABLE memories ADD COLUMN last_accessed TEXT"),
+            ("entities", "ALTER TABLE memories ADD COLUMN entities TEXT"),
+            (
+                "importance",
+                "ALTER TABLE memories ADD COLUMN importance REAL DEFAULT 0.5",
+            ),
+        ]
+        for col, sql in migrations:
+            if col not in columns:
+                try:
+                    conn.execute(sql)
+                except sqlite3.OperationalError:
+                    pass  # column already exists or table issue
+        # Create indexes on new columns (safe if they already exist)
+        try:
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_importance ON memories(importance)"
+            )
+        except sqlite3.OperationalError:
+            pass
         conn.commit()
 
     def store(
@@ -282,6 +391,7 @@ class SQLiteMemoryStore:
         metadata: Optional[dict] = None,
         session_id: Optional[str] = None,
         memory_id: Optional[str] = None,
+        importance: float = 0.5,
     ) -> MemoryEntry:
         """
         Store a memory.
@@ -292,6 +402,8 @@ class SQLiteMemoryStore:
             metadata: Additional metadata
             session_id: Session ID for session memory
             memory_id: Optional custom ID
+            importance: Importance level 0.0-1.0 (higher = more important,
+                        affects search ranking and retention during cleanup)
 
         Returns:
             Created MemoryEntry
@@ -301,15 +413,22 @@ class SQLiteMemoryStore:
         # Generate ID if not provided
         if not memory_id:
             memory_id = hashlib.sha256(
-                f"{content}:{datetime.now(timezone.utc).isoformat()}".encode()
+                f"{content}:{datetime.now(UTC).isoformat()}".encode()
             ).hexdigest()[:16]
 
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
 
         # Generate embedding for semantic memory
         embedding = None
         if memory_type in (MemoryType.SEMANTIC, MemoryType.LONG_TERM):
             embedding = self.embedder.embed(content)
+
+        # Auto-score importance based on content signals (Mem0-inspired)
+        if importance == 0.5:
+            importance = self._score_importance(content, memory_type, metadata)
+
+        # Extract entities
+        extracted_entities = self._extract_entities(content)
 
         entry = MemoryEntry(
             id=memory_id,
@@ -319,13 +438,18 @@ class SQLiteMemoryStore:
             metadata=metadata or {},
             embedding=embedding,
             session_id=session_id,
+            importance=max(0.0, min(1.0, importance)),
+            access_count=0,
+            last_accessed=timestamp,
+            entities=extracted_entities,
         )
 
         conn.execute(
             """
-            INSERT OR REPLACE INTO memories 
-            (id, content, memory_type, timestamp, metadata, embedding, session_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO memories
+            (id, content, memory_type, timestamp, metadata, embedding, session_id,
+             importance, access_count, last_accessed, entities)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
             (
                 entry.id,
@@ -335,9 +459,16 @@ class SQLiteMemoryStore:
                 json.dumps(entry.metadata),
                 json.dumps(embedding) if embedding else None,
                 entry.session_id,
+                entry.importance,
+                entry.access_count,
+                entry.last_accessed.isoformat() if entry.last_accessed else None,
+                json.dumps(extracted_entities),
             ),
         )
         conn.commit()
+
+        # Store entities in entity tracking table
+        self._store_entities(conn, entry.id, extracted_entities)
 
         logger.debug(f"Stored memory {entry.id}: {content[:50]}...")
         return entry
@@ -476,19 +607,23 @@ class SQLiteMemoryStore:
     def _semantic_rerank(
         self, results: list[MemoryEntry], query_embedding: list[float]
     ) -> list[MemoryEntry]:
-        """Re-rank results using semantic similarity."""
+        """Re-rank results using semantic similarity + importance."""
         for entry in results:
             if entry.embedding:
-                semantic_score = self._cosine_similarity(query_embedding, entry.embedding)
-                # Combine FTS score with semantic score
-                entry.score = 0.5 * entry.score + 0.5 * semantic_score
+                semantic_score = self._cosine_similarity(
+                    query_embedding, entry.embedding
+                )
+                # Combine FTS score + semantic score + importance boost
+                entry.score = (
+                    0.4 * entry.score + 0.4 * semantic_score + 0.2 * entry.importance
+                )
 
         results.sort(key=lambda x: x.score, reverse=True)
         return results
 
     def _cosine_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """Calculate cosine similarity between vectors."""
-        dot = sum(a * b for a, b in zip(vec1, vec2))
+        dot = sum(a * b for a, b in zip(vec1, vec2, strict=False))
         norm1 = math.sqrt(sum(a * a for a in vec1))
         norm2 = math.sqrt(sum(b * b for b in vec2))
         if norm1 == 0 or norm2 == 0:
@@ -497,6 +632,15 @@ class SQLiteMemoryStore:
 
     def _row_to_entry(self, row: sqlite3.Row) -> MemoryEntry:
         """Convert SQLite row to MemoryEntry."""
+
+        # Safely read columns that may not exist in older databases
+        def _safe(col: str, default=None):
+            try:
+                val = row[col]
+                return val if val is not None else default
+            except (IndexError, KeyError):
+                return default
+
         return MemoryEntry(
             id=row["id"],
             content=row["content"],
@@ -505,6 +649,14 @@ class SQLiteMemoryStore:
             metadata=json.loads(row["metadata"]) if row["metadata"] else {},
             embedding=json.loads(row["embedding"]) if row["embedding"] else None,
             session_id=row["session_id"],
+            importance=_safe("importance", 0.5),
+            access_count=_safe("access_count", 0),
+            last_accessed=(
+                datetime.fromisoformat(_safe("last_accessed"))
+                if _safe("last_accessed")
+                else None
+            ),
+            entities=json.loads(_safe("entities", "[]")),
         )
 
     def get_recent(
@@ -529,7 +681,7 @@ class SQLiteMemoryStore:
             params.append(session_id)
 
         if hours:
-            cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+            cutoff = datetime.now(UTC) - timedelta(hours=hours)
             sql += " AND timestamp >= ?"
             params.append(cutoff.isoformat())
 
@@ -563,6 +715,136 @@ class SQLiteMemoryStore:
 
         return cursor.fetchone()[0]
 
+    # Importance scoring and entity extraction
+
+    # High-signal keywords that indicate important content
+    _IMPORTANCE_KEYWORDS = {
+        "error",
+        "bug",
+        "fix",
+        "critical",
+        "urgent",
+        "important",
+        "decision",
+        "agreed",
+        "remember",
+        "always",
+        "never",
+        "rule",
+        "password",
+        "secret",
+        "key",
+        "credential",
+        "preference",
+    }
+
+    def _score_importance(
+        self,
+        content: str,
+        memory_type: MemoryType,
+        metadata: Optional[dict],
+    ) -> float:
+        """
+        Auto-score memory importance based on content signals.
+
+        Analyses keyword presence, memory type, and metadata hints
+        to assign 0.0-1.0 importance without requiring an LLM call.
+        """
+        score = 0.5
+        lower = content.lower()
+
+        # Keyword boost
+        hits = sum(1 for kw in self._IMPORTANCE_KEYWORDS if kw in lower)
+        score += min(hits * 0.05, 0.2)
+
+        # Memory type boost
+        if memory_type == MemoryType.LONG_TERM:
+            score += 0.1
+        elif memory_type == MemoryType.EPISODIC:
+            score += 0.05
+
+        # Metadata hints
+        if metadata:
+            if metadata.get("important") or metadata.get("pinned"):
+                score += 0.2
+            if metadata.get("source") == "user":
+                score += 0.05
+
+        # Length heuristic: very short or very long = less likely important
+        word_count = len(content.split())
+        if 10 <= word_count <= 200:
+            score += 0.05
+
+        return max(0.1, min(1.0, score))
+
+    def _extract_entities(self, content: str) -> list[dict[str, str]]:
+        """
+        Extract named entities from content using simple heuristics.
+
+        Returns list of {name, type} dicts.
+        """
+        entities: list[dict[str, str]] = []
+        seen: set[str] = set()
+
+        for word in content.split():
+            # Simple heuristic: capitalised words that aren't sentence starters
+            clean = word.strip(".,!?;:'\"()")
+            if (
+                clean
+                and clean[0].isupper()
+                and len(clean) > 1
+                and clean.lower()
+                not in {
+                    "the",
+                    "this",
+                    "that",
+                    "it",
+                    "he",
+                    "she",
+                    "we",
+                    "they",
+                    "is",
+                    "are",
+                    "was",
+                    "were",
+                    "i",
+                    "a",
+                    "an",
+                }
+                and clean.lower() not in seen
+            ):
+                seen.add(clean.lower())
+                entities.append({"name": clean, "type": "UNKNOWN"})
+
+        return entities[:20]  # Cap at 20 entities
+
+    def _store_entities(
+        self, conn: sqlite3.Connection, memory_id: str, entities: list[dict[str, str]]
+    ) -> None:
+        """Persist extracted entities to the entity tracking tables."""
+        now = datetime.now(UTC).isoformat()
+        for ent in entities:
+            eid = hashlib.sha256(f"{ent['name']}:{ent['type']}".encode()).hexdigest()[
+                :16
+            ]
+
+            conn.execute(
+                """
+                INSERT INTO entities (id, name, entity_type, first_seen, last_seen, mention_count)
+                VALUES (?, ?, ?, ?, ?, 1)
+                ON CONFLICT(name, entity_type) DO UPDATE SET
+                    last_seen = excluded.last_seen,
+                    mention_count = mention_count + 1
+                """,
+                (eid, ent["name"], ent["type"], now, now),
+            )
+            conn.execute(
+                "INSERT OR IGNORE INTO memory_entities (memory_id, entity_id) VALUES (?, ?)",
+                (memory_id, eid),
+            )
+        if entities:
+            conn.commit()
+
     # Session context methods
 
     def save_session_context(
@@ -570,11 +852,11 @@ class SQLiteMemoryStore:
     ) -> None:
         """Save session context (conversation history)."""
         conn = self._get_conn()
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         conn.execute(
             """
-            INSERT OR REPLACE INTO session_context 
+            INSERT OR REPLACE INTO session_context
             (session_id, messages, summary, created_at, updated_at)
             VALUES (?, ?, ?, COALESCE(
                 (SELECT created_at FROM session_context WHERE session_id = ?),
@@ -620,7 +902,7 @@ class SQLiteMemoryStore:
         """Record an event for episodic memory."""
         conn = self._get_conn()
         event_id = hashlib.sha256(
-            f"{event_type}:{datetime.now(timezone.utc).isoformat()}".encode()
+            f"{event_type}:{datetime.now(UTC).isoformat()}".encode()
         ).hexdigest()[:16]
 
         conn.execute(
@@ -632,7 +914,7 @@ class SQLiteMemoryStore:
                 event_id,
                 event_type,
                 json.dumps(data) if data else None,
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
                 session_id,
             ),
         )
@@ -681,6 +963,468 @@ class SQLiteMemoryStore:
 
         return events
 
+    # =========================================================================
+    # IMPORTANCE SCORING (Mem0-inspired)
+    # =========================================================================
+
+    # High-signal keywords that boost importance
+    IMPORTANCE_KEYWORDS = frozenset(
+        {
+            "important",
+            "critical",
+            "urgent",
+            "remember",
+            "always",
+            "never",
+            "must",
+            "password",
+            "key",
+            "secret",
+            "deadline",
+            "decision",
+            "agreed",
+            "confirmed",
+            "preference",
+            "birthday",
+            "error",
+            "bug",
+            "fix",
+            "deploy",
+            "production",
+            "breaking",
+            "security",
+        }
+    )
+
+    def _score_importance(
+        self,
+        content: str,
+        memory_type: MemoryType,
+        metadata: Optional[dict],
+    ) -> float:
+        """
+        Score memory importance based on content signals (Mem0-inspired).
+
+        Args:
+            content: Text content
+            memory_type: Type of memory
+            metadata: Additional metadata
+
+        Returns:
+            Importance score 0.0-1.0
+        """
+        score = 0.5
+        text_lower = content.lower()
+
+        # Memory type boost
+        if memory_type == MemoryType.LONG_TERM:
+            score += 0.15
+        elif memory_type == MemoryType.EPISODIC:
+            score += 0.1
+
+        # Keyword boost
+        hits = sum(1 for kw in self.IMPORTANCE_KEYWORDS if kw in text_lower)
+        score += min(hits * 0.08, 0.3)
+
+        # Length signal
+        word_count = len(content.split())
+        if word_count < 5:
+            score -= 0.1
+        elif word_count > 50:
+            score += 0.1
+
+        # Question signal
+        if "?" in content:
+            score += 0.05
+
+        # Code signal
+        if "```" in content or "def " in content or "class " in content:
+            score += 0.1
+
+        # Metadata overrides
+        if metadata:
+            if metadata.get("importance"):
+                try:
+                    score = float(metadata["importance"])
+                except (ValueError, TypeError):
+                    pass
+            if metadata.get("pinned"):
+                score = max(score, 0.9)
+
+        return max(0.0, min(1.0, score))
+
+    # =========================================================================
+    # ENTITY EXTRACTION (Mem0-inspired)
+    # =========================================================================
+
+    def _extract_entities(self, text: str) -> list[dict[str, str]]:
+        """
+        Extract entities from text using pattern matching (Mem0-inspired).
+
+        Returns:
+            List of {"name": ..., "type": ...} dicts
+        """
+        entities: list[dict[str, str]] = []
+        seen: set[str] = set()
+
+        def _add(name: str, etype: str) -> None:
+            key = name.lower()
+            if key not in seen:
+                seen.add(key)
+                entities.append({"name": name, "type": etype})
+
+        # Emails
+        for m in re.finditer(r"[\w.+-]+@[\w-]+\.[\w.-]+", text):
+            _add(m.group(), "EMAIL")
+
+        # URLs
+        for m in re.finditer(r"https?://[^\s<>\"']+", text):
+            _add(m.group(), "URL")
+
+        # JIRA tickets
+        for m in re.finditer(r"\b[A-Z]{2,6}-\d{1,6}\b", text):
+            _add(m.group(), "TICKET")
+
+        # File paths
+        for m in re.finditer(r"(?:~/|/[\w]+/|\./)[\w/.-]+\.\w+", text):
+            _add(m.group(), "FILE")
+
+        # Technology names
+        tech_re = re.compile(
+            r"\b(Python|JavaScript|TypeScript|Java|Neo4j|Docker|Redis|React|"
+            r"Angular|Vue|Node\.js|FastAPI|Django|Flask|PostgreSQL|MySQL|"
+            r"MongoDB|Kubernetes|AWS|Azure|GCP|Git|GitHub|Bitbucket|JIRA|"
+            r"Safari|Chrome|macOS|Linux|Windows|VoiceOver)\b",
+            re.IGNORECASE,
+        )
+        for m in tech_re.finditer(text):
+            _add(m.group(), "TECHNOLOGY")
+
+        # Multi-word proper nouns (e.g., "Steve Taylor")
+        for m in re.finditer(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b", text):
+            name = m.group()
+            if name.lower() not in {"the end", "the other"}:
+                _add(name, "PERSON")
+
+        # Single capitalized words
+        skip_words = {
+            "the",
+            "this",
+            "that",
+            "these",
+            "those",
+            "when",
+            "where",
+            "what",
+            "which",
+            "how",
+            "who",
+            "why",
+            "but",
+            "and",
+            "for",
+            "not",
+            "with",
+            "from",
+        }
+        for word in text.split():
+            cleaned = word.strip(".,!?;:()[]{}\"'")
+            if (
+                len(cleaned) >= 3
+                and cleaned[0].isupper()
+                and not cleaned.isupper()
+                and cleaned.lower() not in skip_words
+            ):
+                etype = "CONCEPT"
+                if cleaned.endswith(("Corp", "Inc", "Ltd", "LLC", "Pty")):
+                    etype = "ORGANIZATION"
+                _add(cleaned, etype)
+
+        return entities
+
+    def _store_entities(
+        self,
+        conn: sqlite3.Connection,
+        memory_id: str,
+        entities: list[dict[str, str]],
+    ) -> None:
+        """Store extracted entities and link to memory."""
+        now = datetime.now(UTC).isoformat()
+        for ent in entities:
+            eid = hashlib.sha256(f"{ent['name']}:{ent['type']}".encode()).hexdigest()[
+                :16
+            ]
+
+            conn.execute(
+                """
+                INSERT INTO entities (id, name, entity_type, first_seen, last_seen, mention_count)
+                VALUES (?, ?, ?, ?, ?, 1)
+                ON CONFLICT(name, entity_type) DO UPDATE SET
+                    last_seen = ?,
+                    mention_count = mention_count + 1
+                """,
+                (eid, ent["name"], ent["type"], now, now, now),
+            )
+            conn.execute(
+                "INSERT OR IGNORE INTO memory_entities (memory_id, entity_id) VALUES (?, ?)",
+                (memory_id, eid),
+            )
+        conn.commit()
+
+    # =========================================================================
+    # MEMORY DECAY & REINFORCEMENT (Mem0-inspired)
+    # =========================================================================
+
+    def reinforce_memory(
+        self, memory_id: str, boost: float = 0.15
+    ) -> Optional[MemoryEntry]:
+        """
+        Reinforce a memory (boost importance on access).
+
+        Args:
+            memory_id: Memory to reinforce
+            boost: Importance boost amount
+
+        Returns:
+            Updated MemoryEntry or None
+        """
+        conn = self._get_conn()
+        now = datetime.now(UTC).isoformat()
+
+        conn.execute(
+            """
+            UPDATE memories
+            SET access_count = COALESCE(access_count, 0) + 1,
+                last_accessed = ?,
+                importance = MIN(1.0, COALESCE(importance, 0.5) + ?)
+            WHERE id = ?
+            """,
+            (now, boost, memory_id),
+        )
+        conn.commit()
+
+        cursor = conn.execute("SELECT * FROM memories WHERE id = ?", (memory_id,))
+        row = cursor.fetchone()
+        return self._row_to_entry(row) if row else None
+
+    def apply_decay(self, decay_rate: float = 0.01, min_importance: float = 0.1) -> int:
+        """
+        Apply time-based decay to all memories.
+
+        Args:
+            decay_rate: Importance lost per day since last access
+            min_importance: Floor - memories never fully disappear
+
+        Returns:
+            Number of memories updated
+        """
+        conn = self._get_conn()
+        now = datetime.now(UTC)
+        updated = 0
+
+        rows = conn.execute(
+            "SELECT id, importance, timestamp, access_count, last_accessed "
+            "FROM memories WHERE importance > ?",
+            (min_importance,),
+        ).fetchall()
+
+        for row in rows:
+            ref_time_str = row["last_accessed"] or row["timestamp"]
+            ref_time = datetime.fromisoformat(ref_time_str)
+            if ref_time.tzinfo is None:
+                ref_time = ref_time.replace(tzinfo=UTC)
+
+            days = max(0.0, (now - ref_time).total_seconds() / 86400)
+            decay = math.exp(-decay_rate * days)
+            access_bonus = min((row["access_count"] or 0) * 0.02, 0.2)
+            new_importance = max(
+                min_importance, min(1.0, row["importance"] * decay + access_bonus)
+            )
+
+            if abs(new_importance - row["importance"]) > 0.001:
+                conn.execute(
+                    "UPDATE memories SET importance = ? WHERE id = ?",
+                    (new_importance, row["id"]),
+                )
+                updated += 1
+
+        conn.commit()
+        logger.info(f"Applied decay to {updated} memories")
+        return updated
+
+    def condense_old_memories(
+        self,
+        older_than_days: int = 7,
+        importance_threshold: float = 0.3,
+    ) -> dict:
+        """
+        Condense old, low-importance memories into summaries (Mem0-inspired).
+
+        Args:
+            older_than_days: Only condense memories older than this
+            importance_threshold: Only condense memories below this
+
+        Returns:
+            Stats dict with condensed count
+        """
+        conn = self._get_conn()
+        cutoff = (datetime.now(UTC) - timedelta(hours=older_than_days * 24)).isoformat()
+
+        rows = conn.execute(
+            """
+            SELECT id, content, memory_type, session_id, importance
+            FROM memories
+            WHERE timestamp < ? AND importance < ?
+            ORDER BY timestamp
+            """,
+            (cutoff, importance_threshold),
+        ).fetchall()
+
+        if not rows:
+            return {"condensed": 0, "summary_created": False}
+
+        # Group by session
+        by_session: dict[str, list] = {}
+        for r in rows:
+            sid = r["session_id"] or "no_session"
+            by_session.setdefault(sid, []).append(dict(r))
+
+        condensed_count = 0
+        for sid, msgs in by_session.items():
+            # Create summary
+            parts = [f"{m['content'][:200]}" for m in msgs[:10]]
+            summary = f"Condensed {len(msgs)} memories: " + " | ".join(parts[:5])
+            if len(msgs) > 5:
+                summary += f" [... and {len(msgs) - 5} more]"
+
+            # Store as a new high-importance summary memory
+            self.store(
+                content=summary[:2000],
+                memory_type=MemoryType.LONG_TERM,
+                metadata={"condensation": True, "original_count": len(msgs)},
+                session_id=sid if sid != "no_session" else None,
+                importance=0.7,
+            )
+
+            # Delete originals
+            ids = [m["id"] for m in msgs]
+            placeholders = ",".join("?" * len(ids))
+            conn.execute(f"DELETE FROM memories WHERE id IN ({placeholders})", ids)
+            condensed_count += len(msgs)
+
+        conn.commit()
+        logger.info(f"Condensed {condensed_count} old memories")
+        return {
+            "condensed": condensed_count,
+            "sessions": len(by_session),
+            "summary_created": True,
+        }
+
+    # =========================================================================
+    # CROSS-SESSION LINKING (Mem0-inspired)
+    # =========================================================================
+
+    def link_sessions(
+        self,
+        session1: str,
+        session2: str,
+        relationship: str = "RELATED_TO",
+        shared_entities: Optional[list[str]] = None,
+    ) -> None:
+        """Link two sessions that share context."""
+        conn = self._get_conn()
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO session_links
+            (session1, session2, relationship, shared_entities, linked_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                session1,
+                session2,
+                relationship,
+                json.dumps(shared_entities or []),
+                datetime.now(UTC).isoformat(),
+            ),
+        )
+        conn.commit()
+
+    def find_related_sessions(
+        self,
+        session_id: str,
+        limit: int = 10,
+    ) -> list[dict]:
+        """Find sessions related to the given one via shared entities."""
+        conn = self._get_conn()
+
+        # Find sessions that share entities with this one
+        rows = conn.execute(
+            """
+            SELECT DISTINCT m2.session_id, COUNT(DISTINCT me2.entity_id) as shared_count
+            FROM memory_entities me1
+            JOIN memories m1 ON me1.memory_id = m1.id
+            JOIN memory_entities me2 ON me1.entity_id = me2.entity_id
+            JOIN memories m2 ON me2.memory_id = m2.id
+            WHERE m1.session_id = ? AND m2.session_id != ? AND m2.session_id IS NOT NULL
+            GROUP BY m2.session_id
+            ORDER BY shared_count DESC
+            LIMIT ?
+            """,
+            (session_id, session_id, limit),
+        ).fetchall()
+
+        results = []
+        for r in rows:
+            # Get shared entity names
+            entity_rows = conn.execute(
+                """
+                SELECT DISTINCT e.name
+                FROM memory_entities me1
+                JOIN memories m1 ON me1.memory_id = m1.id
+                JOIN memory_entities me2 ON me1.entity_id = me2.entity_id
+                JOIN memories m2 ON me2.memory_id = m2.id
+                JOIN entities e ON me1.entity_id = e.id
+                WHERE m1.session_id = ? AND m2.session_id = ?
+                """,
+                (session_id, r["session_id"]),
+            ).fetchall()
+
+            results.append(
+                {
+                    "session_id": r["session_id"],
+                    "shared_entity_count": r["shared_count"],
+                    "shared_entities": [er["name"] for er in entity_rows],
+                }
+            )
+        return results
+
+    def get_entity_timeline(self, entity_name: str, limit: int = 20) -> list[dict]:
+        """Get timeline of an entity across all memories."""
+        conn = self._get_conn()
+        rows = conn.execute(
+            """
+            SELECT m.id, m.content, m.timestamp, m.session_id, m.importance
+            FROM memories m
+            JOIN memory_entities me ON m.id = me.memory_id
+            JOIN entities e ON me.entity_id = e.id
+            WHERE LOWER(e.name) = LOWER(?)
+            ORDER BY m.timestamp DESC
+            LIMIT ?
+            """,
+            (entity_name, limit),
+        ).fetchall()
+
+        return [
+            {
+                "memory_id": r["id"],
+                "content": r["content"],
+                "timestamp": r["timestamp"],
+                "session_id": r["session_id"],
+                "importance": r["importance"],
+            }
+            for r in rows
+        ]
+
     def close(self) -> None:
         """Close connection."""
         if hasattr(self._local, "conn"):
@@ -703,7 +1447,7 @@ class UnifiedMemory:
 
     Example:
         >>> from agentic_brain.memory import UnifiedMemory
-        >>> 
+        >>>
         >>> # Simple usage (SQLite, no external deps)
         >>> mem = UnifiedMemory()
         >>> mem.store("user likes Python")
@@ -796,6 +1540,7 @@ class UnifiedMemory:
         memory_type: MemoryType = MemoryType.LONG_TERM,
         metadata: Optional[dict] = None,
         session_id: Optional[str] = None,
+        importance: float = 0.5,
     ) -> MemoryEntry:
         """
         Store a memory.
@@ -805,6 +1550,7 @@ class UnifiedMemory:
             memory_type: Type of memory
             metadata: Additional metadata
             session_id: Session ID
+            importance: Importance level 0.0-1.0
 
         Returns:
             Created MemoryEntry
@@ -815,6 +1561,7 @@ class UnifiedMemory:
             memory_type=memory_type,
             metadata=metadata,
             session_id=session,
+            importance=importance,
         )
 
     def search(
@@ -892,7 +1639,7 @@ class UnifiedMemory:
             {
                 "role": role,
                 "content": content,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "metadata": metadata or {},
             }
         )
@@ -948,6 +1695,42 @@ class UnifiedMemory:
         """Alias for search() - more natural language."""
         return self.search(query, **kwargs)
 
+    # Mem0-inspired methods delegated to SQLite store
+
+    def reinforce_memory(
+        self, memory_id: str, boost: float = 0.15
+    ) -> Optional[MemoryEntry]:
+        """Reinforce a memory (boost importance on access)."""
+        return self._sqlite.reinforce_memory(memory_id, boost)
+
+    def apply_decay(self, decay_rate: float = 0.01, min_importance: float = 0.1) -> int:
+        """Apply time-based decay to all memories."""
+        return self._sqlite.apply_decay(decay_rate, min_importance)
+
+    def condense_old_memories(
+        self, older_than_days: int = 7, importance_threshold: float = 0.3
+    ) -> dict:
+        """Condense old, low-importance memories into summaries."""
+        return self._sqlite.condense_old_memories(older_than_days, importance_threshold)
+
+    def link_sessions(
+        self,
+        session1: str,
+        session2: str,
+        relationship: str = "RELATED_TO",
+        shared_entities: Optional[list[str]] = None,
+    ) -> None:
+        """Link two related sessions."""
+        self._sqlite.link_sessions(session1, session2, relationship, shared_entities)
+
+    def find_related_sessions(self, session_id: str, limit: int = 10) -> list[dict]:
+        """Find sessions related via shared entities."""
+        return self._sqlite.find_related_sessions(session_id, limit)
+
+    def get_entity_timeline(self, entity_name: str, limit: int = 20) -> list[dict]:
+        """Get timeline of an entity across all memories."""
+        return self._sqlite.get_entity_timeline(entity_name, limit)
+
     def stats(self) -> dict:
         """Get memory statistics."""
         return {
@@ -967,7 +1750,7 @@ class UnifiedMemory:
         if self._neo4j:
             self._neo4j.close()
 
-    def __enter__(self) -> "UnifiedMemory":
+    def __enter__(self) -> UnifiedMemory:
         return self
 
     def __exit__(self, *args) -> None:

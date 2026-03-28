@@ -35,7 +35,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from functools import wraps
 from random import Random
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
@@ -611,8 +611,8 @@ def now() -> datetime:
     """
     wf = _get_current_workflow(raise_if_none=False)
     if wf is None:
-        return datetime.now(timezone.utc)
-    return wf.context.current_time if hasattr(wf, "context") else datetime.now(timezone.utc)
+        return datetime.now(UTC)
+    return wf.context.current_time if hasattr(wf, "context") else datetime.now(UTC)
 
 
 def info() -> Info:

@@ -22,7 +22,7 @@ lifecycle events throughout the agentic-brain lifecycle.
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -188,7 +188,7 @@ class HooksManager:
 
         context = HookContext(
             event_type=event_type,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data=data or {},
         )
 

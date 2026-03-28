@@ -48,7 +48,7 @@ import random
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from functools import wraps
 from typing import Any, Callable, ParamSpec, TypeVar
 
@@ -121,7 +121,9 @@ class RetryPolicy:
                 return False
 
         if self.retryable_errors is not None:
-            return any(isinstance(error, error_type) for error_type in self.retryable_errors)
+            return any(
+                isinstance(error, error_type) for error_type in self.retryable_errors
+            )
 
         return True
 
@@ -267,7 +269,7 @@ class DurableWorkflow(ABC):
             Workflow result
         """
         args = args or {}
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # Create context
         self._context = WorkflowContext(
@@ -298,7 +300,7 @@ class DurableWorkflow(ABC):
                 result = await self.run(**args)
 
             # Publish completion event
-            duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
+            duration_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
             await self.event_store.publish(
                 WorkflowCompleted(
                     workflow_id=self.workflow_id,
@@ -320,7 +322,7 @@ class DurableWorkflow(ABC):
             self._running = False
             raise
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             from .events import WorkflowTimedOut
 
             await self.event_store.publish(
@@ -375,7 +377,7 @@ class DurableWorkflow(ABC):
             workflow_type=result.state.workflow_type,
             run_id=str(uuid.uuid4()),
             task_queue="default",
-            started_at=result.state.started_at or datetime.now(timezone.utc),
+            started_at=result.state.started_at or datetime.now(UTC),
         )
 
         # Continue execution
@@ -467,7 +469,7 @@ class DurableWorkflow(ABC):
 
             try:
                 # Execute activity
-                start_time = datetime.now(timezone.utc)
+                start_time = datetime.now(UTC)
 
                 if inspect.iscoroutinefunction(activity_fn):
                     result = await asyncio.wait_for(
@@ -477,7 +479,7 @@ class DurableWorkflow(ABC):
                     result = activity_fn(**args)
 
                 duration_ms = int(
-                    (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+                    (datetime.now(UTC) - start_time).total_seconds() * 1000
                 )
 
                 # Record completion event
@@ -537,7 +539,7 @@ class DurableWorkflow(ABC):
                 workflow_id=self.workflow_id,
                 timer_id=timer_id,
                 duration_seconds=duration,
-                fire_at=datetime.now(timezone.utc) + timedelta(seconds=duration),
+                fire_at=datetime.now(UTC) + timedelta(seconds=duration),
             )
         )
 
@@ -573,7 +575,7 @@ class DurableWorkflow(ABC):
                 return args
 
         # Wait for signal
-        start = datetime.now(timezone.utc)
+        start = datetime.now(UTC)
         while True:
             # Check again
             for i, (name, args) in enumerate(self._pending_signals):
@@ -582,9 +584,9 @@ class DurableWorkflow(ABC):
                     return args
 
             if timeout:
-                elapsed = (datetime.now(timezone.utc) - start).total_seconds()
+                elapsed = (datetime.now(UTC) - start).total_seconds()
                 if elapsed >= timeout:
-                    raise asyncio.TimeoutError(f"Signal {signal_name} timed out")
+                    raise TimeoutError(f"Signal {signal_name} timed out")
 
             await asyncio.sleep(0.1)
 
@@ -670,6 +672,61 @@ class DurableWorkflow(ABC):
                 reason=reason,
             )
         )
+
+    async def wait_for_completion(self, timeout: float | None = None) -> Any:
+        """
+        Wait for workflow to complete and return result.
+
+        Args:
+            timeout: Optional timeout in seconds
+
+        Returns:
+            Workflow result
+
+        Raises:
+            asyncio.TimeoutError: If timeout expires
+            Exception: If workflow fails
+        """
+        # If workflow is not running, check if it's already completed
+        if not self._running:
+            # Check if we have a cached result from event store
+            events = await self.event_store.get_events(self.workflow_id)
+            for event in reversed(events):
+                if event.event_type.name == "WORKFLOW_COMPLETED":
+                    return event.data.get("result")
+                if event.event_type.name == "WORKFLOW_FAILED":
+                    error = event.data.get("error", "Workflow failed")
+                    raise Exception(error)
+                if event.event_type.name == "WORKFLOW_CANCELLED":
+                    reason = event.data.get("reason", "Workflow cancelled")
+                    raise asyncio.CancelledError(reason)
+
+        # If workflow is running, wait for completion by polling events
+        start_time = asyncio.get_event_loop().time()
+        while True:
+            events = await self.event_store.get_events(self.workflow_id)
+            for event in reversed(events):
+                if event.event_type.name == "WORKFLOW_COMPLETED":
+                    return event.data.get("result")
+                if event.event_type.name == "WORKFLOW_FAILED":
+                    error = event.data.get("error", "Workflow failed")
+                    raise Exception(error)
+                if event.event_type.name == "WORKFLOW_CANCELLED":
+                    reason = event.data.get("reason", "Workflow cancelled")
+                    raise asyncio.CancelledError(reason)
+
+            # Check timeout
+            if timeout and (asyncio.get_event_loop().time() - start_time) > timeout:
+                raise TimeoutError(
+                    f"Workflow did not complete within {timeout} seconds"
+                )
+
+            # If workflow is no longer running but we haven't found completion event, it might have failed
+            if not self._running:
+                break
+
+            # Wait a bit before polling again
+            await asyncio.sleep(0.1)
 
 
 # =============================================================================

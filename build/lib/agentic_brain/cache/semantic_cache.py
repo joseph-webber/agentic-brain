@@ -36,7 +36,7 @@ import time
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from threading import Lock
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -49,7 +49,7 @@ def _cosine_similarity(v1: List[float], v2: List[float]) -> float:
     if not v1 or not v2 or len(v1) != len(v2):
         return 0.0
 
-    dot = sum(a * b for a, b in zip(v1, v2))
+    dot = sum(a * b for a, b in zip(v1, v2, strict=False))
     norm1 = math.sqrt(sum(a * a for a in v1))
     norm2 = math.sqrt(sum(b * b for b in v2))
     if norm1 == 0.0 or norm2 == 0.0:
@@ -120,11 +120,11 @@ class CacheEntry:
 
     def is_expired(self) -> bool:
         """Check if entry has expired."""
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     def touch(self) -> None:
         """Update access time and hit count."""
-        self.last_accessed = datetime.now(timezone.utc)
+        self.last_accessed = datetime.now(UTC)
         self.hit_count += 1
 
     def to_dict(self) -> Dict[str, Any]:
@@ -595,7 +595,7 @@ class SemanticCache:
 
         try:
             ttl = ttl_seconds or self.config.ttl_seconds
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             entry = CacheEntry(
                 key=key,
@@ -754,10 +754,10 @@ class VectorCacheEntry:
     tokens_saved: int = 0
 
     def is_expired(self) -> bool:
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     def touch(self) -> None:
-        self.last_accessed = datetime.now(timezone.utc)
+        self.last_accessed = datetime.now(UTC)
         self.hit_count += 1
 
     def to_dict(self) -> Dict[str, Any]:
@@ -769,14 +769,14 @@ class VectorCacheEntry:
             "created_at": self.created_at.isoformat(),
             "expires_at": self.expires_at.isoformat(),
             "hit_count": self.hit_count,
-            "last_accessed": self.last_accessed.isoformat()
-            if self.last_accessed
-            else None,
+            "last_accessed": (
+                self.last_accessed.isoformat() if self.last_accessed else None
+            ),
             "tokens_saved": self.tokens_saved,
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "VectorCacheEntry":
+    def from_dict(cls, data: Dict[str, Any]) -> VectorCacheEntry:
         return cls(
             query=data["query"],
             response=data["response"],
@@ -923,7 +923,7 @@ class VectorSQLiteBackend:
         rows = self._conn.execute("SELECT * FROM vector_cache").fetchall()
         best_row = None
         best_similarity = 0.0
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         for row in rows:
             expires_at = datetime.fromisoformat(row["expires_at"])
@@ -977,7 +977,7 @@ class VectorSQLiteBackend:
         return count
 
     async def cleanup_expired(self) -> int:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         cur = self._conn.execute(
             "DELETE FROM vector_cache WHERE expires_at < ?", (now,)
         )
@@ -1039,7 +1039,7 @@ class VectorSemanticCache:
         if self._embedder is None:
             return False
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         embedding = self._embedder.embed(query)
         entry = VectorCacheEntry(
             query=query,
@@ -1083,7 +1083,7 @@ class VectorSemanticCache:
     def get_stats(self) -> CacheStats:
         return self.stats
 
-    async def __aenter__(self) -> "VectorSemanticCache":
+    async def __aenter__(self) -> VectorSemanticCache:
         return self
 
     async def __aexit__(self, *args) -> None:

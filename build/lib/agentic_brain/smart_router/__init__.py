@@ -1,37 +1,37 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-2026 Joseph Webber
+#
+# Licensed under the Apache License, Version 2.0 ("License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+
 """
-🔥 SMART LLM ROUTER - MASTER/WORKER ARCHITECTURE 🔥
+SmartRouter package entrypoint.
 
-Claude is the MASTER THREAD - orchestrates, delegates, NEVER rate limited.
-Other LLMs are WORKER THREADS - they do the heavy lifting.
+The smart router is the “big hammer” for multi-provider orchestration: a fleet
+of worker LLMs (OpenAI, Groq, Gemini, local Ollama, etc.) coordinated by a
+single master (Claude/Copilot).  It focuses on parallelism, load shedding, and
+security posture enforcement so we can smash tasks across providers without
+hitting rate limits.
 
-Architecture:
-    MASTER (Claude/Copilot) 
-        │
-        ├── Worker: OpenAI (gpt-4o) - Complex code
-        ├── Worker: Groq (llama-3.3) - FASTEST responses  
-        ├── Worker: Gemini (2.0-flash) - FREE, fast
-        ├── Worker: DeepSeek (v3) - FREE credits
-        ├── Worker: Together (llama-3.3) - FREE credits
-        ├── Worker: Local Ollama - UNLIMITED
-        └── Worker: OpenRouter (50+ models) - Fallback
+This subpackage exposes three core areas:
 
-Modes:
-    - LUDICROUS: Fire ALL workers, fastest wins
-    - CONSENSUS: Fire 3+, compare results
-    - CASCADE: Try FREE first, fall back to paid
-    - DEDICATED: Route to best worker for task type
+* `agentic_brain.smart_router.core` – routing logic, SmashMode, and result
+  structures.
+* `agentic_brain.smart_router.posture` – posture and security controls that
+  decide which workers can participate.
+* `agentic_brain.smart_router.workers` – concrete worker implementations for
+  each provider.
 
-Usage:
-    from agentic_brain.smart_router import SmartRouter, ludicrous_smash
-    
-    router = SmartRouter()
-    result = await router.route("code", "Write a function...")
-    
-    # Or fire all at once
-    result = await ludicrous_smash("Say hi!")
+Use these imports when you need to embed SmartRouter directly, or import
+`agentic_brain.router.smart_router` for the thin compatibility shim.
 """
 
-from .core import SmartRouter, SmashMode, SmashResult
+from .coordinator import warmup_ping
+from .core import SmartRouter, SmashMode, SmashResult, WorkerConfig, get_router
+from .posture import PostureMode, SecurityPosture, get_posture
 from .workers import (
     AzureOpenAIWorker,
     DeepSeekWorker,
@@ -41,25 +41,60 @@ from .workers import (
     OpenAIWorker,
     OpenRouterWorker,
     TogetherWorker,
+    get_all_workers,
+    get_worker,
 )
-from .coordinator import RedisCoordinator, ludicrous_smash, cascade_smash
-from .posture import SecurityPosture, PostureMode
+
+
+class RedisCoordinator:  # pragma: no cover
+    """Lazy proxy to avoid import-time cycles.
+
+    Returns an instance of the real coordinator class.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        from .coordinator import RedisCoordinator as _RedisCoordinator
+
+        return _RedisCoordinator(*args, **kwargs)
+
+
+async def turbo_smash(prompt: str, timeout: float = 30.0, workers=None) -> SmashResult:
+    """Lazy import wrapper for turbo smash."""
+
+    from .coordinator import turbo_smash as _turbo_smash
+
+    return await _turbo_smash(prompt, timeout=timeout, workers=workers)
+
+
+async def cascade_smash(prompt: str, timeout: float = 30.0) -> SmashResult:
+    """Lazy import wrapper for cascade smash."""
+
+    from .coordinator import cascade_smash as _cascade_smash
+
+    return await _cascade_smash(prompt, timeout=timeout)
+
 
 __all__ = [
     "SmartRouter",
-    "SmashMode", 
+    "SmashMode",
     "SmashResult",
+    "WorkerConfig",
+    "get_router",
     "OpenAIWorker",
     "AzureOpenAIWorker",
     "GroqWorker",
-    "GeminiWorker", 
+    "GeminiWorker",
     "LocalWorker",
     "OpenRouterWorker",
     "TogetherWorker",
     "DeepSeekWorker",
+    "get_worker",
+    "get_all_workers",
     "RedisCoordinator",
-    "ludicrous_smash",
+    "turbo_smash",
     "cascade_smash",
+    "warmup_ping",
     "SecurityPosture",
     "PostureMode",
+    "get_posture",
 ]

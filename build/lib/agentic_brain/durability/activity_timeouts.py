@@ -33,7 +33,7 @@ import asyncio
 import inspect
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
@@ -116,20 +116,20 @@ class ActivityExecution:
         """Time spent waiting to start."""
         if self.started_at:
             return self.started_at - self.scheduled_at
-        return datetime.now(timezone.utc) - self.scheduled_at
+        return datetime.now(UTC) - self.scheduled_at
 
     @property
     def start_to_close_elapsed(self) -> Optional[timedelta]:
         """Time spent executing."""
         if not self.started_at:
             return None
-        end = self.completed_at or datetime.now(timezone.utc)
+        end = self.completed_at or datetime.now(UTC)
         return end - self.started_at
 
     @property
     def schedule_to_close_elapsed(self) -> timedelta:
         """Total time since scheduling."""
-        end = self.completed_at or datetime.now(timezone.utc)
+        end = self.completed_at or datetime.now(UTC)
         return end - self.scheduled_at
 
     @property
@@ -137,11 +137,11 @@ class ActivityExecution:
         """Time since last heartbeat."""
         if not self.last_heartbeat_at:
             return None
-        return datetime.now(timezone.utc) - self.last_heartbeat_at
+        return datetime.now(UTC) - self.last_heartbeat_at
 
     def check_timeouts(self) -> Optional[TimeoutEvent]:
         """Check if any timeout has been exceeded."""
-        datetime.now(timezone.utc)
+        datetime.now(UTC)
 
         # Check schedule_to_start
         if (
@@ -258,19 +258,19 @@ class TimeoutMonitor:
     def mark_started(self, activity_id: str) -> None:
         """Mark activity as started."""
         if activity_id in self.activities:
-            self.activities[activity_id].started_at = datetime.now(timezone.utc)
+            self.activities[activity_id].started_at = datetime.now(UTC)
             self.activities[activity_id].status = "running"
 
     def mark_completed(self, activity_id: str) -> None:
         """Mark activity as completed."""
         if activity_id in self.activities:
-            self.activities[activity_id].completed_at = datetime.now(timezone.utc)
+            self.activities[activity_id].completed_at = datetime.now(UTC)
             self.activities[activity_id].status = "completed"
 
     def record_heartbeat(self, activity_id: str) -> None:
         """Record a heartbeat for activity."""
         if activity_id in self.activities:
-            self.activities[activity_id].last_heartbeat_at = datetime.now(timezone.utc)
+            self.activities[activity_id].last_heartbeat_at = datetime.now(UTC)
 
     def add_timeout_callback(self, callback: Callable[[TimeoutEvent], Any]) -> None:
         """Add callback for timeout events."""

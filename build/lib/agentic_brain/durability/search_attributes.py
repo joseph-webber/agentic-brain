@@ -28,7 +28,7 @@ Features:
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Union
 
@@ -72,17 +72,17 @@ class SearchAttributeValue:
             return query_value is None
 
         if operator == "eq":
-            return self.value == query_value
+            return bool(self.value == query_value)
         elif operator == "ne":
-            return self.value != query_value
+            return bool(self.value != query_value)
         elif operator == "gt":
-            return self.value > query_value
+            return bool(self.value > query_value)
         elif operator == "gte":
-            return self.value >= query_value
+            return bool(self.value >= query_value)
         elif operator == "lt":
-            return self.value < query_value
+            return bool(self.value < query_value)
         elif operator == "lte":
-            return self.value <= query_value
+            return bool(self.value <= query_value)
         elif operator == "contains":
             if self.attribute_type == SearchAttributeType.TEXT:
                 return str(query_value).lower() in str(self.value).lower()
@@ -97,7 +97,7 @@ class SearchAttributeValue:
             return self.value in query_value
         elif operator == "between":
             low, high = query_value
-            return low <= self.value <= high
+            return bool(low <= self.value <= high)
 
         return False
 
@@ -131,7 +131,7 @@ class WorkflowSearchAttributes:
         self.attributes[name] = SearchAttributeValue(
             name=name, attribute_type=attribute_type, value=value
         )
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
     def _infer_type(self, value: Any) -> SearchAttributeType:
         """Infer attribute type from value."""
@@ -157,7 +157,7 @@ class WorkflowSearchAttributes:
         """Remove an attribute."""
         if name in self.attributes:
             del self.attributes[name]
-            self.updated_at = datetime.now(timezone.utc)
+            self.updated_at = datetime.now(UTC)
             return True
         return False
 
@@ -370,8 +370,9 @@ class SearchAttributeIndex:
 
         # Sort
         if query.order_by:
+            sort_key = query.order_by
             results.sort(
-                key=lambda w: (w.get(query.order_by) or ""), reverse=query.order_desc
+                key=lambda w: (w.get(sort_key) or ""), reverse=query.order_desc
             )
 
         # Paginate

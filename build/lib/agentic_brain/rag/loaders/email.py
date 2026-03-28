@@ -23,7 +23,7 @@ Supports:
 import base64
 import logging
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any, Optional
 
 from .base import BaseLoader, LoadedDocument
@@ -701,7 +701,7 @@ class Microsoft365Loader(BaseLoader):
             }
 
             if days:
-                since = datetime.now(timezone.utc) - timedelta(days=days)
+                since = datetime.now(UTC) - timedelta(days=days)
                 params["$filter"] = f"receivedDateTime ge {since.isoformat()}Z"
 
             if query:

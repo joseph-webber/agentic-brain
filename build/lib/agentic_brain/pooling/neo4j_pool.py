@@ -53,6 +53,14 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+try:
+    from neo4j import GraphDatabase
+
+    NEO4J_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    GraphDatabase = None  # type: ignore
+    NEO4J_AVAILABLE = False
+
 
 @dataclass
 class Neo4jPoolConfig:
@@ -315,11 +323,9 @@ class Neo4jPool:
             logger.warning("Neo4j pool already started")
             return
 
-        try:
-            from neo4j import GraphDatabase
-        except ImportError:
+        if not NEO4J_AVAILABLE or GraphDatabase is None:
             logger.error("neo4j package not installed. Run: pip install neo4j")
-            raise
+            raise ImportError("neo4j package not installed")
 
         logger.info(
             f"Starting Neo4j pool: uri={self.config.uri}, max_connections={self.config.max_connections}"
@@ -420,7 +426,7 @@ class Neo4jPool:
                     timeout=self.config.acquisition_timeout,
                 )
                 acquired = True
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 raise TimeoutError("Timed out waiting for Neo4j connection") from e
 
             # Reuse existing connection if available, else create a new one
@@ -551,7 +557,10 @@ class DirectNeo4jConnection:
 
     def connect(self) -> None:
         """Establish connection."""
-        from neo4j import GraphDatabase
+        if not NEO4J_AVAILABLE or GraphDatabase is None:
+            raise ImportError(
+                "neo4j package is required. Install with: pip install neo4j"
+            )
 
         self._driver = GraphDatabase.driver(
             self._uri,

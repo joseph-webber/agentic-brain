@@ -24,20 +24,30 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+from agentic_brain.core.neo4j_pool import (
+    configure_pool as configure_neo4j_pool,
+)
+from agentic_brain.core.neo4j_pool import (
+    get_driver as get_shared_neo4j_driver,
+)
 
 from .base import BaseLoader, LoadedDocument
 
 logger = logging.getLogger(__name__)
 
-# Check for Neo4j driver
 try:
-    from neo4j import GraphDatabase, Session
+    import neo4j  # noqa: F401
 
     NEO4J_AVAILABLE = True
 except ImportError:
     NEO4J_AVAILABLE = False
-    Session = None
+
+if TYPE_CHECKING:  # pragma: no cover
+    from neo4j import Session  # pylint: disable=ungrouped-imports
+else:  # pragma: no cover
+    Session = Any
 
 
 class Neo4jLoader(BaseLoader):
@@ -81,6 +91,7 @@ class Neo4jLoader(BaseLoader):
         self.database = database
         self._driver = None
         self._session: Optional[Session] = None
+        self._using_shared_driver = False
 
     def source_name(self) -> str:
         return "neo4j"
@@ -88,11 +99,16 @@ class Neo4jLoader(BaseLoader):
     def authenticate(self) -> bool:
         """Connect to Neo4j database."""
         try:
-            self._driver = GraphDatabase.driver(
-                self.uri, auth=(self.username, self.password)
+            configure_neo4j_pool(
+                uri=self.uri,
+                user=self.username,
+                password=self.password,
+                database=self.database,
             )
-            self._driver.verify_connectivity()
+            self._driver = get_shared_neo4j_driver()
             self._session = self._driver.session(database=self.database)
+            self._session.run("RETURN 1")
+            self._using_shared_driver = True
             logger.info(f"Connected to Neo4j at {self.uri}")
             return True
         except Exception as e:
@@ -103,8 +119,10 @@ class Neo4jLoader(BaseLoader):
         """Close Neo4j connection."""
         if self._session:
             self._session.close()
-        if self._driver:
+        if self._driver and not self._using_shared_driver:
             self._driver.close()
+        self._driver = None
+        self._using_shared_driver = False
 
     def load_document(self, doc_id: str) -> Optional[LoadedDocument]:
         """Load a single node by ID."""
@@ -193,7 +211,7 @@ class Neo4jLoader(BaseLoader):
 
         documents = []
         try:
-            cypher_query = f"""
+            cypher_query = """
             MATCH (n)
             WHERE any(prop IN keys(n) WHERE toString(n[prop]) CONTAINS $query)
             RETURN n as node
@@ -287,6 +305,8 @@ class MemgraphLoader(BaseLoader):
     def authenticate(self) -> bool:
         """Connect to Memgraph database."""
         try:
+            from neo4j import GraphDatabase
+
             auth = None
             if self.username and self.password:
                 auth = (self.username, self.password)
@@ -394,7 +414,7 @@ class MemgraphLoader(BaseLoader):
 
         documents = []
         try:
-            cypher_query = f"""
+            cypher_query = """
             MATCH (n)
             WHERE any(prop IN keys(n) WHERE toString(n[prop]) CONTAINS $query)
             RETURN n as node

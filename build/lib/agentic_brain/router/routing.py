@@ -15,16 +15,22 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """
-Main LLMRouter class with routing logic.
+Production LLM router built on top of ``LLMRouterCore``.
 
-This is the main entry point for LLM routing. It:
-- Manages provider selection and fallback
-- Handles HTTP pooling
-- Tracks token usage
-- Provides both sync and async interfaces
-- Implements semantic prompt caching for cost reduction
+``agentic_brain.llm.router.LLMRouterCore`` is the lightweight, dependency-light
+core that owns message normalization, alias resolution, retry/backoff, and cost
+tracking for a small set of providers. This module layers production concerns
+on top of that core:
+
+- Streaming responses and additional cloud providers (Azure, Groq, Together,
+  Google, xAI)
+- Semantic prompt caching and Redis-based coordination
+- HTTP pooling integration
+- Smart routing heuristics and fallback chains
+
+Use ``LLMRouter`` from this module for the full-featured production router.
+Use ``LLMRouterCore`` when you need the smallest dependency surface area.
 """
 
 
@@ -33,40 +39,42 @@ import logging
 import os
 import time
 from collections.abc import AsyncGenerator
-from typing import Optional, TYPE_CHECKING
+from types import ModuleType, TracebackType
+from typing import TYPE_CHECKING, Any
 
-from .anthropic import chat_anthropic, stream_anthropic
+from agentic_brain.llm.router import LLMRouterCore
+
+from .anthropic import stream_anthropic
 from .azure_openai import chat_azure_openai, stream_azure_openai
-from .config import Message, Model, Provider, Response, RouterConfig
+from .config import Message, Provider, Response, RouterConfig
 from .google import chat_google, stream_google
 from .groq import chat_groq, stream_groq
 from .http import get_request, post_request
 from .ollama import (
-    chat_ollama,
     check_ollama_sync,
     list_models_async,
     list_models_sync,
     stream_ollama,
 )
-from .openai import chat_openai, stream_openai
+from .openai import stream_openai
 from .openrouter import chat_openrouter, stream_openrouter
-from .provider_checker import (
-    ProviderChecker,
-    format_error_message,
-    format_provider_status_report,
-)
+from .provider_checker import ProviderChecker, format_error_message
 from .together import chat_together, stream_together
 from .xai import chat_xai, stream_xai
 
 # Optional import for typing without forcing Redis dependency
 if TYPE_CHECKING:
+    from agentic_brain.unified_brain import UnifiedBrain
+
     from .redis_cache import RedisInterBotComm, RedisRouterCache
 
 # Lazy import for cache to avoid circular dependencies
-_semantic_cache_module = None
+_MODULE_UNAVAILABLE = object()
+_semantic_cache_module: ModuleType | object | None = None
+_unified_brain_module: type["UnifiedBrain"] | object | None = None
 
 
-def _get_cache_module():
+def _get_cache_module() -> ModuleType | None:
     """Lazy import of cache module."""
     global _semantic_cache_module
     if _semantic_cache_module is None:
@@ -75,8 +83,25 @@ def _get_cache_module():
 
             _semantic_cache_module = cache_mod
         except ImportError:
-            _semantic_cache_module = False  # Mark as unavailable
-    return _semantic_cache_module if _semantic_cache_module else None
+            _semantic_cache_module = _MODULE_UNAVAILABLE  # Mark as unavailable
+    if _semantic_cache_module is _MODULE_UNAVAILABLE:
+        return None
+    return _semantic_cache_module
+
+
+def _get_unified_brain_class() -> type["UnifiedBrain"] | None:
+    """Lazy import of UnifiedBrain to avoid hard dependency cycles."""
+    global _unified_brain_module
+    if _unified_brain_module is None:
+        try:
+            from agentic_brain.unified_brain import UnifiedBrain as UnifiedBrainClass
+
+            _unified_brain_module = UnifiedBrainClass
+        except ImportError:
+            _unified_brain_module = _MODULE_UNAVAILABLE
+    if _unified_brain_module is _MODULE_UNAVAILABLE:
+        return None
+    return _unified_brain_module
 
 
 logger = logging.getLogger(__name__)
@@ -88,23 +113,28 @@ __all__ = [
     "Provider",
     "Response",
     "Message",
-    "Model",
     "get_router",
     "chat_async",
     "chat",
 ]
 
 
-class LLMRouter:
+class LLMRouter(LLMRouterCore):
     """
-    Intelligent LLM routing with automatic fallback (fully async).
+    Production-grade router that extends :class:`LLMRouterCore`.
+
+    ``LLMRouterCore`` provides the dependency-light baseline (message normalization,
+    alias resolution, retry/backoff, and cost tracking). ``LLMRouter`` builds on
+    that foundation to add streaming, semantic caching, Redis coordination, HTTP
+    pooling, and additional providers beyond the lightweight core.
 
     Features:
     - Local-first (Ollama) for privacy and cost
     - Automatic fallback to cloud on failure
-    - Multiple provider support
-    - Simple async chat interface
-    - Cached availability checks
+    - Extended provider support (Azure, Groq, Together, Google, xAI)
+    - Streaming responses and pooled HTTP transport
+    - Semantic + Redis caches for cost reduction
+    - Smart routing heuristics and UnifiedBrain integration
 
     Example:
         >>> router = LLMRouter()
@@ -127,16 +157,58 @@ class LLMRouter:
     """
 
     # Fallback chain: try these in order
-    FALLBACK_CHAIN = [
+    FALLBACK_CHAIN: list[tuple[Provider, str]] = [
         (Provider.OLLAMA, "llama3.1:8b"),
-        (Provider.OLLAMA, "llama3.2:3b"),
+        (Provider.GROQ, "llama-3.1-8b-instant"),
         (Provider.OPENROUTER, "meta-llama/llama-3-8b-instruct:free"),
+        (Provider.OPENAI, "gpt-4o-mini"),
+        (Provider.ANTHROPIC, "claude-3-haiku-20240307"),
+        (Provider.TOGETHER, "meta-llama/Llama-3.1-8B-Instruct-Turbo"),
     ]
+
+    FASTEST_CHAIN: list[tuple[Provider, str]] = [
+        (Provider.OLLAMA, "llama3.2:3b"),
+        (Provider.GROQ, "llama-3.1-8b-instant"),
+        (Provider.OPENROUTER, "meta-llama/llama-3-8b-instruct:free"),
+        (Provider.OPENAI, "gpt-4o-mini"),
+        (Provider.ANTHROPIC, "claude-3-haiku-20240307"),
+        (Provider.TOGETHER, "meta-llama/Llama-3.1-8B-Instruct-Turbo"),
+        (Provider.GOOGLE, "gemini-1.5-flash"),
+        (Provider.XAI, "grok-2-mini"),
+    ]
+
+    CODE_CHAIN: list[tuple[Provider, str]] = [
+        (Provider.ANTHROPIC, "claude-3-5-sonnet-20241022"),
+        (Provider.OPENAI, "gpt-4o"),
+        (Provider.OLLAMA, "llama3.1:8b"),
+    ]
+
+    REASONING_CHAIN: list[tuple[Provider, str]] = [
+        (Provider.ANTHROPIC, "claude-3-sonnet-20240229"),
+        (Provider.OPENAI, "gpt-4o"),
+        (Provider.OLLAMA, "llama3.1:8b"),
+    ]
+
+    MODEL_PROVIDER_MAP: dict[str, Provider] = {
+        "llama3.1:8b": Provider.OLLAMA,
+        "llama3.2:3b": Provider.OLLAMA,
+        "llama-3.1-8b-instant": Provider.GROQ,
+        "meta-llama/llama-3-8b-instruct:free": Provider.OPENROUTER,
+        "gpt-4o": Provider.OPENAI,
+        "gpt-4o-mini": Provider.OPENAI,
+        "claude-3-haiku-20240307": Provider.ANTHROPIC,
+        "claude-3-sonnet-20240229": Provider.ANTHROPIC,
+        "claude-3-5-sonnet-20241022": Provider.ANTHROPIC,
+        "meta-llama/Llama-3.1-8B-Instruct-Turbo": Provider.TOGETHER,
+        "gemini-1.5-flash": Provider.GOOGLE,
+        "grok-2-mini": Provider.XAI,
+    }
 
     def __init__(
         self,
         config: RouterConfig | None = None,
         redis_cache: RedisRouterCache | RedisInterBotComm | None = None,
+        unified_brain: UnifiedBrain | None = None,
     ):
         """
         Initialize LLM router.
@@ -144,9 +216,14 @@ class LLMRouter:
         Args:
             config: Router configuration
             redis_cache: Optional Redis-backed cache for inter-bot coordination
+            unified_brain: Optional UnifiedBrain instance for high-level routing
         """
-        self.config = config or RouterConfig()
-        self.redis_cache = redis_cache
+        super().__init__(config=config)
+        self.redis_cache: RedisRouterCache | RedisInterBotComm | None = redis_cache
+        self._prefer_brain_routing = unified_brain is not None
+        self.unified_brain: UnifiedBrain | None = (
+            unified_brain if unified_brain is not None else self._build_unified_brain()
+        )
 
         # Cached availability check
         self._ollama_available: bool | None = None
@@ -154,21 +231,32 @@ class LLMRouter:
         self._cache_ttl: float = 30.0  # seconds
 
         # HTTP pool reference (lazy loaded)
-        self._http_pool = None
+        self._http_pool: Any | None = None
 
         # HTTP pool usage metrics (use lists for mutability in closures)
         self._pool_requests: list[int] = [0]
         self._direct_requests: list[int] = [0]
 
-        # Token usage tracking
-        self._total_tokens: int = 0
-        self._tokens_by_provider: dict[str, int] = {}
+        self._provider_rr_index: int = 0
+        self._provider_usage: dict[str, int] = {}
 
         # Semantic prompt cache (lazy loaded)
-        self._semantic_cache = None
-        self._cache_initialized = False
+        self._semantic_cache: Any | None = None
+        self._cache_initialized: bool = False
 
-    def _get_http_pool(self):
+    def _build_unified_brain(self) -> UnifiedBrain | None:
+        """Create UnifiedBrain if it is available."""
+        brain_cls = _get_unified_brain_class()
+        if brain_cls is None:
+            return None
+
+        try:
+            return brain_cls(router=self, redis_cache=self.redis_cache)
+        except Exception as exc:
+            logger.debug(f"UnifiedBrain unavailable: {exc}")
+            return None
+
+    def _get_http_pool(self) -> Any | None:
         """Get HTTP pool if configured and available.
 
         Auto-starts the pool on first use if not already started.
@@ -203,7 +291,7 @@ class LLMRouter:
 
         return None
 
-    async def _get_or_start_http_pool(self):
+    async def _get_or_start_http_pool(self) -> Any | None:
         """Async version: Get or start HTTP pool.
 
         This is the recommended way to use the HTTP pool from async contexts,
@@ -240,7 +328,7 @@ class LLMRouter:
 
         return None
 
-    def get_pool_stats(self) -> dict:
+    def get_pool_stats(self) -> dict[str, int | bool]:
         """
         Get HTTP pool usage statistics.
 
@@ -261,28 +349,7 @@ class LLMRouter:
             "requests_direct": self._direct_requests[0],
         }
 
-    def get_token_stats(self) -> dict:
-        """
-        Get token usage statistics.
-
-        Returns:
-            Dict with token counts:
-            {
-                'total_tokens': int,
-                'by_provider': {'ollama': int, 'openai': int, ...},
-            }
-        """
-        return {
-            "total_tokens": self._total_tokens,
-            "by_provider": dict(self._tokens_by_provider),
-        }
-
-    def reset_token_stats(self) -> None:
-        """Reset token usage counters."""
-        self._total_tokens = 0
-        self._tokens_by_provider = {}
-
-    def _get_semantic_cache(self):
+    def _get_semantic_cache(self) -> Any | None:
         """Get or initialize semantic cache (lazy loading)."""
         if self._cache_initialized:
             return self._semantic_cache
@@ -318,7 +385,7 @@ class LLMRouter:
             logger.warning(f"Failed to initialize semantic cache: {e}")
             return None
 
-    def get_cache_stats(self) -> dict | None:
+    def get_cache_stats(self) -> dict[str, Any] | None:
         """
         Get semantic cache statistics.
 
@@ -349,6 +416,244 @@ class LLMRouter:
             self._tokens_by_provider.get(provider_name, 0) + tokens
         )
 
+    def _record_provider_use(self, provider: Provider) -> None:
+        """Record a provider selection for load-balancing decisions."""
+        key = provider.value
+        self._provider_usage[key] = self._provider_usage.get(key, 0) + 1
+
+    def _available_routes(self) -> list[tuple[Provider, str]]:
+        """Return currently available provider/model routes."""
+        routes: list[tuple[Provider, str]] = []
+
+        if self._check_ollama():
+            routes.extend(
+                [
+                    (Provider.OLLAMA, "llama3.2:3b"),
+                    (Provider.OLLAMA, "llama3.1:8b"),
+                ]
+            )
+
+        groq_key = self.config.groq_key or os.environ.get("GROQ_API_KEY")
+        if groq_key:
+            routes.append((Provider.GROQ, "llama-3.1-8b-instant"))
+
+        # OpenRouter free models are available even without an API key.
+        routes.append((Provider.OPENROUTER, "meta-llama/llama-3-8b-instruct:free"))
+
+        openai_key = self.config.openai_key or os.environ.get("OPENAI_API_KEY")
+        if openai_key:
+            routes.append((Provider.OPENAI, "gpt-4o-mini"))
+            routes.append((Provider.OPENAI, "gpt-4o"))
+
+        anthropic_key = self.config.anthropic_key or os.environ.get("ANTHROPIC_API_KEY")
+        if anthropic_key:
+            routes.append((Provider.ANTHROPIC, "claude-3-haiku-20240307"))
+            routes.append((Provider.ANTHROPIC, "claude-3-sonnet-20240229"))
+            routes.append((Provider.ANTHROPIC, "claude-3-5-sonnet-20241022"))
+
+        together_key = self.config.together_key or os.environ.get("TOGETHER_API_KEY")
+        if together_key:
+            routes.append((Provider.TOGETHER, "meta-llama/Llama-3.1-8B-Instruct-Turbo"))
+
+        google_key = self.config.google_key or os.environ.get("GOOGLE_API_KEY")
+        if google_key:
+            routes.append((Provider.GOOGLE, "gemini-1.5-flash"))
+
+        xai_key = self.config.xai_key or os.environ.get("XAI_API_KEY")
+        if xai_key:
+            routes.append((Provider.XAI, "grok-2-mini"))
+
+        return routes
+
+    def _select_balanced_route(
+        self, routes: list[tuple[Provider, str]]
+    ) -> tuple[Provider, str]:
+        """Select the least-used available route."""
+        if not routes:
+            return self.FALLBACK_CHAIN[0]
+
+        return min(
+            enumerate(routes),
+            key=lambda item: (
+                self._provider_usage.get(item[1][0].value, 0),
+                self._provider_rr_index + item[0],
+            ),
+        )[1]
+
+    def _first_available_route(
+        self, candidates: list[tuple[Provider, str]]
+    ) -> tuple[Provider, str]:
+        """Return the first available route from a candidate list."""
+        available_routes = self._available_routes()
+        available = set(available_routes)
+        for route in candidates:
+            if route in available:
+                return route
+        if available_routes:
+            return self._select_balanced_route(available_routes)
+        return candidates[0] if candidates else self.FALLBACK_CHAIN[0]
+
+    def _first_available_model(self, candidates: list[tuple[Provider, str]]) -> str:
+        """Return the model string for the first available route."""
+        return self._first_available_route(candidates)[1]
+
+    def _provider_is_configured(self, provider: Provider) -> bool:
+        """Return whether a provider can be selected conceptually."""
+        if provider == Provider.OLLAMA:
+            return True
+        if provider == Provider.OPENROUTER:
+            return True
+        if provider == Provider.OPENAI:
+            return bool(self.config.openai_key or os.environ.get("OPENAI_API_KEY"))
+        if provider == Provider.AZURE_OPENAI:
+            return bool(
+                self.config.azure_openai_key or os.environ.get("AZURE_OPENAI_API_KEY")
+            )
+        if provider == Provider.ANTHROPIC:
+            return bool(
+                self.config.anthropic_key or os.environ.get("ANTHROPIC_API_KEY")
+            )
+        if provider == Provider.GROQ:
+            return bool(self.config.groq_key or os.environ.get("GROQ_API_KEY"))
+        if provider == Provider.TOGETHER:
+            return bool(self.config.together_key or os.environ.get("TOGETHER_API_KEY"))
+        if provider == Provider.GOOGLE:
+            return bool(self.config.google_key or os.environ.get("GOOGLE_API_KEY"))
+        if provider == Provider.XAI:
+            return bool(self.config.xai_key or os.environ.get("XAI_API_KEY"))
+        return False
+
+    def _first_configured_route(
+        self, candidates: list[tuple[Provider, str]]
+    ) -> tuple[Provider, str]:
+        """Return the first route whose provider is configured."""
+        for route in candidates:
+            if self._provider_is_configured(route[0]):
+                return route
+        return candidates[-1] if candidates else self.FALLBACK_CHAIN[0]
+
+    @staticmethod
+    def _merge_route_lists(
+        *route_groups: list[tuple[Provider, str]],
+    ) -> list[tuple[Provider, str]]:
+        """Merge route groups while preserving order and removing duplicates."""
+        merged: list[tuple[Provider, str]] = []
+        seen: set[tuple[Provider, str]] = set()
+
+        for group in route_groups:
+            for route in group:
+                if route not in seen:
+                    merged.append(route)
+                    seen.add(route)
+
+        return merged
+
+    def _fallback_routes_for(
+        self,
+        provider: Provider,
+        model: str,
+        message: str,
+    ) -> list[tuple[Provider, str]]:
+        """Build an ordered fallback list for the current request."""
+        primary_route = (provider, model)
+        prioritized_routes: list[tuple[Provider, str]] = []
+
+        if primary_route in self.REASONING_CHAIN:
+            prioritized_routes = self.REASONING_CHAIN
+        elif primary_route in self.CODE_CHAIN or self._is_code_task(message):
+            prioritized_routes = self.CODE_CHAIN
+
+        merged_routes = self._merge_route_lists(prioritized_routes, self.FALLBACK_CHAIN)
+        return [route for route in merged_routes if route != primary_route]
+
+    def _route_from_brain(self, message: str) -> tuple[Provider, str] | None:
+        """Use UnifiedBrain to choose a route when available."""
+        if self.unified_brain is None:
+            return None
+
+        route_task = getattr(self.unified_brain, "route_task", None)
+        if not callable(route_task):
+            return None
+
+        try:
+            prefer_free = not self._is_code_task(message)
+            bot_name = route_task(message, prefer_free=prefer_free)
+        except TypeError:
+            bot_name = route_task(message)
+        except Exception as exc:
+            logger.debug(f"UnifiedBrain routing failed: {exc}")
+            return None
+
+        bot = getattr(self.unified_brain, "bots", {}).get(bot_name)
+        if bot is not None:
+            provider = self._map_unified_provider(getattr(bot, "provider", ""))
+            model = getattr(bot, "model", None)
+            if provider and model:
+                return provider, model
+
+        return self._route_from_bot_name(bot_name, message)
+
+    @staticmethod
+    def _map_unified_provider(provider_name: str) -> Provider | None:
+        """Map UnifiedBrain provider names to Provider enum."""
+        if not provider_name:
+            return None
+        key = provider_name.lower()
+        if key == "grok":
+            return Provider.XAI
+        try:
+            return Provider(key)
+        except ValueError:
+            return None
+
+    def _route_from_bot_name(
+        self, bot_name: str | None, message: str
+    ) -> tuple[Provider, str] | None:
+        """Convert a UnifiedBrain bot name into a provider/model route."""
+        if not bot_name:
+            return None
+
+        bot_lower = bot_name.lower()
+        if "deepseek" in bot_lower or "coder" in bot_lower or "code" in bot_lower:
+            return Provider.OPENROUTER, "meta-llama/llama-3-8b-instruct:free"
+        if "claude" in bot_lower:
+            return Provider.ANTHROPIC, "claude-3-5-sonnet-20241022"
+        if "gpt" in bot_lower:
+            return Provider.OPENAI, "gpt-4o"
+        if "groq" in bot_lower:
+            return Provider.GROQ, "llama-3.1-8b-instant"
+        if "ollama" in bot_lower or "llama" in bot_lower:
+            if self._is_code_task(message):
+                return self._first_available_route(self.CODE_CHAIN)
+            return self._first_available_route(self.FASTEST_CHAIN)
+        return None
+
+    def _is_code_task(self, message: str) -> bool:
+        """Detect whether a message is coding-oriented."""
+        msg_lower = message.lower()
+        code_keywords = (
+            "code",
+            "coding",
+            "implement",
+            "function",
+            "class",
+            "refactor",
+            "debug",
+            "bug",
+            "test",
+            "python",
+            "javascript",
+            "typescript",
+            "go ",
+            "rust",
+            "sql",
+        )
+        return any(keyword in msg_lower for keyword in code_keywords)
+
+    def _model_to_provider(self, model: str) -> Provider:
+        """Infer provider from a model name."""
+        return self.MODEL_PROVIDER_MAP.get(model, self.config.default_provider)
+
     async def _is_ollama_available(self) -> bool:
         """Check Ollama availability with caching."""
         from .ollama import check_ollama_available
@@ -378,10 +683,10 @@ class LLMRouter:
     async def _post_request(
         self,
         url: str,
-        json_data: dict,
-        headers: dict | None = None,
+        json_data: dict[str, Any],
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
-    ) -> tuple[int, dict | str]:
+    ) -> tuple[int, dict[str, Any] | str]:
         """Make a POST request using HTTP pool if available."""
         timeout = timeout or self.config.timeout
         pool = self._get_http_pool()
@@ -398,9 +703,9 @@ class LLMRouter:
     async def _get_request(
         self,
         url: str,
-        headers: dict | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float | None = None,
-    ) -> tuple[int, dict | str]:
+    ) -> tuple[int, dict[str, Any] | str]:
         """Make a GET request using HTTP pool if available."""
         timeout = timeout or self.config.timeout
         pool = self._get_http_pool()
@@ -413,6 +718,43 @@ class LLMRouter:
             self._direct_requests,
         )
 
+    def get_fastest_available(self) -> str:
+        """Get the fastest available LLM."""
+        return self._first_available_model(self.FASTEST_CHAIN)
+
+    def get_best_for_code(self) -> str:
+        """Get the best available model for coding tasks."""
+        return self._first_available_model(self.CODE_CHAIN)
+
+    def distribute_load(self, tasks: list[str]) -> dict[str, list[str]]:
+        """Distribute tasks across multiple LLMs."""
+        routes = self._available_routes()
+        if not routes:
+            routes = self.FALLBACK_CHAIN
+
+        distribution: dict[str, list[str]] = {}
+        rr_index = self._provider_rr_index
+
+        for task in tasks:
+            if self._prefer_brain_routing and self.unified_brain is not None:
+                route = self._route_from_brain(task)
+            else:
+                route = None
+
+            if route is None:
+                if self._is_code_task(task):
+                    route = self._first_available_route(self.CODE_CHAIN)
+                else:
+                    route = routes[rr_index % len(routes)]
+                    rr_index += 1
+
+            key = f"{route[0].value}:{route[1]}"
+            distribution.setdefault(key, []).append(task)
+            self._record_provider_use(route[0])
+
+        self._provider_rr_index = rr_index
+        return distribution
+
     def smart_route(self, message: str) -> tuple[Provider, str]:
         """
         Determine the best provider and model for a given message.
@@ -423,41 +765,52 @@ class LLMRouter:
         Returns:
             Tuple of (Provider, model_name)
         """
+        brain_route = (
+            self._route_from_brain(message) if self._prefer_brain_routing else None
+        )
+        if brain_route is not None:
+            self._record_provider_use(brain_route[0])
+            return brain_route
+
         msg_lower = message.lower()
 
-        # 1. Short, simple queries -> Local fast model (Always local for speed/cost)
-        if len(message) < 50 and "complex" not in msg_lower and "code" not in msg_lower:
-            return Provider.OLLAMA, "llama3.2:3b"
+        # 1. Short, simple queries -> Local fast model when available
+        if (
+            len(message) < 50
+            and "complex" not in msg_lower
+            and "code" not in msg_lower
+            and "analyze" not in msg_lower
+        ):
+            route = self._first_configured_route(self.FASTEST_CHAIN)
+            self._record_provider_use(route[0])
+            return route
 
         # 2. Complex reasoning / detailed analysis
         if "analyze" in msg_lower or "reasoning" in msg_lower or "complex" in msg_lower:
-            # Prefer Anthropic for reasoning
-            if self.config.anthropic_key:
-                return Provider.ANTHROPIC, "claude-3-sonnet-20240229"
-            # Fallback to OpenAI
-            if self.config.openai_key:
-                return Provider.OPENAI, "gpt-4o"
-            # Fallback to Local
-            return Provider.OLLAMA, "llama3.1:8b"
+            route = self._first_configured_route(self.REASONING_CHAIN)
+            self._record_provider_use(route[0])
+            return route
 
         # 3. Coding tasks
-        if "code" in msg_lower or "function" in msg_lower or "class" in msg_lower:
-            # Prefer Anthropic for code
-            if self.config.anthropic_key:
-                return Provider.ANTHROPIC, "claude-3-5-sonnet-20241022"
-            # Fallback to OpenAI
-            if self.config.openai_key:
-                return Provider.OPENAI, "gpt-4o"
-            # Fallback to Local
-            return Provider.OLLAMA, "llama3.1:8b"
+        if self._is_code_task(message):
+            route = self._first_configured_route(self.CODE_CHAIN)
+            self._record_provider_use(route[0])
+            return route
 
-        # Default -> Local standard model
-        return Provider.OLLAMA, "llama3.1:8b"
+        # Default -> Prefer configured default provider/model when available.
+        preferred_route = (self.config.default_provider, self.config.default_model)
+        if self._provider_is_configured(self.config.default_provider):
+            route = preferred_route
+        else:
+            route = self._first_configured_route(self.FALLBACK_CHAIN)
+        self._record_provider_use(route[0])
+        return route
 
     async def chat(
         self,
         message: str,
         system: str | None = None,
+        messages: list[dict[str, str] | Message] | None = None,
         provider: Provider | None = None,
         model: str | None = None,
         temperature: float = 0.7,
@@ -486,6 +839,9 @@ class LLMRouter:
         # Smart routing if no provider/model specified
         if provider is None and model is None:
             provider, model = self.smart_route(message)
+        else:
+            route = self.resolve_model(model, provider)
+            provider, model = route.provider, route.model
 
         provider = provider or self.config.default_provider
         model = model or self.config.default_model
@@ -501,13 +857,18 @@ class LLMRouter:
             else:
                 logger.warning(f"Persona '{persona}' not found")
 
+        normalized_messages = self.normalize_messages(
+            message=message, system=system, messages=messages
+        )
+        prompt_text = self.prompt_text(normalized_messages)
+
         # Check semantic cache first
         cache = self._get_semantic_cache() if use_cache else None
         cache_key = None
 
         if cache is not None:
             cache_key = cache.create_key(
-                prompt=message,
+                prompt=prompt_text,
                 system=system,
                 model=model,
                 temperature=temperature,
@@ -528,7 +889,7 @@ class LLMRouter:
         # Check Redis InterBot Cache if available (secondary cache)
         if use_cache and self.redis_cache and hasattr(self.redis_cache, "get_cached"):
             try:
-                cached_data = self.redis_cache.get_cached(message)
+                cached_data = self.redis_cache.get_cached(prompt_text)
                 if cached_data:
                     logger.info("Redis InterBot Cache HIT")
                     return Response(
@@ -551,7 +912,18 @@ class LLMRouter:
         # Try primary provider (uses internal methods for testability)
         response = None
         try:
-            if provider == Provider.OLLAMA:
+            if messages is not None and provider in {
+                Provider.OLLAMA,
+                Provider.OPENAI,
+                Provider.ANTHROPIC,
+            }:
+                response = await self._chat_messages(
+                    normalized_messages,
+                    provider=provider,
+                    model=model,
+                    temperature=temperature,
+                )
+            elif provider == Provider.OLLAMA:
                 response = await self._chat_ollama(message, system, model, temperature)
             elif provider == Provider.OPENAI:
                 response = await self._chat_openai(message, system, model, temperature)
@@ -594,7 +966,7 @@ class LLMRouter:
                 if self.redis_cache and hasattr(self.redis_cache, "cache_response"):
                     try:
                         self.redis_cache.cache_response(
-                            prompt=message,
+                            prompt=prompt_text,
                             response=response.content,
                             model=model or "unknown",
                         )
@@ -614,9 +986,9 @@ class LLMRouter:
                 raise
 
         # Fallback chain (uses internal methods for testability)
-        for fallback_provider, fallback_model in self.FALLBACK_CHAIN:
-            if fallback_provider == provider:
-                continue  # Skip the one that just failed
+        for fallback_provider, fallback_model in self._fallback_routes_for(
+            provider, model, message
+        ):
 
             try:
                 logger.info(
@@ -624,12 +996,51 @@ class LLMRouter:
                     f"model={fallback_model}"
                 )
 
-                if fallback_provider == Provider.OLLAMA:
+                if messages is not None and fallback_provider in {
+                    Provider.OLLAMA,
+                    Provider.OPENAI,
+                    Provider.ANTHROPIC,
+                }:
+                    response = await self._chat_messages(
+                        normalized_messages,
+                        provider=fallback_provider,
+                        model=fallback_model,
+                        temperature=temperature,
+                    )
+                elif fallback_provider == Provider.OLLAMA:
                     response = await self._chat_ollama(
+                        message, system, fallback_model, temperature
+                    )
+                elif fallback_provider == Provider.OPENAI:
+                    response = await self._chat_openai(
+                        message, system, fallback_model, temperature
+                    )
+                elif fallback_provider == Provider.AZURE_OPENAI:
+                    response = await self._chat_azure_openai(
+                        message, system, fallback_model, temperature
+                    )
+                elif fallback_provider == Provider.ANTHROPIC:
+                    response = await self._chat_anthropic(
                         message, system, fallback_model, temperature
                     )
                 elif fallback_provider == Provider.OPENROUTER:
                     response = await self._chat_openrouter(
+                        message, system, fallback_model, temperature
+                    )
+                elif fallback_provider == Provider.GROQ:
+                    response = await self._chat_groq(
+                        message, system, fallback_model, temperature
+                    )
+                elif fallback_provider == Provider.TOGETHER:
+                    response = await self._chat_together(
+                        message, system, fallback_model, temperature
+                    )
+                elif fallback_provider == Provider.GOOGLE:
+                    response = await self._chat_google(
+                        message, system, fallback_model, temperature
+                    )
+                elif fallback_provider == Provider.XAI:
+                    response = await self._chat_xai(
                         message, system, fallback_model, temperature
                     )
 
@@ -680,16 +1091,7 @@ class LLMRouter:
         temperature: float,
     ) -> Response:
         """Internal Ollama chat method (for testing)."""
-        return await chat_ollama(
-            message,
-            system,
-            model,
-            temperature,
-            self.config,
-            self._is_ollama_available,
-            self._post_request,
-            self._track_tokens,
-        )
+        return await super()._chat_ollama(message, system, model, temperature)
 
     async def _chat_openai(
         self,
@@ -699,15 +1101,7 @@ class LLMRouter:
         temperature: float,
     ) -> Response:
         """Internal OpenAI chat method (for testing)."""
-        return await chat_openai(
-            message,
-            system,
-            model,
-            temperature,
-            self.config,
-            self._post_request,
-            self._track_tokens,
-        )
+        return await super()._chat_openai(message, system, model, temperature)
 
     async def _chat_azure_openai(
         self,
@@ -735,15 +1129,7 @@ class LLMRouter:
         temperature: float,
     ) -> Response:
         """Internal Anthropic chat method (for testing)."""
-        return await chat_anthropic(
-            message,
-            system,
-            model,
-            temperature,
-            self.config,
-            self._post_request,
-            self._track_tokens,
-        )
+        return await super()._chat_anthropic(message, system, model, temperature)
 
     async def _chat_openrouter(
         self,
@@ -1061,7 +1447,12 @@ class LLMRouter:
             await self._get_or_start_http_pool()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Async context manager exit - cleanup."""
         # Reset pool reference (actual pool managed by PoolManager singleton)
         self._http_pool = None
@@ -1076,7 +1467,7 @@ class LLMRouter:
         """Check if local LLM is available (async)."""
         return await self._is_ollama_available()
 
-    async def check_all_providers(self) -> dict:
+    async def check_all_providers(self) -> dict[str, dict[str, Any]]:
         """
         Check availability of all LLM providers.
 
@@ -1130,7 +1521,7 @@ class LLMRouter:
 
         return result
 
-    def check_all_providers_sync(self) -> dict:
+    def check_all_providers_sync(self) -> dict[str, dict[str, Any]]:
         """Sync wrapper for check_all_providers."""
         return asyncio.run(self.check_all_providers())
 
@@ -1147,11 +1538,11 @@ def get_router() -> LLMRouter:
     return _default_router
 
 
-async def chat_async(message: str, **kwargs) -> Response:
+async def chat_async(message: str, **kwargs: Any) -> Response:
     """Quick async chat using default router."""
     return await get_router().chat(message, **kwargs)
 
 
-def chat(message: str, **kwargs) -> Response:
+def chat(message: str, **kwargs: Any) -> Response:
     """Quick sync chat using default router."""
     return get_router().chat_sync(message, **kwargs)

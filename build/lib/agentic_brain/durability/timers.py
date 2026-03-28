@@ -32,7 +32,7 @@ import asyncio
 import inspect
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
@@ -73,7 +73,7 @@ class Timer:
         if self.state == TimerState.FIRED:
             return timedelta(0)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         remaining = self.deadline - now
 
         return max(remaining, timedelta(0))
@@ -81,7 +81,7 @@ class Timer:
     @property
     def is_expired(self) -> bool:
         """Check if timer has passed deadline."""
-        return datetime.now(timezone.utc) >= self.deadline
+        return datetime.now(UTC) >= self.deadline
 
 
 @dataclass
@@ -133,7 +133,7 @@ class TimerManager:
             The created Timer
         """
         timer_id = timer_id or f"timer_{uuid.uuid4().hex[:8]}"
-        deadline = datetime.now(timezone.utc) + duration
+        deadline = datetime.now(UTC) + duration
 
         timer = Timer(
             timer_id=timer_id,
@@ -154,7 +154,7 @@ class TimerManager:
             event_id=str(uuid.uuid4()),
             workflow_id=self.workflow_id,
             event_type=EventType.TIMER_STARTED,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data={
                 "timer_id": timer_id,
                 "duration_seconds": duration.total_seconds(),
@@ -189,7 +189,7 @@ class TimerManager:
         Returns:
             The created Timer
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         duration = deadline - now
 
         if duration.total_seconds() < 0:
@@ -233,7 +233,7 @@ class TimerManager:
             event_id=str(uuid.uuid4()),
             workflow_id=self.workflow_id,
             event_type=EventType.TIMER_CANCELLED,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data={"timer_id": timer_id},
         )
         await self.event_store.append(event)
@@ -251,14 +251,14 @@ class TimerManager:
 
             # Fire timer
             timer.state = TimerState.FIRED
-            timer.fired_at = datetime.now(timezone.utc)
+            timer.fired_at = datetime.now(UTC)
 
             # Record fired event
             event = WorkflowEvent(
                 event_id=str(uuid.uuid4()),
                 workflow_id=self.workflow_id,
                 event_type=EventType.TIMER_FIRED,
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 data={
                     "timer_id": timer.timer_id,
                     "deadline": timer.deadline.isoformat(),
@@ -422,7 +422,7 @@ async def sleep_until(
             workflow_id="my-workflow"
         )
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     duration = deadline - now
 
     if duration.total_seconds() > 0:

@@ -47,11 +47,11 @@ import uuid
 from abc import ABC
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 
-class EventType(str, Enum):
+class EventType(StrEnum):
     """All event types in the system"""
 
     # Workflow lifecycle
@@ -140,6 +140,18 @@ class BaseEvent(ABC):
         """Override in subclasses to add event-specific data"""
         return {}
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> BaseEvent:
+        """Deserialize events from the event store.
+
+        The event store uses this method as the single entrypoint for
+        deserialization. For unknown/extended event payloads, this will fall
+        back to :class:`WorkflowEvent` so custom domain events can still be
+        preserved.
+        """
+
+        return WorkflowEvent.from_dict(data)
+
 
 @dataclass
 class WorkflowEvent(BaseEvent):
@@ -154,7 +166,7 @@ class WorkflowEvent(BaseEvent):
     def from_dict(cls, data: dict[str, Any]) -> BaseEvent:
         """Deserialize event from dictionary"""
         event_type = EventType(data["event_type"])
-        event_class = EVENT_TYPE_MAP.get(event_type, BaseEvent)
+        event_class = EVENT_TYPE_MAP.get(event_type, WorkflowEvent)
 
         base_fields = {
             "event_id": data["event_id"],
@@ -167,7 +179,14 @@ class WorkflowEvent(BaseEvent):
 
         # Add event-specific data
         event_data = data.get("data", {})
-        return event_class(**base_fields, **event_data)
+
+        # If the payload doesn't match the expected event class (common for
+        # custom/extended domain events), fall back to WorkflowEvent to preserve
+        # the raw data.
+        try:
+            return event_class(**base_fields, **event_data)
+        except TypeError:
+            return WorkflowEvent(**base_fields, data=event_data)
 
 
 # =============================================================================

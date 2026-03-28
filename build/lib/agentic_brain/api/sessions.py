@@ -26,7 +26,7 @@ import os
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -234,7 +234,7 @@ class InMemorySessionBackend(SessionBackend):
         return self._sessions.get(session_id)
 
     async def create(self, session_id: str, user_id: Optional[str] = None) -> Session:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         session = Session(
             id=session_id,
             user_id=user_id,
@@ -252,7 +252,7 @@ class InMemorySessionBackend(SessionBackend):
         if session is None:
             raise KeyError(f"Session {session_id} not found")
 
-        session.updated_at = datetime.now(timezone.utc)
+        session.updated_at = datetime.now(UTC)
 
         if "message_count" in kwargs:
             session.message_count = kwargs["message_count"]
@@ -274,7 +274,7 @@ class InMemorySessionBackend(SessionBackend):
         return list(self._sessions.values())
 
     async def cleanup_expired(self, max_age_seconds: int) -> int:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expired = []
 
         for session_id, session in self._sessions.items():
@@ -375,7 +375,7 @@ class RedisSessionBackend(SessionBackend):
     async def create(self, session_id: str, user_id: Optional[str] = None) -> Session:
         await self._ensure_connected()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         session = Session(
             id=session_id,
             user_id=user_id,
@@ -407,7 +407,7 @@ class RedisSessionBackend(SessionBackend):
         if session is None:
             raise KeyError(f"Session {session_id} not found")
 
-        session.updated_at = datetime.now(timezone.utc)
+        session.updated_at = datetime.now(UTC)
 
         if "message_count" in kwargs:
             session.message_count = kwargs["message_count"]
@@ -467,7 +467,7 @@ class RedisSessionBackend(SessionBackend):
         """
         await self._ensure_connected()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         session_ids = await self._client.smembers(self.ALL_SESSIONS_KEY)
         expired_count = 0
 

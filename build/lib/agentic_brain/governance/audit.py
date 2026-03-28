@@ -42,15 +42,15 @@ import json
 import logging
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta, timezone
-from enum import Enum
+from datetime import UTC, datetime, timedelta, timezone
+from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-class AuditOutcome(str, Enum):
+class AuditOutcome(StrEnum):
     """Outcome status for audit events."""
 
     SUCCESS = "success"
@@ -60,7 +60,7 @@ class AuditOutcome(str, Enum):
     PENDING = "pending"
 
 
-class AuditCategory(str, Enum):
+class AuditCategory(StrEnum):
     """Categories for audit events."""
 
     DATA_ACCESS = "data_access"
@@ -215,7 +215,7 @@ class AuditLog:
             The created AuditEvent
         """
         event = AuditEvent(
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             action=action,
             actor=actor,
             resource=resource,
@@ -521,7 +521,7 @@ class AuditLog:
         Returns:
             Statistics dictionary
         """
-        start_time = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+        start_time = (datetime.now(UTC) - timedelta(hours=hours)).isoformat()
         events = self.query(start_time=start_time, limit=100000)
 
         if not events:
@@ -584,7 +584,7 @@ class AuditLog:
         events = self.query(start_time=start_time, end_time=end_time, limit=100000)
 
         export_data = {
-            "export_timestamp": datetime.now(timezone.utc).isoformat(),
+            "export_timestamp": datetime.now(UTC).isoformat(),
             "event_count": len(events),
             "filters": {
                 "start_time": start_time,

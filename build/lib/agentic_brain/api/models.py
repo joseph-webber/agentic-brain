@@ -16,7 +16,7 @@
 """Pydantic models for agentic-brain chatbot API."""
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field, field_validator
@@ -112,7 +112,7 @@ class ChatResponse(BaseModel):
     response: str = Field(..., description="The chatbot's response")
     session_id: str = Field(..., description="Session ID for this conversation")
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Timestamp of response generation",
     )
     message_id: str = Field(..., description="Unique message identifier")
@@ -262,7 +262,7 @@ class ApiResponse(BaseModel):
         description="HATEOAS links",
     )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Response timestamp",
     )
 
@@ -327,7 +327,7 @@ class ApiResponse(BaseModel):
     ) -> "ApiResponse":
         """Create a paginated list response."""
         pagination = PaginationInfo.from_total(page, size, total_items)
-        
+
         # Generate HATEOAS links
         links = {}
         if base_url:
@@ -337,8 +337,10 @@ class ApiResponse(BaseModel):
                 links["prev"] = f"{base_url}?page={page - 1}&size={size}"
             if page < pagination.total_pages - 1:
                 links["next"] = f"{base_url}?page={page + 1}&size={size}"
-                links["last"] = f"{base_url}?page={pagination.total_pages - 1}&size={size}"
-        
+                links["last"] = (
+                    f"{base_url}?page={pagination.total_pages - 1}&size={size}"
+                )
+
         return cls(
             success=True,
             data=data,
@@ -387,7 +389,7 @@ class HealthResponse(BaseModel):
         description="Component health indicators",
     )
     timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
         description="Health check timestamp",
     )
 
@@ -418,5 +420,5 @@ class HealthResponse(BaseModel):
             overall = "degraded"
         else:
             overall = "healthy"
-        
+
         return cls(status=overall, components=indicators)

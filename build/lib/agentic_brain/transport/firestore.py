@@ -30,7 +30,7 @@ import logging
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Optional
 
 from .base import BaseTransport, TransportConfig, TransportMessage, TransportType
@@ -210,7 +210,7 @@ class FirestoreTransport(BaseTransport):
             doc_ref.set(doc_data)
 
             self._stats.documents_written += 1
-            self._stats.last_write_at = datetime.now(timezone.utc)
+            self._stats.last_write_at = datetime.now(UTC)
 
             logger.debug(f"Sent message: {message.message_id}")
             return True
@@ -229,7 +229,7 @@ class FirestoreTransport(BaseTransport):
             return await asyncio.wait_for(
                 self._message_queue.get(), timeout=self.config.timeout
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
 
     async def listen(self) -> AsyncIterator[TransportMessage]:
@@ -281,7 +281,7 @@ class FirestoreTransport(BaseTransport):
 
             self._stats.queries_executed += 1
             self._stats.documents_read += len(messages)
-            self._stats.last_read_at = datetime.now(timezone.utc)
+            self._stats.last_read_at = datetime.now(UTC)
 
             # Return in chronological order
             return list(reversed(messages))
@@ -348,7 +348,7 @@ class FirestoreTransport(BaseTransport):
                     self._state_queue.get(), timeout=self.config.timeout
                 )
                 yield state
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
 
     async def clear_session(self) -> bool:
@@ -443,9 +443,9 @@ class FirestoreTransport(BaseTransport):
         timestamp = data.get("timestamp")
         if hasattr(timestamp, "timestamp"):
             # Convert Firestore timestamp
-            timestamp = datetime.fromtimestamp(timestamp.timestamp(), tz=timezone.utc)
+            timestamp = datetime.fromtimestamp(timestamp.timestamp(), tz=UTC)
         else:
-            timestamp = datetime.now(timezone.utc)
+            timestamp = datetime.now(UTC)
 
         return TransportMessage(
             content=data.get("content", ""),

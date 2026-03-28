@@ -22,6 +22,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class Provider(Enum):
@@ -66,9 +67,23 @@ class Model:
 
 
 @dataclass
+class LLMConfig:
+    """Configuration for a specific LLM instance."""
+
+    provider: str
+    model: str
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+    temperature: float = 0.7
+    max_tokens: Optional[int] = None
+    fallback: Optional[str] = None
+
+
+@dataclass
 class RouterConfig:
     """Router configuration."""
 
+    models: Dict[str, LLMConfig] = field(default_factory=dict)
     default_provider: Provider = Provider.OLLAMA
     default_model: str = "llama3.1:8b"
     ollama_host: str = field(
@@ -78,6 +93,13 @@ class RouterConfig:
     max_retries: int = 3
     fallback_enabled: bool = True
     use_http_pool: bool = True  # Use HTTP connection pooling (recommended)
+    priority_models: list[str] = field(
+        default_factory=lambda: ["L2", "OP2", "CL2"]
+    )  # Friendly alias chain
+    model_aliases: dict[str, str] = field(default_factory=dict)
+    backoff_base_seconds: float = 1.0
+    backoff_max_seconds: float = 8.0
+    cost_tracking_enabled: bool = True
 
     # Per-provider timeouts
     ollama_timeout: int = 120  # Local models can be slow on first load
@@ -132,3 +154,7 @@ class Response:
     finish_reason: str = "stop"
     cached: bool = False  # Whether response was served from cache
     cache_key: str | None = None  # Cache key if applicable
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cost_estimate: float = 0.0
+    metadata: dict[str, Any] = field(default_factory=dict)

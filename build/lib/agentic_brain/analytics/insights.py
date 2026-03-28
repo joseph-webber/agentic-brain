@@ -33,8 +33,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime, timezone
+from typing import Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -479,7 +479,7 @@ class InsightsEngine:
         """
         return {
             "analysis_period_days": days,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "engagement": self.analyze_user_engagement(days),
             "performance_trends": self.analyze_response_time_trends(days),
             "error_patterns": self.detect_error_patterns(days),

@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """
 Azure OpenAI provider implementation.
 """
@@ -190,7 +189,7 @@ async def chat_azure_openai(
         )
     except aiohttp.ClientError as e:
         raise LLMProviderError("azure_openai", deployment, e)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise AgenticTimeoutError(
             "Azure OpenAI chat", config.azure_openai_timeout, None
         )

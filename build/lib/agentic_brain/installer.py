@@ -14,7 +14,6 @@
 # limitations under the License.
 
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Joseph Webber <joseph.webber@me.com>
 """
 Agentic Brain Installer
@@ -244,14 +243,11 @@ LLM_TEMPLATES = {
 def get_platform() -> str:
     """Get the current platform identifier."""
     import platform
+
     system = platform.system().lower()
-    if system == "darwin":
-        return "macos"
-    elif system == "windows":
-        return "windows"
-    elif system == "linux":
-        return "linux"
-    return system
+    return {"darwin": "macos", "windows": "windows", "linux": "linux"}.get(
+        system, system
+    )
 
 
 def get_home_dir() -> Path:
@@ -296,18 +292,20 @@ def print_progress_bar(
 
 def print_welcome_banner() -> None:
     """Print a welcome banner for the installer."""
-    print("""
+    print(
+        """
 ╔══════════════════════════════════════════════════════════════╗
 ║           Welcome to Agentic Brain Setup Wizard              ║
 ║                                                              ║
 ║   This wizard will help you configure your AI assistant.    ║
 ╚══════════════════════════════════════════════════════════════╝
-""")
+"""
+    )
 
 
 def print_success_banner(message: str = "Setup Complete!") -> None:
     """Print a success banner.
-    
+
     Args:
         message: Message or path to display. If a path, shows completion message.
     """
@@ -319,28 +317,32 @@ def print_success_banner(message: str = "Setup Complete!") -> None:
     else:
         display = msg_str
         extra = ""
-    print(f"""
+    print(
+        f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║  ✅ {display:^54}  ║
 ╚══════════════════════════════════════════════════════════════╝{extra}
-""")
+"""
+    )
 
 
 def show_template_confirmation(template_name: str, config: dict) -> None:
     """Show confirmation of selected template."""
     print(f"\n📋 Selected Template: {template_name}")
     print(f"   Name: {config.get('name', template_name)}")
-    if 'tagline' in config:
+    if "tagline" in config:
         print(f"   Description: {config.get('tagline')}")
-    if 'best_for' in config:
+    if "best_for" in config:
         print(f"   Best for: {config.get('best_for')}")
-    if 'requirements' in config:
-        reqs = config.get('requirements', [])
+    if "requirements" in config:
+        reqs = config.get("requirements", [])
         if reqs:
             print(f"   Requirements: {', '.join(reqs)}")
-    if 'cost' in config:
+    if "cost" in config:
         print(f"   Cost: {config.get('cost')}")
-    print(f"   Config File: {config.get('template_file', config.get('config_file', 'N/A'))}")
+    print(
+        f"   Config File: {config.get('template_file', config.get('config_file', 'N/A'))}"
+    )
 
 
 def copy_llm_template(template_id: str, dest_dir: Path) -> bool:
@@ -361,11 +363,12 @@ def copy_llm_template(template_id: str, dest_dir: Path) -> bool:
 
     # Look for template in package data
     import importlib.resources
+
     try:
         # Python 3.9+
-        if hasattr(importlib.resources, 'files'):
-            pkg_files = importlib.resources.files('agentic_brain')
-            template_path = pkg_files / 'templates' / 'llm' / config_file
+        if hasattr(importlib.resources, "files"):
+            pkg_files = importlib.resources.files("agentic_brain")
+            template_path = pkg_files.joinpath("templates", "llm", config_file)
             if template_path.is_file():
                 dest_dir.mkdir(parents=True, exist_ok=True)
                 dest_path = dest_dir / config_file
@@ -400,7 +403,8 @@ number: {template.get('number', 0)}
 
 def print_banner():
     """Print installer banner."""
-    print("""
+    print(
+        """
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
 ║     █████╗  ██████╗ ███████╗███╗   ██╗████████╗██╗ ██████╗   ║
@@ -413,7 +417,8 @@ def print_banner():
 ║              B R A I N    I N S T A L L E R                  ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
-    """)
+    """
+    )
 
 
 def choose_template() -> str:
@@ -711,7 +716,7 @@ pip install agentic-brain
 docker-compose up -d neo4j
 
 # Apply schema
-cat schema.cypher | cypher-shell -u neo4j -p password
+cat schema.cypher | cypher-shell -u neo4j -p Brain2026
 
 # Run chatbot
 python main.py
@@ -756,7 +761,8 @@ def smart_llm_setup() -> dict:
     import shutil
     import subprocess
 
-    print("""
+    print(
+        """
 ================================================================================
                          LLM SETUP - GET RUNNING FAST
 ================================================================================
@@ -764,7 +770,8 @@ def smart_llm_setup() -> dict:
 Agentic Brain needs an LLM (AI model) to work. Let's set one up now.
 
 I'll check what you already have, then get you running in under a minute.
-""")
+"""
+    )
 
     # Step 1: Check what's already available
     print("Checking your current setup...\n")
@@ -785,6 +792,7 @@ I'll check what you already have, then get you running in under a minute.
     ollama_running = False
     try:
         import urllib.request
+
         req = urllib.request.Request("http://localhost:11434/api/tags")
         with urllib.request.urlopen(req, timeout=2) as resp:
             if resp.status == 200:
@@ -836,7 +844,8 @@ I'll check what you already have, then get you running in under a minute.
     # Step 2: Nothing found - guide them
     print("No LLM configured yet. Let's fix that!\n")
 
-    print("""Which option works best for you?
+    print(
+        """Which option works best for you?
 
   1. LOCAL  - Download a model (2GB, runs offline, FREE forever)
   2. CLOUD  - Use API key you already have (instant, paid)
@@ -844,7 +853,8 @@ I'll check what you already have, then get you running in under a minute.
   4. SKIP   - I'll configure LLM later manually
 
 Local (option 1) is recommended - it ALWAYS works, even offline.
-""")
+"""
+    )
 
     choice = input("Enter 1, 2, 3, or 4 [1]: ").strip() or "1"
 
@@ -861,6 +871,7 @@ Local (option 1) is recommended - it ALWAYS works, even offline.
 
             # Platform-specific install
             import platform
+
             system = platform.system().lower()
 
             if system == "darwin":
@@ -877,10 +888,13 @@ Local (option 1) is recommended - it ALWAYS works, even offline.
         if not ollama_running:
             print("Starting Ollama...")
             try:
-                subprocess.Popen(["ollama", "serve"],
-                               stdout=subprocess.DEVNULL,
-                               stderr=subprocess.DEVNULL)
+                subprocess.Popen(
+                    ["ollama", "serve"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
                 import time
+
                 time.sleep(2)
                 print("Ollama started!\n")
             except Exception:
@@ -901,14 +915,16 @@ Local (option 1) is recommended - it ALWAYS works, even offline.
 
     if choice == "2":
         # Cloud API key
-        print("""
+        print(
+            """
 Which cloud provider do you have an API key for?
 
   CL - Claude (Anthropic) - https://console.anthropic.com
   OP - OpenAI - https://platform.openai.com
   GO - Gemini (Google) - https://ai.google.dev
   GR - Groq - https://console.groq.com
-""")
+"""
+        )
         provider = input("Enter CL, OP, GO, or GR: ").strip().upper()
 
         if provider not in ["CL", "OP", "GO", "GR"]:
@@ -945,7 +961,8 @@ Which cloud provider do you have an API key for?
 
     if choice == "3":
         # Free API key guide
-        print("""
+        print(
+            """
 ================================================================================
                         GET A FREE API KEY (2 MINUTES)
 ================================================================================
@@ -967,7 +984,8 @@ Option B: GEMINI (Google - Very generous free tier)
 5. Copy the key (starts with AIza)
 
 ================================================================================
-""")
+"""
+        )
         print("Which did you sign up for?")
         provider = input("Enter GR (Groq) or GO (Gemini): ").strip().upper()
 
@@ -1040,7 +1058,8 @@ def run_installer(mode: Optional[str] = None, project_dir: Optional[Path] = None
     create_readme(proj_dir, template)
 
     # Success message
-    print(f"""
+    print(
+        f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
 ║  ✅ Installation Complete!                                   ║
@@ -1057,7 +1076,8 @@ Next steps:
 Documentation: https://github.com/joseph-webber/agentic-brain
 
 Happy building! 🚀
-""")
+"""
+    )
 
 
 def main():

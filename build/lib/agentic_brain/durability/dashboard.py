@@ -31,7 +31,7 @@ Features:
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -169,7 +169,7 @@ class WorkflowDashboard:
             workflow_id=workflow_id,
             workflow_type=workflow_type,
             status="running",
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
             version=version,
             worker_id=worker_id,
         )
@@ -195,7 +195,7 @@ class WorkflowDashboard:
         if status:
             summary.status = status
             if status in ("completed", "failed", "cancelled"):
-                summary.completed_at = datetime.now(timezone.utc)
+                summary.completed_at = datetime.now(UTC)
                 summary.duration_ms = (
                     summary.completed_at - summary.started_at
                 ).total_seconds() * 1000
@@ -226,7 +226,7 @@ class WorkflowDashboard:
         self._events[workflow_id].append(
             {
                 "type": event_type,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "data": data,
             }
         )
@@ -303,7 +303,7 @@ class WorkflowDashboard:
         workflow_type: Optional[str] = None,
     ) -> DashboardStats:
         """Get aggregated statistics"""
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=period_hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=period_hours)
 
         workflows = [w for w in self._workflows.values() if w.started_at >= cutoff]
 
@@ -317,7 +317,7 @@ class WorkflowDashboard:
             failed=len([w for w in workflows if w.status == "failed"]),
             cancelled=len([w for w in workflows if w.status == "cancelled"]),
             period_start=cutoff,
-            period_end=datetime.now(timezone.utc),
+            period_end=datetime.now(UTC),
         )
 
         # Calculate duration percentiles

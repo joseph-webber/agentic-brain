@@ -36,7 +36,7 @@ Example:
     >>> app.add_middleware(AuditMiddleware, audit_logger=audit)
 
 Author: Joseph Webber
-License: GPL-3.0-or-later
+License: Apache-2.0
 """
 
 import json
@@ -44,7 +44,7 @@ import logging
 import os
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Optional
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -95,7 +95,7 @@ class AuditEvent:
         >>> print(event.to_json())
     """
 
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     event_type: str = ""  # "request", "auth", "session", "error"
     action: str = ""  # "chat", "create_session", "delete_session", etc.
     user_id: Optional[str] = None
@@ -150,7 +150,7 @@ class JSONFormatter(logging.Formatter):
 
         # Otherwise, wrap in a structured format
         log_data = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),

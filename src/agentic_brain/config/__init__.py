@@ -37,6 +37,16 @@ from .settings import (
     get_settings,
     settings,
 )
+from .unified_config import (
+    APISection,
+    ConfigLoader,
+    FeatureSection,
+    Neo4jSection,
+    SecuritySection,
+    UnifiedConfig,
+    UnifiedLLMSection,
+    VoiceSection,
+)
 
 __all__ = [
     "Settings",
@@ -48,4 +58,12 @@ __all__ = [
     "SecuritySettings",
     "ObservabilitySettings",
     "CacheSettings",
+    "UnifiedConfig",
+    "ConfigLoader",
+    "UnifiedLLMSection",
+    "VoiceSection",
+    "Neo4jSection",
+    "APISection",
+    "SecuritySection",
+    "FeatureSection",
 ]

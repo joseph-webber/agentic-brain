@@ -20,7 +20,7 @@ Agentic Brain CLI Commands
 Implementation of CLI commands for agentic-brain.
 
 Copyright (C) 2026 Joseph Webber
-License: GPL-3.0-or-later
+License: Apache-2.0
 """
 
 import argparse
@@ -33,8 +33,15 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from agentic_brain import __version__
+from agentic_brain.core.neo4j_pool import (
+    configure_pool as configure_neo4j_pool,
+)
+from agentic_brain.core.neo4j_pool import (
+    get_session as get_shared_neo4j_session,
+)
 
 
 # ANSI color codes
@@ -99,6 +106,54 @@ def print_error(text: str) -> None:
     print(f"{Colors.RED}✗{Colors.RESET} {text}", file=sys.stderr)
 
 
+def _write_output_file(path: str, content: str) -> None:
+    """Write CLI output to a file, ensuring parent directories exist."""
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(content.rstrip() + "\n", encoding="utf-8")
+
+
+def topics_audit_command(args: argparse.Namespace) -> int:
+    """Run the quarterly topic governance audit against Neo4j."""
+    from agentic_brain.graph import TopicHub, render_audit_report
+
+    print_header("Quarterly Topic Audit")
+
+    configure_neo4j_pool(
+        uri=args.uri,
+        user=args.username,
+        password=args.password,
+        database=args.database,
+    )
+
+    hub = TopicHub(session_factory=get_shared_neo4j_session)
+    report = hub.build_quarterly_audit(limit=args.limit)
+    rendered_report = render_audit_report(report, format=args.format)
+
+    topic_health: dict[str, Any] = report["topic_health"]
+    status = str(topic_health["status"])
+    if status == "soft-cap-exceeded":
+        print_warning(
+            f"Topic count is above the soft cap: {topic_health['topic_count']} / {topic_health['soft_cap']}"
+        )
+    elif status == "warning":
+        print_warning(
+            f"Topic count is approaching the soft cap: {topic_health['topic_count']} / {topic_health['soft_cap']}"
+        )
+    else:
+        print_success(
+            f"Topic hub is healthy: {topic_health['topic_count']} / {topic_health['soft_cap']}"
+        )
+
+    print(rendered_report)
+
+    if args.output:
+        _write_output_file(args.output, rendered_report)
+        print_success(f"Saved topic audit report to {args.output}")
+
+    return 0
+
+
 def find_available_port(start_port: int = 8000, max_attempts: int = 10) -> int:
     """
     Find an available port starting from start_port.
@@ -152,6 +207,234 @@ def print_box(title: str, lines: list, header_color: str = Colors.CYAN) -> None:
         )
     print(f"{header_color}╚{'═' * (width - 2)}╝{Colors.RESET}")
     print()
+
+
+ADL_TEMPLATE = """// brain.adl - This is all you need to start!
+application MyBrain {}
+"""
+
+
+def adl_init_command(args: argparse.Namespace) -> int:
+    """Create a new ADL template file.
+
+    Examples:
+        agentic adl init
+        agentic adl init --file config/brain.adl
+    """
+
+    from pathlib import Path
+
+    path = Path(getattr(args, "file", "brain.adl"))
+    if path.exists():
+        print_error(f"ADL file already exists: {path}")
+        print_info("Delete it or choose a different path with --file.")
+        return 1
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(ADL_TEMPLATE, encoding="utf-8")
+    print_success(f"Created ADL template at {path}")
+    return 0
+
+
+def adl_validate_command(args: argparse.Namespace) -> int:
+    """Validate an ADL file and show a short summary."""
+
+    from pathlib import Path
+
+    from agentic_brain.adl import parse_adl_file
+    from agentic_brain.adl.parser import ADLParseError
+
+    path = Path(getattr(args, "file", "brain.adl"))
+    if not path.exists():
+        print_error(f"ADL file not found: {path}")
+        return 1
+
+    try:
+        cfg = parse_adl_file(path)
+    except ADLParseError as e:
+        print_error(f"Invalid ADL syntax in {path}: {e}")
+        return 1
+
+    print_success(f"ADL file {path} is valid")
+    counts = [
+        f"application={1 if cfg.application else 0}",
+        f"llm={len(cfg.llms)}",
+        f"rag={len(cfg.rags)}",
+        f"voice={len(cfg.voices)}",
+        f"api={len(cfg.apis)}",
+        f"security={'1' if cfg.security else '0'}",
+        f"modes={'1' if cfg.modes else '0'}",
+        f"deployment={'1' if cfg.deployment else '0'}",
+    ]
+    print_info("Blocks: " + ", ".join(counts))
+    return 0
+
+
+def adl_generate_command(args: argparse.Namespace) -> int:
+    """Generate config artefacts from an ADL file."""
+
+    from pathlib import Path
+
+    from agentic_brain.adl import generate_from_adl
+
+    path = Path(getattr(args, "file", "brain.adl"))
+    output = getattr(args, "output", None)
+    overwrite = bool(getattr(args, "force", False))
+
+    if not path.exists():
+        print_error(f"ADL file not found: {path}")
+        return 1
+
+    result = generate_from_adl(path, output_dir=output, overwrite=overwrite)
+
+    print_success("Generated configuration from ADL")
+    print_info(f"Config module: {result.config_module}")
+    print_info(f".env file:     {result.env_file}")
+    print_info(f"Docker compose: {result.docker_compose}")
+    print_info(f"API module:    {result.api_module}")
+    return 0
+
+
+def _render_adl_from_jdl(app_name: str) -> str:
+    """Render a simple ADL file using an application name from JDL."""
+
+    name = app_name.strip() or "AgenticBrain"
+    return ADL_TEMPLATE.replace(
+        "application AgenticBrain", f"application {name}"
+    ).replace('name "My Enterprise AI"', f'name "{name} AI"')
+
+
+def adl_import_command(args: argparse.Namespace) -> int:
+    """Import configuration from another DSL into ADL.
+
+    Currently supports:
+        agentic adl import jdl
+    """
+
+    from pathlib import Path
+
+    source = getattr(args, "source", "jdl")
+    if source != "jdl":
+        print_error(f"Unsupported import source: {source}")
+        return 1
+
+    input_path = Path(getattr(args, "input", "app.jdl"))
+    output_path = Path(getattr(args, "file", "brain.adl"))
+    force = bool(getattr(args, "force", False))
+
+    if not input_path.exists():
+        print_error(f"JDL file not found: {input_path}")
+        return 1
+
+    if output_path.exists() and not force:
+        print_error(f"ADL file already exists: {output_path}")
+        print_info("Use --force to overwrite or choose a different --file.")
+        return 1
+
+    text = input_path.read_text(encoding="utf-8")
+    app_name = "AgenticBrain"
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("application"):
+            parts = stripped.split()
+            if len(parts) >= 2 and parts[1] != "{":
+                app_name = parts[1].strip("{")
+            break
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(_render_adl_from_jdl(app_name), encoding="utf-8")
+    print_success(f"Imported JDL application '{app_name}' into ADL at {output_path}")
+    return 0
+
+
+def setup_command(args: argparse.Namespace) -> int:
+    """
+    Run the enhanced setup wizard.
+
+    Interactive installer with:
+    - Environment detection (OS, Python, GPU, voices)
+    - User profile setup (timezone, location, preferences)
+    - LLM configuration (API keys, fallback chain)
+    - ADL initialization (default configuration)
+    - Health check (verify everything works)
+
+    Args:
+        args: Command-line arguments with non_interactive and no_color flags
+
+    Returns:
+        0 on success, 1 on error
+    """
+    print_header("Enhanced Setup Wizard")
+
+    try:
+        # Import the enhanced installer
+        from agentic_brain.installer_enhanced import run_enhanced_installer
+
+        # Run the installer
+        run_enhanced_installer(non_interactive=args.non_interactive)
+
+        return 0
+    except ImportError as e:
+        print_error(f"Enhanced installer not available: {e}")
+        print_info("Try running: pip install agentic-brain[full]")
+        return 1
+    except KeyboardInterrupt:
+        print_warning("\nSetup cancelled by user")
+        return 1
+    except Exception as e:
+        print_error(f"Setup failed: {e}")
+        import traceback
+
+        traceback.print_exc()
+        return 1
+
+
+def persona_install_command(args: argparse.Namespace) -> int:
+    """
+    Run persona-driven installer for Agentic Brain.
+
+    Interactive installer that guides users through persona-based setup.
+    Everything flows from persona selection - ADL is generated automatically.
+
+    Args:
+        args: Command-line arguments with persona and non_interactive flags
+
+    Returns:
+        0 on success, 1 on error
+    """
+    try:
+        # Build sys.argv for the installer
+        import sys
+
+        from agentic_brain.installer_persona import main as persona_main
+
+        old_argv = sys.argv
+        sys.argv = ["agentic"]
+
+        if hasattr(args, "persona") and args.persona:
+            sys.argv.extend(["--persona", args.persona])
+
+        if hasattr(args, "non_interactive") and args.non_interactive:
+            sys.argv.append("--non-interactive")
+
+        try:
+            persona_main()
+            return 0
+        finally:
+            sys.argv = old_argv
+
+    except ImportError as e:
+        print_error(f"Persona installer not available: {e}")
+        return 1
+    except KeyboardInterrupt:
+        print_warning("\nInstallation cancelled by user")
+        return 1
+    except Exception as e:
+        print_error(f"Installation failed: {e}")
+        import traceback
+
+        traceback.print_exc()
+        return 1
 
 
 def check_command(args: argparse.Namespace) -> int:
@@ -218,7 +501,7 @@ def check_command(args: argparse.Namespace) -> int:
                 neo4j_uri = os.getenv("NEO4J_URI")
                 if neo4j_uri:
                     print_info("Neo4j is configured (optional memory/persistence)")
-            except:
+            except Exception:
                 pass
 
             return 0
@@ -705,13 +988,13 @@ def init_command(args: argparse.Namespace) -> int:
         The generated pyproject.toml includes:
         - agentic-brain[all] (main package with all features)
         - Python >= 3.9 requirement
-        - GPL-3.0-or-later license
+        - Apache-2.0 license
 
     Note:
         - Project name is also used as package name (- becomes _)
         - Creates local editable install with pip install -e .
         - Git initialization runs in background
-        - All created files use GPL-3.0-or-later license
+        - All created files use Apache-2.0 license
         - Python version >= 3.9 required
     """
     print_header(f"Initializing Project: {args.name}")
@@ -770,7 +1053,7 @@ name = "{args.name}"
 version = "0.1.0"
 description = "Agentic brain project"
 requires-python = ">=3.9"
-license = {{text = "GPL-3.0-or-later"}}
+license = {{text = "Apache-2.0"}}
 authors = [
     {{name = "Your Name", email = "your.email@example.com"}}
 ]
@@ -827,7 +1110,7 @@ cp .env.example .env
 
 ## License
 
-GPL-3.0-or-later
+Apache-2.0
 """
         (project_path / "README.md").write_text(readme_content)
 
@@ -960,18 +1243,19 @@ def schema_command(args: argparse.Namespace) -> int:
     print(f"User: {Colors.CYAN}{args.username}{Colors.RESET}")
 
     try:
-        from neo4j import GraphDatabase
-
         # Get password if not provided
         password = args.password
         if not password:
             password = getpass.getpass("Neo4j Password: ")
 
-        # Connect to Neo4j
         print_info("Connecting to Neo4j...")
-        driver = GraphDatabase.driver(args.uri, auth=(args.username, password))
+        configure_neo4j_pool(
+            uri=args.uri,
+            user=args.username,
+            password=password,
+        )
 
-        with driver.session() as session:
+        with get_shared_neo4j_session() as session:
             print_success("Connected to Neo4j")
 
             if args.verify_only:
@@ -1020,7 +1304,6 @@ def schema_command(args: argparse.Namespace) -> int:
                     f"{stats['relCount']} relationships"
                 )
 
-        driver.close()
         print_success("Schema operation completed\n")
         return 0
 
@@ -1459,7 +1742,7 @@ def neo4j_start_command(args: argparse.Namespace) -> int:
                     "-p",
                     "7687:7687",
                     "-e",
-                    "NEO4J_AUTH=neo4j/password",
+                    "NEO4J_AUTH=neo4j/Brain2026",
                     "neo4j:latest",
                 ],
                 capture_output=True,
@@ -1840,7 +2123,7 @@ def version_command(args: argparse.Namespace) -> int:
         Agentic Brain
         Version: X.Y.Z
         Author: Name <email@example.com>
-        License: GPL-3.0-or-later
+        License: Apache-2.0
         Repository: https://github.com/joseph-webber/agentic-brain
 
     Use Cases:
@@ -1891,3 +2174,146 @@ def version_command(args: argparse.Namespace) -> int:
     )
 
     return 0
+
+
+# ---------------------------------------------------------------------------
+# Voice commands
+# ---------------------------------------------------------------------------
+
+
+def voice_list_command(args: argparse.Namespace) -> int:
+    """List available voices from the global voice registry.
+
+    This provides a thin CLI wrapper around :mod:`agentic_brain.voice`. For now
+    filter flags (``--english``, ``--female`` etc.) are advisory only – we
+    always show the full list and rely on the ``--search`` term to narrow
+    results.
+    """
+
+    try:
+        from agentic_brain.voice import list_voices
+
+        query = getattr(args, "search", None)
+        voices = list_voices(query)
+
+        if not voices:
+            print_warning("No voices found")
+            return 0
+
+        lines = []
+        for v in voices:
+            name = v.get("full_name") or v.get("name") or "<unknown>"
+            lang = v.get("language", "?")
+            region = v.get("region", "?")
+            desc = v.get("description", "").strip()
+            line = f"{name}  [{lang} / {region}]"
+            if desc:
+                line += f"  - {desc}"
+            lines.append(line)
+
+        print_box("Available Voices", lines)
+        return 0
+
+    except Exception as e:
+        print_error(f"Failed to list voices: {e}")
+        return 1
+
+
+def voice_region_command(args: argparse.Namespace) -> int:
+    """Set or show the preferred region/city for voice assistants."""
+
+    city = getattr(args, "city", None)
+    env_key = "AGENTIC_REGION_CITY"
+
+    if not city:
+        current = os.environ.get(env_key, "adelaide")
+        print_info(f"Current region city: {current}")
+        return 0
+
+    os.environ[env_key] = city
+    print_success(f"Set region city to: {city}")
+    return 0
+
+
+def voice_queue_status_command(args: argparse.Namespace) -> int:
+    """Show status of the global voice queue (backend, length, etc.)."""
+
+    import asyncio
+
+    async def _inner() -> int:
+        from agentic_brain.voice.redpanda_queue import get_voice_queue
+
+        queue = await get_voice_queue()
+        status = await queue.status()
+
+        lines = [
+            f"Backend:        {status.get('backend')}",
+            f"Processing:     {'yes' if status.get('processing') else 'no'}",
+            f"Bootstrap:      {status.get('bootstrap_servers')}",
+        ]
+        if status.get("redis_url"):
+            lines.append(f"Redis URL:      {status['redis_url']}")
+        qlen = status.get("queue_length")
+        if qlen is not None:
+            lines.append(f"Queue length:   {qlen}")
+        else:
+            lines.append("Queue length:   (unknown for Redpanda backend)")
+
+        print_box("Voice Queue Status", lines)
+        return 0
+
+    return asyncio.run(_inner())
+
+
+def voice_queue_clear_command(args: argparse.Namespace) -> int:
+    """Clear pending messages from the voice queue (Redis/memory backends)."""
+
+    import asyncio
+
+    async def _inner() -> int:
+        from agentic_brain.voice.redpanda_queue import get_voice_queue
+
+        queue = await get_voice_queue()
+        cleared = await queue.clear()
+        print_success(f"Cleared {cleared} pending voice message(s)")
+        if queue.backend == "redpanda":
+            print_info(
+                "Redpanda backend does not support destructive clear via CLI; "
+                "use Kafka tooling if you need to truncate topics."
+            )
+        return 0
+
+    return asyncio.run(_inner())
+
+
+def voice_queue_priority_command(args: argparse.Namespace) -> int:
+    """Queue a message with an explicit priority level."""
+
+    import asyncio
+
+    level_raw = args.level
+    text = args.text
+
+    from agentic_brain.voice.redpanda_queue import VoicePriority, queue_speak
+
+    # Parse priority from name or integer value
+    try:
+        priority = VoicePriority[level_raw.upper()]
+    except (KeyError, AttributeError):
+        try:
+            priority = VoicePriority(int(level_raw))
+        except Exception:
+            print_error(
+                "Invalid priority level. Use one of: CRITICAL, URGENT, HIGH, "
+                "NORMAL, LOW or an integer value."
+            )
+            return 1
+
+    async def _inner() -> int:
+        await queue_speak(text, voice=args.voice, rate=args.rate, priority=priority)
+        print_success(
+            f"Queued voice message with priority {priority.name} ({int(priority)})"
+        )
+        return 0
+
+    return asyncio.run(_inner())

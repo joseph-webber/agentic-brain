@@ -31,7 +31,7 @@ import inspect
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar
 
@@ -196,7 +196,7 @@ class QueryHandler:
         Returns:
             QueryResult with status and result/error
         """
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # Check cache
         cache_key = f"{request.query_name}:{request.args}"
@@ -204,7 +204,7 @@ class QueryHandler:
             cache_time = self._cache_ttl.get(cache_key)
             if (
                 cache_time
-                and (datetime.now(timezone.utc) - cache_time).total_seconds() < cache_ttl_seconds
+                and (datetime.now(UTC) - cache_time).total_seconds() < cache_ttl_seconds
             ):
                 cached = self._cache[cache_key]
                 return QueryResult(
@@ -213,7 +213,7 @@ class QueryHandler:
                     workflow_id=request.workflow_id,
                     status=QueryStatus.SUCCESS,
                     result=cached,
-                    completed_at=datetime.now(timezone.utc),
+                    completed_at=datetime.now(UTC),
                     duration_ms=0,
                 )
 
@@ -226,8 +226,8 @@ class QueryHandler:
                 workflow_id=request.workflow_id,
                 status=QueryStatus.FAILED,
                 error="Invalid query arguments",
-                completed_at=datetime.now(timezone.utc),
-                duration_ms=(datetime.now(timezone.utc) - start_time).total_seconds() * 1000,
+                completed_at=datetime.now(UTC),
+                duration_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
             )
             self._history.append(result)
             return result
@@ -241,8 +241,8 @@ class QueryHandler:
                 workflow_id=request.workflow_id,
                 status=QueryStatus.NOT_FOUND,
                 error=f"No handler for query '{request.query_name}'",
-                completed_at=datetime.now(timezone.utc),
-                duration_ms=(datetime.now(timezone.utc) - start_time).total_seconds() * 1000,
+                completed_at=datetime.now(UTC),
+                duration_ms=(datetime.now(UTC) - start_time).total_seconds() * 1000,
             )
             self._history.append(result)
             return result
@@ -260,7 +260,7 @@ class QueryHandler:
                 else:
                     query_result = handler()
 
-            completed_at = datetime.now(timezone.utc)
+            completed_at = datetime.now(UTC)
             duration_ms = (completed_at - start_time).total_seconds() * 1000
 
             # Cache result
@@ -279,7 +279,7 @@ class QueryHandler:
             )
 
         except Exception as e:
-            completed_at = datetime.now(timezone.utc)
+            completed_at = datetime.now(UTC)
             duration_ms = (completed_at - start_time).total_seconds() * 1000
 
             result = QueryResult(
@@ -397,7 +397,7 @@ class QueryDispatcher:
                 handler.execute(request),
                 timeout=timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return QueryResult(
                 query_id=request.query_id,
                 query_name=query_name,

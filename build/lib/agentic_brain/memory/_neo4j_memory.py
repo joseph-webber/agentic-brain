@@ -34,10 +34,25 @@ import hashlib
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+try:
+    from neo4j import GraphDatabase
+
+    NEO4J_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    GraphDatabase = None  # type: ignore
+    NEO4J_AVAILABLE = False
+
+from agentic_brain.core.neo4j_pool import (
+    configure_pool as configure_neo4j_pool,
+)
+from agentic_brain.core.neo4j_pool import (
+    get_driver as get_shared_neo4j_driver,
+)
 
 
 class DataScope(Enum):
@@ -137,7 +152,7 @@ class Neo4jMemory:
         user: str | None = None,
         password: str | None = None,
         database: str = "neo4j",
-        use_pool: bool = False,
+        use_pool: bool = True,
     ) -> None:
         """
         Initialize Neo4j memory connection.
@@ -147,7 +162,7 @@ class Neo4jMemory:
             user: Database username. Defaults to env NEO4J_USER or neo4j
             password: Database password. Defaults to env NEO4J_PASSWORD
             database: Database name
-            use_pool: Use connection pooling (requires pool manager to be started)
+            use_pool: Use connection pooling (shared driver)
         """
         self.config = MemoryConfig(
             uri=uri or os.environ.get("NEO4J_URI", "bolt://localhost:7687"),
@@ -158,7 +173,7 @@ class Neo4jMemory:
         self._driver = None
         self._connected = False
         self._use_pool = use_pool
-        self._pool = None
+        self._using_shared_driver = False
 
     def connect(self) -> bool:
         """
@@ -173,20 +188,26 @@ class Neo4jMemory:
         # Try to use pool if configured
         if self._use_pool:
             try:
-                from agentic_brain.pooling import PoolManager
-
-                manager = PoolManager.get_instance()
-                if manager.is_started:
-                    self._pool = manager.neo4j
-                    self._connected = True
-                    logger.info("Using Neo4j connection pool")
-                    return True
+                configure_neo4j_pool(
+                    uri=self.config.uri,
+                    user=self.config.user,
+                    password=self.config.password,
+                    database=self.config.database,
+                )
+                self._driver = get_shared_neo4j_driver()
+                with self._driver.session(database=self.config.database) as session:
+                    session.run("RETURN 1")
+                self._connected = True
+                self._using_shared_driver = True
+                logger.info("Using shared Neo4j connection pool")
+                return True
             except Exception as e:
-                logger.warning(f"Pool not available, falling back to direct: {e}")
+                logger.warning(f"Shared pool not available, falling back: {e}")
 
         # Fall back to direct connection
         try:
-            from neo4j import GraphDatabase
+            if not NEO4J_AVAILABLE or GraphDatabase is None:
+                raise ImportError
 
             self._driver = GraphDatabase.driver(
                 self.config.uri,
@@ -212,8 +233,9 @@ class Neo4jMemory:
     def close(self) -> None:
         """Close Neo4j connection."""
         # Pool connections are managed by PoolManager
-        if self._pool:
-            self._pool = None
+        if self._using_shared_driver:
+            self._driver = None
+            self._using_shared_driver = False
             self._connected = False
             return
 
@@ -229,7 +251,7 @@ class Neo4jMemory:
 
     def _generate_id(self, content: str, scope: DataScope) -> str:
         """Generate unique ID for memory."""
-        data = f"{content}:{scope.value}:{datetime.now(timezone.utc).isoformat()}"
+        data = f"{content}:{scope.value}:{datetime.now(UTC).isoformat()}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
 
     def store(
@@ -274,7 +296,7 @@ class Neo4jMemory:
             id=self._generate_id(content, scope),
             content=content,
             scope=scope,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             customer_id=customer_id,
             metadata=metadata or {},
             embedding=embedding,
@@ -398,7 +420,7 @@ class Neo4jMemory:
                             timestamp=(
                                 record["timestamp"].to_native()
                                 if record["timestamp"]
-                                else datetime.now(timezone.utc)
+                                else datetime.now(UTC)
                             ),
                             customer_id=record["customer_id"],
                         )
@@ -466,7 +488,7 @@ class Neo4jMemory:
                         timestamp=(
                             record["timestamp"].to_native()
                             if record["timestamp"]
-                            else datetime.now(timezone.utc)
+                            else datetime.now(UTC)
                         ),
                         customer_id=record["customer_id"],
                     )
@@ -604,12 +626,12 @@ class InMemoryStore:
     ) -> Memory:
         """Store in memory."""
         memory = Memory(
-            id=hashlib.sha256(
-                f"{content}:{datetime.now(timezone.utc)}".encode()
-            ).hexdigest()[:16],
+            id=hashlib.sha256(f"{content}:{datetime.now(UTC)}".encode()).hexdigest()[
+                :16
+            ],
             content=content,
             scope=scope,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             customer_id=customer_id,
         )
         self._memories[memory.id] = memory

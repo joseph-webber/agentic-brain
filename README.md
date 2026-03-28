@@ -96,6 +96,8 @@ Key guides:
 - **[Architecture](./docs/architecture.md)** - Learn how the Agentic Brain works
 - **[Voice Integration](./docs/VOICE_INTEGRATION_GUIDE.md)** - Add speech capabilities
 - **[GraphRAG Guide](./docs/GRAPHRAG.md)** - Hybrid vector + graph retrieval, community detection, and Neo4j patterns
+- **[Neo4j Architecture](./docs/NEO4J_ARCHITECTURE.md)** - Public graph model, indexing, and query design reference
+- **[Neo4j Zones](./docs/NEO4J_ZONES.md)** - Five-zone lifecycle model for active and archived graph data
 - **[LLM Swarm Guide](./docs/LLM_SWARM_GUIDE.md)** - Coordinate multiple models for better results
 - **[Security](./docs/SECURITY.md)** - Production-ready security checklists
 - **[macOS Development](./docs/MACOS_DEVELOPMENT.md)** - Setup guide for Mac users

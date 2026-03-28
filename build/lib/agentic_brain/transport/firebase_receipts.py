@@ -34,6 +34,18 @@ from .utils import utc_now as _utc_now
 
 logger = logging.getLogger(__name__)
 
+try:
+    import firebase_admin
+    from firebase_admin import credentials as firebase_credentials
+    from firebase_admin import db as firebase_db
+
+    FIREBASE_AVAILABLE = True
+except ImportError:
+    FIREBASE_AVAILABLE = False
+    firebase_admin = None  # type: ignore[assignment]
+    firebase_credentials = None  # type: ignore[assignment]
+    firebase_db = None  # type: ignore[assignment]
+
 
 class MessageStatus(Enum):
     """Message delivery/read status."""
@@ -448,13 +460,14 @@ class FirebaseReadReceipts(ReadReceiptManager):
         self._db = None
         self._initialized = False
 
+        if not FIREBASE_AVAILABLE:
+            logger.warning("Firebase SDK not installed, using local receipts only")
+            return
+
         # Try to initialize Firebase
         try:
-            import firebase_admin
-            from firebase_admin import credentials, db
-
             if credentials_path:
-                cred = credentials.Certificate(credentials_path)
+                cred = firebase_credentials.Certificate(credentials_path)
                 try:
                     firebase_admin.get_app("receipts")
                 except ValueError:
@@ -462,11 +475,9 @@ class FirebaseReadReceipts(ReadReceiptManager):
                         cred, {"databaseURL": database_url}, name="receipts"
                     )
 
-                self._db = db
+                self._db = firebase_db
                 self._initialized = True
                 logger.info("Firebase read receipts initialized")
-        except ImportError:
-            logger.warning("Firebase SDK not installed, using local receipts only")
         except Exception as e:
             logger.warning(f"Firebase initialization failed: {e}")
 
@@ -484,11 +495,10 @@ class FirebaseReadReceipts(ReadReceiptManager):
         """Track message (syncs to Firebase)."""
         info = super().track_message(message_id, sender_id, session_id)
 
-        if self.is_firebase_enabled:
+        db = self._db
+        if self.is_firebase_enabled and db:
             try:
-                ref = self._db.reference(
-                    f"{self._receipts_path}/{session_id}/{message_id}"
-                )
+                ref = db.reference(f"{self._receipts_path}/{session_id}/{message_id}")
                 ref.set(info.to_dict())
             except Exception as e:
                 logger.error(f"Firebase receipt sync failed: {e}")
@@ -501,16 +511,17 @@ class FirebaseReadReceipts(ReadReceiptManager):
         """Mark as read (syncs to Firebase)."""
         info = await super().mark_read(message_id, user_id)
 
-        if info and self.is_firebase_enabled:
+        db = self._db
+        if info and self.is_firebase_enabled and db:
             try:
                 # Update read_by in Firebase
-                ref = self._db.reference(
+                ref = db.reference(
                     f"{self._receipts_path}/{info.session_id}/{message_id}/read_by/{user_id}"
                 )
                 ref.set(_utc_now().isoformat())
 
                 # Update status
-                status_ref = self._db.reference(
+                status_ref = db.reference(
                     f"{self._receipts_path}/{info.session_id}/{message_id}/status"
                 )
                 status_ref.set("read")
@@ -531,7 +542,9 @@ class FirebaseReadReceipts(ReadReceiptManager):
                 ref.update(
                     {
                         "status": "delivered",
-                        "delivered_at": info.delivered_at.isoformat(),
+                        "delivered_at": (
+                            info.delivered_at.isoformat() if info.delivered_at else ""
+                        ),
                     }
                 )
             except Exception as e:

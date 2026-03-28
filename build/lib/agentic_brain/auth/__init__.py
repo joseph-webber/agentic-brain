@@ -82,6 +82,12 @@ from agentic_brain.auth.enterprise_providers import (
     SAMLAuthRequest,
     SAMLConfig,
 )
+from agentic_brain.auth.firebase_auth import (
+    FIREBASE_AUTH_AVAILABLE,
+    FirebaseAPIAuth,
+    FirebaseAuthConfig,
+    FirebaseTokenClaims,
+)
 from agentic_brain.auth.firebase_provider import FirebaseAuthProvider
 from agentic_brain.auth.models import Token, User
 from agentic_brain.auth.providers import (
@@ -173,4 +179,8 @@ __all__ = [
     "ROLE_ANONYMOUS",
     "AUTHORITY_ADMIN",
     "AUTHORITY_USER",
+    "FirebaseAPIAuth",
+    "FirebaseAuthConfig",
+    "FirebaseTokenClaims",
+    "FIREBASE_AUTH_AVAILABLE",
 ]

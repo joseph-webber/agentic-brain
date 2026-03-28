@@ -15,14 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright 2026 Joseph Webber
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
 """
 Route handlers for the Agentic Brain Chat API.
 
@@ -32,13 +24,14 @@ This module contains all the HTTP route handlers for chat, streaming, and sessio
 import asyncio
 import logging
 import os
+import secrets
 from collections import defaultdict, deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Optional
 
-from fastapi import Depends, HTTPException, Query, Request, status
+from fastapi import Body, Depends, HTTPException, Query, Request, Response, status
 
 from ..streaming import StreamingResponse
 from .audit import get_audit_logger
@@ -85,8 +78,8 @@ def _ensure_session_exists(session_id: str, user_id: str | None = None) -> None:
         sessions[session_id] = {
             "id": session_id,
             "user_id": user_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "last_accessed": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
+            "last_accessed": datetime.now(UTC).isoformat(),
             "message_count": 0,
         }
 
@@ -208,17 +201,20 @@ def _register_health_routes(app) -> None:
         response_model=dict,
         summary="Health Check",
         description="Check if the API server is running and healthy",
-        tags=["Health"],
+        tags=["health"],
     )
     async def health_check():
         """
         Health check endpoint to verify API server status.
 
-        Provides basic health information including:
+        Provides comprehensive health information including:
         - Current server status (always "healthy" if responding)
         - API version
         - Server timestamp
         - Number of active sessions
+        - Redis availability and status (BULLETPROOF)
+        - LLM configuration
+        - Neo4j configuration
 
         This endpoint is useful for:
         - Monitoring and alerting systems
@@ -232,6 +228,10 @@ def _register_health_routes(app) -> None:
                 - version (str): API version
                 - timestamp (str): ISO 8601 server timestamp
                 - sessions_active (int): Number of active chat sessions
+                - redis: Redis health information
+                - llm: LLM provider information
+                - neo4j: Neo4j configuration information
+                - uptime: Server uptime
 
         Raises:
             None: Always returns 200 if server is running
@@ -244,7 +244,12 @@ def _register_health_routes(app) -> None:
                 "status": "healthy",
                 "version": "1.0.0",
                 "timestamp": "2026-01-15T10:30:45.123456+00:00",
-                "sessions_active": 5
+                "sessions_active": 5,
+                "redis": {
+                    "status": "ok",
+                    "available": true,
+                    "message": "Redis is healthy"
+                }
             }
         """
         backend = _get_backend()
@@ -254,7 +259,7 @@ def _register_health_routes(app) -> None:
         server_start_time = getattr(app, "_start_time", None)
         uptime_str = "unknown"
         if server_start_time:
-            uptime = datetime.now(timezone.utc) - server_start_time
+            uptime = datetime.now(UTC) - server_start_time
             hours = uptime.seconds // 3600
             minutes = (uptime.seconds % 3600) // 60
             seconds = uptime.seconds % 60
@@ -262,6 +267,24 @@ def _register_health_routes(app) -> None:
                 uptime_str = f"{uptime.days}d {hours}h {minutes}m"
             else:
                 uptime_str = f"{hours}h {minutes}m {seconds}s"
+
+        # BULLETPROOF: Check Redis health
+        redis_health = {
+            "status": "unknown",
+            "available": False,
+            "message": "Not checked",
+        }
+        try:
+            redis_checker = getattr(app.state, "redis_health_checker", None)
+            if redis_checker:
+                redis_health = redis_checker.get_health_status()
+        except Exception as e:
+            logger.warning(f"Could not get Redis health: {e}")
+            redis_health = {
+                "status": "error",
+                "available": False,
+                "message": f"Error checking Redis: {str(e)}",
+            }
 
         # Check LLM configuration
         llm_status = "not_configured"
@@ -298,8 +321,9 @@ def _register_health_routes(app) -> None:
         return {
             "status": "healthy",
             "version": app.version,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "sessions_active": len(all_sessions),
+            "redis": redis_health,
             "llm": {
                 "provider": llm_provider if llm_status == "ok" else "none",
                 "status": llm_status,
@@ -320,7 +344,7 @@ def _register_chat_routes(app) -> None:
         response_model=ChatResponse,
         summary="Send Chat Message",
         description="Send a message to the chatbot and receive a response",
-        tags=["Chat"],
+        tags=["chat"],
         status_code=status.HTTP_200_OK,
     )
     async def chat(
@@ -432,7 +456,7 @@ def _register_chat_routes(app) -> None:
                     "id": message_id,
                     "role": "user",
                     "content": request.message,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 
@@ -447,7 +471,7 @@ def _register_chat_routes(app) -> None:
                     "id": response_id,
                     "role": "assistant",
                     "content": response_text,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 
@@ -507,7 +531,7 @@ def _register_streaming_routes(app) -> None:
         "/chat/stream",
         summary="Stream Chat Response",
         description="Stream chat response using Server-Sent Events (SSE)",
-        tags=["Chat Streaming"],
+        tags=["chat"],
     )
     async def stream_chat(
         message: str = Query(
@@ -624,7 +648,7 @@ def _register_streaming_routes(app) -> None:
                     "id": generate_message_id(),
                     "role": "user",
                     "content": message,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             )
 
@@ -670,7 +694,7 @@ def _register_session_routes(app) -> None:
         response_model=SessionInfo,
         summary="Get Session Info",
         description="Retrieve information about a specific session",
-        tags=["Sessions"],
+        tags=["chat"],
     )
     async def get_session(
         session_id: str,
@@ -736,7 +760,7 @@ def _register_session_routes(app) -> None:
         response_model=list[dict],
         summary="Get Session Messages",
         description="Retrieve all messages in a session",
-        tags=["Sessions"],
+        tags=["chat"],
     )
     async def get_session_messages(
         session_id: str,
@@ -773,7 +797,7 @@ def _register_session_routes(app) -> None:
         "/session/{session_id}",
         summary="Delete Session",
         description="Clear a session and all its messages",
-        tags=["Sessions"],
+        tags=["chat"],
         status_code=status.HTTP_204_NO_CONTENT,
     )
     async def delete_session(
@@ -840,7 +864,7 @@ def _register_session_routes(app) -> None:
         "/sessions",
         summary="Clear All Sessions",
         description="Clear all sessions and messages (use with caution)",
-        tags=["Sessions"],
+        tags=["chat"],
         status_code=status.HTTP_204_NO_CONTENT,
     )
     async def clear_all_sessions(
@@ -877,20 +901,10 @@ def _register_setup_routes(app) -> None:
         response_model=dict,
         summary="Setup Status and Diagnostics",
         description="Check LLM provider status and get setup instructions",
-        tags=["Setup"],
+        tags=["llm"],
     )
     async def setup_status():
-        """
-        Get setup status and diagnostics for LLM providers.
-
-        Returns information about:
-        - Which LLM providers are available
-        - Which are misconfigured or missing
-        - Step-by-step setup instructions for each provider
-        - Neo4j status (optional)
-
-        This endpoint helps users fix setup issues without looking at logs.
-        """
+        """Get setup status and diagnostics for LLM providers."""
         try:
             status_dict = ProviderChecker.check_all()
             available = [s for s in status_dict.values() if s.available]
@@ -943,7 +957,7 @@ def _register_setup_routes(app) -> None:
         response_model=dict,
         summary="Get Setup Instructions for Provider",
         description="Get detailed setup instructions for a specific provider",
-        tags=["Setup"],
+        tags=["llm"],
     )
     async def setup_help(provider: str):
         """Get detailed setup instructions for a specific provider."""
@@ -971,6 +985,163 @@ def _register_setup_routes(app) -> None:
             }
 
 
+def _register_auth_routes(app) -> None:
+    """Register SSO/SAML authentication helper routes.
+
+    These routes are intentionally lightweight and primarily exist so CI
+    can verify SSO/SAML wiring without requiring a live Identity
+    Provider.
+    """
+
+    from agentic_brain.auth.saml_provider import SAMLConfig, SAMLProvider
+    from agentic_brain.auth.sso_provider import SSOProvider, create_default_sso_provider
+
+    saml_provider: SAMLProvider | None = None
+    sso_provider: SSOProvider | None = None
+
+    def _lazy_saml() -> SAMLProvider:
+        nonlocal saml_provider
+        if saml_provider is None:
+            cfg = SAMLConfig(
+                idp_entity_id=os.environ.get(
+                    "SAML_IDP_ENTITY_ID", "https://idp.example.com/metadata"
+                ),
+                idp_sso_url=os.environ.get(
+                    "SAML_IDP_SSO_URL", "https://idp.example.com/sso"
+                ),
+                idp_certificate=os.environ.get("SAML_IDP_CERTIFICATE", ""),
+                sp_entity_id=os.environ.get("SAML_SP_ENTITY_ID", "agentic-brain"),
+                sp_acs_url=os.environ.get(
+                    "SAML_SP_ACS_URL", "http://localhost:8000/auth/saml/acs"
+                ),
+            )
+            saml_provider = SAMLProvider(cfg)
+        return saml_provider
+
+    def _lazy_sso() -> SSOProvider:
+        nonlocal sso_provider
+        if sso_provider is None:
+            sso_provider = create_default_sso_provider()
+        return sso_provider
+
+    @app.post(
+        "/auth/saml/login",
+        response_model=dict,
+        summary="Initiate SAML login",
+        description="Generate a SAML AuthnRequest for SP-initiated SSO flows.",
+        tags=["auth"],
+    )
+    async def saml_login() -> dict:
+        provider = _lazy_saml()
+        xml = provider.create_authn_request()
+        return {
+            "sso_url": provider.config.idp_sso_url,
+            "authn_request": xml,
+        }
+
+    @app.post(
+        "/auth/saml/acs",
+        response_model=dict,
+        summary="SAML Assertion Consumer Service (ACS)",
+        description="Validate a SAML Response and extract user attributes.",
+        tags=["auth"],
+    )
+    async def saml_acs(payload: dict = Body(...)) -> dict:
+        saml_response = payload.get("saml_response")
+        if not saml_response:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing 'saml_response' in request body",
+            )
+        provider = _lazy_saml()
+        return provider.validate_response(saml_response)
+
+    @app.get(
+        "/auth/saml/metadata",
+        summary="SAML Service Provider metadata",
+        description="Get minimal SP metadata XML for IdP configuration.",
+        tags=["auth"],
+    )
+    async def saml_metadata() -> Response:
+        provider = _lazy_saml()
+        xml = provider.get_metadata()
+        return Response(content=xml, media_type="application/xml")
+
+    @app.get(
+        "/auth/sso/{provider}/login",
+        response_model=dict,
+        summary="Initiate OAuth2/OIDC SSO login",
+        description="Generate an authorization URL for the given SSO provider.",
+        tags=["auth"],
+    )
+    async def sso_login(provider: str) -> dict:
+        try:
+            sso = _lazy_sso()
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=str(exc),
+            )
+
+        state = secrets.token_urlsafe(32)
+        try:
+            url = sso.get_authorization_url(provider, state)
+        except KeyError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Unknown SSO provider '{provider}'",
+            )
+
+        return {"provider": provider, "authorization_url": url, "state": state}
+
+    @app.get(
+        "/auth/sso/{provider}/callback",
+        response_model=dict,
+        summary="OAuth2/OIDC SSO callback",
+        description=(
+            "Handle the OAuth2/OIDC callback by exchanging the authorization "
+            "code for tokens and (optionally) validating the ID token."
+        ),
+        tags=["auth"],
+    )
+    async def sso_callback(provider: str, code: str, state: str | None = None) -> dict:
+        try:
+            sso = _lazy_sso()
+        except RuntimeError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=str(exc),
+            )
+
+        try:
+            token_data = sso.exchange_code_for_token(provider, code)
+        except (RuntimeError, ValueError, KeyError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            )
+
+        id_token_payload = None
+        id_token_raw = (
+            token_data.get("id_token") if isinstance(token_data, dict) else None
+        )
+        if id_token_raw is not None:
+            try:
+                id_token_payload = sso.validate_id_token(provider, id_token_raw)
+            except ValueError as exc:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid ID token: {exc}",
+                )
+
+        return {
+            "provider": provider,
+            "state": state,
+            "token": token_data,
+            "id_token": id_token_payload,
+        }
+
+
 def register_routes(app) -> None:
     """Register all route handlers with the FastAPI app.
 
@@ -983,9 +1154,23 @@ def register_routes(app) -> None:
     - Streaming: /chat/stream - Server-Sent Events streaming
     - Sessions: /session/* - Session management endpoints
     - Setup: /setup - Setup diagnostics and guidance
+    - Auth: /auth/* - SAML and SSO helper endpoints
     """
     _register_health_routes(app)
     _register_chat_routes(app)
     _register_streaming_routes(app)
     _register_session_routes(app)
     _register_setup_routes(app)
+    _register_auth_routes(app)
+
+    # Commerce webhooks (WooCommerce, etc.)
+    try:
+        from agentic_brain.commerce.webhooks import register_commerce_webhooks
+
+        register_commerce_webhooks(app)
+    except Exception as exc:  # pragma: no cover - harden API startup
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "Failed to register commerce webhooks: %s", exc
+        )

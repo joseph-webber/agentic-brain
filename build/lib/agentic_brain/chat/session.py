@@ -31,7 +31,7 @@ import hashlib
 import json
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -58,23 +58,19 @@ class Session:
     bot_name: str = "assistant"
     messages: list[dict[str, Any]] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
-    created_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
-    updated_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def add_message(self, role: str, content: str, **kwargs) -> dict[str, Any]:
         """Add a message to the session."""
         message = {
             "role": role,
             "content": content,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             **kwargs,
         }
         self.messages.append(message)
-        self.updated_at = datetime.now(timezone.utc).isoformat()
+        self.updated_at = datetime.now(UTC).isoformat()
         return message
 
     def get_history(self, limit: Optional[int] = None) -> list[dict[str, Any]]:
@@ -86,7 +82,7 @@ class Session:
     def clear_history(self) -> None:
         """Clear message history."""
         self.messages = []
-        self.updated_at = datetime.now(timezone.utc).isoformat()
+        self.updated_at = datetime.now(UTC).isoformat()
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -141,7 +137,7 @@ class SessionManager:
 
     def _cleanup_expired(self) -> None:
         """Remove expired session files."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cleaned = 0
 
         for file in self.session_dir.glob("session_*.json"):
@@ -151,7 +147,7 @@ class SessionManager:
                 updated = datetime.fromisoformat(updated_str)
                 # Ensure timezone-aware for comparison
                 if updated.tzinfo is None:
-                    updated = updated.replace(tzinfo=timezone.utc)
+                    updated = updated.replace(tzinfo=UTC)
                 if now - updated > self.timeout:
                     file.unlink()
                     cleaned += 1

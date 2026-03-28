@@ -19,14 +19,14 @@ Authentication models following JHipster's domain patterns.
 Provides User, Token, and Credentials classes with Pydantic validation.
 """
 
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime, timezone
+from enum import Enum, StrEnum
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class AuthMethod(str, Enum):
+class AuthMethod(StrEnum):
     """Authentication methods."""
 
     JWT = "jwt"
@@ -125,11 +125,11 @@ class Token(BaseModel):
         """Check if the token is expired."""
         if self.expires_at is None:
             return False
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         # Handle both aware and naive datetimes
         expires = self.expires_at
         if expires.tzinfo is None:
-            expires = expires.replace(tzinfo=timezone.utc)
+            expires = expires.replace(tzinfo=UTC)
         return now > expires
 
     @property

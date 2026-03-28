@@ -32,7 +32,7 @@ import inspect
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
 
@@ -103,7 +103,7 @@ class WorkflowVersion:
             created_at=(
                 datetime.fromisoformat(data["created_at"])
                 if data.get("created_at")
-                else datetime.now(timezone.utc)
+                else datetime.now(UTC)
             ),
             description=data.get("description", ""),
             input_schema=data.get("input_schema"),
@@ -244,7 +244,7 @@ class WorkflowVersionManager:
 
         wf_version = self._versions[workflow_type][version]
         wf_version.deprecated = True
-        wf_version.deprecated_at = datetime.now(timezone.utc)
+        wf_version.deprecated_at = datetime.now(UTC)
         wf_version.deprecation_message = message
 
         logger.warning(
@@ -375,7 +375,7 @@ class WorkflowVersionManager:
                         "workflow_type": workflow_type,
                         "from_version": from_version,
                         "to_version": to_version,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                         "success": True,
                     }
                 )
@@ -392,7 +392,7 @@ class WorkflowVersionManager:
                         "workflow_type": workflow_type,
                         "from_version": from_version,
                         "to_version": to_version,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                         "success": False,
                         "error": str(e),
                     }
@@ -575,5 +575,5 @@ def default_migration(state: Dict[str, Any], from_version: str) -> Dict[str, Any
     return {
         **state,
         "_migrated_from": from_version,
-        "_migrated_at": datetime.now(timezone.utc).isoformat(),
+        "_migrated_at": datetime.now(UTC).isoformat(),
     }

@@ -27,7 +27,7 @@ from __future__ import annotations
 import asyncio
 import inspect
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 from unittest.mock import AsyncMock, MagicMock
 
@@ -71,7 +71,7 @@ class WorkflowEnvironment:
         start_time: Optional[datetime] = None,
     ):
         self._time_skipping = time_skipping
-        self._current_time = start_time or datetime.now(timezone.utc)
+        self._current_time = start_time or datetime.now(UTC)
         self._client: Optional[Client] = None
         self._workers: List[Worker] = []
         self._activity_mocks: Dict[str, Callable] = {}

@@ -930,10 +930,7 @@ def get_fallback_chain(
                 healthy_chain.append(code)
 
         # If ALL models unhealthy, return original chain (emergency)
-        if not healthy_chain:
-            chain = chain  # Use original
-        else:
-            chain = healthy_chain
+        chain = healthy_chain if healthy_chain else chain
 
     if starting_from is None:
         return chain
@@ -949,7 +946,7 @@ def get_fallback_chain(
     return [starting_from] + chain
 
 
-def get_diverse_fallback(last_provider: str = None) -> list:
+def get_diverse_fallback(last_provider: str | None = None) -> list:
     """
     Get fallback chain that avoids same provider twice in a row.
 
@@ -982,10 +979,10 @@ def get_diverse_fallback(last_provider: str = None) -> list:
 
 
 def smart_fallback_with_budget(
-    preferred: str = None,
+    preferred: str | None = None,
     max_cost_tier: int = 0,
     allow_expensive_if_critical: bool = True,
-    last_failed_provider: str = None,
+    last_failed_provider: str | None = None,
 ) -> Tuple[str, str]:
     """
     Find a working model while respecting budget limits and health.
@@ -1097,7 +1094,7 @@ def estimate_cost(code: str, tokens: int = 1000) -> str:
         return f"~${tokens * 0.0005:.4f}"  # ~$0.50 per 1000 tokens
 
 
-def smart_fallback(preferred: str = None) -> str:
+def smart_fallback(preferred: str | None = None) -> str:
     """
     Get the best working model right now using smart fallback.
 
@@ -1233,7 +1230,7 @@ def try_model(code: str, prompt: str = "Say OK", timeout: float = 10.0) -> dict:
         }
 
 
-def find_working_model(preferred: str = None, test_each: bool = True) -> dict:
+def find_working_model(preferred: str | None = None, test_each: bool = True) -> dict:
     """
     Find a working model using the fallback chain.
 

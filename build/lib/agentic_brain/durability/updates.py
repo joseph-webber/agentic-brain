@@ -50,7 +50,7 @@ import inspect
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
@@ -133,7 +133,7 @@ class UpdateRequest:
             created_at=(
                 datetime.fromisoformat(data["created_at"])
                 if data.get("created_at")
-                else datetime.now(timezone.utc)
+                else datetime.now(UTC)
             ),
             requester_id=data.get("requester_id"),
             timeout=data.get("timeout", 30.0),
@@ -268,7 +268,7 @@ class UpdateHandler:
             update_name=request.update_name,
             workflow_id=request.workflow_id,
             status=UpdateStatus.PENDING,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
 
         async with self._lock:
@@ -279,7 +279,7 @@ class UpdateHandler:
                 result.error = (
                     f"No handler registered for update '{request.update_name}'"
                 )
-                result.completed_at = datetime.now(timezone.utc)
+                result.completed_at = datetime.now(UTC)
                 self._history.append(result)
                 return result
 
@@ -289,7 +289,7 @@ class UpdateHandler:
             if definition and not definition.validate_args(request.args):
                 result.status = UpdateStatus.REJECTED
                 result.error = f"Invalid arguments for update '{request.update_name}'"
-                result.completed_at = datetime.now(timezone.utc)
+                result.completed_at = datetime.now(UTC)
                 self._history.append(result)
                 return result
 
@@ -311,7 +311,7 @@ class UpdateHandler:
                 result.status = UpdateStatus.COMPLETED
                 result.result = update_result
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 result.status = UpdateStatus.TIMEOUT
                 result.error = f"Update timed out after {timeout}s"
                 logger.warning(f"Update {request.update_id} timed out")
@@ -326,7 +326,7 @@ class UpdateHandler:
                 result.error = str(e)
                 logger.error(f"Update {request.update_id} failed: {e}")
 
-            result.completed_at = datetime.now(timezone.utc)
+            result.completed_at = datetime.now(UTC)
             self._history.append(result)
 
             return result
@@ -431,8 +431,8 @@ class UpdateDispatcher:
                 workflow_id=workflow_id,
                 status=UpdateStatus.FAILED,
                 error=f"Workflow {workflow_id} not registered",
-                started_at=datetime.now(timezone.utc),
-                completed_at=datetime.now(timezone.utc),
+                started_at=datetime.now(UTC),
+                completed_at=datetime.now(UTC),
             )
 
         return await handler.execute(request)

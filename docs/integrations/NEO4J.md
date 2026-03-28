@@ -4,6 +4,11 @@
 
 Neo4j is the world's leading graph database, and it's the **heart of Agentic Brain**. While other frameworks treat data as flat documents, we understand that knowledge is a web of relationships. This is GraphRAG—the future of AI retrieval.
 
+Reference docs:
+- [Neo4j Architecture](../NEO4J_ARCHITECTURE.md)
+- [Neo4j Zones](../NEO4J_ZONES.md)
+- [Neo4j Integration Guide](../neo4j.md)
+
 ---
 
 ## 🎯 What Neo4j Brings

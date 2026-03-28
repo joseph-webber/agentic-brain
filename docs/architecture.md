@@ -172,6 +172,8 @@ graph TB
 
 ### Neo4j Graph Schema
 
+For a complete reference, see [Neo4j Architecture](./NEO4J_ARCHITECTURE.md) and [Neo4j Zones](./NEO4J_ZONES.md).
+
 ```mermaid
 graph LR
     subgraph "Node Types"

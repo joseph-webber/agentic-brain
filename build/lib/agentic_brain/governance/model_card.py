@@ -37,14 +37,14 @@ Example:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime, timezone
+from enum import Enum, StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class RiskLevel(str, Enum):
+class RiskLevel(StrEnum):
     """Risk level classification for model deployment."""
 
     LOW = "low"
@@ -127,7 +127,7 @@ class ModelCard(BaseModel):
         None, description="Team or individual responsible for the model"
     )
     created_at: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        default_factory=lambda: datetime.now(UTC).isoformat(),
         description="When the model card was created",
     )
     updated_at: str | None = Field(None, description="Last update timestamp")

@@ -33,6 +33,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from agentic_brain import __version__
 from agentic_brain.core.neo4j_pool import (
@@ -103,6 +104,54 @@ def print_warning(text: str) -> None:
 def print_error(text: str) -> None:
     """Print an error message."""
     print(f"{Colors.RED}✗{Colors.RESET} {text}", file=sys.stderr)
+
+
+def _write_output_file(path: str, content: str) -> None:
+    """Write CLI output to a file, ensuring parent directories exist."""
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(content.rstrip() + "\n", encoding="utf-8")
+
+
+def topics_audit_command(args: argparse.Namespace) -> int:
+    """Run the quarterly topic governance audit against Neo4j."""
+    from agentic_brain.graph import TopicHub, render_audit_report
+
+    print_header("Quarterly Topic Audit")
+
+    configure_neo4j_pool(
+        uri=args.uri,
+        user=args.username,
+        password=args.password,
+        database=args.database,
+    )
+
+    hub = TopicHub(session_factory=get_shared_neo4j_session)
+    report = hub.build_quarterly_audit(limit=args.limit)
+    rendered_report = render_audit_report(report, format=args.format)
+
+    topic_health: dict[str, Any] = report["topic_health"]
+    status = str(topic_health["status"])
+    if status == "soft-cap-exceeded":
+        print_warning(
+            f"Topic count is above the soft cap: {topic_health['topic_count']} / {topic_health['soft_cap']}"
+        )
+    elif status == "warning":
+        print_warning(
+            f"Topic count is approaching the soft cap: {topic_health['topic_count']} / {topic_health['soft_cap']}"
+        )
+    else:
+        print_success(
+            f"Topic hub is healthy: {topic_health['topic_count']} / {topic_health['soft_cap']}"
+        )
+
+    print(rendered_report)
+
+    if args.output:
+        _write_output_file(args.output, rendered_report)
+        print_success(f"Saved topic audit report to {args.output}")
+
+    return 0
 
 
 def find_available_port(start_port: int = 8000, max_attempts: int = 10) -> int:

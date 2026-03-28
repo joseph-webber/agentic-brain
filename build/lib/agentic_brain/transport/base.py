@@ -19,7 +19,7 @@ import logging
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Optional
 
@@ -60,7 +60,7 @@ class TransportMessage:
     content: str
     session_id: str
     message_id: str
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict = field(default_factory=dict)
 
 
@@ -70,7 +70,7 @@ class BaseTransport(ABC):
     def __init__(self, config: TransportConfig):
         self.config = config
         self.connected = False
-        self._created_at = datetime.now(timezone.utc)
+        self._created_at = datetime.now(UTC)
 
     @property
     @abstractmethod

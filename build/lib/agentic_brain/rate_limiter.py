@@ -50,7 +50,7 @@ import os
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, TypeVar
@@ -224,7 +224,8 @@ class RateLimiter:
         self.total_429s: dict[str, int] = dict.fromkeys(self.limits, 0)
 
         # Load persisted state
-        self._load_state()
+        if self.auto_save:
+            self._load_state()
 
         logger.info("🧱 Brick Wall Rate Limiter initialized")
 
@@ -264,7 +265,7 @@ class RateLimiter:
         self.STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
 
         state = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "learned_multipliers": {
                 name: limits.learned_rpm_multiplier
                 for name, limits in self.limits.items()
@@ -421,7 +422,7 @@ class RateLimiter:
         # Clean old history
         self._cleanup_history(provider)
 
-    def record_rate_limit(self, provider: str) -> None:
+    def record_rate_limit(self, provider: str, now: datetime | None = None) -> None:
         """
         Record a 429 rate limit error.
 
@@ -436,13 +437,14 @@ class RateLimiter:
         if provider not in self.limits:
             return
 
-        now = time.time()
-        current_hour = datetime.now().hour
+        current_time = now or datetime.now()
+        timestamp = current_time.timestamp() if now else time.time()
+        current_hour = current_time.hour
         limits = self.limits[provider]
 
         # Record the 429
         record = RequestRecord(
-            timestamp=now,
+            timestamp=timestamp,
             provider=provider,
             success=False,
             status_code=429,
@@ -458,7 +460,7 @@ class RateLimiter:
 
         # Calculate cooldown with exponential backoff
         cooldown = limits.cooldown_seconds * limits.backoff_multiplier
-        self.cooldown_until[provider] = now + cooldown
+        self.cooldown_until[provider] = timestamp + cooldown
 
         logger.warning(
             f"🛑 Rate limited on {provider}! "
@@ -476,9 +478,8 @@ class RateLimiter:
         # Auto-save state
         if self.auto_save:
             self._trigger_save()
-
-        # Persist learned patterns
-        self._save_state()
+            # Persist learned patterns
+            self._save_state()
 
     def _learn_from_429(self, provider: str, hour: int) -> None:
         """

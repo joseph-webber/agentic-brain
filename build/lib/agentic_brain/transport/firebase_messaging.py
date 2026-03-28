@@ -35,12 +35,17 @@ logger = logging.getLogger(__name__)
 
 # Optional FCM import
 try:
+    import firebase_admin
     from firebase_admin import credentials, get_app, initialize_app, messaging
 
     FCM_AVAILABLE = True
 except ImportError:
     FCM_AVAILABLE = False
-    messaging = None
+    firebase_admin = None  # type: ignore[assignment]
+    credentials = None  # type: ignore[assignment]
+    get_app = None  # type: ignore[assignment]
+    initialize_app = None  # type: ignore[assignment]
+    messaging = None  # type: ignore[assignment]
 
 
 class NotificationPriority(Enum):

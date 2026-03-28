@@ -30,7 +30,7 @@ Features:
 import asyncio
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set, TypeVar
 
@@ -89,7 +89,7 @@ class ChildWorkflowHandle:
 
         try:
             return await asyncio.wait_for(self._future, timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise TimeoutError(f"Child workflow {self.workflow_id} timed out")
 
     async def signal(self, signal_name: str, data: Any = None) -> None:
@@ -182,7 +182,7 @@ class ChildWorkflowManager:
             event_id=str(uuid.uuid4()),
             workflow_id=self.parent_workflow_id,
             event_type=EventType.ACTIVITY_STARTED,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data={
                 "child_workflow_id": workflow_id,
                 "child_workflow_type": workflow_type,
@@ -240,7 +240,7 @@ class ChildWorkflowManager:
                 event_id=str(uuid.uuid4()),
                 workflow_id=self.parent_workflow_id,
                 event_type=EventType.ACTIVITY_COMPLETED,
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 data={"child_workflow_id": handle.workflow_id, "result": result},
             )
             await self.event_store.append(event)
@@ -261,7 +261,7 @@ class ChildWorkflowManager:
                 event_id=str(uuid.uuid4()),
                 workflow_id=self.parent_workflow_id,
                 event_type=EventType.ACTIVITY_FAILED,
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 data={"child_workflow_id": handle.workflow_id, "error": str(e)},
             )
             await self.event_store.append(event)
@@ -303,7 +303,7 @@ class ChildWorkflowManager:
 
             return results
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise TimeoutError("Timed out waiting for child workflows")
 
     async def cancel_all(self) -> None:

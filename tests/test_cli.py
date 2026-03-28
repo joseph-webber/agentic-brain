@@ -123,6 +123,13 @@ class TestCLIParsing:
         parser = create_parser()
         assert parser.prog == "agentic"
 
+    def test_greet_command_exists(self):
+        """Test greet command is registered."""
+        parser = create_parser()
+        args = parser.parse_args(["greet", "--no-speak"])
+        assert args.command == "greet"
+        assert args.no_speak is True
+
     def test_version_flag(self):
         """Test --version flag."""
         parser = create_parser()
@@ -683,3 +690,69 @@ class TestCommandExecution:
         args = parser.parse_args(["chat", "--no-memory"])
         assert args.command == "chat"
         assert args.no_memory is True
+
+
+class TestTopicAuditCLI:
+    """Test topic audit CLI parsing and execution."""
+
+    def test_topics_audit_parser(self):
+        """Test topics audit parser wiring."""
+        parser = create_parser()
+        args = parser.parse_args(["topics", "audit", "--format", "json", "--limit", "12"])
+        assert args.command == "topics"
+        assert args.topics_command == "audit"
+        assert args.format == "json"
+        assert args.limit == 12
+
+    @patch("agentic_brain.cli.commands.configure_neo4j_pool")
+    @patch("agentic_brain.cli.commands.get_shared_neo4j_session")
+    @patch("agentic_brain.graph.render_audit_report", return_value="audit report")
+    @patch("agentic_brain.graph.TopicHub")
+    def test_topics_audit_command(
+        self,
+        mock_topic_hub,
+        mock_render_report,
+        mock_session,
+        mock_configure,
+        capsys,
+    ):
+        """Test topics audit command renders a report."""
+        hub_instance = mock_topic_hub.return_value
+        hub_instance.build_quarterly_audit.return_value = {
+            "topic_health": {
+                "status": "healthy",
+                "topic_count": 20,
+                "soft_cap": 100,
+            }
+        }
+
+        args = argparse.Namespace(
+            uri="bolt://localhost:7687",
+            username="neo4j",
+            password="secret",
+            database="neo4j",
+            limit=10,
+            format="markdown",
+            output=None,
+        )
+
+        result = commands.topics_audit_command(args)
+        captured = capsys.readouterr()
+
+        assert result == 0
+        assert "audit report" in captured.out
+        mock_configure.assert_called_once()
+        mock_render_report.assert_called_once()
+
+    @patch("agentic_brain.cli.greet_command.get_startup_snapshot")
+    @patch("agentic_brain.cli.greet_command.speak")
+    def test_main_with_greet_command(self, mock_speak, mock_snapshot):
+        """Test greet command prints context and triggers voice output."""
+        mock_snapshot.return_value.greeting = "Welcome back! Here's what I remember:"
+        mock_snapshot.return_value.proof_lines = ("- today at 10:15 AM: Remembered startup context",)
+
+        result = main(["greet"])
+
+        assert result == 0
+        mock_snapshot.assert_called_once()
+        mock_speak.assert_called_once()

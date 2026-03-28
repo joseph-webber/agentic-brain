@@ -50,7 +50,7 @@ import logging
 import os
 import uuid
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -182,7 +182,7 @@ class CheckpointManager:
         checkpoint_data = {
             "checkpoint_id": checkpoint_id,
             "workflow_id": workflow_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "sequence_number": state.last_sequence,
             "state": state_dict,
         }
@@ -414,7 +414,7 @@ class AutoCheckpointer:
         self.get_state = get_state
 
         self._events_since_checkpoint = 0
-        self._last_checkpoint_time = datetime.now(timezone.utc)
+        self._last_checkpoint_time = datetime.now(UTC)
         self._running = False
         self._task: asyncio.Task | None = None
 
@@ -464,7 +464,7 @@ class AutoCheckpointer:
             if state:
                 await self.manager.create_checkpoint(self.workflow_id, state)
                 self._events_since_checkpoint = 0
-                self._last_checkpoint_time = datetime.now(timezone.utc)
+                self._last_checkpoint_time = datetime.now(UTC)
         except Exception as e:
             logger.error(f"Auto-checkpoint failed: {e}")
 

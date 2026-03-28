@@ -16,14 +16,14 @@
 """E-commerce and retail business models."""
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime, timezone
+from enum import Enum, StrEnum
 from typing import Optional
 
 from .base import BusinessEntity
 
 
-class OrderStatus(str, Enum):
+class OrderStatus(StrEnum):
     """Enumeration of possible order statuses."""
 
     PENDING = "pending"
@@ -35,7 +35,7 @@ class OrderStatus(str, Enum):
     REFUNDED = "refunded"
 
 
-class ProductCategory(str, Enum):
+class ProductCategory(StrEnum):
     """Common product categories."""
 
     ELECTRONICS = "electronics"
@@ -325,9 +325,9 @@ class Order(BusinessEntity):
 
         # Update timestamp fields based on status
         if new_status == OrderStatus.SHIPPED:
-            self.shipped_at = datetime.now(timezone.utc)
+            self.shipped_at = datetime.now(UTC)
         elif new_status == OrderStatus.DELIVERED:
-            self.delivered_at = datetime.now(timezone.utc)
+            self.delivered_at = datetime.now(UTC)
 
         return True
 

@@ -41,6 +41,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from agentic_brain.core.neo4j_pool import (
+    configure_pool as configure_neo4j_pool,
+)
+from agentic_brain.core.neo4j_pool import (
+    get_driver as get_shared_neo4j_driver,
+)
+
 from . import MCPServer
 from .tools import (
     ToolContext,
@@ -187,12 +194,13 @@ class AgenticMCPServer:
             return False
 
         try:
-            from neo4j import GraphDatabase
-
-            self._neo4j_driver = GraphDatabase.driver(
-                self.config.neo4j_uri,
-                auth=(self.config.neo4j_user, self.config.neo4j_password),
+            configure_neo4j_pool(
+                uri=self.config.neo4j_uri,
+                user=self.config.neo4j_user,
+                password=self.config.neo4j_password,
+                database=self.config.neo4j_database,
             )
+            self._neo4j_driver = get_shared_neo4j_driver()
 
             # Test connection
             with self._neo4j_driver.session(
@@ -561,7 +569,7 @@ def create_server(
     Example:
         server = create_server(
             neo4j_uri="bolt://localhost:7687",
-            neo4j_password="secret",
+            neo4j_password="your-password-here",
             llm_model="llama3.2:3b"
         )
         server.run()

@@ -31,7 +31,7 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -253,7 +253,7 @@ def create_session(
                     "success": True,
                     "session_id": session_id,
                     "user_id": user_id,
-                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                     "message": f"In-memory session '{session_id}' created (not persistent)",
                 },
                 indent=2,
@@ -647,7 +647,7 @@ def health_check() -> str:
 
     health = {
         "status": "healthy",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "components": {},
     }
 
@@ -765,7 +765,7 @@ def get_analytics(days: int = 7) -> str:
 
             from datetime import timedelta
 
-            end_date = datetime.now(timezone.utc)
+            end_date = datetime.now(UTC)
             start_date = end_date - timedelta(days=days)
 
             # Get daily stats for period

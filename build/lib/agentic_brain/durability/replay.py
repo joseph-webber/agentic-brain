@@ -38,7 +38,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Callable
 
 from .event_store import EventStore, get_event_store
@@ -201,7 +201,7 @@ class ReplayEngine:
         Returns:
             ReplayResult with reconstructed state
         """
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         errors = []
         from_sequence = 0
 
@@ -242,7 +242,7 @@ class ReplayEngine:
                 logger.error(error_msg)
                 errors.append(error_msg)
 
-        duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
+        duration_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
         return ReplayResult(
             success=len(errors) == 0,

@@ -24,7 +24,7 @@ This adapter always works as it only requires numpy (or falls back
 to pure Python if numpy is not available).
 
 Copyright (C) 2026 Joseph Webber
-License: GPL-3.0-or-later
+License: Apache-2.0
 """
 
 import logging
@@ -154,7 +154,7 @@ class MemoryVectorAdapter(VectorDBAdapter):
     def upsert(
         self,
         collection: str,
-        vectors: list[Union[dict[str, Any], VectorRecord]],
+        vectors: list[dict[str, Any] | VectorRecord],
         namespace: Optional[str] = None,
     ) -> int:
         """
@@ -382,7 +382,7 @@ class MemoryVectorAdapter(VectorDBAdapter):
     def _python_similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """Calculate similarity using pure Python."""
         if self.metric == "cosine":
-            dot = sum(a * b for a, b in zip(vec1, vec2))
+            dot = sum(a * b for a, b in zip(vec1, vec2, strict=False))
             norm1 = math.sqrt(sum(a * a for a in vec1))
             norm2 = math.sqrt(sum(b * b for b in vec2))
             if norm1 == 0 or norm2 == 0:
@@ -390,10 +390,12 @@ class MemoryVectorAdapter(VectorDBAdapter):
             return dot / (norm1 * norm2)
 
         elif self.metric == "dotproduct":
-            return sum(a * b for a, b in zip(vec1, vec2))
+            return sum(a * b for a, b in zip(vec1, vec2, strict=False))
 
         elif self.metric == "euclidean":
-            dist = math.sqrt(sum((a - b) ** 2 for a, b in zip(vec1, vec2)))
+            dist = math.sqrt(
+                sum((a - b) ** 2 for a, b in zip(vec1, vec2, strict=False))
+            )
             return -dist
 
         else:

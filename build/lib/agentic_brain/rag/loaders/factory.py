@@ -98,12 +98,8 @@ def _register_loaders():
         pass
 
     try:
-        from .nosql import (
-            ElasticsearchLoader,
-            FirestoreLoader,
-            MongoDBLoader,
-            RedisLoader,
-        )
+        from .firestore import FirestoreLoader
+        from .nosql import ElasticsearchLoader, MongoDBLoader, RedisLoader
 
         _LOADER_REGISTRY["mongodb"] = MongoDBLoader
         _LOADER_REGISTRY["mongo"] = MongoDBLoader
@@ -129,6 +125,14 @@ def _register_loaders():
         from .salesforce import SalesforceLoader
 
         _LOADER_REGISTRY["salesforce"] = SalesforceLoader
+    except ImportError:
+        pass
+
+    try:
+        from .wordpress import WordPressLoader
+
+        _LOADER_REGISTRY["wordpress"] = WordPressLoader
+        _LOADER_REGISTRY["wp"] = WordPressLoader
     except ImportError:
         pass
 

@@ -55,7 +55,7 @@ Usage:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -88,12 +88,12 @@ class MemoEntry:
             created_at=(
                 datetime.fromisoformat(data["created_at"])
                 if data.get("created_at")
-                else datetime.now(timezone.utc)
+                else datetime.now(UTC)
             ),
             updated_at=(
                 datetime.fromisoformat(data["updated_at"])
                 if data.get("updated_at")
-                else datetime.now(timezone.utc)
+                else datetime.now(UTC)
             ),
         )
 
@@ -128,7 +128,7 @@ class MemoStore:
         Returns:
             The created/updated MemoEntry
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if key in self._entries:
             entry = self._entries[key]
@@ -197,7 +197,7 @@ class MemoStore:
                     "action": "delete",
                     "key": key,
                     "old_value": old_value,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -239,7 +239,7 @@ class MemoStore:
             {
                 "action": "clear",
                 "count": count,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -307,6 +307,7 @@ class MemoMixin:
         """Set a memo value"""
         if self._memo_store is None:
             self.init_memos()
+        assert self._memo_store is not None
         self._memo_store.set(key, value)
 
     def get_memo(self, key: str, default: Any = None) -> Any:

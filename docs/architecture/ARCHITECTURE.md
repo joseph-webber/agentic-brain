@@ -31,6 +31,8 @@
 
 ## 1. System Overview
 
+For the Neo4j-specific reference model used by GraphRAG and memory, see [Neo4j Architecture](../NEO4J_ARCHITECTURE.md) and [Neo4j Zones](../NEO4J_ZONES.md).
+
 Agentic Brain is a **production-ready AI orchestration platform** that combines multi-LLM routing, graph-enhanced RAG, and enterprise security. The architecture follows a modular, microservices-friendly design that can scale from single-node deployments to distributed clusters.
 
 <div align="center">

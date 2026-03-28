@@ -23,7 +23,7 @@ Usage:
     python -m agentic_brain.mcp
 
     # With arguments
-    python -m agentic_brain.mcp --neo4j-uri bolt://localhost:7687 --neo4j-password secret
+    python -m agentic_brain.mcp --neo4j-uri bolt://localhost:7687 --neo4j-password your-password-here
 
     # Different LLM model
     python -m agentic_brain.mcp --llm-model llama3.2:3b
@@ -35,13 +35,17 @@ Usage:
     python -m agentic_brain.mcp --list-tools
 """
 
+from __future__ import annotations
+
 import argparse
 import asyncio
 import json
 import os
 import sys
+from typing import TYPE_CHECKING
 
-from .server import AgenticMCPServer, ServerConfig
+if TYPE_CHECKING:
+    from .server import AgenticMCPServer
 
 
 def parse_args() -> argparse.Namespace:
@@ -56,7 +60,7 @@ Examples:
     python -m agentic_brain.mcp
 
     # Connect to Neo4j
-    python -m agentic_brain.mcp --neo4j-uri bolt://localhost:7687 --neo4j-password mypassword
+    python -m agentic_brain.mcp --neo4j-uri bolt://localhost:7687 --neo4j-password your-password-here
 
     # Use different LLM
     python -m agentic_brain.mcp --llm-model llama3.2:3b --ollama-host http://localhost:11434
@@ -247,6 +251,8 @@ def run_health_check(server: AgenticMCPServer) -> None:
 
 def main() -> None:
     """Main entry point."""
+    from .server import AgenticMCPServer, ServerConfig
+
     args = parse_args()
 
     # Build config from args

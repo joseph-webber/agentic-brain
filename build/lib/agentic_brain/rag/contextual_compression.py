@@ -48,7 +48,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 logger = logging.getLogger(__name__)
 
@@ -310,7 +310,7 @@ Relevant extract:"""
         selected: list[str] = []
         current_chars = 0
 
-        for score, sentence in scored:
+        for _score, sentence in scored:
             if current_chars >= target_chars:
                 break
             selected.append(sentence)
@@ -484,7 +484,7 @@ Relevant extract:"""
         norm_b = sum(x * x for x in b) ** 0.5
         if norm_a == 0 or norm_b == 0:
             return 0.0
-        return dot_product / (norm_a * norm_b)
+        return float(dot_product / (norm_a * norm_b))
 
 
 class ChainedCompressor:
@@ -512,7 +512,7 @@ class ChainedCompressor:
         if strategies is None:
             strategies = [CompressionStrategy.SENTENCE] * len(self.compressors)
 
-        current_chunks = chunks
+        current_chunks: list[str | dict[str, Any]] = list(chunks)
 
         for compressor, strategy in zip(self.compressors, strategies, strict=False):
             result = compressor.compress(query, current_chunks, strategy)
@@ -528,7 +528,7 @@ class ChainedCompressor:
             compressed_chunks=[
                 CompressedChunk(
                     original_content=orig,
-                    compressed_content=comp,
+                    compressed_content=cast(str, comp),
                     compression_ratio=len(comp) / len(orig) if orig else 1.0,
                     relevance_score=0.7,
                 )

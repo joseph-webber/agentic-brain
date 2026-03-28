@@ -28,7 +28,7 @@ import os
 import queue
 import threading
 from collections.abc import Generator
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Optional
 
 from .base import BaseLoader, LoadedDocument
@@ -69,6 +69,9 @@ try:
     FIREBASE_AVAILABLE = True
 except ImportError:
     FIREBASE_AVAILABLE = False
+    firebase_admin = None  # type: ignore[assignment]
+    firebase_credentials = None  # type: ignore[assignment]
+    firestore = None  # type: ignore[assignment]
 
 
 class MongoDBLoader(BaseLoader):
@@ -401,8 +404,8 @@ class MongoDBLoader(BaseLoader):
             doc = {
                 self._content_field: content,
                 self._title_field: title or "Untitled",
-                "created_at": datetime.now(timezone.utc),
-                "updated_at": datetime.now(timezone.utc),
+                "created_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC),
             }
 
             if metadata:

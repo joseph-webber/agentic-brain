@@ -56,14 +56,14 @@ Usage:
 """
 
 import asyncio
-import inspect
 import hashlib
 import hmac
+import inspect
 import logging
 import secrets
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, TypeVar
 
@@ -139,7 +139,7 @@ class ActivityToken:
         """Check if token has expired"""
         if not self.expires_at:
             return False
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     @property
     def is_valid(self) -> bool:
@@ -173,7 +173,7 @@ class ActivityToken:
             created_at=(
                 datetime.fromisoformat(data["created_at"])
                 if data.get("created_at")
-                else datetime.now(timezone.utc)
+                else datetime.now(UTC)
             ),
             expires_at=(
                 datetime.fromisoformat(data["expires_at"])
@@ -278,7 +278,7 @@ class AsyncCompletionManager:
             activity_id=activity_id,
             activity_type=activity_type,
             secret=self._secret_key,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=ttl_hours),
+            expires_at=datetime.now(UTC) + timedelta(hours=ttl_hours),
         )
 
         self._tokens[token.token_id] = token
@@ -361,7 +361,7 @@ class AsyncCompletionManager:
 
             token.status = AsyncCompletionStatus.COMPLETED
             token.result = result
-            token.completed_at = datetime.now(timezone.utc)
+            token.completed_at = datetime.now(UTC)
 
             # Notify waiter if any
             if token.token_id in self._waiters:
@@ -405,7 +405,7 @@ class AsyncCompletionManager:
 
             token.status = AsyncCompletionStatus.FAILED
             token.error = error
-            token.completed_at = datetime.now(timezone.utc)
+            token.completed_at = datetime.now(UTC)
 
             # Notify waiter if any
             if token.token_id in self._waiters:
@@ -454,7 +454,7 @@ class AsyncCompletionManager:
             if timeout:
                 return await asyncio.wait_for(future, timeout)
             return await future
-        except asyncio.TimeoutError:
+        except TimeoutError:
             # Clean up waiter
             self._waiters.pop(token.token_id, None)
             token.status = AsyncCompletionStatus.EXPIRED
@@ -476,7 +476,7 @@ class AsyncCompletionManager:
             raise TokenAlreadyCompletedError(token.token_id, token.status)
 
         token.status = AsyncCompletionStatus.CANCELLED
-        token.completed_at = datetime.now(timezone.utc)
+        token.completed_at = datetime.now(UTC)
 
         # Cancel waiter if any
         if token.token_id in self._waiters:

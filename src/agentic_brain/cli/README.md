@@ -1,6 +1,6 @@
 # Agentic Brain CLI
 
-Complete command-line interface for the agentic-brain project with six essential commands for managing AI agents, chat sessions, and deployment.
+Complete command-line interface for the agentic-brain project with essential commands for managing AI agents, chat sessions, deployment, and startup accessibility.
 
 ## Installation
 
@@ -27,6 +27,31 @@ agentic <command> [options]
 ```
 
 ## Commands
+
+### Startup Greeting - Remembered Context at Launch
+
+Speak and display a friendly startup greeting with proof of recent context from Neo4j:
+
+```bash
+python -m agentic_brain.cli greet
+agentic-brain greet
+```
+
+**Options:**
+- `--limit N` - Number of recent memory items to inspect (default: 5)
+- `--voice VOICE` - Voice for the spoken greeting (default: Samantha)
+- `--rate RATE` - Speech rate for the greeting (default: 165)
+- `--no-speak` - Show the greeting without voice output
+
+**Output format:**
+
+```text
+Welcome back! Here's what I remember:
+- Last session: [topic] at [time]
+- Pending: [X items]
+- Recent: [summary]
+Ready to continue?
+```
 
 ### 1. Chat - Interactive Chat Session
 

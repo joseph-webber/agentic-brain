@@ -21,7 +21,7 @@ Provides real-time bidirectional streaming chat over WebSocket connections.
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
@@ -33,12 +33,34 @@ from .routes import (
     session_messages,
     sessions,
 )
+from .websocket_auth import WebSocketAuthenticator
 
 logger = logging.getLogger(__name__)
 
 
+def _resolve_streaming_response():
+    """Resolve StreamingResponse from the currently-imported module.
+
+    Some tests clear `sys.modules` entries under `agentic_brain.*` to validate
+    lazy-loading, then patch `agentic_brain.api.websocket.StreamingResponse`.
+    Resolving dynamically avoids patch drift across module reloads.
+    """
+
+    import sys
+
+    current_module = sys.modules.get("agentic_brain.api.websocket")
+    if current_module is not None and hasattr(current_module, "StreamingResponse"):
+        return current_module.StreamingResponse
+
+    from agentic_brain.streaming import StreamingResponse as _StreamingResponse
+
+    return _StreamingResponse
+
+
 def register_websocket_routes(app: FastAPI):
     """Register WebSocket routes with the FastAPI app."""
+
+    authenticator = WebSocketAuthenticator()
 
     @app.websocket("/ws/chat")
     async def websocket_chat(websocket: WebSocket):
@@ -159,6 +181,11 @@ def register_websocket_routes(app: FastAPI):
         """
         await websocket.accept()
 
+        # Authenticate connection
+        auth_result = await authenticator.authenticate(websocket)
+        if not auth_result:
+            return
+
         try:
             while True:
                 # Receive message from client
@@ -197,7 +224,7 @@ def register_websocket_routes(app: FastAPI):
                 user_id = payload.get("user_id")
                 provider = payload.get("provider", "ollama")
                 model = payload.get("model", "llama3.1:8b")
-                
+
                 # Safely parse temperature with validation
                 try:
                     temperature = float(payload.get("temperature", 0.7))
@@ -214,7 +241,7 @@ def register_websocket_routes(app: FastAPI):
                         "id": _generate_message_id(),
                         "role": "user",
                         "content": message,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                     }
                 )
 
@@ -227,11 +254,22 @@ def register_websocket_routes(app: FastAPI):
 
                 try:
                     # Stream response tokens
-                    streamer = StreamingResponse(
-                        provider=provider,
-                        model=model,
-                        temperature=temperature,
+                    streamer_factory = getattr(
+                        app.state, "streaming_response_factory", None
                     )
+                    if streamer_factory is not None:
+                        streamer = streamer_factory(
+                            provider=provider,
+                            model=model,
+                            temperature=temperature,
+                        )
+                    else:
+                        streaming_response_cls = _resolve_streaming_response()
+                        streamer = streaming_response_cls(
+                            provider=provider,
+                            model=model,
+                            temperature=temperature,
+                        )
 
                     response_text = ""
                     async for token in streamer.stream_websocket(message, history[:-1]):
@@ -251,7 +289,7 @@ def register_websocket_routes(app: FastAPI):
                                 "id": _generate_message_id(),
                                 "role": "assistant",
                                 "content": response_text,
-                                "timestamp": datetime.now(timezone.utc).isoformat(),
+                                "timestamp": datetime.now(UTC).isoformat(),
                             }
                         )
 

@@ -15,13 +15,12 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """Transport Manager - orchestrates multiple transports."""
 
 import logging
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Optional
 
@@ -164,7 +163,7 @@ class TransportManager:
 
     async def send(self, message: TransportMessage) -> bool:
         """Send message via configured transports."""
-        self._status.last_message_at = datetime.now(timezone.utc)
+        self._status.last_message_at = datetime.now(UTC)
         results = []
 
         # Dual write - send to both
@@ -210,7 +209,7 @@ class TransportManager:
         transport = self._get_primary_transport()
         if transport:
             async for message in transport.receive():
-                self._status.last_message_at = datetime.now(timezone.utc)
+                self._status.last_message_at = datetime.now(UTC)
                 yield message
 
     async def send_token(self, token: str, is_end: bool = False) -> bool:

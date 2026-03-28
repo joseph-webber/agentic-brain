@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Joseph Webber <joseph.webber@me.com>
 """
 Chatbot - The Star of the Show
@@ -48,7 +47,7 @@ With Memory:
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Callable, Optional
 
 import aiohttp
@@ -92,9 +91,7 @@ class ChatMessage:
 
     role: str
     content: str
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -110,7 +107,7 @@ class ChatMessage:
         return cls(
             role=data["role"],
             content=data["content"],
-            timestamp=data.get("timestamp", datetime.now(timezone.utc).isoformat()),
+            timestamp=data.get("timestamp", datetime.now(UTC).isoformat()),
             metadata=data.get("metadata", {}),
         )
 
@@ -275,7 +272,7 @@ Guidelines:
 - Remember context from the conversation
 - If you don't know something, say so
 
-Current time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"""
+Current time: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}"""
 
     def _get_session(
         self, session_id: str | None = None, user_id: str | None = None
@@ -329,18 +326,20 @@ Current time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"""
         """Call the LLM to generate response (async)."""
         # If custom LLM provided
         if self.llm:
+            # Prefer explicit chat/generate methods over bare callables so that
+            # router-like objects (with .chat) behave as expected in tests.
+            if hasattr(self.llm, "chat"):
+                result = self.llm.chat(messages=messages)
+                if asyncio.iscoroutine(result):
+                    return await result
+                return result
+            if hasattr(self.llm, "generate"):
+                result = self.llm.generate(messages)
+                if asyncio.iscoroutine(result):
+                    return await result
+                return result
             if callable(self.llm):
                 result = self.llm(messages)
-                if asyncio.iscoroutine(result):
-                    return await result
-                return result
-            elif hasattr(self.llm, "chat"):
-                result = self.llm.chat(messages)
-                if asyncio.iscoroutine(result):
-                    return await result
-                return result
-            elif hasattr(self.llm, "generate"):
-                result = self.llm.generate(messages)
                 if asyncio.iscoroutine(result):
                     return await result
                 return result
@@ -348,11 +347,14 @@ Current time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"""
         # Default: use LLMRouter with its built-in fallback chain
         try:
             router = get_router()
+            # LLMRouter.chat expects a single message string; we join the
+            # structured history into a compact transcript while preserving
+            # roles for routing heuristics.
+            transcript = "\n".join(f"{m['role']}: {m['content']}" for m in messages)
             return await router.chat(
-                messages=messages,
+                message=transcript,
                 model=self.config.model,
                 temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
             )
         except RuntimeError as e:
             # Handle LLMRouter errors with helpful context
@@ -396,7 +398,7 @@ Current time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}"""
                     metadata={
                         "session_id": session.session_id,
                         "user_id": session.user_id,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                         "type": "user_fact",
                     },
                 )

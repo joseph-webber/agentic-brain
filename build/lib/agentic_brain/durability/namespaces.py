@@ -56,7 +56,7 @@ Usage:
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
@@ -132,12 +132,12 @@ class NamespaceConfig:
             created_at=(
                 datetime.fromisoformat(data["created_at"])
                 if data.get("created_at")
-                else datetime.now(timezone.utc)
+                else datetime.now(UTC)
             ),
             updated_at=(
                 datetime.fromisoformat(data["updated_at"])
                 if data.get("updated_at")
-                else datetime.now(timezone.utc)
+                else datetime.now(UTC)
             ),
             owner=data.get("owner"),
             max_workflows=data.get("max_workflows", 10000),
@@ -363,13 +363,13 @@ class Namespace:
     async def suspend(self) -> None:
         """Suspend the namespace (no new workflows)"""
         self.config.state = NamespaceState.SUSPENDED
-        self.config.updated_at = datetime.now(timezone.utc)
+        self.config.updated_at = datetime.now(UTC)
         logger.warning(f"Namespace '{self.name}' suspended")
 
     async def resume(self) -> None:
         """Resume a suspended namespace"""
         self.config.state = NamespaceState.ACTIVE
-        self.config.updated_at = datetime.now(timezone.utc)
+        self.config.updated_at = datetime.now(UTC)
         logger.info(f"Namespace '{self.name}' resumed")
 
     async def delete(self) -> None:
@@ -379,7 +379,7 @@ class Namespace:
         Does not actually delete workflows - use cleanup for that
         """
         self.config.state = NamespaceState.DELETED
-        self.config.updated_at = datetime.now(timezone.utc)
+        self.config.updated_at = datetime.now(UTC)
         logger.warning(f"Namespace '{self.name}' marked for deletion")
 
     async def cleanup(self, force: bool = False) -> int:

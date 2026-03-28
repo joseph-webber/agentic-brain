@@ -15,14 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright 2026 Joseph Webber
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
 """
 FastAPI Server for Agentic Brain — The Universal AI Platform
 ==============================================================
@@ -46,14 +38,20 @@ License: Apache-2.0
 """
 
 import logging
+import os
+import threading
+from datetime import UTC
 from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.staticfiles import StaticFiles
 
 from ..dashboard import create_dashboard_router
 from .audit import AUDIT_ENABLED, AuditLogger, AuditMiddleware
 from .middleware import SecurityHeadersMiddleware, setup_cors, setup_exception_handlers
+from .redis_health import get_redis_health_checker
 from .routes import lifespan, register_routes, session_messages, sessions
 from .websocket import register_websocket_routes
 
@@ -64,8 +62,8 @@ logger = logging.getLogger(__name__)
 
 def create_app(
     title: str = "Agentic Brain API",
-    version: str = "2.11.0",
-    description: str = "The Universal AI Platform — REST API and WebSocket interface for AI agents with GraphRAG memory, multi-tenant sessions, and enterprise-grade security.",
+    version: str = "1.0.0",
+    description: str = "Multi-LLM orchestration platform with GraphRAG, Unified Brain, and real-time chat",
     cors_origins: list[str | None] = None,
 ) -> FastAPI:
     """
@@ -78,6 +76,7 @@ def create_app(
     - Session management endpoints
     - Dashboard router for admin interface
     - Comprehensive API documentation (OpenAPI/Swagger)
+    - Redis health checking on startup (BULLETPROOF)
 
     Args:
         title (str): API title for OpenAPI documentation
@@ -97,22 +96,81 @@ def create_app(
         ... )
         >>> # Run with: uvicorn agentic_brain.api.server:app
     """
+    # BULLETPROOF: Check Redis on startup
+    logger.info("🔴 Checking Redis availability...")
+    redis_checker = get_redis_health_checker()
+    is_test_environment = (
+        os.getenv("TESTING", "").lower() in {"1", "true", "yes"}
+        or os.getenv("CI", "").lower() in {"1", "true", "yes"}
+        or "PYTEST_CURRENT_TEST" in os.environ
+    )
+
+    if is_test_environment:
+        logger.info("Test environment detected — skipping Redis connectivity check")
+    else:
+        is_available, status_msg = redis_checker.check_redis_available()
+        if not is_available:
+            logger.warning(f"⚠️  Redis not available: {status_msg}")
+            logger.info("Attempting to auto-start Redis in background...")
+
+            def _bg_start():
+                if redis_checker.try_auto_start_redis():
+                    logger.info("✅ Redis auto-started successfully")
+                else:
+                    logger.warning(
+                        "⚠️  Could not auto-start Redis. "
+                        "Start manually with: docker-compose -f docker-compose-redis.yml up -d"
+                    )
+
+            threading.Thread(
+                target=_bg_start, daemon=True, name="redis-autostart"
+            ).start()
+        else:
+            logger.info(f"✅ Redis is available: {status_msg}")
 
     app = FastAPI(
         title=title,
         version=version,
         description=description,
-        docs_url="/docs",
+        docs_url=None,  # Disabled for custom theme
         redoc_url="/redoc",
         openapi_url="/openapi.json",
+        openapi_tags=[
+            {"name": "chat", "description": "Real-time chat and messaging"},
+            {"name": "rag", "description": "GraphRAG and knowledge retrieval"},
+            {"name": "llm", "description": "LLM routing and orchestration"},
+            {"name": "bots", "description": "Inter-bot communication"},
+            {"name": "health", "description": "System health and monitoring"},
+        ],
         lifespan=lifespan,
     )
+
+    # Mount static files for custom Swagger UI theme
+    static_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+    if os.path.exists(static_path):
+        app.mount("/static", StaticFiles(directory=static_path), name="static")
+    else:
+        logger.warning(
+            f"Static directory not found at {static_path}, custom theme disabled"
+        )
+
+    @app.get("/docs", include_in_schema=False)
+    async def custom_swagger_ui_html():
+        return get_swagger_ui_html(
+            openapi_url=app.openapi_url,
+            title=app.title + " - Swagger UI",
+            oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+            swagger_css_url="/static/swagger-ui.css",
+        )
 
     # Store version and start time for health check endpoint
     app.version = version
     from datetime import datetime, timezone
 
-    app._start_time = datetime.now(timezone.utc)
+    app._start_time = datetime.now(UTC)
+
+    # Store Redis health checker for route access
+    app.state.redis_health_checker = redis_checker
 
     # Setup middleware
     setup_cors(app, cors_origins)

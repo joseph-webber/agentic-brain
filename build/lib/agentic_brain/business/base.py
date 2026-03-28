@@ -18,7 +18,7 @@
 import contextlib
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field, fields
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Generic, Optional, TypeVar
 from uuid import uuid4
 
@@ -35,8 +35,8 @@ class BusinessEntity(ABC):
     """
 
     id: str = field(default_factory=lambda: str(uuid4()))
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def to_dict(self) -> dict[str, Any]:
         """
@@ -88,7 +88,7 @@ class BusinessEntity(ABC):
         """
         data = self.to_dict()
         # Ensure all values are Neo4j-compatible types
-        neo4j_data = {}
+        neo4j_data: dict[str, Any] = {}
         for key, value in data.items():
             if value is None:
                 continue
@@ -114,7 +114,7 @@ class BusinessEntity(ABC):
 
     def update_timestamp(self) -> None:
         """Update the modified timestamp to current time."""
-        self.updated_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(UTC)
 
 
 class Repository(ABC, Generic[T]):

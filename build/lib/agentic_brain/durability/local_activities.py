@@ -28,11 +28,11 @@ Features:
 """
 
 import asyncio
-import inspect
 import functools
+import inspect
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 from .event_store import EventStore, get_event_store
@@ -223,7 +223,7 @@ class LocalActivityExecutor:
             event_id=str(uuid.uuid4()),
             workflow_id=self.workflow_id,
             event_type=EventType.ACTIVITY_STARTED,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data={
                 "activity_id": activity_id,
                 "activity_name": activity_name,
@@ -244,7 +244,7 @@ class LocalActivityExecutor:
                 # Execute with timeout
                 timeout = options.start_to_close_timeout.total_seconds()
 
-                start_time = datetime.now(timezone.utc)
+                start_time = datetime.now(UTC)
 
                 if inspect.iscoroutinefunction(func):
                     result = await asyncio.wait_for(
@@ -260,7 +260,7 @@ class LocalActivityExecutor:
                         timeout=timeout,
                     )
 
-                end_time = datetime.now(timezone.utc)
+                end_time = datetime.now(UTC)
 
                 execution.completed_at = end_time
                 execution.status = "completed"
@@ -272,7 +272,7 @@ class LocalActivityExecutor:
                     event_id=str(uuid.uuid4()),
                     workflow_id=self.workflow_id,
                     event_type=EventType.ACTIVITY_COMPLETED,
-                    timestamp=datetime.now(timezone.utc),
+                    timestamp=datetime.now(UTC),
                     data={
                         "activity_id": activity_id,
                         "attempts": execution.attempts,
@@ -283,7 +283,7 @@ class LocalActivityExecutor:
 
                 return result
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 last_error = TimeoutError(
                     f"Local activity {activity_name} timed out " f"after {timeout}s"
                 )
@@ -298,14 +298,14 @@ class LocalActivityExecutor:
         # All retries exhausted
         execution.status = "failed"
         execution.error = str(last_error)
-        execution.completed_at = datetime.now(timezone.utc)
+        execution.completed_at = datetime.now(UTC)
 
         # Record failure
         fail_event = BaseEvent(
             event_id=str(uuid.uuid4()),
             workflow_id=self.workflow_id,
             event_type=EventType.ACTIVITY_FAILED,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data={
                 "activity_id": activity_id,
                 "attempts": execution.attempts,

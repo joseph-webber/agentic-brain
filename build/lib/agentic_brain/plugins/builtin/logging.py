@@ -16,7 +16,7 @@
 """Logging plugin for Agentic Brain."""
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Optional
 
 from agentic_brain.plugins.base import Plugin, PluginConfig
@@ -77,7 +77,7 @@ class LoggingPlugin(Plugin):
         log_parts = []
 
         if self.log_timestamps:
-            log_parts.append(f"[{datetime.now(timezone.utc).isoformat()}]")
+            log_parts.append(f"[{datetime.now(UTC).isoformat()}]")
 
         if self.log_session_id and "session_id" in kwargs:
             log_parts.append(f"Session: {kwargs['session_id']}")
@@ -104,7 +104,7 @@ class LoggingPlugin(Plugin):
         log_parts = []
 
         if self.log_timestamps:
-            log_parts.append(f"[{datetime.now(timezone.utc).isoformat()}]")
+            log_parts.append(f"[{datetime.now(UTC).isoformat()}]")
 
         if self.log_session_id and "session_id" in kwargs:
             log_parts.append(f"Session: {kwargs['session_id']}")

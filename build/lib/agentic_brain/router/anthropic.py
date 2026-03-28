@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """
 Anthropic provider implementation.
 """
@@ -152,7 +151,7 @@ async def chat_anthropic(
         )
     except aiohttp.ClientError as e:
         raise LLMProviderError("anthropic", model, e)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise AgenticTimeoutError("Anthropic chat", config.timeout, None)
     except (KeyError, TypeError) as e:
         raise LLMProviderError(

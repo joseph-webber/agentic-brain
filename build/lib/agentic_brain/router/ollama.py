@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """
 Ollama provider implementation.
 """
@@ -196,7 +195,7 @@ async def chat_ollama(
         )
     except aiohttp.ClientError as e:
         raise LLMProviderError("ollama", model, e)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise AgenticTimeoutError("Ollama chat", config.timeout, None)
     except (KeyError, TypeError) as e:
         raise LLMProviderError(

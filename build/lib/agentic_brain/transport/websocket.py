@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """Native WebSocket transport - fast, bidirectional with auto-reconnect and authentication."""
 
 import asyncio
@@ -23,7 +22,7 @@ import logging
 from collections import deque
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Callable, Optional
 
@@ -222,7 +221,7 @@ class WebSocketTransport(BaseTransport):
                 )
                 return None
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(
                 f"WebSocket auth timeout after {self._auth_config.auth_timeout}s"
             )
@@ -242,7 +241,7 @@ class WebSocketTransport(BaseTransport):
                     "success": success,
                     "message": message,
                     "user_id": self._user_id if success else None,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
         except Exception as e:
@@ -418,11 +417,11 @@ class WebSocketTransport(BaseTransport):
                     timestamp=(
                         datetime.fromisoformat(data["timestamp"])
                         if "timestamp" in data
-                        else datetime.now(timezone.utc)
+                        else datetime.now(UTC)
                     ),
                     metadata=data.get("metadata", {}),
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue  # Keep listening
             except WebSocketDisconnect:
                 self.connected = False
@@ -458,7 +457,7 @@ class WebSocketTransport(BaseTransport):
                 {
                     "token": token,
                     "is_end": is_end,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
             return True

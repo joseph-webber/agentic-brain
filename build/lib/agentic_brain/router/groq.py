@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """
 Groq provider implementation - Fast FREE inference.
 """
@@ -153,7 +152,7 @@ async def chat_groq(
         )
     except aiohttp.ClientError as e:
         raise LLMProviderError("groq", model, e)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise AgenticTimeoutError("Groq chat", config.groq_timeout, None)
     except (KeyError, TypeError) as e:
         raise LLMProviderError(

@@ -35,8 +35,8 @@ import time
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from enum import Enum
+from datetime import UTC, datetime, timedelta, timezone
+from enum import Enum, StrEnum
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -246,7 +246,9 @@ class LDAPAuthProvider(AuthProvider):
         except ImportError:
             LDAPAuthProvider._ldap3_available = False
 
-    def _get_connection(self, bind_dn: Optional[str] = None, password: Optional[str] = None) -> Any:
+    def _get_connection(
+        self, bind_dn: Optional[str] = None, password: Optional[str] = None
+    ) -> Any:
         """
         Get an LDAP connection.
 
@@ -258,9 +260,7 @@ class LDAPAuthProvider(AuthProvider):
             ldap3.Connection object
         """
         if not self._ldap3_available:
-            raise RuntimeError(
-                "ldap3 library not installed. Run: pip install ldap3"
-            )
+            raise RuntimeError("ldap3 library not installed. Run: pip install ldap3")
 
         ldap3 = self._ldap3_module
 
@@ -271,7 +271,11 @@ class LDAPAuthProvider(AuthProvider):
         if self.ldap_config.use_anonymous_bind and not bind_dn:
             conn = ldap3.Connection(
                 self._server,
-                auto_bind=ldap3.AUTO_BIND_NO_TLS if not self.ldap_config.use_ssl else ldap3.AUTO_BIND_TLS_BEFORE_BIND,
+                auto_bind=(
+                    ldap3.AUTO_BIND_NO_TLS
+                    if not self.ldap_config.use_ssl
+                    else ldap3.AUTO_BIND_TLS_BEFORE_BIND
+                ),
                 raise_exceptions=True,
             )
         else:
@@ -279,7 +283,11 @@ class LDAPAuthProvider(AuthProvider):
                 self._server,
                 user=dn,
                 password=pwd,
-                auto_bind=ldap3.AUTO_BIND_NO_TLS if not self.ldap_config.use_ssl else ldap3.AUTO_BIND_TLS_BEFORE_BIND,
+                auto_bind=(
+                    ldap3.AUTO_BIND_NO_TLS
+                    if not self.ldap_config.use_ssl
+                    else ldap3.AUTO_BIND_TLS_BEFORE_BIND
+                ),
                 raise_exceptions=True,
             )
 
@@ -317,7 +325,9 @@ class LDAPAuthProvider(AuthProvider):
 
             # Step 2: Search for user DN
             search_base = self.ldap_config.user_search_base or self.ldap_config.base_dn
-            search_filter = self.ldap_config.user_search_filter.format(username=username)
+            search_filter = self.ldap_config.user_search_filter.format(
+                username=username
+            )
 
             service_conn.search(
                 search_base=search_base,
@@ -363,7 +373,11 @@ class LDAPAuthProvider(AuthProvider):
                 try:
                     attr = getattr(user_entry, attr_name, None)
                     if attr and attr.value:
-                        return str(attr.value) if not isinstance(attr.value, list) else str(attr.value[0])
+                        return (
+                            str(attr.value)
+                            if not isinstance(attr.value, list)
+                            else str(attr.value[0])
+                        )
                 except Exception:
                     pass
                 return None
@@ -380,12 +394,17 @@ class LDAPAuthProvider(AuthProvider):
             roles = self._map_groups_to_roles(groups)
 
             # Step 7: Create user object
-            display_name = f"{first_name} {last_name}".strip() if first_name or last_name else username
+            display_name = (
+                f"{first_name} {last_name}".strip()
+                if first_name or last_name
+                else username
+            )
 
             user = User(
                 id=uid,
                 username=username,
-                email=email or f"{username}@{self.ldap_config.base_dn.replace('DC=', '').replace(',', '.')}",
+                email=email
+                or f"{username}@{self.ldap_config.base_dn.replace('DC=', '').replace(',', '.')}",
                 display_name=display_name,
                 first_name=first_name,
                 last_name=last_name,
@@ -422,7 +441,7 @@ class LDAPAuthProvider(AuthProvider):
         """Generate a JWT session token for the authenticated user."""
         import jwt
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires_at = now + timedelta(hours=8)  # 8 hour session
 
         payload = {
@@ -437,7 +456,11 @@ class LDAPAuthProvider(AuthProvider):
             "jti": str(uuid.uuid4()),
         }
 
-        secret = self.config.jwt_secret if self.config else os.environ.get("JWT_SECRET", "change-me-in-production")
+        secret = (
+            self.config.jwt_secret
+            if self.config
+            else os.environ.get("JWT_SECRET", "change-me-in-production")
+        )
         token_value = jwt.encode(payload, secret, algorithm="HS512")
 
         return Token(
@@ -460,7 +483,11 @@ class LDAPAuthProvider(AuthProvider):
         import jwt
 
         try:
-            secret = self.config.jwt_secret if self.config else os.environ.get("JWT_SECRET", "change-me-in-production")
+            secret = (
+                self.config.jwt_secret
+                if self.config
+                else os.environ.get("JWT_SECRET", "change-me-in-production")
+            )
             payload = jwt.decode(token, secret, algorithms=["HS512"])
 
             # Check if this is an LDAP-issued token
@@ -521,8 +548,12 @@ class LDAPAuthProvider(AuthProvider):
             # If no groups found from entry, query for them
             if not groups:
                 conn = self._get_connection()
-                search_base = self.ldap_config.user_search_base or self.ldap_config.base_dn
-                search_filter = self.ldap_config.user_search_filter.format(username=username)
+                search_base = (
+                    self.ldap_config.user_search_base or self.ldap_config.base_dn
+                )
+                search_filter = self.ldap_config.user_search_filter.format(
+                    username=username
+                )
 
                 conn.search(
                     search_base=search_base,
@@ -612,15 +643,19 @@ class LDAPAuthProvider(AuthProvider):
 
             # Check CN match (for flexibility)
             group_lower = group.lower()
-            for mapped_group, mapped_roles in self.ldap_config.group_role_mapping.items():
-                if mapped_group.lower() in group_lower or group_lower in mapped_group.lower():
+            for (
+                mapped_group,
+                mapped_roles,
+            ) in self.ldap_config.group_role_mapping.items():
+                if (
+                    mapped_group.lower() in group_lower
+                    or group_lower in mapped_group.lower()
+                ):
                     roles.update(mapped_roles)
 
         return list(roles) if roles else ["ROLE_USER"]
 
-    async def search_users(
-        self, query: str, limit: int = 50
-    ) -> list[dict[str, Any]]:
+    async def search_users(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
         """
         Search for users in LDAP directory.
 
@@ -663,22 +698,29 @@ class LDAPAuthProvider(AuthProvider):
             )
 
             for entry in conn.entries:
-                def get_attr(attr_name: str) -> Optional[str]:
+
+                def get_attr(attr_name: str, current_entry=entry) -> Optional[str]:
                     try:
-                        attr = getattr(entry, attr_name, None)
+                        attr = getattr(current_entry, attr_name, None)
                         if attr and attr.value:
-                            return str(attr.value) if not isinstance(attr.value, list) else str(attr.value[0])
+                            return (
+                                str(attr.value)
+                                if not isinstance(attr.value, list)
+                                else str(attr.value[0])
+                            )
                     except Exception:
                         pass
                     return None
 
-                users.append({
-                    "dn": str(entry.entry_dn),
-                    "username": get_attr(self.ldap_config.username_attribute),
-                    "email": get_attr(self.ldap_config.email_attribute),
-                    "first_name": get_attr(self.ldap_config.first_name_attribute),
-                    "last_name": get_attr(self.ldap_config.last_name_attribute),
-                })
+                users.append(
+                    {
+                        "dn": str(entry.entry_dn),
+                        "username": get_attr(self.ldap_config.username_attribute),
+                        "email": get_attr(self.ldap_config.email_attribute),
+                        "first_name": get_attr(self.ldap_config.first_name_attribute),
+                        "last_name": get_attr(self.ldap_config.last_name_attribute),
+                    }
+                )
 
             conn.unbind()
             return users
@@ -696,7 +738,11 @@ class LDAPAuthProvider(AuthProvider):
         result = {
             "success": False,
             "server": self.ldap_config.server,
-            "port": self.ldap_config.ssl_port if self.ldap_config.use_ssl else self.ldap_config.port,
+            "port": (
+                self.ldap_config.ssl_port
+                if self.ldap_config.use_ssl
+                else self.ldap_config.port
+            ),
             "use_ssl": self.ldap_config.use_ssl,
             "base_dn": self.ldap_config.base_dn,
             "ldap3_available": self._ldap3_available,
@@ -711,8 +757,12 @@ class LDAPAuthProvider(AuthProvider):
             result["success"] = True
             result["bound"] = conn.bound
             result["server_info"] = {
-                "vendor": str(self._server.info.vendor_name) if self._server.info else None,
-                "version": str(self._server.info.vendor_version) if self._server.info else None,
+                "vendor": (
+                    str(self._server.info.vendor_name) if self._server.info else None
+                ),
+                "version": (
+                    str(self._server.info.vendor_version) if self._server.info else None
+                ),
             }
             conn.unbind()
         except Exception as e:
@@ -1000,7 +1050,7 @@ class SAMLAuthProvider(AuthProvider):
 # =============================================================================
 
 
-class APIKeyScope(str, Enum):
+class APIKeyScope(StrEnum):
     """Predefined API key scopes."""
 
     READ = "read"
@@ -1034,7 +1084,7 @@ class APIKeyInfo:
         """Check if the key has expired."""
         if self.expires_at is None:
             return False
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
     def is_valid(self) -> bool:
         """Check if the key is valid (not expired or revoked)."""
@@ -1206,7 +1256,7 @@ class APIKeyAuthProvider(AuthProvider):
                 )
 
         # Update last used timestamp
-        key_info.last_used_at = datetime.now(timezone.utc)
+        key_info.last_used_at = datetime.now(UTC)
 
         # Create user from key info
         user = User(
@@ -1276,9 +1326,9 @@ class APIKeyAuthProvider(AuthProvider):
         # Calculate expiration
         expires_at = None
         if expires_in_days is not None:
-            expires_at = datetime.now(timezone.utc) + timedelta(days=expires_in_days)
+            expires_at = datetime.now(UTC) + timedelta(days=expires_in_days)
         elif self.api_key_config.key_expiry_days is not None:
-            expires_at = datetime.now(timezone.utc) + timedelta(
+            expires_at = datetime.now(UTC) + timedelta(
                 days=self.api_key_config.key_expiry_days
             )
 
@@ -1288,7 +1338,7 @@ class APIKeyAuthProvider(AuthProvider):
             name=name,
             key_hash=key_hash,
             scopes=scopes or [APIKeyScope.READ.value],
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             expires_at=expires_at,
             last_used_at=None,
             revoked=False,
@@ -1321,7 +1371,7 @@ class APIKeyAuthProvider(AuthProvider):
             return False
 
         key_info.revoked = True
-        key_info.revoked_at = datetime.now(timezone.utc)
+        key_info.revoked_at = datetime.now(UTC)
 
         # Keep hash lookup so we can return proper "key_revoked" error
         # instead of generic "invalid_api_key"
@@ -1377,7 +1427,7 @@ class APIKeyAuthProvider(AuthProvider):
             name=f"{old_key.name} (rotated)",
             scopes=old_key.scopes,
             expires_in_days=(
-                (old_key.expires_at - datetime.now(timezone.utc)).days
+                (old_key.expires_at - datetime.now(UTC)).days
                 if old_key.expires_at
                 else None
             ),
@@ -1465,7 +1515,7 @@ class APIKeyAuthProvider(AuthProvider):
 # =============================================================================
 
 
-class MFAMethod(str, Enum):
+class MFAMethod(StrEnum):
     """MFA methods."""
 
     TOTP = "totp"

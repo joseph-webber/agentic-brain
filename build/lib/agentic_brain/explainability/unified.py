@@ -343,7 +343,7 @@ class UnifiedExplainer:
         format: str = "json",
         include_comparison: bool = True,
         **kwargs,
-    ) -> Union[str, dict[str, Any]]:
+    ) -> str | dict[str, Any]:
         """
         Export a comprehensive explainability report.
 

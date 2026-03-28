@@ -31,7 +31,7 @@ import asyncio
 import inspect
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
 
@@ -235,7 +235,7 @@ class SagaExecutor:
             execution.step_results[step.name] = step_result
 
             try:
-                step_result.started_at = datetime.now(timezone.utc)
+                step_result.started_at = datetime.now(UTC)
 
                 # Execute with timeout if specified
                 if step.timeout:
@@ -247,14 +247,14 @@ class SagaExecutor:
 
                 step_result.result = result
                 step_result.status = "completed"
-                step_result.completed_at = datetime.now(timezone.utc)
+                step_result.completed_at = datetime.now(UTC)
 
                 await self._record_event(saga_id, "step_completed", {"step": step.name})
 
             except Exception as e:
                 step_result.status = "failed"
                 step_result.error = str(e)
-                step_result.completed_at = datetime.now(timezone.utc)
+                step_result.completed_at = datetime.now(UTC)
 
                 execution.failed_at_step = step.name
                 execution.error = str(e)
@@ -270,7 +270,7 @@ class SagaExecutor:
 
         # All steps completed successfully
         execution.state = SagaState.COMPLETED
-        execution.completed_at = datetime.now(timezone.utc)
+        execution.completed_at = datetime.now(UTC)
 
         await self._record_event(saga_id, "saga_completed", {})
 
@@ -332,7 +332,7 @@ class SagaExecutor:
                 )
 
         execution.state = SagaState.COMPENSATED
-        execution.completed_at = datetime.now(timezone.utc)
+        execution.completed_at = datetime.now(UTC)
 
         await self._record_event(execution.saga_id, "compensation_completed", {})
 
@@ -344,7 +344,7 @@ class SagaExecutor:
             event_id=str(uuid.uuid4()),
             workflow_id=self.workflow_id,
             event_type=EventType.ACTIVITY_COMPLETED,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data={"saga_id": saga_id, "saga_event_type": event_type, **data},
         )
         await self.event_store.append(event)

@@ -33,7 +33,7 @@ import re
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 
@@ -337,7 +337,7 @@ class WorkflowScheduler:
             raise KeyError(f"Schedule {schedule_id} not found")
 
         self.schedules[schedule_id].state = ScheduleState.PAUSED
-        self.schedules[schedule_id].updated_at = datetime.now(timezone.utc)
+        self.schedules[schedule_id].updated_at = datetime.now(UTC)
 
     async def resume(self, schedule_id: str) -> None:
         """Resume a paused schedule."""
@@ -345,7 +345,7 @@ class WorkflowScheduler:
             raise KeyError(f"Schedule {schedule_id} not found")
 
         self.schedules[schedule_id].state = ScheduleState.ACTIVE
-        self.schedules[schedule_id].updated_at = datetime.now(timezone.utc)
+        self.schedules[schedule_id].updated_at = datetime.now(UTC)
 
     async def trigger(self, schedule_id: str) -> str:
         """Trigger immediate execution."""
@@ -353,7 +353,7 @@ class WorkflowScheduler:
             raise KeyError(f"Schedule {schedule_id} not found")
 
         return await self._execute_schedule(
-            self.schedules[schedule_id], datetime.now(timezone.utc)
+            self.schedules[schedule_id], datetime.now(UTC)
         )
 
     async def delete(self, schedule_id: str) -> None:
@@ -381,7 +381,7 @@ class WorkflowScheduler:
         if action:
             schedule.action = action
 
-        schedule.updated_at = datetime.now(timezone.utc)
+        schedule.updated_at = datetime.now(UTC)
 
     def list_schedules(
         self, state: Optional[ScheduleState] = None
@@ -419,7 +419,7 @@ class WorkflowScheduler:
     async def _scheduler_loop(self) -> None:
         """Main scheduler loop."""
         while self._running:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
 
             for schedule in self.schedules.values():
                 if schedule.state != ScheduleState.ACTIVE:
@@ -496,7 +496,7 @@ class WorkflowScheduler:
                     schedule.state = ScheduleState.PAUSED
 
             finally:
-                run.completed_at = datetime.now(timezone.utc)
+                run.completed_at = datetime.now(UTC)
                 if schedule.schedule_id in self.running_workflows:
                     del self.running_workflows[schedule.schedule_id]
 

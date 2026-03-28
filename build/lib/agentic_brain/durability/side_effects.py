@@ -28,12 +28,12 @@ Features:
 """
 
 import asyncio
-import inspect
 import functools
+import inspect
 import random
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 from .event_store import EventStore, get_event_store
@@ -120,7 +120,7 @@ class SideEffectManager:
             event_id=str(uuid.uuid4()),
             workflow_id=self.workflow_id,
             event_type=EventType.ACTIVITY_COMPLETED,  # Using generic type
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data={
                 "side_effect_id": effect_id,
                 "side_effect_name": name,

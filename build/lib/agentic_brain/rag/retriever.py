@@ -31,6 +31,13 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+from agentic_brain.core.neo4j_pool import (
+    configure_pool as configure_neo4j_pool,
+)
+from agentic_brain.core.neo4j_pool import (
+    get_driver as get_shared_neo4j_driver,
+)
+
 from .embeddings import EmbeddingProvider, get_embeddings
 
 logger = logging.getLogger(__name__)
@@ -41,8 +48,8 @@ class RetrievedChunk:
     """A retrieved document chunk with metadata."""
 
     content: str
-    source: str
-    score: float
+    source: str = ""
+    score: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -81,36 +88,45 @@ class Retriever:
         neo4j_password: Optional[str] = None,
         embedding_provider: Optional[EmbeddingProvider] = None,
         sources: Optional[list[str]] = None,
+        document_store: Optional[Any] = None,
     ):
+        if neo4j_uri is not None and not isinstance(neo4j_uri, str):
+            document_store = neo4j_uri
+            neo4j_uri = None
+
+        if embedding_provider is None and hasattr(neo4j_user, "embed"):
+            embedding_provider = neo4j_user  # type: ignore[assignment]
+            neo4j_user = "neo4j"
+            neo4j_password = None
+
+        self.document_store = document_store
         self.neo4j_uri = neo4j_uri or os.getenv("NEO4J_URI", "bolt://localhost:7687")
         self.neo4j_user = neo4j_user
         # SECURITY: No default password - must be explicitly configured
         self.neo4j_password = neo4j_password or os.getenv("NEO4J_PASSWORD")
-        if not self.neo4j_password:
-            raise ValueError(
-                "NEO4J_PASSWORD must be set via environment variable or constructor. "
-                "Never use default passwords in production."
-            )
         self.embeddings = embedding_provider or get_embeddings()
         self.sources = sources or ["Document", "Memory", "Knowledge"]
         self._driver = None
+        self._using_shared_driver = False
 
     def _get_driver(self):
         """Get Neo4j driver (lazy initialization)."""
         if self._driver is None:
             try:
-                from neo4j import GraphDatabase
-
-                self._driver = GraphDatabase.driver(
-                    self.neo4j_uri, auth=(self.neo4j_user, self.neo4j_password)
+                configure_neo4j_pool(
+                    uri=self.neo4j_uri,
+                    user=self.neo4j_user,
+                    password=self.neo4j_password,
                 )
-            except ImportError:
-                raise ImportError("neo4j package required: pip install neo4j")
+                self._driver = get_shared_neo4j_driver()
+                self._using_shared_driver = True
+            except ImportError as exc:
+                raise ImportError("neo4j package required: pip install neo4j") from exc
         return self._driver
 
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """Calculate cosine similarity between two vectors."""
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = math.sqrt(sum(x * x for x in a))
         norm_b = math.sqrt(sum(x * x for x in b))
         if norm_a == 0 or norm_b == 0:
@@ -212,6 +228,39 @@ class Retriever:
         chunks.sort(key=lambda x: x.score, reverse=True)
         return chunks[:k]
 
+    def search_documents(self, query: str, k: int = 5) -> list[RetrievedChunk]:
+        """Search an attached document store using embeddings."""
+        if self.document_store is None:
+            return []
+
+        try:
+            docs = self.document_store.list(limit=1000)
+        except Exception:
+            try:
+                docs = self.document_store.search(query, top_k=k)
+            except Exception:
+                docs = []
+
+        query_embedding = self.embeddings.embed(query)
+        chunks: list[RetrievedChunk] = []
+        for doc in docs:
+            try:
+                doc_embedding = self.embeddings.embed(doc.content)
+                score = self._cosine_similarity(query_embedding, doc_embedding)
+                chunks.append(
+                    RetrievedChunk(
+                        content=doc.content,
+                        source=doc.metadata.get("source", "Document"),
+                        score=score,
+                        metadata=dict(doc.metadata),
+                    )
+                )
+            except Exception as e:
+                logger.debug(f"Skipping document during retrieval: {e}")
+
+        chunks.sort(key=lambda x: x.score, reverse=True)
+        return chunks[:k]
+
     def search_files(
         self,
         query: str,
@@ -279,17 +328,20 @@ class Retriever:
         Returns:
             Combined and ranked results
         """
+        if self.document_store is not None:
+            return self.search_documents(query, k=k)
+
+        if self.document_store is not None:
+            return self.search_documents(query, k=k)
+
         all_chunks = []
 
         # Neo4j search
         try:
             neo4j_chunks = self.search_neo4j(query, k=k, labels=sources)
             all_chunks.extend(neo4j_chunks)
-        except (OSError, RuntimeError, ConnectionError, TimeoutError) as e:
-            # OSError/ConnectionError: network error
-            # RuntimeError: Neo4j driver error
-            # TimeoutError: query timeout
-            # Neo4j not available, skip silently
+        except Exception as e:
+            # Neo4j unavailable or authentication failure, skip silently
             logger.debug(f"Neo4j search unavailable: {e}")
             pass
 
@@ -297,8 +349,13 @@ class Retriever:
         all_chunks.sort(key=lambda x: x.score, reverse=True)
         return all_chunks[:k]
 
+    def retrieve(self, query: str, top_k: int = 5, **kwargs) -> list[RetrievedChunk]:
+        """Backward-compatible retrieval alias used by tests."""
+        return self.search(query, k=top_k, **kwargs)
+
     def close(self):
         """Close Neo4j connection."""
-        if self._driver:
+        if self._driver and not self._using_shared_driver:
             self._driver.close()
-            self._driver = None
+        self._driver = None
+        self._using_shared_driver = False

@@ -42,6 +42,7 @@ from typing import Optional
 from agentic_brain import __version__
 
 from . import commands
+from .greet_command import register_greet_command
 from .voice_commands import register_voice_commands
 
 # Lazy import temporal_commands to avoid requiring temporalio
@@ -132,6 +133,7 @@ def create_parser() -> argparse.ArgumentParser:
 
     # Voice commands (critical for accessibility)
     register_voice_commands(subparsers)
+    register_greet_command(subparsers)
 
     # Register Temporal commands (if available)
     if HAS_TEMPORAL:
@@ -643,6 +645,71 @@ def create_parser() -> argparse.ArgumentParser:
         description="Display version and build information",
     )
     version_parser.set_defaults(func=commands.version_command)
+
+    # Topic governance command group
+    topics_parser = subparsers.add_parser(
+        "topics",
+        help="Audit and govern topic nodes",
+        formatter_class=ColoredFormatter,
+        description="Topic governance commands for soft-capped GraphRAG topic hubs",
+    )
+    topics_subparsers = topics_parser.add_subparsers(
+        dest="topics_command", help="Topic governance command"
+    )
+
+    topics_audit_parser = topics_subparsers.add_parser(
+        "audit",
+        help="Run the quarterly topic governance audit",
+        formatter_class=ColoredFormatter,
+        description=(
+            "Inspect topic growth, orphan nodes, and duplicate topics so the "
+            "graph stays discoverable and below the soft cap."
+        ),
+    )
+    topics_audit_parser.add_argument(
+        "--uri",
+        type=str,
+        default=_env_default("NEO4J_URI", "bolt://localhost:7687"),
+        help="Neo4j connection URI (env: NEO4J_URI, default: bolt://localhost:7687)",
+    )
+    topics_audit_parser.add_argument(
+        "--username",
+        type=str,
+        default=_env_default("NEO4J_USER", "neo4j"),
+        help="Neo4j username (env: NEO4J_USER, default: neo4j)",
+    )
+    topics_audit_parser.add_argument(
+        "--password",
+        type=str,
+        default=os.environ.get("NEO4J_PASSWORD"),
+        help="Neo4j password (env: NEO4J_PASSWORD)",
+    )
+    topics_audit_parser.add_argument(
+        "--database",
+        type=str,
+        default=_env_default("NEO4J_DATABASE", "neo4j"),
+        help="Neo4j database name (env: NEO4J_DATABASE, default: neo4j)",
+    )
+    topics_audit_parser.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="Maximum merge suggestions to include (default: 10)",
+    )
+    topics_audit_parser.add_argument(
+        "--format",
+        type=str,
+        choices=["markdown", "text", "json"],
+        default="markdown",
+        help="Report output format (default: markdown)",
+    )
+    topics_audit_parser.add_argument(
+        "--output",
+        type=str,
+        default=None,
+        help="Optional output path for the generated audit report",
+    )
+    topics_audit_parser.set_defaults(func=commands.topics_audit_command)
 
     # New-config command (interactive configuration wizard)
     from .new_config import new_config_command

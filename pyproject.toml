@@ -63,6 +63,7 @@ classifiers = [
 
 dependencies = [
     "aiohttp>=3.9.0,<4.0.0",  # Required for LLM API calls (Ollama, OpenRouter)
+    "PyYAML>=6.0.0,<7.0.0",  # Centralized YAML configuration loading
     "questionary>=2.0.0,<3.0.0",  # Interactive CLI prompts (new-config wizard)
     "pyttsx3>=2.90",  # Cross-platform TTS (Windows/Linux)
     "gTTS>=2.5.0",    # Google TTS (free cloud fallback)

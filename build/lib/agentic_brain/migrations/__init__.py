@@ -18,7 +18,7 @@ import asyncio
 import hashlib
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -198,9 +198,9 @@ class MigrationRunner:
         Returns True if lock acquired, False if timed out.
         """
         lock_id = "migration_lock"
-        end_time = datetime.now(timezone.utc).timestamp() + timeout_seconds
+        end_time = datetime.now(UTC).timestamp() + timeout_seconds
 
-        while datetime.now(timezone.utc).timestamp() < end_time:
+        while datetime.now(UTC).timestamp() < end_time:
             # Try to create lock
             result = await asyncio.to_thread(
                 self._run_cypher,
@@ -277,7 +277,9 @@ class MigrationRunner:
             },
         )
 
-    async def migrate(self, target_version: Optional[str] = None) -> list[MigrationStatus]:
+    async def migrate(
+        self, target_version: Optional[str] = None
+    ) -> list[MigrationStatus]:
         """
         Run pending migrations.
 
@@ -301,11 +303,11 @@ class MigrationRunner:
                     f"Running migration {migration.version}: {migration.description}"
                 )
 
-                start_time = datetime.now(timezone.utc)
+                start_time = datetime.now(UTC)
                 try:
                     await migration.up(self.driver)
                     execution_time_ms = int(
-                        (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+                        (datetime.now(UTC) - start_time).total_seconds() * 1000
                     )
 
                     await self._record_migration(
@@ -328,7 +330,7 @@ class MigrationRunner:
 
                 except Exception as e:
                     execution_time_ms = int(
-                        (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+                        (datetime.now(UTC) - start_time).total_seconds() * 1000
                     )
                     error_msg = str(e)
 
@@ -347,9 +349,7 @@ class MigrationRunner:
                     )
                     results.append(status)
 
-                    logger.error(
-                        f"Migration {migration.version} failed: {error_msg}"
-                    )
+                    logger.error(f"Migration {migration.version} failed: {error_msg}")
                     break  # Stop on first failure
 
                 if target_version and migration.version == target_version:
@@ -381,7 +381,8 @@ class MigrationRunner:
 
             # Find migrations to roll back (in reverse order)
             to_rollback = [
-                m for m in reversed(self.migrations)
+                m
+                for m in reversed(self.migrations)
                 if m.version in applied and m.version > target_version
             ]
 
@@ -390,11 +391,11 @@ class MigrationRunner:
                     f"Rolling back migration {migration.version}: {migration.description}"
                 )
 
-                start_time = datetime.now(timezone.utc)
+                start_time = datetime.now(UTC)
                 try:
                     await migration.down(self.driver)
                     execution_time_ms = int(
-                        (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+                        (datetime.now(UTC) - start_time).total_seconds() * 1000
                     )
 
                     # Remove migration record
@@ -423,7 +424,7 @@ class MigrationRunner:
 
                 except Exception as e:
                     execution_time_ms = int(
-                        (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+                        (datetime.now(UTC) - start_time).total_seconds() * 1000
                     )
                     error_msg = str(e)
 
@@ -438,9 +439,7 @@ class MigrationRunner:
                     )
                     results.append(status)
 
-                    logger.error(
-                        f"Rollback {migration.version} failed: {error_msg}"
-                    )
+                    logger.error(f"Rollback {migration.version} failed: {error_msg}")
                     break  # Stop on first failure
 
             return results

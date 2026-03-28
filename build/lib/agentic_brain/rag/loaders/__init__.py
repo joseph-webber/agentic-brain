@@ -143,6 +143,7 @@ from .enterprise import Dynamics365Loader, SAPLoader, ServiceNowLoader, WorkdayL
 
 # Factory functions
 from .factory import create_loader, get_available_loaders, load_from_multiple_sources
+from .firestore import FIREBASE_AVAILABLE, FirestoreLoader
 from .github import PYGITHUB_AVAILABLE, GitHubLoader
 
 # Google Drive
@@ -157,10 +158,8 @@ from .json_loader import JSONLLoader, JSONLoader
 
 # NoSQL
 from .nosql import (
-    FIREBASE_AVAILABLE,
     PYMONGO_AVAILABLE,
     ElasticsearchLoader,
-    FirestoreLoader,
     MongoDBLoader,
     RedisLoader,
 )
@@ -188,6 +187,9 @@ from .social import NOTION_AVAILABLE, SLACK_AVAILABLE, NotionLoader, SlackLoader
 
 # Text loaders
 from .text import MarkdownLoader, TextLoader
+
+# WordPress (headless CMS)
+from .wordpress import WordPressLoader
 
 __all__ = [
     # Base
@@ -259,6 +261,7 @@ __all__ = [
     "PayPalLoader",
     "AfterpayLoader",
     "WooCommerceLoader",
+    "WordPressLoader",
     # Accounting
     "QuickBooksLoader",
     # API

@@ -22,6 +22,8 @@ Complete reference for the Agentic Brain documentation.
 - [**Memory System**](MEMORY.md) - Persistent memory architecture
 - [**RAG Guide**](RAG_GUIDE.md) - Practical RAG guidance
 - [**GraphRAG Guide**](GRAPHRAG.md) - Graph extraction, hybrid search, Leiden communities, and Neo4j patterns
+- [**Neo4j Architecture**](NEO4J_ARCHITECTURE.md) - Graph model, labels, relationships, indexes, and query patterns
+- [**Neo4j Zones**](NEO4J_ZONES.md) - Five-zone lifecycle model for hot, warm, cold, topic, and meta data
 - [**LLM Guide**](LLM_GUIDE.md) - Working with models and providers
 - [**Vector Embeddings**](VECTOR_EMBEDDINGS.md) - Embedding architecture
 
@@ -39,6 +41,7 @@ Complete reference for the Agentic Brain documentation.
 ## 🛡️ Security & Compliance
 - [**Security Policy**](SECURITY.md) - Core security policy
 - [**Accessibility**](ACCESSIBILITY.md) - WCAG compliance expectations
+- [**Topic Governance**](TOPIC_GOVERNANCE.md) - Soft caps, quarterly audits, and merge procedures
 
 ## 📈 Roadmaps & Strategy
 - [**Roadmap**](ROADMAP.md) - Product roadmap

@@ -36,7 +36,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from multiprocessing import Process
 from multiprocessing import Queue as MPQueue
@@ -136,7 +136,7 @@ class ActivityWorker:
         self.stats = WorkerStats(
             worker_id=config.worker_id,
             status=WorkerStatus.STARTING,
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
         )
 
         self._running = False
@@ -195,7 +195,7 @@ class ActivityWorker:
                         ),
                         timeout=self.config.graceful_shutdown_timeout,
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.warning(
                         "Graceful shutdown timeout, cancelling remaining tasks"
                     )
@@ -241,8 +241,7 @@ class ActivityWorker:
                     # and add done callbacks for proper error logging
                     for task in tasks:
                         async_task = asyncio.create_task(
-                            self._execute_task(queue, task),
-                            name=f"task-{task.task_id}"
+                            self._execute_task(queue, task), name=f"task-{task.task_id}"
                         )
                         self._running_tasks.add(async_task)
                         async_task.add_done_callback(self._task_done_callback)

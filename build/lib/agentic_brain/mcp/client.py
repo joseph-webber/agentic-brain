@@ -440,7 +440,7 @@ class MCPClient:
                 self.transport.receive(),
                 timeout=self.config.timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise MCPTimeoutError(f"Timeout waiting for response to {method}")
 
         if "error" in response:

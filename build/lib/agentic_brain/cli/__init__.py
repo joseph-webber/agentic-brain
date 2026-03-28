@@ -42,6 +42,17 @@ from typing import Optional
 from agentic_brain import __version__
 
 from . import commands
+from .greet_command import register_greet_command
+from .voice_commands import register_voice_commands
+
+# Lazy import temporal_commands to avoid requiring temporalio
+try:
+    from .temporal_commands import register_temporal_commands
+
+    HAS_TEMPORAL = True
+except ImportError:
+    HAS_TEMPORAL = False
+    register_temporal_commands = None
 
 
 # Environment variable defaults
@@ -119,6 +130,14 @@ def create_parser() -> argparse.ArgumentParser:
 
     # Subparsers for commands
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
+
+    # Voice commands (critical for accessibility)
+    register_voice_commands(subparsers)
+    register_greet_command(subparsers)
+
+    # Register Temporal commands (if available)
+    if HAS_TEMPORAL:
+        register_temporal_commands(subparsers)
 
     # Check command (new - for provider diagnosis)
     check_parser = subparsers.add_parser(
@@ -276,6 +295,57 @@ def create_parser() -> argparse.ArgumentParser:
     )
     schema_parser.set_defaults(func=commands.schema_command)
 
+    # Setup command (enhanced installer)
+    setup_parser = subparsers.add_parser(
+        "setup",
+        help="Run enhanced setup wizard",
+        formatter_class=ColoredFormatter,
+        description="Interactive setup wizard with environment detection, user profile, and health checks",
+    )
+    setup_parser.add_argument(
+        "--non-interactive",
+        "-y",
+        action="store_true",
+        help="Run without prompts (use defaults)",
+    )
+    setup_parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable colored output (accessibility)",
+    )
+    setup_parser.set_defaults(func=commands.setup_command)
+
+    # Persona Install command (persona-driven setup)
+    persona_parser = subparsers.add_parser(
+        "persona",
+        help="Run persona-driven installer",
+        formatter_class=ColoredFormatter,
+        description=(
+            "Persona-driven setup that generates everything from a single choice. "
+            "Pick Professional, Technical, Creative, Accessibility, Research, or Minimal. "
+            "ADL and all config files are generated automatically."
+        ),
+    )
+    persona_parser.add_argument(
+        "--persona",
+        type=str,
+        choices=[
+            "professional",
+            "technical",
+            "creative",
+            "accessibility",
+            "research",
+            "minimal",
+        ],
+        help="Pre-select a persona (skips interactive menu)",
+    )
+    persona_parser.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Generate config without prompts (requires --persona)",
+    )
+    persona_parser.set_defaults(func=commands.persona_install_command)
+
     # Install command
     install_parser = subparsers.add_parser(
         "install",
@@ -412,6 +482,119 @@ def create_parser() -> argparse.ArgumentParser:
     )
     models_parser.set_defaults(func=commands.models_command)
 
+    # Region command - manage user regional preferences and learning
+    from .region_commands import setup_region_parser
+
+    setup_region_parser(subparsers)
+
+    # ADL command group
+    adl_parser = subparsers.add_parser(
+        "adl",
+        help="Agentic Definition Language (ADL)",
+        formatter_class=ColoredFormatter,
+        description=(
+            "Work with Agentic Definition Language (ADL) files to "
+            "configure your entire Agentic Brain instance from a single DSL."
+        ),
+    )
+    adl_subparsers = adl_parser.add_subparsers(dest="adl_command", help="ADL command")
+
+    # agentic adl init
+    adl_init = adl_subparsers.add_parser(
+        "init",
+        help="Create an ADL template (brain.adl)",
+        formatter_class=ColoredFormatter,
+    )
+    adl_init.add_argument(
+        "-f",
+        "--file",
+        dest="file",
+        type=str,
+        default="brain.adl",
+        help="Path to ADL file to create (default: brain.adl)",
+    )
+    adl_init.set_defaults(func=commands.adl_init_command)
+
+    # agentic adl validate
+    adl_validate = adl_subparsers.add_parser(
+        "validate",
+        help="Validate an ADL file",
+        formatter_class=ColoredFormatter,
+    )
+    adl_validate.add_argument(
+        "-f",
+        "--file",
+        dest="file",
+        type=str,
+        default="brain.adl",
+        help="Path to ADL file (default: brain.adl)",
+    )
+    adl_validate.set_defaults(func=commands.adl_validate_command)
+
+    # agentic adl generate
+    adl_generate = adl_subparsers.add_parser(
+        "generate",
+        help="Generate config from ADL",
+        formatter_class=ColoredFormatter,
+    )
+    adl_generate.add_argument(
+        "-f",
+        "--file",
+        dest="file",
+        type=str,
+        default="brain.adl",
+        help="Path to ADL file (default: brain.adl)",
+    )
+    adl_generate.add_argument(
+        "-o",
+        "--output",
+        dest="output",
+        type=str,
+        default=None,
+        help="Output directory for generated artefacts (default: ADL directory)",
+    )
+    adl_generate.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing generated files",
+    )
+    adl_generate.set_defaults(func=commands.adl_generate_command)
+
+    # agentic adl import jdl
+    adl_import = adl_subparsers.add_parser(
+        "import",
+        help="Import configuration from other DSLs (e.g., JHipster JDL)",
+        formatter_class=ColoredFormatter,
+    )
+    adl_import.add_argument(
+        "source",
+        type=str,
+        choices=["jdl"],
+        help="Source format to import (currently only 'jdl')",
+    )
+    adl_import.add_argument(
+        "-i",
+        "--input",
+        dest="input",
+        type=str,
+        default="app.jdl",
+        help="Path to source file (default: app.jdl)",
+    )
+    adl_import.add_argument(
+        "-f",
+        "--file",
+        dest="file",
+        type=str,
+        default="brain.adl",
+        help="Output ADL file (default: brain.adl)",
+    )
+    adl_import.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing ADL file if present",
+    )
+    adl_import.set_defaults(func=commands.adl_import_command)
+
     # Model command - get info about specific model
     model_parser = subparsers.add_parser(
         "model",
@@ -462,6 +645,71 @@ def create_parser() -> argparse.ArgumentParser:
         description="Display version and build information",
     )
     version_parser.set_defaults(func=commands.version_command)
+
+    # Topic governance command group
+    topics_parser = subparsers.add_parser(
+        "topics",
+        help="Audit and govern topic nodes",
+        formatter_class=ColoredFormatter,
+        description="Topic governance commands for soft-capped GraphRAG topic hubs",
+    )
+    topics_subparsers = topics_parser.add_subparsers(
+        dest="topics_command", help="Topic governance command"
+    )
+
+    topics_audit_parser = topics_subparsers.add_parser(
+        "audit",
+        help="Run the quarterly topic governance audit",
+        formatter_class=ColoredFormatter,
+        description=(
+            "Inspect topic growth, orphan nodes, and duplicate topics so the "
+            "graph stays discoverable and below the soft cap."
+        ),
+    )
+    topics_audit_parser.add_argument(
+        "--uri",
+        type=str,
+        default=_env_default("NEO4J_URI", "bolt://localhost:7687"),
+        help="Neo4j connection URI (env: NEO4J_URI, default: bolt://localhost:7687)",
+    )
+    topics_audit_parser.add_argument(
+        "--username",
+        type=str,
+        default=_env_default("NEO4J_USER", "neo4j"),
+        help="Neo4j username (env: NEO4J_USER, default: neo4j)",
+    )
+    topics_audit_parser.add_argument(
+        "--password",
+        type=str,
+        default=os.environ.get("NEO4J_PASSWORD"),
+        help="Neo4j password (env: NEO4J_PASSWORD)",
+    )
+    topics_audit_parser.add_argument(
+        "--database",
+        type=str,
+        default=_env_default("NEO4J_DATABASE", "neo4j"),
+        help="Neo4j database name (env: NEO4J_DATABASE, default: neo4j)",
+    )
+    topics_audit_parser.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="Maximum merge suggestions to include (default: 10)",
+    )
+    topics_audit_parser.add_argument(
+        "--format",
+        type=str,
+        choices=["markdown", "text", "json"],
+        default="markdown",
+        help="Report output format (default: markdown)",
+    )
+    topics_audit_parser.add_argument(
+        "--output",
+        type=str,
+        default=None,
+        help="Optional output path for the generated audit report",
+    )
+    topics_audit_parser.set_defaults(func=commands.topics_audit_command)
 
     # New-config command (interactive configuration wizard)
     from .new_config import new_config_command

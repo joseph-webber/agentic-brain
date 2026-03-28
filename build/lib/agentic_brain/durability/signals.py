@@ -31,7 +31,7 @@ import inspect
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar
 
@@ -123,7 +123,7 @@ class Signal:
             created_at=(
                 datetime.fromisoformat(data["created_at"])
                 if data.get("created_at")
-                else datetime.now(timezone.utc)
+                else datetime.now(UTC)
             ),
             delivered_at=(
                 datetime.fromisoformat(data["delivered_at"])
@@ -145,7 +145,7 @@ class Signal:
         """Check if signal has expired"""
         if not self.expires_at:
             return False
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
 
 class SignalHandler:
@@ -233,7 +233,7 @@ class SignalHandler:
                 if not future.done():
                     future.set_result(signal)
                     signal.status = SignalDeliveryStatus.DELIVERED
-                    signal.delivered_at = datetime.now(timezone.utc)
+                    signal.delivered_at = datetime.now(UTC)
                     self._history.append(signal)
                     logger.debug(f"Signal {signal.signal_id} delivered to waiter")
                     return True
@@ -248,7 +248,7 @@ class SignalHandler:
                         handler(signal.payload)
 
                     signal.status = SignalDeliveryStatus.DELIVERED
-                    signal.delivered_at = datetime.now(timezone.utc)
+                    signal.delivered_at = datetime.now(UTC)
                     self._history.append(signal)
                     logger.debug(f"Signal {signal.signal_id} handled")
                     return True
@@ -285,7 +285,7 @@ class SignalHandler:
             if signal.signal_name == signal_name:
                 signal = self._buffer.pop(i)
                 signal.status = SignalDeliveryStatus.DELIVERED
-                signal.delivered_at = datetime.now(timezone.utc)
+                signal.delivered_at = datetime.now(UTC)
                 self._history.append(signal)
                 return signal
 
@@ -300,7 +300,7 @@ class SignalHandler:
             if timeout:
                 return await asyncio.wait_for(future, timeout)
             return await future
-        except asyncio.TimeoutError:
+        except TimeoutError:
             # Remove future from waiters
             if signal_name in self._waiters:
                 try:
@@ -329,7 +329,7 @@ class SignalHandler:
                     if not inspect.iscoroutinefunction(handler):
                         handler(signal.payload)
                         signal.status = SignalDeliveryStatus.DELIVERED
-                        signal.delivered_at = datetime.now(timezone.utc)
+                        signal.delivered_at = datetime.now(UTC)
                         self._history.append(signal)
                         processed += 1
                     else:
@@ -427,8 +427,8 @@ class SignalDispatcher:
             payload=payload,
             sender_id=sender_id,
             expires_at=(
-                datetime.now(timezone.utc).replace(
-                    second=datetime.now(timezone.utc).second + int(ttl_seconds)
+                datetime.now(UTC).replace(
+                    second=datetime.now(UTC).second + int(ttl_seconds)
                 )
                 if ttl_seconds
                 else None

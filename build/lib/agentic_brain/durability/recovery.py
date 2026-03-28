@@ -39,7 +39,7 @@ import asyncio
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -218,7 +218,7 @@ class RecoveryManager:
         Returns:
             RecoveryResult with details
         """
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         if workflow_id in self._recovering:
             return RecoveryResult(
@@ -275,7 +275,7 @@ class RecoveryManager:
                     except Exception as e:
                         logger.error(f"Failed to resume workflow: {e}")
 
-            duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
+            duration_ms = int((datetime.now(UTC) - start_time).total_seconds() * 1000)
 
             return RecoveryResult(
                 workflow_id=workflow_id,
@@ -380,7 +380,7 @@ class RecoveryManager:
         timestamp = self._idempotency_keys[key]
         ttl = timedelta(hours=self.config.idempotency_key_ttl_hours)
 
-        if datetime.now(timezone.utc) - timestamp > ttl:
+        if datetime.now(UTC) - timestamp > ttl:
             del self._idempotency_keys[key]
             return False
 
@@ -393,7 +393,7 @@ class RecoveryManager:
         Args:
             key: Idempotency key
         """
-        self._idempotency_keys[key] = datetime.now(timezone.utc)
+        self._idempotency_keys[key] = datetime.now(UTC)
 
     def clear_idempotency(self, key: str) -> None:
         """Clear an idempotency key"""
@@ -407,7 +407,7 @@ class RecoveryManager:
             Number of keys removed
         """
         ttl = timedelta(hours=self.config.idempotency_key_ttl_hours)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         expired = [key for key, ts in self._idempotency_keys.items() if now - ts > ttl]
 

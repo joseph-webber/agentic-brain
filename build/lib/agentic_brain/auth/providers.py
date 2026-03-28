@@ -46,7 +46,7 @@ import os
 import secrets
 import uuid
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from functools import wraps
 from typing import Any, Callable, Optional, TypeVar
 
@@ -168,7 +168,7 @@ class AuditLogger:
             "event": event_type,
             "user_id": user_id,
             "success": success,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         if ip_address:
             safe_details["ip"] = ip_address
@@ -234,7 +234,7 @@ class RateLimiter:
         Returns:
             True if rate limited, False otherwise
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cutoff = now - timedelta(seconds=window_seconds)
 
         # Clean old attempts
@@ -247,7 +247,7 @@ class RateLimiter:
 
     def record_attempt(self, key: str) -> None:
         """Record an attempt for rate limiting."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if key not in self._attempts:
             self._attempts[key] = []
         self._attempts[key].append(now)
@@ -665,7 +665,7 @@ class JWTAuth(AuthProvider):
         except ImportError:
             import jwt
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         jti = str(uuid.uuid4())
 
         if remember_me:
@@ -885,7 +885,7 @@ class OAuth2Auth(AuthProvider):
         # Store state for validation
         self._pending_states[state] = {
             "redirect_uri": redirect_uri,
-            "created_at": datetime.now(timezone.utc),
+            "created_at": datetime.now(UTC),
             "nonce": nonce,
         }
 
@@ -933,7 +933,7 @@ class OAuth2Auth(AuthProvider):
         created_at = state_data.get("created_at")
 
         if created_at:
-            age = (datetime.now(timezone.utc) - created_at).total_seconds()
+            age = (datetime.now(UTC) - created_at).total_seconds()
             if age > OAUTH2_STATE_EXPIRY_SECONDS:
                 logger.warning("OAuth2 state validation failed: expired")
                 return None
@@ -1092,7 +1092,7 @@ class OAuth2Auth(AuthProvider):
         """Get the JWKS from the OAuth2 provider."""
         # Return cached if recent
         if self._jwks_cache and self._jwks_cache_time:
-            age = datetime.now(timezone.utc) - self._jwks_cache_time
+            age = datetime.now(UTC) - self._jwks_cache_time
             if age.total_seconds() < 3600:  # Cache for 1 hour
                 return self._jwks_cache
 
@@ -1109,7 +1109,7 @@ class OAuth2Auth(AuthProvider):
                 response = await client.get(jwks_uri)
                 if response.status_code == 200:
                     self._jwks_cache = response.json()
-                    self._jwks_cache_time = datetime.now(timezone.utc)
+                    self._jwks_cache_time = datetime.now(UTC)
                     return self._jwks_cache
                 else:
                     logger.warning(
@@ -1421,7 +1421,7 @@ class SessionAuth(AuthProvider):
 
         # Check expiry
         expires_at = session.get("expires_at")
-        if expires_at and datetime.now(timezone.utc) > expires_at:
+        if expires_at and datetime.now(UTC) > expires_at:
             del self._sessions[token]
             return None
 
@@ -1435,13 +1435,13 @@ class SessionAuth(AuthProvider):
     async def create_session(self, user: User) -> str:
         """Create a new session for a user."""
         session_id = secrets.token_urlsafe(32)
-        expires_at = datetime.now(timezone.utc) + timedelta(
+        expires_at = datetime.now(UTC) + timedelta(
             seconds=self.config.session.timeout_seconds
         )
 
         self._sessions[session_id] = {
             "user": user.model_dump(),
-            "created_at": datetime.now(timezone.utc),
+            "created_at": datetime.now(UTC),
             "expires_at": expires_at,
         }
 
@@ -1482,7 +1482,7 @@ class SessionAuth(AuthProvider):
 
     async def cleanup_expired(self) -> int:
         """Clean up expired sessions. Returns count of removed sessions."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expired = [
             sid
             for sid, session in self._sessions.items()

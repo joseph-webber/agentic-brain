@@ -29,7 +29,7 @@ Features:
 import asyncio
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Callable, Dict, Optional, Type, TypeVar
 
 from .event_store import EventStore, get_event_store
@@ -204,14 +204,14 @@ class ContinueAsNewManager:
         if current_run:
             current_run.status = "continued_as_new"
             current_run.continued_as_new = True
-            current_run.completed_at = datetime.now(timezone.utc)
+            current_run.completed_at = datetime.now(UTC)
 
         # Record continue event
         event = WorkflowEvent(
             event_id=str(uuid.uuid4()),
             workflow_id=workflow_id,
             event_type=EventType.WORKFLOW_COMPLETED,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data={
                 "continued_as_new": True,
                 "previous_run_id": current_run_id,
@@ -237,7 +237,7 @@ class ContinueAsNewManager:
             event_id=str(uuid.uuid4()),
             workflow_id=workflow_id,
             event_type=EventType.WORKFLOW_STARTED,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             data={
                 "run_id": new_run.run_id,
                 "continued_from": current_run_id,
@@ -253,7 +253,7 @@ class ContinueAsNewManager:
 
             new_run.status = "completed"
             new_run.result = result
-            new_run.completed_at = datetime.now(timezone.utc)
+            new_run.completed_at = datetime.now(UTC)
 
             return result
 
@@ -268,7 +268,7 @@ class ContinueAsNewManager:
         except Exception as e:
             new_run.status = "failed"
             new_run.error = str(e)
-            new_run.completed_at = datetime.now(timezone.utc)
+            new_run.completed_at = datetime.now(UTC)
             raise
 
 
@@ -354,7 +354,7 @@ class ContinueAsNewWorkflowWrapper:
             result = await self.workflow_func(*args, **kwargs)
             run.status = "completed"
             run.result = result
-            run.completed_at = datetime.now(timezone.utc)
+            run.completed_at = datetime.now(UTC)
             return result
 
         except ContinueAsNewError as e:

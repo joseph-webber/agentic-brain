@@ -1,0 +1,58 @@
+# Example central configuration for Agentic Brain
+#
+# Copy this file to brain-config.yaml for local development.
+# Keep this template committed to Git. Keep brain-config.yaml untracked.
+#
+# Never put secrets in YAML. Use environment variables or a secret manager:
+# - OPENAI_API_KEY / ANTHROPIC_API_KEY / OPENROUTER_API_KEY
+# - NEO4J_PASSWORD
+# - JWT signing keys and other credentials
+
+llm:
+  default_provider: ollama
+  default_model: llama3.1:8b
+  timeout_seconds: 60
+  max_retries: 3
+  temperature: 0.7
+  ollama_base_url: http://localhost:11434
+  openrouter_base_url: https://openrouter.ai/api/v1
+
+voice:
+  enabled: true
+  provider: system
+  default_voice: Karen
+  rate: 160
+  volume: 0.8
+  queue_enabled: true
+
+neo4j:
+  uri: bolt://localhost:7687
+  user: neo4j
+  database: neo4j
+  max_connection_pool_size: 50
+  connection_timeout_seconds: 30
+
+api:
+  host: 0.0.0.0
+  port: 8000
+  base_path: /api
+  request_timeout_seconds: 60
+  cors_origins:
+    - http://localhost:3000
+
+security:
+  require_auth: true
+  api_key_header: X-API-Key
+  cors_enabled: true
+  allowed_origins:
+    - http://localhost:3000
+  rate_limit_requests_per_minute: 100
+  secrets_source: environment
+
+features:
+  rag_enabled: true
+  voice_enabled: true
+  neo4j_enabled: true
+  api_enabled: true
+  observability_enabled: true
+  local_llm_enabled: true

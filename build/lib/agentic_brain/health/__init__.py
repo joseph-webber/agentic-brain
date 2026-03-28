@@ -18,8 +18,8 @@ Spring Boot equivalent: org.springframework.boot.actuate.health.*
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime, timezone
+from enum import Enum, StrEnum
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field
@@ -27,7 +27,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 
 
-class HealthStatus(str, Enum):
+class HealthStatus(StrEnum):
     """
     Health status values matching Spring Boot Actuator.
 
@@ -241,13 +241,15 @@ class Neo4jHealthIndicator(HealthIndicator):
                 if record:
                     return Health.up(
                         database="neo4j",
-                        version=record["versions"][0] if record["versions"] else "unknown",
+                        version=(
+                            record["versions"][0] if record["versions"] else "unknown"
+                        ),
                         edition=record["edition"],
                     )
 
             return Health.up(database="neo4j")
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Health.down(error="Connection timeout")
         except Exception as e:
             return Health.down().with_exception(e)
@@ -287,7 +289,7 @@ class RedisHealthIndicator(HealthIndicator):
 
             return Health.down(error="PING failed")
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Health.down(error="Connection timeout")
         except Exception as e:
             return Health.down().with_exception(e)
@@ -400,7 +402,7 @@ class HttpHealthIndicator(HealthIndicator):
                         expected=self._expected_status,
                     )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Health.down(error="Connection timeout", url=self._url)
         except Exception as e:
             return Health.down(url=self._url).with_exception(e)
@@ -480,7 +482,7 @@ class HealthIndicatorRegistry:
                 indicator.health(),
                 timeout=self._timeout_seconds,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return Health.down(error="Health check timeout")
         except Exception as e:
             return Health.down().with_exception(e)
@@ -514,7 +516,7 @@ class HealthIndicatorRegistry:
                 health = await task
                 components[name] = health
                 statuses.append(health.status)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 health = Health.down(error="Health check timeout")
                 components[name] = health
                 statuses.append(HealthStatus.DOWN)
@@ -530,7 +532,7 @@ class HealthIndicatorRegistry:
             status=overall_status,
             components=components,
             details={
-                "checked_at": datetime.now(timezone.utc).isoformat(),
+                "checked_at": datetime.now(UTC).isoformat(),
                 "component_count": len(components),
             },
         )
@@ -542,7 +544,7 @@ class HealthIndicatorRegistry:
         Returns UP if the application is running.
         This is a lightweight check - don't include dependency checks.
         """
-        return Health.up(timestamp=datetime.now(timezone.utc).isoformat())
+        return Health.up(timestamp=datetime.now(UTC).isoformat())
 
     async def readiness(self) -> Health:
         """

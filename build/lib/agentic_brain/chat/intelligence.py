@@ -49,7 +49,7 @@ import logging
 import re
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
@@ -1162,7 +1162,7 @@ class BookmarkManager:
             label=label,
             message_index=self._message_counter,
             content=content,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             tags=tags or [],
         )
 
@@ -1310,7 +1310,7 @@ class CorrectionLearner:
             original_response=original,
             correction=correction,
             context=context,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
         self.corrections.append(correction_obj)

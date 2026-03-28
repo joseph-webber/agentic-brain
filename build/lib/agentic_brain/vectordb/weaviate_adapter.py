@@ -24,7 +24,7 @@ The weaviate-client is an OPTIONAL dependency. This module
 gracefully handles ImportError if not installed.
 
 Copyright (C) 2026 Joseph Webber
-License: GPL-3.0-or-later
+License: Apache-2.0
 """
 
 import contextlib
@@ -285,7 +285,7 @@ class WeaviateAdapter(VectorDBAdapter):
     def upsert(
         self,
         collection: str,
-        vectors: list[Union[dict[str, Any], VectorRecord]],
+        vectors: list[dict[str, Any] | VectorRecord],
         namespace: Optional[str] = None,
     ) -> int:
         """

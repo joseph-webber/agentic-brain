@@ -24,7 +24,7 @@ Provides authentication for Firebase transports with support for:
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -78,14 +78,14 @@ class FirebaseUser:
             custom_claims=user.custom_claims,
             created_at=(
                 datetime.fromtimestamp(
-                    user.user_metadata.creation_timestamp / 1000, tz=timezone.utc
+                    user.user_metadata.creation_timestamp / 1000, tz=UTC
                 )
                 if user.user_metadata and user.user_metadata.creation_timestamp
                 else None
             ),
             last_sign_in=(
                 datetime.fromtimestamp(
-                    user.user_metadata.last_sign_in_timestamp / 1000, tz=timezone.utc
+                    user.user_metadata.last_sign_in_timestamp / 1000, tz=UTC
                 )
                 if user.user_metadata and user.user_metadata.last_sign_in_timestamp
                 else None
@@ -112,7 +112,7 @@ class TokenInfo:
         """Check if token is expired."""
         if not self.expires_at:
             return True
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(UTC) > self.expires_at
 
 
 class FirebaseAuth:
@@ -214,9 +214,9 @@ class FirebaseAuth:
                 name=decoded.get("name"),
                 picture=decoded.get("picture"),
                 email_verified=decoded.get("email_verified", False),
-                auth_time=datetime.fromtimestamp(decoded["auth_time"], tz=timezone.utc),
-                issued_at=datetime.fromtimestamp(decoded["iat"], tz=timezone.utc),
-                expires_at=datetime.fromtimestamp(decoded["exp"], tz=timezone.utc),
+                auth_time=datetime.fromtimestamp(decoded["auth_time"], tz=UTC),
+                issued_at=datetime.fromtimestamp(decoded["iat"], tz=UTC),
+                expires_at=datetime.fromtimestamp(decoded["exp"], tz=UTC),
                 claims=decoded,
             )
 
@@ -252,8 +252,8 @@ class FirebaseAuth:
 
         # Token is bytes, decode to string
         if isinstance(token, bytes):
-            return token.decode("utf-8")
-        return token
+            return str(token.decode("utf-8"))
+        return str(token)
 
     def get_user(self, uid: str) -> FirebaseUser:
         """Get user by UID.
@@ -461,11 +461,12 @@ class FirebaseAuth:
         if action_code_settings:
             settings = auth.ActionCodeSettings(**action_code_settings)
 
-        return auth.generate_password_reset_link(
+        link = auth.generate_password_reset_link(
             email,
             action_code_settings=settings,
             app=self._app,
         )
+        return str(link)
 
     def generate_email_verification_link(
         self,
@@ -485,11 +486,12 @@ class FirebaseAuth:
         if action_code_settings:
             settings = auth.ActionCodeSettings(**action_code_settings)
 
-        return auth.generate_email_verification_link(
+        link = auth.generate_email_verification_link(
             email,
             action_code_settings=settings,
             app=self._app,
         )
+        return str(link)
 
 
 class FirebaseAuthMiddleware:

@@ -13,14 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Location Services for Agentic Brain
-# Copyright (C) 2024-2025 Joseph Webber
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
 
 """
 Location services for agentic-brain chatbots.
@@ -39,7 +31,7 @@ Features:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from math import atan2, cos, radians, sin, sqrt
 from typing import Any, Dict, List, Optional, Tuple
@@ -179,12 +171,12 @@ class UserLocation:
     consent_timestamp: Optional[datetime] = None
 
     # Metadata
-    detected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    detected_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     detection_method: str = "unknown"  # ip, gps, postcode, manual
 
     def get_local_time(self) -> datetime:
         """Get current time in user's timezone."""
-        utc_now = datetime.now(timezone.utc)
+        utc_now = datetime.now(UTC)
         offset = timedelta(hours=self.utc_offset_hours)
         if self.is_dst:
             offset += timedelta(hours=1)
@@ -498,7 +490,7 @@ class LocationService:
         Returns:
             Distance in kilometers
         """
-        R = 6371  # Earth's radius in km
+        earth_radius_km = 6371
 
         lat1_rad = radians(lat1)
         lat2_rad = radians(lat2)
@@ -511,7 +503,7 @@ class LocationService:
         )
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
-        return R * c
+        return earth_radius_km * c
 
     def filter_services_by_distance(
         self,
@@ -732,7 +724,7 @@ class LocationService:
         if state not in DST_STATES:
             return False
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         month = now.month
 
         # Simple check: DST is October-March inclusive
@@ -744,11 +736,14 @@ class LocationService:
 # CONVENIENCE FUNCTIONS
 # =============================================================================
 
+# Global location service instance (lazy initialized)
+_location_service: Optional[LocationService] = None
+
 
 def get_location_service() -> LocationService:
     """Get or create the global location service instance."""
     global _location_service
-    if "_location_service" not in globals():
+    if _location_service is None:
         _location_service = LocationService()
     return _location_service
 

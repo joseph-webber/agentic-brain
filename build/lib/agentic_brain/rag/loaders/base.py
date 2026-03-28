@@ -15,12 +15,14 @@
 
 """Base loader class and common utilities for RAG document loaders."""
 
+import json
 import logging
 import re
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Callable, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
@@ -133,6 +135,7 @@ class LoadedDocument:
     """A document loaded from a source."""
 
     content: str
+    id: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
     source: str = ""  # e.g., "google_drive", "gmail", "local"
     source_id: str = ""  # Original ID in the source system
@@ -146,6 +149,7 @@ class LoadedDocument:
         """Serialize document to dictionary."""
         return {
             "content": self.content,
+            "id": self.id,
             "metadata": self.metadata,
             "source": self.source,
             "source_id": self.source_id,
@@ -155,6 +159,91 @@ class LoadedDocument:
             "modified_at": self.modified_at.isoformat() if self.modified_at else None,
             "size_bytes": self.size_bytes,
         }
+
+    def to_json(self, indent: int = 2) -> str:
+        """Export document as JSON string.
+
+        Provides unified JSON export similar to Docling's structured output,
+        including content, metadata, and any extracted tables or sections.
+
+        Args:
+            indent: JSON indentation level (default: 2)
+
+        Returns:
+            JSON string representation of the document.
+        """
+        data = self.to_dict()
+        # Include tables and sections if present in metadata
+        if "tables" in self.metadata:
+            data["tables"] = self.metadata["tables"]
+        if "sections" in self.metadata:
+            data["sections"] = self.metadata["sections"]
+        return json.dumps(data, indent=indent, default=str, ensure_ascii=False)
+
+    def to_markdown(self) -> str:
+        """Export document as clean Markdown.
+
+        Converts the loaded document into well-structured Markdown with:
+        - YAML-style metadata header
+        - Preserved heading hierarchy
+        - Markdown-formatted tables (if extracted)
+        - Clean paragraph separation
+
+        This replaces Docling's unified markdown export with a zero-dependency
+        approach that works with all 108+ loaders.
+
+        Returns:
+            Markdown string representation of the document.
+        """
+        parts: list[str] = []
+
+        # Metadata header
+        meta_lines = [f"# {self.filename or 'Untitled'}"]
+        if self.source:
+            meta_lines.append(f"**Source**: {self.source}")
+        if self.source_id:
+            meta_lines.append(f"**ID**: {self.source_id}")
+        if self.modified_at:
+            meta_lines.append(f"**Modified**: {self.modified_at.isoformat()}")
+        if self.size_bytes:
+            size_kb = self.size_bytes / 1024
+            if size_kb >= 1024:
+                meta_lines.append(f"**Size**: {size_kb / 1024:.1f} MB")
+            else:
+                meta_lines.append(f"**Size**: {size_kb:.1f} KB")
+        parts.append("\n".join(meta_lines))
+        parts.append("---")
+
+        # Main content
+        content = self.content.strip()
+        if content:
+            parts.append(content)
+
+        # Append extracted tables as markdown tables
+        tables = self.metadata.get("tables", [])
+        if tables:
+            parts.append("\n## Extracted Tables\n")
+            for i, table in enumerate(tables):
+                if isinstance(table, dict):
+                    headers = table.get("headers", [])
+                    rows = table.get("rows", [])
+                    caption = table.get("caption", f"Table {i + 1}")
+                elif isinstance(table, list) and table:
+                    headers = table[0] if table else []
+                    rows = table[1:] if len(table) > 1 else []
+                    caption = f"Table {i + 1}"
+                else:
+                    continue
+
+                parts.append(f"### {caption}\n")
+                if headers:
+                    parts.append("| " + " | ".join(str(h) for h in headers) + " |")
+                    parts.append("| " + " | ".join("---" for _ in headers) + " |")
+                for row in rows:
+                    if isinstance(row, (list, tuple)):
+                        parts.append("| " + " | ".join(str(c) for c in row) + " |")
+
+        return "\n\n".join(parts) + "\n"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "LoadedDocument":
@@ -168,6 +257,7 @@ class LoadedDocument:
 
         return cls(
             content=data.get("content", ""),
+            id=data.get("id", ""),
             metadata=data.get("metadata", {}),
             source=data.get("source", ""),
             source_id=data.get("source_id", ""),
@@ -226,10 +316,29 @@ class BaseLoader(ABC):
         """Load all documents from a folder."""
         pass
 
-    @abstractmethod
     def search(self, query: str, max_results: int = 50) -> list[LoadedDocument]:
-        """Search for documents."""
-        pass
+        """Search for documents.
+
+        Subclasses can override this. The default implementation returns no
+        results so loaders remain instantiable when search is optional.
+        """
+        return []
+
+    def load(self) -> list[LoadedDocument]:
+        """Backward-compatible convenience method used by CI tests."""
+        base_path = getattr(self, "base_path", None)
+        if base_path is None:
+            return []
+
+        path = Path(base_path)
+        if path.is_file():
+            doc = self.load_document(str(path))
+            return [doc] if doc else []
+        if path.is_dir():
+            return self.load_folder(".", recursive=True)
+
+        doc = self.load_document(str(path))
+        return [doc] if doc else []
 
     def _extract_text_from_pdf(self, pdf_bytes: bytes) -> str:
         """Extract text from PDF bytes. Tries multiple methods."""

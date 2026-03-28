@@ -115,3 +115,12 @@ Neo4j holds all scoring inputs:
 | Ports 7687 / 7474 | ✅ Required for Bolt/HTTP access |
 
 Need more? See [docs/GRAPHRAG.md](GRAPHRAG.md) for API usage and [CHANGELOG.md](../CHANGELOG.md) for the latest improvements.
+
+
+## Architecture references
+
+For the public reference model behind this integration, see:
+
+- [Neo4j Architecture](./NEO4J_ARCHITECTURE.md)
+- [Neo4j Zones](./NEO4J_ZONES.md)
+- [GraphRAG Guide](./GRAPHRAG.md)

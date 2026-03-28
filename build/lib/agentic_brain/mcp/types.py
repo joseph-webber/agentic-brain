@@ -25,7 +25,8 @@ Reference: https://modelcontextprotocol.io/
 from __future__ import annotations
 
 import builtins
-from enum import Enum
+import inspect
+from enum import Enum, StrEnum
 from typing import Any, Callable
 
 try:
@@ -60,7 +61,7 @@ except ImportError:
 # =============================================================================
 
 
-class JSONSchemaType(str, Enum):
+class JSONSchemaType(StrEnum):
     """JSON Schema type values."""
 
     STRING = "string"

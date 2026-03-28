@@ -40,7 +40,7 @@ import inspect
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from functools import wraps
 from typing import Any, Callable, ParamSpec, TypeVar
 
@@ -152,7 +152,7 @@ class HeartbeatMonitor:
         self._activities[activity_id] = HeartbeatInfo(
             activity_id=activity_id,
             workflow_id=workflow_id,
-            last_heartbeat=datetime.now(timezone.utc),
+            last_heartbeat=datetime.now(UTC),
         )
 
         if on_timeout:
@@ -188,7 +188,7 @@ class HeartbeatMonitor:
             return False
 
         info = self._activities[activity_id]
-        info.last_heartbeat = datetime.now(timezone.utc)
+        info.last_heartbeat = datetime.now(UTC)
         info.progress = progress
         info.details = details
 
@@ -221,7 +221,7 @@ class HeartbeatMonitor:
 
     async def _check_timeouts(self) -> None:
         """Check for activities that have timed out"""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         timeout_threshold = timedelta(
             seconds=self.config.default_interval * self.config.timeout_multiplier
         )

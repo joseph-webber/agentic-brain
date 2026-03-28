@@ -15,7 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
 """
 Core Agent class for agentic-brain.
 
@@ -33,7 +32,7 @@ Example:
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 
 from .audio import Audio, AudioConfig
 from .memory import DataScope, InMemoryStore, Memory, Neo4jMemory
@@ -86,7 +85,7 @@ class Agent:
         >>> agent = Agent(
         ...     name="assistant",
         ...     neo4j_uri="bolt://localhost:7687",
-        ...     neo4j_password="password"
+        ...     neo4j_password="your-password-here"
         ... )
         >>>
         >>> # Customer-scoped agent (B2B isolation)
@@ -257,7 +256,7 @@ Be concise and accurate. If you don't know something, say so."""
             {
                 "role": "user",
                 "content": message,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -294,7 +293,7 @@ Be concise and accurate. If you don't know something, say so."""
             {
                 "role": "assistant",
                 "content": answer,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 

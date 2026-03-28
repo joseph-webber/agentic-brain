@@ -15,14 +15,6 @@
 
 from __future__ import annotations
 
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright 2026 Joseph Webber
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
 """
 Authentication module for Agentic Brain API.
 
@@ -58,7 +50,7 @@ Example:
 
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Optional
 
 from fastapi import Depends, HTTPException, Security, status
@@ -99,13 +91,13 @@ def get_jwt_algorithm() -> str:
 def _get_api_key_roles(api_key: str) -> list[str]:
     """
     Get roles for a specific API key.
-    
+
     API key roles are configured via API_KEY_ROLES environment variable.
     Format: "key1:ROLE_ADMIN,ROLE_USER;key2:ROLE_USER"
-    
+
     Args:
         api_key: The API key to look up roles for
-        
+
     Returns:
         List of roles for this API key, or ["ROLE_USER"] as default
     """
@@ -113,7 +105,7 @@ def _get_api_key_roles(api_key: str) -> list[str]:
     if not roles_str:
         # Default: API keys get basic user role
         return ["ROLE_USER"]
-    
+
     # Parse format: "key1:ROLE_ADMIN,ROLE_USER;key2:ROLE_USER"
     for entry in roles_str.split(";"):
         entry = entry.strip()
@@ -121,7 +113,7 @@ def _get_api_key_roles(api_key: str) -> list[str]:
             key, roles_part = entry.split(":", 1)
             if key.strip() == api_key:
                 return [r.strip() for r in roles_part.split(",") if r.strip()]
-    
+
     # Key not found in config - default role
     return ["ROLE_USER"]
 
@@ -308,7 +300,7 @@ async def get_current_user(
         exp = payload.get("exp")
         exp_dt = None
         if exp:
-            exp_dt = datetime.fromtimestamp(exp, tz=timezone.utc)
+            exp_dt = datetime.fromtimestamp(exp, tz=UTC)
 
         return TokenData(
             user_id=str(user_id),
@@ -544,14 +536,14 @@ def create_test_token(
     if not jwt_secret:
         raise ValueError("JWT_SECRET must be configured")
 
-    expires = datetime.now(timezone.utc) + timedelta(seconds=expires_in_seconds)
+    expires = datetime.now(UTC) + timedelta(seconds=expires_in_seconds)
 
     payload = {
         "sub": user_id,
         "user_id": user_id,
         "roles": roles or [],
         "exp": expires,
-        "iat": datetime.now(timezone.utc),
+        "iat": datetime.now(UTC),
     }
 
     return jose_jwt.encode(payload, jwt_secret, algorithm=get_jwt_algorithm())

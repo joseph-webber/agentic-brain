@@ -232,7 +232,9 @@ class PluginManager:
             ValueError: If plugin_class is not a Plugin subclass
         """
         if not issubclass(plugin_class, Plugin):
-            raise ValueError(f"{plugin_class} must be a Plugin subclass")
+            compatible = any(base.__name__ == "Plugin" for base in plugin_class.__mro__)
+            if not compatible:
+                raise ValueError(f"{plugin_class} must be a Plugin subclass")
 
         # Get config from manager or create new
         if config is None:
@@ -302,11 +304,12 @@ class PluginManager:
 
                     # Find Plugin subclasses in module
                     for _name, obj in inspect.getmembers(module):
-                        if (
-                            inspect.isclass(obj)
-                            and issubclass(obj, Plugin)
-                            and obj is not Plugin
-                        ):
+                        if inspect.isclass(obj) and obj is not Plugin:
+                            is_plugin = issubclass(obj, Plugin) or any(
+                                base.__name__ == "Plugin" for base in obj.__mro__
+                            )
+                            if not is_plugin:
+                                continue
                             plugin = self.load_plugin(obj)
                             if plugin:
                                 loaded[plugin.name] = plugin

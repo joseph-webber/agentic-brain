@@ -34,7 +34,7 @@ Example:
     >>> results = adapter.search("collection", query_vector=[...], top_k=5)
 
 Copyright (C) 2026 Joseph Webber
-License: GPL-3.0-or-later
+License: Apache-2.0
 """
 
 import logging
@@ -148,7 +148,7 @@ class VectorDBAdapter(ABC):
     def upsert(
         self,
         collection: str,
-        vectors: list[Union[dict[str, Any], VectorRecord]],
+        vectors: list[dict[str, Any] | VectorRecord],
         namespace: Optional[str] = None,
     ) -> int:
         """
@@ -346,9 +346,7 @@ class VectorDBAdapter(ABC):
             )
         return True
 
-    def _to_vector_record(
-        self, item: Union[dict[str, Any], VectorRecord]
-    ) -> VectorRecord:
+    def _to_vector_record(self, item: dict[str, Any] | VectorRecord) -> VectorRecord:
         """Convert dict to VectorRecord if needed."""
         if isinstance(item, VectorRecord):
             return item
@@ -358,7 +356,7 @@ class VectorDBAdapter(ABC):
 
 
 # Lazy imports for adapters (they handle their own optional dependencies)
-def get_adapter(db_type: Union[str, VectorDBType], **kwargs) -> VectorDBAdapter:
+def get_adapter(db_type: str | VectorDBType, **kwargs) -> VectorDBAdapter:
     """
     Factory function to get the appropriate adapter.
 
