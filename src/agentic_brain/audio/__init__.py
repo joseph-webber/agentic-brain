@@ -611,3 +611,20 @@ from .airpods import (
     SpatialAudioScene,
     SpatialVoicePosition,
 )
+from .spatial_audio import (
+    LADY_POSITIONS,
+    LADY_VOICE_MAP,
+    SpatialAudioRouter,
+    SpatialPosition,
+    get_spatial_router,
+    speak_spatial,
+)
+from .airpods_detect import (
+    AirPodsDetector,
+    AirPodsStatus as DetectedAirPodsStatus,
+    AudioRouter,
+    airpods_connected,
+    check_battery_and_warn,
+    get_airpods_detector,
+    get_audio_router,
+)

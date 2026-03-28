@@ -33,7 +33,9 @@ import warnings
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
+from agentic_brain.audio.stereo_pan import get_stereo_panner
 from agentic_brain.cache.voice_cache import VoiceCache, VoiceState
+from agentic_brain.voice.config import stereo_pan_enabled
 from agentic_brain.voice._speech_lock import get_global_lock as _get_global_lock
 from agentic_brain.voice.redis_queue import RedisVoiceQueue, VoiceJob
 
@@ -94,6 +96,7 @@ class VoiceMessage:
     voice: str = "Karen"
     rate: int = 155
     pause_after: Optional[float] = None
+    lady: Optional[str] = None  # When set, route through spatial audio
 
     def __post_init__(self) -> None:
         self.text = self.text.strip()
@@ -253,18 +256,24 @@ class VoiceSerializer:
         rate: int = 155,
         pause_after: Optional[float] = None,
         wait: bool = True,
+        lady: Optional[str] = None,
     ) -> bool:
         """Queue text for speech through the centralized serializer.
 
         This is the **only** sanctioned way to produce voice output.
         The message is placed on the worker-thread queue and executed
         sequentially, guaranteeing zero overlap.
+
+        When *lady* is provided and stereo panning is enabled, the
+        serializer will pan the generated speech using Sox before
+        playback.
         """
         message = VoiceMessage(
             text=text,
             voice=voice,
             rate=rate,
             pause_after=pause_after,
+            lady=lady,
         )
         return self.run_serialized(message, wait=wait)
 
@@ -275,6 +284,7 @@ class VoiceSerializer:
         rate: int = 155,
         pause_after: Optional[float] = None,
         wait: bool = True,
+        lady: Optional[str] = None,
     ) -> bool:
         """Async wrapper for serialized speech."""
         loop = asyncio.get_running_loop()
@@ -286,6 +296,7 @@ class VoiceSerializer:
                 rate=rate,
                 pause_after=pause_after,
                 wait=wait,
+                lady=lady,
             ),
         )
 
@@ -426,6 +437,31 @@ class VoiceSerializer:
                 )
                 raise
 
+        if message.lady and stereo_pan_enabled():
+            stereo_panner = get_stereo_panner()
+            if stereo_panner.is_available():
+                try:
+                    panned_audio = stereo_panner.render_panned_speech(
+                        text=message.text,
+                        lady=message.lady or message.voice,
+                        voice=message.voice,
+                        rate=message.rate,
+                    )
+                except Exception:
+                    logger.exception("Stereo panning failed - falling back to direct say")
+                else:
+                    try:
+                        process = subprocess.Popen(
+                            ["afplay", str(panned_audio.path)],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                        )
+                        with self._state_lock:
+                            self._current_process = process
+                        return process.wait() == 0
+                    finally:
+                        stereo_panner.cleanup_audio(panned_audio.path)
+
         cmd = ["say", "-v", message.voice, "-r", str(message.rate), message.text]
         process = subprocess.Popen(
             cmd,
@@ -437,6 +473,34 @@ class VoiceSerializer:
             self._current_process = process
 
         return process.wait() == 0
+
+    def _speak_spatial(self, message: VoiceMessage) -> bool:
+        """Speak from a lady's spatial position using the spatial router.
+
+        Falls back to plain ``_speak_with_say`` if spatial routing is
+        unavailable or if no ``lady`` is set on the message.
+        """
+        lady = message.lady
+        if not lady:
+            return self._speak_with_say(message)
+
+        try:
+            from agentic_brain.audio.spatial_audio import get_spatial_router
+
+            router = get_spatial_router()
+            return router.speak_spatial(
+                message.text,
+                lady=lady,
+                rate=message.rate,
+                wait=True,
+            )
+        except Exception:
+            logger.debug(
+                "Spatial routing unavailable for %s, falling back to mono",
+                lady,
+                exc_info=True,
+            )
+            return self._speak_with_say(message)
 
     def cache_audio(
         self,
@@ -516,6 +580,7 @@ def get_voice_serializer() -> VoiceSerializer:
 def speak_serialized(
     text: str,
     voice: str = "Karen",
+    lady: Optional[str] = None,
     rate: int = 155,
     pause_after: Optional[float] = None,
     wait: bool = True,
@@ -525,10 +590,15 @@ def speak_serialized(
     **This is the recommended module-level entry-point.**
     All voice output should flow through here or through
     ``get_voice_serializer().speak()``.
+
+    When *lady* is provided, speech is routed through the spatial audio
+    system so the sound comes from that lady's position in 3D space
+    around Joseph's head (requires AirPods + Sox or native bridge).
     """
     return _serializer.speak(
         text,
         voice=voice,
+        lady=lady,
         rate=rate,
         pause_after=pause_after,
         wait=wait,
