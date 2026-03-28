@@ -27,6 +27,9 @@ from agentic_brain.voice.resilient import (
     speak_via_daemon,
 )
 
+# Import to access and reset global daemon instance
+import agentic_brain.voice.resilient as resilient_module
+
 
 class TestVoiceConfig:
     """Test VoiceConfig"""
@@ -236,6 +239,27 @@ class TestSoundEffects:
 class TestConvenienceFunctions:
     """Test convenience functions"""
 
+    @pytest.fixture
+    async def reset_daemon(self):
+        """Reset global daemon instance before and after test"""
+        # Reset before test
+        if resilient_module._daemon_instance is not None:
+            try:
+                await resilient_module._daemon_instance.stop()
+            except Exception:
+                pass
+        resilient_module._daemon_instance = None
+        
+        yield
+        
+        # Cleanup after test
+        if resilient_module._daemon_instance is not None:
+            try:
+                await resilient_module._daemon_instance.stop()
+            except Exception:
+                pass
+        resilient_module._daemon_instance = None
+
     @pytest.mark.asyncio
     async def test_speak_function(self):
         """Test global speak function"""
@@ -249,7 +273,7 @@ class TestConvenienceFunctions:
         # Should not raise
 
     @pytest.mark.asyncio
-    async def test_get_daemon_function(self):
+    async def test_get_daemon_function(self, reset_daemon):
         """Test get_daemon function"""
         daemon = await get_daemon()
         assert daemon is not None

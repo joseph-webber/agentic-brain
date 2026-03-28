@@ -58,7 +58,7 @@ Example:
     >>> response = agent.chat("Hello!")
 """
 
-__version__ = "2.16.0"
+__version__ = "2.17.0"
 __author__ = "Joseph Webber"
 __email__ = "joseph.webber@me.com"
 __license__ = "Apache-2.0"
