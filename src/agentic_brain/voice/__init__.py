@@ -99,6 +99,17 @@ from agentic_brain.voice.resilient import (
     speak as resilient_speak,
 )
 
+# Import adaptive speed profiles (grow with Joseph's proficiency!)
+from agentic_brain.voice.speed_profiles import (
+    PROFILE_RATES,
+    AdaptiveSpeedTracker,
+    SpeedProfile,
+    SpeedProfileManager,
+    get_adaptive_tracker,
+    get_current_rate,
+    get_speed_manager,
+)
+
 # Import user regional preferences and learning
 from agentic_brain.voice.user_regions import (
     UserRegionStorage,
@@ -136,7 +147,7 @@ if typing.TYPE_CHECKING:
 def speak_safe(
     text: str,
     voice: str = "Karen",
-    rate: int = 155,
+    rate: int | None = None,
     *,
     pause_after: float | None = None,
     wait: bool = True,
@@ -146,16 +157,21 @@ def speak_safe(
     Routes through the singleton ``VoiceSerializer``, which serializes
     all speech through a single worker thread.  **Never overlaps.**
 
+    When *rate* is ``None`` the current adaptive speed profile is used
+    (see :mod:`agentic_brain.voice.speed_profiles`).
+
     Args:
         text: What to say.
         voice: macOS voice name (Karen, Moira, Kyoko …).
-        rate: Words per minute (100-200).
+        rate: Words per minute, or ``None`` for the active profile rate.
         pause_after: Seconds to pause after this utterance.
         wait: Block until the utterance finishes.
 
     Returns:
         True if the utterance was delivered successfully.
     """
+    if rate is None:
+        rate = get_current_rate()
     return get_voice_serializer().speak(
         text,
         voice=voice,
@@ -176,6 +192,14 @@ def __getattr__(name: str):
 __all__ = [
     # ── PRIMARY ENTRY POINT (use this!) ──
     "speak_safe",
+    # Speed profiles (adaptive rate)
+    "SpeedProfile",
+    "SpeedProfileManager",
+    "AdaptiveSpeedTracker",
+    "PROFILE_RATES",
+    "get_speed_manager",
+    "get_adaptive_tracker",
+    "get_current_rate",
     # Config
     "VoiceConfig",
     "VoiceQuality",
@@ -216,6 +240,15 @@ __all__ = [
     "RegionalVoice",
     "get_regional_voice",
     "get_available_regions",
+    # ── NEW: Integration Plan Components (2026-03-29) ──
+    # Lazy-loaded to avoid blocking MCP startup.
+    # Use: from agentic_brain.voice.earcons import EarconPlayer
+    # Or:  EarconPlayer, get_fn = _lazy_earcons()
+    "_lazy_earcons",
+    "_lazy_redis_voice_queue",
+    "_lazy_speech_rates",
+    "_lazy_tts_router",
+    "_lazy_kokoro",
     # Classes
     "Audio",
     "AudioConfig",
@@ -245,3 +278,51 @@ from .redis_summary import (
     speak_queue_status,
     speak_redis_summary,
 )
+
+# ── NEW COMPONENTS (Voice Integration Plan 2026-03-29) ──────────────
+#
+# Five improvements built by parallel agents, integrated here:
+#   ① Redis Cross-Process Lock   → _speech_lock.py (already imported above)
+#   ② Earcon Sound System        → earcons.py
+#   ③ Redis Voice Queue          → redis_voice_queue.py
+#   ④ Adaptive Speech Rates      → speech_rates.py
+#   ⑤ Kokoro TTS / Hybrid Router → kokoro_tts.py, tts_router.py
+#
+# All imports are lazy to avoid blocking MCP server startup.
+
+def _lazy_earcons():
+    """Lazy import for earcon sound system."""
+    from agentic_brain.voice.earcons import EarconPlayer, get_earcon_player
+    return EarconPlayer, get_earcon_player
+
+def _lazy_redis_voice_queue():
+    """Lazy import for Redis-backed priority voice queue."""
+    from agentic_brain.voice.redis_voice_queue import (
+        RedisVoiceQueue,
+        get_redis_voice_queue,
+    )
+    return RedisVoiceQueue, get_redis_voice_queue
+
+def _lazy_speech_rates():
+    """Lazy import for adaptive speech rate profiles."""
+    from agentic_brain.voice.speech_rates import (
+        SpeedProfile,
+        SpeedProfileResolver,
+        VoiceMode,
+        get_speed_profile_resolver,
+    )
+    return SpeedProfile, SpeedProfileResolver, VoiceMode, get_speed_profile_resolver
+
+def _lazy_tts_router():
+    """Lazy import for hybrid TTS engine router."""
+    from agentic_brain.voice.tts_router import (
+        HybridTTSRouter,
+        TTSEngine,
+        get_tts_router,
+    )
+    return HybridTTSRouter, TTSEngine, get_tts_router
+
+def _lazy_kokoro():
+    """Lazy import for Kokoro neural TTS engine."""
+    from agentic_brain.voice.kokoro_tts import KokoroTTS, kokoro_available
+    return KokoroTTS, kokoro_available

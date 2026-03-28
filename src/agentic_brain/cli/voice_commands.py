@@ -503,6 +503,68 @@ def voice_llm_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def voice_speed_command(args: argparse.Namespace) -> int:
+    """Show or change the adaptive speech rate profile.
+
+    Subargument *profile_or_action* may be:
+    - (empty)         → show current profile
+    - relaxed/working/focused/power → jump to that tier
+    - up              → move one tier faster
+    - down            → move one tier slower
+    """
+    from agentic_brain.voice.speed_profiles import (
+        PROFILE_DESCRIPTIONS,
+        PROFILE_RATES,
+        SpeedProfile,
+        get_speed_manager,
+    )
+
+    mgr = get_speed_manager()
+    action = getattr(args, "profile_or_action", None)
+
+    if not action:
+        # Show current state
+        print(f"\n⚡ Speech Speed Profile: {mgr.current_profile.value.upper()}")
+        print(f"   Rate: {mgr.current_rate} WPM")
+        print()
+        for profile in SpeedProfile:
+            marker = " ▶ " if profile == mgr.current_profile else "   "
+            print(f"{marker}{PROFILE_DESCRIPTIONS[profile]}")
+        print()
+        print("Change with:  ab voice speed <profile|up|down>")
+        return 0
+
+    action = action.strip().lower()
+
+    if action == "up":
+        if not mgr.can_speed_up():
+            print("Already at maximum speed (power, 400 WPM)")
+            return 0
+        mgr.speed_up()
+        print(f"⚡ Speed UP → {mgr.current_profile.value} ({mgr.current_rate} WPM)")
+        return 0
+
+    if action == "down":
+        if not mgr.can_slow_down():
+            print("Already at minimum speed (relaxed, 155 WPM)")
+            return 0
+        mgr.slow_down()
+        print(f"⚡ Speed DOWN → {mgr.current_profile.value} ({mgr.current_rate} WPM)")
+        return 0
+
+    # Try direct profile name
+    try:
+        profile = SpeedProfile(action)
+    except ValueError:
+        print(f"Unknown speed profile: '{action}'")
+        print("Valid: relaxed, working, focused, power, up, down")
+        return 1
+
+    mgr.set_profile(profile)
+    print(f"⚡ Speed set to {profile.value} ({PROFILE_RATES[profile]} WPM)")
+    return 0
+
+
 def voice_command(args: argparse.Namespace) -> int:
     """Main voice command (shows help if no subcommand)."""
     print("\n🎙️  Agentic Brain Voice System")
@@ -525,6 +587,15 @@ def voice_command(args: argparse.Namespace) -> int:
     print("  ab voice mode work         Set work mode (Karen only)")
     print("  ab voice mode life         Set life mode (all primary voices)")
     print()
+    print("⚡ Speed Profile Commands:")
+    print("  ab voice speed             Show current speed profile")
+    print("  ab voice speed relaxed     Set relaxed (155 WPM)")
+    print("  ab voice speed working     Set working (200 WPM)")
+    print("  ab voice speed focused     Set focused (280 WPM)")
+    print("  ab voice speed power       Set power   (400 WPM)")
+    print("  ab voice speed up          Move up one tier")
+    print("  ab voice speed down        Move down one tier")
+    print()
     print("📍 Regional Voice Commands:")
     print("  ab voice location          Show current location")
     print("  ab voice location adelaide Set location to Adelaide")
@@ -539,6 +610,7 @@ def voice_command(args: argparse.Namespace) -> int:
     print("  ab voice speak 'Hello Joseph' -v Karen")
     print("  ab voice conversation --demo")
     print("  ab voice mode work")
+    print("  ab voice speed focused")
     print("  ab voice location adelaide")
     print("  ab voice regionalize 'That is very great!'")
     return 0
@@ -692,6 +764,24 @@ def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
         help="Mode to set: work, life, or quiet",
     )
     mode_parser.set_defaults(func=voice_mode_command)
+
+    # voice speed
+    speed_parser = voice_subparsers.add_parser(
+        "speed",
+        help="Show/set adaptive speech rate profile",
+        description=(
+            "Adaptive speech rate profiles. "
+            "Profiles: relaxed (155 WPM), working (200), focused (280), power (400). "
+            "Use 'up'/'down' to shift one tier."
+        ),
+    )
+    speed_parser.add_argument(
+        "profile_or_action",
+        nargs="?",
+        type=str,
+        help="Profile name (relaxed/working/focused/power) or action (up/down)",
+    )
+    speed_parser.set_defaults(func=voice_speed_command)
 
     # voice location
     location_parser = voice_subparsers.add_parser(

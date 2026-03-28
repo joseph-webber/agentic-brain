@@ -128,8 +128,8 @@ class VoiceMessage:
         if not self.text or not self.text.strip():
             raise ValueError("Voice message text cannot be empty")
         self.text = self.text.strip()
-        if self.rate < 100 or self.rate > 200:
-            raise ValueError(f"Rate must be 100-200 wpm, got {self.rate}")
+        if self.rate < 100 or self.rate > 500:
+            raise ValueError(f"Rate must be 100-500 wpm, got {self.rate}")
 
 
 class VoiceQueue:
