@@ -30,16 +30,19 @@ import subprocess
 import threading
 import time
 import warnings
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
 from agentic_brain.audio.stereo_pan import get_stereo_panner
 from agentic_brain.cache.voice_cache import VoiceCache, VoiceState
-from agentic_brain.voice.config import stereo_pan_enabled
 from agentic_brain.voice._speech_lock import get_global_lock as _get_global_lock
+from agentic_brain.voice.config import stereo_pan_enabled, use_redpanda_voice
 from agentic_brain.voice.redis_queue import RedisVoiceQueue, VoiceJob
+from agentic_brain.voice.watchdog import VoiceWatchdog
 
 logger = logging.getLogger(__name__)
+DEFAULT_STARTUP_SILENCE_SECONDS = 0.5
 
 # ── Overlap detection ────────────────────────────────────────────────
 
@@ -163,30 +166,82 @@ class VoiceSerializer:
         # speech path in the process (serializer, voiceover, global_speak,
         # resilient, llm_voice) is gated by the same mutex.
         self._speech_lock = _get_global_lock()
+        self._speech_lock_timeout = float(
+            os.environ.get("VOICE_LOCK_TIMEOUT_SECONDS", "30")
+        )
         self._state_lock = threading.Lock()
         self._queue_lock = threading.Lock()
         self._queue_ready = threading.Condition(self._queue_lock)
+        self._mode_switch_lock = threading.Lock()
         self._queue: list[_SpeechJob] = []
         self._pending_jobs: dict[str, _SpeechJob] = {}
         self._current_message: Optional[VoiceMessage] = None
         self._current_process: Optional[subprocess.Popen] = None
+        self._job_pending = False
         self._pause_between = 0.3
+        self._startup_silence_seconds = max(
+            0.0,
+            float(
+                os.environ.get(
+                    "VOICE_STARTUP_SILENCE_SECONDS",
+                    str(DEFAULT_STARTUP_SILENCE_SECONDS),
+                )
+            ),
+        )
+        self._worker_ready = threading.Event()
+        self._daemon_ready = threading.Event()
+        self._mode_switch_ready = threading.Event()
+        self._daemon_ready.set()
+        self._mode_switch_ready.set()
         self._audit_enabled = os.environ.get(
             "VOICE_AUDIT_DISABLED", ""
         ).lower() not in ("1", "true", "yes")
         self._redis_queue = self._create_redis_queue()
         self._voice_cache = self._create_voice_cache()
-        self._worker = threading.Thread(
+
+        # Worker thread watchdog – auto-restart on stall
+        self._watchdog = VoiceWatchdog(
+            worker_factory=self._create_worker,
+            stall_timeout=15.0,
+            check_interval=5.0,
+            max_restarts=3,
+            alert_callback=self._on_watchdog_alert,
+        )
+        self._worker = self._create_worker()
+        self._watchdog.start(worker=self._worker)
+        self._sync_voice_cache_state()
+
+    def _create_worker(self) -> threading.Thread:
+        """Create and start a new worker thread for the speech queue."""
+        worker = threading.Thread(
             target=self._worker_loop,
             name="voice-serializer",
             daemon=True,
         )
-        self._worker.start()
-        self._sync_voice_cache_state()
+        worker.start()
+        return worker
+
+    def _on_watchdog_alert(self, restart_count: int, reason: Optional[str]) -> None:
+        """Called when the watchdog hits max consecutive restarts."""
+        logger.error(
+            "Voice worker alert: %d consecutive restart failures (reason=%s). "
+            "Voice may be degraded.",
+            restart_count,
+            reason,
+        )
 
     @property
     def pause_between(self) -> float:
         return self._pause_between
+
+    @property
+    def startup_silence_seconds(self) -> float:
+        return self._startup_silence_seconds
+
+    @property
+    def watchdog(self) -> VoiceWatchdog:
+        """Access the worker thread watchdog."""
+        return self._watchdog
 
     @property
     def current_message(self) -> Optional[VoiceMessage]:
@@ -205,6 +260,48 @@ class VoiceSerializer:
     def is_speaking(self) -> bool:
         with self._state_lock:
             return self._current_message is not None
+
+    def is_busy(self) -> bool:
+        with self._state_lock:
+            return self._current_message is not None or self._job_pending
+
+    def is_worker_ready(self) -> bool:
+        return self._worker_ready.is_set()
+
+    def is_daemon_ready(self) -> bool:
+        return self._daemon_ready.is_set()
+
+    def wait_until_worker_ready(self, timeout: float = 5.0) -> bool:
+        return self._worker_ready.wait(timeout)
+
+    def wait_until_ready(self, timeout: Optional[float] = 5.0) -> bool:
+        deadline = None if timeout is None else time.monotonic() + timeout
+        for event in (self._worker_ready, self._daemon_ready, self._mode_switch_ready):
+            remaining = None if deadline is None else max(0.0, deadline - time.monotonic())
+            if not event.wait(remaining):
+                return False
+        return True
+
+    def mark_daemon_starting(self) -> None:
+        self._daemon_ready.clear()
+
+    def mark_daemon_ready(self) -> None:
+        self._daemon_ready.set()
+
+    @contextmanager
+    def mode_switch(self, timeout: float = 10.0):
+        self._mode_switch_lock.acquire()
+        self._mode_switch_ready.clear()
+        try:
+            deadline = time.monotonic() + timeout
+            while self.is_speaking():
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("Timed out waiting for active speech to finish")
+                time.sleep(0.01)
+            yield
+        finally:
+            self._mode_switch_ready.set()
+            self._mode_switch_lock.release()
 
     def queue_size(self) -> int:
         if self._redis_queue is not None:
@@ -238,16 +335,19 @@ class VoiceSerializer:
         with self._state_lock:
             self._current_message = None
             self._current_process = None
+            self._job_pending = False
+        self._daemon_ready.set()
+        self._mode_switch_ready.set()
         self._sync_voice_cache_state()
 
     def wait_until_idle(self, timeout: float = 5.0) -> bool:
         """Wait until no message is queued or speaking."""
         deadline = time.time() + timeout
         while time.time() < deadline:
-            if self.queue_size() == 0 and not self.is_speaking():
+            if self.queue_size() == 0 and not self.is_busy():
                 return True
             time.sleep(0.01)
-        return self.queue_size() == 0 and not self.is_speaking()
+        return self.queue_size() == 0 and not self.is_busy()
 
     def speak(
         self,
@@ -287,6 +387,25 @@ class VoiceSerializer:
         lady: Optional[str] = None,
     ) -> bool:
         """Async wrapper for serialized speech."""
+        if use_redpanda_voice():
+            from agentic_brain.voice.events import VoicePriorityLane
+            from agentic_brain.voice.stream import speak_async as publish_voice_request
+
+            return await publish_voice_request(
+                text,
+                lady=lady or voice,
+                priority=VoicePriorityLane.NORMAL,
+                source="agentic_brain.voice.serializer",
+                fallback=lambda: self.speak(
+                    text,
+                    voice=voice,
+                    rate=rate,
+                    pause_after=pause_after,
+                    wait=wait,
+                    lady=lady,
+                ),
+            )
+
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             None,
@@ -356,10 +475,33 @@ class VoiceSerializer:
         )
 
     def _worker_loop(self) -> None:
-        while True:
-            job = self._next_job()
+        if self._startup_silence_seconds > 0:
+            time.sleep(self._startup_silence_seconds)
+        self._worker_ready.set()
 
-            with self._speech_lock:
+        while True:
+            # Signal the watchdog that the worker is alive
+            if hasattr(self, "_watchdog"):
+                self._watchdog.heartbeat()
+
+            job = self._next_job()
+            with self._state_lock:
+                self._job_pending = True
+            self.wait_until_ready(timeout=None)
+
+            # Heartbeat after waking from queue wait
+            if hasattr(self, "_watchdog"):
+                self._watchdog.heartbeat()
+
+            if not self._speech_lock.acquire(timeout=self._speech_lock_timeout):
+                job.error = TimeoutError(
+                    "Could not acquire the global voice lock before speech execution"
+                )
+                job.result = False
+                job.done.set()
+                continue
+
+            try:
                 with self._state_lock:
                     self._current_message = job.message
                     self._current_process = None
@@ -375,6 +517,7 @@ class VoiceSerializer:
                     with self._state_lock:
                         self._current_message = None
                         self._current_process = None
+                        self._job_pending = False
                     self._sync_voice_cache_state()
 
                     pause_after = (
@@ -386,6 +529,12 @@ class VoiceSerializer:
                         time.sleep(pause_after)
 
                     job.done.set()
+            finally:
+                self._speech_lock.release()
+
+            # Heartbeat after completing a job
+            if hasattr(self, "_watchdog"):
+                self._watchdog.heartbeat()
 
     def _next_job(self) -> _SpeechJob:
         while True:

@@ -445,18 +445,43 @@ class VoiceDaemon:
         self.queue = asyncio.Queue()
         self._running = False
         self._task = None
+        self._ready = asyncio.Event()
+        self._startup_silence_seconds = get_voice_serializer().startup_silence_seconds
         self.processed = 0
         self.errors = 0
 
     async def start(self):
         """Start the daemon"""
+        if self._running:
+            return
+
+        serializer = get_voice_serializer()
+        serializer.mark_daemon_starting()
+        self._ready.clear()
         self._running = True
-        self._task = asyncio.create_task(self._process_queue())
-        logger.info("Voice daemon started")
+        try:
+            self._task = asyncio.create_task(self._process_queue())
+            worker_ready = await asyncio.to_thread(serializer.wait_until_worker_ready, 5.0)
+            if not worker_ready:
+                raise TimeoutError("Voice serializer worker did not become ready")
+            await asyncio.sleep(self._startup_silence_seconds)
+            self._ready.set()
+            serializer.mark_daemon_ready()
+            logger.info(
+                "Voice daemon started (startup gate %.3fs)",
+                self._startup_silence_seconds,
+            )
+        except Exception:
+            serializer.mark_daemon_ready()
+            self._running = False
+            if self._task is not None:
+                self._task.cancel()
+            raise
 
     async def stop(self):
         """Stop the daemon gracefully"""
         self._running = False
+        self._ready.clear()
         if self._task:
             try:
                 # Don't pass loop parameter - deprecated in Python 3.10+
@@ -474,6 +499,7 @@ class VoiceDaemon:
                     await self._task
                 except asyncio.CancelledError:
                     pass
+        get_voice_serializer().mark_daemon_ready()
         logger.info(
             f"Voice daemon stopped (processed={self.processed}, errors={self.errors})"
         )
@@ -489,6 +515,7 @@ class VoiceDaemon:
         while self._running:
             try:
                 text, voice, rate = await asyncio.wait_for(self.queue.get(), timeout=60)
+                await self._ready.wait()
                 success = await ResilientVoice.speak(text, voice, rate)
                 self.processed += 1
                 if not success:
@@ -508,6 +535,7 @@ class VoiceDaemon:
         """Get daemon statistics"""
         return {
             "running": self._running,
+            "ready": self._ready.is_set(),
             "queue_size": self.queue.qsize(),
             "processed": self.processed,
             "errors": self.errors,

@@ -411,8 +411,10 @@ class ConversationalVoice:
     def set_mode(self, mode: VoiceMode):
         """Change voice mode (work/life/quiet)."""
         old_mode = self.config.mode
-        self.config.save_mode(mode)
-        logger.info(f"Voice mode changed: {old_mode.value} → {mode.value}")
+        serializer = get_voice_serializer()
+        with serializer.mode_switch():
+            self.config.save_mode(mode)
+            logger.info(f"Voice mode changed: {old_mode.value} → {mode.value}")
 
         # Announce the change
         if mode == VoiceMode.WORK:

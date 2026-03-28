@@ -22,6 +22,12 @@ def stereo_pan_enabled() -> bool:
     return _env_flag("AGENTIC_BRAIN_STEREO_PAN_ENABLED", "true")
 
 
+def use_redpanda_voice() -> bool:
+    """Return whether async speech should publish via Redpanda."""
+
+    return _env_flag("AGENTIC_BRAIN_VOICE_USE_REDPANDA", "false")
+
+
 class VoiceQuality(Enum):
     STANDARD = "standard"  # System voices
     PREMIUM = "premium"  # macOS Premium voices

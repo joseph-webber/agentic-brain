@@ -86,6 +86,37 @@ pip install agentic-brain
 
 ---
 
+## 🎙️ Voice System
+
+The Agentic Brain voice system is built for accessible, reliable spoken output.
+Phase 2 strengthened the stack with:
+
+- **serialized speech** so voices do not overlap
+- **distributed speech locking** across processes with Redis fallback
+- **spatial and stereo positioning** so each lady has a stable place
+- **durable queueing and event streaming** through Redpanda, Redis, and memory fallback
+- **watchdog recovery** for stalled voice workers
+
+### Voice quick start
+
+```bash
+ab voice list --primary
+ab voice speak "Hello Joseph" -v "Karen (Premium)"
+ab voice mode work
+ab voice conversation --demo
+python demo_voice_system.py
+```
+
+### Voice docs
+
+- **[Voice System Overview](./docs/voice/README.md)** - architecture, roster, configuration
+- **[Spatial Audio](./docs/voice/SPATIAL_AUDIO.md)** - positions, backends, AirPods support
+- **[Live Mode](./docs/voice/LIVE_MODE.md)** - current status of Project Aria style live input
+- **[Streaming](./docs/voice/STREAMING.md)** - Redpanda topics, priorities, monitoring
+- **[Voice Troubleshooting](./docs/voice/TROUBLESHOOTING.md)** - overlap, locks, Redis, watchdogs
+
+---
+
 ## 📚 Documentation
 
 **[Explore the Full Documentation Index](./docs/INDEX.md)**
@@ -95,6 +126,10 @@ Key guides:
 - **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Solutions to common issues
 - **[Architecture](./docs/architecture.md)** - Learn how the Agentic Brain works
 - **[Voice Integration](./docs/VOICE_INTEGRATION_GUIDE.md)** - Add speech capabilities
+- **[Voice System Overview](./docs/voice/README.md)** - Phase 2 voice architecture and configuration
+- **[Spatial Audio](./docs/voice/SPATIAL_AUDIO.md)** - 14-lady positioning and backend behavior
+- **[Streaming](./docs/voice/STREAMING.md)** - Voice events, queues, and priorities
+- **[Voice Troubleshooting](./docs/voice/TROUBLESHOOTING.md)** - Fix overlap, lock, and Redis issues
 - **[GraphRAG Guide](./docs/GRAPHRAG.md)** - Hybrid vector + graph retrieval, community detection, and Neo4j patterns
 - **[Neo4j Architecture](./docs/NEO4J_ARCHITECTURE.md)** - Public graph model, indexing, and query design reference
 - **[Neo4j Zones](./docs/NEO4J_ZONES.md)** - Five-zone lifecycle model for active and archived graph data
