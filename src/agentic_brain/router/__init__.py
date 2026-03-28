@@ -72,7 +72,6 @@ from .provider_checker import (
     format_provider_status_report,
     get_setup_help,
 )
-from .routing import LLMRouter, chat, chat_async, get_router
 from .smart_router import (
     PostureMode,
     SecurityPosture,
@@ -139,3 +138,27 @@ __all__ = [
     "chat_xai",
     "stream_xai",
 ]
+
+# --- Lazy imports for .routing to break circular dependency ---------------
+# routing.py imports agentic_brain.llm.router.LLMRouterCore, and llm/router.py
+# imports agentic_brain.router.config which triggers this __init__.  Deferring
+# the .routing import via __getattr__ (PEP 562) ensures llm/router.py is fully
+# loaded before routing.py tries to read LLMRouterCore from it.
+_ROUTING_ATTRS = {"LLMRouter", "chat", "chat_async", "get_router"}
+
+
+def __getattr__(name: str):
+    if name in _ROUTING_ATTRS:
+        from .routing import LLMRouter, chat, chat_async, get_router
+
+        _mapping = {
+            "LLMRouter": LLMRouter,
+            "chat": chat,
+            "chat_async": chat_async,
+            "get_router": get_router,
+        }
+        # Cache in module globals so __getattr__ is only called once per name
+        for attr_name, attr_val in _mapping.items():
+            globals()[attr_name] = attr_val
+        return _mapping[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

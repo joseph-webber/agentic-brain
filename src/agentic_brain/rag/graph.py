@@ -35,6 +35,35 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+# Lazy-loaded real embeddings (avoids import-time model load)
+_mlx_embeddings = None
+
+
+def _get_mlx_embeddings():
+    """Return the MLXEmbeddings singleton, or None if unavailable."""
+    global _mlx_embeddings
+    if _mlx_embeddings is None:
+        try:
+            from .mlx_embeddings import MLXEmbeddings
+
+            if MLXEmbeddings.is_available():
+                _mlx_embeddings = MLXEmbeddings
+        except Exception:
+            pass
+    return _mlx_embeddings
+
+
+def _embed_text(text: str, fallback_dim: int = 384) -> list[float]:
+    """Embed text using MLXEmbeddings with deterministic fallback."""
+    embedder = _get_mlx_embeddings()
+    if embedder is not None:
+        return embedder.embed(text)
+    # Deterministic fallback when sentence-transformers is not installed
+    from .embeddings import _fallback_embedding
+
+    return _fallback_embedding(text, fallback_dim)
+
+
 try:
     from neo4j import GraphDatabase
 
@@ -256,85 +285,99 @@ class EnhancedGraphRAG:
             # 2. Extract entities (simplified - in production use NER model)
             entities = self._extract_entities(content)
 
-            # 3. Create Entity nodes and relationships
-            for entity in entities:
-                entity_id = hashlib.sha256(entity["name"].encode()).hexdigest()[:16]
-
+            # 3. Batch-create Entity nodes and link to document (UNWIND)
+            if entities:
+                entity_params = [
+                    {
+                        "entity_id": hashlib.sha256(e["name"].encode()).hexdigest()[:16],
+                        "name": e["name"],
+                        "type": e["type"],
+                        "count": e["count"],
+                        "positions": e.get("positions", []),
+                    }
+                    for e in entities
+                ]
                 session.run(
                     """
-                    MERGE (e:Entity {id: $entity_id})
-                    SET e.name = $name,
-                        e.type = $type,
+                    UNWIND $entities AS ent
+                    MERGE (e:Entity {id: ent.entity_id})
+                    SET e.name = ent.name,
+                        e.type = ent.type,
                         e.first_seen = coalesce(e.first_seen, $timestamp),
                         e.last_seen = $timestamp,
                         e.mention_count = coalesce(e.mention_count, 0) + 1
+                    WITH e, ent
+                    MATCH (d:Document {id: $doc_id})
+                    MERGE (d)-[r:MENTIONS]->(e)
+                    SET r.count = coalesce(r.count, 0) + ent.count,
+                        r.positions = ent.positions
                     """,
-                    entity_id=entity_id,
-                    name=entity["name"],
-                    type=entity["type"],
+                    entities=entity_params,
+                    doc_id=doc_id,
                     timestamp=timestamp,
                 )
 
-                # Link entity to document
-                session.run(
-                    """
-                    MATCH (d:Document {id: $doc_id})
-                    MATCH (e:Entity {id: $entity_id})
-                    MERGE (d)-[r:MENTIONS]->(e)
-                    SET r.count = coalesce(r.count, 0) + $count,
-                        r.positions = $positions
-                    """,
-                    doc_id=doc_id,
-                    entity_id=entity_id,
-                    count=entity["count"],
-                    positions=entity.get("positions", []),
-                )
-
-            # 4. Create chunks with embeddings
+            # 4. Create chunks with embeddings (batched UNWIND)
             chunks = self._chunk_content(content)
-            for i, chunk_text in enumerate(chunks):
-                chunk_id = f"{doc_id}_chunk_{i}"
+            if embedding:
+                # Caller provided a single embedding — reuse for all chunks
+                chunk_embeddings = [embedding] * len(chunks)
+            else:
+                # Compute real embeddings per chunk
+                embedder = _get_mlx_embeddings()
+                if embedder is not None:
+                    chunk_embeddings = embedder.embed_batch(chunks) if chunks else []
+                else:
+                    from .embeddings import _fallback_embedding
 
-                # Use provided embedding or mock one
-                # In production, compute real embeddings here
-                chunk_embedding = embedding or [0.1] * self.config.embedding_dimension
-
+                    chunk_embeddings = [
+                        _fallback_embedding(ct, self.config.embedding_dimension)
+                        for ct in chunks
+                    ]
+            chunk_params = [
+                {
+                    "chunk_id": f"{doc_id}_chunk_{i}",
+                    "text": chunk_text,
+                    "position": i,
+                    "embedding": chunk_embeddings[i],
+                }
+                for i, chunk_text in enumerate(chunks)
+            ]
+            if chunk_params:
                 session.run(
                     """
-                    MERGE (c:Chunk {id: $chunk_id})
-                    SET c.text = $text,
-                        c.position = $position,
-                        c.embedding = $embedding
-                    """,
-                    chunk_id=chunk_id,
-                    text=chunk_text,
-                    position=i,
-                    embedding=chunk_embedding,
-                )
-
-                # Link chunk to document
-                session.run(
-                    """
+                    UNWIND $chunks AS ch
+                    MERGE (c:Chunk {id: ch.chunk_id})
+                    SET c.text = ch.text,
+                        c.position = ch.position,
+                        c.embedding = ch.embedding
+                    WITH c, ch
                     MATCH (d:Document {id: $doc_id})
-                    MATCH (c:Chunk {id: $chunk_id})
                     MERGE (d)-[:CONTAINS]->(c)
                     """,
+                    chunks=chunk_params,
                     doc_id=doc_id,
-                    chunk_id=chunk_id,
                 )
 
-                # Link chunk to entities it mentions
-                chunk_entities = self._extract_entities(chunk_text)
-                for entity in chunk_entities:
-                    entity_id = hashlib.sha256(entity["name"].encode()).hexdigest()[:16]
+                # 5. Link chunks to entities they mention (batched UNWIND)
+                chunk_entity_links = []
+                for i, chunk_text in enumerate(chunks):
+                    chunk_id = f"{doc_id}_chunk_{i}"
+                    chunk_entities = self._extract_entities(chunk_text)
+                    for entity in chunk_entities:
+                        entity_id = hashlib.sha256(entity["name"].encode()).hexdigest()[:16]
+                        chunk_entity_links.append(
+                            {"chunk_id": chunk_id, "entity_id": entity_id}
+                        )
+                if chunk_entity_links:
                     session.run(
                         """
-                        MATCH (c:Chunk {id: $chunk_id})
-                        MATCH (e:Entity {id: $entity_id})
+                        UNWIND $links AS link
+                        MATCH (c:Chunk {id: link.chunk_id})
+                        MATCH (e:Entity {id: link.entity_id})
                         MERGE (c)-[:MENTIONS]->(e)
                         """,
-                        chunk_id=chunk_id,
-                        entity_id=entity_id,
+                        links=chunk_entity_links,
                     )
 
         logger.info(
@@ -477,9 +520,10 @@ class EnhancedGraphRAG:
         Returns:
             List of results sorted by similarity
         """
-        # Use provided embedding or compute one
-        # In production: use sentence-transformers, OpenAI, etc.
-        embedding = query_embedding or [0.1] * self.config.embedding_dimension
+        # Use provided embedding or compute real one
+        embedding = query_embedding or _embed_text(
+            query, self.config.embedding_dimension
+        )
 
         results = []
         with self._get_session() as session:

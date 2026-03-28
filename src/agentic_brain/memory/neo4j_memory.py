@@ -337,47 +337,37 @@ class ConversationMemory:
                 msg_id=msg_id,
             )
 
-            # Extract and link entities if enabled
+            # Extract and link entities if enabled (batched UNWIND)
             if self.config.extract_entities:
                 entities = self._extract_entities(content)
-                for entity_name, entity_type in entities:
+                if entities:
+                    entity_params = [
+                        {"name": name, "type": etype}
+                        for name, etype in entities
+                    ]
                     session.run(
                         """
-                        MERGE (e:Entity {name: $name})
-                        ON CREATE SET e.type = $type,
+                        UNWIND $entities AS ent
+                        MERGE (e:Entity {name: ent.name})
+                        ON CREATE SET e.type = ent.type,
                                       e.first_seen = datetime(),
                                       e.mention_count = 0
                         SET e.last_seen = datetime(),
                             e.mention_count = e.mention_count + 1
-                        """,
-                        name=entity_name,
-                        type=entity_type,
-                    )
-
-                    # Link message to entity
-                    session.run(
-                        """
+                        WITH e
                         MATCH (m:Message {id: $msg_id})
-                        MATCH (e:Entity {name: $name})
                         MERGE (m)-[:MENTIONS]->(e)
-                        """,
-                        msg_id=msg_id,
-                        name=entity_name,
-                    )
-
-                    # Link entity to session
-                    session.run(
-                        """
+                        WITH e
                         MATCH (s:Session {id: $session_id})
-                        MATCH (e:Entity {name: $name})
                         MERGE (e)-[r:DISCUSSED_IN]->(s)
                         ON CREATE SET r.first_mentioned = datetime(),
                                       r.mention_count = 0
                         SET r.last_mentioned = datetime(),
                             r.mention_count = r.mention_count + 1
                         """,
+                        entities=entity_params,
+                        msg_id=msg_id,
                         session_id=self.session_id,
-                        name=entity_name,
                     )
 
         self._message_count += 1
@@ -531,7 +521,7 @@ class ConversationMemory:
                 min_importance=self.config.min_importance,
             )
 
-            updated = 0
+            updates = []
             for record in result:
                 created = datetime.fromisoformat(record["timestamp"])
                 new_importance = self._calculate_decayed_importance(
@@ -545,15 +535,18 @@ class ConversationMemory:
                     ),
                 )
                 if abs(new_importance - record["importance"]) > 0.001:
-                    session.run(
-                        """
-                        MATCH (m:Message {id: $msg_id})
-                        SET m.importance = $importance
-                        """,
-                        msg_id=record["id"],
-                        importance=new_importance,
-                    )
-                    updated += 1
+                    updates.append({"id": record["id"], "importance": new_importance})
+
+            updated = len(updates)
+            if updates:
+                session.run(
+                    """
+                    UNWIND $updates AS u
+                    MATCH (m:Message {id: u.id})
+                    SET m.importance = u.importance
+                    """,
+                    updates=updates,
+                )
 
             logger.info(f"Applied decay to {updated} messages")
             return updated
