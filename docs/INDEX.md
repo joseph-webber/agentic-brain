@@ -21,6 +21,7 @@ Complete reference for the Agentic Brain documentation.
 - [**Architecture Overview**](architecture.md) - High-level system design
 - [**Memory System**](MEMORY.md) - Persistent memory architecture
 - [**RAG Guide**](RAG_GUIDE.md) - Practical RAG guidance
+- [**GraphRAG Guide**](GRAPHRAG.md) - Graph extraction, hybrid search, Leiden communities, and Neo4j patterns
 - [**LLM Guide**](LLM_GUIDE.md) - Working with models and providers
 - [**Vector Embeddings**](VECTOR_EMBEDDINGS.md) - Embedding architecture
 
@@ -30,7 +31,7 @@ Complete reference for the Agentic Brain documentation.
 - [**Platform Support**](PLATFORM_SUPPORT.md) - Supported OS, CPU, and hardware combinations
 
 ## 🔌 Integrations
-- [**Enhanced Integrations**](INTEGRATIONS.md) - Built-in LLM routing, neo4j-graphrag, Chonkie
+- [**Enhanced Integrations**](INTEGRATIONS.md) - Built-in LLM routing, GraphRAG architecture, Chonkie
 - [**Voice Integration Guide**](VOICE_INTEGRATION_GUIDE.md) - Adding speech capabilities
 - [**Neo4j Integration**](integrations/NEO4J.md) - Neo4j integration details
 - [**JHipster Integration**](integrations/JHIPSTER.md) - JHipster integration guidance
@@ -45,3 +46,6 @@ Complete reference for the Agentic Brain documentation.
 
 ---
 Maintained manually to keep README links and the docs tree aligned.
+
+## 📝 Release Notes
+- [**Documentation Changelog**](CHANGELOG.md) - Latest documentation-facing release notes

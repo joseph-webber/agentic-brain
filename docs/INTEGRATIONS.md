@@ -1,18 +1,14 @@
 # Integrations (Enhanced)
 
-This guide documents the **new optional integrations** bundled under the `enhanced` extras, plus the built-in LLM router and Neo4j graph tooling that ship with agentic-brain:
+This guide documents the **optional integrations** bundled under the enhanced extras, plus the built-in routing, GraphRAG, and chunking capabilities that ship with Agentic Brain.
 
-- **Built-in LLM router** (`agentic_brain.router.LLMRouter`) — multi-provider routing + fallbacks with no extra dependency
-- **Built-in Neo4j graph extraction** (`agentic_brain.rag.graphrag`) — lightweight entity extraction + prompt-based Text2Cypher without heavy extras
+- **Built-in LLM router** (`agentic_brain.router.LLMRouter`) — multi-provider routing, alias resolution, retries, backoff, and cost tracking
+- **Built-in GraphRAG** (`agentic_brain.rag.graph_rag`, `agentic_brain.rag.graph`, `agentic_brain.rag.graphrag`) — graph extraction, hybrid retrieval, and Neo4j-native graph workflows
 - **Chonkie** (`chonkie`) — fast chunking for RAG preprocessing
 
-> These are **optional dependencies**. Install only what you need.
+> These integrations are optional. Install only what you need.
 >
-> **Note on memory:** agentic-brain ships a full built-in memory system
-> (`agentic_brain.memory.UnifiedMemory`) with 4-type architecture
-> (session, long-term, semantic, episodic), hybrid FTS + semantic search,
-> and importance scoring — all backed by SQLite with optional Neo4j.
-> No external memory library is needed.
+> Agentic Brain already includes a built-in memory system (`agentic_brain.memory.UnifiedMemory`) with session, long-term, semantic, and episodic memory backed by SQLite with optional Neo4j.
 
 ## Install
 
@@ -31,9 +27,9 @@ pip install -e ".[enhanced]"
 Install individually:
 
 ```bash
-pip install "agentic-brain[documents]"    # PDF, DOCX, PPTX, XLSX, etc.
-# Graph extraction is built in; no extra required
-pip install "agentic-brain[chonkie]"      # Chonkie
+pip install "agentic-brain[documents]"   # PDF, DOCX, PPTX, XLSX, etc.
+pip install "agentic-brain[graphrag]"    # Optional neo4j-graphrag experiments
+pip install "agentic-brain[chonkie]"     # Chonkie chunking
 ```
 
 ---
@@ -41,17 +37,19 @@ pip install "agentic-brain[chonkie]"      # Chonkie
 ## 1) Built-in LLM routing
 
 ### What it does
-Agentic Brain already ships a built-in router (`agentic_brain.router.LLMRouter`) for multi-provider fallback (local-first). It covers the providers used in this repo without pulling in an extra abstraction layer.
+Agentic Brain ships a built-in router (`agentic_brain.router.LLMRouter`) for local-first multi-provider fallback without forcing an extra abstraction layer.
 
 ### What it supports
-- **local-first routing** for Ollama
-- **cloud fallback** for Anthropic, OpenAI, OpenRouter, Groq, Together, Google, and xAI
-- **task-aware routing** (fast/simple vs reasoning vs code)
-- **context-aware fallback chains** such as Claude → GPT → Ollama for coding requests
-- **token usage tracking** per provider
-- **semantic caching** to reduce repeated spend
+- local-first routing for Ollama
+- cloud fallback for Anthropic and OpenAI
+- task-aware routing for fast, reasoning, and code requests
+- friendly model aliases (`claude`, `gpt-fast`, `local`, etc.)
+- one normalized `messages` format across Ollama, OpenAI, and Anthropic
+- rate-limit aware retries with exponential backoff
+- token and estimated-cost tracking
+- semantic caching to reduce repeated spend
 
-### Example code (Agentic Brain router)
+### Example
 
 ```python
 import asyncio
@@ -59,61 +57,124 @@ from agentic_brain.router import LLMRouter
 
 async def main():
     router = LLMRouter()
-    r = await router.chat("Hello from the Agentic Brain router")
-    print(r.provider, r.model)
-    print(r.content)
+    response = await router.chat(
+        message="Explain the latest GraphRAG release changes",
+        model="claude",
+    )
+    print(response.provider, response.model)
+    print(response.content)
 
 asyncio.run(main())
 ```
 
 ---
 
-## 2) Document Parsing — Built-in loaders
+## 2) Document parsing — built-in loaders
 
 ### What it does
-Agentic Brain includes **102 built-in loader classes** in `src/agentic_brain/rag/loaders/` covering all major document formats without heavy external dependencies.
+Agentic Brain includes 155+ loader classes in `src/agentic_brain/rag/loaders/` covering major document formats and app integrations without forcing a heavyweight parser stack.
 
 ### Supported formats
-PDF (PyPDF2 + pdfplumber + OCR fallback), DOCX, PPTX, XLSX, CSV, JSON, YAML, HTML, XML, RTF, ODF, EPUB, and many more.
+PDF, DOCX, PPTX, XLSX, CSV, JSON, YAML, HTML, XML, RTF, ODF, EPUB, and many more.
 
-### Usage patterns
+### Example
 
 ```python
 from agentic_brain.rag.loaders.pdf import PDFLoader
 from agentic_brain.rag.loaders.docx import DocxLoader
 
 pdf_loader = PDFLoader(ocr_enabled=True)
-doc = pdf_loader.load_document("report.pdf")
+pdf_doc = pdf_loader.load_document("report.pdf")
 
 docx_loader = DocxLoader()
-doc = docx_loader.load_document("report.docx")
-```
-
-Install all document format support:
-
-```bash
-pip install "agentic-brain[documents]"
+docx_doc = docx_loader.load_document("report.docx")
 ```
 
 ---
 
-## 3) Built-in Neo4j graph extraction
+## 3) Built-in GraphRAG
 
-### What it does
-Agentic Brain keeps graph extraction in-house because `neo4j-graphrag` brings in a heavier base dependency set (`numpy`, `scipy`, `pypdf`, and related transitive packages) than we need for core graph extraction.
+Agentic Brain now exposes GraphRAG as a **layered architecture** rather than a single integration point:
 
-The built-in extractor can:
-- extract entities and relationships with lightweight heuristics
-- upgrade to LLM-driven extraction when you pass an LLM client with `generate()`
-- persist them with raw Cypher through the shared `neo4j_pool`
-- answer graph questions with prompt-based read-only Text2Cypher and safe keyword fallback
+- **`KnowledgeExtractor`** (`agentic_brain.rag.graphrag`) for entity extraction, relationship persistence, and safe Text2Cypher queries
+- **`GraphRAG`** (`agentic_brain.rag.graph_rag`) for ingestion, embedding-aware search strategies, and community-oriented workflows
+- **`EnhancedGraphRAG`** (`agentic_brain.rag.graph`) for production Neo4j vector indexing, chunk storage, and reciprocal-rank-fusion hybrid retrieval
 
-Typical phases:
-1. **Extract entities + relations** into Neo4j
-2. **Query the graph** using safe prompt-generated Cypher
-3. **Layer additional retrieval/generation** on top if your application needs it
+### GraphRAG architecture
 
-### Entity extraction
+```text
+Documents / APIs / Events
+        |
+        v
+ Chunking + Embeddings -------------------------+
+        |                                       |
+        v                                       v
+Graph extraction (entities + relationships)   Vector index / chunk store
+        |                                       |
+        +--------------- Neo4j -----------------+
+                        |
+                        v
+      Hybrid retrieval (vector + graph + rerank)
+                        |
+                        v
+      Natural-language graph query / answer generation
+```
+
+### Vector + graph hybrid search
+
+Hybrid retrieval combines two signals:
+
+1. **Vector similarity** finds semantically similar chunks or entities from embeddings.
+2. **Graph traversal** expands those hits through `MENTIONS`, `CONTAINS`, and `RELATES_TO` edges.
+
+In production, `EnhancedGraphRAG` merges both ranked lists with **reciprocal rank fusion (RRF)** so consensus hits score highest. When the Neo4j vector index is unavailable, it falls back to text matching instead of failing the request.
+
+### Community detection (Leiden)
+
+The GraphRAG pipeline exposes `enable_communities` and `community_algorithm` in `GraphRAGConfig` so you can add a graph analytics stage after ingestion. The built-in ingestion pipeline tracks this stage and the extracted schema (`Entity` + `RELATES_TO`) is compatible with Neo4j GDS.
+
+For production analytics we recommend **Leiden** for dense knowledge graphs because it produces stable, well-separated communities. Example GDS workflow after ingestion:
+
+```cypher
+CALL gds.graph.project(
+  'graphrag-entities',
+  'Entity',
+  {RELATES_TO: {orientation: 'UNDIRECTED'}}
+);
+
+CALL gds.leiden.write('graphrag-entities', {
+  writeProperty: 'communityId',
+  includeIntermediateCommunities: true
+})
+YIELD communityCount, modularity;
+```
+
+### Embedding integration
+
+GraphRAG integrates with the existing embedding stack in two places:
+
+- `GraphRAG` lazily uses `MLXEmbeddings` when available and falls back deterministically when local accelerators are unavailable
+- `EnhancedGraphRAG` stores chunk embeddings in Neo4j and queries them through Neo4j's native vector index
+- `KnowledgeExtractor` accepts an `embedder=` hook so you can wire graph extraction into a broader hybrid pipeline
+
+Recommended flow:
+
+1. Chunk documents with `rag.chunking` or Chonkie
+2. Generate embeddings with `agentic_brain.rag.embeddings`
+3. Persist chunks and graph structure into Neo4j
+4. Retrieve with vector, graph, hybrid, or community strategy
+
+### Feature guide
+
+| Feature | Module | What it does |
+|---|---|---|
+| Graph extraction | `agentic_brain.rag.graphrag.KnowledgeExtractor` | Extracts entities and relationships, persists `SourceDocument`, `Entity`, and `RELATES_TO` data |
+| Natural-language graph query | `KnowledgeExtractor.query()` | Uses safe read-only Text2Cypher with keyword fallback |
+| End-to-end GraphRAG | `agentic_brain.rag.graph_rag.GraphRAG` | Ingests graph documents, stores entity embeddings, exposes search strategies |
+| Production hybrid retrieval | `agentic_brain.rag.graph.EnhancedGraphRAG` | Indexes chunks, uses Neo4j vector search, fuses vector and graph rankings |
+| Community analysis | Neo4j GDS + GraphRAG schema | Runs Leiden/Louvain-style clustering over extracted entity graphs |
+
+### Example: extract knowledge
 
 ```python
 from agentic_brain.rag.graphrag import KnowledgeExtractor, KnowledgeExtractorConfig
@@ -129,7 +190,7 @@ result = extractor.extract_from_text_sync("Alice works at Acme Corp.")
 print(result.entity_count, result.relationship_count, result.metadata["pipeline"])
 ```
 
-### Natural language queries
+### Example: graph query with safe fallback
 
 ```python
 from agentic_brain.rag.graphrag import KnowledgeExtractor, KnowledgeExtractorConfig
@@ -141,32 +202,42 @@ class MyLLM:
 
 
 extractor = KnowledgeExtractor(KnowledgeExtractorConfig(), llm=MyLLM())
-resp = extractor.query("Where does Alice work?")
-print(resp.mode, resp.metadata["cypher"])
+response = extractor.query("Where does Alice work?")
+print(response.mode)
+print(response.metadata["cypher"])
 ```
 
-### Neo4j integration
-You are responsible for:
-- A running Neo4j instance
-- Providing an LLM client if you want prompt-based extraction/Text2Cypher
-- Any higher-level vector indexing or answer-generation layers built on top of this graph
+### Example: production hybrid retrieval
+
+```python
+import asyncio
+from agentic_brain.rag.graph import EnhancedGraphRAG
+
+async def main():
+    rag = EnhancedGraphRAG()
+    await rag.initialize()
+    await rag.index_document("Alice works at Acme Corp in Adelaide.", doc_id="doc-1")
+    results = await rag.retrieve("Where does Alice work?", strategy="hybrid")
+    print(results[0]["strategy"], results[0]["score"])
+
+asyncio.run(main())
+```
+
+For the complete guide, see [GRAPHRAG.md](GRAPHRAG.md).
 
 ---
 
-## 4) Chonkie — Fast chunking
+## 4) Chonkie — fast chunking
 
 ### What it does
 Chonkie provides high-performance chunking for RAG preprocessing.
 
-Agentic Brain includes a wrapper chunker:
-- `agentic_brain.rag.chunking.ChonkieChunker`
-
-### Chunking strategies
-- `token` — fastest, fixed-size chunks (good default)
+### Strategies
+- `token` — fastest, fixed-size chunks
 - `sentence` — preserves sentence boundaries
-- `semantic` — embedding-aware, best quality (requires `chonkie[semantic]`)
+- `semantic` — embedding-aware chunking (requires `chonkie[semantic]`)
 
-### Configuration
+### Example
 
 ```python
 from agentic_brain.rag.chunking import ChonkieChunker
@@ -178,22 +249,12 @@ print("chunks=", len(chunks))
 print(chunks[0].metadata)
 ```
 
-### Performance / benchmarking
-
-```python
-from agentic_brain.rag.chunking import benchmark_chunkers
-
-sample = "Hello world. " * 5000
-results = benchmark_chunkers(sample, iterations=5)
-
-for r in results:
-    print(r.chunker_name, r.avg_time_ms, "speedup=", r.speedup_over)
-```
-
 ---
 
 ## Troubleshooting
 
 - If you see `ImportError: ... Install with: pip install 'agentic-brain[...]'`, install the referenced extra.
-- For Neo4j-backed features, ensure Neo4j is running and `NEO4J_URI/USER/PASSWORD` are set correctly.
-- For prompt-based extraction/Text2Cypher, configure whatever LLM client you pass into `KnowledgeExtractor`.
+- For Neo4j-backed features, ensure Neo4j is running and `NEO4J_URI`, `NEO4J_USER`, and `NEO4J_PASSWORD` are set correctly.
+- For Neo4j native vector search, use Neo4j 5.11+ and create the vector index before relying on `EnhancedGraphRAG._vector_retrieve()`.
+- For Leiden community detection, install the Neo4j Graph Data Science plugin and run the GDS projection/write steps after ingestion.
+- For prompt-based extraction or Text2Cypher, provide an LLM client that implements `generate()`, `chat_sync()`, or `chat()`.

@@ -77,6 +77,7 @@ Key guides:
 - **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Solutions to common issues
 - **[Architecture](./docs/architecture.md)** - Learn how the Agentic Brain works
 - **[Voice Integration](./docs/VOICE_INTEGRATION_GUIDE.md)** - Add speech capabilities
+- **[GraphRAG Guide](./docs/GRAPHRAG.md)** - Hybrid vector + graph retrieval, community detection, and Neo4j patterns
 - **[LLM Swarm Guide](./docs/LLM_SWARM_GUIDE.md)** - Coordinate multiple models for better results
 - **[Security](./docs/SECURITY.md)** - Production-ready security checklists
 - **[macOS Development](./docs/MACOS_DEVELOPMENT.md)** - Setup guide for Mac users
@@ -394,8 +395,8 @@ See [CI_FIX_SUMMARY.md](CI_FIX_SUMMARY.md) for detailed CI configuration.
 
 | | | |
 |:---:|:---:|:---:|
-| <h3>🧭 Smart LLM Router</h3>**Modes: Turbo · Cascade · Consensus**<br/>Auto-selects optimal models (Groq, Claude, Gemini) based on latency, cost, and complexity benchmarks. | <h3>🧬 Polymorphic Personas</h3>Industry-specific AI operators (Defense, Healthcare, Legal, Finance) with pre-tuned guardrails, lexicons, and workflows. | <h3>📚 110+ RAG Loaders</h3>Expanded library covering DevOps monitoring (ArgoCD, Jenkins, Datadog, Prometheus, Splunk, Grafana), plus ERPs, CRMs, and cloud platforms. |
-| <h3>🕸️ GraphRAG Architecture</h3>Hybrid retrieval fusing high-dimensional embeddings with a knowledge graph for precision recall and provenance. | <h3>⚡ Hardware Acceleration</h3>**Metal (MLX) · CUDA · ROCm**<br/>First-class acceleration for Apple Silicon, NVIDIA, and AMD. Switch targets per agent or per workload. | <h3>🛡️ Ethics & Safety</h3>Built-in AI safety layer with policy packs, automated content filtering, and human-in-the-loop review pipeline. |
+| <h3>🧭 Smart LLM Router</h3>**Modes: Turbo · Cascade · Consensus**<br/>Auto-selects optimal models (Groq, Claude, Gemini) based on latency, cost, and complexity benchmarks. | <h3>🧬 Polymorphic Personas</h3>Industry-specific AI operators (Defense, Healthcare, Legal, Finance) with pre-tuned guardrails, lexicons, and workflows. | <h3>📚 155+ RAG Loaders</h3>Expanded library covering documents, DevOps, commerce, enterprise systems, and event streams. |
+| <h3>🕸️ GraphRAG Architecture</h3>Hybrid retrieval combining vector search, graph traversal, safe Text2Cypher, and community-aware expansion for higher-precision answers. | <h3>⚡ Hardware Acceleration</h3>**Metal (MLX) · CUDA · ROCm**<br/>First-class acceleration for Apple Silicon, NVIDIA, and AMD. Switch targets per agent or per workload. | <h3>🛡️ Ethics & Safety</h3>Built-in AI safety layer with policy packs, automated content filtering, and human-in-the-loop review pipeline. |
 | <h3>📡 Event Streaming</h3>**Redpanda & Kafka**<br/>Real-time event bus for inter-agent communication, telemetry, and distributed state management. | <h3>🔌 Real-Time connectivity</h3>**WebSocket & Redis**<br/>Full-duplex WebSocket streaming for UI updates and Redis-backed pub/sub for instant bot-to-bot sync. | <h3>🔐 Enterprise Security</h3>**Firebase Auth, SSO (OAuth2/OIDC) & SAML**<br/>Production-ready authentication, role-based access control, and audit logging out of the box. |
 
 ### 🛒 E-Commerce
@@ -755,7 +756,7 @@ ab mode switch retail       # Customer service, inventory, POS integration
 
 <div align="center">
 
-**Vector + Graph + Event Streaming — The Most Advanced RAG Available**
+**Vector + Graph + Community Reasoning — Agentic Brain's hybrid retrieval stack**
 
 </div>
 
@@ -769,74 +770,82 @@ flowchart TB
     end
 
     subgraph Processing
-        Loaders[110+ RAG Loaders]
-        Embed[Vector Embeddings]
+        Loaders[155+ RAG Loaders]
+        Chunking[Chunking + Embeddings]
+        Extract[Entity + Relationship Extraction]
     end
 
     subgraph Storage
-        VectorDB[(Vector Store)]
-        GraphDB[(Knowledge Graph)]
+        VectorDB[(Chunk / Entity Vectors)]
+        GraphDB[(Neo4j Knowledge Graph)]
+        Communities[(Leiden / Community Layer)]
     end
 
     subgraph Retrieval
         Hybrid[Hybrid Search]
-        Rerank[Reranking]
+        Expand[Graph Traversal + Community Expansion]
+        Rerank[RRF / Reranking]
         Response[LLM Response]
     end
 
     Docs & APIs & Chat & Events --> Loaders
-    Loaders --> Embed
-    Embed --> VectorDB & GraphDB
-    VectorDB & GraphDB --> Hybrid
-    Hybrid --> Rerank --> Response
+    Loaders --> Chunking
+    Loaders --> Extract
+    Chunking --> VectorDB
+    Extract --> GraphDB
+    GraphDB --> Communities
+    VectorDB --> Hybrid
+    GraphDB --> Hybrid
+    Communities --> Expand
+    Hybrid --> Expand --> Rerank --> Response
 ```
+
+### Architecture diagram description
+
+The diagram shows the release's GraphRAG improvements as a pipeline of cooperating stages:
+
+1. **Ingestion** collects content from documents, APIs, chat, and event streams.
+2. **Processing** splits content into chunks, generates embeddings, and extracts entities plus relationships.
+3. **Storage** keeps vectors and graph structure together in Neo4j-friendly schemas so retrieval can combine both views.
+4. **Hybrid retrieval** starts with vector similarity, expands through graph edges, then optionally widens context through community detection.
+5. **Reranking and response** use fused scores plus graph provenance to feed final answer generation.
 
 <details>
 <summary><strong>View Detailed Architecture (ASCII)</strong></summary>
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         🧠 AGENTIC BRAIN GraphRAG                           │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐  │
-│  │   📄 Docs   │    │   🌐 APIs   │    │   💬 Chat   │    │  📊 Events  │  │
-│  │  PDF, DOCX  │    │  REST/GQL   │    │  Messages   │    │ Kafka/Redis │  │
-│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘    └──────┬──────┘  │
-│         └──────────────────┴──────────────────┴──────────────────┘          │
-│                                    ▼                                        │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │                    📥 110+ RAG LOADERS                                 │ │
-│  │  PDF • DOCX • HTML • CSV • JSON • Slack • Teams • GitHub • Jira • S3  │ │
-│  └───────────────────────────────┬────────────────────────────────────────┘ │
-│                                  ▼                                          │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │              🔢 VECTOR EMBEDDINGS (Hardware Accelerated)               │ │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐               │ │
-│  │  │🍎 MLX   │  │🟢 CUDA   │  │🔴 ROCm   │  │💻 CPU    │               │ │
-│  │  │M1/M2/M3 │  │ NVIDIA   │  │  AMD     │  │ Fallback │               │ │
-│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘               │ │
-│  └───────────────────────────────┬────────────────────────────────────────┘ │
-│                                  ▼                                          │
-│  ┌───────────────────────────┐       ┌───────────────────────────────────┐  │
-│  │     📊 VECTOR STORE      │◄─────►│        🕸️ KNOWLEDGE GRAPH         │  │
-│  │   Semantic Similarity    │       │          Neo4j Native             │  │
-│  │   Cosine / Euclidean     │       │    Entity → Relationship → Entity │  │
-│  └───────────────────────────┘       └───────────────────────────────────┘  │
-│                     │                              │                        │
-│                     └──────────────┬───────────────┘                        │
-│                                    ▼                                        │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  🔍 HYBRID SEARCH: Vector + BM25 Keyword + Graph Traversal = Results  │ │
-│  └───────────────────────────────┬────────────────────────────────────────┘ │
-│                                  ▼                                          │
-│  ┌────────────────────────────────────────────────────────────────────────┐ │
-│  │  🎯 RERANKING → 📡 GraphQL API → 🤖 LLM Response with Citations       │ │
-│  └────────────────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│                           🧠 AGENTIC BRAIN GraphRAG                               │
+├────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                    │
+│  Sources: docs · APIs · chat · events                                             │
+│       │                                                                            │
+│       v                                                                            │
+│  155+ loaders → chunking + embeddings → entity / relationship extraction          │
+│       │                               │                                             │
+│       └───────────────┬───────────────┘                                             │
+│                       v                                                             │
+│              Neo4j graph + vector-backed chunks                                    │
+│                       │                                                             │
+│         ┌─────────────┼─────────────┐                                               │
+│         v             v             v                                               │
+│   vector search   graph traversal   community layer (Leiden-ready)                 │
+│         └─────────────┬─────────────┘                                               │
+│                       v                                                             │
+│       reciprocal-rank fusion + reranking + safe graph-aware generation             │
+│                                                                                    │
+└────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 </details>
+
+### GraphRAG highlights in this release
+
+- **Hybrid vector + graph retrieval** using Neo4j-backed chunks, entities, and relationships
+- **Safe graph querying** with read-only Text2Cypher plus keyword fallback
+- **Embedding integration** via MLX-aware embedding hooks and Neo4j vector indexes
+- **Community-aware design** with Leiden-compatible graph analytics workflows
+- **Layered APIs** so you can choose lightweight extraction, simple GraphRAG, or production hybrid retrieval
 
 ### 📦 Supported Data Sources
 
@@ -1634,7 +1643,7 @@ mypy src/                  # Type checking
 | 🐳 **Docker Setup** | [DOCKER_SETUP.md](./DOCKER_SETUP.md) |
 | 🔒 **Security Policy** | [SECURITY.md](./SECURITY.md) |
 | 🤝 **Contributing** | [CONTRIBUTING.md](./CONTRIBUTING.md) |
-| 📜 **Changelog** | [CHANGELOG.md](./CHANGELOG.md) |
+| 📜 **Changelog** | [docs/CHANGELOG.md](./docs/CHANGELOG.md) |
 | 🗺️ **Roadmap** | [ROADMAP.md](./ROADMAP.md) |
 | 📐 **Architecture** | [docs/architecture/ARCHITECTURE.md](./docs/architecture/ARCHITECTURE.md) |
 
@@ -1681,10 +1690,13 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    Sources["110+ Loaders"] --> Process["Chunking"]
-    Process --> Store["Neo4j + Vector"]
-    Store --> Retrieve["Hybrid Search"]
-    Retrieve --> Rerank["Reranking"]
+    Sources["155+ Loaders"] --> Process["Chunking + Embeddings"]
+    Process --> Graph["Entity + Relationship Extraction"]
+    Process --> Store["Chunk Vectors"]
+    Graph --> Neo4j["Neo4j Graph"]
+    Store --> Neo4j
+    Neo4j --> Retrieve["Hybrid Search + Community Expansion"]
+    Retrieve --> Rerank["RRF / Reranking"]
     Rerank --> LLM["Generation"]
 ```
 
