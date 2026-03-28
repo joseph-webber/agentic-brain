@@ -30,12 +30,15 @@ import subprocess
 import threading
 import time
 import warnings
-from collections import deque
 from dataclasses import dataclass, field
-from typing import Callable, Deque, List, Optional
+from typing import Callable, List, Optional
 
 from agentic_brain.cache.voice_cache import VoiceCache, VoiceState
-from agentic_brain.voice._speech_lock import get_global_lock as _get_global_lock
+from agentic_brain.voice._speech_lock import (
+    RedisVoiceLock,
+    get_global_lock as _get_global_lock,
+)
+from agentic_brain.voice.redis_queue import RedisVoiceQueue, VoiceJob
 
 logger = logging.getLogger(__name__)
 
@@ -163,13 +166,15 @@ class VoiceSerializer:
         self._state_lock = threading.Lock()
         self._queue_lock = threading.Lock()
         self._queue_ready = threading.Condition(self._queue_lock)
-        self._queue: Deque[_SpeechJob] = deque()
+        self._queue: list[_SpeechJob] = []
+        self._pending_jobs: dict[str, _SpeechJob] = {}
         self._current_message: Optional[VoiceMessage] = None
         self._current_process: Optional[subprocess.Popen] = None
         self._pause_between = 0.3
         self._audit_enabled = os.environ.get(
             "VOICE_AUDIT_DISABLED", ""
         ).lower() not in ("1", "true", "yes")
+        self._redis_queue = self._create_redis_queue()
         self._voice_cache = self._create_voice_cache()
         self._worker = threading.Thread(
             target=self._worker_loop,
@@ -202,6 +207,11 @@ class VoiceSerializer:
             return self._current_message is not None
 
     def queue_size(self) -> int:
+        if self._redis_queue is not None:
+            try:
+                return self._redis_queue.depth
+            except Exception:
+                logger.debug("Unable to query Redis voice queue depth", exc_info=True)
         with self._queue_lock:
             return len(self._queue)
 
@@ -209,6 +219,13 @@ class VoiceSerializer:
         """Clear pending work and stop any active macOS `say` process."""
         with self._queue_ready:
             self._queue.clear()
+            self._pending_jobs.clear()
+
+        if self._redis_queue is not None:
+            try:
+                self._redis_queue.clear()
+            except Exception:
+                logger.debug("Unable to clear Redis voice queue during reset", exc_info=True)
 
         process = self.current_process
         if process is not None and process.poll() is None:
