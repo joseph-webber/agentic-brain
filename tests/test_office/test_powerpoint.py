@@ -6,8 +6,6 @@ from __future__ import annotations
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Office tests pending implementation alignment")
-
 
 def test_pptx_to_pdf_renames_libreoffice_output(
     make_converter, monkeypatch, sample_office_files, tmp_path

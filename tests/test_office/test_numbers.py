@@ -6,8 +6,6 @@ from __future__ import annotations
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Office tests pending implementation alignment")
-
 
 def test_numbers_to_pdf_delegates_to_macos_automation(
     make_converter, monkeypatch, sample_office_files, tmp_path

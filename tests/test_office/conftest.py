@@ -13,10 +13,51 @@ from types import SimpleNamespace
 
 import pytest
 
-# Skip all office tests until implementation is aligned with test expectations
-pytestmark = pytest.mark.skipif(
-    True, reason="Office tests need refactoring to match actual implementation"
-)
+# ---------------------------------------------------------------------------
+# Optional dependency availability flags
+# Tests that require specific packages use these to skip gracefully.
+# ---------------------------------------------------------------------------
+_OPTIONAL_SPECS = {
+    "docx": "python-docx",
+    "openpyxl": "openpyxl",
+    "pptx": "python-pptx",
+    "mammoth": "mammoth",
+    "odf": "odfpy",
+    "striprtf": "striprtf",
+    "PIL": "Pillow",
+    "snappy": "python-snappy",
+    "pandas": "pandas",
+    "html2text": "html2text",
+    "docx2pdf": "docx2pdf",
+}
+
+
+def _check_available(import_name: str) -> bool:
+    return importlib.util.find_spec(import_name) is not None
+
+
+DOCX_AVAILABLE = _check_available("docx")
+OPENPYXL_AVAILABLE = _check_available("openpyxl")
+PPTX_AVAILABLE = _check_available("pptx")
+MAMMOTH_AVAILABLE = _check_available("mammoth")
+ODF_AVAILABLE = _check_available("odf")
+STRIPRTF_AVAILABLE = _check_available("striprtf")
+PIL_AVAILABLE = _check_available("PIL")
+SNAPPY_AVAILABLE = _check_available("snappy")
+PANDAS_AVAILABLE = _check_available("pandas")
+HTML2TEXT_AVAILABLE = _check_available("html2text")
+DOCX2PDF_AVAILABLE = _check_available("docx2pdf")
+
+# Convenience skip markers for use in test files
+requires_docx = pytest.mark.skipif(not DOCX_AVAILABLE, reason="python-docx not installed")
+requires_openpyxl = pytest.mark.skipif(not OPENPYXL_AVAILABLE, reason="openpyxl not installed")
+requires_pptx = pytest.mark.skipif(not PPTX_AVAILABLE, reason="python-pptx not installed")
+requires_mammoth = pytest.mark.skipif(not MAMMOTH_AVAILABLE, reason="mammoth not installed")
+requires_odf = pytest.mark.skipif(not ODF_AVAILABLE, reason="odfpy not installed")
+requires_striprtf = pytest.mark.skipif(not STRIPRTF_AVAILABLE, reason="striprtf not installed")
+requires_pil = pytest.mark.skipif(not PIL_AVAILABLE, reason="Pillow not installed")
+requires_snappy = pytest.mark.skipif(not SNAPPY_AVAILABLE, reason="python-snappy not installed")
+requires_pandas = pytest.mark.skipif(not PANDAS_AVAILABLE, reason="pandas not installed")
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 OFFICE_ROOT = REPO_ROOT / "src" / "agentic_brain" / "documents" / "services" / "office"
@@ -70,11 +111,14 @@ def office_modules() -> SimpleNamespace:
 @pytest.fixture(scope="session")
 def rag_modules() -> SimpleNamespace:
     """Provide RAG loader modules used by office integration tests."""
-    return SimpleNamespace(
-        base=importlib.import_module("agentic_brain.rag.loaders.base"),
-        docx=importlib.import_module("agentic_brain.rag.loaders.docx"),
-        csv_loader=importlib.import_module("agentic_brain.rag.loaders.csv_loader"),
-    )
+    try:
+        return SimpleNamespace(
+            base=importlib.import_module("agentic_brain.rag.loaders.base"),
+            docx=importlib.import_module("agentic_brain.rag.loaders.docx"),
+            csv_loader=importlib.import_module("agentic_brain.rag.loaders.csv_loader"),
+        )
+    except (ImportError, ModuleNotFoundError) as exc:
+        pytest.skip(f"RAG loader modules not available: {exc}")
 
 
 @pytest.fixture

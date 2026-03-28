@@ -11,8 +11,6 @@ from types import SimpleNamespace
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Office tests pending implementation alignment")
-
 
 @pytest.mark.parametrize(
     ("platform_name", "existing_path"),

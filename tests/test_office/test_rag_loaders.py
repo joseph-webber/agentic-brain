@@ -9,8 +9,6 @@ from types import SimpleNamespace
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Office tests pending implementation alignment")
-
 
 def test_docx_loader_basic_properties(rag_modules) -> None:
     loader = rag_modules.docx.DocxLoader()

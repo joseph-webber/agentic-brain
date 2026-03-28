@@ -6,8 +6,6 @@ from __future__ import annotations
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Office tests pending implementation alignment")
-
 
 def test_model_office_format_includes_rtf(office_modules) -> None:
     assert office_modules.models.OfficeFormat.RTF.value == "rtf"

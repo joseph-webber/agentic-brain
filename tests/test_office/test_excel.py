@@ -10,8 +10,6 @@ from types import SimpleNamespace
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Office tests pending implementation alignment")
-
 OPENPYXL_LIBRARY_AVAILABLE = importlib.util.find_spec("openpyxl") is not None
 PANDAS_LIBRARY_AVAILABLE = importlib.util.find_spec("pandas") is not None
 
