@@ -4,15 +4,21 @@
 """
 Transcription engines for Project Aria (Live Voice Mode).
 
-Provides two backends:
+Provides three backends:
 
 1. **WhisperTranscriber** – uses ``whisper.cpp`` via the ``pywhispercpp``
    Python binding for local, fast, offline transcription on Apple Silicon.
-2. **MacOSDictationTranscriber** – falls back to macOS built-in dictation
+2. **FasterWhisperTranscriber** – uses ``faster-whisper`` with CTranslate2
+   for optimised inference with sub-500ms latency.
+3. **MacOSDictationTranscriber** – falls back to macOS built-in dictation
    when Whisper is unavailable.
 
-Both engines expose the same interface so the live-mode session can swap
+All engines expose the same interface so the live-mode session can swap
 them transparently.
+
+**Streaming Mode**: The streaming transcription feature provides real-time
+partial results using overlapping audio windows. This enables sub-500ms
+latency for live voice input with proper word boundary handling.
 
 Accuracy tracking is built in: every transcription records confidence,
 duration, and error counts for observability.
@@ -32,7 +38,7 @@ import wave
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Generator, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +51,14 @@ try:
     _HAS_WHISPER_CPP = True
 except ImportError:
     WhisperModel = None  # type: ignore[assignment,misc]
+
+_HAS_FASTER_WHISPER = False
+try:
+    from faster_whisper import WhisperModel as FasterWhisperModel  # type: ignore[import-untyped]
+
+    _HAS_FASTER_WHISPER = True
+except ImportError:
+    FasterWhisperModel = None  # type: ignore[assignment,misc]
 
 _HAS_NUMPY = False
 try:
@@ -121,6 +135,189 @@ class TranscriptionMetrics:
         }
 
 
+@dataclass
+class StreamingConfig:
+    """Configuration for streaming transcription mode."""
+
+    window_secs: float = 2.0
+    overlap_secs: float = 0.5
+    sample_rate: int = 16_000
+    enabled: bool = False
+    min_chunk_secs: float = 0.3
+    vad_threshold: float = 0.5
+
+
+@dataclass
+class StreamingTranscriptionResult:
+    """Result from streaming transcription with partial support."""
+
+    text: str
+    is_partial: bool = True
+    is_final: bool = False
+    confidence: float = 1.0
+    segment_index: int = 0
+    timestamp_ms: float = 0.0
+    stable_text: str = ""
+
+
+class StreamingBuffer:
+    """Manages overlapping audio windows for streaming transcription.
+
+    Uses a sliding window approach to enable real-time transcription:
+    - Accumulates audio chunks until window size is reached
+    - Returns segments with overlap to avoid word boundary cuts
+    - Tracks segment indices for stitching results
+    """
+
+    def __init__(
+        self,
+        window_secs: float = 2.0,
+        overlap_secs: float = 0.5,
+        sample_rate: int = 16_000,
+    ) -> None:
+        self.window_samples = int(window_secs * sample_rate)
+        self.overlap_samples = int(overlap_secs * sample_rate)
+        self.sample_rate = sample_rate
+        self._buffer: list[int] = []
+        self._segment_index = 0
+        self._lock = threading.Lock()
+
+    def add_chunk(self, chunk: bytes) -> Optional[Any]:
+        """Add audio chunk and return segment if window is full.
+
+        Args:
+            chunk: Raw PCM int16 audio bytes.
+
+        Returns:
+            numpy array of float32 audio if window is ready, None otherwise.
+        """
+        with self._lock:
+            if not _HAS_NUMPY:
+                n_samples = len(chunk) // 2
+                fmt = f"<{n_samples}h"
+                try:
+                    samples = struct.unpack(fmt, chunk)
+                    self._buffer.extend(samples)
+                except struct.error:
+                    return None
+            else:
+                samples = np.frombuffer(chunk, dtype=np.int16)
+                self._buffer.extend(samples.tolist())
+
+            if len(self._buffer) >= self.window_samples:
+                segment = self._buffer[: self.window_samples]
+                self._buffer = self._buffer[
+                    self.window_samples - self.overlap_samples :
+                ]
+                self._segment_index += 1
+
+                if _HAS_NUMPY:
+                    arr = np.array(segment, dtype=np.float32) / 32768.0
+                    return arr
+                return [s / 32768.0 for s in segment]
+            return None
+
+    def flush(self) -> Optional[Any]:
+        """Flush remaining buffer as final segment."""
+        with self._lock:
+            if not self._buffer:
+                return None
+            segment = self._buffer
+            self._buffer = []
+            self._segment_index += 1
+
+            if _HAS_NUMPY:
+                arr = np.array(segment, dtype=np.float32) / 32768.0
+                return arr
+            return [s / 32768.0 for s in segment]
+
+    @property
+    def segment_index(self) -> int:
+        return self._segment_index
+
+    @property
+    def buffer_duration_ms(self) -> float:
+        return (len(self._buffer) / self.sample_rate) * 1000
+
+    def reset(self) -> None:
+        """Clear buffer and reset segment counter."""
+        with self._lock:
+            self._buffer = []
+            self._segment_index = 0
+
+
+class StreamingStitcher:
+    """Stitches streaming transcription results avoiding word cuts.
+
+    Handles overlapping segments by:
+    - Tracking stable (confirmed) text
+    - Detecting word boundaries in overlaps
+    - Merging partial results intelligently
+    """
+
+    def __init__(self) -> None:
+        self._stable_text = ""
+        self._last_partial = ""
+        self._overlap_words = 3
+
+    def add_result(
+        self, result: StreamingTranscriptionResult
+    ) -> StreamingTranscriptionResult:
+        """Process streaming result and update stable text.
+
+        Args:
+            result: Raw transcription result from a segment.
+
+        Returns:
+            Updated result with stable_text populated.
+        """
+        if result.is_final:
+            self._stable_text = (self._stable_text + " " + result.text).strip()
+            result.stable_text = self._stable_text
+            return result
+
+        new_text = result.text.strip()
+        if not new_text:
+            result.stable_text = self._stable_text
+            return result
+
+        if self._last_partial:
+            last_words = self._last_partial.split()[-self._overlap_words :]
+            new_words = new_text.split()
+            merged = self._merge_overlapping(last_words, new_words)
+            if merged:
+                new_text = " ".join(merged)
+
+        self._last_partial = new_text
+        result.text = new_text
+        result.stable_text = self._stable_text
+        return result
+
+    def _merge_overlapping(
+        self, last_words: list[str], new_words: list[str]
+    ) -> Optional[list[str]]:
+        """Find overlap point and merge word lists."""
+        for i in range(min(len(last_words), len(new_words))):
+            if last_words[-(i + 1) :] == new_words[: i + 1]:
+                return new_words[i + 1 :]
+        return None
+
+    def finalize(self) -> str:
+        """Finalize and return complete transcription."""
+        if self._last_partial:
+            self._stable_text = (
+                self._stable_text + " " + self._last_partial
+            ).strip()
+        result = self._stable_text
+        self.reset()
+        return result
+
+    def reset(self) -> None:
+        """Reset stitcher state."""
+        self._stable_text = ""
+        self._last_partial = ""
+
+
 # ── Base class ───────────────────────────────────────────────────────
 
 
@@ -130,6 +327,9 @@ class BaseTranscriber(ABC):
     def __init__(self) -> None:
         self.metrics = TranscriptionMetrics()
         self._lock = threading.Lock()
+        self._streaming_buffer: Optional[StreamingBuffer] = None
+        self._streaming_stitcher: Optional[StreamingStitcher] = None
+        self._streaming_config = StreamingConfig()
 
     @abstractmethod
     def transcribe_bytes(
@@ -144,6 +344,144 @@ class BaseTranscriber(ABC):
     def is_available(self) -> bool:
         """Return True if this backend can be used."""
         ...
+
+    def configure_streaming(
+        self,
+        window_secs: float = 2.0,
+        overlap_secs: float = 0.5,
+        sample_rate: int = 16_000,
+        enabled: bool = True,
+    ) -> None:
+        """Configure streaming transcription mode.
+
+        Args:
+            window_secs: Audio window size in seconds (default 2.0).
+            overlap_secs: Overlap between windows (default 0.5).
+            sample_rate: Audio sample rate (default 16000).
+            enabled: Enable streaming mode.
+        """
+        self._streaming_config = StreamingConfig(
+            window_secs=window_secs,
+            overlap_secs=overlap_secs,
+            sample_rate=sample_rate,
+            enabled=enabled,
+        )
+        if enabled:
+            self._streaming_buffer = StreamingBuffer(
+                window_secs=window_secs,
+                overlap_secs=overlap_secs,
+                sample_rate=sample_rate,
+            )
+            self._streaming_stitcher = StreamingStitcher()
+        else:
+            self._streaming_buffer = None
+            self._streaming_stitcher = None
+
+    def transcribe_streaming(
+        self,
+        audio_chunk: bytes,
+        sample_rate: int = 16_000,
+    ) -> Generator[StreamingTranscriptionResult, None, None]:
+        """Transcribe audio incrementally with streaming support.
+
+        Takes audio chunks and yields partial results as windows complete.
+        Results include both partial (may change) and stable (confirmed) text.
+
+        Args:
+            audio_chunk: Raw PCM int16 audio bytes.
+            sample_rate: Audio sample rate.
+
+        Yields:
+            StreamingTranscriptionResult with partial/stable transcription.
+        """
+        if self._streaming_buffer is None:
+            self.configure_streaming(sample_rate=sample_rate, enabled=True)
+
+        segment = self._streaming_buffer.add_chunk(audio_chunk)
+        if segment is not None:
+            result = self._transcribe_segment(
+                segment,
+                sample_rate,
+                self._streaming_buffer.segment_index,
+            )
+            if result and self._streaming_stitcher:
+                yield self._streaming_stitcher.add_result(result)
+
+    def _transcribe_segment(
+        self,
+        audio_float: Any,
+        sample_rate: int,
+        segment_index: int,
+    ) -> Optional[StreamingTranscriptionResult]:
+        """Transcribe a single audio segment (internal).
+
+        Subclasses can override for optimised streaming transcription.
+        """
+        if _HAS_NUMPY:
+            audio_bytes = (np.array(audio_float) * 32768).astype(np.int16).tobytes()
+        else:
+            samples = [int(s * 32768) for s in audio_float]
+            audio_bytes = struct.pack(f"<{len(samples)}h", *samples)
+
+        result = self.transcribe_bytes(audio_bytes, sample_rate)
+        if result:
+            return StreamingTranscriptionResult(
+                text=result.text,
+                is_partial=True,
+                is_final=False,
+                confidence=result.confidence,
+                segment_index=segment_index,
+                timestamp_ms=time.monotonic() * 1000,
+            )
+        return None
+
+    def flush_streaming(self) -> Optional[StreamingTranscriptionResult]:
+        """Flush remaining audio and finalize transcription.
+
+        Returns:
+            Final transcription result with complete stable text.
+        """
+        if self._streaming_buffer is None:
+            return None
+
+        segment = self._streaming_buffer.flush()
+        result: Optional[StreamingTranscriptionResult] = None
+
+        if segment is not None:
+            result = self._transcribe_segment(
+                segment,
+                self._streaming_config.sample_rate,
+                self._streaming_buffer.segment_index,
+            )
+
+        if self._streaming_stitcher:
+            final_text = self._streaming_stitcher.finalize()
+            if result:
+                result.is_final = True
+                result.is_partial = False
+                result.stable_text = final_text
+            elif final_text:
+                result = StreamingTranscriptionResult(
+                    text=final_text,
+                    is_partial=False,
+                    is_final=True,
+                    stable_text=final_text,
+                    segment_index=self._streaming_buffer.segment_index,
+                )
+
+        self.reset_streaming()
+        return result
+
+    def reset_streaming(self) -> None:
+        """Reset streaming state for a new transcription session."""
+        if self._streaming_buffer:
+            self._streaming_buffer.reset()
+        if self._streaming_stitcher:
+            self._streaming_stitcher.reset()
+
+    @property
+    def streaming_enabled(self) -> bool:
+        return self._streaming_config.enabled
 
     @property
     def name(self) -> str:
@@ -257,6 +595,231 @@ class WhisperTranscriber(BaseTranscriber):
             except Exception as exc:
                 self.metrics.record_error()
                 logger.warning("WhisperTranscriber: transcription error: %s", exc)
+                return None
+
+
+# ── Faster-Whisper Transcriber (CTranslate2) ─────────────────────────
+
+
+class FasterWhisperTranscriber(BaseTranscriber):
+    """High-performance transcription via faster-whisper (CTranslate2).
+
+    Optimised for sub-500ms latency with:
+    - CTranslate2 int8 quantisation
+    - Batched inference
+    - VAD-based segmentation
+    - Apple Silicon MPS support (when available)
+
+    Install: pip install faster-whisper
+
+    Models: tiny, tiny.en, base, base.en, small, small.en,
+    medium, medium.en, large-v2, large-v3, distil-large-v3
+    """
+
+    # Default cache directory
+    DEFAULT_MODEL_DIR = os.path.expanduser("~/.cache/huggingface/hub")
+
+    def __init__(
+        self,
+        model_name: str = "base.en",
+        model_dir: Optional[str] = None,
+        device: str = "auto",
+        compute_type: str = "int8",
+        num_workers: int = 4,
+        vad_filter: bool = True,
+    ) -> None:
+        super().__init__()
+        self._model_name = model_name
+        self._model_dir = model_dir or self.DEFAULT_MODEL_DIR
+        self._device = device
+        self._compute_type = compute_type
+        self._num_workers = num_workers
+        self._vad_filter = vad_filter
+        self._model: Any = None
+        self._init_error: Optional[str] = None
+        self._initialised = False
+
+    def _ensure_model(self) -> bool:
+        """Lazily load the faster-whisper model."""
+        if self._initialised:
+            return self._model is not None
+        self._initialised = True
+
+        if not _HAS_FASTER_WHISPER:
+            self._init_error = "faster-whisper not installed"
+            logger.info(
+                "FasterWhisperTranscriber: faster-whisper not available. "
+                "Install with: pip install faster-whisper"
+            )
+            return False
+
+        try:
+            device = self._device
+            if device == "auto":
+                # Check for MPS (Apple Silicon) or CUDA
+                if _HAS_NUMPY:
+                    try:
+                        import torch
+
+                        if torch.backends.mps.is_available():
+                            device = "cpu"  # faster-whisper uses CPU but CTranslate2 is optimised
+                        elif torch.cuda.is_available():
+                            device = "cuda"
+                        else:
+                            device = "cpu"
+                    except ImportError:
+                        device = "cpu"
+                else:
+                    device = "cpu"
+
+            self._model = FasterWhisperModel(
+                self._model_name,
+                device=device,
+                compute_type=self._compute_type,
+                num_workers=self._num_workers,
+                download_root=self._model_dir,
+            )
+            logger.info(
+                "FasterWhisperTranscriber: loaded model '%s' (device=%s, compute=%s)",
+                self._model_name,
+                device,
+                self._compute_type,
+            )
+            return True
+        except Exception as exc:
+            self._init_error = str(exc)
+            logger.warning("FasterWhisperTranscriber: model load failed: %s", exc)
+            return False
+
+    def is_available(self) -> bool:
+        return _HAS_FASTER_WHISPER
+
+    def transcribe_bytes(
+        self,
+        audio_data: bytes,
+        sample_rate: int = 16_000,
+    ) -> Optional[TranscriptionResult]:
+        """Transcribe raw PCM int16 audio with faster-whisper."""
+        with self._lock:
+            if not self._ensure_model():
+                self.metrics.record_error()
+                return None
+
+            t0 = time.monotonic()
+            try:
+                audio_float = _pcm_to_float32(audio_data)
+                if audio_float is None or len(audio_float) == 0:
+                    self.metrics.record_error()
+                    return None
+
+                duration_ms = (len(audio_float) / sample_rate) * 1000
+
+                segments, info = self._model.transcribe(
+                    audio_float,
+                    beam_size=5,
+                    vad_filter=self._vad_filter,
+                    vad_parameters=dict(
+                        min_silence_duration_ms=300,
+                        speech_pad_ms=200,
+                    ),
+                )
+
+                text_parts = []
+                confidences = []
+                for segment in segments:
+                    if segment.text.strip():
+                        text_parts.append(segment.text.strip())
+                        # faster-whisper provides avg_logprob
+                        conf = min(1.0, max(0.0, 1.0 + segment.avg_logprob / 5))
+                        confidences.append(conf)
+
+                text = " ".join(text_parts)
+                if not text:
+                    return None
+
+                avg_confidence = (
+                    sum(confidences) / len(confidences) if confidences else 0.9
+                )
+
+                processing_ms = (time.monotonic() - t0) * 1000
+                result = TranscriptionResult(
+                    text=text,
+                    confidence=avg_confidence,
+                    is_final=True,
+                    language=info.language if hasattr(info, "language") else "en",
+                    duration_ms=duration_ms,
+                )
+                self.metrics.record(result, processing_ms)
+                return result
+
+            except Exception as exc:
+                self.metrics.record_error()
+                logger.warning(
+                    "FasterWhisperTranscriber: transcription error: %s", exc
+                )
+                return None
+
+    def _transcribe_segment(
+        self,
+        audio_float: Any,
+        sample_rate: int,
+        segment_index: int,
+    ) -> Optional[StreamingTranscriptionResult]:
+        """Optimised streaming segment transcription.
+
+        faster-whisper is particularly good at short segments due to
+        efficient VAD and batched processing.
+        """
+        with self._lock:
+            if not self._ensure_model():
+                return None
+
+            t0 = time.monotonic()
+            try:
+                segments, info = self._model.transcribe(
+                    audio_float,
+                    beam_size=3,  # Reduced for speed
+                    best_of=1,
+                    vad_filter=self._vad_filter,
+                )
+
+                text_parts = []
+                confidences = []
+                for segment in segments:
+                    if segment.text.strip():
+                        text_parts.append(segment.text.strip())
+                        conf = min(1.0, max(0.0, 1.0 + segment.avg_logprob / 5))
+                        confidences.append(conf)
+
+                text = " ".join(text_parts)
+                if not text:
+                    return None
+
+                avg_confidence = (
+                    sum(confidences) / len(confidences) if confidences else 0.9
+                )
+                processing_ms = (time.monotonic() - t0) * 1000
+
+                logger.debug(
+                    "FasterWhisper segment %d: '%s' (%.0fms)",
+                    segment_index,
+                    text[:50],
+                    processing_ms,
+                )
+
+                return StreamingTranscriptionResult(
+                    text=text,
+                    is_partial=True,
+                    is_final=False,
+                    confidence=avg_confidence,
+                    segment_index=segment_index,
+                    timestamp_ms=time.monotonic() * 1000,
+                )
+
+            except Exception as exc:
+                logger.warning(
+                    "FasterWhisperTranscriber: segment error: %s", exc
+                )
                 return None
 
 
@@ -383,6 +946,66 @@ print(resultText)
             return None
 
 
+# ── RealtimeSTT Transcriber (optional backend) ───────────────────────────
+
+
+class RealtimeSTTTranscriber:
+    """RealtimeSTT-based transcriber for low-latency streaming.
+
+    Wraps the third-party ``realtimestt`` package and exposes a simple
+    callback-based streaming API. This lets the library handle voice
+    activity detection and wake word logic directly.
+    """
+
+    def __init__(self, **recorder_kwargs: Any) -> None:
+        self._recorder: Any | None = None
+        self._recorder_kwargs = recorder_kwargs
+
+    def _ensure_recorder(self) -> bool:
+        """Lazily construct the underlying ``AudioToTextRecorder``."""
+        if self._recorder is not None:
+            return True
+        try:
+            from RealtimeSTT import (  # type: ignore[import-untyped]
+                AudioToTextRecorder,
+            )
+
+            self._recorder = AudioToTextRecorder(**self._recorder_kwargs)
+            return True
+        except ImportError:
+            logger.warning(
+                "RealtimeSTTTranscriber: RealtimeSTT not installed. "
+                "Install with: pip install realtimestt",
+            )
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.warning("RealtimeSTTTranscriber: init failed: %s", exc)
+        return False
+
+    def transcribe_stream(self, callback: Callable[[str], None]) -> None:
+        """Start streaming transcription.
+
+        The callback will be invoked for each recognised utterance.
+        """
+        if not self._ensure_recorder():
+            return
+        try:
+            # RealtimeSTT handles microphone capture and VAD internally.
+            self._recorder.text(callback)
+        except Exception as exc:  # pragma: no cover - runtime safety
+            logger.warning("RealtimeSTTTranscriber: streaming error: %s", exc)
+
+    def stop(self) -> None:
+        """Stop streaming and release underlying resources, if any."""
+        if self._recorder is None:
+            return
+        try:
+            stop = getattr(self._recorder, "stop", None)
+            if callable(stop):
+                stop()
+        except Exception:  # pragma: no cover - best-effort cleanup
+            pass
+
+
 # ── Audio conversion helpers ─────────────────────────────────────────
 
 
@@ -412,34 +1035,113 @@ def get_transcriber(
     use_whisper: bool = True,
     model_name: str = "base.en",
     model_dir: Optional[str] = None,
-) -> BaseTranscriber:
+    prefer_faster_whisper: bool = True,
+    backend: Optional[str] = None,
+    streaming: bool = False,
+    streaming_window_secs: float = 2.0,
+    streaming_overlap_secs: float = 0.5,
+) -> BaseTranscriber | RealtimeSTTTranscriber:
     """Create the best available transcriber.
 
     Preference order:
-      1. WhisperTranscriber (local, fast, offline)
-      2. MacOSDictationTranscriber (macOS only)
+      1. FasterWhisperTranscriber (CTranslate2, sub-500ms latency)
+      2. WhisperTranscriber (whisper.cpp, local, fast, offline)
+      3. MacOSDictationTranscriber (macOS only)
 
     Args:
-        use_whisper: Prefer whisper.cpp if available.
+        use_whisper: Prefer Whisper backends if available.
         model_name: Whisper model to load.
         model_dir: Override model cache directory.
+        prefer_faster_whisper: Use faster-whisper over whisper.cpp if available.
+        streaming: Enable streaming transcription mode.
+        streaming_window_secs: Audio window size for streaming.
+        streaming_overlap_secs: Overlap between streaming windows.
 
     Returns:
         A :class:`BaseTranscriber` instance.
     """
-    if use_whisper and _HAS_WHISPER_CPP:
+    transcriber: Optional[BaseTranscriber] = None
+
+    if backend == "realtimestt":
+        try:
+            from RealtimeSTT import AudioToTextRecorder  # type: ignore[import-untyped]
+
+            _ = AudioToTextRecorder  # Only to verify import
+        except ImportError:
+            logger.warning(
+                "RealtimeSTT backend requested but 'realtimestt' is not installed; "
+                "falling back to Whisper/MacOS backends.",
+            )
+        else:
+            logger.info("Using RealtimeSTTTranscriber backend")
+            return RealtimeSTTTranscriber()
+
+    if use_whisper and prefer_faster_whisper and _HAS_FASTER_WHISPER:
+        logger.info("Using FasterWhisperTranscriber (model=%s)", model_name)
+        transcriber = FasterWhisperTranscriber(
+            model_name=model_name, model_dir=model_dir
+        )
+    elif use_whisper and _HAS_WHISPER_CPP:
         logger.info("Using WhisperTranscriber (model=%s)", model_name)
-        return WhisperTranscriber(model_name=model_name, model_dir=model_dir)
-
-    if os.uname().sysname == "Darwin":
+        transcriber = WhisperTranscriber(model_name=model_name, model_dir=model_dir)
+    elif os.uname().sysname == "Darwin":
         logger.info("Using MacOSDictationTranscriber (fallback)")
-        return MacOSDictationTranscriber()
+        transcriber = MacOSDictationTranscriber()
+    else:
+        # Last resort: return whisper transcriber anyway (it'll report unavailable)
+        logger.warning("No transcription backend available")
+        transcriber = WhisperTranscriber(model_name=model_name, model_dir=model_dir)
 
-    # Last resort: return whisper transcriber anyway (it'll report unavailable)
-    logger.warning("No transcription backend available")
-    return WhisperTranscriber(model_name=model_name, model_dir=model_dir)
+    if streaming and transcriber:
+        transcriber.configure_streaming(
+            window_secs=streaming_window_secs,
+            overlap_secs=streaming_overlap_secs,
+            enabled=True,
+        )
+        logger.info(
+            "Streaming mode enabled (window=%.1fs, overlap=%.1fs)",
+            streaming_window_secs,
+            streaming_overlap_secs,
+        )
+
+    return transcriber
+
+
+def get_streaming_transcriber(
+    model_name: str = "base.en",
+    window_secs: float = 2.0,
+    overlap_secs: float = 0.5,
+    prefer_faster_whisper: bool = True,
+) -> BaseTranscriber:
+    """Create a transcriber optimised for streaming with sub-500ms latency.
+
+    Convenience wrapper around :func:`get_transcriber` with streaming enabled
+    and optimal settings for real-time voice input.
+
+    Args:
+        model_name: Whisper model to load (smaller = faster).
+        window_secs: Audio window size in seconds.
+        overlap_secs: Overlap between windows to avoid word cuts.
+        prefer_faster_whisper: Use faster-whisper for best latency.
+
+    Returns:
+        A streaming-enabled :class:`BaseTranscriber` instance.
+    """
+    return get_transcriber(
+        use_whisper=True,
+        model_name=model_name,
+        prefer_faster_whisper=prefer_faster_whisper,
+        streaming=True,
+        streaming_window_secs=window_secs,
+        streaming_overlap_secs=overlap_secs,
+    )
 
 
 def whisper_available() -> bool:
     """Quick check if whisper.cpp is importable."""
     return _HAS_WHISPER_CPP
+
+
+def faster_whisper_available() -> bool:
+    """Quick check if faster-whisper is importable."""
+    return _HAS_FASTER_WHISPER

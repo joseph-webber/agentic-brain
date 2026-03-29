@@ -217,6 +217,7 @@ They are valid personas in `voice/registry.py` and `voice/kokoro_engine.py`, but
 | `REDIS_PORT` | `6379` | Redis port for the distributed speech lock |
 | `REDIS_PASSWORD` | `BrainRedis2026` | Redis password used by the lock and queue |
 | `REDIS_DB` | `0` | Redis database number |
+| `CARTESIA_API_KEY` | unset | API key for Cartesia Sonic 3 cloud TTS (optional) |
 | `VOICE_AUDIT_DISABLED` | unset | Disables process-table overlap auditing when set truthy |
 | `VOICE_LOCK_TIMEOUT_SECONDS` | `30` | How long the serializer waits for the shared speech lock |
 | `VOICE_STARTUP_SILENCE_SECONDS` | serializer default | Delay before the worker begins speaking after startup |

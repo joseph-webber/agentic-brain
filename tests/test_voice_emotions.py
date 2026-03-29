@@ -25,9 +25,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 from agentic_brain.voice.config import VoiceConfig
 from agentic_brain.voice.emotions import (
     EMOTION_PARAMS,
+    Emotion,
     EmotionDetector,
+    EmotionResult,
     VoiceEmotion,
+    VoiceEmotionDetector,
     apply_emotion,
+    emotion_result_to_voice_emotion,
+    emotion_to_voice_emotion,
 )
 from agentic_brain.voice.expression import ExpressionEngine
 from agentic_brain.voice.serializer import (
@@ -295,3 +300,202 @@ class TestSerializerEmotionSupport:
         )
         cmd = popen_mock.call_args[0][0]
         assert int(cmd[4]) == 155
+
+
+class TestBasicEmotion:
+    """Tests for the Emotion enum (for GraphRAG memory)."""
+
+    def test_emotion_enum_values(self):
+        assert {e.value for e in Emotion} == {
+            "neutral",
+            "happy",
+            "sad",
+            "angry",
+            "fearful",
+            "surprised",
+            "disgusted",
+        }
+
+
+class TestEmotionResult:
+    """Tests for EmotionResult dataclass."""
+
+    def test_to_dict(self):
+        result = EmotionResult(
+            emotion=Emotion.HAPPY,
+            confidence=0.9,
+            valence=0.8,
+            arousal=0.6,
+        )
+        d = result.to_dict()
+        assert d["emotion"] == "happy"
+        assert d["confidence"] == 0.9
+        assert d["valence"] == 0.8
+        assert d["arousal"] == 0.6
+
+    def test_is_positive(self):
+        positive = EmotionResult(Emotion.HAPPY, 0.9, 0.8, 0.6)
+        negative = EmotionResult(Emotion.SAD, 0.9, -0.6, 0.2)
+        neutral = EmotionResult(Emotion.NEUTRAL, 0.9, 0.05, 0.3)
+
+        assert positive.is_positive is True
+        assert negative.is_positive is False
+        assert neutral.is_positive is False
+
+    def test_is_negative(self):
+        positive = EmotionResult(Emotion.HAPPY, 0.9, 0.8, 0.6)
+        negative = EmotionResult(Emotion.SAD, 0.9, -0.6, 0.2)
+        neutral = EmotionResult(Emotion.NEUTRAL, 0.9, -0.05, 0.3)
+
+        assert positive.is_negative is False
+        assert negative.is_negative is True
+        assert neutral.is_negative is False
+
+    def test_is_high_arousal(self):
+        high = EmotionResult(Emotion.ANGRY, 0.9, -0.5, 0.8)
+        low = EmotionResult(Emotion.SAD, 0.9, -0.6, 0.2)
+
+        assert high.is_high_arousal is True
+        assert low.is_high_arousal is False
+
+    def test_with_secondary_emotion(self):
+        result = EmotionResult(
+            emotion=Emotion.SURPRISED,
+            confidence=0.7,
+            valence=0.2,
+            arousal=0.8,
+            secondary_emotion=Emotion.FEARFUL,
+        )
+        d = result.to_dict()
+        assert d["secondary_emotion"] == "fearful"
+
+
+class TestEmotionToVoiceEmotionMapping:
+    """Tests for mapping between Emotion and VoiceEmotion."""
+
+    def test_happy_low_arousal_maps_to_happy(self):
+        assert emotion_to_voice_emotion(Emotion.HAPPY, arousal=0.5) == VoiceEmotion.HAPPY
+
+    def test_happy_high_arousal_maps_to_excited(self):
+        assert emotion_to_voice_emotion(Emotion.HAPPY, arousal=0.8) == VoiceEmotion.EXCITED
+
+    def test_sad_maps_to_concerned(self):
+        assert emotion_to_voice_emotion(Emotion.SAD) == VoiceEmotion.CONCERNED
+
+    def test_angry_maps_to_urgent(self):
+        assert emotion_to_voice_emotion(Emotion.ANGRY) == VoiceEmotion.URGENT
+
+    def test_fearful_maps_to_concerned(self):
+        assert emotion_to_voice_emotion(Emotion.FEARFUL) == VoiceEmotion.CONCERNED
+
+    def test_surprised_maps_to_excited(self):
+        assert emotion_to_voice_emotion(Emotion.SURPRISED) == VoiceEmotion.EXCITED
+
+    def test_neutral_maps_to_neutral(self):
+        assert emotion_to_voice_emotion(Emotion.NEUTRAL) == VoiceEmotion.NEUTRAL
+
+    def test_emotion_result_to_voice_emotion(self):
+        result = EmotionResult(Emotion.HAPPY, 0.9, 0.8, 0.5)  # arousal < 0.7 maps to HAPPY
+        assert emotion_result_to_voice_emotion(result) == VoiceEmotion.HAPPY
+
+
+class TestVoiceEmotionDetector:
+    """Tests for VoiceEmotionDetector ML-based detection."""
+
+    def setup_method(self):
+        self.detector = VoiceEmotionDetector()
+
+    def test_detector_initializes(self):
+        assert self.detector is not None
+        assert isinstance(self.detector.has_audio_support, bool)
+        assert isinstance(self.detector.has_text_support, bool)
+
+    def test_detect_from_empty_text_returns_neutral(self):
+        result = self.detector.detect_from_text("")
+        assert result.emotion == Emotion.NEUTRAL
+        assert result.confidence == 1.0
+
+    def test_detect_from_whitespace_returns_neutral(self):
+        result = self.detector.detect_from_text("   ")
+        assert result.emotion == Emotion.NEUTRAL
+
+    def test_keyword_fallback_happy(self):
+        result = self.detector._keyword_fallback("I'm so happy today!")
+        assert result.emotion == Emotion.HAPPY
+        assert result.valence > 0
+
+    def test_keyword_fallback_angry(self):
+        result = self.detector._keyword_fallback("I'm really angry about this")
+        assert result.emotion == Emotion.ANGRY
+        assert result.valence < 0
+
+    def test_keyword_fallback_sad(self):
+        result = self.detector._keyword_fallback("This is so sad, unfortunately")
+        assert result.emotion == Emotion.SAD
+        assert result.valence < 0
+
+    def test_keyword_fallback_fearful(self):
+        result = self.detector._keyword_fallback("I'm afraid of what might happen")
+        assert result.emotion == Emotion.FEARFUL
+
+    def test_keyword_fallback_surprised(self):
+        result = self.detector._keyword_fallback("Wow, that's unexpected!")
+        assert result.emotion == Emotion.SURPRISED
+
+    def test_keyword_fallback_exclamation_marks(self):
+        result = self.detector._keyword_fallback("This is amazing!!")
+        assert result.emotion == Emotion.SURPRISED
+        assert result.arousal > 0.5
+
+    def test_keyword_fallback_single_exclamation(self):
+        result = self.detector._keyword_fallback("Nice one!")
+        assert result.emotion == Emotion.HAPPY
+
+    def test_keyword_fallback_neutral(self):
+        result = self.detector._keyword_fallback("The weather is cloudy today")
+        assert result.emotion == Emotion.NEUTRAL
+
+    def test_detect_with_text_only(self):
+        result = self.detector.detect(text="Hello there")
+        assert isinstance(result, EmotionResult)
+        assert isinstance(result.emotion, Emotion)
+
+    def test_detect_with_no_input_returns_neutral(self):
+        result = self.detector.detect()
+        assert result.emotion == Emotion.NEUTRAL
+
+    def test_result_has_valid_ranges(self):
+        result = self.detector.detect(text="I love this!")
+        assert -1.0 <= result.valence <= 1.0
+        assert 0.0 <= result.arousal <= 1.0
+        assert 0.0 <= result.confidence <= 1.0
+
+
+class TestVoiceEmotionDetectorTextPipeline:
+    """Tests for text-based emotion detection pipeline."""
+
+    def test_loads_model_gracefully(self):
+        detector = VoiceEmotionDetector()
+        # Should not raise even if transformers not installed
+        result = detector.detect_from_text("Happy day!")
+        assert isinstance(result, EmotionResult)
+
+    def test_truncates_long_text(self):
+        detector = VoiceEmotionDetector()
+        long_text = "I am very happy! " * 100
+        result = detector.detect_from_text(long_text)
+        assert isinstance(result, EmotionResult)
+
+
+class TestVoiceEmotionDetectorAudioSupport:
+    """Tests for audio-based emotion detection."""
+
+    def test_audio_detection_without_model_returns_neutral(self):
+        detector = VoiceEmotionDetector()
+        # Fake audio bytes (would fail to process but should not raise)
+        fake_audio = b"\x00" * 16000  # 1 second of silence at 16kHz
+        result = detector.detect_from_audio(fake_audio)
+        assert isinstance(result, EmotionResult)
+        # Without model loaded, should return neutral with low confidence
+        assert result.confidence <= 0.5 or result.emotion == Emotion.NEUTRAL
+

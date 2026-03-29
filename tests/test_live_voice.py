@@ -186,15 +186,27 @@ class TestSessionMetrics:
         m = SessionMetrics()
         assert m.utterances_heard == 0
         assert m.avg_response_latency_ms == 0.0
+        assert m.emotions_detected == 0
+        assert m.emotion_counts == {}
         d = m.to_dict()
         assert "utterances_heard" in d
         assert "avg_response_latency_ms" in d
+        assert "emotions_detected" in d
+        assert "emotion_counts" in d
 
     def test_record_latency(self):
         m = SessionMetrics()
         m.record_latency(100.0)
         m.record_latency(200.0)
         assert m.avg_response_latency_ms == pytest.approx(150.0)
+
+    def test_record_emotion(self):
+        m = SessionMetrics()
+        m.record_emotion("happy")
+        m.record_emotion("happy")
+        m.record_emotion("sad")
+        assert m.emotions_detected == 3
+        assert m.emotion_counts == {"happy": 2, "sad": 1}
 
     def test_to_dict_keys(self):
         m = SessionMetrics()
@@ -207,6 +219,8 @@ class TestSessionMetrics:
             "total_listen_secs",
             "wake_word_detections",
             "transcription_errors",
+            "emotions_detected",
+            "emotion_counts",
         }
         assert set(d.keys()) == expected_keys
 

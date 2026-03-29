@@ -44,6 +44,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
+import numpy as np
+
 logger = logging.getLogger(__name__)
 
 # ── Optional imports (graceful degradation) ──────────────────────────
@@ -64,8 +66,37 @@ DEFAULT_CHUNK_SIZE = 1024
 SILENCE_THRESHOLD = 500
 UTTERANCE_SILENCE_SECS = 2.0
 SESSION_TIMEOUT_SECS = 30.0
-WAKE_WORDS = ("hey karen", "hey brain")
+WAKE_WORDS = ("hey iris", "hey karen", "hey brain")
 RESPONSE_LATENCY_TARGET_MS = 500
+WAKE_WORD_ML_THRESHOLD = 0.5
+
+
+# ── Device Discovery ─────────────────────────────────────────────────
+
+
+def find_airpods_device() -> Optional[int]:
+    """Find AirPods input device index.
+
+    Enumerates all PyAudio input devices and returns the index of the
+    first device with 'airpods' in its name (case-insensitive).
+
+    Returns:
+        Device index if AirPods found, None otherwise.
+    """
+    if not _HAS_PYAUDIO:
+        return None
+    try:
+        pa = pyaudio.PyAudio()
+        for i in range(pa.get_device_count()):
+            info = pa.get_device_info_by_index(i)
+            if info["maxInputChannels"] > 0 and "airpods" in info["name"].lower():
+                logger.info("Found AirPods mic at device index %d: %s", i, info["name"])
+                pa.terminate()
+                return i
+        pa.terminate()
+    except Exception as exc:
+        logger.debug("AirPods device search failed: %s", exc)
+    return None
 
 
 # ── Data Types ───────────────────────────────────────────────────────
@@ -100,6 +131,21 @@ class LiveSessionConfig:
     use_whisper: bool = True
     whisper_model: str = "base.en"
     response_callback: Optional[Callable[[str], str]] = None
+    # ML-based wake word detection (fast, 50-100ms latency)
+    use_ml_wake_word: bool = True
+    wake_word_threshold: float = WAKE_WORD_ML_THRESHOLD
+    wake_word_model_path: Optional[str] = None
+    prefer_airpods: bool = True
+    input_device_index: Optional[int] = None
+    # Emotion detection for richer GraphRAG memory and adaptive responses
+    detect_emotion: bool = True
+    emotion_callback: Optional[Callable[[Any], None]] = None  # EmotionResult callback
+    # Primary voice activity detection (Silero VAD)
+    use_vad: bool = True
+    vad_threshold: float = 0.5
+    # Push-to-talk mode (optional, driven by an external PTT controller)
+    ptt_mode: bool = False
+    ptt_hotkey: Optional[str] = None
 
 
 @dataclass
@@ -113,6 +159,8 @@ class SessionMetrics:
     total_listen_secs: float = 0.0
     wake_word_detections: int = 0
     transcription_errors: int = 0
+    emotions_detected: int = 0
+    emotion_counts: dict[str, int] = field(default_factory=dict)
     _latency_samples: list[float] = field(default_factory=list)
 
     def record_latency(self, ms: float) -> None:
@@ -120,6 +168,11 @@ class SessionMetrics:
         self.avg_response_latency_ms = sum(self._latency_samples) / len(
             self._latency_samples
         )
+
+    def record_emotion(self, emotion: str) -> None:
+        """Record a detected emotion for metrics."""
+        self.emotions_detected += 1
+        self.emotion_counts[emotion] = self.emotion_counts.get(emotion, 0) + 1
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -130,6 +183,8 @@ class SessionMetrics:
             "total_listen_secs": round(self.total_listen_secs, 1),
             "wake_word_detections": self.wake_word_detections,
             "transcription_errors": self.transcription_errors,
+            "emotions_detected": self.emotions_detected,
+            "emotion_counts": self.emotion_counts,
         }
 
 
@@ -198,7 +253,30 @@ class LiveVoiceSession:
         self._on_state_change: Optional[Callable[[SessionState], None]] = None
         self._on_utterance: Optional[Callable[[str], None]] = None
         self._on_wake: Optional[Callable[[], None]] = None
+        self._on_emotion: Optional[Callable[[Any], None]] = self.config.emotion_callback
         self._speaking = False
+        # ML-based wake word detector (fast detection)
+        self._wake_detector: Any = None
+        # ML-based emotion detector (for GraphRAG memory)
+        self._emotion_detector: Any = None
+        self._last_emotion_result: Any = None
+        # Silero VAD (primary voice activity detector when available)
+        self._vad: Any = None
+        # Optional push-to-talk controller (external hotkey-driven input)
+        self._ptt_controller: Any = None
+        if self.config.ptt_mode:
+            try:
+                from agentic_brain.voice.ptt import PushToTalkController, PTTConfig
+
+                hotkey = self.config.ptt_hotkey or "ctrl+space"
+                self._ptt_controller = PushToTalkController(
+                    config=PTTConfig(hotkey=hotkey)
+                )
+                self._ptt_controller.on(
+                    "transcription", self._handle_ptt_transcription
+                )
+            except Exception:
+                logger.debug("LiveVoice: PTT initialisation failed", exc_info=True)
 
     # ── Properties ───────────────────────────────────────────────
 
@@ -233,6 +311,22 @@ class LiveVoiceSession:
         """Register a callback fired when the wake word is detected."""
         self._on_wake = callback
 
+    def on_emotion(self, callback: Callable[[Any], None]) -> None:
+        """Register a callback fired when emotion is detected for an utterance.
+
+        The callback receives an EmotionResult object with:
+        - emotion: The detected basic emotion (Emotion enum)
+        - confidence: Detection confidence 0.0-1.0
+        - valence: Emotional valence -1.0 to 1.0
+        - arousal: Arousal level 0.0 to 1.0
+        """
+        self._on_emotion = callback
+
+    @property
+    def last_emotion(self) -> Any:
+        """Return the most recently detected EmotionResult, or None."""
+        return self._last_emotion_result
+
     # ── State machine ────────────────────────────────────────────
 
     def _set_state(self, new_state: SessionState) -> None:
@@ -259,6 +353,9 @@ class LiveVoiceSession:
             return False
 
         self._init_transcriber()
+        self._init_wake_detector()
+        self._init_emotion_detector()
+        self._init_vad()
 
         if not self._open_audio_stream():
             logger.error("LiveVoice: microphone unavailable")
@@ -315,7 +412,7 @@ class LiveVoiceSession:
 
     def status(self) -> dict[str, Any]:
         """Return a JSON-serialisable status snapshot."""
-        return {
+        status_dict = {
             "state": self.state.value,
             "wake_detected": self._wake_detected,
             "metrics": self._metrics.to_dict(),
@@ -326,24 +423,58 @@ class LiveVoiceSession:
                 "session_timeout_secs": self.config.session_timeout_secs,
                 "require_wake_word": self.config.require_wake_word,
                 "use_whisper": self.config.use_whisper,
+                "use_ml_wake_word": self.config.use_ml_wake_word,
+                "detect_emotion": self.config.detect_emotion,
+                "ptt_mode": self.config.ptt_mode,
             },
         }
+        # Add wake word detector status if available
+        if self._wake_detector is not None:
+            try:
+                status_dict["wake_detector"] = self._wake_detector.status()
+            except Exception:
+                pass
+        # Add emotion detector status and last result
+        if self._emotion_detector is not None:
+            status_dict["emotion_detector"] = {
+                "has_audio_support": self._emotion_detector.has_audio_support,
+                "has_text_support": self._emotion_detector.has_text_support,
+            }
+        if self._last_emotion_result is not None:
+            try:
+                status_dict["last_emotion"] = self._last_emotion_result.to_dict()
+            except Exception:
+                pass
+        return status_dict
 
     # ── Audio stream ─────────────────────────────────────────────
 
-    def _open_audio_stream(self) -> bool:
+    def _open_audio_stream(self, input_device_index: Optional[int] = None) -> bool:
         if not _HAS_PYAUDIO:
             logger.warning("LiveVoice: PyAudio not installed")
             return False
+
+        # Determine device index: explicit > config > AirPods preference > default
+        device_idx = input_device_index
+        if device_idx is None:
+            device_idx = self.config.input_device_index
+        if device_idx is None and self.config.prefer_airpods:
+            device_idx = find_airpods_device()
+
         try:
             self._pa = pyaudio.PyAudio()
-            self._stream = self._pa.open(
-                format=pyaudio.paInt16,
-                channels=self.config.channels,
-                rate=self.config.sample_rate,
-                input=True,
-                frames_per_buffer=self.config.chunk_size,
-            )
+            open_kwargs: dict[str, Any] = {
+                "format": pyaudio.paInt16,
+                "channels": self.config.channels,
+                "rate": self.config.sample_rate,
+                "input": True,
+                "frames_per_buffer": self.config.chunk_size,
+            }
+            if device_idx is not None:
+                open_kwargs["input_device_index"] = device_idx
+                logger.info("LiveVoice: using input device index %d", device_idx)
+
+            self._stream = self._pa.open(**open_kwargs)
             return True
         except Exception as exc:
             logger.error("LiveVoice: cannot open mic: %s", exc)
@@ -381,6 +512,128 @@ class LiveVoiceSession:
             logger.warning("LiveVoice: transcriber init failed: %s", exc)
             self._transcriber = None
 
+    # ── Wake Word Detector ───────────────────────────────────────
+
+    def _init_wake_detector(self) -> None:
+        """Initialize ML-based wake word detector if enabled."""
+        if not self.config.use_ml_wake_word:
+            logger.info("LiveVoice: ML wake word detection disabled")
+            return
+
+        try:
+            from agentic_brain.voice.wake_word import WakeWordConfig, WakeWordDetector
+
+            wake_config = WakeWordConfig(
+                wake_phrase=self.config.wake_words[0] if self.config.wake_words else "hey iris",
+                threshold=self.config.wake_word_threshold,
+                sample_rate=self.config.sample_rate,
+                alternative_phrases=self.config.wake_words,
+                use_ml=True,
+            )
+            self._wake_detector = WakeWordDetector(config=wake_config)
+
+            if self._wake_detector.load_model(self.config.wake_word_model_path):
+                logger.info("LiveVoice: ML wake word detector ready (fast path)")
+            else:
+                logger.info("LiveVoice: ML wake word unavailable, using transcription fallback")
+        except Exception as exc:
+            logger.warning("LiveVoice: wake detector init failed: %s", exc)
+            self._wake_detector = None
+
+    def _detect_wake_word_ml(self, audio_chunk: bytes) -> bool:
+        """Try ML-based wake word detection (fast, 50-100ms).
+
+        Returns True if wake word detected via ML model.
+        """
+        if self._wake_detector is None or not self._wake_detector.is_ml_available:
+            return False
+
+        try:
+            result = self._wake_detector.detect(audio_chunk)
+            return result.detected
+        except Exception:
+            return False
+
+    def _init_emotion_detector(self) -> None:
+        """Initialize ML-based emotion detector if enabled."""
+        if not self.config.detect_emotion:
+            logger.info("LiveVoice: emotion detection disabled")
+            return
+
+        try:
+            from agentic_brain.voice.emotions import VoiceEmotionDetector
+
+            self._emotion_detector = VoiceEmotionDetector()
+            logger.info(
+                "LiveVoice: emotion detector ready (audio=%s, text=%s)",
+                self._emotion_detector.has_audio_support,
+                self._emotion_detector.has_text_support,
+            )
+        except Exception as exc:
+            logger.warning("LiveVoice: emotion detector init failed: %s", exc)
+            self._emotion_detector = None
+
+    def _detect_emotion(self, audio_data: bytes, text: Optional[str]) -> Any:
+        """Detect emotion from audio and/or transcribed text.
+
+        Returns EmotionResult or None if detection is disabled/failed.
+        """
+        if self._emotion_detector is None:
+            return None
+
+        try:
+            result = self._emotion_detector.detect(audio=audio_data, text=text)
+            self._last_emotion_result = result
+            self._metrics.record_emotion(result.emotion.value)
+
+            if self._on_emotion:
+                try:
+                    self._on_emotion(result)
+                except Exception:
+                    logger.debug("Emotion callback error", exc_info=True)
+
+            logger.debug(
+                "LiveVoice: detected emotion=%s confidence=%.2f valence=%.2f arousal=%.2f",
+                result.emotion.value,
+                result.confidence,
+                result.valence,
+                result.arousal,
+            )
+            return result
+        except Exception as exc:
+            logger.debug("LiveVoice: emotion detection failed: %s", exc)
+            return None
+
+    def _init_vad(self) -> None:
+        """Initialize Silero VAD detector if enabled.
+
+        VAD is optional and will gracefully degrade to RMS-based detection
+        when PyTorch/Silero is unavailable.
+        """
+        if not self.config.use_vad:
+            logger.info("LiveVoice: VAD disabled by config")
+            return
+
+        try:
+            from agentic_brain.voice.vad import SileroVAD, VADConfig
+
+            vad_config = VADConfig(
+                threshold=self.config.vad_threshold,
+                sample_rate=self.config.sample_rate,
+            )
+            self._vad = SileroVAD(config=vad_config)
+
+            # Ensure the model can be loaded; if not, disable VAD.
+            if not self._vad.ensure_model():  # type: ignore[func-returns-value]
+                logger.info("LiveVoice: Silero VAD not available, falling back to RMS")
+                self._vad = None
+                return
+
+            logger.info("LiveVoice: Silero VAD initialised as primary VAD")
+        except Exception as exc:
+            logger.warning("LiveVoice: VAD init failed: %s", exc)
+            self._vad = None
+
     # ── Core listen loop ─────────────────────────────────────────
 
     def _listen_loop(self) -> None:
@@ -402,7 +655,18 @@ class LiveVoiceSession:
                 continue
 
             rms = rms_amplitude(chunk)
-            is_voice = rms > self.config.silence_threshold
+
+            # Primary voice activity detection via Silero VAD when available.
+            is_voice = False
+            if self._vad is not None:
+                try:
+                    samples = np.frombuffer(chunk, dtype=np.int16)
+                    if samples.size:
+                        is_voice = any(True for _ in self._vad.detect_speech(samples))
+                except Exception:
+                    is_voice = rms > self.config.silence_threshold
+            else:
+                is_voice = rms > self.config.silence_threshold
 
             # Interrupt detection: Joseph speaks while brain talking
             if is_voice and self._speaking:
@@ -411,6 +675,23 @@ class LiveVoiceSession:
 
             # ── Wake word gate ───────────────────────────────────
             if not self._wake_detected:
+                # Try ML-based detection first (fast path: 50-100ms)
+                if self._detect_wake_word_ml(chunk):
+                    self._wake_detected = True
+                    self._metrics.wake_word_detections += 1
+                    self._last_voice_activity = time.monotonic()
+                    self._set_state(SessionState.LISTENING)
+                    logger.info("LiveVoice: wake word detected via ML (fast path)")
+                    if self._on_wake:
+                        try:
+                            self._on_wake()
+                        except Exception:
+                            pass
+                    self._respond("Yes?")
+                    audio_chunks.clear()
+                    continue
+
+                # Fallback: transcription-based detection (slower: 3-7s)
                 if is_voice:
                     audio_chunks.append(chunk)
                     silence_start = None
@@ -423,6 +704,7 @@ class LiveVoiceSession:
                             self._metrics.wake_word_detections += 1
                             self._last_voice_activity = time.monotonic()
                             self._set_state(SessionState.LISTENING)
+                            logger.info("LiveVoice: wake word detected via transcription (fallback)")
                             if self._on_wake:
                                 try:
                                     self._on_wake()
@@ -451,12 +733,18 @@ class LiveVoiceSession:
                     and silence_duration >= self.config.utterance_silence_secs
                 ):
                     self._set_state(SessionState.PROCESSING)
+                    # Save audio before transcription for emotion detection
+                    audio_data = b"".join(audio_chunks)
                     text = self._transcribe(audio_chunks)
                     audio_chunks.clear()
                     silence_start = None
 
                     if text:
                         self._metrics.utterances_heard += 1
+
+                        # Detect emotion from the utterance (audio + text)
+                        self._detect_emotion(audio_data, text)
+
                         if self._on_utterance:
                             try:
                                 self._on_utterance(text)

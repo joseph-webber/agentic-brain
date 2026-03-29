@@ -55,11 +55,21 @@ from agentic_brain.voice.config import (
     VoiceConfig,
     VoiceQuality,
 )
+from agentic_brain.voice.ptt import (
+    PTTConfig,
+    PTTState,
+    PushToTalkController,
+)
 from agentic_brain.voice.emotions import (
     EMOTION_PARAMS,
+    Emotion,
     EmotionDetector,
+    EmotionResult,
     VoiceEmotion,
+    VoiceEmotionDetector,
     apply_emotion,
+    emotion_result_to_voice_emotion,
+    emotion_to_voice_emotion,
 )
 from agentic_brain.voice.expression import ExpressionEngine
 
@@ -128,6 +138,10 @@ from agentic_brain.voice.stream import (
     VoiceEventProducer,
     get_voice_event_producer,
     speak_async,
+)
+from agentic_brain.voice.streaming_api import (
+    StreamingAPIConfig,
+    VoiceStreamingAPI,
 )
 
 # Import user regional preferences and learning
@@ -238,11 +252,20 @@ __all__ = [
     "VoiceQuality",
     "LanguagePack",
     "LANGUAGE_PACKS",
+    # Push-to-talk controller
+    "PTTConfig",
+    "PTTState",
+    "PushToTalkController",
     "VoiceEmotion",
+    "Emotion",
+    "EmotionResult",
+    "VoiceEmotionDetector",
     "EmotionDetector",
     "ExpressionEngine",
     "EMOTION_PARAMS",
     "apply_emotion",
+    "emotion_to_voice_emotion",
+    "emotion_result_to_voice_emotion",
     # Queue system (CRITICAL for accessibility!)
     "VoiceQueue",
     "VoiceMessage",
@@ -263,6 +286,8 @@ __all__ = [
     "VoiceEventProducer",
     "VoiceEventConsumer",
     "get_voice_event_producer",
+    "StreamingAPIConfig",
+    "VoiceStreamingAPI",
     # Resilient voice system (NEVER FAILS!)
     "ResilientVoice",
     "VoiceDaemon",
@@ -318,6 +343,19 @@ __all__ = [
     "VoiceQualityAnalyzer",
     "EmotionDetector",
     "ExpressionEngine",
+    # ── PHASE 4: GraphRAG Voice Memory ──
+    "_lazy_voice_memory",
+    "VoiceMemory",
+    "VoiceUtterance",
+    "VoiceConversation",
+    "get_voice_memory",
+    # ── PHASE 5: ML-based Wake Word Detection ──
+    "_lazy_wake_word",
+    "WakeWordDetector",
+    "WakeWordConfig",
+    "WakeWordResult",
+    "get_wake_word_detector",
+    "detect_wake_word",
     # Classes
     "Audio",
     "AudioConfig",
@@ -494,6 +532,44 @@ def _lazy_repeat_detector():
     return RepeatDetector, RepeatAction, get_repeat_detector
 
 
+def _lazy_voice_memory():
+    """Lazy import for GraphRAG voice memory (Neo4j-backed)."""
+    from agentic_brain.voice.memory import (
+        VoiceConversation,
+        VoiceMemory,
+        VoiceUtterance,
+        get_voice_memory,
+        reset_voice_memory,
+    )
+
+    return (
+        VoiceMemory,
+        VoiceUtterance,
+        VoiceConversation,
+        get_voice_memory,
+        reset_voice_memory,
+    )
+
+
+def _lazy_wake_word():
+    """Lazy import for ML-based wake word detection."""
+    from agentic_brain.voice.wake_word import (
+        WakeWordConfig,
+        WakeWordDetector,
+        WakeWordResult,
+        detect_wake_word,
+        get_wake_word_detector,
+    )
+
+    return (
+        WakeWordDetector,
+        WakeWordConfig,
+        WakeWordResult,
+        get_wake_word_detector,
+        detect_wake_word,
+    )
+
+
 _VOICE_EXPORTS = {
     "KokoroVoice": ("agentic_brain.voice.kokoro_tts", "KokoroVoice"),
     "KokoroTTS": ("agentic_brain.voice.kokoro_tts", "KokoroVoice"),
@@ -517,10 +593,24 @@ _VOICE_EXPORTS = {
         "VoiceQualityAnalyzer",
     ),
     "EmotionDetector": ("agentic_brain.voice.emotions", "EmotionDetector"),
+    "VoiceEmotionDetector": ("agentic_brain.voice.emotions", "VoiceEmotionDetector"),
+    "Emotion": ("agentic_brain.voice.emotions", "Emotion"),
+    "EmotionResult": ("agentic_brain.voice.emotions", "EmotionResult"),
     "ExpressionEngine": ("agentic_brain.voice.expression", "ExpressionEngine"),
     "Phase3VoiceSystem": ("agentic_brain.voice.phase3", "Phase3VoiceSystem"),
     "get_phase3_voice_system": (
         "agentic_brain.voice.phase3",
         "get_phase3_voice_system",
     ),
+    # GraphRAG Voice Memory (Neo4j-backed)
+    "VoiceMemory": ("agentic_brain.voice.memory", "VoiceMemory"),
+    "VoiceUtterance": ("agentic_brain.voice.memory", "VoiceUtterance"),
+    "VoiceConversation": ("agentic_brain.voice.memory", "VoiceConversation"),
+    "get_voice_memory": ("agentic_brain.voice.memory", "get_voice_memory"),
+    # Wake word detection (ML-based, fast 50-100ms)
+    "WakeWordDetector": ("agentic_brain.voice.wake_word", "WakeWordDetector"),
+    "WakeWordConfig": ("agentic_brain.voice.wake_word", "WakeWordConfig"),
+    "WakeWordResult": ("agentic_brain.voice.wake_word", "WakeWordResult"),
+    "get_wake_word_detector": ("agentic_brain.voice.wake_word", "get_wake_word_detector"),
+    "detect_wake_word": ("agentic_brain.voice.wake_word", "detect_wake_word"),
 }

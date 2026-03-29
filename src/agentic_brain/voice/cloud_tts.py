@@ -18,6 +18,7 @@ import logging
 import os
 import shutil
 import tempfile
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -203,6 +204,56 @@ async def speak_aws_polly(text: str, voice: Optional[str] = None) -> bool:
         return False
 
 
+async def speak_cartesia(text: str, voice_id: Optional[str] = None) -> bool:
+    """Speak using Cartesia Sonic 3 cloud TTS.
+
+    Requires the ``cartesia`` Python package and ``CARTESIA_API_KEY``.
+    ``voice_id`` is treated as a Cartesia voice identifier; when omitted
+    the backend falls back to ``CARTESIA_VOICE_ID`` if set.
+    """
+    api_key = os.getenv("CARTESIA_API_KEY")
+    if not api_key:
+        logger.debug("Cartesia API key not configured")
+        return False
+
+    try:
+        from agentic_brain.voice.cartesia_tts import CartesiaTTS
+    except Exception:
+        logger.debug(
+            "Cartesia backend not available (cartesia package missing)", exc_info=True
+        )
+        return False
+
+    loop = asyncio.get_event_loop()
+
+    def _synthesize_to_file() -> Optional[str]:
+        try:
+            tts = CartesiaTTS(api_key=api_key)
+            audio_bytes = tts.synthesize(text, voice_id=voice_id or "default")
+            if not audio_bytes:
+                return None
+            cache_dir = Path.home() / ".cache" / "agentic-brain" / "cartesia-playback"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            file_path = cache_dir / f"cartesia_{os.getpid()}_{int(time.time() * 1000)}.wav"
+            file_path.write_bytes(audio_bytes)
+            return str(file_path)
+        except Exception as e:  # pragma: no cover - network/SDK errors
+            logger.error(f"Cartesia synthesis error: {e}")
+            return None
+
+    wav_file = await loop.run_in_executor(None, _synthesize_to_file)
+    if not wav_file:
+        return False
+
+    try:
+        return await _play_audio_file(wav_file)
+    finally:
+        try:
+            Path(wav_file).unlink()
+        except Exception:
+            pass
+
+
 async def _play_audio_file(file_path: str) -> bool:
     """
     Play an audio file using available system player.
@@ -272,8 +323,9 @@ async def speak_cloud(
 
     Tries providers in order:
     1. Google TTS (free, no key needed)
-    2. Azure Speech (if configured)
-    3. AWS Polly (if configured)
+    2. Cartesia Sonic 3 (if configured)
+    3. Azure Speech (if configured)
+    4. AWS Polly (if configured)
 
     Args:
         text: Text to speak
@@ -286,6 +338,8 @@ async def speak_cloud(
     """
     if provider == "gtts":
         return await speak_gtts(text, lang)
+    elif provider == "cartesia":
+        return await speak_cartesia(text, voice)
     elif provider == "azure":
         return await speak_azure(text, voice)
     elif provider == "polly":
@@ -295,6 +349,11 @@ async def speak_cloud(
     # Start with free option
     if await speak_gtts(text, lang):
         logger.info("Cloud TTS succeeded with Google TTS")
+        return True
+
+    # Prefer Cartesia Sonic 3 as low-latency neural cloud backend when available
+    if await speak_cartesia(text, voice):
+        logger.info("Cloud TTS succeeded with Cartesia Sonic 3")
         return True
 
     # Try paid services if configured
@@ -319,6 +378,7 @@ def check_cloud_tts_available() -> dict:
     """
     return {
         "gtts": _check_gtts_available(),
+        "cartesia": _check_cartesia_available(),
         "azure": _check_azure_available(),
         "aws_polly": _check_aws_polly_available(),
     }
@@ -352,6 +412,18 @@ def _check_aws_polly_available() -> bool:
         return False
     try:
         import boto3
+
+        return True
+    except ImportError:
+        return False
+
+
+def _check_cartesia_available() -> bool:
+    """Check if Cartesia Sonic 3 is available."""
+    if not os.getenv("CARTESIA_API_KEY"):
+        return False
+    try:  # pragma: no cover - optional dependency
+        import cartesia  # type: ignore[unused-import]
 
         return True
     except ImportError:
