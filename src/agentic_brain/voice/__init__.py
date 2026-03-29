@@ -195,6 +195,11 @@ def speak_safe(
 
 
 def __getattr__(name: str):
+    if name in _VOICE_EXPORTS:
+        module_name, attr_name = _VOICE_EXPORTS[name]
+        module = __import__(module_name, fromlist=[attr_name])
+        return getattr(module, attr_name)
+
     import agentic_brain.audio as _audio
 
     if hasattr(_audio, name):
@@ -280,6 +285,17 @@ __all__ = [
     "_lazy_live_mode",
     "_lazy_stream_consumer",
     "_lazy_unified",
+    # ── PHASE 3: Conversation Memory ──
+    "_lazy_phase3",
+    "_lazy_conversation_memory",
+    "_lazy_repeat_detector",
+    "Phase3VoiceSystem",
+    "get_phase3_voice_system",
+    "KokoroVoice",
+    "KokoroTTS",
+    "NeuralVoiceRouter",
+    "EarconPlayer",
+    "ensure_earcons_exist",
     # Classes
     "Audio",
     "AudioConfig",
@@ -323,7 +339,9 @@ from .redis_summary import (
 
 def _lazy_earcons():
     """Lazy import for earcon sound system."""
-    from agentic_brain.voice.earcons import EarconPlayer, get_earcon_player
+    from agentic_brain.audio import get_earcon_player
+    from agentic_brain.audio.earcons import EarconPlayer
+
     return EarconPlayer, get_earcon_player
 
 def _lazy_redis_voice_queue():
@@ -399,3 +417,45 @@ def _lazy_unified():
     """Lazy import for the unified voice system."""
     from agentic_brain.voice.unified import UnifiedVoiceSystem, get_unified
     return UnifiedVoiceSystem, get_unified
+
+
+def _lazy_phase3():
+    """Lazy import for the Phase 3 voice integration facade."""
+    from agentic_brain.voice.phase3 import (
+        Phase3VoiceSystem,
+        get_phase3_voice_system,
+    )
+
+    return Phase3VoiceSystem, get_phase3_voice_system
+
+def _lazy_conversation_memory():
+    """Lazy import for conversation memory (voice history + search)."""
+    from agentic_brain.voice.conversation_memory import (
+        ConversationMemory,
+        Utterance,
+        get_conversation_memory,
+    )
+    return ConversationMemory, Utterance, get_conversation_memory
+
+def _lazy_repeat_detector():
+    """Lazy import for repeat/duplicate utterance detection."""
+    from agentic_brain.voice.repeat_detector import (
+        RepeatAction,
+        RepeatDetector,
+        get_repeat_detector,
+    )
+    return RepeatDetector, RepeatAction, get_repeat_detector
+
+
+_VOICE_EXPORTS = {
+    "KokoroVoice": ("agentic_brain.voice.kokoro_tts", "KokoroVoice"),
+    "KokoroTTS": ("agentic_brain.voice.kokoro_tts", "KokoroVoice"),
+    "NeuralVoiceRouter": ("agentic_brain.voice.neural_router", "NeuralVoiceRouter"),
+    "EarconPlayer": ("agentic_brain.audio.earcons", "EarconPlayer"),
+    "ensure_earcons_exist": ("agentic_brain.audio.earcons", "ensure_earcons_exist"),
+    "Phase3VoiceSystem": ("agentic_brain.voice.phase3", "Phase3VoiceSystem"),
+    "get_phase3_voice_system": (
+        "agentic_brain.voice.phase3",
+        "get_phase3_voice_system",
+    ),
+}

@@ -677,6 +677,13 @@ def voice_command(args: argparse.Namespace) -> int:
     print("  ab voice live uninstall    Remove launchd auto-start")
     print("  ab voice stream            Show Redpanda stream consumer status")
     print("  ab voice health            Full unified voice system health")
+    print()
+    print("📝 Conversation Memory Commands:")
+    print("  ab voice history           Show recent utterances")
+    print("  ab voice history --lady karen  Filter by lady")
+    print("  ab voice repeat            Show last spoken utterance")
+    print("  ab voice repeat --speak    Re-speak the last utterance")
+    print("  ab voice search 'JIRA'     Search voice history")
     return 0
 
 
@@ -986,6 +993,107 @@ def voice_health_command(args: argparse.Namespace) -> int:
     except Exception as e:
         print(f"Error: {e}")
         return 1
+
+
+# ── Conversation memory CLI commands ─────────────────────────────────
+
+
+def voice_history_command(args: argparse.Namespace) -> int:
+    """Show recent voice utterance history."""
+    from agentic_brain.voice.conversation_memory import get_conversation_memory
+
+    mem = get_conversation_memory()
+    lady = getattr(args, "lady", None)
+    count = getattr(args, "count", 20)
+
+    recent = mem.get_recent(lady=lady, count=count)
+
+    if not recent:
+        if lady:
+            print(f"No voice history for {lady}.")
+        else:
+            print("No voice history yet.")
+        return 0
+
+    title = f"Voice History ({lady})" if lady else "Voice History (all)"
+    print(f"\n🎙️  {title}")
+    print(f"   Showing {len(recent)} utterance(s)\n")
+    print(f"   {'Time':<12} {'Lady':<12} {'Text'}")
+    print(f"   {'-'*12} {'-'*12} {'-'*50}")
+
+    import time as _time
+
+    for utt in recent:
+        age = utt.age_seconds()
+        if age < 60:
+            age_str = f"{age:.0f}s ago"
+        elif age < 3600:
+            age_str = f"{age / 60:.0f}m ago"
+        else:
+            age_str = _time.strftime("%H:%M:%S", _time.localtime(utt.timestamp))
+        text_preview = utt.text[:60] + ("…" if len(utt.text) > 60 else "")
+        print(f"   {age_str:<12} {utt.lady:<12} {text_preview}")
+
+    print()
+    health = mem.health()
+    print(f"   Total: {health['in_memory_count']} | Redis: {'✓' if health['redis_available'] else '✗'}")
+    return 0
+
+
+def voice_repeat_command(args: argparse.Namespace) -> int:
+    """Repeat the last spoken utterance or a specific lady's last utterance."""
+    from agentic_brain.voice.conversation_memory import get_conversation_memory
+
+    mem = get_conversation_memory()
+    lady = getattr(args, "lady", None)
+    last = mem.get_last(lady=lady)
+
+    if last is None:
+        print("Nothing to repeat – no voice history.")
+        return 1
+
+    print(f"🔁 Last ({last.lady}): {last.text}")
+
+    # Optionally re-speak it
+    if getattr(args, "speak", False):
+        try:
+            from agentic_brain.voice import speak_safe
+
+            speak_safe(last.text, voice=last.voice or "Karen", rate=last.rate or 155)
+        except Exception as e:
+            print(f"   (Could not speak: {e})")
+    return 0
+
+
+def voice_search_command(args: argparse.Namespace) -> int:
+    """Search voice history for a keyword."""
+    from agentic_brain.voice.conversation_memory import get_conversation_memory
+
+    query = getattr(args, "query", None)
+    if not query:
+        print("Error: Please specify a search query")
+        print("Usage: ab voice search 'JIRA'")
+        return 1
+
+    mem = get_conversation_memory()
+    limit = getattr(args, "limit", 20)
+    results = mem.search(query, limit=limit)
+
+    if not results:
+        print(f"No voice history matching '{query}'.")
+        return 0
+
+    print(f"\n🔍 Voice Search: '{query}'")
+    print(f"   Found {len(results)} match(es)\n")
+
+    import time as _time
+
+    for utt in results:
+        ts_str = _time.strftime("%H:%M:%S", _time.localtime(utt.timestamp))
+        text_preview = utt.text[:60] + ("…" if len(utt.text) > 60 else "")
+        print(f"   [{ts_str}] {utt.lady}: {text_preview}")
+
+    return 0
 
 
 def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
@@ -1348,3 +1456,61 @@ def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
         help="Show unified voice system health",
     )
     health_parser.set_defaults(func=voice_health_command)
+
+    # voice history
+    history_parser = voice_subparsers.add_parser(
+        "history",
+        help="Show recent voice utterance history",
+    )
+    history_parser.add_argument(
+        "--lady",
+        type=str,
+        default=None,
+        help="Filter by lady name (e.g., karen, moira)",
+    )
+    history_parser.add_argument(
+        "-n",
+        "--count",
+        type=int,
+        default=20,
+        help="Number of utterances to show (default: 20)",
+    )
+    history_parser.set_defaults(func=voice_history_command)
+
+    # voice repeat
+    repeat_parser = voice_subparsers.add_parser(
+        "repeat",
+        help="Repeat the last spoken utterance",
+    )
+    repeat_parser.add_argument(
+        "--lady",
+        type=str,
+        default=None,
+        help="Repeat last utterance from a specific lady",
+    )
+    repeat_parser.add_argument(
+        "--speak",
+        action="store_true",
+        default=False,
+        help="Re-speak the utterance aloud",
+    )
+    repeat_parser.set_defaults(func=voice_repeat_command)
+
+    # voice search
+    search_parser = voice_subparsers.add_parser(
+        "search",
+        help="Search voice history for a keyword",
+    )
+    search_parser.add_argument(
+        "query",
+        type=str,
+        help="Search term (e.g., 'JIRA', 'morning')",
+    )
+    search_parser.add_argument(
+        "-n",
+        "--limit",
+        type=int,
+        default=20,
+        help="Max results (default: 20)",
+    )
+    search_parser.set_defaults(func=voice_search_command)

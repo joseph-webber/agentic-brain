@@ -367,7 +367,32 @@ class VoiceSerializer:
         When *lady* is provided and stereo panning is enabled, the
         serializer will pan the generated speech using Sox before
         playback.
+
+        Repeat detection: if the env var ``AGENTIC_BRAIN_VOICE_NO_REPEATS``
+        is set to ``true``, near-duplicate utterances are silently dropped.
         """
+        # ── Repeat detection ─────────────────────────────────────────
+        try:
+            from agentic_brain.voice.repeat_detector import get_repeat_detector
+
+            detector = get_repeat_detector()
+            result = detector.check(text)
+            if result.should_block:
+                logger.debug(
+                    "Blocked repeat utterance (similarity=%.2f): %s",
+                    result.similarity,
+                    text[:60],
+                )
+                return True  # pretend success – caller doesn't need to retry
+            if result.is_repeat:
+                logger.debug(
+                    "Near-repeat detected (similarity=%.2f): %s",
+                    result.similarity,
+                    text[:60],
+                )
+        except Exception:
+            pass  # repeat detection must never break speech
+
         message = VoiceMessage(
             text=text,
             voice=voice,
@@ -514,6 +539,10 @@ class VoiceSerializer:
                     job.result = False
                     logger.exception("Voice serializer job failed")
                 finally:
+                    # Record to conversation memory + repeat detector
+                    if job.result:
+                        self._record_utterance(job.message)
+
                     with self._state_lock:
                         self._current_message = None
                         self._current_process = None
@@ -535,6 +564,29 @@ class VoiceSerializer:
             # Heartbeat after completing a job
             if hasattr(self, "_watchdog"):
                 self._watchdog.heartbeat()
+
+    @staticmethod
+    def _record_utterance(message: VoiceMessage) -> None:
+        """Record a successfully spoken utterance to memory + repeat detector."""
+        try:
+            from agentic_brain.voice.conversation_memory import get_conversation_memory
+
+            mem = get_conversation_memory()
+            mem.record(
+                lady=message.lady or message.voice,
+                text=message.text,
+                voice=message.voice,
+                rate=message.rate,
+            )
+        except Exception:
+            logger.debug("Failed to record utterance to conversation memory", exc_info=True)
+
+        try:
+            from agentic_brain.voice.repeat_detector import get_repeat_detector
+
+            get_repeat_detector().record(message.text)
+        except Exception:
+            logger.debug("Failed to record utterance to repeat detector", exc_info=True)
 
     def _next_job(self) -> _SpeechJob:
         while True:
