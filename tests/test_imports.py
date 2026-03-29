@@ -166,7 +166,7 @@ class TestMetadata:
         import agentic_brain
 
         assert hasattr(agentic_brain, "__author__")
-        assert agentic_brain.__author__ == "Joseph Webber"
+        assert agentic_brain.__author__ == "Agentic Brain Contributors"
 
     def test_email_metadata(self):
         """Test email metadata is set."""
