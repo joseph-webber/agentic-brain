@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.22.0] - 2026-03-29
+
+### Added
+
+- **CI/CD Workflows** - GitHub Actions pipelines for automated quality
+  - `staging.yml` - Pre-release validation pipeline
+  - `release.yml` - Automated release on version tags
+
+### Improved
+
+- **Privacy Cleanup** - Full open source readiness pass
+  - 407 privacy violations fixed across codebase
+  - 399 copyright headers updated for open source
+  - Author info anonymized to "Agentic Brain Contributors"
+  - Examples and docs scrubbed of personal references
+- **Voice Serialization** - Improved queue-based speech reliability
+- **Default Voice** - Changed from Karen to Samantha for open source neutrality
+
+### Fixed
+
+- Voice mocking in tests for CI compatibility
+- Hardcoded paths removed from CI tests
+- Linting fixes across test suite
+
+---
+
 ## [2.21.0] - 2026-03-29
 
 ### Added
