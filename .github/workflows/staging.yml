@@ -1,0 +1,289 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright (C) 2026 Joseph Webber <joseph.webber@me.com>
+#
+# Staging/Demo CI workflow for agentic-brain
+# - Runs on PR to main or manual dispatch
+# - Tests across Python 3.10, 3.11, 3.12
+# - Lints with ruff, type-checks with mypy
+# - Builds package and optionally publishes to TestPyPI
+
+name: Staging CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      publish_testpypi:
+        description: 'Publish to TestPyPI after successful build'
+        required: false
+        default: false
+        type: boolean
+      python_version:
+        description: 'Python version to use for publishing'
+        required: false
+        default: '3.11'
+        type: choice
+        options:
+          - '3.10'
+          - '3.11'
+          - '3.12'
+
+concurrency:
+  group: staging-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DEFAULT_LLM_PROVIDER: mock
+  TESTING: "true"
+
+jobs:
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+
+      - name: Install linting dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install ruff mypy black
+
+      - name: Run ruff linting
+        run: ruff check src/ tests/ --output-format=github
+
+      - name: Run ruff format check
+        run: ruff format --check src/ tests/
+
+      - name: Run black format check (fallback)
+        run: black --check --exclude 'installer\.py' src/ tests/
+        continue-on-error: true
+
+      - name: Run mypy type checking
+        run: mypy src/agentic_brain --ignore-missing-imports
+        continue-on-error: true
+
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: lint
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            pip-${{ runner.os }}-${{ matrix.python-version }}-
+            pip-${{ runner.os }}-
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e ".[test]"
+
+      - name: Run pytest
+        run: |
+          pytest tests/ \
+            --ignore=tests/e2e \
+            --ignore=tests/test_infrastructure.py \
+            --ignore=tests/test_cultural_sensitivity.py \
+            --ignore=tests/test_demo_auth.py \
+            --ignore=tests/test_documented_features.py \
+            --ignore=tests/test_devops_loaders.py \
+            --ignore=tests/test_installer_enhanced.py \
+            --ignore=tests/test_new_loaders.py \
+            --ignore=tests/test_voice_ci.py \
+            --ignore=tests/test_adl_comprehensive_parser_only.py \
+            --ignore=tests/test_speed_profiles.py \
+            --ignore=tests/test_voice_phase3_integration.py \
+            --ignore=tests/test_voice_no_overlap.py \
+            --ignore=tests/test_voice_system.py \
+            --ignore=tests/test_voice_stream.py \
+            --ignore=tests/test_spatial_audio.py \
+            --ignore=tests/test_speech_lock.py \
+            --ignore=tests/test_voice_safety.py \
+            --ignore=tests/test_voice_resilient.py \
+            --ignore=tests/test_daemon_overlap.py \
+            --ignore=tests/test_voice_serializer.py \
+            --ignore=tests/test_clock_server.py \
+            --ignore=tests/test_audio.py \
+            -m "not integration and not requires_redis and not requires_neo4j and not requires_docker" \
+            -v --tb=short \
+            --cov=agentic_brain \
+            --cov-report=term-missing \
+            --cov-report=xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.11'
+        with:
+          name: coverage-report-${{ matrix.python-version }}
+          path: coverage.xml
+          retention-days: 7
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 10
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      wheel_name: ${{ steps.build.outputs.wheel_name }}
+      sdist_name: ${{ steps.build.outputs.sdist_name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel build twine
+
+      - name: Extract version
+        id: version
+        run: |
+          VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "📦 Building agentic-brain v${VERSION}"
+
+      - name: Build package
+        id: build
+        run: |
+          python -m build
+          
+          # Get artifact names
+          WHEEL_NAME=$(ls dist/*.whl | xargs -n1 basename)
+          SDIST_NAME=$(ls dist/*.tar.gz | xargs -n1 basename)
+          
+          echo "wheel_name=${WHEEL_NAME}" >> "$GITHUB_OUTPUT"
+          echo "sdist_name=${SDIST_NAME}" >> "$GITHUB_OUTPUT"
+          
+          echo "✅ Built: ${WHEEL_NAME}"
+          echo "✅ Built: ${SDIST_NAME}"
+
+      - name: Verify package with twine
+        run: twine check dist/*
+
+      - name: Test package installation
+        run: |
+          pip install dist/*.whl
+          python -c "import agentic_brain; print(f'✅ agentic_brain {agentic_brain.__version__} installed successfully')"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ steps.version.outputs.version }}
+          path: dist/
+          retention-days: 14
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    runs-on: ubuntu-latest
+    needs: build
+    if: |
+      github.event_name == 'workflow_dispatch' && 
+      github.event.inputs.publish_testpypi == 'true'
+    timeout-minutes: 10
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/agentic-brain/
+
+    permissions:
+      id-token: write  # For trusted publishing
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ needs.build.outputs.version }}
+          path: dist/
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ github.event.inputs.python_version || '3.11' }}
+
+      - name: Install twine
+        run: pip install twine
+
+      - name: Publish to TestPyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TESTPYPI_TOKEN }}
+        run: |
+          if [ -z "$TWINE_PASSWORD" ]; then
+            echo "⚠️ TESTPYPI_TOKEN secret not configured"
+            echo "To enable TestPyPI publishing:"
+            echo "1. Create an API token at https://test.pypi.org/manage/account/token/"
+            echo "2. Add it as TESTPYPI_TOKEN in repository secrets"
+            exit 0
+          fi
+          
+          twine upload --repository testpypi dist/*
+          echo "✅ Published to TestPyPI: https://test.pypi.org/project/agentic-brain/${{ needs.build.outputs.version }}/"
+
+  summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [lint, test, build]
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 🚀 Staging CI Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Job | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Lint | ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Test | ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Build | ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          
+          if [ "${{ needs.build.result }}" == "success" ]; then
+            echo "### 📦 Build Artifacts" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Version**: \`${{ needs.build.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Wheel**: \`${{ needs.build.outputs.wheel_name }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Source**: \`${{ needs.build.outputs.sdist_name }}\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Download from the **Actions** tab artifacts." >> "$GITHUB_STEP_SUMMARY"
+          fi
