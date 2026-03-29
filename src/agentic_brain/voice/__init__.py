@@ -101,12 +101,19 @@ from agentic_brain.voice.serializer import (
 
 # Import adaptive speed profiles (grow with Joseph's proficiency!)
 from agentic_brain.voice.speed_profiles import (
+    CONTENT_SPEED_TIERS,
     PROFILE_RATES,
+    TIER_DESCRIPTIONS,
     AdaptiveSpeedTracker,
+    ContentSpeedResult,
     SpeedProfile,
     SpeedProfileManager,
+    UserPreferenceManager,
+    UserSpeedPreferences,
     get_adaptive_tracker,
     get_current_rate,
+    get_preference_manager,
+    get_speed_for_content,
     get_speed_manager,
 )
 from agentic_brain.voice.stream import (
@@ -203,9 +210,16 @@ __all__ = [
     "SpeedProfileManager",
     "AdaptiveSpeedTracker",
     "PROFILE_RATES",
+    "CONTENT_SPEED_TIERS",
+    "TIER_DESCRIPTIONS",
+    "UserSpeedPreferences",
+    "UserPreferenceManager",
+    "ContentSpeedResult",
     "get_speed_manager",
     "get_adaptive_tracker",
     "get_current_rate",
+    "get_preference_manager",
+    "get_speed_for_content",
     # Config
     "VoiceConfig",
     "VoiceQuality",
@@ -259,6 +273,7 @@ __all__ = [
     "_lazy_speech_rates",
     "_lazy_tts_router",
     "_lazy_kokoro",
+    "_lazy_neural_router",
     # ── PHASE 2: New Integration Components ──
     "_lazy_watchdog",
     "_lazy_daemon_gate",
@@ -340,8 +355,13 @@ def _lazy_tts_router():
 
 def _lazy_kokoro():
     """Lazy import for Kokoro neural TTS engine."""
-    from agentic_brain.voice.kokoro_tts import KokoroTTS, kokoro_available
-    return KokoroTTS, kokoro_available
+    from agentic_brain.voice.kokoro_tts import KokoroVoice, kokoro_available
+    return KokoroVoice, kokoro_available
+
+def _lazy_neural_router():
+    """Lazy import for neural voice router (Apple say ↔ Kokoro)."""
+    from agentic_brain.voice.neural_router import NeuralVoiceRouter
+    return NeuralVoiceRouter
 
 
 # ── PHASE 2 COMPONENTS (Voice Improvements 2026-03-30) ──────────────

@@ -733,6 +733,7 @@ def speak_serialized(
     rate: int = 155,
     pause_after: Optional[float] = None,
     wait: bool = True,
+    speed_profile: Optional[str] = None,
 ) -> bool:
     """Thread-safe speech that never overlaps.
 
@@ -740,15 +741,42 @@ def speak_serialized(
     All voice output should flow through here or through
     ``get_voice_serializer().speak()``.
 
+    When *speed_profile* is provided (``"slow"``, ``"normal"``,
+    ``"fast"``, ``"rapid"``), the *rate* is overridden with the
+    midpoint WPM for that tier.  If *speed_profile* is ``"auto"``
+    and auto-classification is enabled, the content classifier
+    determines the tier from the text itself.
+
     When *lady* is provided, speech is routed through the spatial audio
     system so the sound comes from that lady's position in 3D space
     around Joseph's head (requires AirPods + Sox or native bridge).
     """
+    effective_rate = rate
+
+    if speed_profile == "auto":
+        try:
+            from agentic_brain.voice.speed_profiles import (
+                get_preference_manager,
+                get_speed_for_content,
+            )
+            prefs = get_preference_manager().preferences
+            if prefs.auto_classify:
+                result = get_speed_for_content(text)
+                effective_rate = result.wpm
+        except Exception:
+            logger.debug("Auto-classify failed, using default rate", exc_info=True)
+
+    elif speed_profile and speed_profile != "auto":
+        from agentic_brain.voice.speed_profiles import CONTENT_SPEED_TIERS
+        tier_range = CONTENT_SPEED_TIERS.get(speed_profile)
+        if tier_range:
+            effective_rate = (tier_range[0] + tier_range[1]) // 2
+
     return _serializer.speak(
         text,
         voice=voice,
         lady=lady,
-        rate=rate,
+        rate=effective_rate,
         pause_after=pause_after,
         wait=wait,
     )
