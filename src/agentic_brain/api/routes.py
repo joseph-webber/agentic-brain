@@ -25,6 +25,7 @@ import asyncio
 import logging
 import os
 import secrets
+import threading
 from collections import defaultdict, deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
@@ -50,6 +51,7 @@ logger = logging.getLogger(__name__)
 
 # Global session backend (lazy-initialized)
 _session_backend: SessionBackend | None = None
+_backend_lock = threading.Lock()  # Lock for thread-safe backend initialization
 
 # Rate limiting (kept in-memory for simplicity)
 request_counts: dict[str, deque] = defaultdict(lambda: deque(maxlen=60))
@@ -93,10 +95,13 @@ _cleanup_task: asyncio.Task | None = None
 
 
 def _get_backend() -> SessionBackend:
-    """Get the session backend, initializing if needed."""
+    """Get the session backend, initializing if needed (thread-safe)."""
     global _session_backend
     if _session_backend is None:
-        _session_backend = get_session_backend()
+        with _backend_lock:
+            # Double-check locking pattern to avoid redundant initialization
+            if _session_backend is None:
+                _session_backend = get_session_backend()
     return _session_backend
 
 
