@@ -41,7 +41,7 @@ class VoiceSection(BaseModel):
 
     enabled: bool = True
     provider: str = "system"
-    default_voice: str = "Karen"
+    default_voice: str = "Samantha"
     rate: int = Field(default=160, ge=50, le=250)
     volume: float = Field(default=0.8, ge=0.0, le=1.0)
     queue_enabled: bool = True

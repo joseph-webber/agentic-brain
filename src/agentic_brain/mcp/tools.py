@@ -813,7 +813,7 @@ def get_analytics(days: int = 7) -> str:
 
 
 def voice_live_start(
-    voice: str = "Karen",
+    voice: str = "Samantha",
     rate: int = 155,
     require_wake_word: bool = True,
     session_timeout: float = 30.0,

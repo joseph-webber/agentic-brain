@@ -128,7 +128,7 @@ class VoiceConfig:
 
     enabled: bool = True
     personality: VoicePersonality = VoicePersonality.PROFESSIONAL
-    primary_voice: str = "Karen (Premium)"
+    primary_voice: str = "Samantha"
     fallback_voice: str = "Samantha"
     speech_rate: int = 160
     volume: float = 1.0

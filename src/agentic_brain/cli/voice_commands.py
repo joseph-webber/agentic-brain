@@ -311,7 +311,7 @@ def voice_speak_command(args: argparse.Namespace) -> int:
         print("Usage: ab voice speak 'Hello world'")
         return 1
 
-    voice = args.voice if hasattr(args, "voice") and args.voice else "Karen (Premium)"
+    voice = args.voice if hasattr(args, "voice") and args.voice else "Samantha"
     rate = args.rate if hasattr(args, "rate") and args.rate else 160
 
     print(f"🎙️  Speaking with {voice}...")
@@ -556,7 +556,7 @@ def voice_regionalize_command(args: argparse.Namespace) -> int:
             from agentic_brain.audio import speak
 
             print("\n🎙️ Speaking regionalized text...")
-            speak(regionalized, voice="Karen (Premium)", rate=160)
+            speak(regionalized, voice="Samantha", rate=160)
         except Exception as e:
             print(f"   (Could not speak: {e})")
 
@@ -841,7 +841,7 @@ def voice_live_command(args: argparse.Namespace) -> int:
     wake_word = getattr(args, "wake_word", None)
     timeout_val = getattr(args, "timeout", None)
     transcriber = getattr(args, "transcriber", None)
-    voice = getattr(args, "voice", "Karen") or "Karen"
+    voice = getattr(args, "voice", "Samantha") or "Samantha"
     rate = getattr(args, "rate", 160) or 160
 
     # Build wake-words tuple
@@ -985,7 +985,7 @@ def _print_live_status(result: dict) -> None:
 
     config = result.get("config", {})
     if config:
-        print(f"   Voice: {config.get('voice', 'Karen')}")
+        print(f"   Voice: {config.get('voice', 'Samantha')}")
         print(f"   Rate: {config.get('rate', 155)}")
         wake = config.get("wake_words", [])
         print(f"   Wake words: {', '.join(wake)}")
@@ -1160,7 +1160,7 @@ def voice_repeat_command(args: argparse.Namespace) -> int:
         try:
             from agentic_brain.voice import speak_safe
 
-            speak_safe(last.text, voice=last.voice or "Karen", rate=last.rate or 155)
+            speak_safe(last.text, voice=last.voice or "Samantha", rate=last.rate or 155)
         except Exception as e:
             print(f"   (Could not speak: {e})")
     return 0
@@ -1290,8 +1290,8 @@ def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
         "-v",
         "--voice",
         type=str,
-        default="Karen (Premium)",
-        help="Voice to use (default: Karen Premium)",
+        default="Samantha",
+        help="Voice to use (default: Samantha)",
     )
     speak_parser.add_argument(
         "-r",
@@ -1543,8 +1543,8 @@ def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
         "-v",
         "--voice",
         type=str,
-        default="Karen",
-        help="Voice for live mode (default: Karen)",
+        default="Samantha",
+        help="Voice for live mode (default: Samantha)",
     )
     live_parser.add_argument(
         "-r",

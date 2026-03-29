@@ -181,7 +181,7 @@ def _build_mode_registry() -> Dict[str, Mode]:
             rag=RAGConfig(rag_type=RagType.GRAPHRAG),
             voice=VoiceConfig(
                 personality=VoicePersonality.PROFESSIONAL,
-                primary_voice="Karen (Premium)",
+                primary_voice="Samantha",
             ),
             security=SecurityConfig(
                 level=SecurityLevel.CONFIDENTIAL,
@@ -214,7 +214,7 @@ def _build_mode_registry() -> Dict[str, Mode]:
             security=create_enterprise_security(),
             voice=VoiceConfig(
                 personality=VoicePersonality.PROFESSIONAL,
-                primary_voice="Karen (Premium)",
+                primary_voice="Samantha",
             ),
             compliance=ComplianceConfig(
                 audit_trail=True,

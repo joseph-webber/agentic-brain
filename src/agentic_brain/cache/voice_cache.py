@@ -72,7 +72,7 @@ class VoiceState:
 
     is_speaking: bool = False
     current_text: str = ""
-    current_voice: str = "Karen"
+    current_voice: str = "Samantha"
     queue_depth: int = 0
     message_id: str = ""
     updated_at: float = 0.0
@@ -91,7 +91,7 @@ class Priority(IntEnum):
 class VoicePreferences:
     """Per-user voice settings stored in Redis."""
 
-    preferred_voice: str = "Karen (Premium)"
+    preferred_voice: str = "Samantha"
     preferred_rate: int = 160
     provider: str = "local"
     volume: float = 0.8
@@ -105,7 +105,7 @@ class VoicePreferences:
     @classmethod
     def from_hash(cls, d: Dict[str, str]) -> VoicePreferences:
         return cls(
-            preferred_voice=d.get("preferred_voice", "Karen (Premium)"),
+            preferred_voice=d.get("preferred_voice", "Samantha"),
             preferred_rate=int(d.get("preferred_rate", 160)),
             provider=d.get("provider", "local"),
             volume=float(d.get("volume", 0.8)),
@@ -399,7 +399,7 @@ class VoiceCache:
             is_speaking=str(data.get("is_speaking", "")).lower()
             in {"1", "true", "yes"},
             current_text=str(data.get("current_text", "")),
-            current_voice=str(data.get("current_voice", "Karen")),
+            current_voice=str(data.get("current_voice", "Samantha")),
             queue_depth=int(data.get("queue_depth", 0) or 0),
             message_id=str(data.get("message_id", "")),
             updated_at=float(data.get("updated_at", 0) or 0),

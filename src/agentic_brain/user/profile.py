@@ -53,7 +53,7 @@ class UserProfile:
     prefers_audio: bool = False
 
     # Voice preferences
-    favorite_voice: str = "Karen"
+    favorite_voice: str = "Samantha"
     speech_rate: int = 155
     regional_expressions: bool = True
     region: str = ""
