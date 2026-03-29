@@ -3,7 +3,7 @@
 **Agentic Brain** — Production-Ready AI Chatbot Framework
 
 ```
-Copyright (C) 2026 Agentic Brain Contributors <joseph.webber@me.com>
+Copyright (C) 2026 Agentic Brain Contributors <agentic-brain@proton.me>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

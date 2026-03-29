@@ -603,6 +603,6 @@ Apache-2.0 - See LICENSE file for details
 
 ## Author
 
-Agentic Brain Contributors - joseph.webber@me.com
+Agentic Brain Contributors - agentic-brain@proton.me
 
 Built with ❤️ for accessibility - ensuring voice works EVERYWHERE!

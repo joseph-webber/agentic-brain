@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
+# Copyright 2024-2026 Agentic Brain Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-# Copyright (C) 2026 Joseph Webber <joseph.webber@me.com>
+# Copyright (C) 2026 Agentic Brain Contributors
 """
 Chatbot - The Star of the Show
 ==============================

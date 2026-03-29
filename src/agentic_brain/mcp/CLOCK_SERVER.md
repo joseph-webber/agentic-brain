@@ -325,7 +325,7 @@ Apache-2.0 (same as agentic-brain)
 
 ## Author
 
-Agentic Brain Contributors <joseph.webber@me.com>
+Agentic Brain Contributors <agentic-brain@proton.me>
 
 ---
 

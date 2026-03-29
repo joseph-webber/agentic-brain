@@ -39,7 +39,7 @@ Create a new Python file in `src/agentic_brain/voice/regions/` following this st
 
 ```python
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Agentic Brain Contributors <joseph.webber@me.com>
+# Copyright 2024-2026 Agentic Brain Contributors <agentic-brain@proton.me>
 
 """
 [CITY/REGION NAME] Regional Expressions
@@ -314,7 +314,7 @@ Contributors will be:
 ## ❓ Questions?
 
 - **Discord**: [Join our server](https://discord.gg/agentic-brain)
-- **Email**: joseph.webber@me.com
+- **Email**: agentic-brain@proton.me
 - **GitHub Issues**: Tag with `regional-voices`
 
 ---

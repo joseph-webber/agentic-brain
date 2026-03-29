@@ -544,7 +544,7 @@ See: [LICENSE](../LICENSE), [LEGAL.md](./LEGAL.md)
 ## 📞 Contact
 
 **Ethics Concerns:**
-- 📧 Email: joseph.webber@me.com
+- 📧 Email: agentic-brain@proton.me
 - 🐙 GitHub: [@agentic-brain-project](https://github.com/agentic-brain-project)
 - 💬 Discussions: [GitHub Discussions](https://github.com/agentic-brain-project/agentic-brain/discussions)
 

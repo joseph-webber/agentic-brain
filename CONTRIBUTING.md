@@ -304,7 +304,7 @@ These templates ensure all necessary information is captured upfront.
 - Check existing [issues](https://github.com/agentic-brain-project/agentic-brain/issues) and [discussions](https://github.com/agentic-brain-project/agentic-brain/discussions)
 - Read project documentation in `/docs`
 - Create a new issue if you have questions
-- Email maintainers at joseph.webber@me.com for concerns
+- Email maintainers at agentic-brain@proton.me for concerns
 
 ## Recognition
 

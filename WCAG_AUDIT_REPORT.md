@@ -451,7 +451,7 @@ This project is **production-ready for blind users** with only minor enhancement
 ## 📞 Contact
 
 **Accessibility Lead:** Agentic Brain Contributors  
-**Email:** joseph.webber@me.com  
+**Email:** agentic-brain@proton.me  
 **Priority:** Accessibility issues are P0 (highest priority)
 
 ---

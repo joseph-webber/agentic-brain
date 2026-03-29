@@ -375,7 +375,7 @@ if is_globally_appropriate(content):
 ## 📞 Contact
 
 **Ethics Concerns:**
-- 📧 Email: joseph.webber@me.com
+- 📧 Email: agentic-brain@proton.me
 - �� GitHub: [@agentic-brain-project](https://github.com/agentic-brain-project)
 
 **Urgent Issues:** `ab feedback --type ethics --urgent`

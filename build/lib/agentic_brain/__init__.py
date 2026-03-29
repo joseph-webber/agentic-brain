@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
+# Copyright 2024-2026 Agentic Brain Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ Example:
 
 __version__ = "2.17.0"
 __author__ = "Joseph Webber"
-__email__ = "joseph.webber@me.com"
+__email__ = "agentic-brain@proton.me"
 __license__ = "Apache-2.0"
 __tagline__ = "The Universal AI Platform — Install. Run. Create."
 __description__ = "From Grandmother to Enterprise. Production-ready AI agents with GraphRAG, 155+ RAG loaders, and enterprise-grade security."

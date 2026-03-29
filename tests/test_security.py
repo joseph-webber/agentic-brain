@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
+# Copyright 2024-2026 Agentic Brain Contributors
 """
 Security Test Suite for agentic-brain
 Must pass before Apache 2.0 release!

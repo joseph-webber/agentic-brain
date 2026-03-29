@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
+# Copyright 2024-2026 Agentic Brain Contributors
 
 """
 Voice System Demo and Test Script

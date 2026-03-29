@@ -60,7 +60,7 @@ Example:
 
 __version__ = "2.21.0"
 __author__ = "Joseph Webber"
-__email__ = "joseph.webber@me.com"
+__email__ = "agentic-brain@proton.me"
 __license__ = "Apache-2.0"
 __tagline__ = "The Universal AI Platform — Install. Run. Create."
 __description__ = "From Grandmother to Enterprise. Production-ready AI agents with GraphRAG, 155+ RAG loaders, and enterprise-grade security."

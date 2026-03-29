@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
+# Copyright 2024-2026 Agentic Brain Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ class LicenseChecker:
     def __init__(
         self,
         repo_path: Optional[str] = None,
-        author: str = "Joseph Webber <joseph.webber@me.com>",
+        author: str = "Agentic Brain Contributors",
     ):
         self.repo_path = (
             Path(repo_path)

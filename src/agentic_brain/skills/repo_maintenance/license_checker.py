@@ -78,7 +78,7 @@ class LicenseChecker:
     def __init__(
         self,
         repo_path: Optional[str] = None,
-        author: str = "Joseph Webber <joseph.webber@me.com>",
+        author: str = "Agentic Brain Contributors",
     ):
         self.repo_path = (
             Path(repo_path)

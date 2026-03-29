@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright 2026 Joseph Webber
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 Joseph Webber <joseph.webber@me.com>
+# Copyright (C) 2026 Agentic Brain Contributors
 #
 # This file is part of Agentic Brain.
 """

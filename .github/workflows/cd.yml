@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2024-2026 Joseph Webber <joseph.webber@me.com>
+# Copyright (C) 2024-2026 Agentic Brain Contributors
 #
 # Continuous Deployment: Docker Image Build & Push
 # Builds Docker image on push to main and publishes to GitHub Container Registry (ghcr.io)

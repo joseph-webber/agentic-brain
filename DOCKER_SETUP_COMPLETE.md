@@ -509,7 +509,7 @@ Total:      ~5 min (parallel jobs)
 
 - **Issues:** https://github.com/agentic-brain-project/agentic-brain/issues
 - **Discussions:** https://github.com/agentic-brain-project/agentic-brain/discussions
-- **Email:** joseph.webber@me.com
+- **Email:** agentic-brain@proton.me
 
 ---
 

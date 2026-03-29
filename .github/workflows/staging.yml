@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2026 Joseph Webber <joseph.webber@me.com>
+# Copyright (C) 2026 Agentic Brain Contributors
 #
 # Staging/Demo CI workflow for agentic-brain
 # - Runs on PR to main or manual dispatch

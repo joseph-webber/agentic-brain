@@ -471,7 +471,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t agentic-brain:latest -
 
 - **Issues**: https://github.com/agentic-brain-project/agentic-brain/issues
 - **Discussions**: https://github.com/agentic-brain-project/agentic-brain/discussions
-- **Email**: joseph.webber@me.com
+- **Email**: agentic-brain@proton.me
 
 ---
 
