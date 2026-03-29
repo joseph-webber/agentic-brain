@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.21.0] - 2026-03-29
+
+### Added
+
+- **Production Clock System** - Thread-safe singleton for correct dates (never stale!)
+  - `src/agentic_brain/utils/clock.py` - Clock singleton with Adelaide timezone
+  - `src/agentic_brain/mcp/clock_server.py` - 9 MCP tools for date/time
+  - `config/timezone.yaml` - Adelaide timezone configuration with 2026 year awareness
+  - `docs/CLOCK.md` - Usage documentation
+
+- **Voice Phase 3** - Enhanced voice system with quality improvements
+  - `src/agentic_brain/voice/serializer.py` - Queue-based non-overlapping speech
+  - `src/agentic_brain/voice/lady_voices.py` - Lady personalities module
+  - `src/agentic_brain/voice/quality_gate.py` - CI/CD voice validation
+  - `src/agentic_brain/voice/emotions.py` - Expressive speech support
+  - `src/agentic_brain/voice/voice_cloning.py` - Voice cloning foundation
+
+- **Audio System Enhancements**
+  - `src/agentic_brain/audio/audio_normalizer.py` - Consistent volume levels
+  - `src/agentic_brain/audio/quality_analyzer.py` - Voice output analysis
+  - `src/agentic_brain/audio/sound_themes.py` - Theme-based sound selection
+  - 10 new earcon WAV files for audio feedback
+
+### Improved
+
+- Voice resilient fallback chain (5 layers - never fails)
+- Regional voice expressions (Adelaide, Melbourne, Sydney)
+- Voice CI tests (23 tests, all passing)
+
+### Documentation
+
+- `docs/voice/TECHNICAL_DEBT.md` - Voice overlap flagged for future rebuild
+- `docs/voice/CLONING.md` - Voice cloning documentation
+- `docs/voice/EMOTIONS.md` - Emotion system documentation
+- `docs/voice/LADIES.md` - Lady voices documentation
+
 ## [2.17.0] - 2026-03-28
 
 ### Added
