@@ -509,29 +509,64 @@ def voice_speed_command(args: argparse.Namespace) -> int:
     Subargument *profile_or_action* may be:
     - (empty)         → show current profile
     - relaxed/working/focused/power → jump to that tier
+    - slow/normal/fast/rapid → set content-aware tier
     - up              → move one tier faster
     - down            → move one tier slower
     """
     from agentic_brain.voice.speed_profiles import (
+        CONTENT_SPEED_TIERS,
         PROFILE_DESCRIPTIONS,
         PROFILE_RATES,
+        TIER_DESCRIPTIONS,
         SpeedProfile,
+        get_preference_manager,
         get_speed_manager,
     )
 
     mgr = get_speed_manager()
+    pref_mgr = get_preference_manager()
     action = getattr(args, "profile_or_action", None)
+    max_speed = getattr(args, "max_speed", None)
+    auto_classify = getattr(args, "auto_classify", False)
+
+    # Handle --max flag
+    if max_speed is not None:
+        pref_mgr.set_max_speed(max_speed)
+        print(f"⚡ Max speed set to {max_speed} WPM")
+        return 0
+
+    # Handle --auto flag
+    if auto_classify:
+        prefs = pref_mgr.preferences
+        new_state = not prefs.auto_classify
+        pref_mgr.set_auto_classify(new_state)
+        state_str = "ENABLED" if new_state else "DISABLED"
+        print(f"⚡ Auto-classification {state_str}")
+        if new_state:
+            print("  Content will be analysed for optimal speed:")
+            for tier, desc in TIER_DESCRIPTIONS.items():
+                print(f"    {desc}")
+        return 0
 
     if not action:
         # Show current state
+        prefs = pref_mgr.preferences
         print(f"\n⚡ Speech Speed Profile: {mgr.current_profile.value.upper()}")
         print(f"   Rate: {mgr.current_rate} WPM")
+        print(f"   Max speed: {prefs.max_speed} WPM")
+        print(f"   Auto-classify: {'ON' if prefs.auto_classify else 'OFF'}")
         print()
         for profile in SpeedProfile:
             marker = " ▶ " if profile == mgr.current_profile else "   "
             print(f"{marker}{PROFILE_DESCRIPTIONS[profile]}")
         print()
+        print("Content-aware tiers:")
+        for tier, desc in TIER_DESCRIPTIONS.items():
+            print(f"   {desc}")
+        print()
         print("Change with:  ab voice speed <profile|up|down>")
+        print("              ab voice speed --max 300")
+        print("              ab voice speed --auto")
         return 0
 
     action = action.strip().lower()
@@ -552,12 +587,21 @@ def voice_speed_command(args: argparse.Namespace) -> int:
         print(f"⚡ Speed DOWN → {mgr.current_profile.value} ({mgr.current_rate} WPM)")
         return 0
 
+    # Try content-aware tier name (slow/normal/fast/rapid)
+    if action in CONTENT_SPEED_TIERS:
+        low, high = CONTENT_SPEED_TIERS[action]
+        midpoint = (low + high) // 2
+        print(f"⚡ Content speed tier: {action} ({low}-{high} WPM, default {midpoint})")
+        print(f"   {TIER_DESCRIPTIONS[action]}")
+        return 0
+
     # Try direct profile name
     try:
         profile = SpeedProfile(action)
     except ValueError:
         print(f"Unknown speed profile: '{action}'")
-        print("Valid: relaxed, working, focused, power, up, down")
+        print("Valid profiles: relaxed, working, focused, power, up, down")
+        print("Valid tiers: slow, normal, fast, rapid")
         return 1
 
     mgr.set_profile(profile)
@@ -595,6 +639,9 @@ def voice_command(args: argparse.Namespace) -> int:
     print("  ab voice speed power       Set power   (400 WPM)")
     print("  ab voice speed up          Move up one tier")
     print("  ab voice speed down        Move down one tier")
+    print("  ab voice speed slow        Show slow tier info (130-150)")
+    print("  ab voice speed --max 300   Set maximum WPM")
+    print("  ab voice speed --auto      Toggle auto-classification")
     print()
     print("📍 Regional Voice Commands:")
     print("  ab voice location          Show current location")
@@ -616,9 +663,18 @@ def voice_command(args: argparse.Namespace) -> int:
     print()
     print("🔧 Phase 2 Commands:")
     print("  ab voice watchdog          Show worker thread watchdog status")
+    print("  ab voice live              Show live voice session status")
     print("  ab voice live start        Start live voice mode (streaming)")
     print("  ab voice live stop         Stop live voice mode")
     print("  ab voice live status       Show live mode status")
+    print("  ab voice live --stop       Stop (flag shortcut)")
+    print("  ab voice live --status     Status (flag shortcut)")
+    print("  ab voice live start --wake-word 'Hey Karen'")
+    print("  ab voice live start --timeout 60")
+    print("  ab voice live start --transcriber whisper")
+    print("  ab voice live start --daemon   Run as background daemon")
+    print("  ab voice live install      Install launchd auto-start")
+    print("  ab voice live uninstall    Remove launchd auto-start")
     print("  ab voice stream            Show Redpanda stream consumer status")
     print("  ab voice health            Full unified voice system health")
     return 0
@@ -664,10 +720,50 @@ def voice_live_command(args: argparse.Namespace) -> int:
 
     This connects to the bidirectional live session (listen + respond)
     powered by whisper.cpp for local offline transcription.
+
+    Supports both in-process sessions and daemon mode (background
+    listening with PID file management).
     """
     action = getattr(args, "action", "status").lower()
+    use_daemon = getattr(args, "daemon", False)
+
+    # ── --stop flag shortcut ─────────────────────────────────────
+    if getattr(args, "stop", False):
+        action = "stop"
+
+    # ── --status flag shortcut ───────────────────────────────────
+    if getattr(args, "status_flag", False):
+        action = "status"
+
+    # ── Collect options from flags ───────────────────────────────
+    wake_word = getattr(args, "wake_word", None)
+    timeout_val = getattr(args, "timeout", None)
+    transcriber = getattr(args, "transcriber", None)
+    voice = getattr(args, "voice", "Karen") or "Karen"
+    rate = getattr(args, "rate", 160) or 160
+
+    # Build wake-words tuple
+    default_wake_words = ("hey karen", "hey brain")
+    if wake_word:
+        wake_words = tuple(w.strip().lower() for w in wake_word.split(","))
+    else:
+        wake_words = default_wake_words
+
+    session_timeout = float(timeout_val) if timeout_val else 30.0
+    use_whisper = transcriber != "macos"  # default to whisper unless --transcriber macos
 
     try:
+        if use_daemon and action in ("start", "stop", "status"):
+            return _live_daemon_command(
+                action=action,
+                voice=voice,
+                rate=rate,
+                wake_words=wake_words,
+                session_timeout=session_timeout,
+                use_whisper=use_whisper,
+            )
+
+        # Non-daemon: in-process session
         from agentic_brain.voice.live_session import (
             live_session_status,
             start_live_session,
@@ -675,21 +771,23 @@ def voice_live_command(args: argparse.Namespace) -> int:
         )
 
         if action == "start":
-            voice = getattr(args, "voice", "Karen")
-            rate = getattr(args, "rate", 160)
             result = start_live_session(
                 voice=voice,
                 rate=rate,
                 require_wake_word=True,
-                session_timeout=30.0,
+                session_timeout=session_timeout,
             )
             if "error" in result:
                 print(f"❌ {result['error']}")
                 return 1
             state = result.get("state", "unknown")
-            print(f"✅ Live voice session started (state={state}, voice={voice}, rate={rate})")
-            print("   Say 'Hey Karen' or 'Hey Brain' to begin conversation.")
-            print("   Session auto-stops after 30s of silence.")
+            print(
+                f"✅ Live voice session started "
+                f"(state={state}, voice={voice}, rate={rate})"
+            )
+            print(f"   Wake words: {', '.join(wake_words)}")
+            print(f"   Timeout: {session_timeout:.0f}s of silence")
+            print(f"   Transcriber: {'whisper.cpp' if use_whisper else 'macOS dictation'}")
             return 0
 
         elif action == "stop":
@@ -705,26 +803,16 @@ def voice_live_command(args: argparse.Namespace) -> int:
                 print(f"   Avg latency: {latency:.0f}ms")
             return 0
 
+        elif action == "install":
+            return _live_launchd_install()
+
+        elif action == "uninstall":
+            return _live_launchd_uninstall()
+
         else:
+            # status (default)
             result = live_session_status()
-            print("\n🎙️  Live Voice Session (Project Aria)")
-            print("=" * 50)
-            state = result.get("state", "idle")
-            icon = "🟢" if state not in ("idle", "error") else "⚪"
-            print(f"   {icon} State: {state}")
-
-            config = result.get("config", {})
-            if config:
-                print(f"   Voice: {config.get('voice', 'Karen')}")
-                print(f"   Rate: {config.get('rate', 155)}")
-                wake = config.get("wake_words", [])
-                print(f"   Wake words: {', '.join(wake)}")
-
-            metrics = result.get("metrics", {})
-            if metrics and metrics.get("utterances_heard", 0) > 0:
-                print(f"   Utterances: {metrics.get('utterances_heard', 0)}")
-                print(f"   Responses: {metrics.get('responses_given', 0)}")
-                print(f"   Avg latency: {metrics.get('avg_response_latency_ms', 0):.0f}ms")
+            _print_live_status(result)
             return 0
 
     except ImportError as e:
@@ -734,6 +822,120 @@ def voice_live_command(args: argparse.Namespace) -> int:
     except Exception as e:
         print(f"Error: {e}")
         return 1
+
+
+def _live_daemon_command(
+    action: str,
+    voice: str,
+    rate: int,
+    wake_words: tuple[str, ...],
+    session_timeout: float,
+    use_whisper: bool,
+) -> int:
+    """Handle daemon-mode live voice commands."""
+    from agentic_brain.voice.live_daemon import (
+        DaemonConfig,
+        daemon_status,
+        start_daemon,
+        stop_daemon,
+    )
+
+    if action == "start":
+        cfg = DaemonConfig(
+            wake_words=wake_words,
+            session_timeout=session_timeout,
+            voice=voice,
+            rate=rate,
+            use_whisper=use_whisper,
+        )
+        result = start_daemon(cfg)
+        if not result.get("ok"):
+            print(f"❌ {result.get('error', 'Failed to start daemon')}")
+            return 1
+        print(f"✅ Live voice daemon started (PID {result.get('pid', '?')})")
+        print(f"   Wake words: {', '.join(wake_words)}")
+        print(f"   Timeout: {session_timeout:.0f}s")
+        print(f"   Transcriber: {'whisper.cpp' if use_whisper else 'macOS dictation'}")
+        return 0
+
+    elif action == "stop":
+        result = stop_daemon()
+        print("✅ Live voice daemon stopped")
+        return 0
+
+    else:
+        result = daemon_status()
+        _print_daemon_status(result)
+        return 0
+
+
+def _print_live_status(result: dict) -> None:
+    """Pretty-print live session status."""
+    print("\n🎙️  Live Voice Session (Project Aria)")
+    print("=" * 50)
+    state = result.get("state", "idle")
+    icon = "🟢" if state not in ("idle", "error") else "⚪"
+    print(f"   {icon} State: {state}")
+
+    config = result.get("config", {})
+    if config:
+        print(f"   Voice: {config.get('voice', 'Karen')}")
+        print(f"   Rate: {config.get('rate', 155)}")
+        wake = config.get("wake_words", [])
+        print(f"   Wake words: {', '.join(wake)}")
+        print(f"   Timeout: {config.get('session_timeout_secs', 30)}s")
+        print(
+            f"   Transcriber: "
+            f"{'whisper.cpp' if config.get('use_whisper', True) else 'macOS dictation'}"
+        )
+
+    metrics = result.get("metrics", {})
+    if metrics and metrics.get("utterances_heard", 0) > 0:
+        print(f"\n   Utterances: {metrics.get('utterances_heard', 0)}")
+        print(f"   Responses: {metrics.get('responses_given', 0)}")
+        latency = metrics.get("avg_response_latency_ms", 0)
+        print(f"   Avg latency: {latency:.0f}ms")
+
+
+def _print_daemon_status(result: dict) -> None:
+    """Pretty-print daemon status."""
+    print("\n🎙️  Live Voice Daemon (Project Aria)")
+    print("=" * 50)
+    running = result.get("daemon_running", False)
+    icon = "🟢" if running else "⚪"
+    print(f"   {icon} Running: {running}")
+    if running:
+        print(f"   PID: {result.get('pid', '?')}")
+        print(f"   Uptime: {result.get('uptime_s', 0)}s")
+    session = result.get("session", {})
+    if session:
+        print(f"   Session state: {session.get('state', 'unknown')}")
+
+
+def _live_launchd_install() -> int:
+    """Install the launchd plist for auto-start."""
+    from agentic_brain.voice.live_daemon import install_launchd_plist
+
+    result = install_launchd_plist()
+    if not result.get("ok"):
+        print(f"❌ {result.get('error', 'Failed')}")
+        return 1
+    print(f"✅ Launchd plist installed: {result['path']}")
+    print(f"   Load:   {result['load_command']}")
+    print(f"   Unload: {result['unload_command']}")
+    return 0
+
+
+def _live_launchd_uninstall() -> int:
+    """Uninstall the launchd plist."""
+    from agentic_brain.voice.live_daemon import uninstall_launchd_plist
+
+    result = uninstall_launchd_plist()
+    if not result.get("ok"):
+        print(f"❌ {result.get('error', 'Failed')}")
+        return 1
+    print("✅ Launchd plist removed")
+    return 0
 
 
 def voice_stream_command(args: argparse.Namespace) -> int:
@@ -942,6 +1144,7 @@ def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
         description=(
             "Adaptive speech rate profiles. "
             "Profiles: relaxed (155 WPM), working (200), focused (280), power (400). "
+            "Content tiers: slow (130-150), normal (155-180), fast (200-250), rapid (300-400). "
             "Use 'up'/'down' to shift one tier."
         ),
     )
@@ -949,7 +1152,22 @@ def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
         "profile_or_action",
         nargs="?",
         type=str,
-        help="Profile name (relaxed/working/focused/power) or action (up/down)",
+        help="Profile (relaxed/working/focused/power), tier (slow/normal/fast/rapid), or action (up/down)",
+    )
+    speed_parser.add_argument(
+        "--max",
+        dest="max_speed",
+        type=int,
+        default=None,
+        metavar="WPM",
+        help="Set maximum speech speed in WPM (e.g. --max 300)",
+    )
+    speed_parser.add_argument(
+        "--auto",
+        dest="auto_classify",
+        action="store_true",
+        default=False,
+        help="Toggle auto-classification (content-aware speed)",
     )
     speed_parser.set_defaults(func=voice_speed_command)
 
@@ -1047,13 +1265,19 @@ def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
     live_parser = voice_subparsers.add_parser(
         "live",
         help="Start/stop live voice mode (Project Aria)",
+        description=(
+            "Live voice conversation powered by whisper.cpp (offline) "
+            "or macOS dictation (fallback). Listens for wake words, "
+            "transcribes speech, and responds via the voice serializer."
+        ),
     )
     live_parser.add_argument(
         "action",
         nargs="?",
         type=str,
         default="status",
-        help="Action: start, stop, status (default: status)",
+        choices=["start", "stop", "status", "install", "uninstall"],
+        help="Action: start, stop, status, install, uninstall (default: status)",
     )
     live_parser.add_argument(
         "-v",
@@ -1068,6 +1292,46 @@ def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
         type=int,
         default=160,
         help="Speech rate for live mode (default: 160)",
+    )
+    live_parser.add_argument(
+        "-w",
+        "--wake-word",
+        type=str,
+        default=None,
+        help="Wake word(s), comma-separated (default: 'hey karen,hey brain')",
+    )
+    live_parser.add_argument(
+        "-t",
+        "--timeout",
+        type=float,
+        default=None,
+        help="Session timeout in seconds of silence (default: 30)",
+    )
+    live_parser.add_argument(
+        "--transcriber",
+        type=str,
+        choices=["whisper", "macos"],
+        default=None,
+        help="Transcription backend: whisper (offline) or macos (dictation)",
+    )
+    live_parser.add_argument(
+        "--daemon",
+        action="store_true",
+        default=False,
+        help="Run as background daemon with PID file management",
+    )
+    live_parser.add_argument(
+        "--stop",
+        action="store_true",
+        default=False,
+        help="Stop the live session (shortcut for 'ab voice live stop')",
+    )
+    live_parser.add_argument(
+        "--status",
+        action="store_true",
+        default=False,
+        dest="status_flag",
+        help="Show status (shortcut for 'ab voice live status')",
     )
     live_parser.set_defaults(func=voice_live_command)
 

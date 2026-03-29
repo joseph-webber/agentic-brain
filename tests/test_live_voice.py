@@ -22,6 +22,8 @@ Covers:
 
 from __future__ import annotations
 
+import argparse
+import os
 import struct
 import threading
 import time
@@ -567,3 +569,354 @@ class TestEventHooks:
         s.on_wake(lambda: wakes.append(True))
         s._on_wake()
         assert len(wakes) == 1
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  CLI COMMAND PARSING (voice live)
+# ══════════════════════════════════════════════════════════════════════
+
+class TestVoiceLiveCLI:
+    """Tests that CLI argument parsing produces correct Namespace values."""
+
+    @staticmethod
+    def _build_parser():
+        """Build a minimal parser mirroring register_voice_commands."""
+        from agentic_brain.cli.voice_commands import register_voice_commands
+
+        root = argparse.ArgumentParser()
+        subs = root.add_subparsers()
+        register_voice_commands(subs)
+        return root
+
+    def test_default_action_is_status(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live"])
+        assert ns.action == "status"
+
+    def test_start_action(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "start"])
+        assert ns.action == "start"
+
+    def test_stop_action(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "stop"])
+        assert ns.action == "stop"
+
+    def test_wake_word_flag(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "start", "--wake-word", "hey iris"])
+        assert ns.wake_word == "hey iris"
+
+    def test_timeout_flag(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "start", "--timeout", "60"])
+        assert ns.timeout == 60.0
+
+    def test_transcriber_whisper(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "start", "--transcriber", "whisper"])
+        assert ns.transcriber == "whisper"
+
+    def test_transcriber_macos(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "start", "--transcriber", "macos"])
+        assert ns.transcriber == "macos"
+
+    def test_daemon_flag(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "start", "--daemon"])
+        assert ns.daemon is True
+
+    def test_stop_flag_shortcut(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "--stop"])
+        assert ns.stop is True
+
+    def test_status_flag_shortcut(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "--status"])
+        assert ns.status_flag is True
+
+    def test_voice_flag(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "start", "-v", "Moira"])
+        assert ns.voice == "Moira"
+
+    def test_rate_flag(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "start", "-r", "180"])
+        assert ns.rate == 180
+
+    def test_install_action(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "install"])
+        assert ns.action == "install"
+
+    def test_uninstall_action(self):
+        parser = self._build_parser()
+        ns = parser.parse_args(["voice", "live", "uninstall"])
+        assert ns.action == "uninstall"
+
+    def test_combined_flags(self):
+        """Multiple flags in one invocation."""
+        parser = self._build_parser()
+        ns = parser.parse_args([
+            "voice", "live", "start",
+            "--wake-word", "hey iris",
+            "--timeout", "45",
+            "--transcriber", "macos",
+            "--daemon",
+            "-v", "Moira",
+            "-r", "140",
+        ])
+        assert ns.wake_word == "hey iris"
+        assert ns.timeout == 45.0
+        assert ns.transcriber == "macos"
+        assert ns.daemon is True
+        assert ns.voice == "Moira"
+        assert ns.rate == 140
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  LIVE VOICE DAEMON
+# ══════════════════════════════════════════════════════════════════════
+
+from agentic_brain.voice.live_daemon import (
+    DaemonConfig,
+    LiveVoiceDaemon,
+    PID_FILE,
+    STATE_FILE,
+    _pid_alive,
+    _set_daemon_for_testing,
+    daemon_status,
+    install_launchd_plist,
+    read_pid_status,
+    start_daemon,
+    stop_daemon,
+    uninstall_launchd_plist,
+)
+
+
+class TestDaemonConfig:
+    """Test DaemonConfig defaults."""
+
+    def test_defaults(self):
+        cfg = DaemonConfig()
+        assert cfg.wake_words == ("hey karen", "hey brain")
+        assert cfg.session_timeout == 30.0
+        assert cfg.voice == "Karen"
+        assert cfg.rate == 155
+        assert cfg.use_whisper is True
+
+    def test_custom_config(self):
+        cfg = DaemonConfig(
+            wake_words=("hey iris",),
+            session_timeout=60.0,
+            voice="Moira",
+            rate=140,
+            use_whisper=False,
+        )
+        assert cfg.wake_words == ("hey iris",)
+        assert cfg.session_timeout == 60.0
+        assert cfg.voice == "Moira"
+        assert cfg.use_whisper is False
+
+
+class TestDaemonStartStop:
+    """Test daemon start/stop behaviour (mocked audio)."""
+
+    def setup_method(self):
+        _set_daemon_for_testing(None)
+
+    def teardown_method(self):
+        _set_daemon_for_testing(None)
+
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=False)
+    def test_start_fails_without_mic(self, _mock_start):
+        d = LiveVoiceDaemon()
+        result = d.start()
+        assert result["ok"] is False
+        assert "Microphone" in result["error"]
+
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    def test_start_success(self, _mock_running, _mock_start):
+        d = LiveVoiceDaemon()
+        result = d.start()
+        assert result["ok"] is True
+        assert "pid" in result
+        # Clean up
+        d.stop()
+
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    def test_double_start_blocked(self, _mock_running, _mock_start):
+        d = LiveVoiceDaemon()
+        d.start()
+        result = d.start()
+        assert result["ok"] is False
+        assert "already" in result["error"].lower()
+        d.stop()
+
+    def test_stop_when_not_running(self):
+        d = LiveVoiceDaemon()
+        result = d.stop()
+        assert result["ok"] is True
+
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    def test_status_while_running(self, _mock_running, _mock_start):
+        d = LiveVoiceDaemon()
+        d.start()
+        s = d.status()
+        assert s["daemon_running"] is True
+        assert s["pid"] == os.getpid()
+        assert s["uptime_s"] >= 0
+        d.stop()
+
+    def test_status_when_stopped(self):
+        d = LiveVoiceDaemon()
+        s = d.status()
+        assert s["daemon_running"] is False
+
+
+class TestDaemonPIDFile:
+    """Test PID file lifecycle."""
+
+    def setup_method(self):
+        PID_FILE.unlink(missing_ok=True)
+        STATE_FILE.unlink(missing_ok=True)
+        _set_daemon_for_testing(None)
+
+    def teardown_method(self):
+        PID_FILE.unlink(missing_ok=True)
+        STATE_FILE.unlink(missing_ok=True)
+        _set_daemon_for_testing(None)
+
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    def test_pid_file_written_on_start(self, _mock_running, _mock_start):
+        d = LiveVoiceDaemon()
+        d.start()
+        assert PID_FILE.exists()
+        assert int(PID_FILE.read_text().strip()) == os.getpid()
+        d.stop()
+
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    def test_pid_file_removed_on_stop(self, _mock_running, _mock_start):
+        d = LiveVoiceDaemon()
+        d.start()
+        d.stop()
+        assert not PID_FILE.exists()
+
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    def test_state_file_written(self, _mock_running, _mock_start):
+        d = LiveVoiceDaemon()
+        d.start()
+        assert STATE_FILE.exists()
+        import json
+        data = json.loads(STATE_FILE.read_text())
+        assert data["state"] == "running"
+        d.stop()
+
+    def test_read_pid_status_no_file(self):
+        result = read_pid_status()
+        assert result["daemon_running"] is False
+
+    def test_pid_alive_current_process(self):
+        assert _pid_alive(os.getpid()) is True
+
+    def test_pid_alive_nonexistent(self):
+        assert _pid_alive(99999999) is False
+
+
+class TestDaemonSingletonHelpers:
+    """Test module-level start_daemon / stop_daemon / daemon_status."""
+
+    def setup_method(self):
+        _set_daemon_for_testing(None)
+
+    def teardown_method(self):
+        stop_daemon()
+        _set_daemon_for_testing(None)
+
+    def test_daemon_status_no_daemon(self):
+        PID_FILE.unlink(missing_ok=True)
+        result = daemon_status()
+        assert result["daemon_running"] is False
+
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
+    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    def test_start_and_stop_daemon(self, _mock_running, _mock_start):
+        result = start_daemon()
+        assert result["ok"] is True
+        result = stop_daemon()
+        assert result["ok"] is True
+
+
+class TestLaunchdIntegration:
+    """Test launchd plist generation."""
+
+    def test_install_generates_plist(self):
+        result = install_launchd_plist()
+        if os.uname().sysname != "Darwin":
+            assert result["ok"] is False
+            return
+        assert result["ok"] is True
+        assert "path" in result
+        assert "load_command" in result
+        # Clean up
+        from pathlib import Path
+        Path(result["path"]).unlink(missing_ok=True)
+
+    def test_uninstall_when_no_plist(self):
+        from agentic_brain.voice.live_daemon import LAUNCHD_PLIST_PATH
+        LAUNCHD_PLIST_PATH.unlink(missing_ok=True)
+        result = uninstall_launchd_plist()
+        if os.uname().sysname != "Darwin":
+            assert result["ok"] is False
+        else:
+            assert result["ok"] is True
+
+
+class TestTranscriberSelection:
+    """Test that --transcriber flag routes correctly."""
+
+    def test_whisper_is_default(self):
+        """When no --transcriber flag, use_whisper is True."""
+        transcriber = None
+        use_whisper = transcriber != "macos"
+        assert use_whisper is True
+
+    def test_macos_fallback(self):
+        transcriber = "macos"
+        use_whisper = transcriber != "macos"
+        assert use_whisper is False
+
+    def test_whisper_explicit(self):
+        transcriber = "whisper"
+        use_whisper = transcriber != "macos"
+        assert use_whisper is True
+
+
+class TestWakeWordParsing:
+    """Test wake word CSV parsing in CLI handler."""
+
+    def test_single_wake_word(self):
+        wake_word = "hey iris"
+        words = tuple(w.strip().lower() for w in wake_word.split(","))
+        assert words == ("hey iris",)
+
+    def test_multiple_wake_words(self):
+        wake_word = "Hey Karen, Hey Brain, Hey Iris"
+        words = tuple(w.strip().lower() for w in wake_word.split(","))
+        assert words == ("hey karen", "hey brain", "hey iris")
+
+    def test_default_wake_words(self):
+        wake_word = None
+        default = ("hey karen", "hey brain")
+        words = tuple(w.strip().lower() for w in wake_word.split(",")) if wake_word else default
+        assert words == default

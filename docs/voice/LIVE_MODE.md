@@ -1,149 +1,213 @@
-# Live Mode
+# Live Mode — Project Aria
 
-## Current status
+## Overview
 
-**Project Aria live mode is not implemented in this repository today.**
+**Project Aria** is the live, hands-free voice conversation feature of Agentic
+Brain.  Joseph speaks, the brain listens, transcribes, thinks, and responds
+— all with voice.  No typing needed.
 
-Phase 2 added strong output-side foundations:
-
-- serialized speech
-- distributed speech locking
-- spatial routing
-- durable queueing
-- event topics for voice requests and status
-
-But the repo does **not** currently ship:
-
-- microphone capture
-- wake word detection
-- streaming speech-to-text
-- whisper.cpp integration
-- an always-listening conversation loop
-
-This document exists so the current state is clear and future work has a home.
-
-## What “Project Aria” would mean here
-
-In Agentic Brain terms, live mode would be a hands-free voice loop:
-
-1. listen for a wake word
-2. capture speech
-3. transcribe it
-4. route it into the agent
-5. speak the answer back through the existing safe voice stack
-
-The output side of that pipeline already exists.
-The input side does not.
-
-## What is already in place
-
-### Conversation modes
-
-`src/agentic_brain/voice/conversation.py` provides:
-
-- `WORK`
-- `LIFE`
-- `QUIET`
-
-These are **speaker selection modes**, not live listening modes.
-
-### Voice event topics
-
-`src/agentic_brain/events/voice_events.py` defines:
-
-- `brain.voice.request`
-- `brain.voice.status`
-- `brain.voice.input`
-- `brain.voice.control`
-- `brain.llm.streaming`
-
-`brain.voice.input` is useful as a future hook for speech-to-text events, but the repo
-does not currently publish microphone transcripts into it.
-
-## Wake word usage
-
-There is **no built-in wake word command or configuration** in the current codebase.
-
-That means:
-
-- no “Hey Brain” style trigger is available
-- no wake-word model is configured
-- no always-on microphone loop is present
-
-If you need hands-free input today, it must be added outside the current shipped modules.
-
-## Current conversation flow
-
-What exists today is an **output-first** flow:
-
-```text
-CLI / app / agent
-    -> queue or serializer
-    -> speech lock
-    -> optional spatial router
-    -> playback
-```
-
-There is no built-in input flow like this yet:
+### Architecture
 
 ```text
 microphone
-    -> wake word
-    -> speech-to-text
-    -> agent
-    -> serializer
-    -> playback
+    → wake word detection ("Hey Karen" / "Hey Brain")
+    → whisper.cpp transcription (offline, M2-accelerated)
+    → agent / response callback
+    → VoiceSerializer (safe, no-overlap playback)
 ```
 
-## whisper.cpp setup
+The output side (serializer, speech lock, spatial routing, event topics) has
+been stable since Phase 2.  Project Aria adds the **input side**: microphone
+capture, wake-word gating, and speech-to-text.
 
-There is **no whisper.cpp setup in this repository** right now.
+### Key modules
 
-That means:
+| Module | Purpose |
+|--------|---------|
+| `voice/live_session.py` | `LiveVoiceSession` — bidirectional session |
+| `voice/transcription.py` | `WhisperTranscriber` / `MacOSDictationTranscriber` |
+| `voice/live_daemon.py` | `LiveVoiceDaemon` — background daemon + PID file |
+| `cli/voice_commands.py` | `ab voice live` CLI surface |
 
-- no dependency entry for whisper.cpp
-- no wrapper module
-- no CLI command
-- no documented model directory
+---
 
-If you are planning live mode, treat whisper.cpp as future integration work rather than
-something already supported.
+## CLI Usage
 
-## Recommended approach if you add live mode later
+### Start a live session
 
-Use the current voice stack as the output layer:
+```bash
+# Defaults: whisper.cpp, wake words "Hey Karen" / "Hey Brain", 30s timeout
+ab voice live start
 
-- publish transcribed input into `brain.voice.input`
-- publish generated speech requests into `brain.voice.request`
-- keep final playback routed through `VoiceSerializer`
-- keep overlap protection in `_speech_lock.py`
+# Custom wake word
+ab voice live start --wake-word "Hey Iris"
 
-That way, live mode inherits the accessibility work already done in Phase 2.
+# Multiple wake words (comma-separated)
+ab voice live start --wake-word "Hey Karen,Hey Brain,Hey Iris"
+
+# Custom timeout (seconds of silence before auto-stop)
+ab voice live start --timeout 60
+
+# Use macOS dictation instead of whisper.cpp
+ab voice live start --transcriber macos
+
+# Explicit whisper.cpp (the default)
+ab voice live start --transcriber whisper
+
+# Custom voice and rate
+ab voice live start -v Moira -r 140
+
+# All options combined
+ab voice live start --wake-word "Hey Iris" --timeout 45 --transcriber whisper -v Karen -r 155
+```
+
+### Stop a live session
+
+```bash
+ab voice live stop
+
+# Or use the flag shortcut
+ab voice live --stop
+```
+
+### Check status
+
+```bash
+ab voice live status
+ab voice live          # same as "status"
+ab voice live --status # flag shortcut
+```
+
+### Daemon mode (background)
+
+Run the session as a background daemon with PID file management:
+
+```bash
+# Start daemon
+ab voice live start --daemon
+
+# Check daemon status
+ab voice live status --daemon
+
+# Stop daemon
+ab voice live stop --daemon
+```
+
+The daemon writes its PID to `~/.agentic-brain/live-voice.pid` and session
+state to `~/.agentic-brain/live-voice-state.json`.
+
+### Auto-start at login (launchd)
+
+```bash
+# Install the launchd plist
+ab voice live install
+
+# Load it now
+launchctl load ~/Library/LaunchAgents/com.agentic-brain.live-voice.plist
+
+# Remove it
+ab voice live uninstall
+```
+
+---
+
+## Transcription backends
+
+### 1. whisper.cpp (preferred)
+
+Local, fast, fully offline transcription via `pywhispercpp`.  Runs on
+Apple Silicon with excellent latency.
+
+```bash
+pip install pywhispercpp
+```
+
+Models are downloaded automatically to `~/.cache/whisper/` on first use.
+Default model: `base.en` (good balance of speed and accuracy).
+
+### 2. macOS Dictation (fallback)
+
+When whisper.cpp is not installed, the system falls back to macOS
+`SFSpeechRecognizer`.  Requires:
+- macOS (Darwin)
+- Dictation enabled in System Preferences → Keyboard → Dictation
+- Speech recognition permission granted
+
+Use explicitly with `--transcriber macos`.
+
+---
+
+## Wake words
+
+Default wake words: **"Hey Karen"** and **"Hey Brain"**.
+
+Wake word detection works by continuously transcribing short audio chunks
+and checking for a match.  This is simple but effective for the offline
+use case.
+
+Customise via CLI:
+
+```bash
+ab voice live start --wake-word "Hey Iris"
+```
+
+---
+
+## Timeout behaviour
+
+- **Utterance silence**: 2 seconds of silence marks end-of-utterance
+- **Session timeout**: 30 seconds of silence auto-stops the session
+  (configurable with `--timeout`)
+
+---
+
+## Interrupt detection
+
+If Joseph speaks while the brain is talking, the current speech is
+immediately terminated.  This is critical for accessibility — the user
+must always be able to interrupt.
+
+---
 
 ## Troubleshooting
 
-### “I can’t find live mode commands”
+### "Microphone unavailable"
 
-That is expected.
-The feature is not implemented yet.
+Install PyAudio:
 
-### “Where is the wake word config?”
+```bash
+pip install pyaudio
+```
 
-There is none in the current tree.
+On macOS you may also need:
 
-### “Where is whisper.cpp configured?”
+```bash
+brew install portaudio
+pip install pyaudio
+```
 
-It is not wired into the repo at this time.
+### "pywhispercpp not installed"
 
-### “What should I use today instead?”
+```bash
+pip install pywhispercpp
+```
 
-Use:
+The system will fall back to macOS dictation, but whisper.cpp is
+strongly recommended for offline, low-latency transcription.
 
-- `ab voice speak ...`
-- `ab voice conversation --demo`
-- queue and event-based voice output
+### Session stops immediately
 
-For current voice behavior, see:
+Check the timeout value.  The default 30s timeout means the session
+ends after 30 seconds with no voice input.  Increase with `--timeout`.
+
+### No wake word detected
+
+Speak clearly and close to the microphone.  The wake word must appear
+somewhere in the transcribed text (case-insensitive partial match).
+
+---
+
+## See also
 
 - [Voice system overview](./README.md)
 - [Streaming](./STREAMING.md)
