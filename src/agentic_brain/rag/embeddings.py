@@ -1159,3 +1159,35 @@ def get_accelerated_embeddings(
     if cache:
         return CachedEmbeddings(base)
     return base
+
+
+def get_embedding(
+    text: str,
+    provider: str = "auto",
+    model: str = "all-MiniLM-L6-v2",
+) -> list[float]:
+    """
+    Get embedding for a single text.
+
+    This is a convenience function that embeds a single piece of text.
+    For multiple texts, use get_embeddings() directly which is more efficient.
+
+    Args:
+        text: Text to embed
+        provider: Embedding provider ("auto", "ollama", "openai", "sentence_transformers", etc)
+        model: Model name for sentence-transformers based providers
+
+    Returns:
+        Embedding vector as list of floats
+
+    Example:
+        # Get embedding with auto-detected hardware acceleration
+        vector = get_embedding("How do I deploy?")
+
+        # Use specific provider
+        vector = get_embedding("Some text", provider="ollama")
+        vector = get_embedding("Some text", provider="openai")
+    """
+    embedder = get_embeddings(provider=provider, model=model)
+    result = embedder.embed(text)
+    return result.embedding

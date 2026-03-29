@@ -31,10 +31,10 @@ logger = logging.getLogger(__name__)
 class VoiceType(Enum):
     """Voice type classification."""
 
-    WESTERN = "western"  # Karen, Moira, Zosia, etc.
-    ASIAN = "asian"  # Kyoko, Tingting, Yuna, Sinji, etc.
+    WESTERN = "western"  # Standard English voices
+    ASIAN = "asian"  # Standard Asian voices
     SYSTEM = "system"  # Generic system voices
-    ROBOT = "robot"  # Zarvox, Trinoids, Ralph, etc.
+    ROBOT = "robot"  # Robot and synthetic voices
 
 
 # Asian voice configuration - needs number spelling!
@@ -206,7 +206,7 @@ class VoiceQueue:
 
         Args:
             text: Message to speak
-            voice: Voice name (Karen, Kyoko, etc.)
+            voice: Voice name
             rate: Speech rate in words per minute (100-200)
             pause_after: Pause duration after speaking (seconds)
             speaker_id: For debugging/tracking

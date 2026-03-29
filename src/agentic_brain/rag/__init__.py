@@ -86,7 +86,7 @@ Usage:
 # Core pipeline
 import contextlib
 
-from .embeddings import EmbeddingProvider, get_embeddings
+from .embeddings import EmbeddingProvider, get_embeddings, get_embedding
 from .pipeline import (
     GraphQueryResult,
     GraphSearchResult,
@@ -94,6 +94,7 @@ from .pipeline import (
     RAGPipeline,
     RAGResult,
     ask,
+    get_rag_pipeline,
 )
 from .retriever import RetrievedChunk, Retriever
 
@@ -371,10 +372,12 @@ __all__ = [
     "GraphSearchResult",
     "GraphQueryResult",
     "ask",
+    "get_rag_pipeline",
     "Retriever",
     "RetrievedChunk",
     "EmbeddingProvider",
     "get_embeddings",
+    "get_embedding",
     # Hardware-accelerated Embeddings
     "SentenceTransformerEmbeddings",
     "MLXEmbeddings",

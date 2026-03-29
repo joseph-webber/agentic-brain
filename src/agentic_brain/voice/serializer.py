@@ -116,7 +116,7 @@ class VoiceMessage:
     """Normalized speech request handled by the serializer."""
 
     text: str
-    voice: str = "Karen"
+    voice: str = "Samantha"
     rate: int = 155
     pitch: float = 1.0
     volume: float = 0.8
@@ -396,7 +396,7 @@ class VoiceSerializer:
     def speak(
         self,
         text: str,
-        voice: str = "Karen",
+        voice: str = "Samantha",
         rate: int = 155,
         emotion: VoiceEmotion | str | None = None,
         pause_after: Optional[float] = None,
@@ -451,7 +451,7 @@ class VoiceSerializer:
     async def speak_async(
         self,
         text: str,
-        voice: str = "Karen",
+        voice: str = "Samantha",
         rate: int = 155,
         emotion: VoiceEmotion | str | None = None,
         pause_after: Optional[float] = None,
@@ -832,7 +832,7 @@ class VoiceSerializer:
                 VoiceState(
                     is_speaking=is_speaking,
                     current_text=current_message.text if current_message else "",
-                    current_voice=current_message.voice if current_message else "Karen",
+                    current_voice=current_message.voice if current_message else "Samantha",
                     queue_depth=(
                         self.queue_size()
                         if queue_depth_override is None
@@ -854,7 +854,7 @@ def get_voice_serializer() -> VoiceSerializer:
 
 def speak_serialized(
     text: str,
-    voice: str = "Karen",
+    voice: str = "Samantha",
     lady: Optional[str] = None,
     rate: int = 155,
     emotion: VoiceEmotion | str | None = None,
@@ -949,7 +949,7 @@ def speak_serialized(
 # ── Legacy / bypass detection ────────────────────────────────────────
 
 
-def _legacy_speak(text: str, voice: str = "Karen", rate: int = 155) -> bool:
+def _legacy_speak(text: str, voice: str = "Samantha", rate: int = 155) -> bool:
     """Deprecated shim that routes through the serializer.
 
     Emits a ``DeprecationWarning`` so callers that bypass the canonical

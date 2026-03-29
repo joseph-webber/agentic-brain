@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Context-aware expression engine for the ladies."""
+"""Context-aware expression engine for voice output."""
 
 from __future__ import annotations
 
@@ -25,22 +25,8 @@ from agentic_brain.voice.config import VoiceConfig
 from agentic_brain.voice.emotions import EmotionDetector, VoiceEmotion, apply_emotion
 
 
-@dataclass(frozen=True)
-class LadyExpressionStyle:
-    default_emotion: VoiceEmotion | None = None
-    happy_boost: bool = False
-    force_calm: bool = False
-
-
-LADY_EXPRESSION_STYLES: Final[dict[str, LadyExpressionStyle]] = {
-    "kanya": LadyExpressionStyle(default_emotion=VoiceEmotion.CALM, force_calm=True),
-    "yuna": LadyExpressionStyle(happy_boost=True),
-    "karen": LadyExpressionStyle(default_emotion=VoiceEmotion.PROFESSIONAL),
-}
-
-
 class ExpressionEngine:
-    """Resolve emotion using text, work-mode context, and lady personality."""
+    """Resolve emotion using text and work-mode context."""
 
     def __init__(
         self,
@@ -86,8 +72,6 @@ class ExpressionEngine:
     def _apply_context(
         self, emotion: VoiceEmotion, *, lady: str | None
     ) -> VoiceEmotion:
-        style = LADY_EXPRESSION_STYLES.get((lady or "").lower())
-
         if self.is_work_mode() and emotion in {
             VoiceEmotion.FRIENDLY,
             VoiceEmotion.HAPPY,
@@ -95,20 +79,5 @@ class ExpressionEngine:
             VoiceEmotion.NEUTRAL,
         }:
             emotion = VoiceEmotion.PROFESSIONAL
-
-        if style is None:
-            return emotion
-
-        if style.force_calm and emotion not in {
-            VoiceEmotion.URGENT,
-            VoiceEmotion.CONCERNED,
-        }:
-            return VoiceEmotion.CALM
-
-        if style.happy_boost and emotion == VoiceEmotion.HAPPY:
-            return VoiceEmotion.EXCITED
-
-        if emotion == VoiceEmotion.NEUTRAL and style.default_emotion is not None:
-            return style.default_emotion
 
         return emotion

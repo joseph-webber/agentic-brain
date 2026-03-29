@@ -952,6 +952,27 @@ Answer:"""
 _default_pipeline: Optional[RAGPipeline] = None
 
 
+def get_rag_pipeline() -> RAGPipeline:
+    """
+    Get singleton RAGPipeline instance.
+    
+    Returns a cached instance to avoid recreating the pipeline
+    with its expensive initialization (Neo4j connection, embeddings, etc).
+    
+    Usage:
+        from agentic_brain.rag import get_rag_pipeline
+        pipeline = get_rag_pipeline()
+        result = pipeline.query("What is the status of project X?")
+    
+    Returns:
+        RAGPipeline: Singleton instance
+    """
+    global _default_pipeline
+    if _default_pipeline is None:
+        _default_pipeline = RAGPipeline()
+    return _default_pipeline
+
+
 def ask(
     query: str,
     k: int = 5,
@@ -965,12 +986,8 @@ def ask(
         from agentic_brain.rag import ask
         answer = ask("How do I deploy?")
     """
-    global _default_pipeline
-
     if pipeline is None:
-        if _default_pipeline is None:
-            _default_pipeline = RAGPipeline()
-        pipeline = _default_pipeline
+        pipeline = get_rag_pipeline()
 
     result = pipeline.query(query, k=k, sources=sources)
     return result.answer

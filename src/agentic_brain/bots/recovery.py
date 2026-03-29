@@ -1,17 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Copyright 2024-2026 Agentic Brain contributors
 
 """
 Error recovery module for agentic-brain autonomous agents.
@@ -39,7 +27,9 @@ import asyncio
 import inspect
 import json
 import logging
+import os
 import random
+import re
 import time
 from collections.abc import Awaitable
 from dataclasses import dataclass
@@ -59,6 +49,7 @@ logger = logging.getLogger(__name__)
 
 F = TypeVar("F", bound=Callable[..., Any])
 AsyncF = TypeVar("AsyncF", bound=Callable[..., Awaitable[Any]])
+_IDENTIFIER_PATTERN = re.compile(r"[^A-Za-z0-9_.-]+")
 
 
 def _sleep_safe(delay: float) -> None:
@@ -301,7 +292,7 @@ class RecoveryManager:
     synchronous and asynchronous checkpoint operations.
 
     Attributes:
-        bot_id: Unique identifier for the bot instance
+        agent_id: Unique identifier for the agent instance
         checkpoint_dir: Directory where checkpoints are stored
 
     Example:
@@ -322,19 +313,33 @@ class RecoveryManager:
         ...     logger.info(f"Resuming with {len(previous_data['items'])} items")
     """
 
-    def __init__(self, bot_id: str, logger: logging.Logger | None = None) -> None:
+    def __init__(
+        self,
+        agent_id: str,
+        logger: logging.Logger | None = None,
+        checkpoint_root: str | Path | None = None,
+    ) -> None:
         """
         Initialize RecoveryManager.
 
         Args:
-            bot_id: Unique identifier for the bot instance
+            agent_id: Unique identifier for the agent instance
             logger: Optional logger instance (uses module logger if None)
+            checkpoint_root: Optional root directory for checkpoints.
+                Defaults to AGENTIC_BRAIN_CHECKPOINT_DIR or ~/.agentic-brain/checkpoints.
         """
-        self.bot_id = bot_id
+        self.agent_id = agent_id
+        self.bot_id = agent_id
         self.logger = logger or logging.getLogger(__name__)
 
-        home = Path.home()
-        self.checkpoint_dir = home / ".agentic-brain" / "checkpoints" / bot_id
+        configured_root = checkpoint_root or os.getenv("AGENTIC_BRAIN_CHECKPOINT_DIR")
+        if configured_root is None:
+            base_dir = Path.home() / ".agentic-brain" / "checkpoints"
+        else:
+            base_dir = Path(configured_root).expanduser()
+
+        safe_agent_id = _IDENTIFIER_PATTERN.sub("_", agent_id).strip("._") or "agent"
+        self.checkpoint_dir = base_dir / safe_agent_id
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
     def attempt(
@@ -573,7 +578,7 @@ class RecoveryManager:
 
     def clear_checkpoints(self) -> None:
         """
-        Delete all checkpoints for this bot.
+        Delete all checkpoints for this agent.
 
         Useful for cleanup or forcing a fresh start.
         """

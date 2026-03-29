@@ -53,12 +53,27 @@ from agentic_brain.bots.recovery import (
     RetryConfig,
     retry,
 )
+from agentic_brain.bots.secrets import AgentSecrets, BotSecrets
+from agentic_brain.bots.session import (
+    AgentSession,
+    BotSession,
+    generate_session_id,
+    get_session_key,
+)
 
 __all__ = [
     # Recovery
     "RetryConfig",
     "RecoveryManager",
     "retry",
+    # Sessions
+    "AgentSession",
+    "BotSession",
+    "generate_session_id",
+    "get_session_key",
+    # Secrets
+    "AgentSecrets",
+    "BotSecrets",
     # Messaging
     "BotMessage",
     "BotHandoff",
