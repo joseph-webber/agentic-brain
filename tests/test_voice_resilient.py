@@ -6,17 +6,16 @@ Tests for Resilient Voice System
 
 Tests verify that voice always works with fallbacks,
 and that the daemon continues operating even under failure conditions.
+All subprocess calls are mocked to prevent real audio output.
 """
 
 import asyncio
-import json
-import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
-
+# Import to access and reset global daemon instance
+import agentic_brain.voice.resilient as resilient_module
 from agentic_brain.voice.resilient import (
     ResilientVoice,
     SoundEffects,
@@ -28,9 +27,40 @@ from agentic_brain.voice.resilient import (
     speak,
     speak_via_daemon,
 )
+from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
 
-# Import to access and reset global daemon instance
-import agentic_brain.voice.resilient as resilient_module
+
+@pytest.fixture(autouse=True)
+def _mock_voice_subprocess():
+    """Prevent real audio by mocking all subprocess entry points."""
+    mock_proc = MagicMock()
+    mock_proc.wait.return_value = 0
+    mock_proc.returncode = 0
+    mock_proc.communicate.return_value = (b"", b"")
+    mock_proc.poll.return_value = 0
+    mock_proc.pid = 12345
+
+    mock_async_proc = AsyncMock()
+    mock_async_proc.wait = AsyncMock(return_value=0)
+    mock_async_proc.returncode = 0
+    mock_async_proc.communicate = AsyncMock(return_value=(b"", b""))
+    mock_async_proc.pid = 12345
+
+    with (
+        patch(
+            "agentic_brain.voice.serializer.subprocess.Popen",
+            return_value=mock_proc,
+        ),
+        patch(
+            "agentic_brain.voice.serializer.subprocess.run",
+            return_value=MagicMock(returncode=1, stdout=""),
+        ),
+        patch(
+            "asyncio.create_subprocess_exec",
+            return_value=mock_async_proc,
+        ),
+    ):
+        yield
 
 
 class TestVoiceConfig:
@@ -50,12 +80,8 @@ class TestVoiceConfig:
         assert config.timeout == 60
 
 
-@pytest.mark.skipif(
-    os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
-    reason="Voice tests call real speak() which hangs on CI without audio device",
-)
 class TestResilientVoice:
-    """Test ResilientVoice with fallbacks"""
+    """Test ResilientVoice with fallbacks (subprocess mocked via fixture)"""
 
     @pytest.fixture
     def setup(self):
@@ -309,12 +335,8 @@ class TestConvenienceFunctions:
         assert "voice" in stats
 
 
-@pytest.mark.skipif(
-    os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
-    reason="Voice integration tests hang on CI without audio device",
-)
 class TestIntegration:
-    """Integration tests"""
+    """Integration tests (subprocess mocked via fixture)"""
 
     @pytest.mark.asyncio
     async def test_speak_and_sound(self):
@@ -368,10 +390,6 @@ class TestIntegration:
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(10)
-    @pytest.mark.skipif(
-        os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
-        reason="Daemon test hangs on GitHub Actions CI - no audio device",
-    )
     async def test_long_running_daemon(self):
         """Test daemon running for extended period"""
         daemon = VoiceDaemon()

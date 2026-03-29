@@ -8,18 +8,11 @@ Tests platform detection, voice availability, and speech synthesis
 across macOS, Windows, and Linux.
 """
 
-import asyncio
-import os
 import platform
 import sys
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-
-CI_SKIP = pytest.mark.skipif(
-    os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
-    reason="Voice tests require audio device - not available on CI",
-)
 
 from agentic_brain.voice.cloud_tts import check_cloud_tts_available, speak_cloud
 from agentic_brain.voice.linux import list_linux_voices, speak_linux
@@ -113,7 +106,6 @@ class TestWindowsVoice:
 class TestLinuxVoice:
     """Test Linux voice support"""
 
-    @CI_SKIP
     @pytest.mark.skipif(platform.system() != "Linux", reason="Linux-specific test")
     @pytest.mark.asyncio
     async def test_speak_linux(self):
@@ -153,12 +145,8 @@ class TestCloudTTS:
         assert isinstance(result, bool)
 
 
-@pytest.mark.skipif(
-    os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
-    reason="Voice tests call real speak() which hangs on CI without audio",
-)
 class TestResilientVoice:
-    """Test resilient voice system"""
+    """Test resilient voice system (subprocess mocked via conftest.py)"""
 
     @pytest.mark.asyncio
     async def test_resilient_voice_init(self):
@@ -206,12 +194,8 @@ class TestResilientVoice:
         assert isinstance(result3, bool)
 
 
-@pytest.mark.skipif(
-    os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true",
-    reason="Voice integration tests hang on CI without audio device",
-)
 class TestCrossPlatformIntegration:
-    """Integration tests for cross-platform voice"""
+    """Integration tests for cross-platform voice (subprocess mocked via conftest.py)"""
 
     @pytest.mark.asyncio
     @pytest.mark.integration
