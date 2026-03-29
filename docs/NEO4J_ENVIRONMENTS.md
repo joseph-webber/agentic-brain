@@ -8,18 +8,18 @@
 
 | Environment | Port | Password | Purpose | Data | Can Reset? |
 |------------|------|----------|---------|------|------------|
-| **Production** | 7687 | `Brain2026` | Joseph's real brain | 60,000+ nodes | ❌ NEVER |
+| **Production** | 7687 | `Brain2026` | Production brain | 60,000+ nodes | ❌ NEVER |
 | **Local Demo** | 7688 | `demo2026` | Testing & demos | Clean seed data | ✅ Anytime |
 | **CI/CD** | 7687 | `test2026` | Automated tests | Test fixtures | ✅ Auto |
 
 ---
 
-## 1. Production (Joseph's Brain)
+## 1. Production (the user's Brain)
 
 ### Details
 - **Location**: Homebrew install (local macOS)
 - **Port**: 7687 (default)
-- **Data**: 60,000+ nodes - Joseph's real data
+- **Data**: 60,000+ nodes - the user's real data
   - JIRA tickets
   - Teams messages
   - Bitbucket PRs
@@ -56,7 +56,7 @@ Password: Brain2026
 - **NEVER** reset or clear this database
 - **NEVER** run test scripts against port 7687
 - **ALWAYS** backup before maintenance
-- This is Joseph's memory - treat it with care
+- This is the user's memory - treat it with care
 
 ### Backup
 ```bash
@@ -340,7 +340,7 @@ python3 scripts/import_to_demo.py
 - Real work
 - Daily operations
 - Production scripts
-- Joseph's actual brain
+- the user's actual brain
 
 **Use Demo (7688) for:**
 - Testing new features

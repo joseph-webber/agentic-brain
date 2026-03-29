@@ -4,7 +4,7 @@
 
 ```python
 # Speak (automatic fallbacks)
-await speak("Hello Joseph")
+await speak("Hello there")
 
 # Speak with options
 await speak("Hello", voice="Moira", rate=140)

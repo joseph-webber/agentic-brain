@@ -1062,6 +1062,6 @@ cheap_bot = brain.route_task("Simple task", prefer_free=True)
 
 ---
 
-**Made with 🧠 by [Joseph Webber](https://github.com/josephweber)**
+**Built by Agentic Brain Contributors**
 
 Licensed under [Apache License 2.0](../LICENSE)

@@ -575,4 +575,4 @@ helm install temporal temporalio/temporal \
 
 ## License
 
-MIT © 2026 Joseph Webber
+MIT © 2026 Agentic Brain Contributors

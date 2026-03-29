@@ -68,7 +68,7 @@ ab serve  # Auto-detects CUDA if available
 
 **PowerShell One-Liner:**
 ```powershell
-irm https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/setup.ps1 | iex
+irm https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/setup.ps1 | iex
 ```
 
 ---
@@ -98,7 +98,7 @@ ab serve  # Auto-detects CUDA/ROCm if available
 
 **Curl One-Liner:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/setup.sh | bash
 ```
 
 ---

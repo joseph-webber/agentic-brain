@@ -227,6 +227,6 @@ python3 examples/demo_cross_platform_voice.py
 
 ---
 
-Built by: Joseph Webber  
+Built by: Agentic Brain Contributors  
 Date: 2026  
 License: Apache-2.0

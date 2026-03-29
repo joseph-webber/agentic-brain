@@ -833,7 +833,7 @@ agentic-brain rag query "How do I deploy?"
 
 <div align="center">
 
-**Built with 💜 by Joseph Webber**
+**Built with 💜 by Agentic Brain Contributors**
 
 *Part of the Brain ecosystem*
 

@@ -71,7 +71,7 @@ ab chat
 
 **One-liner:**
 ```powershell
-irm https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/setup.ps1 | iex
+irm https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/setup.ps1 | iex
 ```
 
 **What happens:**
@@ -97,7 +97,7 @@ ab chat
 
 **One-liner:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/setup.sh | bash
 ```
 
 **What happens:**
@@ -113,7 +113,7 @@ curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/se
 docker run -it agenticbrain/brain chat
 
 # Or with docker compose
-curl -O https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/docker-compose.yml
+curl -O https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/docker-compose.yml
 docker compose up -d
 
 # Access at http://localhost:8000
@@ -348,8 +348,8 @@ pipx install agentic-brain
 
 ## 🆘 Get Help
 
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/joseph-webber/agentic-brain/discussions)
-- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/joseph-webber/agentic-brain/issues)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/agentic-brain-project/agentic-brain/discussions)
+- 🐛 **Bug Reports:** [GitHub Issues](https://github.com/agentic-brain-project/agentic-brain/issues)
 - 📖 **Full Docs:** [Documentation](./INDEX.md)
 
 ---

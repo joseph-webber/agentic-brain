@@ -13,7 +13,7 @@
 | ⚡ Speed Demon | `llm-speed-demon.env` | Real-time apps, high volume | FREE | ⭐⭐⭐⭐ |
 | 💼 Business Standard | `llm-business-standard.env` | SMBs, consultants | $20-50/mo | ⭐⭐⭐⭐ |
 | 👨‍💻 Developer | `llm-developer.env` | Coding, debugging | $10-30/mo | ⭐⭐⭐⭐ |
-| 🌏 Aussie Default | `llm-aussie-default.env` | Joseph's recommended | $0-20/mo | ⭐⭐⭐⭐⭐ |
+| 🌏 Aussie Default | `llm-aussie-default.env` | the recommended | $0-20/mo | ⭐⭐⭐⭐⭐ |
 
 ## Quick Start
 
@@ -58,7 +58,7 @@
 - Typical cost: $10-30/month
 
 ### 🌏 Aussie Default (Recommended!)
-- **Joseph's balanced setup**
+- **the balanced setup**
 - Local first, cloud when needed
 - Works offline too
 - GST notes for paid providers

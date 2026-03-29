@@ -348,7 +348,7 @@ docker-compose up -d
 ### Building from Source
 
 ```bash
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 docker build -t agentic-brain .
 docker run -p 8000:8000 agentic-brain
@@ -362,7 +362,7 @@ docker run -p 8000:8000 agentic-brain
 
 ```bash
 # Clone the repository
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 
 # Create virtual environment
@@ -701,8 +701,8 @@ After installation:
 ## Getting Help
 
 - **Documentation**: [docs/INDEX.md](INDEX.md)
-- **GitHub Issues**: [github.com/joseph-webber/agentic-brain/issues](https://github.com/joseph-webber/agentic-brain/issues)
-- **Discussions**: [github.com/joseph-webber/agentic-brain/discussions](https://github.com/joseph-webber/agentic-brain/discussions)
+- **GitHub Issues**: [github.com/agentic-brain-project/agentic-brain/issues](https://github.com/agentic-brain-project/agentic-brain/issues)
+- **Discussions**: [github.com/agentic-brain-project/agentic-brain/discussions](https://github.com/agentic-brain-project/agentic-brain/discussions)
 
 ---
 

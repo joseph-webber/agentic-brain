@@ -365,4 +365,4 @@ The voice system now works on:
 
 ---
 
-Built with ❤️ for accessibility by Joseph Webber
+Built with ❤️ for accessibility by Agentic Brain Contributors

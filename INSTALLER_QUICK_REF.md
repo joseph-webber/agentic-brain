@@ -149,11 +149,11 @@ agentic-brain check
 
 ## Support
 
-🐛 **Issues**: https://github.com/joseph-webber/agentic-brain/issues  
-💬 **Discussions**: https://github.com/joseph-webber/agentic-brain/discussions  
+🐛 **Issues**: https://github.com/agentic-brain-project/agentic-brain/issues  
+💬 **Discussions**: https://github.com/agentic-brain-project/agentic-brain/discussions  
 📧 **Email**: joseph.webber@me.com  
 
 ---
 
-**Made with 💜 by Joseph Webber & Iris Lumina**  
+**Built by Agentic Brain Contributors**  
 **License**: Apache-2.0

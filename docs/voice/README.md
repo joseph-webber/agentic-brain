@@ -39,7 +39,7 @@ The voice system is designed so a blind user can:
 
 ```bash
 ab voice list --primary
-ab voice speak "Hello Joseph" -v "Karen (Premium)"
+ab voice speak "Hello there" -v "Karen (Premium)"
 ab voice mode work
 ab voice conversation --demo
 ```
@@ -65,7 +65,7 @@ from agentic_brain.voice import get_phase3_voice_system
 
 voice = get_phase3_voice_system()
 voice.play_earcon("task_started")
-voice.speak("Hello Joseph", lady="Karen")
+voice.speak("Hello there", lady="Karen")
 print(voice.health())
 ```
 

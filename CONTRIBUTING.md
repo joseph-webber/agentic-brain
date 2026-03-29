@@ -25,7 +25,7 @@ This project adheres to the Contributor Covenant Code of Conduct. By participati
    ```
 3. **Add upstream remote**:
    ```bash
-   git remote add upstream https://github.com/joseph-webber/agentic-brain.git
+   git remote add upstream https://github.com/agentic-brain-project/agentic-brain.git
    ```
 4. **Install dependencies**:
    ```bash
@@ -62,7 +62,7 @@ This project enforces code quality and license compliance through automated tool
 - All new Python files in `src/` **must** begin with the Apache 2.0 header:
   ```python
   # SPDX-License-Identifier: Apache-2.0
-  # Copyright 2024-2026 Joseph Webber
+  # Copyright 2024-2026 Agentic Brain Contributors
   #
   # Licensed under the Apache License, Version 2.0 ("License");
   # you may not use this file except in compliance with the License.
@@ -301,7 +301,7 @@ These templates ensure all necessary information is captured upfront.
 
 ## Questions or Need Help?
 
-- Check existing [issues](https://github.com/joseph-webber/agentic-brain/issues) and [discussions](https://github.com/joseph-webber/agentic-brain/discussions)
+- Check existing [issues](https://github.com/agentic-brain-project/agentic-brain/issues) and [discussions](https://github.com/agentic-brain-project/agentic-brain/discussions)
 - Read project documentation in `/docs`
 - Create a new issue if you have questions
 - Email maintainers at joseph.webber@me.com for concerns

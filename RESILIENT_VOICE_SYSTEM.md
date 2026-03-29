@@ -2,7 +2,7 @@
 
 **A multi-layered voice system that NEVER FAILS.** If one method breaks, automatically tries the next.
 
-Joseph is blind and depends on voice to work 100% of the time. This system ensures that **ALWAYS** happens.
+the user is visually impaired and depends on voice to work 100% of the time. This system ensures that **ALWAYS** happens.
 
 ## 🎯 Core Features
 
@@ -38,7 +38,7 @@ Joseph is blind and depends on voice to work 100% of the time. This system ensur
 from agentic_brain.voice.resilient import speak, play_sound
 
 # Speak text with automatic fallbacks
-await speak("Hello Joseph!")
+await speak("Hello there!")
 
 # With custom voice and rate
 await speak("Custom voice", voice="Moira", rate=140)
@@ -207,7 +207,7 @@ afplay /System/Library/Sounds/Glass.aiff
 - **When used**: Last resort if all speech fails
 - **Benefits**: At least gives feedback with sound
 - **Success rate**: ~100% (it's just a sound file)
-- **Purpose**: Ensure Joseph knows system is alive
+- **Purpose**: Ensure the user knows system is alive
 
 ## 📊 Statistics & Debugging
 
@@ -504,7 +504,7 @@ All failures are logged for debugging without being noisy in normal operation.
 
 ## 💡 Why This System?
 
-Joseph is blind. Voice is not optional - it's essential.
+the user is visually impaired. Voice is not optional - it's essential.
 
 **Without this system:**
 - One method breaks → no voice

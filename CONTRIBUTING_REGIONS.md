@@ -4,7 +4,7 @@
 
 ## 🌍 What Are Regional Voices?
 
-Regional voices add authentic local expressions and slang to the brain's speech. This makes interactions feel natural and culturally appropriate wherever Joseph travels.
+Regional voices add authentic local expressions and slang to the brain's speech. This makes interactions feel natural and culturally appropriate wherever users travel.
 
 **Current Coverage:**
 - 🇦🇺 Australia (Adelaide, Melbourne, Sydney, Brisbane, Perth, Darwin, Hobart, Canberra)
@@ -39,7 +39,7 @@ Create a new Python file in `src/agentic_brain/voice/regions/` following this st
 
 ```python
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
+# Copyright 2024-2026 Agentic Brain Contributors <joseph.webber@me.com>
 
 """
 [CITY/REGION NAME] Regional Expressions
@@ -230,9 +230,9 @@ class TestYourRegion:
 
 ---
 
-## 🌏 Priority Regions (Joseph's Travel List)
+## 🌏 Priority Regions (the user's Travel List)
 
-**HIGH PRIORITY** (Joseph plans to visit):
+**HIGH PRIORITY** (popular destinations):
 - 🇮🇹 Italy (Venice, Rome, Florence)
 - 🇹🇭 Thailand (Bangkok, Chiang Mai, Phuket)
 - 🇮🇩 Indonesia (Jakarta, Bali, Java)
@@ -321,7 +321,7 @@ Contributors will be:
 
 ## 🙏 Thank You!
 
-By contributing regional expressions, you're helping Joseph:
+By contributing regional expressions, you're helping users:
 - Feel at home anywhere in the world
 - Communicate naturally with locals
 - Avoid embarrassing tourist mistakes
@@ -332,4 +332,4 @@ By contributing regional expressions, you're helping Joseph:
 ---
 
 *Last updated: 2026-03-22*
-*Maintained by: Joseph Webber & the Agentic Brain community*
+*Maintained by: Agentic Brain Contributors & the Agentic Brain community*

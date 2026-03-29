@@ -6,11 +6,11 @@ Deploy Agentic Brain to production with one click or one command.
 
 ## 🚀 One-Click Deploy
 
-[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/joseph-webber/agentic-brain)
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/agentic-brain-project/agentic-brain)
 [![Deploy to Railway](https://railway.app/button.svg)](https://railway.app/template/agentic-brain?referralCode=agentic)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/joseph-webber/agentic-brain)
-[![Deploy to Fly.io](https://img.shields.io/badge/Deploy%20to-Fly.io-7B3F00?style=for-the-badge&logo=fly.io&logoColor=white)](https://fly.io/launch?repo=https://github.com/joseph-webber/agentic-brain)
-[![Deploy to DigitalOcean](https://img.shields.io/badge/Deploy%20to-DigitalOcean-0080FF?style=for-the-badge&logo=digitalocean&logoColor=white)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/joseph-webber/agentic-brain)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/agentic-brain-project/agentic-brain)
+[![Deploy to Fly.io](https://img.shields.io/badge/Deploy%20to-Fly.io-7B3F00?style=for-the-badge&logo=fly.io&logoColor=white)](https://fly.io/launch?repo=https://github.com/agentic-brain-project/agentic-brain)
+[![Deploy to DigitalOcean](https://img.shields.io/badge/Deploy%20to-DigitalOcean-0080FF?style=for-the-badge&logo=digitalocean&logoColor=white)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/agentic-brain-project/agentic-brain)
 
 </div>
 
@@ -54,7 +54,7 @@ These are indicative only; always confirm in each provider's calculator.
 
 ```bash
 # Clone and deploy
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 
 # Set password
@@ -89,8 +89,8 @@ git push heroku main
 {
   "name": "Agentic Brain",
   "description": "AI Agent Framework with GraphRAG",
-  "repository": "https://github.com/joseph-webber/agentic-brain",
-  "logo": "https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/docs/assets/brain-logo.png",
+  "repository": "https://github.com/agentic-brain-project/agentic-brain",
+  "logo": "https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/docs/assets/brain-logo.png",
   "keywords": ["ai", "agents", "graphrag", "python"],
   "addons": [
     "heroku-redis:mini"
@@ -324,7 +324,7 @@ services:
   - name: api
     dockerfile_path: Dockerfile
     github:
-      repo: joseph-webber/agentic-brain
+      repo: agentic-brain-project/agentic-brain
       branch: main
       deploy_on_push: true
     http_port: 8000
@@ -391,7 +391,7 @@ az containerapp create \
   --name agentic-brain \
   --resource-group agentic-brain-rg \
   --environment agentic-brain-env \
-  --image ghcr.io/joseph-webber/agentic-brain:latest \
+  --image ghcr.io/agentic-brain-project/agentic-brain:latest \
   --target-port 8000 \
   --ingress external \
   --min-replicas 1 \
@@ -436,7 +436,7 @@ az webapp create \
   --name agentic-brain \
   --resource-group agentic-brain-rg \
   --plan agentic-brain-plan \
-  --deployment-container-image-name ghcr.io/joseph-webber/agentic-brain:latest
+  --deployment-container-image-name ghcr.io/agentic-brain-project/agentic-brain:latest
 
 # Configure
 az webapp config appsettings set \
@@ -466,7 +466,7 @@ resource containerApp 'Microsoft.App/containerApps@2023-05-01' = {
       containers: [
         {
           name: appName
-          image: 'ghcr.io/joseph-webber/agentic-brain:latest'
+          image: 'ghcr.io/agentic-brain-project/agentic-brain:latest'
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
@@ -550,7 +550,7 @@ gcloud compute ssh agentic-brain-vm --zone australia-southeast1-a
 
 # On the VM:
 curl -fsSL https://get.docker.com | sh
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 docker-compose up -d
 ```
@@ -619,7 +619,7 @@ aws ecs create-service \
   "containerDefinitions": [
     {
       "name": "agentic-brain",
-      "image": "ghcr.io/joseph-webber/agentic-brain:latest",
+      "image": "ghcr.io/agentic-brain-project/agentic-brain:latest",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -736,7 +736,7 @@ Resources:
       RequiresCompatibilities: [FARGATE]
       ContainerDefinitions:
         - Name: agentic-brain
-          Image: ghcr.io/joseph-webber/agentic-brain:latest
+          Image: ghcr.io/agentic-brain-project/agentic-brain:latest
           PortMappings:
             - ContainerPort: 8000
 
@@ -775,7 +775,7 @@ module "aws_ecs" {
   count  = var.cloud_provider == "aws" ? 1 : 0
   
   app_name       = "agentic-brain"
-  image          = "ghcr.io/joseph-webber/agentic-brain:latest"
+  image          = "ghcr.io/agentic-brain-project/agentic-brain:latest"
   cpu            = 512
   memory         = 1024
   desired_count  = 2
@@ -800,7 +800,7 @@ module "azure_aca" {
   count  = var.cloud_provider == "azure" ? 1 : 0
   
   app_name       = "agentic-brain"
-  image          = "ghcr.io/joseph-webber/agentic-brain:latest"
+  image          = "ghcr.io/agentic-brain-project/agentic-brain:latest"
   location       = "australiaeast"
   min_replicas   = 1
   max_replicas   = 10
@@ -913,7 +913,7 @@ services:
       - agentic-network
 
   agentic-brain:
-    image: ghcr.io/joseph-webber/agentic-brain:${VERSION:-latest}
+    image: ghcr.io/agentic-brain-project/agentic-brain:${VERSION:-latest}
     deploy:
       replicas: 3
       resources:

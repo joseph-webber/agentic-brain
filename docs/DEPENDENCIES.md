@@ -221,4 +221,4 @@ The dependency configuration is complete and correct!
 
 ---
 
-**Maintainer:** Joseph Webber (joseph.webber@me.com)
+**Maintainer:** Agentic Brain Contributors (joseph.webber@me.com)

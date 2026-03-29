@@ -207,7 +207,7 @@ async def main() -> None:
             "payment_method": "stripe",
             "payment_method_title": "Stripe",
             "billing": {
-                "first_name": "Joseph",
+                "first_name": "John",
                 "last_name": "Webber",
                 "email": "joseph@example.com",
                 "address_1": "1 King William St",
@@ -216,7 +216,7 @@ async def main() -> None:
                 "country": "AU",
             },
             "shipping": {
-                "first_name": "Joseph",
+                "first_name": "John",
                 "last_name": "Webber",
                 "address_1": "1 King William St",
                 "city": "Adelaide",

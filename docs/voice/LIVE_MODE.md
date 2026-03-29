@@ -3,7 +3,7 @@
 ## Overview
 
 **Project Aria** is the live, hands-free voice conversation feature of Agentic
-Brain.  Joseph speaks, the brain listens, transcribes, thinks, and responds
+Brain.  The user speaks, the brain listens, transcribes, thinks, and responds
 — all with voice.  No typing needed.
 
 ### Architecture
@@ -163,7 +163,7 @@ ab voice live start --wake-word "Hey Iris"
 
 ## Interrupt detection
 
-If Joseph speaks while the brain is talking, the current speech is
+If the user speaks while the brain is talking, the current speech is
 immediately terminated.  This is critical for accessibility — the user
 must always be able to interrupt.
 

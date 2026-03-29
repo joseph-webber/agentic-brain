@@ -332,7 +332,7 @@ Environment:
 
 User Profile:
   Timezone: ACDT (UTC+10:30)
-  Name: Joseph Webber
+  Name: Agentic Brain Contributors
   Location: Adelaide, SA
 
 LLM Configuration:
@@ -444,8 +444,8 @@ Improvements welcome:
 
 ## Support
 
-- **Issues**: https://github.com/joseph-webber/agentic-brain/issues
-- **Discussions**: https://github.com/joseph-webber/agentic-brain/discussions
+- **Issues**: https://github.com/agentic-brain-project/agentic-brain/issues
+- **Discussions**: https://github.com/agentic-brain-project/agentic-brain/discussions
 - **Email**: joseph.webber@me.com
 
 ## License

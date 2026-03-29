@@ -53,8 +53,8 @@ from agentic_brain.memory import SessionMemory
 session = SessionMemory(session_id="user-123-abc")
 
 # Automatically tracks conversation
-await session.add_message({"role": "user", "content": "My name is Joseph"})
-await session.add_message({"role": "assistant", "content": "Nice to meet you, Joseph!"})
+await session.add_message({"role": "user", "content": "My name is Alice"})
+await session.add_message({"role": "assistant", "content": "Nice to meet you, Alice!"})
 
 # Recall within session
 context = session.get_context(last_n=10)  # Last 10 messages
@@ -79,7 +79,7 @@ ltm = LongTermMemory(neo4j_uri="bolt://localhost:7687")
 
 # Store knowledge
 await ltm.store_fact(
-    subject="Joseph",
+    subject="Alice",
     predicate="lives_in",
     object="Adelaide",
     confidence=0.95
@@ -87,14 +87,14 @@ await ltm.store_fact(
 
 # Store relationships
 await ltm.store_relationship(
-    entity1="Joseph",
+    entity1="Alice",
     relation="works_at",
     entity2="CITB",
     properties={"role": "Developer", "since": "2020"}
 )
 
 # Query knowledge
-facts = await ltm.query("MATCH (p:Person {name: 'Joseph'})-[r]->(n) RETURN p, r, n")
+facts = await ltm.query("MATCH (p:Person {name: 'Alice'})-[r]->(n) RETURN p, r, n")
 ```
 
 **Features:**
@@ -119,13 +119,13 @@ semantic = SemanticMemory(
 
 # Store with embeddings
 await semantic.store(
-    text="Joseph prefers bullet points over paragraphs",
+    text="The user prefers bullet points over paragraphs",
     metadata={"type": "preference", "confidence": 0.9}
 )
 
 # Semantic search
 results = await semantic.search(
-    query="How does Joseph like his information formatted?",
+    query="How does the user like information formatted?",
     top_k=5
 )
 # Returns the preference even though wording is different!
@@ -187,18 +187,18 @@ brain = Brain()
 
 # Store across all memory types automatically
 await brain.memory.remember(
-    "Joseph lives in Adelaide and works at CITB as a developer",
+    "Alice lives in Adelaide and works as a developer",
     session_id="current"
 )
 # This will:
 # 1. Add to session context
-# 2. Extract entities → Neo4j (Joseph, Adelaide, CITB)
+# 2. Extract entities → Neo4j (Alice, Adelaide)
 # 3. Generate embeddings → vector store
 # 4. Record event → episodic log
 
 # Recall intelligently
 memories = await brain.memory.recall(
-    query="Where does Joseph work?",
+    query="Where does Alice work?",
     session_id="current",
     include_long_term=True,
     include_semantic=True,
@@ -229,13 +229,13 @@ memory_config = {
 ```python
 # High-importance memories survive longer
 await brain.memory.remember(
-    "Joseph's birthday is March 15",
+    "the user's birthday is March 15",
     importance=0.9,  # Will be retained longer
     decay_rate=0.1   # Slow decay
 )
 
 await brain.memory.remember(
-    "Joseph mentioned liking coffee",
+    "Alice mentioned liking coffee",
     importance=0.3,  # Lower priority
     decay_rate=0.5   # Faster decay
 )
@@ -272,7 +272,7 @@ result = await backend.query("""
     RETURN topic.name, count(*) as mentions
     ORDER BY mentions DESC
     LIMIT 5
-""", {"name": "Joseph"})
+""", {"name": "Alice"})
 ```
 
 ### SQLite (Local Memory)

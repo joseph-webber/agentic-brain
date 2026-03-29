@@ -2,7 +2,7 @@
 
 Use the included `render.yaml` to spin up a demo-grade Agentic Brain deployment on Render.
 
-1. **Fork** `joseph-webber/agentic-brain` (Render needs repo access).
+1. **Fork** `agentic-brain-project/agentic-brain` (Render needs repo access).
 2. Go to https://render.com/deploy and paste the URL of your fork. Render detects `render.yaml` and
    provisions three services: the FastAPI web app, a private Neo4j service, and managed Redis.
 3. Accept the defaults or customize the following demo credentials when prompted:

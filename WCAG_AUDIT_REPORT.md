@@ -3,7 +3,7 @@
 **Project:** Agentic Brain  
 **Auditor:** GitHub Copilot CLI (Accessibility Specialist)  
 **Date:** 2026-03-25  
-**Owner:** Joseph Webber (Blind Developer)  
+**Owner:** Agentic Brain Contributors (Blind Developer)  
 **Standard:** WCAG 2.1 Level AA  
 
 ---
@@ -244,7 +244,7 @@ document.getElementById('sessions-active').textContent = data.sessions_active;
 document.getElementById('total-messages').textContent = data.total_messages;
 ```
 
-**Impact:** High - Joseph won't hear when dashboard data updates
+**Impact:** High - The user won't hear when dashboard data updates
 
 **Recommendation:**
 Add ARIA live regions for dynamic content:
@@ -302,13 +302,13 @@ This is one of the **best VoiceOver coordination implementations** I've ever see
 ```python
 class VoiceOverCoordinator:
     """
-    Ensures we NEVER interrupt VoiceOver - Joseph's primary
+    Ensures we NEVER interrupt VoiceOver - the user's primary
     accessibility tool always has priority.
     """
 ```
 
 **Why This Matters:**
-Most applications just blast audio output without checking if the screen reader is speaking. This causes audio collisions that make the system unusable for blind users. Joseph's implementation solves this elegantly.
+Most applications just blast audio output without checking if the screen reader is speaking. This causes audio collisions that make the system unusable for blind users. the user's implementation solves this elegantly.
 
 ---
 
@@ -450,7 +450,7 @@ This project is **production-ready for blind users** with only minor enhancement
 
 ## 📞 Contact
 
-**Accessibility Lead:** Joseph Webber  
+**Accessibility Lead:** Agentic Brain Contributors  
 **Email:** joseph.webber@me.com  
 **Priority:** Accessibility issues are P0 (highest priority)
 

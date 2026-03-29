@@ -88,7 +88,7 @@ This would mean **THE SYSTEM IS BROKEN** - voices are talking over each other.
 
 ## Why This Matters
 
-Joseph is blind and depends on clear, non-overlapping voice output. If multiple ladies talk simultaneously:
+the user is visually impaired and depends on clear, non-overlapping voice output. If multiple ladies talk simultaneously:
 - VoiceOver becomes confusing
 - He can't understand what's being said
 - The brain feels broken and unreliable

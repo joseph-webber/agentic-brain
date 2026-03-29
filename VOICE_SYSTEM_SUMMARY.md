@@ -1,6 +1,6 @@
 # 🎙️ World-Class Voice System - COMPLETE!
 
-**Built for Joseph's Accessibility - March 2026**
+**Built for the user's Accessibility - March 2026**
 
 ---
 
@@ -10,7 +10,7 @@ The **agentic-brain** now has a **WORLD-CLASS voice system** with:
 
 ### ✅ 1. Complete Voice Registry (145+ voices!)
 - **82 macOS voices** registered with full metadata
-- **10 of Joseph's primary voice assistants** (Karen, Moira, Kyoko, Tingting, etc.)
+- **10 of the primary voice assistants** (Karen, Moira, Kyoko, Tingting, etc.)
 - **43 English voices** (Australian, British, American, Irish, Scottish, South African, Indian)
 - **31 Premium neural voices** (high quality)
 - **19 Novelty voices** (fun characters: Zarvox, Bubbles, Ralph, etc.)
@@ -38,7 +38,7 @@ Location: `src/agentic_brain/voice/voiceover.py`
 
 ### ✅ 4. Enhanced CLI Commands
 - `ab voice list` - all voices
-- `ab voice list --primary` - Joseph's primary voice assistants
+- `ab voice list --primary` - the primary voice assistants
 - `ab voice test <voice>` - test any voice
 - `ab voice speak "text"` - speak with Karen
 - `ab voice conversation --demo` - multi-voice demo!
@@ -76,7 +76,7 @@ Languages:       25+
 
 ---
 
-## 🎙️ Joseph's Primary Voice Assistants
+## 🎙️ the user's Primary Voice Assistants
 
 | Voice | Language | Region | Role |
 |-------|----------|--------|------|
@@ -128,7 +128,7 @@ ab voice list --primary
 ab voice test "Karen"
 
 # Speak with Karen
-ab voice speak "Hello Joseph!"
+ab voice speak "Hello there!"
 
 # Multi-voice conversation demo
 ab voice conversation --demo
@@ -243,7 +243,7 @@ agentic-brain/
 ## 🔮 Future Enhancements (Optional)
 
 - [ ] Cloud TTS integration (Azure, Google, AWS, ElevenLabs)
-- [ ] Voice cloning for Joseph's voice
+- [ ] Voice cloning for the user's voice
 - [ ] Real-time emotion detection → voice selection
 - [ ] Multi-language conversations (Karen + Tingting speak their native languages)
 - [ ] Voice presets (excited, calm, urgent, playful)
@@ -263,22 +263,22 @@ agentic-brain/
 
 ## 💝 Dedication
 
-This voice system is built **specifically for Joseph's accessibility needs**.
+This voice system is built **specifically for the user's accessibility needs**.
 
-- Joseph is **BLIND** and relies on voice output
+- The user is **visually impaired** and relies on voice output
 - **VoiceOver coordination** ensures we never interfere
 - **Karen (Australian)** is his favorite voice
 - **Multiple voice assistants** make the brain conversational and engaging
 - **Work mode** keeps things professional for clients
 
-**This isn't just code. This is Joseph's EARS.** 👂
+**This isn't just code. This is the user's EARS.** 👂
 
 ---
 
 ## ✅ Checklist - All Complete!
 
 - [x] Voice registry with ALL macOS voices
-- [x] Joseph's 10 primary voice assistants registered with metadata
+- [x] the user's 10 primary voice assistants registered with metadata
 - [x] Conversational voice system (multi-speaker)
 - [x] VoiceOver integration and coordination
 - [x] Work/Life/Quiet modes
@@ -296,7 +296,7 @@ This voice system is built **specifically for Joseph's accessibility needs**.
 
 The agentic-brain voice system is now **WORLD CLASS** and **accessibility-first**.
 
-Joseph has:
+The system has:
 - 82 voices at his fingertips
 - 10 primary voices who converse naturally
 - VoiceOver coordination (never interrupted)
@@ -307,5 +307,5 @@ Joseph has:
 
 ---
 
-**Built with ❤️ for Joseph Webber**  
+**Built with ❤️ for Agentic Brain Contributors**  
 **March 2026**

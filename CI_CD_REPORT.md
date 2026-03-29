@@ -151,7 +151,7 @@
 # Settings > Actions > Runners > New self-hosted runner
 
 # On Mac:
-./run.sh --url https://github.com/joseph-webber/agentic-brain --token <token>
+./run.sh --url https://github.com/agentic-brain-project/agentic-brain --token <token>
 
 # Tags: self-hosted, macos, arm64
 ```

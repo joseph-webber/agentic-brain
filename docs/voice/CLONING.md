@@ -98,7 +98,7 @@ cloner = VoiceCloner()
 voice_id = cloner.clone_voice(
     "samples/karen.wav",
     name="custom_karen",
-    reference_text="Hello Joseph, I'm ready when you are.",
+    reference_text="Hello there, I'm ready when you are.",
     assigned_lady="karen",
 )
 

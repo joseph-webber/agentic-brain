@@ -7,7 +7,7 @@
 from agentic_brain.voice import speak, VoiceQueue
 
 # Simple: Just speak!
-speak("Hello Joseph!")
+speak("Hello there!")
 
 # Advanced: Control voice and rate
 speak("温度是一百度", voice="Tingting", rate=140)
@@ -103,7 +103,7 @@ ASIAN_VOICE_CONFIG = {
 ### Western Voices (Keep Numbers)
 ```python
 WESTERN_VOICE_CONFIG = {
-    "Karen":      {"default_rate": 155},  # Joseph's favorite!
+    "Karen":      {"default_rate": 155},  # the default voice!
     "Moira":      {"default_rate": 150},  # Irish
     "Shelley":    {"default_rate": 148},  # English
     "Zosia":      {"default_rate": 150},  # Polish
@@ -170,7 +170,7 @@ from agentic_brain.voice import speak
 # Conversation-like effect
 speak("Hello, I'm Karen", voice="Karen")
 speak("And I'm Moira", voice="Moira", pause_after=2.0)
-speak("Together we help Joseph", voice="Kyoko", pause_after=1.5)
+speak("Together we help the user", voice="Kyoko", pause_after=1.5)
 ```
 
 ---
@@ -300,7 +300,7 @@ python3 -m pytest tests/test_voice_safety.py --cov=agentic_brain.voice.queue
 ## Common Questions
 
 ### Q: Why thread-safe?
-**A**: Agents run in multiple threads. If two agents try to speak simultaneously, we don't want overlapping voices confusing Joseph. The semaphore ensures sequential access.
+**A**: Agents run in multiple threads. If two agents try to speak simultaneously, we don't want overlapping voices confusing the user. The semaphore ensures sequential access.
 
 ### Q: Why number spelling?
 **A**: Kyoko (Japanese speaker) can't pronounce "100" clearly when speaking English. She needs to hear "one hundred" spelled out. Western voices (Karen) pronounce numbers naturally.
@@ -329,8 +329,8 @@ import logging
 logging.getLogger('agentic_brain.voice.queue').setLevel(logging.DEBUG)
 
 # Now you'll see:
-# [DEBUG] Queued voice message: Karen - Hello Joseph...
-# [INFO] 🔊 Speaking [Karen] @155wpm: Hello Joseph...
+# [DEBUG] Queued voice message: Karen - Hello there...
+# [INFO] 🔊 Speaking [Karen] @155wpm: Hello there...
 ```
 
 ### Check Queue Status
@@ -429,6 +429,6 @@ queue.add_error_callback(monitor_errors)
 
 ---
 
-Created for **Joseph Webber** ❤️  
+Created for **Agentic Brain Contributors** ❤️  
 AGENTIC-BRAIN Voice Safety System - Integration Guide  
 Status: Production Ready ✅

@@ -107,7 +107,7 @@ from agentic_brain.voice.lady_voices import get_lady_voice
 
 config = get_lady_voice("Flo")
 pipeline = KPipeline(lang_code="f")
-for _, _, audio in pipeline("Bonjour Joseph, je relis la pull request.", voice=config["voice_id"], speed=config["rate_adjustment"]):
+for _, _, audio in pipeline("Bonjour, je relis la pull request.", voice=config["voice_id"], speed=config["rate_adjustment"]):
     print(type(audio), len(audio))
     break
 PY

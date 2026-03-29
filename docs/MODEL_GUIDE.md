@@ -222,7 +222,7 @@ If using AI for Australian clients, ensure your provider's data handling meets P
 | 🏢 **Enterprise** | Large orgs, compliance | ⭐⭐⭐⭐⭐ | $100+/mo | ✅ Yes |
 | 👨‍💻 **Developer** | Coding, debugging | ⭐⭐⭐⭐ | $10-30/mo | ✅ Yes |
 | 🎨 **Creative** | Writing, content | ⭐⭐⭐⭐ | $10-30/mo | ✅ Yes |
-| 🌏 **Aussie Default** | Joseph's recommended | ⭐⭐⭐⭐⭐ | FREE-$20 | Optional |
+| 🌏 **Aussie Default** | the recommended | ⭐⭐⭐⭐⭐ | FREE-$20 | Optional |
 
 ---
 
@@ -508,7 +508,7 @@ TEMPERATURE=0.8
 
 ---
 
-### 🌏 Template: Aussie Default (Joseph's Recommended)
+### 🌏 Template: Aussie Default (the user's Recommended)
 
 **For:** Australian users who want a sensible, balanced setup
 
@@ -517,7 +517,7 @@ TEMPERATURE=0.8
 ```bash
 # .env - Aussie Default Template
 # Last verified: March 2026
-# Recommended by Joseph Webber, Adelaide SA
+# Recommended by Agentic Brain Contributors, Adelaide SA
 
 # === LOCAL FIRST (Privacy + Offline) ===
 OLLAMA_HOST=http://localhost:11434

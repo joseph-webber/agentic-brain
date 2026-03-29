@@ -411,7 +411,7 @@ When adding new features, consider:
 ## 🔒 LOCKED DECISION: Blueprint Strategy
 
 **Decision Date:** 2026-03-24  
-**Decision Maker:** Joseph Webber
+**Decision Maker:** Agentic Brain Contributors
 
 ### Strategy
 1. **NOW**: Finish agentic-brain core features

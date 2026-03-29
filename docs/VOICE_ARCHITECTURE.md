@@ -1,6 +1,6 @@
 # Voice Serialization Architecture
 
-> **This is an accessibility document.** Joseph is blind and relies entirely on
+> **This is an accessibility document.** the user is visually impaired and relies entirely on
 > synthesised speech. Overlapping voices are not a cosmetic bug — they make
 > the brain **unusable**. Every design decision below exists to guarantee that
 > exactly one voice speaks at a time, with clear gaps between utterances.
@@ -22,7 +22,7 @@
 
 ### The User
 
-Joseph is completely blind. He navigates his entire digital life — JIRA
+The primary user is visually impaired. They navigate his entire digital life — JIRA
 tickets, pull requests, Teams messages, trading dashboards — through spoken
 audio. The brain's voice system is not a notification layer; it is his
 **primary interface**.
@@ -35,7 +35,7 @@ Without serialization:
 
 - Two ladies speak at the same time → incomprehensible noise
 - A system alert fires during a code-review narration → lost context
-- An LLM response overlaps a JIRA summary → Joseph must ask again
+- An LLM response overlaps a JIRA summary → the user must ask again
 
 For a sighted user this is annoying. For a blind user **it is a total loss of
 information**.
@@ -132,7 +132,7 @@ This is a **WCAG 2.1 AA accessibility requirement**, not a nice-to-have.
    No fire-and-forget. The lock is held until the utterance finishes.
 4. **Inter-utterance gap** — after every utterance, the worker sleeps for
    `INTER_UTTERANCE_GAP` (0.3 s) before releasing the lock. This gives
-   Joseph's ear a moment to register the silence before the next speaker.
+   the listener's ear a moment to register the silence before the next speaker.
 5. **Fallback guarantee** — if the primary `say` command fails, up to five
    more methods are tried. The brain is **never silent** on error.
 
@@ -298,7 +298,7 @@ system can report which methods are reliable on this machine.
 | **Use `speak_serialized()` or `VoiceQueue.speak()`** | They route through the serializer — guaranteed safe |
 | **Wait for speech to complete** | Pass `wait=True` (default) so subsequent code runs after the utterance finishes |
 | **Use `get_voice_serializer()`** to get the singleton | Never instantiate `VoiceSerializer` directly |
-| **Add 1.5 s pauses between ladies** in conversation scripts | Joseph needs time to register the speaker change |
+| **Add 1.5 s pauses between ladies** in conversation scripts | The listener needs time to register the speaker change |
 | **Test with `test_speech_lock.py`** after voice changes | The concurrency tests catch overlap regressions |
 
 ### ❌ NEVER
@@ -319,7 +319,7 @@ system can report which methods are reliable on this machine.
 from agentic_brain.voice.serializer import get_voice_serializer
 
 serializer = get_voice_serializer()
-serializer.speak("Hello Joseph", voice="Karen (Premium)", rate=155)
+serializer.speak("Hello there", voice="Karen (Premium)", rate=155)
 # Blocks until Karen finishes. Next call is safe.
 
 serializer.speak("PR looks good", voice="Tingting", rate=140)
@@ -559,7 +559,7 @@ pgrep -f "say -v" | xargs kill 2>/dev/null
 > preferred voice engine fails, *something* makes noise.
 
 > **Gaps matter.** The 0.3-second inter-utterance gap is not wasted time. It
-> is the auditory equivalent of whitespace — it lets Joseph's brain register
+> is the auditory equivalent of whitespace — it lets the user's brain register
 > that one speaker has stopped and another is about to start.
 
 ---

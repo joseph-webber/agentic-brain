@@ -714,7 +714,7 @@ location /wp-content/plugins/agentic-brain/ {
 ## Support
 
 For WordPress integration support:
-- GitHub Issues: [agentic-brain/issues](https://github.com/joseph-webber/agentic-brain/issues)
+- GitHub Issues: [agentic-brain/issues](https://github.com/agentic-brain-project/agentic-brain/issues)
 - Documentation: [docs/integrations/](.)
 
 ---

@@ -346,7 +346,7 @@ agentic-brain serve
 ---
 
 **Created**: March 2026  
-**Authors**: Joseph Webber & Contributors  
+**Authors**: Agentic Brain Contributors & Contributors  
 **Status**: ACTIVE DEVELOPMENT  
 **Stars Goal**: 🌟 1,000,000+
 

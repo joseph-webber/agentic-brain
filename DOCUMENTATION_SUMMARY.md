@@ -132,7 +132,7 @@ Use: **[docs/MACOS_DEVELOPER_CHECKLIST.md](docs/MACOS_DEVELOPER_CHECKLIST.md)**
 ### Initial Setup
 ```bash
 # Clone and setup
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 ./setup.sh -i
 
@@ -235,7 +235,7 @@ If you find issues or have improvements:
 - [Main README](README.md)
 - [Contributing Guide](CONTRIBUTING.md)
 - [Security Policy](SECURITY.md)
-- [API Documentation](https://joseph-webber.github.io/agentic-brain/)
+- [API Documentation](https://agentic-brain-project.github.io/agentic-brain/)
 
 ---
 

@@ -140,7 +140,7 @@ The brain features a world-class voice system designed for accessibility.
   ```
 - **Speak Text**: Make the brain say something.
   ```bash
-  agentic voice speak "Hello Joseph, ready to work."
+  agentic voice speak "Hello there, ready to work."
   ```
 
 ### Voice Modes

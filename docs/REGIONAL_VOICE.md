@@ -2,13 +2,13 @@
 
 **Location-aware voice system that adapts to regional language differences**
 
-Joseph lives in Adelaide, South Australia. The voice system knows Adelaide expressions like "heaps good", "bottle-o", and "arvo"!
+The default locale is Adelaide, South Australia. The voice system knows Adelaide expressions like "heaps good", "bottle-o", and "arvo"!
 
 ## Features
 
 ### 🌏 Location Awareness
 - Automatically detects location from system settings
-- Defaults to Adelaide (Joseph's location)
+- Defaults to Adelaide (the user's location)
 - Easy switching when traveling
 
 ### 🗣️ Regional Expressions
@@ -276,7 +276,7 @@ Different voices could have different regional profiles:
 - Kyoko speaks Japanese-accented English
 
 ### Context-Aware Regionalization
-Adapt based on who Joseph is talking to:
+Adapt based on the conversation context:
 - Formal contexts: Less slang
 - Casual contexts: More regional expressions
 - International: Standard English
@@ -312,10 +312,10 @@ regional.py
 
 ## License
 
-Apache-2.0 - Part of Joseph's Agentic Brain
+Apache-2.0 - Part of the user's Agentic Brain
 
 ## Credits
 
-Created for Joseph Webber, Adelaide, South Australia 🇦🇺
+Created for Agentic Brain Contributors, Adelaide, South Australia 🇦🇺
 
 Built with ❤️ to make the brain sound local!

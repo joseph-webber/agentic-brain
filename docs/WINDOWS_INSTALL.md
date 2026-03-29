@@ -24,7 +24,7 @@ This is the **simplest and most reliable** method for Windows users.
 
 Open Git Bash and run:
 ```bash
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain/
 ./setup.sh
 ```
@@ -66,12 +66,12 @@ If you prefer not to use Docker:
 
 ```powershell
 # Run in PowerShell (as Administrator recommended)
-irm https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/setup.ps1 | iex
+irm https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/setup.ps1 | iex
 ```
 
 Or clone and run:
 ```powershell
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 .\setup.ps1
 ```
@@ -184,5 +184,5 @@ agentic-brain serve
 
 If you're still stuck:
 1. Check the log file (see above)
-2. Open an issue at https://github.com/joseph-webber/agentic-brain/issues
+2. Open an issue at https://github.com/agentic-brain-project/agentic-brain/issues
 3. Include: Windows version, Python version, full error message

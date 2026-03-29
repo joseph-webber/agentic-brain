@@ -361,11 +361,11 @@ asyncio.run(main())
 ## Support
 
 - **Documentation**: See `docs/CROSS_PLATFORM_VOICE.md`
-- **Issues**: Report at github.com/joseph-webber/agentic-brain/issues
+- **Issues**: Report at github.com/agentic-brain-project/agentic-brain/issues
 - **Examples**: Check `examples/demo_cross_platform_voice.py`
 
 ## License
 
 Apache-2.0
 
-Built with ❤️ for accessibility by Joseph Webber
+Built with ❤️ for accessibility by Agentic Brain Contributors

@@ -54,7 +54,7 @@ gh copilot --version
 ## 5️⃣ Clone & Run
 
 ```bash
-gh repo clone joseph-webber/agentic-brain
+gh repo clone agentic-brain-project/agentic-brain
 cd agentic-brain
 python3 -m venv venv
 source venv/bin/activate
@@ -130,7 +130,7 @@ gh copilot --version
 ## 7️⃣ Clone & Run (Git Bash)
 
 ```bash
-gh repo clone joseph-webber/agentic-brain
+gh repo clone agentic-brain-project/agentic-brain
 cd agentic-brain
 python -m venv venv
 source venv/Scripts/activate
@@ -141,7 +141,7 @@ pytest tests/ -v
 ### Windows PowerShell Alternative
 
 ```powershell
-gh repo clone joseph-webber/agentic-brain
+gh repo clone agentic-brain-project/agentic-brain
 cd agentic-brain
 python -m venv venv
 .\venv\Scripts\Activate.ps1
@@ -205,7 +205,7 @@ gh auth login
 gh extension install github/gh-copilot
 
 # Clone and run
-gh repo clone joseph-webber/agentic-brain
+gh repo clone agentic-brain-project/agentic-brain
 cd agentic-brain
 python3 -m venv venv
 source venv/bin/activate
@@ -314,7 +314,7 @@ gh copilot explain "git rebase -i HEAD~3"
 
 ```bash
 # Clone the repo
-gh repo clone joseph-webber/agentic-brain
+gh repo clone agentic-brain-project/agentic-brain
 
 # Enter directory
 cd agentic-brain
@@ -469,4 +469,4 @@ pyenv global 3.11
 
 ---
 
-*Made with 💜 by Joseph Webber*
+*Made with 💜 by Agentic Brain Contributors*

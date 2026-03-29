@@ -20,7 +20,7 @@ Get your Agentic Brain up and running in 5 minutes.
 
 ### 1. Clone & Enter
 ```bash
-git clone https://github.com/joseph-webber/brain.git
+git clone https://github.com/agentic-brain-project/brain.git
 cd brain/agentic-brain
 ```
 

@@ -4,7 +4,7 @@
 
 **Version**: 3.0.0-SNAPSHOT  
 **Last Updated**: 2026-03-24  
-**Author**: Joseph Webber  
+**Author**: Agentic Brain Contributors  
 **License**: Apache 2.0 (JHipster Aligned)
 
 ---

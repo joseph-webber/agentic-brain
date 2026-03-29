@@ -4,10 +4,10 @@ Continuous Integration and Deployment with GitHub Actions.
 
 <div align="center">
 
-[![CI](https://github.com/joseph-webber/agentic-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/joseph-webber/agentic-brain/actions/workflows/ci.yml)
-[![Release](https://github.com/joseph-webber/agentic-brain/actions/workflows/release.yml/badge.svg)](https://github.com/joseph-webber/agentic-brain/actions/workflows/release.yml)
-[![CodeQL](https://github.com/joseph-webber/agentic-brain/actions/workflows/codeql.yml/badge.svg)](https://github.com/joseph-webber/agentic-brain/actions/workflows/codeql.yml)
-[![Dependabot](https://img.shields.io/badge/Dependabot-enabled-025E8C?logo=dependabot&logoColor=white)](https://github.com/joseph-webber/agentic-brain/security/dependabot)
+[![CI](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/ci.yml)
+[![Release](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/release.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/release.yml)
+[![CodeQL](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/codeql.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/codeql.yml)
+[![Dependabot](https://img.shields.io/badge/Dependabot-enabled-025E8C?logo=dependabot&logoColor=white)](https://github.com/agentic-brain-project/agentic-brain/security/dependabot)
 
 </div>
 
@@ -401,7 +401,7 @@ jobs:
       #   with:
       #     service: agentic-brain
       #     region: australia-southeast1
-      #     image: ghcr.io/joseph-webber/agentic-brain:${{ needs.setup.outputs.version }}
+      #     image: ghcr.io/agentic-brain-project/agentic-brain:${{ needs.setup.outputs.version }}
       
       # Option 3: Deploy to AWS ECS
       # - name: Deploy to ECS
@@ -558,8 +558,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/joseph-webber/agentic-brain:${{ steps.version.outputs.version }}
-            ghcr.io/joseph-webber/agentic-brain:latest
+            ghcr.io/agentic-brain-project/agentic-brain:${{ steps.version.outputs.version }}
+            ghcr.io/agentic-brain-project/agentic-brain:latest
             josephwebber/agentic-brain:${{ steps.version.outputs.version }}
             josephwebber/agentic-brain:latest
           cache-from: type=gha
@@ -810,10 +810,10 @@ jobs:
 echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
 
 # Pull image
-docker pull ghcr.io/joseph-webber/agentic-brain:latest
+docker pull ghcr.io/agentic-brain-project/agentic-brain:latest
 
 # Run
-docker run -p 8000:8000 ghcr.io/joseph-webber/agentic-brain:latest
+docker run -p 8000:8000 ghcr.io/agentic-brain-project/agentic-brain:latest
 ```
 
 ---
@@ -874,7 +874,7 @@ updates:
       day: "monday"
     open-pull-requests-limit: 10
     reviewers:
-      - "joseph-webber"
+      - "agentic-brain-project"
     labels:
       - "dependencies"
       - "python"
@@ -892,7 +892,7 @@ updates:
     schedule:
       interval: "weekly"
     reviewers:
-      - "joseph-webber"
+      - "agentic-brain-project"
     labels:
       - "dependencies"
       - "github-actions"
@@ -903,7 +903,7 @@ updates:
     schedule:
       interval: "weekly"
     reviewers:
-      - "joseph-webber"
+      - "agentic-brain-project"
     labels:
       - "dependencies"
       - "docker"

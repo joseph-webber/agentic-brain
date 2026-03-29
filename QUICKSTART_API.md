@@ -204,4 +204,4 @@ uvicorn agentic_brain.api.server:app
 
 ## License
 
-Apache-2.0 © 2026 Joseph Webber
+Apache-2.0 © 2026 Agentic Brain Contributors

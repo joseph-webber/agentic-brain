@@ -429,7 +429,7 @@ docker run -d --name woo-chatbot \
   agenticbrain/commerce-chatbot:latest
 
 # Option C: From source
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 pip install -e ".[commerce]"
 ```
@@ -662,9 +662,9 @@ pip install agentic-brain[commerce]
 
 **Open source. Free to self-host. Your data, your rules.**
 
-- GitHub: [github.com/joseph-webber/agentic-brain](https://github.com/joseph-webber/agentic-brain)
+- GitHub: [github.com/agentic-brain-project/agentic-brain](https://github.com/agentic-brain-project/agentic-brain)
 - Documentation: [docs.agenticbrain.dev](https://docs.agenticbrain.dev)
-- Community: [GitHub Discussions](https://github.com/joseph-webber/agentic-brain/discussions)
+- Community: [GitHub Discussions](https://github.com/agentic-brain-project/agentic-brain/discussions)
 - License: Apache 2.0
 
 ---

@@ -215,7 +215,7 @@ if is_globally_appropriate(content):
 #### WCAG 2.1 AA Compliance ✅
 - All 50 criteria documented
 - Implementation status tracked
-- Built by blind developer (Joseph)
+- Built with accessibility-first design
 - VoiceOver optimized
 - CLI-first design (keyboard-only)
 - Screen reader friendly output
@@ -376,7 +376,7 @@ if is_globally_appropriate(content):
 
 **Ethics Concerns:**
 - 📧 Email: joseph.webber@me.com
-- �� GitHub: [@joseph-webber](https://github.com/joseph-webber)
+- �� GitHub: [@agentic-brain-project](https://github.com/agentic-brain-project)
 
 **Urgent Issues:** `ab feedback --type ethics --urgent`
 

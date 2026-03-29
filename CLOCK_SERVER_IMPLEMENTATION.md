@@ -61,7 +61,7 @@ Successfully created a comprehensive Clock MCP Server for the agentic-brain proj
 - Safe for concurrent access by multiple agents
 
 ### ✅ Adelaide-First Design
-- All times default to Joseph's timezone (Australia/Adelaide)
+- All times default to the user's timezone (Australia/Adelaide)
 - UTC offset: +10:30 (ACDT) or +9:30 (ACST)
 - Handles daylight saving automatically
 
@@ -192,7 +192,7 @@ AI models have training data that is ~2 years out of date. When asked about date
 The Clock MCP Server provides AI agents with **real-time system time** that:
 - ✅ Always reflects current date/time (not training data)
 - ✅ Never becomes stale or outdated
-- ✅ Respects Joseph's timezone (Adelaide)
+- ✅ Respects the user's timezone (Adelaide)
 - ✅ Includes business logic (hours, weekends, greetings)
 - ✅ Warns about AI training data staleness
 
@@ -225,7 +225,7 @@ The Clock MCP Server provides AI agents with **real-time system time** that:
 | Full Adelaide info | `clock_adelaide` |
 | UTC time | `clock_utc` |
 | Just the date | `clock_date` |
-| Greeting Joseph | `clock_greeting` |
+| Greeting the user | `clock_greeting` |
 | Before sending work message | `clock_is_business_hours` |
 | Converting timezones | `clock_convert` |
 | Custom date format | `clock_format` |

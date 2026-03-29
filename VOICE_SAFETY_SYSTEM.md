@@ -2,7 +2,7 @@
 
 ## 🎯 Purpose
 
-The Voice Queue System ensures **ONLY ONE VOICE SPEAKS AT A TIME**, critical for accessibility. Joseph is blind and relies on audio - overlapping voices are confusing and dangerous!
+The Voice Queue System ensures **ONLY ONE VOICE SPEAKS AT A TIME**, critical for accessibility. The user is blind and relies on audio - overlapping voices are confusing and dangerous!
 
 **Created**: 2026-03-22 (ACDT)  
 **Status**: ✅ PRODUCTION READY - All 30 tests passing
@@ -31,7 +31,7 @@ The Voice Queue System ensures **ONLY ONE VOICE SPEAKS AT A TIME**, critical for
 
 ### ✅ Western Voice Support
 - **5 Western Voices** - Karen (Australian), Moira (Irish), Shelley (English), Zosia (Polish), Damayanti (Indonesian)
-- **Natural Rates** - Karen: 155 wpm (Joseph's favorite!)
+- **Natural Rates** - Karen: 155 wpm (the default voice!)
 - **Native Language Context** - Each voice configured with language/accent
 
 ---
@@ -62,7 +62,7 @@ queue = VoiceQueue.get_instance()
 
 # Queue a message
 msg = queue.speak(
-    text="Hello Joseph",
+    text="Hello there",
     voice="Karen",
     rate=155,
     pause_after=1.5
@@ -123,8 +123,8 @@ ASIAN_VOICE_CONFIG = {
 WESTERN_VOICE_CONFIG = {
     "Karen": {
         "native_lang": "en-AU",       # Australian
-        "default_rate": 155,          # Joseph's FAVORITE
-        "description": "Australian - Joseph's favorite!"
+        "default_rate": 155,          # the recommended voice!
+        "description": "Australian - the default voice!"
     },
     "Moira": {
         "native_lang": "en-IE",       # Irish
@@ -210,7 +210,7 @@ queue.add_error_callback(on_error)
 ```python
 from agentic_brain.voice.queue import speak
 
-speak("Hello Joseph, starting work now")
+speak("Hello there, starting work now")
 speak("That's done!", voice="Moira")
 speak("一百项目", voice="Tingting")  # Tingting speaks: "one hundred items"
 ```
@@ -293,7 +293,7 @@ All 30 tests passing:
 - ✅ `get_queue_size()` function
 
 ### Accessibility Tests (3/3)
-- ✅ Karen is default (Joseph's favorite)
+- ✅ Karen is default (the default voice!)
 - ✅ Karen speaks at clear rate (155 wpm)
 - ✅ Callbacks enable notifications
 
@@ -359,7 +359,7 @@ async def run_task(request: TaskRequest):
 ### 3. **Configurable Rates**
 - Kyoko: 145 wpm (slower for clarity)
 - Tingting: 140 wpm (Mandarin accent)
-- Karen: 155 wpm (Joseph's preference)
+- Karen: 155 wpm (the user's preference)
 - Each optimized for native accent
 
 ### 4. **Error Callbacks**
@@ -399,8 +399,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Now see voice system logs:
-# [DEBUG] Queued voice message: Karen - Hello Joseph...
-# [INFO] 🔊 Speaking [Karen] @155wpm: Hello Joseph...
+# [DEBUG] Queued voice message: Karen - Hello there...
+# [INFO] 🔊 Speaking [Karen] @155wpm: Hello there...
 ```
 
 ---
@@ -413,7 +413,7 @@ logging.basicConfig(level=logging.DEBUG)
 - Error messages always spoken
 - No information lost in audio
 
-### ✅ Joseph's Privacy
+### ✅ the user's Privacy
 - All voice processing local (macOS `say` command)
 - No cloud/network calls for speech
 - No recording of voice output
@@ -460,7 +460,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 ---
 
-## 👨‍🦯 For Joseph
+## 👨‍🦯 For the User
 
 **This system is built for YOU:**
 
@@ -475,6 +475,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 ---
 
-Created with ❤️ for Joseph Webber  
+Created with ❤️ for Agentic Brain Contributors  
 AGENTIC-BRAIN Voice Safety System  
 Status: PRODUCTION READY ✅

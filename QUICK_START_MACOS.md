@@ -20,7 +20,7 @@ colima start
 
 ```bash
 # 1. Clone repo
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 
 # 2. Run automated setup

@@ -65,7 +65,7 @@ The conversational voice system uses the clock for greetings:
 ```python
 from agentic_brain.voice.conversation import greet
 
-greet()           # "Good morning, Joseph!" (based on Adelaide time)
+greet()           # "Good morning!" (based on Adelaide time)
 greet("Karen")    # "Good afternoon, Karen!"
 ```
 

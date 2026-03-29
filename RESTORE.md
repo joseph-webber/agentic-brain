@@ -79,7 +79,7 @@ A full recovery restores:
 ### Step 1: Recreate the codebase
 
 ```bash
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 ```
 
@@ -345,9 +345,9 @@ If all of the above pass and your node count looks correct, the restore worked.
 
 If this guide does not get you back online:
 
-- **Bug reports / restore failures:** https://github.com/joseph-webber/agentic-brain/issues
-- **Questions / community help:** https://github.com/joseph-webber/agentic-brain/discussions
-- **Project homepage:** https://github.com/joseph-webber/agentic-brain
+- **Bug reports / restore failures:** https://github.com/agentic-brain-project/agentic-brain/issues
+- **Questions / community help:** https://github.com/agentic-brain-project/agentic-brain/discussions
+- **Project homepage:** https://github.com/agentic-brain-project/agentic-brain
 
 When opening an issue, include:
 1. the Compose profile you used

@@ -21,8 +21,8 @@ pip install agentic-brain
 
 <br/>
 
-[![CI](https://github.com/joseph-webber/agentic-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/joseph-webber/agentic-brain/actions/workflows/ci.yml)
-[![Release](https://github.com/joseph-webber/agentic-brain/actions/workflows/release.yml/badge.svg)](https://github.com/joseph-webber/agentic-brain/actions/workflows/release.yml)
+[![CI](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/ci.yml)
+[![Release](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/release.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/release.yml)
 [![PyPI version](https://img.shields.io/pypi/v/agentic-brain?color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/agentic-brain/)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white)](https://pypi.org/project/agentic-brain/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue?logo=apache)](LICENSE)
@@ -50,7 +50,7 @@ pip install agentic-brain
 
 <!-- COMMUNITY LINKS -->
 [![Discord](https://img.shields.io/badge/Discord-Chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/agentic-brain)
-[![GitHub Discussions](https://img.shields.io/badge/GitHub-Discussions-181717?logo=github&logoColor=white)](https://github.com/joseph-webber/agentic-brain/discussions)
+[![GitHub Discussions](https://img.shields.io/badge/GitHub-Discussions-181717?logo=github&logoColor=white)](https://github.com/agentic-brain-project/agentic-brain/discussions)
 [![Twitter/X](https://img.shields.io/badge/Twitter-Follow-000000?logo=x&logoColor=white)](https://twitter.com/agentic_brain)
 
 ---
@@ -73,7 +73,7 @@ pip install agentic-brain
 **Docs:** [WordPress Integration Guide](./docs/integrations/WORDPRESS.md) • [Plugin README](./plugins/wordpress/agentic-brain/readme.txt)
 
 **Quick install:**
-1. Download the plugin ZIP from [GitHub Releases](https://github.com/ecomlounge/agentic-brain/releases) or clone into `wp-content/plugins/agentic-brain`.
+1. Download the plugin ZIP from [GitHub Releases](https://github.com/agentic-brain-project/agentic-brain/releases) or clone into `wp-content/plugins/agentic-brain`.
 2. Activate **Agentic Brain** in **Plugins → Installed Plugins**.
 3. Open **Settings → Agentic Brain** and add your API endpoint + API key.
 4. Click **Sync Now** to push products and posts to the AI backend.
@@ -101,7 +101,7 @@ Phase 2 strengthened the stack with:
 
 ```bash
 ab voice list --primary
-ab voice speak "Hello Joseph" -v "Karen (Premium)"
+ab voice speak "Hello there" -v "Karen (Premium)"
 ab voice mode work
 ab voice conversation --demo
 python demo_voice_system.py
@@ -149,17 +149,17 @@ Documentation hubs:
 ### 🚀 One-Click Deploy
 
 <p align="center">
-  <a href="https://heroku.com/deploy?template=https://github.com/joseph-webber/agentic-brain"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku"></a>
+  <a href="https://heroku.com/deploy?template=https://github.com/agentic-brain-project/agentic-brain"><img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy to Heroku"></a>
   <a href="https://railway.app/template/agentic-brain?referralCode=agentic"><img src="https://railway.app/button.svg" alt="Deploy to Railway"></a>
-  <a href="https://render.com/deploy?repo=https://github.com/joseph-webber/agentic-brain"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render"></a>
+  <a href="https://render.com/deploy?repo=https://github.com/agentic-brain-project/agentic-brain"><img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render"></a>
   <br/>
-  <a href="https://fly.io/launch?repo=https://github.com/joseph-webber/agentic-brain"><img src="https://img.shields.io/badge/Deploy%20to-Fly.io-7B3F00?style=for-the-badge&logo=fly.io&logoColor=white" alt="Deploy to Fly.io"></a>
-  <a href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/joseph-webber/agentic-brain"><img src="https://www.deploytodo.com/do-btn-blue.svg" alt="Deploy to DigitalOcean"></a>
+  <a href="https://fly.io/launch?repo=https://github.com/agentic-brain-project/agentic-brain"><img src="https://img.shields.io/badge/Deploy%20to-Fly.io-7B3F00?style=for-the-badge&logo=fly.io&logoColor=white" alt="Deploy to Fly.io"></a>
+  <a href="https://cloud.digitalocean.com/apps/new?repo=https://github.com/agentic-brain-project/agentic-brain"><img src="https://www.deploytodo.com/do-btn-blue.svg" alt="Deploy to DigitalOcean"></a>
   <br/>
-  <a href="https://console.cloud.google.com/cloudshell/editor?shellonly=true&cloudshell_image=gcr.io/cloudrun/button&cloudshell_git_repo=https://github.com/joseph-webber/agentic-brain"><img src="https://img.shields.io/badge/Deploy%20to-Google%20Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Deploy to Google Cloud"></a>
-  <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjoseph-webber%2Fagentic-brain%2Fmain%2Fazuredeploy.json"><img src="https://img.shields.io/badge/Deploy%20to-Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white" alt="Deploy to Azure"></a>
+  <a href="https://console.cloud.google.com/cloudshell/editor?shellonly=true&cloudshell_image=gcr.io/cloudrun/button&cloudshell_git_repo=https://github.com/agentic-brain-project/agentic-brain"><img src="https://img.shields.io/badge/Deploy%20to-Google%20Cloud-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white" alt="Deploy to Google Cloud"></a>
+  <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fagentic-brain-project%2Fagentic-brain%2Fmain%2Fazuredeploy.json"><img src="https://img.shields.io/badge/Deploy%20to-Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white" alt="Deploy to Azure"></a>
   <a href="https://console.aws.amazon.com/apprunner/home#/create"><img src="https://img.shields.io/badge/Deploy%20to-AWS-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white" alt="Deploy to AWS"></a>
-  <a href="https://github.com/joseph-webber/agentic-brain/tree/main/k8s"><img src="https://img.shields.io/badge/Deploy%20to-Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Deploy to Kubernetes"></a>
+  <a href="https://github.com/agentic-brain-project/agentic-brain/tree/main/k8s"><img src="https://img.shields.io/badge/Deploy%20to-Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Deploy to Kubernetes"></a>
 </p>
 
 ---
@@ -168,7 +168,7 @@ Documentation hubs:
 
 #### GitHub Pages (Docs Only)
 The static documentation site is built from `main` and published at
-[joseph-webber.github.io/agentic-brain](https://joseph-webber.github.io/agentic-brain/). Every push
+[agentic-brain-project.github.io/agentic-brain](https://agentic-brain-project.github.io/agentic-brain/). Every push
 to `main` refreshes the public docs within roughly one minute via GitHub Pages.
 
 **Status:** ✅ Live and reachable (documentation demo)
@@ -182,7 +182,7 @@ demo credentials from `.env.docker.example`. The resulting URL (for example,
 `https://agentic-brain.onrender.com`) is perfect for sharing the live demo.
 
 <p>
-  <a href="https://render.com/deploy?repo=https://github.com/joseph-webber/agentic-brain">
+  <a href="https://render.com/deploy?repo=https://github.com/agentic-brain-project/agentic-brain">
     <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy live demo to Render">
   </a>
 </p>
@@ -393,7 +393,7 @@ Get a production-ready environment running in seconds:
 
 ### 🔧 CI/CD & Testing
 
-[![CI](https://github.com/joseph-webber/agentic-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/joseph-webber/agentic-brain/actions/workflows/ci.yml)
+[![CI](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/ci.yml)
 
 **Services Required:**
 - Neo4j 5.15+ (with APOC plugin)
@@ -1253,7 +1253,7 @@ ab mode list             # See all 42 modes
 
 ```bash
 # Run with one command
-curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/setup.sh | bash
 
 # Or via Docker Compose
 docker compose up -d
@@ -1466,10 +1466,10 @@ ab mode switch european
 
 ```python
 # Unified memory API
-await brain.memory.remember("Joseph prefers bullet points")
+await brain.memory.remember("The user prefers bullet points")
 
 # Later, even in a new session:
-context = await brain.memory.recall("How does Joseph like info formatted?")
+context = await brain.memory.recall("How does the user like info formatted?")
 # Returns the preference even with different wording!
 ```
 
@@ -1702,7 +1702,7 @@ speak("注文確認しました", voice="Kyoko")              # Japanese
 ## 🛠️ Development
 
 ```bash
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 pip install -e ".[dev]"
 
@@ -1804,10 +1804,10 @@ flowchart TB
 
 | Workflow | Status |
 |----------|--------|
-| CI | [![CI](https://github.com/joseph-webber/agentic-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/joseph-webber/agentic-brain/actions/workflows/ci.yml) |
-| Docs | [![Docs](https://github.com/joseph-webber/agentic-brain/actions/workflows/docs.yml/badge.svg)](https://github.com/joseph-webber/agentic-brain/actions/workflows/docs.yml) |
-| Docker | [![Docker](https://github.com/joseph-webber/agentic-brain/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/joseph-webber/agentic-brain/actions/workflows/docker-publish.yml) |
-| Release | [![Release](https://github.com/joseph-webber/agentic-brain/actions/workflows/release.yml/badge.svg)](https://github.com/joseph-webber/agentic-brain/actions/workflows/release.yml) |
+| CI | [![CI](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/ci.yml) |
+| Docs | [![Docs](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/docs.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/docs.yml) |
+| Docker | [![Docker](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/docker-publish.yml) |
+| Release | [![Release](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/release.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/release.yml) |
 
 ---
 
@@ -1824,7 +1824,7 @@ flowchart TB
 
 ## 🙏 Acknowledgments
 
-**Built by [Joseph Webber](https://github.com/joseph-webber)** · Ba. Maths & Comp. Sci. · Adelaide, Australia
+**Built by Agentic Brain Contributors**
 
 **Strategic Partners:**
 - [Temporal.io](https://temporal.io) — Durable execution patterns
@@ -1841,7 +1841,7 @@ flowchart TB
 
 **⭐ Star this repo if you find it useful!**
 
-[Report Bug](https://github.com/joseph-webber/agentic-brain/issues) • [Request Feature](https://github.com/joseph-webber/agentic-brain/issues) • [Discussions](https://github.com/joseph-webber/agentic-brain/discussions)
+[Report Bug](https://github.com/agentic-brain-project/agentic-brain/issues) • [Request Feature](https://github.com/agentic-brain-project/agentic-brain/issues) • [Discussions](https://github.com/agentic-brain-project/agentic-brain/discussions)
 
 ---
 

@@ -88,7 +88,7 @@ speak("That's very great!")  # → "That's heaps heaps tops!"
 
 ## Adelaide Regional Expressions
 
-Joseph's brain now speaks proper South Australian! 🇦🇺
+the user's brain now speaks proper South Australian! 🇦🇺
 
 | Standard | Adelaide |
 |----------|----------|
@@ -161,7 +161,7 @@ All tests passing:
 ### Quick Start
 
 ```bash
-# Show Joseph's current location
+# Show the user's current location
 ab voice location
 # Output: Adelaide, South Australia, Australia
 
@@ -278,9 +278,9 @@ Add more Australian cities and international locations
 6. ✅ Demo script created
 7. ✅ Full documentation written
 
-## How This Helps Joseph
+## How This Helps Users
 
-Joseph lives in Adelaide and is blind. This system:
+Designed for Adelaide users with accessibility needs. This system:
 
 1. **Makes the brain sound local** - Uses Adelaide expressions naturally
 2. **Teaches about Adelaide** - Local knowledge always available
@@ -297,6 +297,6 @@ The brain now speaks proper Adelaide! 🇦🇺
 
 ---
 
-**Built for Joseph Webber, Adelaide, South Australia**  
+**Built for Agentic Brain Contributors, Adelaide, South Australia**  
 **Date**: 2026-03-23  
 **Status**: Production Ready ✅

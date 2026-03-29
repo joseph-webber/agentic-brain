@@ -144,7 +144,7 @@ All contributions must be:
 
 ## 👤 Review Process
 
-1. **Joseph Webber** reviews all regional PRs
+1. **Agentic Brain Contributors** reviews all regional PRs
 2. Regions are tested for accuracy
 3. Content is reviewed for appropriateness
 4. If approved, merged into main branch

@@ -49,7 +49,7 @@ Store a fact or memory explicitly.
 **Request:**
 ```json
 {
-  "content": "Joseph prefers dark mode.",
+  "content": "The user prefers dark mode.",
   "type": "preference"
 }
 ```

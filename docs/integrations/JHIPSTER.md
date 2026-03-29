@@ -474,7 +474,7 @@ npm start
 
 ```bash
 # Clone starter template
-git clone https://github.com/joseph-webber/agentic-brain-starter
+git clone https://github.com/agentic-brain-project/agentic-brain-starter
 cd agentic-brain-starter
 
 # Start everything

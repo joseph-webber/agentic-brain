@@ -419,9 +419,9 @@ worker = Worker(
 
 ## Getting Help
 
-- **Documentation**: https://github.com/joseph-webber/agentic-brain
-- **Issues**: https://github.com/joseph-webber/agentic-brain/issues
-- **Discussions**: https://github.com/joseph-webber/agentic-brain/discussions
+- **Documentation**: https://github.com/agentic-brain-project/agentic-brain
+- **Issues**: https://github.com/agentic-brain-project/agentic-brain/issues
+- **Discussions**: https://github.com/agentic-brain-project/agentic-brain/discussions
 
 ---
 

@@ -110,11 +110,11 @@ brew install --cask pycharm-ce
 
 ```bash
 # Clone via HTTPS
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 
 # OR clone via SSH
-git clone git@github.com:joseph-webber/agentic-brain.git
+git clone git@github.com:agentic-brain-project/agentic-brain.git
 cd agentic-brain
 ```
 
@@ -1176,7 +1176,7 @@ mkdocs build
 mkdocs gh-deploy --force
 ```
 
-**GitHub Pages URL:** https://joseph-webber.github.io/agentic-brain/
+**GitHub Pages URL:** https://agentic-brain-project.github.io/agentic-brain/
 
 ### Production Deployment Options
 
@@ -1195,7 +1195,7 @@ docker compose logs -f agentic-brain
 
 **2. Render.com (One-Click):**
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/joseph-webber/agentic-brain)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/agentic-brain-project/agentic-brain)
 
 **3. Heroku:**
 
@@ -1376,7 +1376,7 @@ LOG_LEVEL=DEBUG agentic-brain serve
 
 **Report issues:**
 
-1. Check [existing issues](https://github.com/joseph-webber/agentic-brain/issues)
+1. Check [existing issues](https://github.com/agentic-brain-project/agentic-brain/issues)
 2. Create new issue with:
    - macOS version
    - Python version
@@ -1503,13 +1503,13 @@ CACHE_REDIS_URL=redis://localhost:6379/0
 ### Documentation
 
 - [Main README](../README.md)
-- [API Documentation](https://joseph-webber.github.io/agentic-brain/)
+- [API Documentation](https://agentic-brain-project.github.io/agentic-brain/)
 - [Contributing Guide](../CONTRIBUTING.md)
 - [Security Policy](../SECURITY.md)
 
 ### Community
 
-- [GitHub Discussions](https://github.com/joseph-webber/agentic-brain/discussions)
+- [GitHub Discussions](https://github.com/agentic-brain-project/agentic-brain/discussions)
 - [Discord Server](https://discord.gg/agentic-brain)
 - [Twitter/X](https://twitter.com/agentic_brain)
 
@@ -1532,6 +1532,6 @@ CACHE_REDIS_URL=redis://localhost:6379/0
 
 ---
 
-**Questions?** Open an [issue](https://github.com/joseph-webber/agentic-brain/issues) or start a [discussion](https://github.com/joseph-webber/agentic-brain/discussions).
+**Questions?** Open an [issue](https://github.com/agentic-brain-project/agentic-brain/issues) or start a [discussion](https://github.com/agentic-brain-project/agentic-brain/discussions).
 
 **Ready to contribute?** See [CONTRIBUTING.md](../CONTRIBUTING.md).

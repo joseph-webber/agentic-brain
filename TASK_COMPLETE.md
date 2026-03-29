@@ -283,7 +283,7 @@ The installer sets a new standard for developer tools, putting **user experience
 **Status**: ✅ Production Ready  
 **Version**: 2.0.0  
 **Date**: 2026-03-25  
-**Author**: Joseph Webber & Iris Lumina (GitHub Copilot CLI)
+**Author**: Agentic Brain Contributors & Iris Lumina (GitHub Copilot CLI)
 
 ---
 

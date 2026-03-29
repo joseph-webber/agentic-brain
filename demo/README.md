@@ -436,8 +436,8 @@ When a new version is tagged and released:
    - ✅ Creates demo package artifact (`agentic-brain-demo-vX.X.X.tar.gz`)
    - ✅ Attaches demo package to GitHub release
    - ✅ Pushes versioned images:
-     - `ghcr.io/joseph-webber/agentic-brain/demo-api:vX.X.X`
-     - `ghcr.io/joseph-webber/agentic-brain/demo-api:latest`
+     - `ghcr.io/agentic-brain-project/agentic-brain/demo-api:vX.X.X`
+     - `ghcr.io/agentic-brain-project/agentic-brain/demo-api:latest`
 
 2. **Demo Workflow** (`demo.yml`):
    - ✅ Triggers automatically on release publication
@@ -451,7 +451,7 @@ Download the demo package from any GitHub release:
 
 ```bash
 # Download latest release demo
-curl -LO https://github.com/joseph-webber/agentic-brain/releases/latest/download/agentic-brain-demo-vX.X.X.tar.gz
+curl -LO https://github.com/agentic-brain-project/agentic-brain/releases/latest/download/agentic-brain-demo-vX.X.X.tar.gz
 
 # Extract
 tar -xzf agentic-brain-demo-vX.X.X.tar.gz

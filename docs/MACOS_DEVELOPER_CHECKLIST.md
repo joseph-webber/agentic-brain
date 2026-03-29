@@ -60,7 +60,7 @@ brew install --cask pycharm-ce
 
 ```bash
 # Clone repository
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 
 # Run automated setup
@@ -353,8 +353,8 @@ top
 
 ## Help & Support
 
-- **GitHub Issues:** https://github.com/joseph-webber/agentic-brain/issues
-- **Discussions:** https://github.com/joseph-webber/agentic-brain/discussions
+- **GitHub Issues:** https://github.com/agentic-brain-project/agentic-brain/issues
+- **Discussions:** https://github.com/agentic-brain-project/agentic-brain/discussions
 - **Discord:** https://discord.gg/agentic-brain
 
 ---

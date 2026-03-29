@@ -37,7 +37,7 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y python3 python3-pip python3-venv git
 
 # Clone and install
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 ./setup.sh
 ```
@@ -90,7 +90,7 @@ Install Docker Desktop:
 
 ```bash
 # Clone the repo
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 
 # Copy environment template and configure
@@ -157,7 +157,7 @@ If you can't use WSL or Docker, use native Windows installation.
 
 ```powershell
 # Clone repo
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 
 # Run installer
@@ -166,7 +166,7 @@ cd agentic-brain
 
 Or use the one-liner:
 ```powershell
-irm https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/setup.ps1 | iex
+irm https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/setup.ps1 | iex
 ```
 
 ### Troubleshooting Windows
@@ -186,7 +186,7 @@ See [WINDOWS_INSTALL.md](WINDOWS_INSTALL.md) for common issues.
 
 ```bash
 # Clone
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 
 # Run installer
@@ -296,5 +296,5 @@ Ensure these ports are open:
 ## Getting Help
 
 1. Check the [troubleshooting docs](WINDOWS_INSTALL.md)
-2. Open an issue: https://github.com/joseph-webber/agentic-brain/issues
+2. Open an issue: https://github.com/agentic-brain-project/agentic-brain/issues
 3. Include: OS version, Python version, full error message, install log

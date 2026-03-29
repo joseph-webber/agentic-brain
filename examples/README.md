@@ -388,7 +388,7 @@ pip install -e ".[dev,api]"
 
 - [Full Documentation](../docs/)
 - [API Reference](../docs/api/)
-- [GitHub Issues](https://github.com/joseph-webber/agentic-brain/issues)
+- [GitHub Issues](https://github.com/agentic-brain-project/agentic-brain/issues)
 
 ---
 

@@ -134,7 +134,7 @@ See: [ACCESSIBILITY.md](./ACCESSIBILITY.md)
 
 ### Voice Persona Guidelines
 
-**Joseph's 14 Ladies (Private Brain Configuration):**
+**14 Voice Assistants (Private Brain Configuration):**
 - Australian, Irish, Japanese, Chinese, Korean, Vietnamese, Thai, Indonesian (3 regions), Polish, French, British
 - Each has authentic background and personality
 - **NO stereotypes** — They are individuals, not cultural caricatures
@@ -370,7 +370,7 @@ GitHub Issues with `ethics` label
 ### Accountability
 
 **Who is responsible:**
-- **Joseph Webber** — Project maintainer, final authority
+- **Agentic Brain Contributors** — Project maintainer, final authority
 - **Contributors** — Review code for ethics before submitting
 - **Users** — Report issues when discovered
 - **Automated Systems** — Ethics Guard, content filters
@@ -545,8 +545,8 @@ See: [LICENSE](../LICENSE), [LEGAL.md](./LEGAL.md)
 
 **Ethics Concerns:**
 - 📧 Email: joseph.webber@me.com
-- 🐙 GitHub: [@joseph-webber](https://github.com/joseph-webber)
-- 💬 Discussions: [GitHub Discussions](https://github.com/joseph-webber/agentic-brain/discussions)
+- 🐙 GitHub: [@agentic-brain-project](https://github.com/agentic-brain-project)
+- 💬 Discussions: [GitHub Discussions](https://github.com/agentic-brain-project/agentic-brain/discussions)
 
 **Urgent Issues:**
 - Report immediately via `ab feedback --type ethics --urgent`

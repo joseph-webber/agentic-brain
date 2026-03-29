@@ -363,10 +363,10 @@ The CLI consists of three modules:
 
 ## License
 
-Apache-2.0, Copyright 2026 Joseph Webber
+Apache-2.0, Copyright 2026 Agentic Brain Contributors
 
 ## Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/joseph-webber/agentic-brain/issues
-- Documentation: https://github.com/joseph-webber/agentic-brain#readme
+- GitHub Issues: https://github.com/agentic-brain-project/agentic-brain/issues
+- Documentation: https://github.com/agentic-brain-project/agentic-brain#readme

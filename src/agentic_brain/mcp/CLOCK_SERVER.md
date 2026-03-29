@@ -10,14 +10,14 @@ The Clock MCP Server provides reliable date/time tools that AI agents can use to
 
 - AI models trained in 2024 think it's 2024, not 2026
 - Stale training data leads to incorrect date assumptions
-- Joseph (and AI agents) need **real-time, accurate** date/time info
+- Users (and AI agents) need **real-time, accurate** date/time info
 
 ## The Solution
 
 This MCP server uses the thread-safe `Clock` singleton from `agentic_brain.utils.clock` to provide:
 
 ✅ **Always current dates** - No stale data  
-✅ **Adelaide timezone aware** - Joseph's local time (ACDT/ACST)  
+✅ **Adelaide timezone aware** - the user's local time (ACDT/ACST)  
 ✅ **Business hours detection** - Know when it's work time  
 ✅ **Smart greetings** - Based on actual time of day  
 ✅ **Timezone conversions** - Convert between any timezones  
@@ -36,7 +36,7 @@ clock_now("full")      # "Friday, March 22, 2026 at 3:30 PM"
 ```
 
 ### 2. `clock_adelaide`
-Get comprehensive Adelaide time information (Joseph's timezone).
+Get comprehensive Adelaide time information (the user's timezone).
 
 Returns JSON with:
 - Current datetime
@@ -314,7 +314,7 @@ AI Agents (Claude, GPT, Ollama, etc.)
 ## Important Notes
 
 1. **Thread-safe**: Uses double-checked locking singleton pattern
-2. **Adelaide-first**: All times default to Joseph's timezone
+2. **Adelaide-first**: All times default to the user's timezone
 3. **Business logic**: Built-in awareness of weekdays/weekends
 4. **Lazy loading**: Clock instance created on first use
 5. **No external deps**: Uses only Python stdlib (datetime, zoneinfo)
@@ -325,7 +325,7 @@ Apache-2.0 (same as agentic-brain)
 
 ## Author
 
-Joseph Webber <joseph.webber@me.com>
+Agentic Brain Contributors <joseph.webber@me.com>
 
 ---
 

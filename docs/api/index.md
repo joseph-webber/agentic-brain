@@ -336,15 +336,15 @@ For large-scale deployments:
 - **[CLI Guide](../../README.md#cli)** - Command-line interface
 - **[Docker Setup](../../DOCKER_SETUP.md)** - Container deployment
 - **[Architecture](../../ARCHITECTURE.md)** - System design
-- **[Enterprise Features](https://github.com/joseph-webber/brain-core)** - Advanced capabilities
+- **[Enterprise Features](https://github.com/agentic-brain-project/brain-core)** - Advanced capabilities
 
 ---
 
 ## Support
 
 - 📖 [Documentation](../../README.md)
-- 🐛 [Issues](https://github.com/joseph-webber/agentic-brain/issues)
-- 💬 [Discussions](https://github.com/joseph-webber/agentic-brain/discussions)
+- 🐛 [Issues](https://github.com/agentic-brain-project/agentic-brain/issues)
+- 💬 [Discussions](https://github.com/agentic-brain-project/agentic-brain/discussions)
 
 ---
 

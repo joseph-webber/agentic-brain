@@ -73,7 +73,7 @@ Helm charts available for production deployment with:
 ## Contact
 
 - **Email**: enterprise@agenticbrain.ai
-- **GitHub**: github.com/joseph-webber/agentic-brain
+- **GitHub**: github.com/agentic-brain-project/agentic-brain
 - **Schedule Demo**: [Book a call](#)
 
 ---

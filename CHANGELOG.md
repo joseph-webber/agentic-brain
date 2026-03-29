@@ -704,10 +704,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Project licensed under Apache-2.0 for maximum flexibility
 
-[Unreleased]: https://github.com/joseph-webber/agentic-brain/compare/v2.5.0...HEAD
-[2.5.0]: https://github.com/joseph-webber/agentic-brain/compare/v2.4.0...v2.5.0
-[2.4.0]: https://github.com/joseph-webber/agentic-brain/compare/v2.2.1...v2.4.0
-[2.2.1]: https://github.com/joseph-webber/agentic-brain/compare/v2.2.0...v2.2.1
-[2.2.0]: https://github.com/joseph-webber/agentic-brain/compare/v2.1.0...v2.2.0
-[2.1.0]: https://github.com/joseph-webber/agentic-brain/compare/v1.0.0...v2.1.0
-[1.0.0]: https://github.com/joseph-webber/agentic-brain/releases/tag/v1.0.0
+[Unreleased]: https://github.com/agentic-brain-project/agentic-brain/compare/v2.5.0...HEAD
+[2.5.0]: https://github.com/agentic-brain-project/agentic-brain/compare/v2.4.0...v2.5.0
+[2.4.0]: https://github.com/agentic-brain-project/agentic-brain/compare/v2.2.1...v2.4.0
+[2.2.1]: https://github.com/agentic-brain-project/agentic-brain/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/agentic-brain-project/agentic-brain/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/agentic-brain-project/agentic-brain/compare/v1.0.0...v2.1.0
+[1.0.0]: https://github.com/agentic-brain-project/agentic-brain/releases/tag/v1.0.0
