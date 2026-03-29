@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-03-29
+
+### 🎉 Major Release - Universal Foundation Library
+
+This release marks agentic-brain as the clean, open-source foundation for all AI brain projects.
+
+### Changed
+- Complete privacy cleanup for open source release
+- All personal data removed (emails, names, paths)
+- Default voice changed to Samantha (neutral)
+- Copyright updated to "Agentic Brain Contributors"
+- Apache 2.0 license ready
+
+### Added
+- CI/CD workflows (staging.yml, release.yml)
+- TestPyPI and PyPI publishing
+- Docker build automation
+- GitHub Release automation
+
+### Fixed
+- Voice serialization to prevent overlap
+- Concurrency test timing issues
+- 752+ files cleaned of privacy violations
+
+---
+
 ## [2.22.0] - 2026-03-29
 
 ### Added

@@ -58,8 +58,8 @@ Example:
     >>> response = agent.chat("Hello!")
 """
 
-__version__ = "2.21.0"
-__author__ = "Joseph Webber"
+__version__ = "3.0.0"
+__author__ = "Agentic Brain Contributors"
 __email__ = "agentic-brain@proton.me"
 __license__ = "Apache-2.0"
 __tagline__ = "The Universal AI Platform — Install. Run. Create."
