@@ -65,3 +65,6 @@ user_profile.json
 .env.user
 .env.local
 *.private
+.env.user
+.env.local
+.env.*.local
