@@ -60,8 +60,8 @@ from .voice_cache import (
     VoiceCache,
     VoicePreferences,
     VoiceQueueItem,
-    VoiceState,
     VoiceRedisCache,
+    VoiceState,
     get_voice_cache,
 )
 

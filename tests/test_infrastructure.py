@@ -72,7 +72,7 @@ def redis_container(docker_client):
     try:
         container.stop()
         container.remove()
-    except:
+    except Exception:
         pass
 
 
@@ -110,7 +110,7 @@ def neo4j_container(docker_client):
     try:
         container.stop()
         container.remove()
-    except:
+    except Exception:
         pass
 
 

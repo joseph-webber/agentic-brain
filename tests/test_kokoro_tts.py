@@ -22,7 +22,7 @@ import wave
 from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import numpy as np
 import pytest
@@ -30,20 +30,19 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
 from agentic_brain.voice.kokoro_tts import (
+    _APPLE_FALLBACKS,
+    KOKORO_SAMPLE_RATE,
     LADY_VOICES,
     KokoroVoice,
-    _APPLE_FALLBACKS,
     _to_wav_bytes,
     detect_m2_acceleration,
     kokoro_available,
-    KOKORO_SAMPLE_RATE,
 )
 from agentic_brain.voice.neural_router import (
-    NeuralVoiceRouter,
     _SHORT_MESSAGE_THRESHOLD,
     _SYSTEM_CATEGORIES,
+    NeuralVoiceRouter,
 )
-
 
 # ═══════════════════════════════════════════════════════════════════
 # Fixtures

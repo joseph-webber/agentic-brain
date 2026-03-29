@@ -21,8 +21,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tests.fixtures.voice_test_phrases import pick_voice_phrase
-
 from agentic_brain.audio import (
     Audio,
     AudioConfig,
@@ -33,6 +31,7 @@ from agentic_brain.audio import (
     sound,
     speak,
 )
+from tests.fixtures.voice_test_phrases import pick_voice_phrase
 
 
 class TestPlatform:

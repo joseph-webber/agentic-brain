@@ -955,15 +955,15 @@ _default_pipeline: Optional[RAGPipeline] = None
 def get_rag_pipeline() -> RAGPipeline:
     """
     Get singleton RAGPipeline instance.
-    
+
     Returns a cached instance to avoid recreating the pipeline
     with its expensive initialization (Neo4j connection, embeddings, etc).
-    
+
     Usage:
         from agentic_brain.rag import get_rag_pipeline
         pipeline = get_rag_pipeline()
         result = pipeline.query("What is the status of project X?")
-    
+
     Returns:
         RAGPipeline: Singleton instance
     """

@@ -316,7 +316,7 @@ class ContentClassifier:
             signals.append("context_first_time")
 
         # Score each category
-        scores: Dict[ContentType, float] = {ct: 0.0 for ct in ContentType}
+        scores: Dict[ContentType, float] = dict.fromkeys(ContentType, 0.0)
 
         # Error keywords
         for kw in _ERROR_KEYWORDS:

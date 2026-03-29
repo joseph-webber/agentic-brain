@@ -34,7 +34,6 @@ from agentic_brain.voice.repeat_detector import (
     reset_repeat_detector,
 )
 
-
 # ── Fixtures ─────────────────────────────────────────────────────────
 
 

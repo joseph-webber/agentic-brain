@@ -525,7 +525,7 @@ def mock_firebase_admin():
     """Mock Firebase Admin SDK."""
     with (
         patch("firebase_admin.credentials") as mock_creds,
-        patch("firebase_admin.initialize_app") as mock_init,
+        patch("firebase_admin.initialize_app"),
         patch("firebase_admin.firestore") as mock_firestore,
         patch("firebase_admin.messaging") as mock_messaging,
     ):
@@ -617,7 +617,7 @@ def mock_in_memory_store():
 
         def clear(self):
             for key in self.data:
-                if isinstance(self.data[key], list) or isinstance(self.data[key], dict):
+                if isinstance(self.data[key], (list, dict)):
                     self.data[key].clear()
 
     return MockStore(store)
@@ -788,6 +788,7 @@ def voice_cleanup():
     # Stop daemon (don't just null it — stop it so in-flight speech drains first)
     try:
         import asyncio
+
         import agentic_brain.voice.resilient as resilient
 
         if resilient._daemon_instance is not None:

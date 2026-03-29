@@ -297,7 +297,7 @@ def clock_convert(
             }
         }
     """
-    clock = _get_clock()
+    _get_clock()
 
     # Parse or use current time
     if iso_datetime:

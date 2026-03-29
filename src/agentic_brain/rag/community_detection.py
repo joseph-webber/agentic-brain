@@ -14,7 +14,7 @@ def detect_communities(session) -> dict[int, list[str]]:
     # Project graph
     session.run(
         """
-        CALL gds.graph.project('entity-graph', 'Entity', 
+        CALL gds.graph.project('entity-graph', 'Entity',
             {RELATES_TO: {orientation: 'UNDIRECTED'}})
     """
     )
@@ -44,7 +44,7 @@ async def detect_communities_async(session) -> dict[int, list[str]]:
     """Async wrapper for community detection using Neo4j GDS."""
     await session.run(
         """
-        CALL gds.graph.project('entity-graph', 'Entity', 
+        CALL gds.graph.project('entity-graph', 'Entity',
             {RELATES_TO: {orientation: 'UNDIRECTED'}})
     """
     )

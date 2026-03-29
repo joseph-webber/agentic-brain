@@ -37,15 +37,15 @@ except ImportError:  # pragma: no cover
     pyzipper = None
     PYZIPPER_AVAILABLE = False
 
-from .models import Metadata
 from ..security import (
-    AuditLog,
     AuditEntry,
+    AuditLog,
     PIIDetector,
     PIIEntity,
     PIIType,
     RedactionStyle,
 )
+from .models import Metadata
 
 LOGGER = logging.getLogger(__name__)
 

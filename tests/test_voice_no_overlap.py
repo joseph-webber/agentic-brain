@@ -22,10 +22,12 @@ CRITICAL RULE: Ladies must NEVER talk over each other. One voice at a time.
 
 import asyncio
 import time
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock, call
+
 from agentic_brain.voice.resilient import ResilientVoice
-from agentic_brain.voice.serializer import get_voice_serializer, VoiceSerializer
+from agentic_brain.voice.serializer import VoiceSerializer, get_voice_serializer
 
 
 class TestNoVoiceOverlap:

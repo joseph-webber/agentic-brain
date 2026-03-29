@@ -284,7 +284,7 @@ class RedisVoiceLock:
 
     # ── Context-manager protocol ─────────────────────────────────
 
-    def __enter__(self) -> "RedisVoiceLock":
+    def __enter__(self) -> RedisVoiceLock:
         if not self.acquire():
             raise TimeoutError(
                 "Could not acquire the global voice lock before starting speech"

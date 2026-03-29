@@ -15,13 +15,16 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Callable, Dict, Iterable, Optional
 
-from ...rag.store import Document as RagDocument, InMemoryDocumentStore
+from ...rag.store import Document as RagDocument
+from ...rag.store import InMemoryDocumentStore
 from ..accessibility.api import make_accessible, validate_accessibility
 from ..accessibility.models import AccessibilityReport, RemediationResult
 from .converter import ConversionError, OfficeConverter
-from .images import Image as ExtractedImage, ImageExtractor
+from .images import Image as ExtractedImage
+from .images import ImageExtractor
 from .security import OfficePIIMatch, OfficeSecurityService
-from .tables import Table as NormalizedTable, TableExtractor
+from .tables import Table as NormalizedTable
+from .tables import TableExtractor
 
 FormatParser = Callable[[Path], tuple[Any, str, dict[str, Any]]]
 

@@ -20,39 +20,39 @@ operations:
 
 from __future__ import annotations
 
+import logging
+import zipfile
 from collections import defaultdict
 from dataclasses import dataclass, field
-import logging
 from pathlib import Path
 from typing import Any, Iterable, Sequence
-import zipfile
 
 from .accessibility import AccessibilityReport, OfficeAccessibilityProcessor
+from .apple_keynote import KeynoteProcessor
+from .apple_numbers import NumbersProcessor
+from .apple_pages import PagesProcessor
+from .excel import ExcelProcessor
 from .exceptions import UnsupportedOfficeFormatError
 from .models import (
+    Chart,
+    Image,
+    OfficeFormat,
+    Paragraph,
+    Slide,
     Table,
     TableCell,
-    Paragraph,
-    Image,
-    Slide,
     Worksheet,
-    Chart,
-    OfficeFormat,
 )
-from .word import WordProcessor
-from .excel import ExcelProcessor
-from .powerpoint import PowerPointProcessor
-from .apple_pages import PagesProcessor
-from .apple_numbers import NumbersProcessor
-from .apple_keynote import KeynoteProcessor
 from .opendocument import OpenDocumentProcessor
+from .powerpoint import PowerPointProcessor
 from .rtf import RTFProcessor
 from .security import (
-    OfficeSecurityService,
-    OfficePIIMatch,
-    MacroCheckResult,
     ExternalLinkReport,
+    MacroCheckResult,
+    OfficePIIMatch,
+    OfficeSecurityService,
 )
+from .word import WordProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -410,7 +410,7 @@ class OfficeDocumentPipeline:
         if not blocks:
             resources = getattr(content, "resources", None) or {}
             if isinstance(resources, dict):
-                for key in resources.keys():
+                for key in resources:
                     blocks.append(f"[embedded resource: {key}]")
 
         return "\n\n".join(blocks).strip()
@@ -422,7 +422,7 @@ class OfficeDocumentPipeline:
         if hasattr(paragraph, "text_content"):
             return str(paragraph.text_content()).strip()
         if hasattr(paragraph, "text"):
-            return str(getattr(paragraph, "text")).strip()
+            return str(paragraph.text).strip()
         runs = getattr(paragraph, "runs", None)
         if runs:
             return "".join(str(getattr(run, "text", "")) for run in runs).strip()
@@ -489,7 +489,7 @@ class OfficeDocumentPipeline:
             entries.extend(cells)
 
         if not entries and hasattr(worksheet, "rows"):
-            entries.extend(getattr(worksheet, "rows"))
+            entries.extend(worksheet.rows)
 
         if not entries:
             return ""
@@ -520,7 +520,7 @@ class OfficeDocumentPipeline:
     @staticmethod
     def _cell_position(cell: Any) -> tuple[int | None, int | None]:
         if hasattr(cell, "row") and hasattr(cell, "column"):
-            return getattr(cell, "row"), getattr(cell, "column")
+            return cell.row, cell.column
         reference = getattr(cell, "reference", None)
         if isinstance(reference, str):
             column_part = "".join(ch for ch in reference if ch.isalpha())

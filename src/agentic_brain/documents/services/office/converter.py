@@ -19,9 +19,11 @@ from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 from .models import (
     DocumentContent,
-    OfficeFormat as ModelOfficeFormat,
     Paragraph,
     TextRun,
+)
+from .models import (
+    OfficeFormat as ModelOfficeFormat,
 )
 
 logger = logging.getLogger(__name__)

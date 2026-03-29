@@ -524,11 +524,11 @@ class TestPhase2Integration:
     def test_all_lazy_loaders(self):
         """All Phase 2 lazy loaders return the expected types."""
         from agentic_brain.voice import (
-            _lazy_watchdog,
             _lazy_daemon_gate,
             _lazy_live_mode,
             _lazy_stream_consumer,
             _lazy_unified,
+            _lazy_watchdog,
         )
 
         Wd = _lazy_watchdog()

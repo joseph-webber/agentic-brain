@@ -532,10 +532,7 @@ class ImageExtractor:
     def _relationship_base_dir(rels_path: str) -> str:
         """Determine base directory for relationship resolution."""
         rel = PurePosixPath(rels_path)
-        if rel.parent.name == "_rels":
-            base = rel.parent.parent
-        else:
-            base = rel.parent
+        base = rel.parent.parent if rel.parent.name == "_rels" else rel.parent
         doc_name = rel.stem
         document = base / doc_name
         return str(document.parent)

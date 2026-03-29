@@ -182,13 +182,7 @@ class QualityGate:
 
     def _needs_normalization(self, report: QualityReport) -> bool:
         """True if audio quality would benefit from normalization."""
-        # Too quiet but rescuable
-        if report.rms_db < self.min_db:
-            return True
-        # Moderate clipping that normalization can fix (reduce volume)
-        if 0 < report.clipping_ratio <= self.clipping_threshold:
-            return True
-        return False
+        return report.rms_db < self.min_db or 0 < report.clipping_ratio <= self.clipping_threshold
 
     def _try_normalize(self, audio_path: Path, report: QualityReport) -> GateDecision:
         """Attempt auto-normalization and return the decision."""

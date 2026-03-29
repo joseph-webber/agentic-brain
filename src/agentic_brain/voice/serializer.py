@@ -52,8 +52,8 @@ from typing import Callable, List, Optional
 from agentic_brain.audio.stereo_pan import get_stereo_panner
 from agentic_brain.cache.voice_cache import VoiceCache, VoiceState
 from agentic_brain.voice._speech_lock import get_global_lock as _get_global_lock
-from agentic_brain.voice.config import stereo_pan_enabled, use_redpanda_voice
 from agentic_brain.voice.config import VoiceConfig as EmotionalVoiceConfig
+from agentic_brain.voice.config import stereo_pan_enabled, use_redpanda_voice
 from agentic_brain.voice.emotions import VoiceEmotion
 from agentic_brain.voice.expression import ExpressionEngine
 from agentic_brain.voice.redis_queue import RedisVoiceQueue, VoiceJob

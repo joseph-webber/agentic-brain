@@ -16,7 +16,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any, Sequence
 
@@ -401,9 +401,9 @@ class LLMRouterCore:
             try:
                 retry_dt = parsedate_to_datetime(retry_after)
                 if retry_dt.tzinfo is None:
-                    retry_dt = retry_dt.replace(tzinfo=timezone.utc)
+                    retry_dt = retry_dt.replace(tzinfo=UTC)
                 return max(
-                    0, int((retry_dt - datetime.now(timezone.utc)).total_seconds())
+                    0, int((retry_dt - datetime.now(UTC)).total_seconds())
                 )
             except Exception:
                 return None

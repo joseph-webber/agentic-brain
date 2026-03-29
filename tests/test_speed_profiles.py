@@ -19,6 +19,14 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
+from agentic_brain.voice.content_classifier import (
+    CONTENT_TYPE_TO_TIER,
+    ClassificationContext,
+    ClassificationResult,
+    ContentClassifier,
+    ContentType,
+    get_content_classifier,
+)
 from agentic_brain.voice.speed_profiles import (
     CONTENT_SPEED_TIERS,
     PROFILE_RATES,
@@ -35,16 +43,6 @@ from agentic_brain.voice.speed_profiles import (
     get_speed_for_content,
     get_speed_manager,
 )
-
-from agentic_brain.voice.content_classifier import (
-    ClassificationContext,
-    ClassificationResult,
-    ContentClassifier,
-    ContentType,
-    CONTENT_TYPE_TO_TIER,
-    get_content_classifier,
-)
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

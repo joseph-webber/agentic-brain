@@ -19,8 +19,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
-
 from agentic_brain.voice.australian_regions import (
     AUSTRALIAN_CITIES,
     get_local_knowledge,
@@ -46,6 +44,7 @@ from agentic_brain.voice.resilient import (
 from agentic_brain.voice.resilient import (
     speak as resilient_speak,
 )
+from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
 
 
 class TestVoiceLatency:

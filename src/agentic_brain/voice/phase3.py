@@ -252,8 +252,8 @@ class Phase3VoiceSystem:
         if speed_module is None:
             raise RuntimeError("speed profile module unavailable")
 
-        SpeedProfile = getattr(speed_module, "SpeedProfile")
-        enum_value = SpeedProfile(profile.lower())
+        speed_profile = speed_module.SpeedProfile
+        enum_value = speed_profile(profile.lower())
         manager.set_profile(enum_value)
         return enum_value.value
 
@@ -512,7 +512,7 @@ class Phase3VoiceSystem:
             for attr in ("LADY_ORDER", "LADY_VOICES", "LADIES", "VOICE_MAP"):
                 value = getattr(lady_voices, attr, None)
                 if isinstance(value, dict):
-                    return sorted(str(name) for name in value.keys())
+                    return sorted(str(name) for name in value)
                 if isinstance(value, (list, tuple, set)):
                     return sorted(str(name) for name in value)
 
@@ -533,7 +533,7 @@ class Phase3VoiceSystem:
         kokoro_module = self._import_module("agentic_brain.voice.kokoro_tts")
         voice_map = getattr(kokoro_module, "LADY_VOICES", {}) if kokoro_module else {}
         if isinstance(voice_map, dict):
-            return sorted(str(name) for name in voice_map.keys())
+            return sorted(str(name) for name in voice_map)
         return ["Karen"]
 
     async def start_live_daemon(self) -> VoiceDaemon:

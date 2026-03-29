@@ -4,11 +4,11 @@
 
 from __future__ import annotations
 
-import pytest
-
 import plistlib
 import zipfile
 from pathlib import Path
+
+import pytest
 
 
 def _encode_varint(value: int) -> bytes:

@@ -34,12 +34,12 @@ _DIMENSIONS = 384
 class MLXEmbeddings:
     """Lazy-loaded real embeddings for GraphRAG."""
 
-    _provider: ClassVar[Optional["EmbeddingProvider"]] = None
+    _provider: ClassVar[Optional[EmbeddingProvider]] = None
     _available: ClassVar[Optional[bool]] = None
     _provider_name: ClassVar[str] = "uninitialized"
 
     @classmethod
-    def get_model(cls) -> "EmbeddingProvider":
+    def get_model(cls) -> EmbeddingProvider:
         """Return the cached embedding provider, loading on first call."""
         if cls._provider is None:
             try:

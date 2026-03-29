@@ -33,11 +33,11 @@ from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-from agentic_brain.core.neo4j_utils import resilient_query_sync
 from agentic_brain.core.neo4j_schema import (
     VECTOR_INDEX_NAME,
     ensure_indexes_sync,
 )
+from agentic_brain.core.neo4j_utils import resilient_query_sync
 
 logger = logging.getLogger(__name__)
 
@@ -190,12 +190,16 @@ class EnhancedGraphRAG:
             return get_session()
         else:
             # Fallback to direct connection if pool disabled
-            if not NEO4J_AVAILABLE or GraphDatabase is None:
+            try:
+                from neo4j import GraphDatabase as _graph_db_cls
+            except ImportError:
+                _graph_db_cls = None
+            if not NEO4J_AVAILABLE or _graph_db_cls is None:
                 raise ImportError(
                     "neo4j package is required for direct graph connections. Install with: pip install neo4j"
                 )
 
-            driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", ""))
+            driver = _graph_db_cls.driver("bolt://localhost:7687", auth=("neo4j", ""))
             return driver.session()
 
     def _run_query(
@@ -799,7 +803,7 @@ class EnhancedGraphRAG:
                 ):
                     matched_entities.extend(entities)
 
-            matched_entities = sorted({entity for entity in matched_entities})
+            matched_entities = sorted(set(matched_entities))
             if not matched_entities:
                 logger.info(
                     "Community retrieval found no matches - falling back to hybrid"

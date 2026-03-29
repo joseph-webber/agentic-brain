@@ -113,7 +113,7 @@ class HeadingNode:
     text: str
     paragraph_index: int
     paragraph_id: str | None = None
-    children: list["HeadingNode"] = None  # type: ignore[assignment]
+    children: list[HeadingNode] = None  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
         if self.children is None:
@@ -162,7 +162,7 @@ class WordProcessor:
     # ------------------------------------------------------------------ #
     # Loading and parsing
     # ------------------------------------------------------------------ #
-    def load(self, path: str | Path) -> "WordProcessor":
+    def load(self, path: str | Path) -> WordProcessor:
         """Load a DOCX document into memory."""
 
         source = self._validate_source(path)
@@ -678,8 +678,7 @@ class WordProcessor:
     ) -> Iterator[Paragraph]:
         """Yield paragraphs one at a time for large-document processing."""
 
-        for paragraph in self.extract_paragraphs(path):
-            yield paragraph
+        yield from self.extract_paragraphs(path)
 
     # ------------------------------------------------------------------ #
     # Internal: extraction helpers
@@ -1582,10 +1581,7 @@ class WordProcessor:
     def _split_keywords(self, value: str | None) -> list[str]:
         if not value:
             return []
-        if ";" in value:
-            parts = value.split(";")
-        else:
-            parts = value.split(",")
+        parts = value.split(";") if ";" in value else value.split(",")
         return [part.strip() for part in parts if part.strip()]
 
     def _hex_to_rgb(self, value: str | None) -> RGBColor | None:

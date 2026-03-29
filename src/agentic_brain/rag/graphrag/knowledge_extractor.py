@@ -17,11 +17,11 @@ from datetime import UTC, datetime
 from itertools import combinations
 from typing import Any, Optional, Sequence
 
-from agentic_brain.core.neo4j_utils import resilient_query_sync
-from agentic_brain.core.neo4j_schema import VECTOR_INDEX_NAME, ensure_indexes_sync
 from agentic_brain.core.neo4j_pool import configure_pool as configure_neo4j_pool
 from agentic_brain.core.neo4j_pool import get_driver as get_neo4j_driver
 from agentic_brain.core.neo4j_pool import get_session as get_neo4j_session
+from agentic_brain.core.neo4j_schema import VECTOR_INDEX_NAME, ensure_indexes_sync
+from agentic_brain.core.neo4j_utils import resilient_query_sync
 
 logger = logging.getLogger(__name__)
 

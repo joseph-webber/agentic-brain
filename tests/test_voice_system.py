@@ -15,8 +15,6 @@ from pathlib import Path
 
 import pytest
 
-from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
-
 from agentic_brain.voice.conversation import (
     ConversationalVoice,
     ConversationConfig,
@@ -39,6 +37,7 @@ from agentic_brain.voice.voiceover import (
     VoiceOverPriority,
     format_for_voiceover,
 )
+from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
 
 
 class TestVoiceRegistry:

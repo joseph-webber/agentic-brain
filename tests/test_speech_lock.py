@@ -315,6 +315,7 @@ class TestUnifiedLockIdentity:
     ):
         """Simultaneous calls through serializer and global_speak never overlap."""
         import threading
+
         from agentic_brain.voice._speech_lock import _global_speak_inner
         from agentic_brain.voice.serializer import get_voice_serializer
 

@@ -42,7 +42,6 @@ from agentic_brain.audio.spatial_audio import (
     speak_spatial,
 )
 
-
 # ── Position data integrity ──────────────────────────────────────────
 
 

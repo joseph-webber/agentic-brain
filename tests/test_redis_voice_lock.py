@@ -26,7 +26,6 @@ from agentic_brain.voice._speech_lock import (
     voice_lock_status,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -378,7 +377,7 @@ class TestSerializerIntegration:
     """Verify the serializer picks up the RedisVoiceLock type."""
 
     def test_serializer_speech_lock_is_redis_type(self):
-        from agentic_brain.voice.serializer import get_voice_serializer
+        from agentic_brain.voice.serializer import VoiceSerializer
 
-        vs = get_voice_serializer()
+        vs = VoiceSerializer()
         assert isinstance(vs._speech_lock, RedisVoiceLock)

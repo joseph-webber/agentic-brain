@@ -9,7 +9,8 @@ provider registry that :mod:`agentic_brain.router` pulls in.
 
 from __future__ import annotations
 
-from .router import LLMRouterCore as _LLMRouterCore, ModelRoute
+from .router import LLMRouterCore as _LLMRouterCore
+from .router import ModelRoute
 
 LLMRouterCore = _LLMRouterCore
 LLMRouterCore.__doc__ = (

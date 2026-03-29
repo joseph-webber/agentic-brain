@@ -17,8 +17,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
-from agentic_brain.voice.watchdog import VoiceWatchdog, _NEVER
-
+from agentic_brain.voice.watchdog import _NEVER, VoiceWatchdog
 
 # ---------------------------------------------------------------------------
 # Helpers

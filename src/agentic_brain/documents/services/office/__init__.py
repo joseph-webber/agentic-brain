@@ -7,6 +7,13 @@ Provides conversion services for office document formats including
 Microsoft Office, Apple iWork, and OpenDocument formats.
 """
 
+from .accessibility import (
+    ContrastFix,
+    OfficeAccessibilityProcessor,
+    ReadingOrderReport,
+    Suggestion,
+    WCAGReport,
+)
 from .api import (
     DocumentContent,
     check_accessibility,
@@ -31,35 +38,30 @@ from .api import (
     scrub_metadata,
 )
 from .converter import ConversionError, OfficeConverter, OfficeFormat
-from .security import OfficeSecurityService
-from .accessibility import (
-    ContrastFix,
-    OfficeAccessibilityProcessor,
-    ReadingOrderReport,
-    Suggestion,
-    WCAGReport,
-)
-from .rag_loaders import (
-    UnifiedOfficeLoader,
-    WordRAGLoader,
-    ExcelRAGLoader,
-    PowerPointRAGLoader,
-    PagesRAGLoader,
-    NumbersRAGLoader,
-    KeynoteRAGLoader,
-    OpenDocumentRAGLoader,
-    register_office_loaders,
-    load_office_document,
-    load_office_directory,
-    load_and_chunk_office,
-)
 from .pipeline import (
+    BatchProcessingResult,
     OfficeDocumentPipeline,
     OfficeDocumentResult,
-    BatchProcessingResult,
-    SecurityScanResult as PipelineSecurityScanResult,
     PipelineError,
 )
+from .pipeline import (
+    SecurityScanResult as PipelineSecurityScanResult,
+)
+from .rag_loaders import (
+    ExcelRAGLoader,
+    KeynoteRAGLoader,
+    NumbersRAGLoader,
+    OpenDocumentRAGLoader,
+    PagesRAGLoader,
+    PowerPointRAGLoader,
+    UnifiedOfficeLoader,
+    WordRAGLoader,
+    load_and_chunk_office,
+    load_office_directory,
+    load_office_document,
+    register_office_loaders,
+)
+from .security import OfficeSecurityService
 
 __all__ = [
     "ContrastFix",

@@ -4,6 +4,7 @@
 """Core shared infrastructure for Agentic Brain."""
 
 from .cache_manager import CacheManager
+from .neo4j_first import neo4j_first
 from .neo4j_pool import (
     Neo4jPoolConfig,
 )
@@ -34,7 +35,6 @@ from .neo4j_pool import (
 from .neo4j_pool import (
     write as neo4j_write,
 )
-from .neo4j_first import neo4j_first
 from .redis_pool import RedisConfig, RedisCoordination, RedisPoolManager, get_redis_pool
 
 __all__ = [

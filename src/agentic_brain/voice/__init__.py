@@ -55,6 +55,13 @@ from agentic_brain.voice.config import (
     VoiceConfig,
     VoiceQuality,
 )
+from agentic_brain.voice.emotions import (
+    EMOTION_PARAMS,
+    EmotionDetector,
+    VoiceEmotion,
+    apply_emotion,
+)
+from agentic_brain.voice.expression import ExpressionEngine
 
 # Import voice queue (CRITICAL for accessibility!)
 from agentic_brain.voice.queue import (
@@ -90,13 +97,6 @@ from agentic_brain.voice.resilient import (
 from agentic_brain.voice.resilient import (
     speak as resilient_speak,
 )
-from agentic_brain.voice.emotions import (
-    EMOTION_PARAMS,
-    EmotionDetector,
-    VoiceEmotion,
-    apply_emotion,
-)
-from agentic_brain.voice.expression import ExpressionEngine
 from agentic_brain.voice.serializer import (
     VoiceSerializer,
     _legacy_speak,

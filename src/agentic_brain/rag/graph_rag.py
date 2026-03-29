@@ -345,8 +345,8 @@ class GraphRAG:
 
     async def _vector_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """Perform vector search using embeddings."""
-        # Compute real query embedding
-        query_embedding = _embed_text(query, self.config.embedding_dim)
+        # Compute real query embedding (used when DB is connected)
+        _embed_text(query, self.config.embedding_dim)
 
         results = []
         if self._driver:

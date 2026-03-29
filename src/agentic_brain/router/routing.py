@@ -71,7 +71,7 @@ if TYPE_CHECKING:
 # Lazy import for cache to avoid circular dependencies
 _MODULE_UNAVAILABLE = object()
 _semantic_cache_module: ModuleType | object | None = None
-_unified_brain_module: type["UnifiedBrain"] | object | None = None
+_unified_brain_module: type[UnifiedBrain] | object | None = None
 
 
 def _get_cache_module() -> ModuleType | None:
@@ -89,7 +89,7 @@ def _get_cache_module() -> ModuleType | None:
     return _semantic_cache_module
 
 
-def _get_unified_brain_class() -> type["UnifiedBrain"] | None:
+def _get_unified_brain_class() -> type[UnifiedBrain] | None:
     """Lazy import of UnifiedBrain to avoid hard dependency cycles."""
     global _unified_brain_module
     if _unified_brain_module is None:

@@ -40,15 +40,15 @@ from pathlib import Path
 from typing import Any, Iterable, Optional
 from xml.etree import ElementTree as ET
 
-from .exceptions import DocumentValidationError, UnsupportedOfficeFormatError
-from .models import Image
 from ..accessibility.alttext import AltTextGenerator
 from ..accessibility.contrast import (
     Color,
     ContrastChecker,
     TextSize,
-    WCAGLevel as ContrastWCAGLevel,
     suggest_accessible_color,
+)
+from ..accessibility.contrast import (
+    WCAGLevel as ContrastWCAGLevel,
 )
 from ..accessibility.models import (
     AccessibilityIssue,
@@ -63,6 +63,8 @@ from ..accessibility.models import (
     TableSummary,
 )
 from ..accessibility.tables import CellType, TableAccessibilityEngine
+from .exceptions import DocumentValidationError, UnsupportedOfficeFormatError
+from .models import Image
 
 logger = logging.getLogger(__name__)
 

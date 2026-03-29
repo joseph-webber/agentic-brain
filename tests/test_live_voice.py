@@ -28,32 +28,30 @@ import struct
 import threading
 import time
 from typing import Any, Optional
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
-
 # ── Imports under test ───────────────────────────────────────────────
-
 from agentic_brain.voice.live_session import (
     DEFAULT_CHANNELS,
     DEFAULT_CHUNK_SIZE,
     DEFAULT_SAMPLE_RATE,
+    SESSION_TIMEOUT_SECS,
+    SILENCE_THRESHOLD,
+    UTTERANCE_SILENCE_SECS,
+    WAKE_WORDS,
     LiveSessionConfig,
     LiveVoiceSession,
     SessionMetrics,
     SessionState,
-    SILENCE_THRESHOLD,
-    UTTERANCE_SILENCE_SECS,
-    SESSION_TIMEOUT_SECS,
-    WAKE_WORDS,
+    _set_session_for_testing,
     check_microphone,
     get_live_session,
     live_session_status,
     rms_amplitude,
     start_live_session,
     stop_live_session,
-    _set_session_for_testing,
 )
 from agentic_brain.voice.transcription import (
     BaseTranscriber,
@@ -65,7 +63,6 @@ from agentic_brain.voice.transcription import (
     get_transcriber,
     whisper_available,
 )
-
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
@@ -696,10 +693,10 @@ class TestVoiceLiveCLI:
 # ══════════════════════════════════════════════════════════════════════
 
 from agentic_brain.voice.live_daemon import (
-    DaemonConfig,
-    LiveVoiceDaemon,
     PID_FILE,
     STATE_FILE,
+    DaemonConfig,
+    LiveVoiceDaemon,
     _pid_alive,
     _set_daemon_for_testing,
     daemon_status,

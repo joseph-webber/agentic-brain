@@ -86,7 +86,7 @@ Usage:
 # Core pipeline
 import contextlib
 
-from .embeddings import EmbeddingProvider, get_embeddings, get_embedding
+from .embeddings import EmbeddingProvider, get_embedding, get_embeddings
 from .pipeline import (
     GraphQueryResult,
     GraphSearchResult,

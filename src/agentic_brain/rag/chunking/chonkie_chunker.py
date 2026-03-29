@@ -57,7 +57,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
-from .base import BaseChunker, Chunk, SemanticChunker as BuiltinSemanticChunker
+from .base import BaseChunker, Chunk
+from .base import SemanticChunker as BuiltinSemanticChunker
 
 logger = logging.getLogger(__name__)
 

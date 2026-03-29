@@ -19,9 +19,10 @@ Quick test to verify clock MCP server is properly integrated
 and available through the main MCP server.
 """
 
+import json
+
 from agentic_brain.mcp.tools import get_all_tools
 from agentic_brain.utils.clock import get_clock
-import json
 
 
 def test_clock_singleton():
@@ -107,7 +108,7 @@ def test_config_exists():
     config_path = "/Users/joe/brain/agentic-brain/config/timezone.yaml"
     assert os.path.exists(config_path), f"Config not found: {config_path}"
 
-    print(f"   ✅ Configuration file exists")
+    print("   ✅ Configuration file exists")
 
 
 def main():
