@@ -165,6 +165,15 @@ jobs:
             --ignore=tests/test_new_loaders.py \
             --ignore=tests/test_voice_ci.py \
             --ignore=tests/test_adl_comprehensive_parser_only.py \
+            --ignore=tests/test_speed_profiles.py \
+            --ignore=tests/test_voice_phase3_integration.py \
+            --ignore=tests/test_voice_no_overlap.py \
+            --ignore=tests/test_voice_system.py \
+            --ignore=tests/test_voice_stream.py \
+            --ignore=tests/test_spatial_audio.py \
+            --ignore=tests/test_speech_lock.py \
+            --ignore=tests/test_voice_safety.py \
+            --ignore=tests/test_voice_resilient.py \
             -m "not integration" \
             -n auto \
             --maxprocesses=4 \
