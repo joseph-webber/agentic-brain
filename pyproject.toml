@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [
-    {name = "Joseph Webber", email = "joseph.webber@me.com"}
+    {name = "Agentic Brain Contributors"}
 ]
 keywords = [
     "ai",
@@ -398,9 +398,9 @@ agentic = "agentic_brain.cli:main"
 ab = "agentic_brain.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/joseph-webber/agentic-brain"
-Repository = "https://github.com/joseph-webber/agentic-brain"
-Documentation = "https://github.com/joseph-webber/agentic-brain/blob/main/docs/INDEX.md"
+Homepage = "https://github.com/agentic-brain/agentic-brain"
+Repository = "https://github.com/agentic-brain/agentic-brain"
+Documentation = "https://github.com/agentic-brain/agentic-brain/blob/main/docs/INDEX.md"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
