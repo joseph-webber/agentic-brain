@@ -43,6 +43,7 @@ from agentic_brain import __version__
 
 from . import commands
 from .greet_command import register_greet_command
+from .audio_commands import register_audio_commands
 from .voice_commands import register_voice_commands
 
 # Lazy import temporal_commands to avoid requiring temporalio
@@ -133,6 +134,7 @@ def create_parser() -> argparse.ArgumentParser:
 
     # Voice commands (critical for accessibility)
     register_voice_commands(subparsers)
+    register_audio_commands(subparsers)
     register_greet_command(subparsers)
 
     # Register Temporal commands (if available)

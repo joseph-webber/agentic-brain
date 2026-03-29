@@ -163,6 +163,8 @@ class TestConversationalVoice:
     def test_voice_modes(self):
         """Test voice mode switching."""
         conv = ConversationalVoice()
+        # Avoid actual speech in tests
+        conv.speak = lambda *args, **kwargs: True
 
         # Test mode changes
         conv.set_mode(VoiceMode.WORK)

@@ -588,7 +588,9 @@ class BenchmarkResult:
 
     def __post_init__(self) -> None:
         if not self.timestamp:
-            self.timestamp = datetime.now(tz=None).astimezone().isoformat()
+            from agentic_brain.utils.clock import clock
+
+            self.timestamp = clock.iso_datetime()
 
     def to_dict(self) -> dict[str, Any]:
         return {

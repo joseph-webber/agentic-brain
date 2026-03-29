@@ -8,8 +8,17 @@ Phase 2 strengthened four areas:
 - **Durability:** Redis and Redpanda-backed queueing with memory fallback
 - **Recovery:** watchdog monitoring so stalled voice workers restart automatically
 
+Phase 3 adds a lazy integration layer for newer voice capabilities:
+
+- **Neural routing:** Kokoro and Apple voices are chosen dynamically per utterance
+- **Earcons:** non-speech cues can be played without breaking the speech path
+- **Adaptive pacing:** content-aware speed and profile controls remain centralised
+- **Live integration:** the live daemon stays reachable through one facade
+- **Graceful degradation:** optional modules can be absent without breaking speech
+
 This guide is the entry point for the voice docs set:
 
+- [Voice cloning](./CLONING.md)
 - [Spatial audio](./SPATIAL_AUDIO.md)
 - [Live mode status](./LIVE_MODE.md)
 - [Streaming and events](./STREAMING.md)
@@ -49,6 +58,17 @@ from agentic_brain.voice.serializer import speak_serialized
 speak_serialized("Voice system ready", voice="Karen", rate=155)
 ```
 
+### Phase 3 Python facade
+
+```python
+from agentic_brain.voice import get_phase3_voice_system
+
+voice = get_phase3_voice_system()
+voice.play_earcon("task_started")
+voice.speak("Hello Joseph", lady="Karen")
+print(voice.health())
+```
+
 ## Architecture
 
 ```text
@@ -59,6 +79,15 @@ CLI / app code / agents
 | Conversation + mode layer |
 | - work / life / quiet     |
 | - topic-based speaker     |
++-------------+-------------+
+              |
+              v
++---------------------------+
+| Phase3VoiceSystem         |
+| - lazy subsystem loading  |
+| - Kokoro / Apple routing  |
+| - earcons + live daemon   |
+| - quality + memory hooks  |
 +-------------+-------------+
               |
               v
@@ -111,6 +140,20 @@ CLI / app code / agents
 | `src/agentic_brain/events/voice_events.py` | Event topics and request/status payloads |
 | `src/agentic_brain/voice/kokoro_engine.py` | Kokoro-82M neural voice routing for the ladies |
 | `src/agentic_brain/voice/watchdog.py` | Worker heartbeat monitoring and restart alerts |
+| `src/agentic_brain/voice/phase3.py` | Lazy integration facade for Kokoro, earcons, live daemon, quality, memory, and optional Phase 3 modules |
+
+## Phase 3 health checks
+
+`Phase3VoiceSystem.health()` reports:
+
+- speech path availability
+- Kokoro backend readiness
+- earcon and live daemon status
+- speed profile state
+- optional-module availability for cloning, quality, emotions, and memory
+
+This lets integration code verify the full stack without forcing heavy imports at
+startup.
 
 ## The 14 spatial ladies
 
@@ -195,6 +238,7 @@ Supported values:
 ## Related docs
 
 - [Spatial audio](./SPATIAL_AUDIO.md)
+- [Voice cloning](./CLONING.md)
 - [Live mode](./LIVE_MODE.md)
 - [Streaming](./STREAMING.md)
 - [Troubleshooting](./TROUBLESHOOTING.md)

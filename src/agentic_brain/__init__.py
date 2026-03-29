@@ -66,6 +66,10 @@ __tagline__ = "The Universal AI Platform — Install. Run. Create."
 __description__ = "From Grandmother to Enterprise. Production-ready AI agents with GraphRAG, 155+ RAG loaders, and enterprise-grade security."
 
 __all__ = [
+    # Clock — single source of truth for time
+    "Clock",
+    "clock",
+    "get_clock",
     # Core
     "Agent",
     "Audio",
@@ -174,6 +178,10 @@ __all__ = [
 ]
 
 _LAZY_EXPORTS = {
+    # Clock — single source of truth for time
+    "Clock": ("agentic_brain.utils.clock", "Clock"),
+    "clock": ("agentic_brain.utils.clock", "clock"),
+    "get_clock": ("agentic_brain.utils.clock", "get_clock"),
     # Core
     "Agent": ("agentic_brain.agent", "Agent"),
     "Audio": ("agentic_brain.audio", "Audio"),

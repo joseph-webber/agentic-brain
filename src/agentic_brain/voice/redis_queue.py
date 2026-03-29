@@ -33,6 +33,9 @@ class VoiceJob:
     text: str
     voice: str = "Karen (Premium)"
     rate: int = 155
+    pitch: float = 1.0
+    volume: float = 0.8
+    emotion: str = "neutral"
     priority: str = "normal"
     timestamp: float = 0.0
     pause_after: Optional[float] = None

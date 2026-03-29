@@ -176,7 +176,7 @@ class TestVoicePriority:
 class TestVoiceNeverOverlap:
     """Guarantee voices never talk over each other"""
 
-    @patch("agentic_brain.voice.queue.subprocess.Popen")
+    @patch("agentic_brain.voice.serializer.subprocess.Popen")
     @patch("agentic_brain.voice.queue.time.sleep")
     def test_sequential_voices_have_gap(self, sleep_mock, popen_mock):
         """At least 0.5s gap between voices via VoiceQueue.pause_after."""
@@ -300,7 +300,7 @@ class TestVoiceFallback:
 class TestVoiceRobotHuman:
     """Robot-human hybrid features"""
 
-    @patch("agentic_brain.voice.queue.subprocess.Popen")
+    @patch("agentic_brain.voice.serializer.subprocess.Popen")
     @patch("agentic_brain.voice.queue.time.sleep")
     def test_thinking_announcement(self, sleep_mock, popen_mock):
         """Announces when thinking/processing via queued speech."""

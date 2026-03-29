@@ -231,12 +231,37 @@ def fake_redis():
 @pytest.fixture(autouse=True)
 def _reset_serializer_singleton():
     """Reset the VoiceSerializer singleton between tests."""
+    import agentic_brain.voice.resilient as resilient
+
+    # Stop any running daemon before the test so its speech doesn't leak in
+    if resilient._daemon_instance is not None:
+        try:
+            import asyncio
+
+            loop = asyncio.get_event_loop()
+            if not loop.is_running():
+                loop.run_until_complete(resilient._daemon_instance.stop())
+        except Exception:
+            pass
+        resilient._daemon_instance = None
+
     serializer = get_voice_serializer()
     serializer.reset()
-    serializer.wait_until_idle(timeout=2)
+    serializer.wait_until_idle(timeout=5)
     yield
+    # Same teardown after each test
+    if resilient._daemon_instance is not None:
+        try:
+            import asyncio
+
+            loop = asyncio.get_event_loop()
+            if not loop.is_running():
+                loop.run_until_complete(resilient._daemon_instance.stop())
+        except Exception:
+            pass
+        resilient._daemon_instance = None
     serializer.reset()
-    serializer.wait_until_idle(timeout=2)
+    serializer.wait_until_idle(timeout=5)
 
 
 _SAY_WHICH = "agentic_brain.voice.serializer.shutil.which"

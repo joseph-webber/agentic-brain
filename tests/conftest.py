@@ -774,9 +774,9 @@ def debug_mode():
 
 @pytest.fixture(autouse=True)
 def voice_cleanup():
-    """Clean up voice singletons between tests."""
+    """Clean up voice singletons between tests, preventing speech leaking across tests."""
     yield
-    # Clear voice queue and daemon after each test
+    # Clear voice queue after each test
     try:
         from agentic_brain.voice.queue import VoiceQueue
 
@@ -785,10 +785,31 @@ def voice_cleanup():
     except Exception:
         pass
 
-    # Clear daemon instance for async tests
+    # Stop daemon (don't just null it — stop it so in-flight speech drains first)
     try:
+        import asyncio
         import agentic_brain.voice.resilient as resilient
 
-        resilient._daemon_instance = None
+        if resilient._daemon_instance is not None:
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    loop.create_task(resilient._daemon_instance.stop())
+                else:
+                    loop.run_until_complete(resilient._daemon_instance.stop())
+            except Exception:
+                pass
+            resilient._daemon_instance = None
+    except Exception:
+        pass
+
+    # Wait for serializer to drain then reset, so no queued speech leaks into
+    # the next test
+    try:
+        from agentic_brain.voice.serializer import get_voice_serializer
+
+        serializer = get_voice_serializer()
+        serializer.wait_until_idle(timeout=5)
+        serializer.reset()
     except Exception:
         pass

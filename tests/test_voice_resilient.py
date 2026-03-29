@@ -319,13 +319,20 @@ class TestIntegration:
     @pytest.mark.asyncio
     async def test_speak_and_sound(self):
         """Test speaking and playing sound"""
-        # Speak
-        await speak(pick_voice_phrase("test_speak_and_sound", "status_updates"))
+        phrase = pick_voice_phrase("test_speak_and_sound", "status_updates")
+        with patch.object(
+            ResilientVoice, "speak", new_callable=AsyncMock, return_value=True
+        ) as mock_speak, patch.object(
+            SoundEffects, "play", new_callable=AsyncMock, return_value=True
+        ) as mock_play:
+            # Speak
+            await speak(phrase)
 
-        # Play sound
-        await play_sound("success")
+            # Play sound
+            await play_sound("success")
 
-        # Both should complete without error
+        mock_speak.assert_awaited_once_with(phrase, "Karen", 155)
+        mock_play.assert_awaited_once_with("success")
 
     @pytest.mark.asyncio
     async def test_daemon_multiple_speakers(self):
@@ -333,16 +340,27 @@ class TestIntegration:
         daemon = VoiceDaemon()
         await daemon.start()
 
-        # Queue multiple at once
-        phrases = pick_voice_phrases("test_daemon_multiple_speakers", 3, "status_updates")
-        tasks = [
-            daemon.speak(phrases[0]),
-            daemon.speak(phrases[1], voice="Moira"),
-            daemon.speak(phrases[2], voice="Tingting"),
-        ]
-        await asyncio.gather(*tasks)
+        with patch.object(
+            ResilientVoice, "speak", new_callable=AsyncMock, return_value=True
+        ) as mock_speak:
+            # Queue multiple at once
+            phrases = pick_voice_phrases(
+                "test_daemon_multiple_speakers", 3, "status_updates"
+            )
+            tasks = [
+                daemon.speak(phrases[0]),
+                daemon.speak(phrases[1], voice="Moira"),
+                daemon.speak(phrases[2], voice="Tingting"),
+            ]
+            await asyncio.gather(*tasks)
 
-        await asyncio.sleep(1)
+            await asyncio.sleep(2)
+
+            stats = daemon.get_stats()
+            assert stats["processed"] == 3
+            assert stats["errors"] == 0
+            assert mock_speak.await_count == 3
+
         await daemon.stop()
 
     @pytest.mark.asyncio

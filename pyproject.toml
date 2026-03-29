@@ -81,6 +81,9 @@ voice-kokoro = [
     "soundfile>=0.12.1",
     "huggingface-hub>=0.29.0",
 ]
+voice-cloning = [
+    "f5-tts",
+]
 # Enhanced integrations bundle
 enhanced = [
     "mem0ai>=0.1.0",
@@ -413,6 +416,7 @@ include = ["agentic_brain*"]
     "native/*.m",
     "native/*.cpp",
     "earcons/*.wav",
+    "sounds/*.wav",
 ]
 
 [tool.black]

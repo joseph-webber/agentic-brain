@@ -38,6 +38,9 @@ from agentic_brain.audio.stereo_pan import get_stereo_panner
 from agentic_brain.cache.voice_cache import VoiceCache, VoiceState
 from agentic_brain.voice._speech_lock import get_global_lock as _get_global_lock
 from agentic_brain.voice.config import stereo_pan_enabled, use_redpanda_voice
+from agentic_brain.voice.config import VoiceConfig as EmotionalVoiceConfig
+from agentic_brain.voice.emotions import VoiceEmotion
+from agentic_brain.voice.expression import ExpressionEngine
 from agentic_brain.voice.redis_queue import RedisVoiceQueue, VoiceJob
 from agentic_brain.voice.watchdog import VoiceWatchdog
 
@@ -98,6 +101,9 @@ class VoiceMessage:
     text: str
     voice: str = "Karen"
     rate: int = 155
+    pitch: float = 1.0
+    volume: float = 0.8
+    emotion: VoiceEmotion = VoiceEmotion.NEUTRAL
     pause_after: Optional[float] = None
     lady: Optional[str] = None  # When set, route through spatial audio
 
@@ -105,6 +111,23 @@ class VoiceMessage:
         self.text = self.text.strip()
         if not self.text:
             raise ValueError("Voice message text cannot be empty")
+
+    def render_for_say(self) -> str:
+        """Render text with inline macOS speech prosody controls."""
+
+        commands: list[str] = []
+        pitch_steps = int(round((self.pitch - 1.0) * 25))
+        volume_percent = int(round(self.volume * 100))
+
+        if pitch_steps:
+            commands.append(f"[[pbas {pitch_steps:+d}]]")
+        if volume_percent != 80:
+            commands.append(f"[[volm {volume_percent}]]")
+
+        if not commands:
+            return self.text
+
+        return "".join(commands) + self.text
 
 
 SpeechExecutor = Callable[[VoiceMessage], bool]
@@ -354,6 +377,7 @@ class VoiceSerializer:
         text: str,
         voice: str = "Karen",
         rate: int = 155,
+        emotion: VoiceEmotion | str | None = None,
         pause_after: Optional[float] = None,
         wait: bool = True,
         lady: Optional[str] = None,
@@ -393,20 +417,22 @@ class VoiceSerializer:
         except Exception:
             pass  # repeat detection must never break speech
 
-        message = VoiceMessage(
-            text=text,
+        return speak_serialized(
+            text,
             voice=voice,
-            rate=rate,
-            pause_after=pause_after,
             lady=lady,
+            rate=rate,
+            emotion=emotion,
+            pause_after=pause_after,
+            wait=wait,
         )
-        return self.run_serialized(message, wait=wait)
 
     async def speak_async(
         self,
         text: str,
         voice: str = "Karen",
         rate: int = 155,
+        emotion: VoiceEmotion | str | None = None,
         pause_after: Optional[float] = None,
         wait: bool = True,
         lady: Optional[str] = None,
@@ -425,6 +451,7 @@ class VoiceSerializer:
                     text,
                     voice=voice,
                     rate=rate,
+                    emotion=emotion,
                     pause_after=pause_after,
                     wait=wait,
                     lady=lady,
@@ -438,6 +465,7 @@ class VoiceSerializer:
                 text,
                 voice=voice,
                 rate=rate,
+                emotion=emotion,
                 pause_after=pause_after,
                 wait=wait,
                 lady=lady,
@@ -461,6 +489,9 @@ class VoiceSerializer:
                         text=message.text,
                         voice=message.voice,
                         rate=message.rate,
+                        pitch=message.pitch,
+                        volume=message.volume,
+                        emotion=message.emotion.value,
                         priority="normal",
                         pause_after=message.pause_after,
                     )
@@ -607,6 +638,9 @@ class VoiceSerializer:
                             text=redis_job.text,
                             voice=redis_job.voice,
                             rate=redis_job.rate,
+                            pitch=redis_job.pitch,
+                            volume=redis_job.volume,
+                            emotion=VoiceEmotion(redis_job.emotion),
                             pause_after=redis_job.pause_after,
                         ),
                         executor=self._speak_with_say,
@@ -663,7 +697,7 @@ class VoiceSerializer:
                     finally:
                         stereo_panner.cleanup_audio(panned_audio.path)
 
-        cmd = ["say", "-v", message.voice, "-r", str(message.rate), message.text]
+        cmd = ["say", "-v", message.voice, "-r", str(message.rate), message.render_for_say()]
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
@@ -783,6 +817,7 @@ def speak_serialized(
     voice: str = "Karen",
     lady: Optional[str] = None,
     rate: int = 155,
+    emotion: VoiceEmotion | str | None = None,
     pause_after: Optional[float] = None,
     wait: bool = True,
     speed_profile: Optional[str] = None,
@@ -824,14 +859,49 @@ def speak_serialized(
         if tier_range:
             effective_rate = (tier_range[0] + tier_range[1]) // 2
 
-    return _serializer.speak(
-        text,
+    explicit_emotion = emotion is not None
+    base_config = EmotionalVoiceConfig(voice_name=voice, rate=effective_rate)
+    styled_config = base_config
+    resolved_emotion = VoiceEmotion.NEUTRAL
+
+    if explicit_emotion:
+        expression_engine = ExpressionEngine()
+        resolved_emotion = (
+            emotion if isinstance(emotion, VoiceEmotion) else VoiceEmotion(emotion)
+        )
+        _, styled_config = expression_engine.style_config(
+            base_config,
+            text,
+            lady=lady or voice,
+            emotion=resolved_emotion,
+        )
+    else:
+        expression_engine = ExpressionEngine()
+        auto_emotion = expression_engine.detect_emotion(text, lady=lady or voice)
+        if auto_emotion in {
+            VoiceEmotion.EXCITED,
+            VoiceEmotion.CALM,
+            VoiceEmotion.URGENT,
+            VoiceEmotion.CONCERNED,
+        }:
+            resolved_emotion = auto_emotion
+            _, styled_config = expression_engine.style_config(
+                base_config,
+                text,
+                lady=lady or voice,
+                emotion=resolved_emotion,
+            )
+    message = VoiceMessage(
+        text=text,
         voice=voice,
-        lady=lady,
-        rate=effective_rate,
+        rate=styled_config.rate,
+        pitch=styled_config.pitch,
+        volume=styled_config.volume,
+        emotion=resolved_emotion,
         pause_after=pause_after,
-        wait=wait,
+        lady=lady,
     )
+    return _serializer.run_serialized(message, wait=wait)
 
 
 # ── Legacy / bypass detection ────────────────────────────────────────

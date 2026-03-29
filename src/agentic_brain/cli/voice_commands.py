@@ -56,6 +56,95 @@ from agentic_brain.voice.registry import (
 )
 
 
+def voice_clone_command(args: argparse.Namespace) -> int:
+    """Manage local zero-shot voice clones."""
+    try:
+        from agentic_brain.voice.voice_cloning import VoiceCloner
+        from agentic_brain.voice.voice_library import VoiceLibrary
+    except ImportError as exc:
+        print(f"Error: Could not import voice cloning module: {exc}")
+        return 1
+
+    library = VoiceLibrary()
+    cloner = VoiceCloner(library=library)
+
+    if getattr(args, "list", False):
+        voices = library.list_voices()
+        print("\n🧬 Cloned Voices")
+        print(f"   Found {len(voices)} voice clone(s)\n")
+        if not voices:
+            print("   No cloned voices yet.")
+            print("   Create one with: ab voice clone sample.wav --name custom_karen")
+            return 0
+
+        print(f"   {'Voice ID':<26} {'Name':<24} {'Lady':<12} {'Backend':<16}")
+        print(f"   {'-'*26} {'-'*24} {'-'*12} {'-'*16}")
+        for profile in voices:
+            lady = profile.assigned_lady or "-"
+            print(
+                f"   {profile.voice_id:<26} {profile.name[:24]:<24} {lady:<12} {profile.backend:<16}"
+            )
+        return 0
+
+    if getattr(args, "delete", None):
+        deleted = library.delete_voice(args.delete)
+        if deleted:
+            print(f"✅ Deleted cloned voice: {args.delete}")
+            return 0
+        print(f"❌ Voice not found: {args.delete}")
+        return 1
+
+    if getattr(args, "assign", None):
+        if not getattr(args, "lady", None):
+            print("❌ --lady is required with --assign")
+            return 1
+        try:
+            profile = library.assign_voice(args.assign, args.lady)
+        except KeyError:
+            print(f"❌ Voice not found: {args.assign}")
+            return 1
+        except ValueError as exc:
+            print(f"❌ {exc}")
+            return 1
+
+        print(f"✅ Assigned {profile.voice_id} to lady: {profile.assigned_lady}")
+        return 0
+
+    audio_file = getattr(args, "audio_file", None)
+    if not audio_file:
+        print("Usage: ab voice clone <audio_file> --name custom_karen")
+        print("       ab voice clone --list")
+        print("       ab voice clone --delete <voice_id>")
+        print("       ab voice clone --assign <voice_id> --lady karen")
+        return 1
+
+    try:
+        voice_id = cloner.clone_voice(
+            audio_file,
+            name=getattr(args, "name", None),
+            reference_text=getattr(args, "reference_text", ""),
+            assigned_lady=getattr(args, "lady", None),
+        )
+    except Exception as exc:
+        print(f"❌ Failed to clone voice: {exc}")
+        return 1
+
+    profile = library.get_voice(voice_id)
+    warnings = profile.validation.get("warnings", []) if profile else []
+    print(f"✅ Voice clone created: {voice_id}")
+    if profile:
+        print(f"   Name: {profile.name}")
+        print(f"   Reference: {profile.reference_audio}")
+        print(f"   Backend: {profile.backend}")
+        if profile.assigned_lady:
+            print(f"   Assigned lady: {profile.assigned_lady}")
+    if warnings:
+        print("   Warnings:")
+        for warning in warnings:
+            print(f"   - {warning}")
+    return 0
+
+
 def voice_region_command(args: argparse.Namespace) -> int:
     """Set or show regional voice settings."""
     rv = get_regional_voice()
@@ -544,7 +633,7 @@ def voice_speed_command(args: argparse.Namespace) -> int:
         print(f"⚡ Auto-classification {state_str}")
         if new_state:
             print("  Content will be analysed for optimal speed:")
-            for tier, desc in TIER_DESCRIPTIONS.items():
+            for _tier, desc in TIER_DESCRIPTIONS.items():
                 print(f"    {desc}")
         return 0
 
@@ -561,7 +650,7 @@ def voice_speed_command(args: argparse.Namespace) -> int:
             print(f"{marker}{PROFILE_DESCRIPTIONS[profile]}")
         print()
         print("Content-aware tiers:")
-        for tier, desc in TIER_DESCRIPTIONS.items():
+        for _tier, desc in TIER_DESCRIPTIONS.items():
             print(f"   {desc}")
         print()
         print("Change with:  ab voice speed <profile|up|down>")
@@ -677,6 +766,12 @@ def voice_command(args: argparse.Namespace) -> int:
     print("  ab voice live uninstall    Remove launchd auto-start")
     print("  ab voice stream            Show Redpanda stream consumer status")
     print("  ab voice health            Full unified voice system health")
+    print()
+    print("🧬 Voice Cloning Commands:")
+    print("  ab voice clone sample.wav --name custom_karen")
+    print("  ab voice clone --list")
+    print("  ab voice clone --delete <voice_id>")
+    print("  ab voice clone --assign <voice_id> --lady karen")
     print()
     print("📝 Conversation Memory Commands:")
     print("  ab voice history           Show recent utterances")
@@ -1356,6 +1451,57 @@ def register_voice_commands(subparsers: argparse._SubParsersAction) -> None:
         help="Voice personality to use (karen, daniel, moira)",
     )
     llm_parser.set_defaults(func=voice_llm_command)
+
+    # voice clone
+    clone_parser = voice_subparsers.add_parser(
+        "clone",
+        help="Manage local F5-TTS voice clones",
+        description=(
+            "Create and manage local voice clones. "
+            "F5-TTS is optional and used when installed; otherwise clones are stored "
+            "locally for later use with graceful fallback synthesis."
+        ),
+    )
+    clone_parser.add_argument(
+        "audio_file",
+        nargs="?",
+        type=str,
+        help="Reference audio file to clone",
+    )
+    clone_parser.add_argument(
+        "--name",
+        type=str,
+        help="Human-friendly clone name (e.g. custom_karen)",
+    )
+    clone_parser.add_argument(
+        "--reference-text",
+        type=str,
+        default="",
+        help="Optional transcription of the reference audio",
+    )
+    clone_parser.add_argument(
+        "--list",
+        action="store_true",
+        help="List available cloned voices",
+    )
+    clone_parser.add_argument(
+        "--delete",
+        type=str,
+        metavar="VOICE_ID",
+        help="Delete a cloned voice",
+    )
+    clone_parser.add_argument(
+        "--assign",
+        type=str,
+        metavar="VOICE_ID",
+        help="Assign a cloned voice to a lady",
+    )
+    clone_parser.add_argument(
+        "--lady",
+        type=str,
+        help="Lady name for --assign or initial clone association",
+    )
+    clone_parser.set_defaults(func=voice_clone_command)
 
     # Default for bare 'ab voice'
     voice_parser.set_defaults(func=voice_command)

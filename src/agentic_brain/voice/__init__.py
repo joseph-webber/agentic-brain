@@ -90,6 +90,13 @@ from agentic_brain.voice.resilient import (
 from agentic_brain.voice.resilient import (
     speak as resilient_speak,
 )
+from agentic_brain.voice.emotions import (
+    EMOTION_PARAMS,
+    EmotionDetector,
+    VoiceEmotion,
+    apply_emotion,
+)
+from agentic_brain.voice.expression import ExpressionEngine
 from agentic_brain.voice.serializer import (
     VoiceSerializer,
     _legacy_speak,
@@ -230,6 +237,11 @@ __all__ = [
     "VoiceQuality",
     "LanguagePack",
     "LANGUAGE_PACKS",
+    "VoiceEmotion",
+    "EmotionDetector",
+    "ExpressionEngine",
+    "EMOTION_PARAMS",
+    "apply_emotion",
     # Queue system (CRITICAL for accessibility!)
     "VoiceQueue",
     "VoiceMessage",
@@ -296,6 +308,15 @@ __all__ = [
     "NeuralVoiceRouter",
     "EarconPlayer",
     "ensure_earcons_exist",
+    "ContentClassifier",
+    "ConversationMemory",
+    "RepeatDetector",
+    "VoiceCloner",
+    "VoiceLibrary",
+    "QualityGate",
+    "VoiceQualityAnalyzer",
+    "EmotionDetector",
+    "ExpressionEngine",
     # Classes
     "Audio",
     "AudioConfig",
@@ -453,6 +474,21 @@ _VOICE_EXPORTS = {
     "NeuralVoiceRouter": ("agentic_brain.voice.neural_router", "NeuralVoiceRouter"),
     "EarconPlayer": ("agentic_brain.audio.earcons", "EarconPlayer"),
     "ensure_earcons_exist": ("agentic_brain.audio.earcons", "ensure_earcons_exist"),
+    "ContentClassifier": ("agentic_brain.voice.content_classifier", "ContentClassifier"),
+    "ConversationMemory": (
+        "agentic_brain.voice.conversation_memory",
+        "ConversationMemory",
+    ),
+    "RepeatDetector": ("agentic_brain.voice.repeat_detector", "RepeatDetector"),
+    "VoiceCloner": ("agentic_brain.voice.voice_cloning", "VoiceCloner"),
+    "VoiceLibrary": ("agentic_brain.voice.voice_library", "VoiceLibrary"),
+    "QualityGate": ("agentic_brain.voice.quality_gate", "QualityGate"),
+    "VoiceQualityAnalyzer": (
+        "agentic_brain.audio.quality_analyzer",
+        "VoiceQualityAnalyzer",
+    ),
+    "EmotionDetector": ("agentic_brain.voice.emotions", "EmotionDetector"),
+    "ExpressionEngine": ("agentic_brain.voice.expression", "ExpressionEngine"),
     "Phase3VoiceSystem": ("agentic_brain.voice.phase3", "Phase3VoiceSystem"),
     "get_phase3_voice_system": (
         "agentic_brain.voice.phase3",

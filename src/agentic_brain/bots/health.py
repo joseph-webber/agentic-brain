@@ -543,7 +543,7 @@ class BotHealth:
         """
         lines = [
             f"Bot Health Report: {self.bot_id}",
-            f"Timestamp: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Timestamp: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}",
             f"Overall Status: {self.get_health_status().value.upper()}",
             "",
         ]

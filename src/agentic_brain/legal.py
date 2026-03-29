@@ -36,9 +36,10 @@ IMPORTANT:
     legal practitioner for advice specific to your circumstances.
 """
 
-from datetime import datetime
 from enum import Enum
 from typing import Optional
+
+from agentic_brain.utils.clock import clock
 
 __all__ = [
     # Enums
@@ -468,7 +469,7 @@ def format_disclaimer(
     disclaimer = get_disclaimer(disclaimer_type)
 
     if include_timestamp:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S AEST")
+        timestamp = clock.format("%Y-%m-%d %H:%M:%S %Z")
         disclaimer = f"{disclaimer}\n\nDisclaimer shown: {timestamp}"
 
     if format == "html":

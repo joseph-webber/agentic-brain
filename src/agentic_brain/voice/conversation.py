@@ -37,6 +37,7 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+from agentic_brain.utils.clock import clock
 from agentic_brain.voice.registry import get_voice
 from agentic_brain.voice.serializer import get_voice_serializer
 
@@ -416,18 +417,33 @@ class ConversationalVoice:
             self.config.save_mode(mode)
             logger.info(f"Voice mode changed: {old_mode.value} → {mode.value}")
 
-        # Announce the change
-        if mode == VoiceMode.WORK:
-            self.speak(
-                "Switching to work mode. Professional Karen only.", voice="Karen"
-            )
-        elif mode == VoiceMode.LIFE:
-            self.speak(
-                "Switching to life mode. All primary voices active!", voice="Karen"
-            )
-        elif mode == VoiceMode.QUIET:
-            # Don't speak in quiet mode!
-            logger.info("Quiet mode activated")
+            # Announce the change while still holding the mode switch lock
+            if mode == VoiceMode.WORK:
+                self.speak(
+                    "Switching to work mode. Professional Karen only.", voice="Karen"
+                )
+            elif mode == VoiceMode.LIFE:
+                self.speak(
+                    "Switching to life mode. All primary voices active!", voice="Karen"
+                )
+            elif mode == VoiceMode.QUIET:
+                # Don't speak in quiet mode!
+                logger.info("Quiet mode activated")
+
+    def greet(self, name: str = "Joseph") -> bool:
+        """
+        Speak a time-appropriate Adelaide greeting.
+
+        Uses the brain clock for accurate local time.
+
+        Args:
+            name: Who to greet (default: Joseph)
+
+        Returns:
+            True if speech succeeded
+        """
+        greeting = clock.greeting()
+        return self.speak(f"{greeting}, {name}!", voice="Karen")
 
     def demo(self):
         """Run a demo conversation showing off the system!"""
@@ -516,6 +532,11 @@ def conversation(messages: List[Tuple[str, str]]) -> bool:
 def set_mode(mode: VoiceMode):
     """Quick mode change function."""
     get_conversation().set_mode(mode)
+
+
+def greet(name: str = "Joseph") -> bool:
+    """Quick greeting function using clock."""
+    return get_conversation().greet(name)
 
 
 def demo():

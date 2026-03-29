@@ -37,6 +37,7 @@ from .platform import VoicePlatform, check_voice_available, detect_platform
 from .serializer import VoiceMessage as SerializedVoiceMessage
 from .serializer import get_voice_serializer
 from .windows import speak_windows
+from ._speech_lock import get_global_lock
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +193,13 @@ class ResilientVoice:
         cls, text: str, voice: str = "Karen", rate: int = 155
     ) -> bool:
         """macOS say command with voice and rate"""
+        lock = get_global_lock()
+        owns_lock = not lock.is_held
+        if owns_lock:
+            acquired = await asyncio.to_thread(lock.acquire, timeout=cls._config.timeout)
+            if not acquired:
+                logger.warning("say_with_voice: could not acquire speech lock")
+                return False
         try:
             proc = await asyncio.create_subprocess_exec(
                 "say",
@@ -211,12 +219,22 @@ class ResilientVoice:
         except Exception as e:
             logger.debug(f"say_with_voice error: {e}")
             return False
+        finally:
+            if owns_lock:
+                lock.release()
 
     @classmethod
     async def _say_default(
         cls, text: str, voice: str = "Karen", rate: int = 155
     ) -> bool:
         """macOS say command with default voice"""
+        lock = get_global_lock()
+        owns_lock = not lock.is_held
+        if owns_lock:
+            acquired = await asyncio.to_thread(lock.acquire, timeout=cls._config.timeout)
+            if not acquired:
+                logger.warning("say_default: could not acquire speech lock")
+                return False
         try:
             proc = await asyncio.create_subprocess_exec(
                 "say",
@@ -232,12 +250,22 @@ class ResilientVoice:
         except Exception as e:
             logger.debug(f"say_default error: {e}")
             return False
+        finally:
+            if owns_lock:
+                lock.release()
 
     @classmethod
     async def _osascript_voice(
         cls, text: str, voice: str = "Karen", rate: int = 155
     ) -> bool:
         """AppleScript with voice"""
+        lock = get_global_lock()
+        owns_lock = not lock.is_held
+        if owns_lock:
+            acquired = await asyncio.to_thread(lock.acquire, timeout=cls._config.timeout)
+            if not acquired:
+                logger.warning("osascript_voice: could not acquire speech lock")
+                return False
         try:
             safe_text = text.replace('"', '\\"')
             script = (
@@ -258,12 +286,22 @@ class ResilientVoice:
         except Exception as e:
             logger.debug(f"osascript_voice error: {e}")
             return False
+        finally:
+            if owns_lock:
+                lock.release()
 
     @classmethod
     async def _osascript_default(
         cls, text: str, voice: str = "Karen", rate: int = 155
     ) -> bool:
         """AppleScript without voice specification"""
+        lock = get_global_lock()
+        owns_lock = not lock.is_held
+        if owns_lock:
+            acquired = await asyncio.to_thread(lock.acquire, timeout=cls._config.timeout)
+            if not acquired:
+                logger.warning("osascript_default: could not acquire speech lock")
+                return False
         try:
             safe_text = text.replace('"', '\\"')
             script = f'say "{safe_text}"'
@@ -282,12 +320,22 @@ class ResilientVoice:
         except Exception as e:
             logger.debug(f"osascript_default error: {e}")
             return False
+        finally:
+            if owns_lock:
+                lock.release()
 
     @classmethod
     async def _play_alert(
         cls, text: str, voice: str = "Karen", rate: int = 155
     ) -> bool:
         """Play alert sound as final fallback"""
+        lock = get_global_lock()
+        owns_lock = not lock.is_held
+        if owns_lock:
+            acquired = await asyncio.to_thread(lock.acquire, timeout=5)
+            if not acquired:
+                logger.warning("play_alert: could not acquire speech lock")
+                return False
         try:
             if os.path.exists(cls._config.fallback_sound):
                 proc = await asyncio.create_subprocess_exec(
@@ -302,6 +350,9 @@ class ResilientVoice:
         except Exception as e:
             logger.debug(f"alert_sound error: {e}")
             return False
+        finally:
+            if owns_lock:
+                lock.release()
 
     @classmethod
     async def _windows_voice(
@@ -440,6 +491,8 @@ class VoiceDaemon:
     Runs continuously, processing requests from queue.
     """
 
+    INTER_UTTERANCE_GAP = 0.3
+
     def __init__(self, config: Optional[VoiceConfig] = None):
         self.config = config or VoiceConfig()
         self.queue = asyncio.Queue()
@@ -511,12 +564,13 @@ class VoiceDaemon:
         )
 
     async def _process_queue(self):
-        """Process queued speech requests forever"""
+        """Process queued speech requests one at a time."""
         while self._running:
             try:
                 text, voice, rate = await asyncio.wait_for(self.queue.get(), timeout=60)
                 await self._ready.wait()
                 success = await ResilientVoice.speak(text, voice, rate)
+                await asyncio.sleep(self.INTER_UTTERANCE_GAP)
                 self.processed += 1
                 if not success:
                     self.errors += 1

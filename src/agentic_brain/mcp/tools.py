@@ -948,5 +948,16 @@ TOOLS = {
 
 
 def get_all_tools() -> dict[str, Any]:
-    """Get all registered tools."""
-    return TOOLS.copy()
+    """Get all registered tools, including clock tools."""
+    # Import clock tools
+    try:
+        from agentic_brain.mcp.clock_server import get_clock_tools
+        clock_tools = get_clock_tools()
+    except ImportError:
+        logger.warning("Clock server not available")
+        clock_tools = {}
+    
+    # Merge all tools
+    all_tools = TOOLS.copy()
+    all_tools.update(clock_tools)
+    return all_tools

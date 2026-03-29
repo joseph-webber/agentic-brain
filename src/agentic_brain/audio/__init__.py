@@ -256,6 +256,7 @@ class AudioConfig:
     default_rate: int = 175
     earcons_enabled: bool = True
     earcon_volume: float = 0.3
+    earcon_theme: str = "minimal"
     sounds_dir: Path | None = None
     on_speak: Callable[[str], None] | None = None
     on_error: Callable[[str], None] | None = None
@@ -357,7 +358,12 @@ class Audio:
         if self._earcon_player is None:
             from .earcons import EarconPlayer
 
-            self._earcon_player = EarconPlayer(volume=self.config.earcon_volume)
+            self._earcon_player = EarconPlayer(
+                volume=self.config.earcon_volume,
+                enabled=self.config.earcons_enabled,
+                sound_dir=self.config.sounds_dir,
+                theme=self.config.earcon_theme,
+            )
         return self._earcon_player
 
     def speak(
@@ -611,6 +617,17 @@ from .airpods import (
     SpatialAudioScene,
     SpatialVoicePosition,
 )
+from .airpods_detect import (
+    AirPodsDetector,
+    AudioRouter,
+    airpods_connected,
+    check_battery_and_warn,
+    get_airpods_detector,
+    get_audio_router,
+)
+from .airpods_detect import (
+    AirPodsStatus as DetectedAirPodsStatus,
+)
 from .spatial_audio import (
     LADY_POSITIONS,
     LADY_VOICE_MAP,
@@ -618,13 +635,4 @@ from .spatial_audio import (
     SpatialPosition,
     get_spatial_router,
     speak_spatial,
-)
-from .airpods_detect import (
-    AirPodsDetector,
-    AirPodsStatus as DetectedAirPodsStatus,
-    AudioRouter,
-    airpods_connected,
-    check_battery_and_warn,
-    get_airpods_detector,
-    get_audio_router,
 )

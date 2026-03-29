@@ -1,0 +1,69 @@
+# Timezone Configuration for Agentic Brain
+# Joseph's timezone and time preferences
+
+# Default timezone for all operations
+default_timezone: Australia/Adelaide
+
+# User's timezone (Joseph lives in Adelaide)
+user_timezone: Australia/Adelaide
+
+# Display format for time
+# Options: "12h" (12-hour with AM/PM) or "24h" (24-hour military time)
+display_format: 12h
+
+# Business hours in Adelaide (24-hour format)
+business_hours:
+  start: 9  # 9 AM
+  end: 17   # 5 PM
+
+# Weekend days (0=Monday, 6=Sunday)
+weekend_days:
+  - 5  # Saturday
+  - 6  # Sunday
+
+# Date format preference
+date_format: "%A, %B %d, %Y"  # Friday, March 22, 2026
+
+# Time format preference (for 12h mode)
+time_format_12h: "%I:%M %p"  # 3:30 PM
+
+# Time format preference (for 24h mode)
+time_format_24h: "%H:%M"  # 15:30
+
+# Greeting time ranges (24-hour format)
+greetings:
+  morning:
+    start: 5
+    end: 12
+    message: "Good morning"
+  
+  afternoon:
+    start: 12
+    end: 18
+    message: "Good afternoon"
+  
+  evening:
+    start: 18
+    end: 5  # wraps to next day
+    message: "Good evening"
+
+# Additional timezone mappings for common conversions
+timezones:
+  adelaide: Australia/Adelaide
+  sydney: Australia/Sydney
+  melbourne: Australia/Melbourne
+  brisbane: Australia/Brisbane
+  perth: Australia/Perth
+  utc: UTC
+  london: Europe/London
+  new_york: America/New_York
+  los_angeles: America/Los_Angeles
+  tokyo: Asia/Tokyo
+  singapore: Asia/Singapore
+
+# CRITICAL: Year awareness
+# AI models often have stale training data (~2 years old)
+# This section helps prevent date confusion
+current_year: 2026  # Update annually
+training_data_year: 2024  # When AI training data was collected
+staleness_warning: "AI training data is ~2 years out of date. Use web search for current info."
