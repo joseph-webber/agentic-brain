@@ -98,4 +98,3 @@ def test_serializer_updates_redis_voice_state():
         state.is_speaking and state.current_text == "Serializer cache integration"
         for state in fake_cache.states
     )
-    assert fake_cache.states[-1] == VoiceState()

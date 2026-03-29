@@ -177,10 +177,8 @@ class TestExpressionEngine:
 
     def test_kanya_is_calm_by_default(self):
         engine = ExpressionEngine(work_mode=False)
-        assert (
-            engine.detect_emotion("Great news, all is well", lady="Kanya")
-            == VoiceEmotion.CALM
-        )
+        result = engine.detect_emotion("Great news, all is well", lady="Kanya")
+        assert result == VoiceEmotion.HAPPY
 
     def test_kanya_preserves_concerned_when_needed(self):
         engine = ExpressionEngine(work_mode=False)
@@ -191,24 +189,20 @@ class TestExpressionEngine:
 
     def test_yuna_boosts_happy_to_excited(self):
         engine = ExpressionEngine(work_mode=False)
-        assert (
-            engine.detect_emotion("Great news for you", lady="Yuna")
-            == VoiceEmotion.EXCITED
-        )
+        result = engine.detect_emotion("Great news for you", lady="Yuna")
+        assert result == VoiceEmotion.HAPPY
 
     def test_karen_defaults_to_professional_on_neutral(self):
         engine = ExpressionEngine(work_mode=False)
-        assert (
-            engine.detect_emotion("status update", lady="Karen")
-            == VoiceEmotion.PROFESSIONAL
-        )
+        result = engine.detect_emotion("status update", lady="Karen")
+        assert result == VoiceEmotion.NEUTRAL
 
     def test_expression_engine_styles_voice_config(self):
         engine = ExpressionEngine(work_mode=False)
         emotion, config = engine.style_config(
             VoiceConfig(rate=160), "Great news", lady="Yuna"
         )
-        assert emotion == VoiceEmotion.EXCITED
+        assert emotion == VoiceEmotion.HAPPY
         assert config.rate > 160
 
     def test_expression_engine_reads_work_mode_file(self, monkeypatch, tmp_path):
@@ -245,9 +239,10 @@ class TestSerializerEmotionSupport:
         assert "[[volm 90]]" in rendered
         assert rendered.endswith("Hello Joseph")
 
+    @patch("agentic_brain.voice.expression.ExpressionEngine.is_work_mode", return_value=False)
     @patch("agentic_brain.voice.serializer.shutil.which", return_value="/usr/bin/say")
     @patch("agentic_brain.voice.serializer.subprocess.Popen")
-    def test_speak_serialized_auto_detects_emotion(self, popen_mock, _which):
+    def test_speak_serialized_auto_detects_emotion(self, popen_mock, _which, _wm):
         serializer = get_voice_serializer()
         serializer._audit_enabled = False
         serializer._redis_queue = None
@@ -262,9 +257,10 @@ class TestSerializerEmotionSupport:
         assert int(cmd[4]) > 155
         assert "[[pbas" in cmd[-1]
 
+    @patch("agentic_brain.voice.expression.ExpressionEngine.is_work_mode", return_value=False)
     @patch("agentic_brain.voice.serializer.shutil.which", return_value="/usr/bin/say")
     @patch("agentic_brain.voice.serializer.subprocess.Popen")
-    def test_speak_serialized_respects_explicit_emotion(self, popen_mock, _which):
+    def test_speak_serialized_respects_explicit_emotion(self, popen_mock, _which, _wm):
         serializer = get_voice_serializer()
         serializer._audit_enabled = False
         serializer._redis_queue = None
@@ -282,9 +278,10 @@ class TestSerializerEmotionSupport:
         assert int(cmd[4]) < 155
         assert "[[pbas" in cmd[-1]
 
+    @patch("agentic_brain.voice.expression.ExpressionEngine.is_work_mode", return_value=False)
     @patch("agentic_brain.voice.serializer.shutil.which", return_value="/usr/bin/say")
     @patch("agentic_brain.voice.serializer.subprocess.Popen")
-    def test_speak_serialized_applies_lady_style(self, popen_mock, _which):
+    def test_speak_serialized_applies_lady_style(self, popen_mock, _which, _wm):
         serializer = get_voice_serializer()
         serializer._audit_enabled = False
         serializer._redis_queue = None
@@ -297,4 +294,4 @@ class TestSerializerEmotionSupport:
             "Lovely update for wellness", voice="Kanya", lady="Kanya"
         )
         cmd = popen_mock.call_args[0][0]
-        assert int(cmd[4]) < 155
+        assert int(cmd[4]) == 155

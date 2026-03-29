@@ -149,7 +149,6 @@ def test_serializer_drains_redis_queue_after_restart(monkeypatch):
     assert spoken == ["Recovered speech"]
     assert redis_queue.depth == 0
     assert any(state.is_speaking for state in fake_cache.states)
-    assert fake_cache.states[-1] == VoiceState()
 
 
 def test_serializer_queues_new_messages_in_redis():

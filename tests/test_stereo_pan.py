@@ -100,7 +100,9 @@ def test_render_panned_speech_generates_say_then_sox(monkeypatch):
 
 
 def test_serializer_uses_stereo_pan_when_enabled(monkeypatch):
-    serializer = get_voice_serializer()
+    from agentic_brain.voice.serializer import VoiceSerializer
+
+    serializer = VoiceSerializer()
     serializer._audit_enabled = False
     calls = {}
 

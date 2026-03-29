@@ -812,5 +812,8 @@ def voice_cleanup():
         serializer = get_voice_serializer()
         serializer.wait_until_idle(timeout=5)
         serializer.reset()
+        serializer.set_pause_between(0.3)
+        serializer._audit_enabled = True
+        serializer._redis_queue = None
     except Exception:
         pass
