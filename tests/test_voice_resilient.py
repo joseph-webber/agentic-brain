@@ -320,11 +320,14 @@ class TestIntegration:
     async def test_speak_and_sound(self):
         """Test speaking and playing sound"""
         phrase = pick_voice_phrase("test_speak_and_sound", "status_updates")
-        with patch.object(
-            ResilientVoice, "speak", new_callable=AsyncMock, return_value=True
-        ) as mock_speak, patch.object(
-            SoundEffects, "play", new_callable=AsyncMock, return_value=True
-        ) as mock_play:
+        with (
+            patch.object(
+                ResilientVoice, "speak", new_callable=AsyncMock, return_value=True
+            ) as mock_speak,
+            patch.object(
+                SoundEffects, "play", new_callable=AsyncMock, return_value=True
+            ) as mock_play,
+        ):
             # Speak
             await speak(phrase)
 

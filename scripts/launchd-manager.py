@@ -141,9 +141,11 @@ def load_service(label: str, plist_path: Path) -> None:
     result = run_command(
         ["launchctl", "bootstrap", DOMAIN, str(plist_path)], check=False
     )
-    if result.returncode != 0 and "service already loaded" in (
-        (result.stderr or "") + (result.stdout or "")
-    ).lower():
+    if (
+        result.returncode != 0
+        and "service already loaded"
+        in ((result.stderr or "") + (result.stdout or "")).lower()
+    ):
         unload_service(label, plist_path)
         run_command(["launchctl", "bootstrap", DOMAIN, str(plist_path)])
     elif result.returncode != 0:
@@ -367,7 +369,9 @@ def run_backup(_: argparse.Namespace) -> int:
 
     with tarfile.open(archive_path, "w:gz") as archive:
         for path in iter_backup_paths():
-            archive.add(path, arcname=Path("agentic-brain") / path.relative_to(PROJECT_DIR))
+            archive.add(
+                path, arcname=Path("agentic-brain") / path.relative_to(PROJECT_DIR)
+            )
 
     keep_count = int(os.environ.get("AGENTIC_BACKUP_KEEP", "48"))
     prune_old_backups(keep_count)
@@ -407,7 +411,9 @@ def run_health_check(_: argparse.Namespace) -> int:
         load_service(daemon_label, daemon_plist)
     else:
         info(f"Attempting kickstart for {daemon_label}")
-        run_command(["launchctl", "kickstart", "-k", f"{DOMAIN}/{daemon_label}"], check=False)
+        run_command(
+            ["launchctl", "kickstart", "-k", f"{DOMAIN}/{daemon_label}"], check=False
+        )
 
     time.sleep(5)
     if url_is_healthy(health_url):
@@ -418,7 +424,9 @@ def run_health_check(_: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Manage agentic-brain launchd services")
+    parser = argparse.ArgumentParser(
+        description="Manage agentic-brain launchd services"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     install_parser = subparsers.add_parser("install", help="Install all LaunchAgents")

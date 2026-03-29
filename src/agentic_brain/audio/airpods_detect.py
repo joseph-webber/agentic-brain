@@ -47,12 +47,18 @@ class AirPodsDetector:
         battery_left = rich_status.battery.left
         battery_right = rich_status.battery.right
 
-        if battery_single is not None and battery_left is None and battery_right is None:
+        if (
+            battery_single is not None
+            and battery_left is None
+            and battery_right is None
+        ):
             battery_left = battery_single
             battery_right = battery_single
 
         name = device.name if device else ""
-        spatial_audio_available = rich_status.spatial_audio_enabled or self._supports_spatial(name)
+        spatial_audio_available = (
+            rich_status.spatial_audio_enabled or self._supports_spatial(name)
+        )
         head_tracking_available = (
             rich_status.head_tracking_available or spatial_audio_available
         )

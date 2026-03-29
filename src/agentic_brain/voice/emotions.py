@@ -25,10 +25,18 @@ class VoiceEmotion(str, Enum):
 EMOTION_PARAMS: Final[dict[VoiceEmotion, dict[str, float]]] = {
     VoiceEmotion.NEUTRAL: {"rate_delta": 0, "pitch_delta": 0.0, "volume_delta": 0.0},
     VoiceEmotion.HAPPY: {"rate_delta": 8, "pitch_delta": 0.08, "volume_delta": 0.05},
-    VoiceEmotion.CONCERNED: {"rate_delta": -8, "pitch_delta": -0.06, "volume_delta": -0.02},
+    VoiceEmotion.CONCERNED: {
+        "rate_delta": -8,
+        "pitch_delta": -0.06,
+        "volume_delta": -0.02,
+    },
     VoiceEmotion.EXCITED: {"rate_delta": 18, "pitch_delta": 0.18, "volume_delta": 0.12},
     VoiceEmotion.CALM: {"rate_delta": -18, "pitch_delta": -0.10, "volume_delta": -0.08},
-    VoiceEmotion.PROFESSIONAL: {"rate_delta": -4, "pitch_delta": -0.02, "volume_delta": 0.0},
+    VoiceEmotion.PROFESSIONAL: {
+        "rate_delta": -4,
+        "pitch_delta": -0.02,
+        "volume_delta": 0.0,
+    },
     VoiceEmotion.FRIENDLY: {"rate_delta": 4, "pitch_delta": 0.04, "volume_delta": 0.03},
     VoiceEmotion.URGENT: {"rate_delta": 22, "pitch_delta": 0.10, "volume_delta": 0.18},
 }
@@ -133,7 +141,11 @@ class EmotionDetector:
                 return emotion
 
         if "!" in normalized:
-            return VoiceEmotion.EXCITED if normalized.count("!") >= 2 else VoiceEmotion.HAPPY
+            return (
+                VoiceEmotion.EXCITED
+                if normalized.count("!") >= 2
+                else VoiceEmotion.HAPPY
+            )
 
         if work_mode:
             return VoiceEmotion.PROFESSIONAL

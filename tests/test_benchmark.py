@@ -412,8 +412,12 @@ class TestBenchmarkRunner:
         """macOS say benchmarks must use the shared speech lock."""
         runner = BenchmarkRunner(BenchmarkConfig())
 
-        with patch("agentic_brain.benchmark.runner.global_speak", return_value=True) as mock_speak:
-            success = runner._run_voice_command(["say", "-o", "/dev/null", "test"], timeout=5)
+        with patch(
+            "agentic_brain.benchmark.runner.global_speak", return_value=True
+        ) as mock_speak:
+            success = runner._run_voice_command(
+                ["say", "-o", "/dev/null", "test"], timeout=5
+            )
 
         assert success is True
         mock_speak.assert_called_once_with(

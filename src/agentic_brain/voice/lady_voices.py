@@ -456,7 +456,9 @@ _LADY_NAME_INDEX: Final[dict[str, str]] = {
 }
 
 
-def get_official_kokoro_voices(language: str | None = None) -> dict[str, tuple[str, ...]]:
+def get_official_kokoro_voices(
+    language: str | None = None,
+) -> dict[str, tuple[str, ...]]:
     """Return the official Kokoro voice catalogue.
 
     Args:

@@ -246,6 +246,7 @@ class TestVoiceModulesUseGlobalLock:
         # Verify the serializer's lock IS the global lock from _speech_lock
         from agentic_brain.voice._speech_lock import get_global_lock
         from agentic_brain.voice.serializer import get_voice_serializer
+
         assert get_voice_serializer()._speech_lock is get_global_lock()
 
     @patch("agentic_brain.voice._speech_lock.subprocess.Popen")
@@ -328,6 +329,7 @@ class TestUnifiedLockIdentity:
                 with log_lock:
                     execution_log.append(("start", threading.current_thread().name))
                 import time
+
                 time.sleep(0.05)
                 with log_lock:
                     execution_log.append(("end", threading.current_thread().name))
@@ -340,7 +342,9 @@ class TestUnifiedLockIdentity:
         mock_popen.side_effect = mock_subprocess
 
         # Also mock Popen in _speech_lock for global_speak path
-        with patch("agentic_brain.voice._speech_lock.subprocess.Popen") as mock_gs_popen:
+        with patch(
+            "agentic_brain.voice._speech_lock.subprocess.Popen"
+        ) as mock_gs_popen:
             mock_gs_popen.side_effect = mock_subprocess
 
             def call_serializer():
@@ -356,6 +360,7 @@ class TestUnifiedLockIdentity:
 
             t1.start()
             import time
+
             time.sleep(0.01)  # slight stagger
             t2.start()
 
@@ -368,6 +373,4 @@ class TestUnifiedLockIdentity:
         assert len(starts) == 2, f"Expected 2 starts, got {starts} in {execution_log}"
         assert len(ends) == 2, f"Expected 2 ends, got {ends} in {execution_log}"
         # First must end before second starts
-        assert ends[0] < starts[1], (
-            f"Overlap detected! Log: {execution_log}"
-        )
+        assert ends[0] < starts[1], f"Overlap detected! Log: {execution_log}"

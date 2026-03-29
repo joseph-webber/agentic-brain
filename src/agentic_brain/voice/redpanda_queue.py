@@ -408,7 +408,9 @@ class RedpandaVoiceQueue:
         except Exception:  # pragma: no cover - eventing is best-effort
             logger.debug("Failed to publish voice status event", exc_info=True)
 
-    async def _play_message(self, message: VoiceMessage, *, queue_depth: int = 0) -> None:
+    async def _play_message(
+        self, message: VoiceMessage, *, queue_depth: int = 0
+    ) -> None:
         """Play a single message via the resilient voice system."""
 
         # Delegate to resilient voice chain – this already ensures a single

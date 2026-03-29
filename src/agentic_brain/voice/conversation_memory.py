@@ -281,9 +281,7 @@ class ConversationMemory:
 
     def _redis_recent_by_lady(self, lady: str, count: int) -> List[Utterance]:
         try:
-            raw: Sequence[str] = self._redis.lrange(
-                self._lady_key(lady), -count, -1
-            )
+            raw: Sequence[str] = self._redis.lrange(self._lady_key(lady), -count, -1)
             return [Utterance.from_dict(json.loads(r)) for r in raw]
         except Exception:
             logger.debug("Redis read failed, falling back to in-memory", exc_info=True)
@@ -304,9 +302,7 @@ class ConversationMemory:
     def _redis_search(self, query_lower: str, limit: int) -> List[Utterance]:
         """Search Redis global list.  Falls back to in-memory on error."""
         try:
-            raw: Sequence[str] = self._redis.lrange(
-                f"{_REDIS_PREFIX}:global", 0, -1
-            )
+            raw: Sequence[str] = self._redis.lrange(f"{_REDIS_PREFIX}:global", 0, -1)
             matches: List[Utterance] = []
             for item in reversed(raw):
                 utt = Utterance.from_dict(json.loads(item))
@@ -318,7 +314,11 @@ class ConversationMemory:
             return matches
         except Exception:
             logger.debug("Redis search failed, falling back", exc_info=True)
-            return self.search.__wrapped__(self, query_lower, limit=limit) if hasattr(self.search, "__wrapped__") else []
+            return (
+                self.search.__wrapped__(self, query_lower, limit=limit)
+                if hasattr(self.search, "__wrapped__")
+                else []
+            )
 
     def _redis_ladies(self) -> List[str]:
         try:

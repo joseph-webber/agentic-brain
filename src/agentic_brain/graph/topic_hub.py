@@ -144,8 +144,12 @@ class TopicHub:
         soft_cap: int = TOPIC_SOFT_CAP,
     ) -> None:
         self._session_factory = session_factory
-        self.driver = driver if driver is not None else (
-            None if session_factory is not None else get_driver(database=database)
+        self.driver = (
+            driver
+            if driver is not None
+            else (
+                None if session_factory is not None else get_driver(database=database)
+            )
         )
         self.hub_name = hub_name
         self.database = database
@@ -446,7 +450,8 @@ class TopicHub:
         orphan_topics = [
             topic
             for topic in topics
-            if int(topic.get("relationship_count", topic.get("usage_count", 0)) or 0) == 0
+            if int(topic.get("relationship_count", topic.get("usage_count", 0)) or 0)
+            == 0
         ]
         merge_suggestions = self.suggest_merges(limit=merge_limit)
         duplicate_topic_group_count = len(
@@ -575,16 +580,25 @@ def render_audit_report(report: dict[str, Any], *, format: str = "markdown") -> 
             lines.append("- None")
         return "\n".join(lines)
 
-    merge_lines = "\n".join(
-        f"- Merge `{item['from_topic']}` into `{item['to_topic']}` "
-        f"(confidence {float(item['confidence']):.2f}; {item['reason']})"
-        for item in merge_suggestions
-    ) or "- No merge suggestions."
-    orphan_lines = "\n".join(
-        f"- `{item['name']}` ({', '.join(item.get('labels', [])) or 'unlabelled'})"
-        for item in orphan_nodes
-    ) or "- No orphan nodes."
-    cleanup_lines = "\n".join(f"- {action}" for action in cleanup_actions) or "- No cleanup actions."
+    merge_lines = (
+        "\n".join(
+            f"- Merge `{item['from_topic']}` into `{item['to_topic']}` "
+            f"(confidence {float(item['confidence']):.2f}; {item['reason']})"
+            for item in merge_suggestions
+        )
+        or "- No merge suggestions."
+    )
+    orphan_lines = (
+        "\n".join(
+            f"- `{item['name']}` ({', '.join(item.get('labels', [])) or 'unlabelled'})"
+            for item in orphan_nodes
+        )
+        or "- No orphan nodes."
+    )
+    cleanup_lines = (
+        "\n".join(f"- {action}" for action in cleanup_actions)
+        or "- No cleanup actions."
+    )
 
     return (
         "# Quarterly Topic Audit\n\n"

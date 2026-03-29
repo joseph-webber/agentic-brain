@@ -198,7 +198,10 @@ class QualityGate:
             new_report = self._analyzer.analyze_audio(normalized)
 
             # If normalization actually helped
-            if new_report.rms_db > report.rms_db or new_report.clarity_score > report.clarity_score:
+            if (
+                new_report.rms_db > report.rms_db
+                or new_report.clarity_score > report.clarity_score
+            ):
                 logger.info(
                     "Auto-normalized %s: %+.1f dB → %+.1f dB",
                     audio_path.name,

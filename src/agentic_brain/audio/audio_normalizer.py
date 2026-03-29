@@ -76,7 +76,11 @@ class AudioNormalizer:
         if not audio_path.exists():
             raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
-        out = Path(output_path) if output_path else self._output_path(audio_path, "normalized")
+        out = (
+            Path(output_path)
+            if output_path
+            else self._output_path(audio_path, "normalized")
+        )
 
         if self.sox_available:
             self._sox_normalize(audio_path, out, target_db)
@@ -100,7 +104,11 @@ class AudioNormalizer:
         if not audio_path.exists():
             raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
-        out = Path(output_path) if output_path else self._output_path(audio_path, "desilenced")
+        out = (
+            Path(output_path)
+            if output_path
+            else self._output_path(audio_path, "desilenced")
+        )
 
         if not self.sox_available:
             logger.warning("sox not available — falling back to edge trimming")
@@ -113,10 +121,16 @@ class AudioNormalizer:
             str(audio_path),
             str(out),
             # Remove leading silence
-            "silence", "1", str(min_duration), threshold_pct,
+            "silence",
+            "1",
+            str(min_duration),
+            threshold_pct,
             # Remove trailing silence
             "reverse",
-            "silence", "1", str(min_duration), threshold_pct,
+            "silence",
+            "1",
+            str(min_duration),
+            threshold_pct,
             "reverse",
         ]
 
@@ -136,7 +150,11 @@ class AudioNormalizer:
         if not audio_path.exists():
             raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
-        out = Path(output_path) if output_path else self._output_path(audio_path, "trimmed")
+        out = (
+            Path(output_path)
+            if output_path
+            else self._output_path(audio_path, "trimmed")
+        )
 
         if self.sox_available:
             threshold_pct = f"{self._db_to_percent(DEFAULT_SILENCE_THRESHOLD_DB):.1f}%"
@@ -144,9 +162,15 @@ class AudioNormalizer:
                 self.sox_path,
                 str(audio_path),
                 str(out),
-                "silence", "1", "0.1", threshold_pct,
+                "silence",
+                "1",
+                "0.1",
+                threshold_pct,
                 "reverse",
-                "silence", "1", "0.1", threshold_pct,
+                "silence",
+                "1",
+                "0.1",
+                threshold_pct,
                 "reverse",
             ]
             self._run_sox(cmd)
@@ -166,14 +190,20 @@ class AudioNormalizer:
         Returns the path to the final processed file.
         """
         audio_path = Path(audio_path)
-        out = Path(output_path) if output_path else self._output_path(audio_path, "processed")
+        out = (
+            Path(output_path)
+            if output_path
+            else self._output_path(audio_path, "processed")
+        )
 
         # Chain through intermediate steps
         trimmed = self.trim_edges(audio_path)
         try:
             desilenced = self.remove_silence(trimmed)
             try:
-                result = self.normalize_volume(desilenced, target_db=target_db, output_path=out)
+                result = self.normalize_volume(
+                    desilenced, target_db=target_db, output_path=out
+                )
             finally:
                 if desilenced != out and desilenced.exists():
                     desilenced.unlink(missing_ok=True)
@@ -212,9 +242,7 @@ class AudioNormalizer:
                 )
             return result
         except FileNotFoundError:
-            raise RuntimeError(
-                "sox binary not found. Install with: brew install sox"
-            )
+            raise RuntimeError("sox binary not found. Install with: brew install sox")
         except subprocess.TimeoutExpired:
             raise RuntimeError("sox timed out after 60 seconds")
 
@@ -252,10 +280,7 @@ class AudioNormalizer:
 
         max_int = int(max_val) - 1
         min_int = -int(max_val)
-        normalized = [
-            max(min_int, min(max_int, int(s * gain_linear)))
-            for s in samples
-        ]
+        normalized = [max(min_int, min(max_int, int(s * gain_linear))) for s in samples]
 
         out_raw = struct.pack(f"<{n_samples}{fmt_char}", *normalized)
         with wave.open(str(dst), "wb") as wf:

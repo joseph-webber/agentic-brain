@@ -44,7 +44,9 @@ class TestVoiceMessage:
 
     def test_voice_message_creation(self):
         """Test creating a voice message."""
-        phrase = pick_voice_phrase("test_voice_message_creation", "multilingual_greetings")
+        phrase = pick_voice_phrase(
+            "test_voice_message_creation", "multilingual_greetings"
+        )
         msg = VoiceMessage(text=phrase, voice="Karen", rate=155)
         assert msg.text == phrase
         assert msg.voice == "Karen"
@@ -75,7 +77,9 @@ class TestVoiceMessage:
 
     def test_voice_message_with_pause_after(self):
         """Test pause_after setting."""
-        phrase = pick_voice_phrase("test_voice_message_with_pause_after", "status_updates")
+        phrase = pick_voice_phrase(
+            "test_voice_message_with_pause_after", "status_updates"
+        )
         msg = VoiceMessage(text=phrase, pause_after=2.5)
         assert msg.pause_after == 2.5
 
@@ -193,7 +197,9 @@ class TestVoiceQueueSafety:
         mock_popen.side_effect = record_speak
 
         # Queue messages with 0.2s pause
-        phrases = pick_voice_phrases("test_pause_between_speakers", 2, "poetry_snippets")
+        phrases = pick_voice_phrases(
+            "test_pause_between_speakers", 2, "poetry_snippets"
+        )
         queue.speak(phrases[0], pause_after=0.2)
         queue.speak(phrases[1], pause_after=0.2)
 
@@ -370,7 +376,9 @@ class TestConvenienceFunctions:
     def test_clear_queue_function(self):
         """Test clear_queue() function."""
         with patch("subprocess.Popen"):
-            phrases = pick_voice_phrases("test_clear_queue_function", 2, "status_updates")
+            phrases = pick_voice_phrases(
+                "test_clear_queue_function", 2, "status_updates"
+            )
             speak(phrases[0])
             speak(phrases[1])
             clear_queue()
@@ -389,7 +397,9 @@ class TestConvenienceFunctions:
         """Test get_queue_size() function."""
         assert get_queue_size() == 0
         with patch("subprocess.Popen"):
-            phrases = pick_voice_phrases("test_get_queue_size_function", 2, "poetry_snippets")
+            phrases = pick_voice_phrases(
+                "test_get_queue_size_function", 2, "poetry_snippets"
+            )
             speak(phrases[0])
             speak(phrases[1])
             size = get_queue_size()

@@ -474,9 +474,15 @@ class TestRepeatResult:
     """Test RepeatResult dataclass."""
 
     def test_should_block_only_when_block_and_repeat(self):
-        r = RepeatResult(is_repeat=True, similarity=1.0, matched_text="x", action=RepeatAction.BLOCK)
+        r = RepeatResult(
+            is_repeat=True, similarity=1.0, matched_text="x", action=RepeatAction.BLOCK
+        )
         assert r.should_block
-        r2 = RepeatResult(is_repeat=False, similarity=0.0, matched_text="", action=RepeatAction.BLOCK)
+        r2 = RepeatResult(
+            is_repeat=False, similarity=0.0, matched_text="", action=RepeatAction.BLOCK
+        )
         assert not r2.should_block
-        r3 = RepeatResult(is_repeat=True, similarity=1.0, matched_text="x", action=RepeatAction.WARN)
+        r3 = RepeatResult(
+            is_repeat=True, similarity=1.0, matched_text="x", action=RepeatAction.WARN
+        )
         assert not r3.should_block

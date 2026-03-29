@@ -99,7 +99,9 @@ class VoiceCloner:
         target_path = self._resolve_output_path(voice_id, output_path)
         if self.is_f5_available:
             try:
-                return self._synthesize_with_f5(text=text, profile=profile, output_path=target_path)
+                return self._synthesize_with_f5(
+                    text=text, profile=profile, output_path=target_path
+                )
             except Exception as exc:
                 logger.warning("F5-TTS synthesis failed for %s: %s", voice_id, exc)
 
@@ -112,7 +114,9 @@ class VoiceCloner:
     def validate_voice_quality(self, audio_path: str | Path) -> VoiceValidationResult:
         path = Path(audio_path).expanduser()
         if not path.exists():
-            return VoiceValidationResult(ok=False, errors=[f"Audio sample not found: {path}"])
+            return VoiceValidationResult(
+                ok=False, errors=[f"Audio sample not found: {path}"]
+            )
 
         if path.stat().st_size == 0:
             return VoiceValidationResult(ok=False, errors=["Audio sample is empty"])
@@ -163,7 +167,9 @@ class VoiceCloner:
             warnings.append("Sample rate below 16 kHz may reduce clone quality")
 
         if channels > 2:
-            warnings.append("More than 2 channels detected; mono or stereo is preferred")
+            warnings.append(
+                "More than 2 channels detected; mono or stereo is preferred"
+            )
 
         if sample_width not in {1, 2, 4}:
             warnings.append("Uncommon sample width detected")
@@ -195,7 +201,9 @@ class VoiceCloner:
         data.frombytes(preview[: min(len(preview), 16_000)])
         return any(abs(sample) > 32 for sample in data[:4000])
 
-    def _resolve_output_path(self, voice_id: str, output_path: str | Path | None) -> Path:
+    def _resolve_output_path(
+        self, voice_id: str, output_path: str | Path | None
+    ) -> Path:
         if output_path is not None:
             target = Path(output_path).expanduser()
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -217,9 +225,13 @@ class VoiceCloner:
         self._engine = module.F5TTS()
         return self._engine
 
-    def _synthesize_with_f5(self, *, text: str, profile: Any, output_path: Path) -> Path:
+    def _synthesize_with_f5(
+        self, *, text: str, profile: Any, output_path: Path
+    ) -> Path:
         final_path = (
-            output_path if output_path.suffix.lower() == ".wav" else output_path.with_suffix(".wav")
+            output_path
+            if output_path.suffix.lower() == ".wav"
+            else output_path.with_suffix(".wav")
         )
         final_path.parent.mkdir(parents=True, exist_ok=True)
         engine = self._get_engine()
@@ -237,7 +249,9 @@ class VoiceCloner:
             )
         return final_path
 
-    def _synthesize_with_fallback(self, *, text: str, profile: Any, output_path: Path) -> Path:
+    def _synthesize_with_fallback(
+        self, *, text: str, profile: Any, output_path: Path
+    ) -> Path:
         fallback_voice = profile.metadata.get("fallback_voice")
         if not fallback_voice and profile.assigned_lady:
             fallback_voice = SYSTEM_VOICE_BY_LADY.get(
@@ -247,12 +261,18 @@ class VoiceCloner:
 
         try:
             if platform.system() == "Darwin":
-                return self._synthesize_with_system_voice(text, fallback_voice, output_path)
+                return self._synthesize_with_system_voice(
+                    text, fallback_voice, output_path
+                )
         except Exception as exc:
-            logger.warning("System voice fallback failed for %s: %s", profile.voice_id, exc)
+            logger.warning(
+                "System voice fallback failed for %s: %s", profile.voice_id, exc
+            )
 
         return self._write_silence_wav(
-            output_path if output_path.suffix.lower() == ".wav" else output_path.with_suffix(".wav")
+            output_path
+            if output_path.suffix.lower() == ".wav"
+            else output_path.with_suffix(".wav")
         )
 
     def _synthesize_with_system_voice(

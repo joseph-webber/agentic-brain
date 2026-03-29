@@ -145,7 +145,9 @@ def _build_proof_lines(rows: Sequence[Mapping[str, Any]]) -> tuple[str, ...]:
     """Build proof lines showing the memories behind the greeting."""
     proof: list[str] = []
     for row in rows[:3]:
-        proof.append(f"- {_format_time(row.get('timestamp'))}: {_clean_text(str(row.get('content', '')))}")
+        proof.append(
+            f"- {_format_time(row.get('timestamp'))}: {_clean_text(str(row.get('content', '')))}"
+        )
     return tuple(proof)
 
 
@@ -154,8 +156,12 @@ def build_startup_snapshot(
 ) -> StartupSnapshot:
     """Convert recent memory rows into a greeting snapshot."""
     last_row = rows[0] if rows else {}
-    last_session_topic = _extract_topic(last_row) if last_row else "No recent context found"
-    last_session_time = _format_time(last_row.get("timestamp")) if last_row else "just now"
+    last_session_topic = (
+        _extract_topic(last_row) if last_row else "No recent context found"
+    )
+    last_session_time = (
+        _format_time(last_row.get("timestamp")) if last_row else "just now"
+    )
     recent_summary = _build_recent_summary(rows)
     greeting = "\n".join(
         [
@@ -214,7 +220,9 @@ def get_startup_snapshot(
         return build_startup_snapshot([], pending_count=0)
 
 
-def startup_greeting(*, limit: int = 5, scopes: Sequence[str] = ("private", "public")) -> str:
+def startup_greeting(
+    *, limit: int = 5, scopes: Sequence[str] = ("private", "public")
+) -> str:
     """Return a friendly startup greeting with context from Neo4j."""
     return get_startup_snapshot(limit=limit, scopes=scopes).greeting
 

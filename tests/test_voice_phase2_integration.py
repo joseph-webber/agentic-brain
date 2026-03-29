@@ -34,6 +34,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 class FakeSpeak:
     """Records speak calls for assertion without invoking macOS say."""
 
@@ -60,12 +61,14 @@ class FakeSpeak:
 # 1. Watchdog Tests
 # ===========================================================================
 
+
 class TestVoiceWatchdog:
     """Tests for the worker thread watchdog."""
 
     def test_watchdog_import(self):
         """Watchdog module can be imported."""
         from agentic_brain.voice.watchdog import VoiceWatchdog
+
         assert VoiceWatchdog is not None
 
     def test_watchdog_create(self):
@@ -131,16 +134,19 @@ class TestVoiceWatchdog:
 # 2. Daemon Gate Tests
 # ===========================================================================
 
+
 class TestDaemonGate:
     """Tests for the daemon overlap prevention gate."""
 
     def _make_gate(self, tmp_path):
         from agentic_brain.voice.daemon_gate import DaemonGate
+
         return DaemonGate(pid_path=str(tmp_path / "test-daemon.pid"))
 
     def test_daemon_gate_import(self):
         """DaemonGate module can be imported."""
         from agentic_brain.voice.daemon_gate import DaemonGate
+
         assert DaemonGate is not None
 
     def test_acquire_and_release(self, tmp_path):
@@ -190,12 +196,14 @@ class TestDaemonGate:
 # 3. Live Voice Mode Tests
 # ===========================================================================
 
+
 class TestLiveVoiceMode:
     """Tests for the live (streaming) voice mode."""
 
     def test_live_mode_import(self):
         """LiveVoiceMode can be imported."""
         from agentic_brain.voice.live_mode import LiveVoiceMode
+
         assert LiveVoiceMode is not None
 
     def test_lifecycle(self):
@@ -294,12 +302,14 @@ class TestLiveVoiceMode:
 # 4. Stream Consumer Tests
 # ===========================================================================
 
+
 class TestStreamConsumer:
     """Tests for the Redpanda voice stream consumer."""
 
     def test_stream_consumer_import(self):
         """VoiceStreamConsumer can be imported."""
         from agentic_brain.voice.stream_consumer import VoiceStreamConsumer
+
         assert VoiceStreamConsumer is not None
 
     def test_initial_state(self):
@@ -359,16 +369,19 @@ class TestStreamConsumer:
 # 5. Unified Voice System Tests
 # ===========================================================================
 
+
 class TestUnifiedVoiceSystem:
     """Tests for the unified voice facade."""
 
     def _make_unified(self):
         from agentic_brain.voice.unified import UnifiedVoiceSystem
+
         return UnifiedVoiceSystem()
 
     def test_unified_import(self):
         """UnifiedVoiceSystem can be imported."""
         from agentic_brain.voice.unified import UnifiedVoiceSystem
+
         assert UnifiedVoiceSystem is not None
 
     @patch("agentic_brain.voice.serializer.VoiceSerializer")
@@ -456,18 +469,23 @@ class TestUnifiedVoiceSystem:
 # 6. Integration: Components work together
 # ===========================================================================
 
+
 class TestPhase2Integration:
     """End-to-end integration of all Phase 2 components."""
 
     def test_unified_with_live_mode(self):
         """Unified system can start/feed/stop live mode."""
-        from agentic_brain.voice.live_mode import LiveVoiceMode, _set_live_mode_for_testing
+        from agentic_brain.voice.live_mode import (
+            LiveVoiceMode,
+            _set_live_mode_for_testing,
+        )
 
         fake = FakeSpeak()
         lm = LiveVoiceMode(speak_fn=fake)
         _set_live_mode_for_testing(lm)
 
         from agentic_brain.voice.unified import UnifiedVoiceSystem
+
         uv = UnifiedVoiceSystem()
         uv._live_mode = lm
 
@@ -484,12 +502,16 @@ class TestPhase2Integration:
 
     def test_unified_with_daemon_gate(self, tmp_path):
         """Unified system can acquire/release daemon gate."""
-        from agentic_brain.voice.daemon_gate import DaemonGate, _set_daemon_gate_for_testing
+        from agentic_brain.voice.daemon_gate import (
+            DaemonGate,
+            _set_daemon_gate_for_testing,
+        )
 
         gate = DaemonGate(pid_path=str(tmp_path / "test.pid"))
         _set_daemon_gate_for_testing(gate)
 
         from agentic_brain.voice.unified import UnifiedVoiceSystem
+
         uv = UnifiedVoiceSystem()
         uv._daemon_gate = gate
 

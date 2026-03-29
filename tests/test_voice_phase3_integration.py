@@ -104,7 +104,9 @@ class TestSpeakRouting:
 
     @patch("agentic_brain.voice.serializer.get_voice_serializer")
     def test_speak_returns_false_when_all_paths_fail(self, mock_get_serializer, phase3):
-        phase3._components["neural_router"] = MagicMock(speak=MagicMock(side_effect=RuntimeError("boom")))
+        phase3._components["neural_router"] = MagicMock(
+            speak=MagicMock(side_effect=RuntimeError("boom"))
+        )
         phase3._components["speed_manager"] = _fake_speed_manager()
         serializer = MagicMock()
         serializer.speak.side_effect = RuntimeError("boom")
@@ -186,7 +188,10 @@ class TestOptionalSubsystems:
         expression = MagicMock()
         expression.apply.return_value = "<expressed>Hello</expressed>"
         phase3._components["expression"] = expression
-        assert phase3.apply_expression("Hello", lady="Karen") == "<expressed>Hello</expressed>"
+        assert (
+            phase3.apply_expression("Hello", lady="Karen")
+            == "<expressed>Hello</expressed>"
+        )
 
     def test_get_recent_turns_empty_when_memory_missing(self, phase3):
         phase3._components["conversation_memory"] = None
@@ -257,7 +262,9 @@ class TestRuntimeControls:
         assert phase3.get_current_rate() == 155
 
     def test_get_speed_profile_reads_manager(self, phase3):
-        phase3._components["speed_manager"] = _fake_speed_manager(profile="focused", rate=280)
+        phase3._components["speed_manager"] = _fake_speed_manager(
+            profile="focused", rate=280
+        )
         assert phase3.get_speed_profile() == "focused"
 
     def test_set_speed_profile_uses_enum(self, phase3):
@@ -280,7 +287,9 @@ class TestRuntimeControls:
         daemon.stop = AsyncMock()
 
         with (
-            patch("agentic_brain.voice.phase3.get_daemon", AsyncMock(return_value=daemon)),
+            patch(
+                "agentic_brain.voice.phase3.get_daemon", AsyncMock(return_value=daemon)
+            ),
             patch("agentic_brain.voice.resilient._daemon_instance", daemon),
         ):
             started = await phase3.start_live_daemon()
@@ -366,7 +375,9 @@ class TestCliCompatibility:
         fake_unified = SimpleNamespace(
             status=lambda: {"summary": "Voice System: HEALTHY", "health": {}}
         )
-        with patch("agentic_brain.voice.unified.get_unified", return_value=fake_unified):
+        with patch(
+            "agentic_brain.voice.unified.get_unified", return_value=fake_unified
+        ):
             assert voice_health_command(SimpleNamespace()) == 0
 
         out = capsys.readouterr().out

@@ -698,7 +698,9 @@ class TestTopicAuditCLI:
     def test_topics_audit_parser(self):
         """Test topics audit parser wiring."""
         parser = create_parser()
-        args = parser.parse_args(["topics", "audit", "--format", "json", "--limit", "12"])
+        args = parser.parse_args(
+            ["topics", "audit", "--format", "json", "--limit", "12"]
+        )
         assert args.command == "topics"
         assert args.topics_command == "audit"
         assert args.format == "json"
@@ -749,7 +751,9 @@ class TestTopicAuditCLI:
     def test_main_with_greet_command(self, mock_speak, mock_snapshot):
         """Test greet command prints context and triggers voice output."""
         mock_snapshot.return_value.greeting = "Welcome back! Here's what I remember:"
-        mock_snapshot.return_value.proof_lines = ("- today at 10:15 AM: Remembered startup context",)
+        mock_snapshot.return_value.proof_lines = (
+            "- today at 10:15 AM: Remembered startup context",
+        )
 
         result = main(["greet"])
 

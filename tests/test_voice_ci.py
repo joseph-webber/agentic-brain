@@ -149,7 +149,9 @@ class TestVoicePriority:
             timestamp=now - 5,
         )
         low_late = DurableVoiceMessage(
-            text=pick_voice_phrase("test_priority_order_low_late", "multilingual_greetings"),
+            text=pick_voice_phrase(
+                "test_priority_order_low_late", "multilingual_greetings"
+            ),
             voice="Karen",
             rate=155,
             priority=VoicePriority.LOW,

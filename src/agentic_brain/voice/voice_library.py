@@ -170,13 +170,17 @@ class VoiceLibrary:
         profile_file = self.profile_path(voice_id)
         if not profile_file.exists():
             return None
-        return VoiceProfile.from_dict(json.loads(profile_file.read_text(encoding="utf-8")))
+        return VoiceProfile.from_dict(
+            json.loads(profile_file.read_text(encoding="utf-8"))
+        )
 
     def list_voices(self) -> list[VoiceProfile]:
         profiles: list[VoiceProfile] = []
         for profile_file in sorted(self.base_dir.glob("*/profile.json")):
             profiles.append(
-                VoiceProfile.from_dict(json.loads(profile_file.read_text(encoding="utf-8")))
+                VoiceProfile.from_dict(
+                    json.loads(profile_file.read_text(encoding="utf-8"))
+                )
             )
         return sorted(profiles, key=lambda item: (item.name.lower(), item.voice_id))
 
@@ -197,7 +201,9 @@ class VoiceLibrary:
             raise KeyError(voice_id)
 
         profile.assigned_lady = normalized_lady
-        profile.metadata.setdefault("fallback_voice", SYSTEM_VOICE_BY_LADY[normalized_lady])
+        profile.metadata.setdefault(
+            "fallback_voice", SYSTEM_VOICE_BY_LADY[normalized_lady]
+        )
         return self.save_profile(profile)
 
     def find_by_lady(self, lady: str) -> list[VoiceProfile]:
@@ -217,9 +223,13 @@ class VoiceLibrary:
         export_target.parent.mkdir(parents=True, exist_ok=True)
 
         portable_profile = profile.to_dict()
-        portable_profile["reference_audio_path"] = f"audio/{profile.reference_audio.name}"
+        portable_profile["reference_audio_path"] = (
+            f"audio/{profile.reference_audio.name}"
+        )
 
-        with zipfile.ZipFile(export_target, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        with zipfile.ZipFile(
+            export_target, "w", compression=zipfile.ZIP_DEFLATED
+        ) as archive:
             archive.writestr(
                 "profile.json",
                 json.dumps(portable_profile, indent=2, sort_keys=True),
@@ -245,7 +255,9 @@ class VoiceLibrary:
             target_dir = self.voice_dir(voice_id)
             target_dir.mkdir(parents=True, exist_ok=True)
             target_audio_path = target_dir / original_audio_path.name
-            target_audio_path.write_bytes(archive.read(profile_data["reference_audio_path"]))
+            target_audio_path.write_bytes(
+                archive.read(profile_data["reference_audio_path"])
+            )
 
         profile_data["voice_id"] = voice_id
         profile_data["reference_audio_path"] = str(target_audio_path)

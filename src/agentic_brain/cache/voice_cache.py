@@ -53,6 +53,7 @@ from agentic_brain.core.redis_pool import RedisConfig, RedisPoolManager
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _json_compact(obj: Any) -> str:
     return json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
 
@@ -94,9 +95,9 @@ class VoicePreferences:
     preferred_rate: int = 160
     provider: str = "local"
     volume: float = 0.8
-    spatial_pan: int = 0        # -100 (left) .. 100 (right)
+    spatial_pan: int = 0  # -100 (left) .. 100 (right)
     spatial_reverb: float = 0.0  # 0..1
-    calm_mode: bool = False      # slower rate during Bali spa
+    calm_mode: bool = False  # slower rate during Bali spa
 
     def to_hash(self) -> Dict[str, str]:
         return {k: str(v) for k, v in self.__dict__.items()}
@@ -200,7 +201,9 @@ class VoiceCache:
             "duration_ms": duration_ms,
             "hit_count": 0,
         }
-        self.client.setex(key, ttl or self.AUDIO_TTL, json.dumps(payload, ensure_ascii=False))
+        self.client.setex(
+            key, ttl or self.AUDIO_TTL, json.dumps(payload, ensure_ascii=False)
+        )
         self._track_phrase(text, voice)
         return key
 
@@ -374,14 +377,16 @@ class VoiceCache:
     ) -> None:
         """Convenience wrapper to update speaking flag."""
         depth = self.get_queue_depth()
-        self.set_state(VoiceState(
-            is_speaking=speaking,
-            current_text=text,
-            current_voice=voice,
-            queue_depth=depth,
-            message_id=message_id,
-            updated_at=time.time(),
-        ))
+        self.set_state(
+            VoiceState(
+                is_speaking=speaking,
+                current_text=text,
+                current_voice=voice,
+                queue_depth=depth,
+                message_id=message_id,
+                updated_at=time.time(),
+            )
+        )
 
     def get_state(self) -> VoiceState:
         """Load the latest shared voice state."""
@@ -391,7 +396,8 @@ class VoiceCache:
             return VoiceState()
 
         return VoiceState(
-            is_speaking=str(data.get("is_speaking", "")).lower() in {"1", "true", "yes"},
+            is_speaking=str(data.get("is_speaking", "")).lower()
+            in {"1", "true", "yes"},
             current_text=str(data.get("current_text", "")),
             current_voice=str(data.get("current_voice", "Karen")),
             queue_depth=int(data.get("queue_depth", 0) or 0),
@@ -438,12 +444,14 @@ class VoiceCache:
             parts = str(member).split("::", 1)
             voice = parts[0] if len(parts) == 2 else ""
             text = parts[-1]
-            results.append({
-                "voice": voice,
-                "text": text,
-                "count": int(score),
-                "cached": self.audio_exists(text, voice) if voice else False,
-            })
+            results.append(
+                {
+                    "voice": voice,
+                    "text": text,
+                    "count": int(score),
+                    "cached": self.audio_exists(text, voice) if voice else False,
+                }
+            )
         return results
 
     def phrases_needing_cache(self, min_uses: int = 3) -> List[Dict[str, Any]]:
@@ -453,11 +461,13 @@ class VoiceCache:
 
     def record_latency(self, latency_ms: float, voice: str = "") -> None:
         """Append a latency measurement (capped list)."""
-        entry = _json_compact({
-            "ms": round(latency_ms, 2),
-            "voice": voice,
-            "ts": time.time(),
-        })
+        entry = _json_compact(
+            {
+                "ms": round(latency_ms, 2),
+                "voice": voice,
+                "ts": time.time(),
+            }
+        )
         pipe = self.client.pipeline(transaction=False)
         pipe.lpush(self.latency_key, entry)
         pipe.ltrim(self.latency_key, 0, self.LATENCY_CAP - 1)
@@ -519,11 +529,13 @@ class VoiceCache:
         key = f"{self.llm_ctx_prefix}{session_id}"
         raw = self.client.get(key)
         ctx = _json_load(raw) if raw else {"messages": []}
-        ctx.setdefault("messages", []).append({
-            "role": role,
-            "content": content,
-            "ts": time.time(),
-        })
+        ctx.setdefault("messages", []).append(
+            {
+                "role": role,
+                "content": content,
+                "ts": time.time(),
+            }
+        )
         remaining = self.client.ttl(key)
         ttl = max(remaining if remaining > 0 else 0, self.LLM_CTX_TTL)
         self.client.setex(key, ttl, _json_compact(ctx))

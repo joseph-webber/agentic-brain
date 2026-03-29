@@ -50,12 +50,14 @@ from agentic_brain.voice.content_classifier import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def state_file(tmp_path, monkeypatch):
     """Redirect the persistent state file to a temp location."""
     fake = tmp_path / ".brain-speech-profile"
     monkeypatch.setattr(
-        "agentic_brain.voice.speed_profiles._STATE_FILE", fake,
+        "agentic_brain.voice.speed_profiles._STATE_FILE",
+        fake,
     )
     return fake
 
@@ -74,6 +76,7 @@ def tracker(manager):
 # ---------------------------------------------------------------------------
 # SpeedProfile enum
 # ---------------------------------------------------------------------------
+
 
 class TestSpeedProfile:
     def test_all_profiles_have_rates(self):
@@ -94,6 +97,7 @@ class TestSpeedProfile:
 # ---------------------------------------------------------------------------
 # SpeedProfileManager
 # ---------------------------------------------------------------------------
+
 
 class TestSpeedProfileManager:
     def test_defaults_to_relaxed(self, manager):
@@ -152,6 +156,7 @@ class TestSpeedProfileManager:
 # Persistence
 # ---------------------------------------------------------------------------
 
+
 class TestPersistence:
     def test_saves_and_loads(self, state_file):
         m1 = SpeedProfileManager()
@@ -175,6 +180,7 @@ class TestPersistence:
 # ---------------------------------------------------------------------------
 # Voice command matching
 # ---------------------------------------------------------------------------
+
 
 class TestVoiceCommands:
     def test_speed_up_command(self, manager):
@@ -236,6 +242,7 @@ class TestVoiceCommands:
 # ---------------------------------------------------------------------------
 # AdaptiveSpeedTracker
 # ---------------------------------------------------------------------------
+
 
 class TestAdaptiveTracker:
     def test_starts_with_no_suggestion(self, tracker):
@@ -314,10 +321,12 @@ class TestAdaptiveTracker:
 # Module-level singletons
 # ---------------------------------------------------------------------------
 
+
 class TestSingletons:
     def test_get_speed_manager_returns_same_instance(self, state_file, monkeypatch):
         monkeypatch.setattr(
-            "agentic_brain.voice.speed_profiles._manager", None,
+            "agentic_brain.voice.speed_profiles._manager",
+            None,
         )
         m1 = get_speed_manager()
         m2 = get_speed_manager()
@@ -325,7 +334,8 @@ class TestSingletons:
 
     def test_get_current_rate(self, state_file, monkeypatch):
         monkeypatch.setattr(
-            "agentic_brain.voice.speed_profiles._manager", None,
+            "agentic_brain.voice.speed_profiles._manager",
+            None,
         )
         rate = get_current_rate()
         assert rate == 155  # default relaxed
@@ -334,6 +344,7 @@ class TestSingletons:
 # ---------------------------------------------------------------------------
 # Integration: all profiles round-trip through persistence
 # ---------------------------------------------------------------------------
+
 
 class TestAllProfilesPersist:
     @pytest.mark.parametrize("profile", list(SpeedProfile))
@@ -350,6 +361,7 @@ class TestAllProfilesPersist:
 # Content Speed Tiers
 # ---------------------------------------------------------------------------
 
+
 class TestContentSpeedTiers:
     def test_all_tiers_exist(self):
         for tier in ("slow", "normal", "fast", "rapid"):
@@ -357,8 +369,9 @@ class TestContentSpeedTiers:
 
     def test_tiers_are_ascending(self):
         tiers = ["slow", "normal", "fast", "rapid"]
-        midpoints = [(CONTENT_SPEED_TIERS[t][0] + CONTENT_SPEED_TIERS[t][1]) // 2
-                     for t in tiers]
+        midpoints = [
+            (CONTENT_SPEED_TIERS[t][0] + CONTENT_SPEED_TIERS[t][1]) // 2 for t in tiers
+        ]
         assert midpoints == sorted(midpoints), "Tier midpoints must ascend"
 
     def test_slow_tier_range(self):
@@ -379,6 +392,7 @@ class TestContentSpeedTiers:
 # ---------------------------------------------------------------------------
 # Content Classifier
 # ---------------------------------------------------------------------------
+
 
 class TestContentClassifier:
 
@@ -425,7 +439,9 @@ class TestContentClassifier:
         assert result.tier == "normal"
 
     def test_complex_code_classification(self, classifier):
-        result = classifier.classify("def calculate_hash(data): return hashlib.sha256(data)")
+        result = classifier.classify(
+            "def calculate_hash(data): return hashlib.sha256(data)"
+        )
         assert result.content_type == ContentType.COMPLEX
         assert result.tier == "slow"
 
@@ -503,6 +519,7 @@ class TestContentClassifier:
 # User Speed Preferences
 # ---------------------------------------------------------------------------
 
+
 class TestUserSpeedPreferences:
     def test_defaults(self):
         prefs = UserSpeedPreferences()
@@ -527,7 +544,9 @@ class TestUserSpeedPreferences:
             default_speed=180,
             max_speed=350,
             auto_classify=True,
-            feedback_history=[{"direction": "faster", "wpm_at_feedback": 155, "timestamp": 1.0}],
+            feedback_history=[
+                {"direction": "faster", "wpm_at_feedback": 155, "timestamp": 1.0}
+            ],
         )
         d = prefs.to_dict()
         restored = UserSpeedPreferences.from_dict(d)
@@ -540,6 +559,7 @@ class TestUserSpeedPreferences:
 # ---------------------------------------------------------------------------
 # User Preference Manager
 # ---------------------------------------------------------------------------
+
 
 class TestUserPreferenceManager:
     @pytest.fixture
@@ -597,11 +617,13 @@ class TestUserPreferenceManager:
 # Content-Aware Speed Resolution
 # ---------------------------------------------------------------------------
 
+
 class TestGetSpeedForContent:
     @pytest.fixture(autouse=True)
     def _reset_classifier(self):
         """Ensure a fresh classifier for each test."""
         import agentic_brain.voice.content_classifier as cc
+
         cc._classifier = None
         yield
         cc._classifier = None

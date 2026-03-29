@@ -9,7 +9,11 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
-from agentic_brain.voice.conversation import ConversationalVoice, ConversationConfig, VoiceMode
+from agentic_brain.voice.conversation import (
+    ConversationalVoice,
+    ConversationConfig,
+    VoiceMode,
+)
 from agentic_brain.voice.resilient import ResilientVoice, VoiceDaemon
 from agentic_brain.voice.serializer import VoiceMessage, get_voice_serializer
 
@@ -68,7 +72,9 @@ def test_serializer_blocks_startup_speech_until_daemon_ready(serializer):
         executed.append(time.monotonic())
         return True
 
-    serializer.run_serialized(VoiceMessage(text="blocked"), executor=executor, wait=False)
+    serializer.run_serialized(
+        VoiceMessage(text="blocked"), executor=executor, wait=False
+    )
     time.sleep(0.05)
     assert executed == []
 
@@ -142,7 +148,9 @@ def test_mode_switch_releases_gate_after_switch(serializer, monkeypatch):
     monkeypatch.setattr(config, "load_mode", lambda: VoiceMode.LIFE)
     conv = ConversationalVoice(config)
     announcements = []
-    monkeypatch.setattr(conv, "speak", lambda *args, **kwargs: announcements.append(True) or True)
+    monkeypatch.setattr(
+        conv, "speak", lambda *args, **kwargs: announcements.append(True) or True
+    )
 
     conv.set_mode(VoiceMode.WORK)
 
@@ -262,7 +270,9 @@ def test_concurrent_startup_speech_attempts_do_not_overlap(serializer, monkeypat
 
 
 @pytest.mark.asyncio
-async def test_daemon_concurrent_startup_queue_remains_serialized(serializer, monkeypatch):
+async def test_daemon_concurrent_startup_queue_remains_serialized(
+    serializer, monkeypatch
+):
     daemon = VoiceDaemon()
     daemon._startup_silence_seconds = 0.02
     active = 0

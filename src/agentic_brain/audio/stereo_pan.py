@@ -193,7 +193,9 @@ class StereoPanner:
 
     def speak_panned(self, text: str, lady: str, voice: str, rate: int = 155) -> bool:
         """Speak text with stereo panning for the lady."""
-        panned_audio = self.render_panned_speech(text=text, lady=lady, voice=voice, rate=rate)
+        panned_audio = self.render_panned_speech(
+            text=text, lady=lady, voice=voice, rate=rate
+        )
         try:
             completed = subprocess.run(
                 ["afplay", str(panned_audio.path)],

@@ -51,6 +51,7 @@ logger = logging.getLogger(__name__)
 _HAS_PYAUDIO = False
 try:
     import pyaudio  # type: ignore[import-untyped]
+
     _HAS_PYAUDIO = True
 except ImportError:
     pyaudio = None  # type: ignore[assignment]
@@ -69,8 +70,10 @@ RESPONSE_LATENCY_TARGET_MS = 500
 
 # ── Data Types ───────────────────────────────────────────────────────
 
+
 class SessionState(enum.Enum):
     """Lifecycle states for a live voice session."""
+
     IDLE = "idle"
     WAITING_FOR_WAKE = "waiting_for_wake"
     LISTENING = "listening"
@@ -83,6 +86,7 @@ class SessionState(enum.Enum):
 @dataclass
 class LiveSessionConfig:
     """Configuration knobs for a live voice session."""
+
     sample_rate: int = DEFAULT_SAMPLE_RATE
     channels: int = DEFAULT_CHANNELS
     chunk_size: int = DEFAULT_CHUNK_SIZE
@@ -101,6 +105,7 @@ class LiveSessionConfig:
 @dataclass
 class SessionMetrics:
     """Runtime statistics for the live session."""
+
     utterances_heard: int = 0
     responses_given: int = 0
     interrupts: int = 0
@@ -112,8 +117,8 @@ class SessionMetrics:
 
     def record_latency(self, ms: float) -> None:
         self._latency_samples.append(ms)
-        self.avg_response_latency_ms = (
-            sum(self._latency_samples) / len(self._latency_samples)
+        self.avg_response_latency_ms = sum(self._latency_samples) / len(
+            self._latency_samples
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -129,6 +134,7 @@ class SessionMetrics:
 
 
 # ── Audio helpers ────────────────────────────────────────────────────
+
 
 def rms_amplitude(data: bytes, sample_width: int = 2) -> float:
     """Compute RMS amplitude of raw PCM audio (int16 LE)."""
@@ -160,6 +166,7 @@ def check_microphone() -> bool:
 
 
 # ── Live Voice Session ───────────────────────────────────────────────
+
 
 class LiveVoiceSession:
     """A real-time bidirectional voice conversation session.
@@ -295,6 +302,7 @@ class LiveVoiceSession:
         self._speaking = False
         try:
             from agentic_brain.voice._speech_lock import interrupt_speech
+
             interrupt_speech()
         except ImportError:
             logger.debug("interrupt_speech not available")
@@ -364,6 +372,7 @@ class LiveVoiceSession:
     def _init_transcriber(self) -> None:
         try:
             from agentic_brain.voice.transcription import get_transcriber
+
             self._transcriber = get_transcriber(
                 use_whisper=self.config.use_whisper,
                 model_name=self.config.whisper_model,
@@ -433,9 +442,14 @@ class LiveVoiceSession:
                 if silence_start is None:
                     silence_start = time.monotonic()
 
-                silence_duration = time.monotonic() - (silence_start or time.monotonic())
+                silence_duration = time.monotonic() - (
+                    silence_start or time.monotonic()
+                )
 
-                if audio_chunks and silence_duration >= self.config.utterance_silence_secs:
+                if (
+                    audio_chunks
+                    and silence_duration >= self.config.utterance_silence_secs
+                ):
                     self._set_state(SessionState.PROCESSING)
                     text = self._transcribe(audio_chunks)
                     audio_chunks.clear()
@@ -538,6 +552,7 @@ def _get_serializer():
     """Lazy import of the singleton voice serializer."""
     try:
         from agentic_brain.voice.serializer import get_voice_serializer
+
         return get_voice_serializer()
     except Exception:
         return None
@@ -563,6 +578,7 @@ def _speak_fallback(text: str, voice: str, rate: int) -> None:
 
 
 # ── Singleton session management (for MCP tools / CLI) ───────────────
+
 
 def start_live_session(
     voice: str = "Karen",

@@ -85,7 +85,9 @@ class LiveVoiceMode:
             self._total_chars = 0
             self._start_time = time.time()
             self._history = []
-        logger.info("Live voice mode started (voice=%s, rate=%d)", self._voice, self._rate)
+        logger.info(
+            "Live voice mode started (voice=%s, rate=%d)", self._voice, self._rate
+        )
 
     def stop(self) -> None:
         """Deactivate live mode. Flushes remaining buffer."""

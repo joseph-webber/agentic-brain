@@ -49,6 +49,7 @@ from agentic_brain.voice.neural_router import (
 # Fixtures
 # ═══════════════════════════════════════════════════════════════════
 
+
 @pytest.fixture
 def cache_dir(tmp_path):
     return tmp_path / "kokoro-test-cache"
@@ -64,7 +65,9 @@ def router(cache_dir):
     return NeuralVoiceRouter(cache_dir=cache_dir / "router", enable_cache=True)
 
 
-def _make_wav_bytes(duration_samples: int = 1000, sample_rate: int = KOKORO_SAMPLE_RATE) -> bytes:
+def _make_wav_bytes(
+    duration_samples: int = 1000, sample_rate: int = KOKORO_SAMPLE_RATE
+) -> bytes:
     """Generate minimal valid WAV bytes for testing."""
     audio = np.zeros(duration_samples, dtype=np.float32)
     audio[:100] = np.linspace(0, 0.5, 100, dtype=np.float32)
@@ -75,13 +78,25 @@ def _make_wav_bytes(duration_samples: int = 1000, sample_rate: int = KOKORO_SAMP
 # 1. LADY_VOICES mapping tests
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestLadyVoices:
     """Tests for the LADY_VOICES configuration."""
 
     ALL_LADIES = [
-        "Karen", "Kyoko", "Tingting", "Yuna", "Linh", "Kanya",
-        "Dewi", "Sari", "Wayan", "Moira", "Alice", "Zosia",
-        "Flo", "Shelley",
+        "Karen",
+        "Kyoko",
+        "Tingting",
+        "Yuna",
+        "Linh",
+        "Kanya",
+        "Dewi",
+        "Sari",
+        "Wayan",
+        "Moira",
+        "Alice",
+        "Zosia",
+        "Flo",
+        "Shelley",
     ]
 
     def test_all_14_ladies_are_mapped(self):
@@ -132,6 +147,7 @@ class TestLadyVoices:
 # 2. KokoroVoice class tests
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestKokoroVoice:
     """Tests for the KokoroVoice TTS wrapper."""
 
@@ -163,8 +179,14 @@ class TestKokoroVoice:
         with pytest.raises(ValueError, match="empty"):
             kokoro.synthesize("   ", "Karen")
 
-    @patch("agentic_brain.voice.kokoro_tts.KokoroVoice._try_kokoro_onnx", return_value=False)
-    @patch("agentic_brain.voice.kokoro_tts.KokoroVoice._try_kokoro_base", return_value=False)
+    @patch(
+        "agentic_brain.voice.kokoro_tts.KokoroVoice._try_kokoro_onnx",
+        return_value=False,
+    )
+    @patch(
+        "agentic_brain.voice.kokoro_tts.KokoroVoice._try_kokoro_base",
+        return_value=False,
+    )
     @patch("agentic_brain.voice.kokoro_tts.KokoroVoice._synthesize_apple_say")
     def test_fallback_to_apple_say(self, mock_apple, mock_base, mock_onnx, kokoro):
         """When Kokoro is unavailable, falls back to Apple say."""
@@ -174,10 +196,21 @@ class TestKokoroVoice:
         assert kokoro.backend == "apple-say"
         mock_apple.assert_called_once()
 
-    @patch("agentic_brain.voice.kokoro_tts.KokoroVoice._try_kokoro_onnx", return_value=False)
-    @patch("agentic_brain.voice.kokoro_tts.KokoroVoice._try_kokoro_base", return_value=False)
-    @patch("agentic_brain.voice.kokoro_tts.KokoroVoice._synthesize_apple_say", return_value=None)
-    def test_raises_when_all_backends_fail(self, mock_apple, mock_base, mock_onnx, kokoro):
+    @patch(
+        "agentic_brain.voice.kokoro_tts.KokoroVoice._try_kokoro_onnx",
+        return_value=False,
+    )
+    @patch(
+        "agentic_brain.voice.kokoro_tts.KokoroVoice._try_kokoro_base",
+        return_value=False,
+    )
+    @patch(
+        "agentic_brain.voice.kokoro_tts.KokoroVoice._synthesize_apple_say",
+        return_value=None,
+    )
+    def test_raises_when_all_backends_fail(
+        self, mock_apple, mock_base, mock_onnx, kokoro
+    ):
         """RuntimeError when no backend can produce audio."""
         with pytest.raises(RuntimeError, match="All TTS backends failed"):
             kokoro.synthesize("Hello", "Karen")
@@ -210,7 +243,9 @@ class TestKokoroVoice:
         fake_pipeline = MagicMock()
         fake_pipeline.return_value = [("gs", "ps", fake_segments[0])]
 
-        with patch("agentic_brain.voice.kokoro_tts.KokoroVoice._synthesize_base") as mock_base:
+        with patch(
+            "agentic_brain.voice.kokoro_tts.KokoroVoice._synthesize_base"
+        ) as mock_base:
             wav = _to_wav_bytes(fake_segments[0])
             mock_base.return_value = wav
             result = voice.synthesize("Hello", "Kyoko")
@@ -262,6 +297,7 @@ class TestKokoroVoice:
 # 3. Cache tests
 # ═══════════════════════════════════════════════════════════════════
 
+
 class TestCache:
     """Tests for the phrase cache system."""
 
@@ -274,7 +310,9 @@ class TestCache:
         voice._initialized = True
         voice._onnx_engine = MagicMock()
 
-        with patch.object(voice, "_synthesize_onnx", return_value=wav_bytes) as mock_synth:
+        with patch.object(
+            voice, "_synthesize_onnx", return_value=wav_bytes
+        ) as mock_synth:
             result1 = voice.synthesize("Cached test", "Karen")
             assert result1 == wav_bytes
             mock_synth.assert_called_once()
@@ -305,7 +343,9 @@ class TestCache:
         voice._initialized = True
         voice._onnx_engine = MagicMock()
 
-        with patch.object(voice, "_synthesize_onnx", return_value=wav_bytes) as mock_synth:
+        with patch.object(
+            voice, "_synthesize_onnx", return_value=wav_bytes
+        ) as mock_synth:
             voice.synthesize("Test", "Karen")
             voice.synthesize("Test", "Karen")
             assert mock_synth.call_count == 2
@@ -314,6 +354,7 @@ class TestCache:
 # ═══════════════════════════════════════════════════════════════════
 # 4. M2 acceleration detection tests
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestM2Acceleration:
     """Tests for Apple Silicon / M2 detection."""
@@ -338,14 +379,18 @@ class TestM2Acceleration:
     @patch("agentic_brain.voice.kokoro_tts.platform.system", return_value="Darwin")
     @patch("agentic_brain.voice.kokoro_tts.platform.machine", return_value="arm64")
     @patch("subprocess.run", side_effect=FileNotFoundError)
-    def test_sysctl_failure_still_detects_arm(self, mock_run, mock_machine, mock_system):
+    def test_sysctl_failure_still_detects_arm(
+        self, mock_run, mock_machine, mock_system
+    ):
         result = detect_m2_acceleration()
         assert result["is_apple_silicon"] is True
         assert result["chip_name"] == "Apple Silicon"
 
     def test_hardware_info_cached(self, kokoro):
         """hardware_info property should be cached after first access."""
-        with patch("agentic_brain.voice.kokoro_tts.detect_m2_acceleration") as mock_detect:
+        with patch(
+            "agentic_brain.voice.kokoro_tts.detect_m2_acceleration"
+        ) as mock_detect:
             mock_detect.return_value = {"is_apple_silicon": True, "chip_name": "M2"}
             info1 = kokoro.hardware_info
             info2 = kokoro.hardware_info
@@ -356,6 +401,7 @@ class TestM2Acceleration:
 # ═══════════════════════════════════════════════════════════════════
 # 5. kokoro_available() function tests
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestKokoroAvailable:
 
@@ -369,6 +415,7 @@ class TestKokoroAvailable:
             if name == "kokoro_onnx":
                 return MagicMock()
             return None
+
         mock_spec.side_effect = side_effect
         assert kokoro_available() is True
 
@@ -378,6 +425,7 @@ class TestKokoroAvailable:
             if name == "kokoro":
                 return MagicMock()
             return None
+
         mock_spec.side_effect = side_effect
         assert kokoro_available() is True
 
@@ -385,6 +433,7 @@ class TestKokoroAvailable:
 # ═══════════════════════════════════════════════════════════════════
 # 6. _to_wav_bytes utility tests
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestWavBytes:
 
@@ -412,6 +461,7 @@ class TestWavBytes:
 # ═══════════════════════════════════════════════════════════════════
 # 7. NeuralVoiceRouter tests
 # ═══════════════════════════════════════════════════════════════════
+
 
 class TestNeuralVoiceRouter:
     """Tests for the NeuralVoiceRouter routing logic."""
@@ -452,7 +502,10 @@ class TestNeuralVoiceRouter:
             "Long enough message for test", "Tingting", "conversation"
         )
         assert info["engine"] == "apple-say"
-        assert "fallback" in info["reason"].lower() or "unavailable" in info["reason"].lower()
+        assert (
+            "fallback" in info["reason"].lower()
+            or "unavailable" in info["reason"].lower()
+        )
 
     def test_speak_system_uses_apple(self, router):
         """System speech routes through Apple say and increments stats."""
@@ -469,7 +522,10 @@ class TestNeuralVoiceRouter:
         info = router.get_routing_info("Deployment complete!", "Karen", "system")
         assert info["engine"] == "apple-say"
 
-    @patch("agentic_brain.voice.neural_router.NeuralVoiceRouter._speak_apple", return_value=True)
+    @patch(
+        "agentic_brain.voice.neural_router.NeuralVoiceRouter._speak_apple",
+        return_value=True,
+    )
     def test_speak_empty_text_returns_false(self, mock_apple, router):
         assert router.speak("") is False
         assert router.speak("   ") is False

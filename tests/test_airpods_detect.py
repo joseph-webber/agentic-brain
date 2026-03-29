@@ -83,16 +83,24 @@ def test_audio_router_lists_and_switches_outputs():
         ("/opt/homebrew/bin/SwitchAudioSource", "-a", "-t", "output"): Completed(
             "MacBook Pro Speakers\nAirPods Pro Max\nStudio Display\n"
         ),
-        ("/opt/homebrew/bin/SwitchAudioSource", "-c"): Completed("MacBook Pro Speakers\n"),
+        ("/opt/homebrew/bin/SwitchAudioSource", "-c"): Completed(
+            "MacBook Pro Speakers\n"
+        ),
         ("/opt/homebrew/bin/SwitchAudioSource", "-s", "AirPods Pro Max"): Completed(),
-        ("/opt/homebrew/bin/SwitchAudioSource", "-s", "MacBook Pro Speakers"): Completed(),
+        (
+            "/opt/homebrew/bin/SwitchAudioSource",
+            "-s",
+            "MacBook Pro Speakers",
+        ): Completed(),
     }
 
     def fake_run(command, capture_output=True, text=True, check=False):
         return commands[tuple(command)]
 
     router = AudioRouter(switchaudio_path=Path("/opt/homebrew/bin/SwitchAudioSource"))
-    with patch("agentic_brain.audio.airpods_detect.subprocess.run", side_effect=fake_run):
+    with patch(
+        "agentic_brain.audio.airpods_detect.subprocess.run", side_effect=fake_run
+    ):
         assert router.list_outputs() == [
             "MacBook Pro Speakers",
             "AirPods Pro Max",
@@ -129,7 +137,9 @@ def test_module_exports_and_singleton_helpers():
     detector = MagicMock()
     detector.is_connected.return_value = True
 
-    with patch("agentic_brain.audio.airpods_detect.get_airpods_detector", return_value=detector):
+    with patch(
+        "agentic_brain.audio.airpods_detect.get_airpods_detector", return_value=detector
+    ):
         assert airpods_connected() is True
 
     assert audio.AirPodsDetector is AirPodsDetector

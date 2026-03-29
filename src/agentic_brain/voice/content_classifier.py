@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 # ── Content types ─────────────────────────────────────────────────────
 
+
 class ContentType(Enum):
     """Broad classification of spoken content."""
 
@@ -72,25 +73,64 @@ CONTENT_TYPE_TO_TIER: Dict[ContentType, str] = {
 
 # ── Keyword patterns ─────────────────────────────────────────────────
 
-_ERROR_KEYWORDS: Set[str] = frozenset({
-    "error", "exception", "traceback", "failed", "failure",
-    "critical", "fatal", "crash", "panic", "broken",
-    "cannot", "unable", "refused", "denied", "timeout",
-    "stacktrace", "stack trace", "nullpointer", "segfault",
-})
+_ERROR_KEYWORDS: Set[str] = frozenset(
+    {
+        "error",
+        "exception",
+        "traceback",
+        "failed",
+        "failure",
+        "critical",
+        "fatal",
+        "crash",
+        "panic",
+        "broken",
+        "cannot",
+        "unable",
+        "refused",
+        "denied",
+        "timeout",
+        "stacktrace",
+        "stack trace",
+        "nullpointer",
+        "segfault",
+    }
+)
 
-_WARNING_KEYWORDS: Set[str] = frozenset({
-    "warning", "caution", "deprecated", "watch out",
-    "be careful", "attention", "notice", "alert",
-    "potential", "might fail", "could break",
-})
+_WARNING_KEYWORDS: Set[str] = frozenset(
+    {
+        "warning",
+        "caution",
+        "deprecated",
+        "watch out",
+        "be careful",
+        "attention",
+        "notice",
+        "alert",
+        "potential",
+        "might fail",
+        "could break",
+    }
+)
 
-_STATUS_KEYWORDS: Set[str] = frozenset({
-    "all good", "all ok", "healthy", "running",
-    "online", "connected", "up and running", "no issues",
-    "everything is fine", "all systems go", "status ok",
-    "all tests passed", "build succeeded", "deploy complete",
-})
+_STATUS_KEYWORDS: Set[str] = frozenset(
+    {
+        "all good",
+        "all ok",
+        "healthy",
+        "running",
+        "online",
+        "connected",
+        "up and running",
+        "no issues",
+        "everything is fine",
+        "all systems go",
+        "status ok",
+        "all tests passed",
+        "build succeeded",
+        "deploy complete",
+    }
+)
 
 _PROGRESS_PATTERNS: List[re.Pattern] = [
     re.compile(r"\d+\s*(of|out of|/)\s*\d+", re.IGNORECASE),
@@ -113,15 +153,16 @@ _QUESTION_PATTERNS: List[re.Pattern] = [
 ]
 
 _COMPLEX_PATTERNS: List[re.Pattern] = [
-    re.compile(r"```"),                          # code fences
+    re.compile(r"```"),  # code fences
     re.compile(r"def |class |function |import "),  # code
     re.compile(r"[A-Z][a-zA-Z]+\.[a-zA-Z]+\("),  # method calls
-    re.compile(r"\b0x[0-9a-fA-F]+\b"),            # hex literals
-    re.compile(r"\b\d{5,}\b"),                     # large numbers
+    re.compile(r"\b0x[0-9a-fA-F]+\b"),  # hex literals
+    re.compile(r"\b\d{5,}\b"),  # large numbers
 ]
 
 
 # ── Classification context ────────────────────────────────────────────
+
 
 @dataclass
 class ClassificationContext:
@@ -131,10 +172,10 @@ class ClassificationContext:
     "user has seen this text before", etc.
     """
 
-    source: str = ""          # e.g. "jira", "bitbucket", "neo4j"
+    source: str = ""  # e.g. "jira", "bitbucket", "neo4j"
     is_repeated: bool = False
     is_first_time: bool = False
-    urgency: str = "normal"   # "low" | "normal" | "high" | "critical"
+    urgency: str = "normal"  # "low" | "normal" | "high" | "critical"
 
 
 @dataclass
@@ -142,8 +183,8 @@ class ClassificationResult:
     """Outcome of content classification."""
 
     content_type: ContentType
-    tier: str                     # "slow" | "normal" | "fast" | "rapid"
-    confidence: float = 1.0       # 0.0 → 1.0
+    tier: str  # "slow" | "normal" | "fast" | "rapid"
+    confidence: float = 1.0  # 0.0 → 1.0
     matched_signals: List[str] = field(default_factory=list)
 
     @property
@@ -152,6 +193,7 @@ class ClassificationResult:
 
 
 # ── LRU Cache ─────────────────────────────────────────────────────────
+
 
 class _LRUCache:
     """Bounded LRU cache for classification results."""
@@ -182,6 +224,7 @@ class _LRUCache:
 
 
 # ── Content Classifier ────────────────────────────────────────────────
+
 
 class ContentClassifier:
     """Classify spoken content to determine optimal speech speed.
@@ -257,11 +300,17 @@ class ContentClassifier:
         # Context overrides
         if ctx.is_repeated:
             return ClassificationResult(
-                ContentType.FAMILIAR, "fast", 1.0, ["context_repeated"],
+                ContentType.FAMILIAR,
+                "fast",
+                1.0,
+                ["context_repeated"],
             )
         if ctx.urgency == "critical":
             return ClassificationResult(
-                ContentType.ERROR, "slow", 1.0, ["context_critical"],
+                ContentType.ERROR,
+                "slow",
+                1.0,
+                ["context_critical"],
             )
         if ctx.is_first_time:
             signals.append("context_first_time")
@@ -326,7 +375,10 @@ class ContentClassifier:
         if best_score == 0.0:
             # No signals → default to normal update
             return ClassificationResult(
-                ContentType.UPDATE, "normal", 0.5, signals or ["no_signal_default"],
+                ContentType.UPDATE,
+                "normal",
+                0.5,
+                signals or ["no_signal_default"],
             )
 
         total = sum(scores.values())

@@ -46,7 +46,9 @@ class VoiceConfig:
     provider: str = os.getenv(
         "AGENTIC_BRAIN_VOICE_PROVIDER", "system"
     )  # system, azure, google, aws, elevenlabs
-    enabled: bool = _env_flag("AGENTIC_BRAIN_VOICE_ENABLED", "true")  # False for CI/servers
+    enabled: bool = _env_flag(
+        "AGENTIC_BRAIN_VOICE_ENABLED", "true"
+    )  # False for CI/servers
     fallback_voice: str = "Samantha"
     quality: VoiceQuality = VoiceQuality(
         os.getenv("AGENTIC_BRAIN_VOICE_QUALITY", "premium")

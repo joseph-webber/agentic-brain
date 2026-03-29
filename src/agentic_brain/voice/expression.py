@@ -68,7 +68,9 @@ class ExpressionEngine:
             return False
         return value in {"work", "boss"}
 
-    def _apply_context(self, emotion: VoiceEmotion, *, lady: str | None) -> VoiceEmotion:
+    def _apply_context(
+        self, emotion: VoiceEmotion, *, lady: str | None
+    ) -> VoiceEmotion:
         style = LADY_EXPRESSION_STYLES.get((lady or "").lower())
 
         if self.is_work_mode() and emotion in {
@@ -82,7 +84,10 @@ class ExpressionEngine:
         if style is None:
             return emotion
 
-        if style.force_calm and emotion not in {VoiceEmotion.URGENT, VoiceEmotion.CONCERNED}:
+        if style.force_calm and emotion not in {
+            VoiceEmotion.URGENT,
+            VoiceEmotion.CONCERNED,
+        }:
             return VoiceEmotion.CALM
 
         if style.happy_boost and emotion == VoiceEmotion.HAPPY:

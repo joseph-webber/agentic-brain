@@ -144,7 +144,9 @@ class TestVoiceLibraryManagement:
         assert library.delete_voice(profile.voice_id) is True
         assert library.get_voice(profile.voice_id) is None
 
-    def test_assign_voice_to_lady_updates_profile(self, configured_env, voice_workspace):
+    def test_assign_voice_to_lady_updates_profile(
+        self, configured_env, voice_workspace
+    ):
         library = VoiceLibrary(base_dir=configured_env)
         sample = _create_test_wav(voice_workspace / "assign.wav")
         profile = library.register_voice(source_audio=sample, name="Assign Me")
@@ -156,7 +158,9 @@ class TestVoiceLibraryManagement:
         library = VoiceLibrary(base_dir=configured_env)
         one = _create_test_wav(voice_workspace / "one.wav")
         two = _create_test_wav(voice_workspace / "two.wav")
-        profile_one = library.register_voice(source_audio=one, name="One", assigned_lady="karen")
+        profile_one = library.register_voice(
+            source_audio=one, name="One", assigned_lady="karen"
+        )
         library.register_voice(source_audio=two, name="Two", assigned_lady="moira")
         matches = library.find_by_lady("karen")
         assert [profile.voice_id for profile in matches] == [profile_one.voice_id]
@@ -174,7 +178,9 @@ class TestVoiceLibraryManagement:
         source_library = VoiceLibrary(base_dir=voice_workspace / "source")
         sample = _create_test_wav(voice_workspace / "import.wav")
         profile = source_library.register_voice(source_audio=sample, name="Import Me")
-        archive = source_library.export_voice(profile.voice_id, voice_workspace / "import.zip")
+        archive = source_library.export_voice(
+            profile.voice_id, voice_workspace / "import.zip"
+        )
 
         target_library = VoiceLibrary(base_dir=configured_env)
         imported = target_library.import_voice(archive)
@@ -184,11 +190,17 @@ class TestVoiceLibraryManagement:
 
 
 class TestVoiceSynthesis:
-    def test_synthesize_with_f5_backend_writes_wav(self, configured_env, voice_workspace):
+    def test_synthesize_with_f5_backend_writes_wav(
+        self, configured_env, voice_workspace
+    ):
         sample = _create_test_wav(voice_workspace / "ref.wav")
         fake_backend = FakeF5TTS()
-        cloner = VoiceCloner(base_dir=configured_env, backend_factory=lambda: fake_backend)
-        voice_id = cloner.clone_voice(sample, name="Synth Voice", reference_text="hello there")
+        cloner = VoiceCloner(
+            base_dir=configured_env, backend_factory=lambda: fake_backend
+        )
+        voice_id = cloner.clone_voice(
+            sample, name="Synth Voice", reference_text="hello there"
+        )
         output = cloner.synthesize_with_voice("Generated text", voice_id)
         assert output.exists()
         assert output.suffix == ".wav"
@@ -207,7 +219,9 @@ class TestVoiceSynthesis:
     ):
         sample = _create_test_wav(voice_workspace / "fallback.wav")
         cloner = VoiceCloner(base_dir=configured_env)
-        voice_id = cloner.clone_voice(sample, name="Fallback Voice", assigned_lady="moira")
+        voice_id = cloner.clone_voice(
+            sample, name="Fallback Voice", assigned_lady="moira"
+        )
 
         def fake_system_voice(text: str, voice_name: str, output_path: Path) -> Path:
             assert text == "Fallback text"
@@ -221,7 +235,9 @@ class TestVoiceSynthesis:
         assert output.exists()
         assert output.suffix == ".wav"
 
-    def test_synthesize_with_voice_rejects_blank_text(self, configured_env, voice_workspace):
+    def test_synthesize_with_voice_rejects_blank_text(
+        self, configured_env, voice_workspace
+    ):
         sample = _create_test_wav(voice_workspace / "blank.wav")
         cloner = VoiceCloner(base_dir=configured_env)
         voice_id = cloner.clone_voice(sample, name="Blank")
@@ -232,7 +248,9 @@ class TestVoiceSynthesis:
 class TestVoiceCloneCLI:
     def test_parser_accepts_clone_command(self):
         parser = create_parser()
-        args = parser.parse_args(["voice", "clone", "sample.wav", "--name", "custom_karen"])
+        args = parser.parse_args(
+            ["voice", "clone", "sample.wav", "--name", "custom_karen"]
+        )
         assert args.command == "voice"
         assert args.voice_subcommand == "clone"
         assert args.audio_file == "sample.wav"
@@ -254,7 +272,9 @@ class TestVoiceCloneCLI:
         assert result == 0
         assert "Voice clone created" in output
 
-    def test_cli_clone_list_outputs_profiles(self, configured_env, voice_workspace, capsys):
+    def test_cli_clone_list_outputs_profiles(
+        self, configured_env, voice_workspace, capsys
+    ):
         sample = _create_test_wav(voice_workspace / "cli-list.wav")
         VoiceLibrary(base_dir=configured_env).register_voice(
             source_audio=sample,
@@ -291,7 +311,9 @@ class TestVoiceCloneCLI:
         assert result == 0
         assert library.get_voice(profile.voice_id) is None
 
-    def test_cli_clone_assign_updates_lady(self, configured_env, voice_workspace, capsys):
+    def test_cli_clone_assign_updates_lady(
+        self, configured_env, voice_workspace, capsys
+    ):
         library = VoiceLibrary(base_dir=configured_env)
         sample = _create_test_wav(voice_workspace / "cli-assign.wav")
         profile = library.register_voice(source_audio=sample, name="Assign Voice")
@@ -311,7 +333,9 @@ class TestVoiceCloneCLI:
         assert "Assigned" in output
         assert updated is not None and updated.assigned_lady == "karen"
 
-    def test_cli_clone_assign_requires_lady(self, configured_env, voice_workspace, capsys):
+    def test_cli_clone_assign_requires_lady(
+        self, configured_env, voice_workspace, capsys
+    ):
         library = VoiceLibrary(base_dir=configured_env)
         sample = _create_test_wav(voice_workspace / "cli-assign-missing.wav")
         profile = library.register_voice(source_audio=sample, name="Assign Missing")

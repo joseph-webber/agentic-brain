@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 _HAS_WHISPER_CPP = False
 try:
     from pywhispercpp.model import Model as WhisperModel  # type: ignore[import-untyped]
+
     _HAS_WHISPER_CPP = True
 except ImportError:
     WhisperModel = None  # type: ignore[assignment,misc]
@@ -48,6 +49,7 @@ except ImportError:
 _HAS_NUMPY = False
 try:
     import numpy as np  # type: ignore[import-untyped]
+
     _HAS_NUMPY = True
 except ImportError:
     np = None  # type: ignore[assignment]
@@ -55,9 +57,11 @@ except ImportError:
 
 # ── Shared types ─────────────────────────────────────────────────────
 
+
 @dataclass
 class TranscriptionResult:
     """Unified output from any transcription backend."""
+
     text: str
     confidence: float = 1.0
     is_final: bool = True
@@ -68,6 +72,7 @@ class TranscriptionResult:
 @dataclass
 class TranscriptionMetrics:
     """Accuracy and performance tracking."""
+
     total_requests: int = 0
     successful: int = 0
     errors: int = 0
@@ -82,8 +87,8 @@ class TranscriptionMetrics:
         self.total_audio_ms += result.duration_ms
         self.total_processing_ms += processing_ms
         self._confidence_samples.append(result.confidence)
-        self.avg_confidence = (
-            sum(self._confidence_samples) / len(self._confidence_samples)
+        self.avg_confidence = sum(self._confidence_samples) / len(
+            self._confidence_samples
         )
 
     def record_error(self) -> None:
@@ -118,6 +123,7 @@ class TranscriptionMetrics:
 
 # ── Base class ───────────────────────────────────────────────────────
 
+
 class BaseTranscriber(ABC):
     """Abstract transcription backend."""
 
@@ -145,6 +151,7 @@ class BaseTranscriber(ABC):
 
 
 # ── Whisper.cpp Transcriber ──────────────────────────────────────────
+
 
 class WhisperTranscriber(BaseTranscriber):
     """Local transcription via whisper.cpp (pywhispercpp).
@@ -229,7 +236,9 @@ class WhisperTranscriber(BaseTranscriber):
                 duration_ms = (len(audio_float) / sample_rate) * 1000
 
                 segments = self._model.transcribe(audio_float)
-                text = " ".join(seg.text.strip() for seg in segments if seg.text.strip())
+                text = " ".join(
+                    seg.text.strip() for seg in segments if seg.text.strip()
+                )
 
                 if not text:
                     return None
@@ -252,6 +261,7 @@ class WhisperTranscriber(BaseTranscriber):
 
 
 # ── macOS Dictation fallback ─────────────────────────────────────────
+
 
 class MacOSDictationTranscriber(BaseTranscriber):
     """Fallback transcriber using macOS ``say``-adjacent APIs.
@@ -327,7 +337,7 @@ class MacOSDictationTranscriber(BaseTranscriber):
             return None
 
         # Swift helper that uses SFSpeechRecognizer
-        swift_code = f'''
+        swift_code = f"""
 import Foundation
 import Speech
 
@@ -355,7 +365,7 @@ SFSpeechRecognizer.requestAuthorization {{ status in
 
 _ = semaphore.wait(timeout: .now() + 10)
 print(resultText)
-'''
+"""
         try:
             result = subprocess.run(
                 ["swift", "-"],
@@ -374,6 +384,7 @@ print(resultText)
 
 
 # ── Audio conversion helpers ─────────────────────────────────────────
+
 
 def _pcm_to_float32(audio_data: bytes) -> Any:
     """Convert raw PCM int16 bytes to float32 numpy array (or list).
@@ -395,6 +406,7 @@ def _pcm_to_float32(audio_data: bytes) -> Any:
 
 
 # ── Factory ──────────────────────────────────────────────────────────
+
 
 def get_transcriber(
     use_whisper: bool = True,

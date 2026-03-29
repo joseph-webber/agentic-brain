@@ -131,7 +131,9 @@ class TestAudio:
         """Test disabled audio doesn't speak."""
         audio = Audio(AudioConfig(enabled=False))
 
-        result = audio.speak(pick_voice_phrase("test_disabled_audio", "technology_quotes"))
+        result = audio.speak(
+            pick_voice_phrase("test_disabled_audio", "technology_quotes")
+        )
         assert result is False
 
     @patch("agentic_brain.voice._speech_lock.subprocess.Popen")

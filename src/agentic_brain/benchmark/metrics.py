@@ -599,7 +599,9 @@ class BenchmarkResult:
             "duration_seconds": round(self.duration_seconds, 2),
             "hardware": self.hardware.to_dict() if self.hardware else None,
             "config": self.config.to_dict() if self.config else None,
-            "metrics": {name: metric.to_dict() for name, metric in self.metrics.items()},
+            "metrics": {
+                name: metric.to_dict() for name, metric in self.metrics.items()
+            },
             "models": [model.to_dict() for model in self.models],
             "comparison": self.comparison.to_dict() if self.comparison else None,
             "metadata": self.metadata,
@@ -621,9 +623,9 @@ class BenchmarkResult:
             timestamp=data.get("timestamp", ""),
             duration_seconds=float(data.get("duration_seconds", 0.0)),
             version=data.get("version", "1.0.0"),
-            comparison=BenchmarkComparison.from_dict(comparison)
-            if comparison
-            else None,
+            comparison=(
+                BenchmarkComparison.from_dict(comparison) if comparison else None
+            ),
             metadata=data.get("metadata", {}),
         )
 

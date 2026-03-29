@@ -42,6 +42,7 @@ logger = logging.getLogger(__name__)
 
 # ── Data structures ──────────────────────────────────────────────────
 
+
 @dataclass(slots=True)
 class SpatialPosition:
     """3D position of a lady relative to the listener.
@@ -68,46 +69,47 @@ class SpatialPosition:
 
 LADY_POSITIONS: Dict[str, SpatialPosition] = {
     # Front arc — the main voices Joseph hears most often
-    "Karen":   SpatialPosition(azimuth=0),        # Center front — main host
-    "Kyoko":   SpatialPosition(azimuth=30),        # Front-right — Japan
-    "Tingting": SpatialPosition(azimuth=55),       # Right-front — China
-    "Yuna":    SpatialPosition(azimuth=80),        # Right — Korea
-    "Linh":    SpatialPosition(azimuth=110),       # Right-back — Vietnam
-    "Kanya":   SpatialPosition(azimuth=140),       # Back-right — Thailand
+    "Karen": SpatialPosition(azimuth=0),  # Center front — main host
+    "Kyoko": SpatialPosition(azimuth=30),  # Front-right — Japan
+    "Tingting": SpatialPosition(azimuth=55),  # Right-front — China
+    "Yuna": SpatialPosition(azimuth=80),  # Right — Korea
+    "Linh": SpatialPosition(azimuth=110),  # Right-back — Vietnam
+    "Kanya": SpatialPosition(azimuth=140),  # Back-right — Thailand
     # Behind — the Indonesian trio
-    "Dewi":    SpatialPosition(azimuth=165),       # Back — Jakarta
-    "Sari":    SpatialPosition(azimuth=180),       # Dead behind — Java
-    "Wayan":   SpatialPosition(azimuth=195),       # Back-left — Bali
+    "Dewi": SpatialPosition(azimuth=165),  # Back — Jakarta
+    "Sari": SpatialPosition(azimuth=180),  # Dead behind — Java
+    "Wayan": SpatialPosition(azimuth=195),  # Back-left — Bali
     # Left arc — European ladies
-    "Moira":   SpatialPosition(azimuth=225),       # Left-back — Ireland
-    "Alice":   SpatialPosition(azimuth=255),       # Left — Italy
-    "Zosia":   SpatialPosition(azimuth=285),       # Left-front — Poland
-    "Flo":     SpatialPosition(azimuth=315),       # Front-left — France
-    "Shelley": SpatialPosition(azimuth=345),       # Front-left — UK
+    "Moira": SpatialPosition(azimuth=225),  # Left-back — Ireland
+    "Alice": SpatialPosition(azimuth=255),  # Left — Italy
+    "Zosia": SpatialPosition(azimuth=285),  # Left-front — Poland
+    "Flo": SpatialPosition(azimuth=315),  # Front-left — France
+    "Shelley": SpatialPosition(azimuth=345),  # Front-left — UK
 }
 
 # Lady name → macOS ``say -v`` voice name
 LADY_VOICE_MAP: Dict[str, str] = {
-    "Karen":    "Karen (Premium)",
-    "Kyoko":    "Kyoko",
+    "Karen": "Karen (Premium)",
+    "Kyoko": "Kyoko",
     "Tingting": "Ting-Ting",
-    "Yuna":     "Yuna",
-    "Linh":     "Linh",
-    "Kanya":    "Kanya",
-    "Dewi":     "Damayanti",
-    "Sari":     "Damayanti",
-    "Wayan":    "Damayanti",
-    "Moira":    "Moira",
-    "Alice":    "Alice",
-    "Zosia":    "Zosia",
-    "Flo":      "Amelie",
-    "Shelley":  "Shelley",
+    "Yuna": "Yuna",
+    "Linh": "Linh",
+    "Kanya": "Kanya",
+    "Dewi": "Damayanti",
+    "Sari": "Damayanti",
+    "Wayan": "Damayanti",
+    "Moira": "Moira",
+    "Alice": "Alice",
+    "Zosia": "Zosia",
+    "Flo": "Amelie",
+    "Shelley": "Shelley",
 }
 
 ALL_LADIES = tuple(LADY_POSITIONS.keys())
 
 
 # ── Stereo-pan helpers ───────────────────────────────────────────────
+
 
 def _azimuth_to_stereo_gains(azimuth_deg: float) -> tuple[float, float]:
     """Convert an azimuth angle to (left_gain, right_gain) for stereo pan.
@@ -146,6 +148,7 @@ def _azimuth_to_cartesian(
 
 
 # ── Spatial Audio Router ─────────────────────────────────────────────
+
 
 class SpatialAudioRouter:
     """Route speech to spatial positions so Joseph can locate each lady.
@@ -348,7 +351,9 @@ class SpatialAudioRouter:
                 timeout=30,
             )
             if result.returncode != 0:
-                logger.warning("say -o failed: %s", result.stderr.decode(errors="replace"))
+                logger.warning(
+                    "say -o failed: %s", result.stderr.decode(errors="replace")
+                )
                 return self._speak_mono(text, voice, rate)
 
             if not mono_path.exists() or mono_path.stat().st_size == 0:
@@ -447,9 +452,7 @@ class SpatialAudioRouter:
 
     # ── Scene builder — build AirPods scene from all positions ───────
 
-    def build_full_scene(
-        self, ladies: Sequence[str] | None = None
-    ) -> Any:
+    def build_full_scene(self, ladies: Sequence[str] | None = None) -> Any:
         """Build a ``SpatialAudioScene`` with all (or specified) ladies.
 
         Returns the scene dataclass from ``airpods.py`` for use with

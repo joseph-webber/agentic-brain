@@ -370,7 +370,11 @@ class VoiceQualityAnalyzer:
 
         # Too quiet
         if report.rms_db < self.min_db:
-            sev = Severity.ERROR if report.rms_db < (self.min_db - 10) else Severity.WARNING
+            sev = (
+                Severity.ERROR
+                if report.rms_db < (self.min_db - 10)
+                else Severity.WARNING
+            )
             report.issues.append(
                 QualityIssue(
                     sev,

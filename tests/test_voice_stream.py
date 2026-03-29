@@ -190,7 +190,10 @@ def test_voice_event_producer_routes_failed_to_dead_letter_topic() -> None:
 
     producer.publish(VoiceSpeechFailed(text="Nope", error="boom"))
 
-    assert [topic for topic, _ in fake.messages] == [BRAIN_VOICE_STATUS, BRAIN_VOICE_ERRORS]
+    assert [topic for topic, _ in fake.messages] == [
+        BRAIN_VOICE_STATUS,
+        BRAIN_VOICE_ERRORS,
+    ]
 
 
 def test_voice_event_producer_creates_topics() -> None:
@@ -234,7 +237,11 @@ def test_consumer_poll_orders_priority_then_timestamp() -> None:
     )
     consumer = VoiceEventConsumer(
         consumer=FakeConsumer(
-            [background.to_dict(), normal.to_json(), serialize_event(urgent).encode("utf-8")]
+            [
+                background.to_dict(),
+                normal.to_json(),
+                serialize_event(urgent).encode("utf-8"),
+            ]
         ),
         event_producer=RecordingProducer(),
     )
@@ -254,7 +261,9 @@ async def test_consumer_process_batch_speaks_and_publishes_statuses() -> None:
         return True
 
     consumer = VoiceEventConsumer(
-        consumer=FakeConsumer([VoiceSpeechRequested(text="Hello", lady="Karen").to_dict()]),
+        consumer=FakeConsumer(
+            [VoiceSpeechRequested(text="Hello", lady="Karen").to_dict()]
+        ),
         event_producer=recorder,
         speaker=speaker,
     )
@@ -284,7 +293,10 @@ async def test_consumer_dead_letters_failed_speech() -> None:
 
     await consumer.process_batch()
 
-    assert [topic for topic, _ in recorder.events] == [BRAIN_VOICE_STATUS, BRAIN_VOICE_ERRORS]
+    assert [topic for topic, _ in recorder.events] == [
+        BRAIN_VOICE_STATUS,
+        BRAIN_VOICE_ERRORS,
+    ]
     assert isinstance(recorder.events[-1][1], VoiceSpeechFailed)
 
 
@@ -373,7 +385,9 @@ def test_shared_producer_uses_redpanda_flag(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_consumer_close_closes_underlying_consumer() -> None:
     fake_consumer = FakeConsumer([])
-    consumer = VoiceEventConsumer(consumer=fake_consumer, event_producer=RecordingProducer())
+    consumer = VoiceEventConsumer(
+        consumer=fake_consumer, event_producer=RecordingProducer()
+    )
 
     consumer.close()
 

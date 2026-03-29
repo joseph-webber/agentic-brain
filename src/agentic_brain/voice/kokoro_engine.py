@@ -52,9 +52,7 @@ logger = logging.getLogger(__name__)
 
 KOKORO_REPO_ID = "hexgrad/Kokoro-82M"
 KOKORO_SAMPLE_RATE = 24_000
-KOKORO_VOICE_SOURCE = (
-    "https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md"
-)
+KOKORO_VOICE_SOURCE = "https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md"
 
 # Official Kokoro v1.0 voice IDs documented from VOICES.md.
 OFFICIAL_KOKORO_VOICES: Dict[str, tuple[str, ...]] = {
@@ -338,7 +336,9 @@ class KokoroEngine:
 
     def is_available(self) -> bool:
         """Check if Kokoro is downloaded and the Python package is importable."""
-        return self._model_path.exists() and importlib.util.find_spec("kokoro") is not None
+        return (
+            self._model_path.exists() and importlib.util.find_spec("kokoro") is not None
+        )
 
     def load(self) -> None:
         """Ensure the model snapshot is present and ready for inference."""
@@ -392,7 +392,9 @@ class KokoroEngine:
         """Render speech to a deterministic cache file and return the path."""
         audio_bytes = self.synthesize(text, voice=voice, language=language, speed=speed)
         self._audio_dir.mkdir(parents=True, exist_ok=True)
-        digest = hashlib.sha256(f"{voice}|{language}|{speed}|{text}".encode()).hexdigest()
+        digest = hashlib.sha256(
+            f"{voice}|{language}|{speed}|{text}".encode()
+        ).hexdigest()
         output_path = self._audio_dir / f"{digest}.wav"
         output_path.write_bytes(audio_bytes)
         return output_path
@@ -416,7 +418,9 @@ class KokoroEngine:
         if prefix in VOICE_PREFIX_LANGUAGE:
             return KOKORO_LANGUAGE_CODES[VOICE_PREFIX_LANGUAGE[prefix]]
 
-        raise ValueError(f"Unsupported Kokoro language {language!r} for voice {voice!r}")
+        raise ValueError(
+            f"Unsupported Kokoro language {language!r} for voice {voice!r}"
+        )
 
     def _download_model(self) -> None:
         """Download Kokoro-82M with huggingface_hub if needed."""
@@ -557,7 +561,9 @@ class HybridVoiceRouter:
         return completed.returncode == 0
 
 
-def get_official_kokoro_voice_ids(language: Optional[str] = None) -> Mapping[str, Iterable[str]]:
+def get_official_kokoro_voice_ids(
+    language: Optional[str] = None,
+) -> Mapping[str, Iterable[str]]:
     """Return the official Kokoro v1.0 voice catalogue or a single language entry."""
     if language is None:
         return OFFICIAL_KOKORO_VOICES

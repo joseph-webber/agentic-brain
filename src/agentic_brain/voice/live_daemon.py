@@ -50,15 +50,13 @@ _RUN_DIR = Path.home() / ".agentic-brain"
 PID_FILE = _RUN_DIR / "live-voice.pid"
 STATE_FILE = _RUN_DIR / "live-voice-state.json"
 LAUNCHD_PLIST_PATH = (
-    Path.home()
-    / "Library"
-    / "LaunchAgents"
-    / "com.agentic-brain.live-voice.plist"
+    Path.home() / "Library" / "LaunchAgents" / "com.agentic-brain.live-voice.plist"
 )
 LAUNCHD_LABEL = "com.agentic-brain.live-voice"
 
 
 # ── Daemon config ────────────────────────────────────────────────────
+
 
 @dataclass
 class DaemonConfig:
@@ -74,6 +72,7 @@ class DaemonConfig:
 
 
 # ── Daemon class ─────────────────────────────────────────────────────
+
 
 class LiveVoiceDaemon:
     """Background daemon wrapping a :class:`LiveVoiceSession`.

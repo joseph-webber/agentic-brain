@@ -48,9 +48,11 @@ from agentic_brain.voice.serializer import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class _SpeechRecord:
     """Records what was spoken and when for verification."""
+
     text: str
     voice: str
     rate: int
@@ -135,9 +137,9 @@ class SpeechRecorder:
     def assert_priority_order(self, expected_texts: List[str]):
         """Verify speech happened in expected priority order."""
         actual = [r.text for r in self.records]
-        assert actual == expected_texts, (
-            f"Priority order mismatch:\n  Expected: {expected_texts}\n  Got: {actual}"
-        )
+        assert (
+            actual == expected_texts
+        ), f"Priority order mismatch:\n  Expected: {expected_texts}\n  Got: {actual}"
 
 
 class FakeRedis:
@@ -218,6 +220,7 @@ class FakeRedis:
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def recorder():
     return SpeechRecorder(speech_duration=0.02)
@@ -273,6 +276,7 @@ _SAY_AUDIT = "agentic_brain.voice.serializer.audit_no_concurrent_say"
 # TEST SUITE 1: Full Flow — Enqueue to Speech
 # ===========================================================================
 
+
 class TestFullFlowEnqueueToSpeech:
     """Verify the complete path: speak_safe → serializer → say subprocess."""
 
@@ -284,6 +288,7 @@ class TestFullFlowEnqueueToSpeech:
         popen_mock.side_effect = recorder.make_popen_factory()
 
         from agentic_brain.voice import speak_safe
+
         result = speak_safe("Hello Joseph", voice="Karen", rate=155)
 
         assert result is True
@@ -299,6 +304,7 @@ class TestFullFlowEnqueueToSpeech:
         popen_mock.side_effect = recorder.make_popen_factory()
 
         from agentic_brain.voice import speak_safe
+
         speak_safe("First", voice="Karen", rate=155)
         speak_safe("Second", voice="Moira", rate=150)
         speak_safe("Third", voice="Kyoko", rate=140)
@@ -339,6 +345,7 @@ class TestFullFlowEnqueueToSpeech:
 # TEST SUITE 2: Priority Interruption
 # ===========================================================================
 
+
 class TestPriorityInterruption:
     """Verify that higher-priority messages are processed before lower ones."""
 
@@ -367,7 +374,12 @@ class TestPriorityInterruption:
         import time
 
         items = []
-        for priority, text in [(5, "normal"), (10, "urgent"), (15, "critical"), (5, "normal2")]:
+        for priority, text in [
+            (5, "normal"),
+            (10, "urgent"),
+            (15, "critical"),
+            (5, "normal2"),
+        ]:
             score = -priority + (time.time() % 1) * 0.001
             items.append((score, text))
 
@@ -381,6 +393,7 @@ class TestPriorityInterruption:
 # ===========================================================================
 # TEST SUITE 3: Cross-Process Coordination (Redis Lock)
 # ===========================================================================
+
 
 class TestCrossProcessCoordination:
     """Verify RedisVoiceLock prevents concurrent speech across threads."""
@@ -494,6 +507,7 @@ class TestCrossProcessCoordination:
 # TEST SUITE 4: Earcon Timing
 # ===========================================================================
 
+
 class TestEarconTiming:
     """Verify earcon audio cues integrate correctly with speech."""
 
@@ -552,6 +566,7 @@ class TestEarconTiming:
 # TEST SUITE 5: Speed Profile Switching
 # ===========================================================================
 
+
 class TestSpeedProfileSwitching:
     """Verify adaptive speech rates adjust correctly per context."""
 
@@ -562,6 +577,7 @@ class TestSpeedProfileSwitching:
                 SpeedProfile,
                 SpeedProfileManager,
             )
+
             assert SpeedProfile is not None
             assert SpeedProfileManager is not None
         except ImportError:
@@ -569,6 +585,7 @@ class TestSpeedProfileSwitching:
 
     def test_rate_clamping(self):
         """Speech rates are always clamped to 100-200 range."""
+
         def clamp_rate(rate: int) -> int:
             return max(100, min(200, rate))
 
@@ -602,7 +619,9 @@ class TestSpeedProfileSwitching:
 
         for mode, modifier in mode_modifiers.items():
             effective = max(100, min(200, base_rate + modifier))
-            assert 100 <= effective <= 200, f"Mode {mode} produced invalid rate {effective}"
+            assert (
+                100 <= effective <= 200
+            ), f"Mode {mode} produced invalid rate {effective}"
 
         # Spa should be slower than work
         spa_rate = base_rate + mode_modifiers["spa"]
@@ -630,6 +649,7 @@ class TestSpeedProfileSwitching:
 # ===========================================================================
 # TEST SUITE 6: TTS Engine Routing Concept
 # ===========================================================================
+
 
 class TestTTSEngineRouting:
     """Verify hybrid TTS routing logic (Karen→say, Asian→Kokoro)."""
@@ -674,6 +694,7 @@ class TestTTSEngineRouting:
 # TEST SUITE 7: Redis Queue Integration
 # ===========================================================================
 
+
 class TestRedisQueueIntegration:
     """Test Redis sorted-set queue concepts for cross-process voice."""
 
@@ -681,12 +702,15 @@ class TestRedisQueueIntegration:
         """Redis sorted set correctly orders by priority."""
         # Lower score = dequeued first by ZPOPMIN
         # We use negative priority so CRITICAL (15) gets score -15 (smallest)
-        fake_redis.zadd("voice:q:test", {
-            json.dumps({"text": "low", "priority": 1}): -1,
-            json.dumps({"text": "normal", "priority": 5}): -5,
-            json.dumps({"text": "critical", "priority": 15}): -15,
-            json.dumps({"text": "urgent", "priority": 10}): -10,
-        })
+        fake_redis.zadd(
+            "voice:q:test",
+            {
+                json.dumps({"text": "low", "priority": 1}): -1,
+                json.dumps({"text": "normal", "priority": 5}): -5,
+                json.dumps({"text": "critical", "priority": 15}): -15,
+                json.dumps({"text": "urgent", "priority": 10}): -10,
+            },
+        )
 
         results = []
         while True:
@@ -734,6 +758,7 @@ class TestRedisQueueIntegration:
 # TEST SUITE 8: Graceful Degradation
 # ===========================================================================
 
+
 class TestGracefulDegradation:
     """Verify everything still works when Redis/Kokoro are unavailable."""
 
@@ -755,6 +780,7 @@ class TestGracefulDegradation:
         popen_mock.side_effect = recorder.make_popen_factory()
 
         from agentic_brain.voice import speak_safe
+
         result = speak_safe("Still works", voice="Karen", rate=155)
 
         assert result is True
@@ -775,6 +801,7 @@ class TestGracefulDegradation:
 # ===========================================================================
 # TEST SUITE 9: Multi-Threaded Stress Test
 # ===========================================================================
+
 
 class TestMultiThreadStress:
     """Stress test: many threads, many messages, zero overlaps."""
@@ -803,10 +830,7 @@ class TestMultiThreadStress:
             except Exception as e:
                 errors.append(e)
 
-        threads = [
-            threading.Thread(target=worker, args=(i,))
-            for i in range(20)
-        ]
+        threads = [threading.Thread(target=worker, args=(i,)) for i in range(20)]
         for t in threads:
             t.start()
         for t in threads:
@@ -823,6 +847,7 @@ class TestMultiThreadStress:
 # ===========================================================================
 # TEST SUITE 10: Async Integration
 # ===========================================================================
+
 
 class TestAsyncIntegration:
     """Verify async speech paths also serialize correctly."""
@@ -853,52 +878,71 @@ class TestAsyncIntegration:
 # TEST SUITE 11: Integration Plan Lazy Loaders
 # ===========================================================================
 
+
 class TestLazyLoaders:
     """Verify __init__.py lazy loader functions work correctly."""
 
     def test_lazy_earcons_callable(self):
         """_lazy_earcons is a callable that returns types."""
         from agentic_brain.voice import _lazy_earcons
+
         assert callable(_lazy_earcons)
 
     def test_lazy_redis_voice_queue_callable(self):
         """_lazy_redis_voice_queue is a callable."""
         from agentic_brain.voice import _lazy_redis_voice_queue
+
         assert callable(_lazy_redis_voice_queue)
 
     def test_lazy_speech_rates_callable(self):
         """_lazy_speech_rates is a callable."""
         from agentic_brain.voice import _lazy_speech_rates
+
         assert callable(_lazy_speech_rates)
 
     def test_lazy_tts_router_callable(self):
         """_lazy_tts_router is a callable."""
         from agentic_brain.voice import _lazy_tts_router
+
         assert callable(_lazy_tts_router)
 
     def test_lazy_kokoro_callable(self):
         """_lazy_kokoro is a callable."""
         from agentic_brain.voice import _lazy_kokoro
+
         assert callable(_lazy_kokoro)
 
     def test_speak_safe_still_works(self):
         """speak_safe remains the primary entry point after integration."""
         from agentic_brain.voice import speak_safe
+
         assert callable(speak_safe)
 
     def test_all_exports_present(self):
         """All __all__ entries are importable from the voice module."""
         import agentic_brain.voice as voice_mod
+
         missing = []
         for name in voice_mod.__all__:
             if not hasattr(voice_mod, name):
                 # Lazy audio attrs may not be present without audio module
                 if name not in {
-                    "Audio", "AudioConfig", "Platform", "Voice",
-                    "VoiceInfo", "VoiceRegistry", "MACOS_VOICES",
-                    "get_audio", "get_registry", "get_queue",
-                    "sound", "announce", "list_voices", "test_voice",
-                    "queue_speak", "play_queue",
+                    "Audio",
+                    "AudioConfig",
+                    "Platform",
+                    "Voice",
+                    "VoiceInfo",
+                    "VoiceRegistry",
+                    "MACOS_VOICES",
+                    "get_audio",
+                    "get_registry",
+                    "get_queue",
+                    "sound",
+                    "announce",
+                    "list_voices",
+                    "test_voice",
+                    "queue_speak",
+                    "play_queue",
                 }:
                     missing.append(name)
         assert not missing, f"Missing from voice module: {missing}"

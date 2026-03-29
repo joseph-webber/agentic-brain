@@ -27,12 +27,8 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_THRESHOLD = float(
-    os.getenv("AGENTIC_BRAIN_VOICE_REPEAT_THRESHOLD", "0.8")
-)
-_DEFAULT_WINDOW = int(
-    os.getenv("AGENTIC_BRAIN_VOICE_REPEAT_WINDOW", "20")
-)
+_DEFAULT_THRESHOLD = float(os.getenv("AGENTIC_BRAIN_VOICE_REPEAT_THRESHOLD", "0.8"))
+_DEFAULT_WINDOW = int(os.getenv("AGENTIC_BRAIN_VOICE_REPEAT_WINDOW", "20"))
 
 
 class RepeatAction(Enum):
@@ -108,9 +104,7 @@ class RepeatDetector:
     def action(self) -> RepeatAction:
         return self._action
 
-    def check(
-        self, text: str, *, threshold: float | None = None
-    ) -> RepeatResult:
+    def check(self, text: str, *, threshold: float | None = None) -> RepeatResult:
         """Check whether *text* is a repeat of a recent utterance.
 
         Returns a :class:`RepeatResult` with similarity and matched text.

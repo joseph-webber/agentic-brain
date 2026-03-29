@@ -68,9 +68,7 @@ MACOS_VOICES = {
     "moira": VoiceInfo("Moira", "en-IE", "Ireland", "Creative", True),
     "kyoko": VoiceInfo("Kyoko", "ja-JP", "Japan", "Japanese", True),
     "tingting": VoiceInfo("Ting-Ting", "zh-CN", "China", "Chinese", True),
-    "damayanti": VoiceInfo(
-        "Damayanti", "id-ID", "Indonesia", "Indonesian", True
-    ),
+    "damayanti": VoiceInfo("Damayanti", "id-ID", "Indonesia", "Indonesian", True),
     "zosia": VoiceInfo("Zosia", "pl-PL", "Poland", "Polish", True),
     "yuna": VoiceInfo("Yuna", "ko-KR", "Korea", "Korean", True),
     "linh": VoiceInfo("Linh", "vi-VN", "Vietnam", "Vietnamese", True),
@@ -220,7 +218,9 @@ class VoiceQueue:
         return len(self._queue)
 
     def add(self, text: str, voice: str | None = None, **kwargs):
-        self._queue.append({"text": text, "voice": voice or self._default_voice, **kwargs})
+        self._queue.append(
+            {"text": text, "voice": voice or self._default_voice, **kwargs}
+        )
 
     def clear(self):
         self._queue.clear()
@@ -414,12 +414,12 @@ class Audio:
     def _speak_windows(self, text: str, rate: int, wait: bool) -> bool:
         from agentic_brain.voice._speech_lock import global_speak
 
-        ps_script = f'''
+        ps_script = f"""
         Add-Type -AssemblyName System.Speech
         $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer
         $synth.Rate = {(rate - 175) // 25}
         $synth.Speak("{text}")
-        '''
+        """
         return global_speak(["powershell", "-Command", ps_script], timeout=60)
 
     def _speak_linux(self, text: str, rate: int, wait: bool) -> bool:
@@ -510,7 +510,9 @@ class Audio:
     def available_voices(self) -> list[str]:
         if self.platform == Platform.MACOS:
             try:
-                result = subprocess.run(["say", "-v", "?"], capture_output=True, text=True)
+                result = subprocess.run(
+                    ["say", "-v", "?"], capture_output=True, text=True
+                )
                 voices = []
                 for line in result.stdout.strip().split("\n"):
                     if line:

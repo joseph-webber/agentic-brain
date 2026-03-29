@@ -15,7 +15,11 @@ from agentic_brain.voice.emotions import (
     apply_emotion,
 )
 from agentic_brain.voice.expression import ExpressionEngine
-from agentic_brain.voice.serializer import VoiceMessage, get_voice_serializer, speak_serialized
+from agentic_brain.voice.serializer import (
+    VoiceMessage,
+    get_voice_serializer,
+    speak_serialized,
+)
 
 
 class TestVoiceEmotions:
@@ -87,28 +91,52 @@ class TestEmotionDetector:
         self.detector = EmotionDetector()
 
     def test_detects_happy_keyword(self):
-        assert self.detector.classify("Great news, the tests passed.") == VoiceEmotion.HAPPY
+        assert (
+            self.detector.classify("Great news, the tests passed.")
+            == VoiceEmotion.HAPPY
+        )
 
     def test_detects_excited_keyword(self):
-        assert self.detector.classify("Amazing achievement unlocked!") == VoiceEmotion.EXCITED
+        assert (
+            self.detector.classify("Amazing achievement unlocked!")
+            == VoiceEmotion.EXCITED
+        )
 
     def test_detects_concerned_keyword(self):
-        assert self.detector.classify("Warning: the deploy failed.") == VoiceEmotion.CONCERNED
+        assert (
+            self.detector.classify("Warning: the deploy failed.")
+            == VoiceEmotion.CONCERNED
+        )
 
     def test_detects_urgent_keyword(self):
-        assert self.detector.classify("Critical alert, act immediately.") == VoiceEmotion.URGENT
+        assert (
+            self.detector.classify("Critical alert, act immediately.")
+            == VoiceEmotion.URGENT
+        )
 
     def test_detects_calm_keyword(self):
-        assert self.detector.classify("Take a gentle breath and relax.") == VoiceEmotion.CALM
+        assert (
+            self.detector.classify("Take a gentle breath and relax.")
+            == VoiceEmotion.CALM
+        )
 
     def test_detects_professional_keyword(self):
-        assert self.detector.classify("Please review the Jira ticket.") == VoiceEmotion.PROFESSIONAL
+        assert (
+            self.detector.classify("Please review the Jira ticket.")
+            == VoiceEmotion.PROFESSIONAL
+        )
 
     def test_detects_friendly_keyword(self):
-        assert self.detector.classify("Hello friend, nice to see you.") == VoiceEmotion.FRIENDLY
+        assert (
+            self.detector.classify("Hello friend, nice to see you.")
+            == VoiceEmotion.FRIENDLY
+        )
 
     def test_uses_work_mode_default(self):
-        assert self.detector.classify("status update", work_mode=True) == VoiceEmotion.PROFESSIONAL
+        assert (
+            self.detector.classify("status update", work_mode=True)
+            == VoiceEmotion.PROFESSIONAL
+        )
 
     def test_exclamation_marks_influence_positive_text(self):
         assert self.detector.classify("We did it!!") == VoiceEmotion.EXCITED
@@ -120,31 +148,51 @@ class TestEmotionDetector:
 class TestExpressionEngine:
     def test_work_mode_prefers_professional(self):
         engine = ExpressionEngine(work_mode=True)
-        assert engine.detect_emotion("Hello there", lady="Karen") == VoiceEmotion.PROFESSIONAL
+        assert (
+            engine.detect_emotion("Hello there", lady="Karen")
+            == VoiceEmotion.PROFESSIONAL
+        )
 
     def test_work_mode_preserves_urgent(self):
         engine = ExpressionEngine(work_mode=True)
-        assert engine.detect_emotion("Critical alert for production", lady="Karen") == VoiceEmotion.URGENT
+        assert (
+            engine.detect_emotion("Critical alert for production", lady="Karen")
+            == VoiceEmotion.URGENT
+        )
 
     def test_kanya_is_calm_by_default(self):
         engine = ExpressionEngine(work_mode=False)
-        assert engine.detect_emotion("Great news, all is well", lady="Kanya") == VoiceEmotion.CALM
+        assert (
+            engine.detect_emotion("Great news, all is well", lady="Kanya")
+            == VoiceEmotion.CALM
+        )
 
     def test_kanya_preserves_concerned_when_needed(self):
         engine = ExpressionEngine(work_mode=False)
-        assert engine.detect_emotion("Warning, there is an issue", lady="Kanya") == VoiceEmotion.CONCERNED
+        assert (
+            engine.detect_emotion("Warning, there is an issue", lady="Kanya")
+            == VoiceEmotion.CONCERNED
+        )
 
     def test_yuna_boosts_happy_to_excited(self):
         engine = ExpressionEngine(work_mode=False)
-        assert engine.detect_emotion("Great news for you", lady="Yuna") == VoiceEmotion.EXCITED
+        assert (
+            engine.detect_emotion("Great news for you", lady="Yuna")
+            == VoiceEmotion.EXCITED
+        )
 
     def test_karen_defaults_to_professional_on_neutral(self):
         engine = ExpressionEngine(work_mode=False)
-        assert engine.detect_emotion("status update", lady="Karen") == VoiceEmotion.PROFESSIONAL
+        assert (
+            engine.detect_emotion("status update", lady="Karen")
+            == VoiceEmotion.PROFESSIONAL
+        )
 
     def test_expression_engine_styles_voice_config(self):
         engine = ExpressionEngine(work_mode=False)
-        emotion, config = engine.style_config(VoiceConfig(rate=160), "Great news", lady="Yuna")
+        emotion, config = engine.style_config(
+            VoiceConfig(rate=160), "Great news", lady="Yuna"
+        )
         assert emotion == VoiceEmotion.EXCITED
         assert config.rate > 160
 
@@ -230,6 +278,8 @@ class TestSerializerEmotionSupport:
         process.poll.return_value = 0
         popen_mock.return_value = process
 
-        assert speak_serialized("Lovely update for wellness", voice="Kanya", lady="Kanya")
+        assert speak_serialized(
+            "Lovely update for wellness", voice="Kanya", lady="Kanya"
+        )
         cmd = popen_mock.call_args[0][0]
         assert int(cmd[4]) < 155

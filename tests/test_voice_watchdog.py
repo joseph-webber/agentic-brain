@@ -24,6 +24,7 @@ from agentic_brain.voice.watchdog import VoiceWatchdog, _NEVER
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _fake_worker_factory() -> threading.Thread:
     """Create a fake worker thread that just sleeps."""
     t = threading.Thread(target=lambda: time.sleep(300), daemon=True)
@@ -57,6 +58,7 @@ class FakeRedis:
 # ---------------------------------------------------------------------------
 # 1. Heartbeat mechanism
 # ---------------------------------------------------------------------------
+
 
 class TestHeartbeat:
     def test_heartbeat_updates_timestamp(self):
@@ -98,6 +100,7 @@ class TestHeartbeat:
 # ---------------------------------------------------------------------------
 # 2. Stall detection
 # ---------------------------------------------------------------------------
+
 
 class TestStallDetection:
     def test_no_restart_when_heartbeat_active(self):
@@ -144,6 +147,7 @@ class TestStallDetection:
 # ---------------------------------------------------------------------------
 # 3. Auto-restart
 # ---------------------------------------------------------------------------
+
 
 class TestAutoRestart:
     def test_dead_worker_is_restarted(self):
@@ -233,6 +237,7 @@ class TestAutoRestart:
 # 4. Max restart limit and alert
 # ---------------------------------------------------------------------------
 
+
 class TestMaxRestartLimit:
     def test_alert_fires_at_max_restarts(self):
         """Alert callback fires when consecutive failures hit max_restarts."""
@@ -280,6 +285,7 @@ class TestMaxRestartLimit:
 
     def test_alert_callback_exception_does_not_crash_watchdog(self):
         """A broken alert callback doesn't kill the watchdog."""
+
         def bad_alert(count, reason):
             raise ValueError("alert broke")
 
@@ -305,6 +311,7 @@ class TestMaxRestartLimit:
 # ---------------------------------------------------------------------------
 # 5. Exponential backoff
 # ---------------------------------------------------------------------------
+
 
 class TestExponentialBackoff:
     def test_backoff_delays_restarts(self):
@@ -375,6 +382,7 @@ class TestExponentialBackoff:
 # 6. Clean shutdown
 # ---------------------------------------------------------------------------
 
+
 class TestCleanShutdown:
     def test_stop_terminates_monitor(self):
         """stop() causes the monitor thread to exit."""
@@ -440,6 +448,7 @@ class TestCleanShutdown:
 # ---------------------------------------------------------------------------
 # 7. Redis publish
 # ---------------------------------------------------------------------------
+
 
 class TestRedisPublish:
     def test_restart_publishes_to_redis(self):
@@ -510,6 +519,7 @@ class TestRedisPublish:
 # ---------------------------------------------------------------------------
 # 8. Validation and edge cases
 # ---------------------------------------------------------------------------
+
 
 class TestValidation:
     def test_invalid_stall_timeout_raises(self):

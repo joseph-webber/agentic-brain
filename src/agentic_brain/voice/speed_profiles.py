@@ -57,6 +57,7 @@ logger = logging.getLogger(__name__)
 
 # ── Speed profiles ────────────────────────────────────────────────────
 
+
 class SpeedProfile(Enum):
     """Ordered tiers from slowest to fastest."""
 
@@ -86,10 +87,10 @@ _ORDERED_PROFILES: List[SpeedProfile] = list(SpeedProfile)
 # ── Content-aware speed tiers ─────────────────────────────────────────
 
 CONTENT_SPEED_TIERS: Dict[str, Tuple[int, int]] = {
-    "slow": (130, 150),    # errors, warnings, new info, complex
+    "slow": (130, 150),  # errors, warnings, new info, complex
     "normal": (155, 180),  # regular conversation, updates
-    "fast": (200, 250),    # familiar, confirmations, lists
-    "rapid": (300, 400),   # status, progress, repeated phrases
+    "fast": (200, 250),  # familiar, confirmations, lists
+    "rapid": (300, 400),  # status, progress, repeated phrases
 }
 
 TIER_DESCRIPTIONS: Dict[str, str] = {
@@ -101,15 +102,26 @@ TIER_DESCRIPTIONS: Dict[str, str] = {
 
 # ── Voice command triggers ────────────────────────────────────────────
 
-SPEED_UP_TRIGGERS = frozenset({
-    "speed up", "faster", "go faster", "talk faster",
-    "quicker", "hurry up",
-})
+SPEED_UP_TRIGGERS = frozenset(
+    {
+        "speed up",
+        "faster",
+        "go faster",
+        "talk faster",
+        "quicker",
+        "hurry up",
+    }
+)
 
-SLOW_DOWN_TRIGGERS = frozenset({
-    "slow down", "slower", "go slower", "talk slower",
-    "ease up",
-})
+SLOW_DOWN_TRIGGERS = frozenset(
+    {
+        "slow down",
+        "slower",
+        "go slower",
+        "talk slower",
+        "ease up",
+    }
+)
 
 PROFILE_TRIGGERS: Dict[str, SpeedProfile] = {
     "relaxed mode": SpeedProfile.RELAXED,
@@ -150,6 +162,7 @@ def _save_state(data: dict) -> None:
 
 # ── SpeedProfileManager ──────────────────────────────────────────────
 
+
 class SpeedProfileManager:
     """Manages the active speech rate profile.
 
@@ -187,8 +200,11 @@ class SpeedProfileManager:
         if idx < len(_ORDERED_PROFILES) - 1:
             self._profile = _ORDERED_PROFILES[idx + 1]
             self._persist()
-            logger.info("Speed profile raised to %s (%d WPM)",
-                        self._profile.value, self.current_rate)
+            logger.info(
+                "Speed profile raised to %s (%d WPM)",
+                self._profile.value,
+                self.current_rate,
+            )
         return self._profile
 
     def slow_down(self) -> SpeedProfile:
@@ -197,16 +213,20 @@ class SpeedProfileManager:
         if idx > 0:
             self._profile = _ORDERED_PROFILES[idx - 1]
             self._persist()
-            logger.info("Speed profile lowered to %s (%d WPM)",
-                        self._profile.value, self.current_rate)
+            logger.info(
+                "Speed profile lowered to %s (%d WPM)",
+                self._profile.value,
+                self.current_rate,
+            )
         return self._profile
 
     def set_profile(self, profile: SpeedProfile) -> None:
         """Jump directly to *profile*."""
         self._profile = profile
         self._persist()
-        logger.info("Speed profile set to %s (%d WPM)",
-                    self._profile.value, self.current_rate)
+        logger.info(
+            "Speed profile set to %s (%d WPM)", self._profile.value, self.current_rate
+        )
 
     def can_speed_up(self) -> bool:
         return _ORDERED_PROFILES.index(self._profile) < len(_ORDERED_PROFILES) - 1
@@ -228,23 +248,29 @@ class SpeedProfileManager:
         for trigger, profile in PROFILE_TRIGGERS.items():
             if normalised == trigger:
                 self.set_profile(profile)
-                return (f"Switched to {profile.value} mode - "
-                        f"{PROFILE_RATES[profile]} words per minute")
+                return (
+                    f"Switched to {profile.value} mode - "
+                    f"{PROFILE_RATES[profile]} words per minute"
+                )
 
         # Relative triggers
         if normalised in SPEED_UP_TRIGGERS:
             if not self.can_speed_up():
                 return "Already at maximum speed - power mode, 400 words per minute"
             new = self.speed_up()
-            return (f"Speed up! Now {new.value} mode - "
-                    f"{PROFILE_RATES[new]} words per minute")
+            return (
+                f"Speed up! Now {new.value} mode - "
+                f"{PROFILE_RATES[new]} words per minute"
+            )
 
         if normalised in SLOW_DOWN_TRIGGERS:
             if not self.can_slow_down():
                 return "Already at minimum speed - relaxed mode, 155 words per minute"
             new = self.slow_down()
-            return (f"Slowing down. Now {new.value} mode - "
-                    f"{PROFILE_RATES[new]} words per minute")
+            return (
+                f"Slowing down. Now {new.value} mode - "
+                f"{PROFILE_RATES[new]} words per minute"
+            )
 
         return None
 
@@ -260,9 +286,10 @@ class SpeedProfileManager:
 
 # ── Adaptive Speed Tracker ────────────────────────────────────────────
 
+
 @dataclass
 class _AdaptiveEvent:
-    kind: str          # "interrupt" | "replay"
+    kind: str  # "interrupt" | "replay"
     timestamp: float = field(default_factory=time.time)
 
 
@@ -276,9 +303,9 @@ class AdaptiveSpeedTracker:
     Suggestions are soft - the manager decides whether to apply them.
     """
 
-    WINDOW_SECONDS = 300       # 5-minute rolling window
-    INTERRUPT_THRESHOLD = 5    # interrupts in window → suggest speed up
-    REPLAY_THRESHOLD = 3       # replays in window    → suggest slow down
+    WINDOW_SECONDS = 300  # 5-minute rolling window
+    INTERRUPT_THRESHOLD = 5  # interrupts in window → suggest speed up
+    REPLAY_THRESHOLD = 3  # replays in window    → suggest slow down
 
     def __init__(self, manager: SpeedProfileManager) -> None:
         self._manager = manager
@@ -290,15 +317,15 @@ class AdaptiveSpeedTracker:
         """Speech was interrupted - signal that pace may be too slow."""
         self._events.append(_AdaptiveEvent(kind="interrupt"))
         self._trim_window()
-        logger.debug("Adaptive: recorded interrupt (%d in window)",
-                      self._count("interrupt"))
+        logger.debug(
+            "Adaptive: recorded interrupt (%d in window)", self._count("interrupt")
+        )
 
     def record_replay(self) -> None:
         """User requested a replay - signal that pace may be too fast."""
         self._events.append(_AdaptiveEvent(kind="replay"))
         self._trim_window()
-        logger.debug("Adaptive: recorded replay (%d in window)",
-                      self._count("replay"))
+        logger.debug("Adaptive: recorded replay (%d in window)", self._count("replay"))
 
     def get_suggested_profile(self) -> Optional[SpeedProfile]:
         """Suggest optimal profile based on recent history.
@@ -339,9 +366,12 @@ class AdaptiveSpeedTracker:
         self._manager.set_profile(suggested)
         self._events.clear()
 
-        direction = "faster" if suggested.value != old.value and \
-            _ORDERED_PROFILES.index(suggested) > _ORDERED_PROFILES.index(old) \
+        direction = (
+            "faster"
+            if suggested.value != old.value
+            and _ORDERED_PROFILES.index(suggested) > _ORDERED_PROFILES.index(old)
             else "slower"
+        )
         return (
             f"Auto-adjusted {direction}: {old.value} to {suggested.value} "
             f"({PROFILE_RATES[old]} to {PROFILE_RATES[suggested]} WPM)"
@@ -396,6 +426,7 @@ def get_current_rate() -> int:
 
 # ── User Preferences ─────────────────────────────────────────────────
 
+
 @dataclass
 class UserSpeedPreferences:
     """Persisted user preferences for speech speed.
@@ -403,9 +434,9 @@ class UserSpeedPreferences:
     Stored alongside the profile state in ``~/.brain-speech-profile``.
     """
 
-    default_speed: int = 155          # Base WPM
-    max_speed: int = 400              # Hard ceiling
-    auto_classify: bool = False       # Content-aware speed
+    default_speed: int = 155  # Base WPM
+    max_speed: int = 400  # Hard ceiling
+    auto_classify: bool = False  # Content-aware speed
     feedback_history: List[dict] = field(default_factory=list)
 
     def clamp(self, wpm: int) -> int:
@@ -501,6 +532,7 @@ class UserPreferenceManager:
 
 
 # ── Content-aware speed resolver ──────────────────────────────────────
+
 
 @dataclass
 class ContentSpeedResult:

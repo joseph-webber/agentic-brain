@@ -338,7 +338,9 @@ class TestGlobalSpeakInner:
         mock_popen.return_value = proc
 
         result = _global_speak_inner(
-            ["say", "hello"], timeout=5, inter_gap=0,
+            ["say", "hello"],
+            timeout=5,
+            inter_gap=0,
         )
         assert result is True
         # Lock should be released after the call.
@@ -357,7 +359,9 @@ class TestGlobalSpeakInner:
         mock_popen.side_effect = FileNotFoundError("say not found")
 
         result = _global_speak_inner(
-            ["say", "hello"], timeout=5, inter_gap=0,
+            ["say", "hello"],
+            timeout=5,
+            inter_gap=0,
         )
         assert result is False
         assert not lock.is_held

@@ -111,7 +111,9 @@ def test_serializer_uses_stereo_pan_when_enabled(monkeypatch):
         def render_panned_speech(self, text, lady, voice, rate):
             calls["render"] = (text, lady, voice, rate)
             return PannedAudio(
-                path=Path("/Users/joe/brain/agentic-brain/tests/fixtures/panned_voice.aiff"),
+                path=Path(
+                    "/Users/joe/brain/agentic-brain/tests/fixtures/panned_voice.aiff"
+                ),
                 lady=lady,
                 pan=0.4,
             )
@@ -130,8 +132,12 @@ def test_serializer_uses_stereo_pan_when_enabled(monkeypatch):
         calls["popen"] = cmd
         return FakeProcess()
 
-    monkeypatch.setattr("agentic_brain.voice.serializer.shutil.which", lambda _: "/usr/bin/say")
-    monkeypatch.setattr("agentic_brain.voice.serializer.stereo_pan_enabled", lambda: True)
+    monkeypatch.setattr(
+        "agentic_brain.voice.serializer.shutil.which", lambda _: "/usr/bin/say"
+    )
+    monkeypatch.setattr(
+        "agentic_brain.voice.serializer.stereo_pan_enabled", lambda: True
+    )
     monkeypatch.setattr(
         "agentic_brain.voice.serializer.get_stereo_panner",
         lambda: FakePanner(),
@@ -169,11 +175,17 @@ def test_serializer_falls_back_to_say_when_pan_disabled(monkeypatch):
         commands.append(cmd)
         return FakeProcess()
 
-    monkeypatch.setattr("agentic_brain.voice.serializer.shutil.which", lambda _: "/usr/bin/say")
-    monkeypatch.setattr("agentic_brain.voice.serializer.stereo_pan_enabled", lambda: False)
+    monkeypatch.setattr(
+        "agentic_brain.voice.serializer.shutil.which", lambda _: "/usr/bin/say"
+    )
+    monkeypatch.setattr(
+        "agentic_brain.voice.serializer.stereo_pan_enabled", lambda: False
+    )
     monkeypatch.setattr("agentic_brain.voice.serializer.subprocess.Popen", fake_popen)
 
-    result = serializer._speak_with_say(VoiceMessage(text="Fallback", voice="Karen", rate=150))
+    result = serializer._speak_with_say(
+        VoiceMessage(text="Fallback", voice="Karen", rate=150)
+    )
 
     assert result is True
     assert commands == [["say", "-v", "Karen", "-r", "150", "Fallback"]]

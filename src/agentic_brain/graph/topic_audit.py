@@ -63,9 +63,8 @@ def _token_set(name: str) -> set[str]:
 def _topic_similarity(left: str, right: str) -> float:
     normalized_left = _normalize_topic_name(left)
     normalized_right = _normalize_topic_name(right)
-    if (
-        normalized_left.startswith(normalized_right)
-        or normalized_right.startswith(normalized_left)
+    if normalized_left.startswith(normalized_right) or normalized_right.startswith(
+        normalized_left
     ):
         return 0.8
     ratio = SequenceMatcher(None, normalized_left, normalized_right).ratio()
@@ -133,7 +132,9 @@ def audit_topics(
     topic_hub = TopicHub(driver=neo4j_driver, database=database)
     topics = topic_hub.get_topics()
 
-    with neo4j_driver.session(database=database) if database else neo4j_driver.session() as session:
+    with (
+        neo4j_driver.session(database=database) if database else neo4j_driver.session()
+    ) as session:
         ensure_topic_schema(session)
         orphan_result = session.run(
             """
@@ -155,7 +156,11 @@ def audit_topics(
             """,
             limit=orphan_limit,
         )
-        orphan_rows = orphan_result.data() if hasattr(orphan_result, "data") else list(orphan_result)
+        orphan_rows = (
+            orphan_result.data()
+            if hasattr(orphan_result, "data")
+            else list(orphan_result)
+        )
 
     usage_counts = [topic.usage_count for topic in topics if topic.usage_count > 0]
     median_usage = median(usage_counts) if usage_counts else 0

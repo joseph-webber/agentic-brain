@@ -90,8 +90,7 @@ def test_suggest_merges_flags_duplicates_and_similar_topics():
         for suggestion in suggestions
     )
     assert any(
-        {"Graph RAG", "GraphRAG"}
-        == {suggestion["from_topic"], suggestion["to_topic"]}
+        {"Graph RAG", "GraphRAG"} == {suggestion["from_topic"], suggestion["to_topic"]}
         for suggestion in suggestions
     )
 

@@ -164,6 +164,7 @@ if typing.TYPE_CHECKING:
 
 # ── THE ONE TRUE SPEAK FUNCTION ─────────────────────────────────────
 
+
 def speak_safe(
     text: str,
     voice: str = "Karen",
@@ -358,6 +359,7 @@ from .redis_summary import (
 #
 # All imports are lazy to avoid blocking MCP server startup.
 
+
 def _lazy_earcons():
     """Lazy import for earcon sound system."""
     from agentic_brain.audio import get_earcon_player
@@ -365,13 +367,16 @@ def _lazy_earcons():
 
     return EarconPlayer, get_earcon_player
 
+
 def _lazy_redis_voice_queue():
     """Lazy import for Redis-backed priority voice queue."""
     from agentic_brain.voice.redis_voice_queue import (
         RedisVoiceQueue,
         get_redis_voice_queue,
     )
+
     return RedisVoiceQueue, get_redis_voice_queue
+
 
 def _lazy_speech_rates():
     """Lazy import for adaptive speech rate profiles."""
@@ -381,7 +386,9 @@ def _lazy_speech_rates():
         VoiceMode,
         get_speed_profile_resolver,
     )
+
     return SpeedProfile, SpeedProfileResolver, VoiceMode, get_speed_profile_resolver
+
 
 def _lazy_tts_router():
     """Lazy import for hybrid TTS engine router."""
@@ -390,16 +397,21 @@ def _lazy_tts_router():
         TTSEngine,
         get_tts_router,
     )
+
     return HybridTTSRouter, TTSEngine, get_tts_router
+
 
 def _lazy_kokoro():
     """Lazy import for Kokoro neural TTS engine."""
     from agentic_brain.voice.kokoro_tts import KokoroVoice, kokoro_available
+
     return KokoroVoice, kokoro_available
+
 
 def _lazy_neural_router():
     """Lazy import for neural voice router (Apple say ↔ Kokoro)."""
     from agentic_brain.voice.neural_router import NeuralVoiceRouter
+
     return NeuralVoiceRouter
 
 
@@ -414,29 +426,39 @@ def _lazy_neural_router():
 #
 # All imports are lazy to avoid blocking MCP server startup.
 
+
 def _lazy_watchdog():
     """Lazy import for the voice worker watchdog."""
     from agentic_brain.voice.watchdog import VoiceWatchdog
+
     return VoiceWatchdog
+
 
 def _lazy_daemon_gate():
     """Lazy import for the daemon startup gate."""
     from agentic_brain.voice.daemon_gate import DaemonGate, get_daemon_gate
+
     return DaemonGate, get_daemon_gate
+
 
 def _lazy_live_mode():
     """Lazy import for live voice mode (Project Aria)."""
     from agentic_brain.voice.live_mode import LiveVoiceMode, get_live_mode
+
     return LiveVoiceMode, get_live_mode
+
 
 def _lazy_stream_consumer():
     """Lazy import for Redpanda voice stream consumer."""
     from agentic_brain.voice.stream_consumer import VoiceStreamConsumer
+
     return VoiceStreamConsumer
+
 
 def _lazy_unified():
     """Lazy import for the unified voice system."""
     from agentic_brain.voice.unified import UnifiedVoiceSystem, get_unified
+
     return UnifiedVoiceSystem, get_unified
 
 
@@ -449,6 +471,7 @@ def _lazy_phase3():
 
     return Phase3VoiceSystem, get_phase3_voice_system
 
+
 def _lazy_conversation_memory():
     """Lazy import for conversation memory (voice history + search)."""
     from agentic_brain.voice.conversation_memory import (
@@ -456,7 +479,9 @@ def _lazy_conversation_memory():
         Utterance,
         get_conversation_memory,
     )
+
     return ConversationMemory, Utterance, get_conversation_memory
+
 
 def _lazy_repeat_detector():
     """Lazy import for repeat/duplicate utterance detection."""
@@ -465,6 +490,7 @@ def _lazy_repeat_detector():
         RepeatDetector,
         get_repeat_detector,
     )
+
     return RepeatDetector, RepeatAction, get_repeat_detector
 
 
@@ -474,7 +500,10 @@ _VOICE_EXPORTS = {
     "NeuralVoiceRouter": ("agentic_brain.voice.neural_router", "NeuralVoiceRouter"),
     "EarconPlayer": ("agentic_brain.audio.earcons", "EarconPlayer"),
     "ensure_earcons_exist": ("agentic_brain.audio.earcons", "ensure_earcons_exist"),
-    "ContentClassifier": ("agentic_brain.voice.content_classifier", "ContentClassifier"),
+    "ContentClassifier": (
+        "agentic_brain.voice.content_classifier",
+        "ContentClassifier",
+    ),
     "ConversationMemory": (
         "agentic_brain.voice.conversation_memory",
         "ConversationMemory",

@@ -42,15 +42,17 @@ logger = logging.getLogger(__name__)
 _SHORT_MESSAGE_THRESHOLD = 12
 
 # Speech categories that always use Apple say
-_SYSTEM_CATEGORIES = frozenset({
-    "system",
-    "navigation",
-    "alert",
-    "timer",
-    "notification",
-    "error",
-    "progress",
-})
+_SYSTEM_CATEGORIES = frozenset(
+    {
+        "system",
+        "navigation",
+        "alert",
+        "timer",
+        "notification",
+        "error",
+        "progress",
+    }
+)
 
 
 class NeuralVoiceRouter:
@@ -90,9 +92,9 @@ class NeuralVoiceRouter:
     def kokoro_available(self) -> bool:
         """Check if Kokoro backend is usable."""
         self._ensure_kokoro()
-        return (
-            self._kokoro is not None
-            and self._kokoro.backend not in (None, "apple-say")
+        return self._kokoro is not None and self._kokoro.backend not in (
+            None,
+            "apple-say",
         )
 
     def _ensure_kokoro(self) -> None:
@@ -155,7 +157,9 @@ class NeuralVoiceRouter:
         wait: bool = True,
     ) -> bool:
         """Shortcut for lady conversational speech (prefers Kokoro)."""
-        return self.speak(text, lady=lady, rate=rate, category="conversation", wait=wait)
+        return self.speak(
+            text, lady=lady, rate=rate, category="conversation", wait=wait
+        )
 
     def _route(self, text: str, *, lady: str, category: str) -> str:
         """Decide which engine to use.

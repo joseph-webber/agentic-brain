@@ -348,9 +348,7 @@ EARCONS: dict[str, EarconConfig] = {
 }
 
 EARCON_ALIASES = {
-    alias: config.name
-    for config in EARCONS.values()
-    for alias in config.aliases
+    alias: config.name for config in EARCONS.values() for alias in config.aliases
 }
 EARCON_GENERATORS = {name: config.generator for name, config in EARCONS.items()}
 
@@ -535,13 +533,17 @@ class EarconPlayer:
         thread.start()
         return thread
 
-    def _play_file(self, sound_path: Path, *, volume: float, wait_for_turn: bool) -> bool:
+    def _play_file(
+        self, sound_path: Path, *, volume: float, wait_for_turn: bool
+    ) -> bool:
         command = self._build_command(sound_path, volume)
         if command is None:
             return False
 
         lock = get_global_lock()
-        timeout = self.blocking_lock_timeout if wait_for_turn else self.async_lock_timeout
+        timeout = (
+            self.blocking_lock_timeout if wait_for_turn else self.async_lock_timeout
+        )
         if not lock.acquire(timeout=timeout):
             return False
 

@@ -39,7 +39,9 @@ def _normalize_bootstrap_servers(
         bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 
     if isinstance(bootstrap_servers, str):
-        return [server.strip() for server in bootstrap_servers.split(",") if server.strip()]
+        return [
+            server.strip() for server in bootstrap_servers.split(",") if server.strip()
+        ]
 
     return [str(server).strip() for server in bootstrap_servers if str(server).strip()]
 
@@ -378,7 +380,9 @@ class VoiceEventConsumer:
 
         return processed
 
-    def poll(self, timeout_ms: int = 1000, max_records: int = 100) -> list[dict[str, Any]]:
+    def poll(
+        self, timeout_ms: int = 1000, max_records: int = 100
+    ) -> list[dict[str, Any]]:
         """Poll a batch of messages from Kafka."""
 
         if not self._ensure_consumer():

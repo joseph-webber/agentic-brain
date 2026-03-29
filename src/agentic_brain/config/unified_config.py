@@ -236,7 +236,9 @@ class ConfigLoader:
 
             section_data = merged.setdefault(section, {})
             if not isinstance(section_data, dict):
-                raise ValueError(f"Configuration section '{section}' must be a mapping.")
+                raise ValueError(
+                    f"Configuration section '{section}' must be a mapping."
+                )
 
             section_model_annotation = UnifiedConfig.model_fields[section].annotation
             if not (

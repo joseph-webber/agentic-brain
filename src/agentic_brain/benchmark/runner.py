@@ -285,9 +285,11 @@ class BrainBenchmark:
                 await self._benchmark_single_request(model, session)
 
             for _ in range(self.config.iterations):
-                latency, tokens, eval_duration, success = await self._benchmark_single_request(
-                    model,
-                    session,
+                latency, tokens, eval_duration, success = (
+                    await self._benchmark_single_request(
+                        model,
+                        session,
+                    )
                 )
                 if success:
                     latencies.append(latency)
@@ -339,7 +341,8 @@ class BrainBenchmark:
                 metadata={
                     "reason": f"Ollama not available at {self.config.ollama_host}",
                     "successful_operations": 0,
-                    "total_operations": len(self.config.models) * self.config.iterations,
+                    "total_operations": len(self.config.models)
+                    * self.config.iterations,
                 },
             )
 
@@ -647,7 +650,9 @@ class BrainBenchmark:
         metrics["voice_synthesis_latency"] = self._benchmark_voice_synthesis()
         memory_samples.append(_rss_megabytes())
 
-        metrics["context_size"] = self._context_size_metric(len(models) or len(self.config.models))
+        metrics["context_size"] = self._context_size_metric(
+            len(models) or len(self.config.models)
+        )
         metrics["memory_usage"] = self._memory_usage_metric(memory_samples)
         metrics["success_rate"] = self._success_rate_metric(
             {name: metric for name, metric in metrics.items() if name != "success_rate"}

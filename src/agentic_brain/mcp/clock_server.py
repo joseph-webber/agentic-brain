@@ -63,13 +63,13 @@ def _get_clock():
 def clock_now(format_type: str = "iso") -> str:
     """
     Get current Adelaide datetime in various formats.
-    
+
     Args:
         format_type: Output format - "iso", "human", "timestamp", "full"
-    
+
     Returns:
         Current Adelaide time in requested format
-    
+
     Examples:
         clock_now("iso") -> "2026-03-22T15:30:45.123456+10:30"
         clock_now("human") -> "3:30 PM"
@@ -77,7 +77,7 @@ def clock_now(format_type: str = "iso") -> str:
     """
     clock = _get_clock()
     current = clock.now_adelaide()
-    
+
     if format_type == "iso":
         return current.isoformat()
     elif format_type == "human":
@@ -93,12 +93,12 @@ def clock_now(format_type: str = "iso") -> str:
 def clock_adelaide() -> str:
     """
     Get current Adelaide time (Joseph's timezone).
-    
+
     Adelaide is UTC+10:30 (ACDT) or UTC+9:30 (ACST).
-    
+
     Returns:
         JSON with Adelaide time details
-    
+
     Example:
         {
             "datetime": "2026-03-22T15:30:45.123456+10:30",
@@ -112,7 +112,7 @@ def clock_adelaide() -> str:
     """
     clock = _get_clock()
     current = clock.now_adelaide()
-    
+
     result = {
         "datetime": current.isoformat(),
         "date": current.date().isoformat(),
@@ -125,17 +125,17 @@ def clock_adelaide() -> str:
         "is_business_hours": clock.is_business_hours(),
         "is_weekend": clock.is_weekend(),
     }
-    
+
     return json.dumps(result, indent=2)
 
 
 def clock_utc() -> str:
     """
     Get current UTC time.
-    
+
     Returns:
         JSON with UTC time details
-    
+
     Example:
         {
             "datetime": "2026-03-22T05:00:45.123456+00:00",
@@ -146,7 +146,7 @@ def clock_utc() -> str:
     """
     clock = _get_clock()
     current = clock.now_utc()
-    
+
     result = {
         "datetime": current.isoformat(),
         "date": current.date().isoformat(),
@@ -154,43 +154,43 @@ def clock_utc() -> str:
         "timezone": "UTC",
         "timestamp": int(current.timestamp()),
     }
-    
+
     return json.dumps(result, indent=2)
 
 
 def clock_year() -> str:
     """
     Get the current year in Adelaide timezone.
-    
+
     CRITICAL: This ensures AI agents never use stale year data.
     The year 2026 should NEVER be confused with 2024 or 2023.
-    
+
     Returns:
         Current year as string
-    
+
     Example:
         "2026"
     """
     clock = _get_clock()
     year = clock.year()
-    
+
     # Return comprehensive info
     result = {
         "year": year,
         "message": f"The current year is {year}",
         "warning": "AI training data is ~2 years stale. Use web search for current info.",
     }
-    
+
     return json.dumps(result, indent=2)
 
 
 def clock_date() -> str:
     """
     Get current date in Adelaide timezone (ISO format).
-    
+
     Returns:
         Current date as YYYY-MM-DD
-    
+
     Example:
         "2026-03-22"
     """
@@ -201,10 +201,10 @@ def clock_date() -> str:
 def clock_greeting() -> str:
     """
     Get appropriate greeting based on Adelaide time of day.
-    
+
     Returns:
         JSON with greeting and time context
-    
+
     Example:
         {
             "greeting": "Good afternoon",
@@ -217,7 +217,7 @@ def clock_greeting() -> str:
     current = clock.now_adelaide()
     hour = current.hour
     greeting = clock.greeting()
-    
+
     # Determine reason
     if 5 <= hour < 12:
         reason = "Between 05:00 and 12:00"
@@ -225,26 +225,26 @@ def clock_greeting() -> str:
         reason = "Between 12:00 and 18:00"
     else:
         reason = "Between 18:00 and 05:00"
-    
+
     result = {
         "greeting": greeting,
         "time": clock.human_time(),
         "hour": hour,
         "reason": reason,
     }
-    
+
     return json.dumps(result, indent=2)
 
 
 def clock_is_business_hours() -> str:
     """
     Check if it's currently business hours in Adelaide.
-    
+
     Business hours are Monday-Friday, 9 AM - 5 PM.
-    
+
     Returns:
         JSON with business hours status
-    
+
     Example:
         {
             "is_business_hours": true,
@@ -255,7 +255,7 @@ def clock_is_business_hours() -> str:
     """
     clock = _get_clock()
     current = clock.now_adelaide()
-    
+
     result = {
         "is_business_hours": clock.is_business_hours(),
         "is_weekend": clock.is_weekend(),
@@ -263,7 +263,7 @@ def clock_is_business_hours() -> str:
         "day": current.strftime("%A"),
         "hour": current.hour,
     }
-    
+
     return json.dumps(result, indent=2)
 
 
@@ -274,15 +274,15 @@ def clock_convert(
 ) -> str:
     """
     Convert time between timezones.
-    
+
     Args:
         from_tz: Source timezone (e.g., "UTC", "America/New_York")
         to_tz: Target timezone (e.g., "Australia/Adelaide", "Europe/London")
         iso_datetime: ISO datetime string to convert (uses current time if None)
-    
+
     Returns:
         JSON with conversion details
-    
+
     Example:
         clock_convert("UTC", "Australia/Adelaide", "2026-03-22T05:00:00Z")
         ->
@@ -298,20 +298,20 @@ def clock_convert(
         }
     """
     clock = _get_clock()
-    
+
     # Parse or use current time
     if iso_datetime:
         dt = datetime.fromisoformat(iso_datetime.replace("Z", "+00:00"))
     else:
         dt = datetime.now(ZoneInfo(from_tz))
-    
+
     # Ensure timezone aware
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=ZoneInfo(from_tz))
-    
+
     # Convert to target timezone
     to_dt = dt.astimezone(ZoneInfo(to_tz))
-    
+
     result = {
         "from": {
             "datetime": dt.isoformat(),
@@ -321,28 +321,31 @@ def clock_convert(
             "datetime": to_dt.isoformat(),
             "timezone": to_tz,
         },
-        "offset_hours": (to_dt.utcoffset().total_seconds() - dt.utcoffset().total_seconds()) / 3600,
+        "offset_hours": (
+            to_dt.utcoffset().total_seconds() - dt.utcoffset().total_seconds()
+        )
+        / 3600,
     }
-    
+
     return json.dumps(result, indent=2)
 
 
 def clock_format(format_string: str = "%Y-%m-%d %H:%M:%S") -> str:
     """
     Format current Adelaide time with custom strftime format.
-    
+
     Args:
         format_string: Python strftime format string
-    
+
     Returns:
         Formatted time string
-    
+
     Common formats:
         "%Y-%m-%d" -> "2026-03-22"
         "%I:%M %p" -> "03:30 PM"
         "%A, %B %d, %Y" -> "Friday, March 22, 2026"
         "%Y-%m-%d %H:%M:%S" -> "2026-03-22 15:30:45"
-    
+
     Example:
         clock_format("%A, %B %d, %Y") -> "Friday, March 22, 2026"
     """
@@ -398,7 +401,7 @@ CLOCK_TOOLS = {
 def get_clock_tools() -> dict[str, dict[str, Any]]:
     """
     Get all clock tools for registration.
-    
+
     Returns:
         Dictionary of tool name -> tool info
     """

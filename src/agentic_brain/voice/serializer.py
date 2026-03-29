@@ -49,6 +49,7 @@ DEFAULT_STARTUP_SILENCE_SECONDS = 0.5
 
 # ── Overlap detection ────────────────────────────────────────────────
 
+
 def audit_no_concurrent_say() -> None:
     """Raise ``RuntimeError`` if multiple ``say`` processes are running.
 
@@ -78,6 +79,7 @@ def audit_no_concurrent_say() -> None:
 
 
 # ── Deprecation helper ───────────────────────────────────────────────
+
 
 def _warn_direct_say(caller: str = "unknown") -> None:
     """Emit a deprecation warning for direct say/speak calls.
@@ -300,7 +302,9 @@ class VoiceSerializer:
     def wait_until_ready(self, timeout: Optional[float] = 5.0) -> bool:
         deadline = None if timeout is None else time.monotonic() + timeout
         for event in (self._worker_ready, self._daemon_ready, self._mode_switch_ready):
-            remaining = None if deadline is None else max(0.0, deadline - time.monotonic())
+            remaining = (
+                None if deadline is None else max(0.0, deadline - time.monotonic())
+            )
             if not event.wait(remaining):
                 return False
         return True
@@ -345,7 +349,9 @@ class VoiceSerializer:
             try:
                 self._redis_queue.clear()
             except Exception:
-                logger.debug("Unable to clear Redis voice queue during reset", exc_info=True)
+                logger.debug(
+                    "Unable to clear Redis voice queue during reset", exc_info=True
+                )
 
         process = self.current_process
         if process is not None and process.poll() is None:
@@ -610,7 +616,9 @@ class VoiceSerializer:
                 rate=message.rate,
             )
         except Exception:
-            logger.debug("Failed to record utterance to conversation memory", exc_info=True)
+            logger.debug(
+                "Failed to record utterance to conversation memory", exc_info=True
+            )
 
         try:
             from agentic_brain.voice.repeat_detector import get_repeat_detector
@@ -625,7 +633,9 @@ class VoiceSerializer:
                 try:
                     redis_job = self._redis_queue.dequeue()
                 except Exception:
-                    logger.debug("Unable to dequeue from Redis voice queue", exc_info=True)
+                    logger.debug(
+                        "Unable to dequeue from Redis voice queue", exc_info=True
+                    )
                     redis_job = None
 
                 if redis_job is not None:
@@ -683,7 +693,9 @@ class VoiceSerializer:
                         rate=message.rate,
                     )
                 except Exception:
-                    logger.exception("Stereo panning failed - falling back to direct say")
+                    logger.exception(
+                        "Stereo panning failed - falling back to direct say"
+                    )
                 else:
                     try:
                         process = subprocess.Popen(
@@ -697,7 +709,14 @@ class VoiceSerializer:
                     finally:
                         stereo_panner.cleanup_audio(panned_audio.path)
 
-        cmd = ["say", "-v", message.voice, "-r", str(message.rate), message.render_for_say()]
+        cmd = [
+            "say",
+            "-v",
+            message.voice,
+            "-r",
+            str(message.rate),
+            message.render_for_say(),
+        ]
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
@@ -769,17 +788,23 @@ class VoiceSerializer:
         try:
             return VoiceCache()
         except Exception:
-            logger.debug("Voice cache unavailable - continuing without Redis", exc_info=True)
+            logger.debug(
+                "Voice cache unavailable - continuing without Redis", exc_info=True
+            )
             return None
 
     def _create_redis_queue(self) -> Optional[RedisVoiceQueue]:
         try:
             return RedisVoiceQueue()
         except Exception:
-            logger.debug("Redis voice queue unavailable - falling back to memory", exc_info=True)
+            logger.debug(
+                "Redis voice queue unavailable - falling back to memory", exc_info=True
+            )
             return None
 
-    def _sync_voice_cache_state(self, queue_depth_override: Optional[int] = None) -> None:
+    def _sync_voice_cache_state(
+        self, queue_depth_override: Optional[int] = None
+    ) -> None:
         if self._voice_cache is None:
             return
 
@@ -846,6 +871,7 @@ def speak_serialized(
                 get_preference_manager,
                 get_speed_for_content,
             )
+
             prefs = get_preference_manager().preferences
             if prefs.auto_classify:
                 result = get_speed_for_content(text)
@@ -855,6 +881,7 @@ def speak_serialized(
 
     elif speed_profile and speed_profile != "auto":
         from agentic_brain.voice.speed_profiles import CONTENT_SPEED_TIERS
+
         tier_range = CONTENT_SPEED_TIERS.get(speed_profile)
         if tier_range:
             effective_rate = (tier_range[0] + tier_range[1]) // 2
@@ -905,6 +932,7 @@ def speak_serialized(
 
 
 # ── Legacy / bypass detection ────────────────────────────────────────
+
 
 def _legacy_speak(text: str, voice: str = "Karen", rate: int = 155) -> bool:
     """Deprecated shim that routes through the serializer.

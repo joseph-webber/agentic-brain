@@ -52,7 +52,8 @@ class TestEarconMetadata:
 
     def test_all_required_earcons_are_short(self):
         assert all(
-            config.duration_seconds < MAX_DURATION_SECONDS for config in EARCONS.values()
+            config.duration_seconds < MAX_DURATION_SECONDS
+            for config in EARCONS.values()
         )
 
     def test_default_earcon_volume_is_quieter_than_speech(self):
@@ -89,9 +90,9 @@ class TestSoundThemes:
         assert DEFAULT_SOUND_THEME == "minimal"
 
     def test_minimal_theme_is_quieter_than_expressive(self):
-        assert get_sound_theme("minimal").apply(DEFAULT_EARCON_VOLUME) < get_sound_theme(
-            "expressive"
-        ).apply(DEFAULT_EARCON_VOLUME)
+        assert get_sound_theme("minimal").apply(
+            DEFAULT_EARCON_VOLUME
+        ) < get_sound_theme("expressive").apply(DEFAULT_EARCON_VOLUME)
 
     def test_silent_theme_disables_playback(self):
         silent = get_sound_theme("silent")
@@ -172,7 +173,9 @@ class TestEarconPlayer:
     @patch("agentic_brain.audio.earcons.subprocess.run")
     @patch("agentic_brain.audio.earcons.shutil.which")
     def test_play_blocking_uses_afplay_with_quiet_volume(self, mock_which, mock_run):
-        mock_which.side_effect = lambda cmd: "/usr/bin/afplay" if cmd == "afplay" else None
+        mock_which.side_effect = lambda cmd: (
+            "/usr/bin/afplay" if cmd == "afplay" else None
+        )
         mock_run.return_value = MagicMock(returncode=0)
         player = EarconPlayer(volume=0.22, theme="minimal")
 

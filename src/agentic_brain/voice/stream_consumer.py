@@ -137,7 +137,9 @@ class VoiceStreamConsumer:
 
     def status(self) -> Dict:
         """Return health / metrics dict."""
-        elapsed = time.time() - self._metrics.started_at if self._metrics.started_at else 0
+        elapsed = (
+            time.time() - self._metrics.started_at if self._metrics.started_at else 0
+        )
         return {
             "running": self._running,
             "available": self._available,

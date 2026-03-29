@@ -185,7 +185,9 @@ class SwiftAirPodsBridge:
             return False
         return shutil.which("xcrun") is not None or shutil.which("swift") is not None
 
-    def invoke(self, command: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    def invoke(
+        self, command: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         if not self.is_available():
             raise NativeBridgeError("Swift AirPods bridge is unavailable")
 
@@ -208,7 +210,9 @@ class AirPodsManager:
     def __init__(
         self,
         *,
-        command_runner: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
+        command_runner: Callable[
+            ..., subprocess.CompletedProcess[str]
+        ] = subprocess.run,
         native_bridge: SwiftAirPodsBridge | None = None,
         target_name_patterns: Sequence[str] = (
             "AirPods Max",
@@ -418,7 +422,9 @@ class AirPodsManager:
     def status(self) -> AirPodsStatus:
         device = self._find_airpods_device()
         current_output = self.current_output_device()
-        output_selected = bool(device and current_output and current_output == device.name)
+        output_selected = bool(
+            device and current_output and current_output == device.name
+        )
         head_pose = self.get_head_tracking_data()
         native_status: dict[str, Any] = {}
         if self.native_bridge.is_available():
@@ -568,9 +574,13 @@ class AirPodsManager:
                 continue
             device = AirPodsDevice(
                 name=name,
-                address=self._first_string(item, "device_address", "address", "bd_addr"),
+                address=self._first_string(
+                    item, "device_address", "address", "bd_addr"
+                ),
                 connected=self._to_bool(
-                    self._first_non_none(item, "device_connected", "connected", "is_connected")
+                    self._first_non_none(
+                        item, "device_connected", "connected", "is_connected"
+                    )
                 ),
                 battery=self._parse_battery_levels(item),
             )

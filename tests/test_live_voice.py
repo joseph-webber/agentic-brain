@@ -69,6 +69,7 @@ from agentic_brain.voice.transcription import (
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
+
 def _make_pcm_silence(n_samples: int = 1024) -> bytes:
     """Generate silent PCM (all zeros)."""
     return b"\x00\x00" * n_samples
@@ -486,8 +487,10 @@ class TestSingletonManagement:
         mock_stream.read.return_value = _make_pcm_silence(1024)
         mock_pa.open.return_value = mock_stream
 
-        with patch("agentic_brain.voice.live_session._HAS_PYAUDIO", True), \
-             patch("agentic_brain.voice.live_session.pyaudio") as mock_pyaudio_mod:
+        with (
+            patch("agentic_brain.voice.live_session._HAS_PYAUDIO", True),
+            patch("agentic_brain.voice.live_session.pyaudio") as mock_pyaudio_mod,
+        ):
             mock_pyaudio_mod.PyAudio.return_value = mock_pa
             mock_pyaudio_mod.paInt16 = 8  # pyaudio constant
 
@@ -575,6 +578,7 @@ class TestEventHooks:
 #  CLI COMMAND PARSING (voice live)
 # ══════════════════════════════════════════════════════════════════════
 
+
 class TestVoiceLiveCLI:
     """Tests that CLI argument parsing produces correct Namespace values."""
 
@@ -661,15 +665,24 @@ class TestVoiceLiveCLI:
     def test_combined_flags(self):
         """Multiple flags in one invocation."""
         parser = self._build_parser()
-        ns = parser.parse_args([
-            "voice", "live", "start",
-            "--wake-word", "hey iris",
-            "--timeout", "45",
-            "--transcriber", "macos",
-            "--daemon",
-            "-v", "Moira",
-            "-r", "140",
-        ])
+        ns = parser.parse_args(
+            [
+                "voice",
+                "live",
+                "start",
+                "--wake-word",
+                "hey iris",
+                "--timeout",
+                "45",
+                "--transcriber",
+                "macos",
+                "--daemon",
+                "-v",
+                "Moira",
+                "-r",
+                "140",
+            ]
+        )
         assert ns.wake_word == "hey iris"
         assert ns.timeout == 45.0
         assert ns.transcriber == "macos"
@@ -732,7 +745,9 @@ class TestDaemonStartStop:
     def teardown_method(self):
         _set_daemon_for_testing(None)
 
-    @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=False)
+    @patch(
+        "agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=False
+    )
     def test_start_fails_without_mic(self, _mock_start):
         d = LiveVoiceDaemon()
         result = d.start()
@@ -740,7 +755,11 @@ class TestDaemonStartStop:
         assert "Microphone" in result["error"]
 
     @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
-    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    @patch(
+        "agentic_brain.voice.live_session.LiveVoiceSession.is_running",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
     def test_start_success(self, _mock_running, _mock_start):
         d = LiveVoiceDaemon()
         result = d.start()
@@ -750,7 +769,11 @@ class TestDaemonStartStop:
         d.stop()
 
     @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
-    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    @patch(
+        "agentic_brain.voice.live_session.LiveVoiceSession.is_running",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
     def test_double_start_blocked(self, _mock_running, _mock_start):
         d = LiveVoiceDaemon()
         d.start()
@@ -765,7 +788,11 @@ class TestDaemonStartStop:
         assert result["ok"] is True
 
     @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
-    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    @patch(
+        "agentic_brain.voice.live_session.LiveVoiceSession.is_running",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
     def test_status_while_running(self, _mock_running, _mock_start):
         d = LiveVoiceDaemon()
         d.start()
@@ -795,7 +822,11 @@ class TestDaemonPIDFile:
         _set_daemon_for_testing(None)
 
     @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
-    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    @patch(
+        "agentic_brain.voice.live_session.LiveVoiceSession.is_running",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
     def test_pid_file_written_on_start(self, _mock_running, _mock_start):
         d = LiveVoiceDaemon()
         d.start()
@@ -804,7 +835,11 @@ class TestDaemonPIDFile:
         d.stop()
 
     @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
-    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    @patch(
+        "agentic_brain.voice.live_session.LiveVoiceSession.is_running",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
     def test_pid_file_removed_on_stop(self, _mock_running, _mock_start):
         d = LiveVoiceDaemon()
         d.start()
@@ -812,12 +847,17 @@ class TestDaemonPIDFile:
         assert not PID_FILE.exists()
 
     @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
-    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    @patch(
+        "agentic_brain.voice.live_session.LiveVoiceSession.is_running",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
     def test_state_file_written(self, _mock_running, _mock_start):
         d = LiveVoiceDaemon()
         d.start()
         assert STATE_FILE.exists()
         import json
+
         data = json.loads(STATE_FILE.read_text())
         assert data["state"] == "running"
         d.stop()
@@ -849,7 +889,11 @@ class TestDaemonSingletonHelpers:
         assert result["daemon_running"] is False
 
     @patch("agentic_brain.voice.live_session.LiveVoiceSession.start", return_value=True)
-    @patch("agentic_brain.voice.live_session.LiveVoiceSession.is_running", new_callable=PropertyMock, return_value=True)
+    @patch(
+        "agentic_brain.voice.live_session.LiveVoiceSession.is_running",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
     def test_start_and_stop_daemon(self, _mock_running, _mock_start):
         result = start_daemon()
         assert result["ok"] is True
@@ -870,10 +914,12 @@ class TestLaunchdIntegration:
         assert "load_command" in result
         # Clean up
         from pathlib import Path
+
         Path(result["path"]).unlink(missing_ok=True)
 
     def test_uninstall_when_no_plist(self):
         from agentic_brain.voice.live_daemon import LAUNCHD_PLIST_PATH
+
         LAUNCHD_PLIST_PATH.unlink(missing_ok=True)
         result = uninstall_launchd_plist()
         if os.uname().sysname != "Darwin":
@@ -918,5 +964,9 @@ class TestWakeWordParsing:
     def test_default_wake_words(self):
         wake_word = None
         default = ("hey karen", "hey brain")
-        words = tuple(w.strip().lower() for w in wake_word.split(",")) if wake_word else default
+        words = (
+            tuple(w.strip().lower() for w in wake_word.split(","))
+            if wake_word
+            else default
+        )
         assert words == default

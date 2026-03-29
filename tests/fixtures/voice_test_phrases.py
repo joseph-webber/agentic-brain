@@ -105,11 +105,15 @@ def _get_phrase_pool(categories: tuple[str, ...]) -> tuple[str, ...]:
     if not categories:
         return ALL_VOICE_TEST_PHRASES
 
-    invalid = [category for category in categories if category not in PHRASES_BY_CATEGORY]
+    invalid = [
+        category for category in categories if category not in PHRASES_BY_CATEGORY
+    ]
     if invalid:
         raise KeyError(f"Unknown voice test categories: {', '.join(sorted(invalid))}")
 
-    return tuple(chain.from_iterable(PHRASES_BY_CATEGORY[category] for category in categories))
+    return tuple(
+        chain.from_iterable(PHRASES_BY_CATEGORY[category] for category in categories)
+    )
 
 
 def _rng_for(test_id: str, categories: tuple[str, ...]) -> Random:

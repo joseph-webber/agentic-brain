@@ -86,12 +86,16 @@ def _make_wav(
     return path
 
 
-def _make_silent_wav(path: Path, duration: float = 1.0, sample_rate: int = 22050) -> Path:
+def _make_silent_wav(
+    path: Path, duration: float = 1.0, sample_rate: int = 22050
+) -> Path:
     """Generate a silent WAV file."""
     return _make_wav(path, amplitude=0.0, duration=duration, sample_rate=sample_rate)
 
 
-def _make_clipping_wav(path: Path, duration: float = 0.5, sample_rate: int = 22050) -> Path:
+def _make_clipping_wav(
+    path: Path, duration: float = 0.5, sample_rate: int = 22050
+) -> Path:
     """Generate a heavily clipped WAV file (square wave at max amplitude)."""
     n_frames = int(sample_rate * duration)
     max_val = 32767  # 16-bit max
@@ -192,25 +196,33 @@ class TestVoiceQualityAnalyzer:
         assert report.channels == 1
         assert report.bit_depth == 16
 
-    def test_volume_detection_normal(self, analyzer: VoiceQualityAnalyzer, tmp_wav: Path):
+    def test_volume_detection_normal(
+        self, analyzer: VoiceQualityAnalyzer, tmp_wav: Path
+    ):
         """Normal volume should be within acceptable range."""
         report = analyzer.analyze_audio(tmp_wav)
         # A 0.5 amplitude sine has peak ~-6 dB and RMS ~-9 dB
         assert -12.0 < report.peak_db < 0.0
         assert -15.0 < report.rms_db < 0.0
 
-    def test_volume_detection_quiet(self, analyzer: VoiceQualityAnalyzer, quiet_wav: Path):
+    def test_volume_detection_quiet(
+        self, analyzer: VoiceQualityAnalyzer, quiet_wav: Path
+    ):
         """Very quiet audio should be detected as too quiet."""
         report = analyzer.analyze_audio(quiet_wav)
         assert report.is_too_quiet
         assert report.rms_db < MIN_ACCEPTABLE_DB
 
-    def test_volume_detection_loud(self, analyzer: VoiceQualityAnalyzer, loud_wav: Path):
+    def test_volume_detection_loud(
+        self, analyzer: VoiceQualityAnalyzer, loud_wav: Path
+    ):
         """Loud audio near 0 dBFS should be flagged."""
         report = analyzer.analyze_audio(loud_wav)
         assert report.peak_db > -1.0
 
-    def test_clipping_detection(self, analyzer: VoiceQualityAnalyzer, clipping_wav: Path):
+    def test_clipping_detection(
+        self, analyzer: VoiceQualityAnalyzer, clipping_wav: Path
+    ):
         """Square wave at max amplitude should detect clipping."""
         report = analyzer.analyze_audio(clipping_wav)
         assert report.is_clipping
@@ -282,11 +294,15 @@ class TestVoiceQualityAnalyzer:
         report = analyzer.analyze_audio(tmp_wav)
         assert report.grade in ("EXCELLENT", "GOOD")
 
-    def test_quick_check_returns_bool(self, analyzer: VoiceQualityAnalyzer, tmp_wav: Path):
+    def test_quick_check_returns_bool(
+        self, analyzer: VoiceQualityAnalyzer, tmp_wav: Path
+    ):
         """quick_check should return True for good audio."""
         assert analyzer.quick_check(tmp_wav) is True
 
-    def test_quick_check_false_for_empty(self, analyzer: VoiceQualityAnalyzer, empty_wav: Path):
+    def test_quick_check_false_for_empty(
+        self, analyzer: VoiceQualityAnalyzer, empty_wav: Path
+    ):
         """quick_check should return False for empty audio."""
         assert analyzer.quick_check(empty_wav) is False
 
@@ -304,7 +320,9 @@ class TestVoiceQualityAnalyzer:
 class TestAudioNormalizer:
     """Tests for AudioNormalizer."""
 
-    def test_normalize_volume_creates_file(self, normalizer: AudioNormalizer, tmp_wav: Path):
+    def test_normalize_volume_creates_file(
+        self, normalizer: AudioNormalizer, tmp_wav: Path
+    ):
         """Normalizing should produce an output file."""
         result = normalizer.normalize_volume(tmp_wav)
         assert result.exists()
@@ -319,7 +337,9 @@ class TestAudioNormalizer:
         assert result == out
         assert out.exists()
 
-    def test_normalize_changes_volume(self, normalizer: AudioNormalizer, quiet_wav: Path):
+    def test_normalize_changes_volume(
+        self, normalizer: AudioNormalizer, quiet_wav: Path
+    ):
         """Normalizing a quiet file should increase its volume."""
         result = normalizer.normalize_volume(quiet_wav, target_db=-16)
         assert result.exists()
@@ -346,7 +366,9 @@ class TestAudioNormalizer:
         with pytest.raises(FileNotFoundError):
             normalizer.trim_edges("/no/such/file.wav")
 
-    def test_remove_silence_creates_file(self, normalizer: AudioNormalizer, tmp_wav: Path):
+    def test_remove_silence_creates_file(
+        self, normalizer: AudioNormalizer, tmp_wav: Path
+    ):
         """remove_silence should produce an output file."""
         result = normalizer.remove_silence(tmp_wav)
         assert result.exists()
@@ -516,11 +538,7 @@ class TestQualityReport:
             peak_db=-6.0,
             clarity_score=0.8,
             silence_ratio=0.1,
-            issues=[
-                QualityIssue(
-                    Severity.WARNING, "TEST", "Test issue", "Fix it"
-                )
-            ],
+            issues=[QualityIssue(Severity.WARNING, "TEST", "Test issue", "Fix it")],
         )
         summary = report.summary()
         assert "Issues found: 1" in summary

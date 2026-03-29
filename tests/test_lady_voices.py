@@ -80,10 +80,14 @@ class TestLadyVoiceLookup:
         assert LADY_VOICE_MAP["Karen"]["voice_id"] == "bf_emma"
 
     def test_get_lady_voice_is_case_insensitive(self):
-        assert get_lady_voice("kyoko")["voice_id"] == LADY_VOICE_MAP["Kyoko"]["voice_id"]
+        assert (
+            get_lady_voice("kyoko")["voice_id"] == LADY_VOICE_MAP["Kyoko"]["voice_id"]
+        )
 
     def test_unknown_lady_falls_back_to_karen(self):
-        assert get_lady_voice("Unknown")["voice_id"] == LADY_VOICE_MAP["Karen"]["voice_id"]
+        assert (
+            get_lady_voice("Unknown")["voice_id"] == LADY_VOICE_MAP["Karen"]["voice_id"]
+        )
 
     def test_fallback_chain_starts_with_primary_voice(self):
         for lady_name, config in LADY_VOICE_MAP.items():
@@ -104,7 +108,16 @@ class TestLadyVoiceLookup:
             assert config["notes"].strip()
 
     def test_unsupported_native_languages_use_proxy_english_languages(self):
-        for lady_name in ("Yuna", "Linh", "Kanya", "Dewi", "Sari", "Wayan", "Zosia", "Moira"):
+        for lady_name in (
+            "Yuna",
+            "Linh",
+            "Kanya",
+            "Dewi",
+            "Sari",
+            "Wayan",
+            "Zosia",
+            "Moira",
+        ):
             config = LADY_VOICE_MAP[lady_name]
             assert config["language"] in {"en-us", "en-gb"}
 

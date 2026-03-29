@@ -158,9 +158,7 @@ class BenchmarkReporter:
             hw = result.hardware
             processor = hw.processor[:40]
             accelerator = (hw.accelerator or "n/a").upper()
-            lines.append(
-                f"║  Hardware: {processor:<40} {accelerator:>8}  ║"
-            )
+            lines.append(f"║  Hardware: {processor:<40} {accelerator:>8}  ║")
             lines.append(
                 f"║  Memory: {hw.memory_gb}GB | Cores: {hw.cpu_cores} | Platform: {hw.platform:<24} ║"
             )
@@ -182,7 +180,9 @@ class BenchmarkReporter:
                 metric = result.metrics.get(name)
                 if not metric:
                     continue
-                comparison = cls._format_value(metric.comparison_value(), definition.unit)
+                comparison = cls._format_value(
+                    metric.comparison_value(), definition.unit
+                )
                 p50 = cls._format_value(metric.p50, definition.unit)
                 p95 = cls._format_value(metric.p95, definition.unit)
                 lines.append(

@@ -168,7 +168,9 @@ class Phase3VoiceSystem:
                     )
                 )
             except Exception:
-                logger.debug("Neural router failed, falling back to serializer", exc_info=True)
+                logger.debug(
+                    "Neural router failed, falling back to serializer", exc_info=True
+                )
 
         if not result:
             result = self._speak_via_serializer(
@@ -230,7 +232,9 @@ class Phase3VoiceSystem:
     def get_current_rate(self) -> int:
         """Return the active speech rate, defaulting safely when unavailable."""
         manager = self._get_component("speed_manager")
-        return int(getattr(manager, "current_rate", 155)) if manager is not None else 155
+        return (
+            int(getattr(manager, "current_rate", 155)) if manager is not None else 155
+        )
 
     def get_speed_profile(self) -> str:
         """Return the current speed profile name."""
@@ -331,9 +335,21 @@ class Phase3VoiceSystem:
             result = self._call_first_available(
                 expression,
                 (
-                    ("apply", (text,), {"lady": lady, "emotion": emotion, "category": category}),
-                    ("express", (text,), {"lady": lady, "emotion": emotion, "category": category}),
-                    ("render", (text,), {"lady": lady, "emotion": emotion, "category": category}),
+                    (
+                        "apply",
+                        (text,),
+                        {"lady": lady, "emotion": emotion, "category": category},
+                    ),
+                    (
+                        "express",
+                        (text,),
+                        {"lady": lady, "emotion": emotion, "category": category},
+                    ),
+                    (
+                        "render",
+                        (text,),
+                        {"lady": lady, "emotion": emotion, "category": category},
+                    ),
                 ),
             )
             if isinstance(result, str) and result.strip():
@@ -355,11 +371,27 @@ class Phase3VoiceSystem:
         stored = self._call_first_available(
             memory,
             (
-                ("record", (speaker, text), {"voice": speaker, "rate": self.get_current_rate()}),
-                ("remember", (), {"text": text, "speaker": speaker, "category": category}),
-                ("add_turn", (), {"text": text, "speaker": speaker, "category": category}),
+                (
+                    "record",
+                    (speaker, text),
+                    {"voice": speaker, "rate": self.get_current_rate()},
+                ),
+                (
+                    "remember",
+                    (),
+                    {"text": text, "speaker": speaker, "category": category},
+                ),
+                (
+                    "add_turn",
+                    (),
+                    {"text": text, "speaker": speaker, "category": category},
+                ),
                 ("store", (), {"text": text, "speaker": speaker, "category": category}),
-                ("append", (), {"text": text, "speaker": speaker, "category": category}),
+                (
+                    "append",
+                    (),
+                    {"text": text, "speaker": speaker, "category": category},
+                ),
             ),
         )
         ok = bool(stored) if stored is not None else False
@@ -441,7 +473,11 @@ class Phase3VoiceSystem:
         """Invoke optional voice cloning and library registration hooks."""
         cloning = self._get_component("voice_cloning")
         library = self._get_component("voice_library")
-        result: dict[str, Any] = {"available": cloning is not None, "clone": None, "library": None}
+        result: dict[str, Any] = {
+            "available": cloning is not None,
+            "clone": None,
+            "library": None,
+        }
 
         if cloning is None:
             return result
@@ -692,7 +728,9 @@ class Phase3VoiceSystem:
         if manager is None:
             return {
                 "available": False,
-                "detail": self._load_errors.get("speed_manager", "speed profiles unavailable"),
+                "detail": self._load_errors.get(
+                    "speed_manager", "speed profiles unavailable"
+                ),
             }
 
         profile = getattr(getattr(manager, "current_profile", None), "value", "relaxed")

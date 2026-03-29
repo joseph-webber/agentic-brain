@@ -80,9 +80,7 @@ class VoiceSpeechStarted(VoiceEvent):
     event_type: ClassVar[str] = "voice.speech.started"
 
     @classmethod
-    def from_request(
-        cls, request: VoiceSpeechRequested
-    ) -> VoiceSpeechStarted:
+    def from_request(cls, request: VoiceSpeechRequested) -> VoiceSpeechStarted:
         return cls(
             text=request.text,
             lady=request.lady,
@@ -109,9 +107,7 @@ class VoiceSpeechCompleted(VoiceEvent):
     event_type: ClassVar[str] = "voice.speech.completed"
 
     @classmethod
-    def from_request(
-        cls, request: VoiceSpeechRequested
-    ) -> VoiceSpeechCompleted:
+    def from_request(cls, request: VoiceSpeechRequested) -> VoiceSpeechCompleted:
         return cls(
             text=request.text,
             lady=request.lady,

@@ -122,7 +122,9 @@ def test_voice_event_producer_publishes_all_topics() -> None:
     producer = VoiceEventProducer(producer=fake)
 
     request = VoiceRequest(text="Speak now")
-    status = VoiceStatus(event="started", text="Speak now", voice="Karen", queue_depth=1)
+    status = VoiceStatus(
+        event="started", text="Speak now", voice="Karen", queue_depth=1
+    )
 
     assert producer.request_speech(request) is True
     assert producer.publish_status(status) is True
@@ -186,7 +188,9 @@ async def test_redpanda_queue_publishes_request_and_status_events() -> None:
 
 
 @pytest.mark.asyncio
-async def test_stream_voice_response_publishes_stream_events(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_stream_voice_response_publishes_stream_events(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     recorder = RecordingEventProducer()
     monkeypatch.setattr(
         "agentic_brain.voice.llm_voice.get_voice_event_producer",
@@ -229,12 +233,16 @@ async def test_stream_voice_response_publishes_stream_events(monkeypatch: pytest
         def stream(self, *args, **kwargs):
             return FakeResponse()
 
-    monkeypatch.setattr("agentic_brain.voice.llm_voice.httpx.AsyncClient", FakeAsyncClient)
+    monkeypatch.setattr(
+        "agentic_brain.voice.llm_voice.httpx.AsyncClient", FakeAsyncClient
+    )
 
     async def fake_get_llm_voice():
         return SimpleNamespace(_model="test-model", _base_url="http://localhost:11434")
 
-    monkeypatch.setattr("agentic_brain.voice.llm_voice.get_llm_voice", fake_get_llm_voice)
+    monkeypatch.setattr(
+        "agentic_brain.voice.llm_voice.get_llm_voice", fake_get_llm_voice
+    )
 
     await stream_voice_response("Say hello")
 

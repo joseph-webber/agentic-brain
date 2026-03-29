@@ -65,10 +65,8 @@ def test_detect_airpods_max_and_battery_levels():
 
 @patch("agentic_brain.audio.airpods.shutil.which")
 def test_route_audio_uses_switchaudiosource(mock_which):
-    mock_which.side_effect = (
-        lambda name: "/usr/local/bin/SwitchAudioSource"
-        if name == "SwitchAudioSource"
-        else None
+    mock_which.side_effect = lambda name: (
+        "/usr/local/bin/SwitchAudioSource" if name == "SwitchAudioSource" else None
     )
     manager = AirPodsManager(
         command_runner=make_runner(
@@ -166,7 +164,9 @@ def test_prepare_and_finish_speech_toggle_transparency(mock_which):
     assert manager.prepare_for_speech("Hello") is True
     assert manager.finish_speech() is True
     noise_calls = [
-        call for call in native_bridge.invoke.call_args_list if call.args[0] == "noise-control"
+        call
+        for call in native_bridge.invoke.call_args_list
+        if call.args[0] == "noise-control"
     ]
     assert len(noise_calls) == 2
     assert noise_calls[0].args[1]["mode"] == NoiseControlMode.TRANSPARENCY.value
@@ -195,8 +195,9 @@ def test_audio_speak_integrates_airpods_hooks():
     manager.finish_speech.return_value = True
 
     audio = Audio(AudioConfig(auto_route_to_airpods=True, adaptive_transparency=True))
-    with patch.object(audio, "_get_airpods_manager", return_value=manager), patch.object(
-        audio, "_speak_macos", return_value=True
+    with (
+        patch.object(audio, "_get_airpods_manager", return_value=manager),
+        patch.object(audio, "_speak_macos", return_value=True),
     ):
         audio.platform = audio.platform.MACOS
         audio._tts_available = True

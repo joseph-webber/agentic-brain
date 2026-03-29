@@ -305,13 +305,13 @@ class UnifiedVoiceSystem:
         h = self.health()
         lines = []
         lines.append(f"Voice System: {'HEALTHY' if h['healthy'] else 'DEGRADED'}")
-        lines.append(f"Uptime: {h['uptime_s']}s | Speaks: {h['speak_count']} | Errors: {h['error_count']}")
+        lines.append(
+            f"Uptime: {h['uptime_s']}s | Speaks: {h['speak_count']} | Errors: {h['error_count']}"
+        )
 
         for name, info in h["subsystems"].items():
             ok_str = "OK" if info.get("ok") else "DOWN"
-            detail = " | ".join(
-                f"{k}={v}" for k, v in info.items() if k != "ok"
-            )
+            detail = " | ".join(f"{k}={v}" for k, v in info.items() if k != "ok")
             lines.append(f"  {name}: [{ok_str}] {detail}")
 
         return {
@@ -324,6 +324,7 @@ class UnifiedVoiceSystem:
     def _get_serializer(self):
         if self._serializer is None:
             from agentic_brain.voice.serializer import get_voice_serializer
+
             self._serializer = get_voice_serializer()
         return self._serializer
 
@@ -353,6 +354,7 @@ class UnifiedVoiceSystem:
         if self._daemon_gate is None:
             try:
                 from agentic_brain.voice.daemon_gate import get_daemon_gate
+
                 self._daemon_gate = get_daemon_gate()
             except Exception:
                 logger.debug("DaemonGate not available", exc_info=True)
@@ -363,6 +365,7 @@ class UnifiedVoiceSystem:
         if self._live_mode is None:
             try:
                 from agentic_brain.voice.live_mode import get_live_mode
+
                 self._live_mode = get_live_mode()
             except Exception:
                 logger.debug("LiveVoiceMode not available", exc_info=True)
@@ -373,6 +376,7 @@ class UnifiedVoiceSystem:
         if self._stream_consumer is None:
             try:
                 from agentic_brain.voice.stream_consumer import VoiceStreamConsumer
+
                 self._stream_consumer = VoiceStreamConsumer()
             except Exception:
                 logger.debug("VoiceStreamConsumer not available", exc_info=True)

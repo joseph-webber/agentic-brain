@@ -495,9 +495,7 @@ class KokoroVoice:
 
     # ── Cache ────────────────────────────────────────────────────────
 
-    def _cache_key(
-        self, text: str, voice_id: str, lang_code: str, speed: float
-    ) -> str:
+    def _cache_key(self, text: str, voice_id: str, lang_code: str, speed: float) -> str:
         raw = f"{voice_id}|{lang_code}|{speed:.2f}|{text}"
         return hashlib.sha256(raw.encode()).hexdigest()
 
@@ -544,6 +542,7 @@ class KokoroVoice:
 
 
 # ── Utility ──────────────────────────────────────────────────────────
+
 
 def _to_wav_bytes(audio, sample_rate: int = KOKORO_SAMPLE_RATE) -> bytes:
     """Convert float32 audio array to WAV bytes."""

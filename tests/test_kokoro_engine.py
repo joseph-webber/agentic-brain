@@ -86,7 +86,9 @@ class TestKokoroEngine:
     @patch("agentic_brain.voice.kokoro_engine.importlib.import_module")
     def test_synthesize_returns_wav_bytes(self, import_module_mock, tmp_path):
         pipeline = _FakePipeline(lang_code="j")
-        import_module_mock.return_value = SimpleNamespace(KPipeline=lambda **kwargs: pipeline)
+        import_module_mock.return_value = SimpleNamespace(
+            KPipeline=lambda **kwargs: pipeline
+        )
 
         engine = KokoroEngine(model_path=tmp_path / "kokoro-82m")
         engine.model_path.mkdir()
@@ -102,7 +104,9 @@ class TestKokoroEngine:
     @patch("agentic_brain.voice.kokoro_engine.importlib.import_module")
     def test_render_to_path_creates_cached_wav(self, import_module_mock, tmp_path):
         pipeline = _FakePipeline(lang_code="z")
-        import_module_mock.return_value = SimpleNamespace(KPipeline=lambda **kwargs: pipeline)
+        import_module_mock.return_value = SimpleNamespace(
+            KPipeline=lambda **kwargs: pipeline
+        )
 
         engine = KokoroEngine(model_path=tmp_path / "kokoro-82m")
         engine.model_path.mkdir()
@@ -124,9 +128,14 @@ class TestHybridVoiceRouter:
         serializer = SimpleNamespace(
             run_serialized=lambda message, executor, wait: executor(message)
         )
-        with patch("agentic_brain.voice.kokoro_engine.get_voice_serializer", return_value=serializer):
+        with patch(
+            "agentic_brain.voice.kokoro_engine.get_voice_serializer",
+            return_value=serializer,
+        ):
             router = HybridVoiceRouter(kokoro=MagicMock())
-            with patch.object(router, "_speak_with_apple", return_value=True) as apple_mock:
+            with patch.object(
+                router, "_speak_with_apple", return_value=True
+            ) as apple_mock:
                 assert router.speak("Hello", lady="Karen") is True
                 apple_mock.assert_called_once_with("Hello", "Karen (Premium)", 155)
 
@@ -137,7 +146,10 @@ class TestHybridVoiceRouter:
         kokoro = MagicMock()
         kokoro.render_to_path.return_value = tmp_path / "kyoko.wav"
         kokoro.render_to_path.return_value.write_bytes(b"wav")
-        with patch("agentic_brain.voice.kokoro_engine.get_voice_serializer", return_value=serializer):
+        with patch(
+            "agentic_brain.voice.kokoro_engine.get_voice_serializer",
+            return_value=serializer,
+        ):
             router = HybridVoiceRouter(kokoro=kokoro)
             with patch.object(router, "_play_audio", return_value=True) as play_mock:
                 assert router.speak("こんにちは", lady="Kyoko", rate=170) is True
@@ -154,15 +166,22 @@ class TestHybridVoiceRouter:
         )
         kokoro = MagicMock()
         kokoro.render_to_path.side_effect = RuntimeError("boom")
-        with patch("agentic_brain.voice.kokoro_engine.get_voice_serializer", return_value=serializer):
+        with patch(
+            "agentic_brain.voice.kokoro_engine.get_voice_serializer",
+            return_value=serializer,
+        ):
             router = HybridVoiceRouter(kokoro=kokoro)
-            with patch.object(router, "_speak_with_apple", return_value=True) as apple_mock:
+            with patch.object(
+                router, "_speak_with_apple", return_value=True
+            ) as apple_mock:
                 assert router.speak("Cześć", lady="Zosia") is True
                 apple_mock.assert_called_once_with("Cześć", "Zosia", 155)
 
     def test_teach_phrase_uses_native_voice_for_middle_step(self):
         router = HybridVoiceRouter(kokoro=MagicMock())
-        with patch.object(router, "speak", side_effect=[True, True, True]) as speak_mock:
+        with patch.object(
+            router, "speak", side_effect=[True, True, True]
+        ) as speak_mock:
             assert router.teach_phrase("Good morning", "おはよう", lady="Kyoko") is True
             assert speak_mock.call_args_list[0].kwargs == {"lady": "Karen"}
             assert speak_mock.call_args_list[1].kwargs == {

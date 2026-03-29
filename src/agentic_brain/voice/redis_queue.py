@@ -118,11 +118,14 @@ class RedisVoiceQueue:
         normal_depth = int(state.get("normal_depth", 0) or 0)
         priority_depth = int(state.get("priority_depth", 0) or 0)
         return {
-            "is_speaking": str(state.get("is_speaking", "")).lower() in {"1", "true", "yes"},
+            "is_speaking": str(state.get("is_speaking", "")).lower()
+            in {"1", "true", "yes"},
             "current_text": state.get("current_text", ""),
             "current_voice": state.get("current_voice", ""),
             "current_lady": state.get("current_lady", state.get("current_voice", "")),
-            "queue_depth": int(state.get("queue_depth", normal_depth + priority_depth) or 0),
+            "queue_depth": int(
+                state.get("queue_depth", normal_depth + priority_depth) or 0
+            ),
             "priority_depth": priority_depth,
             "normal_depth": normal_depth,
             "updated_at": float(state.get("updated_at", 0.0) or 0.0),
@@ -156,7 +159,9 @@ class RedisVoiceQueue:
 
     @property
     def depth(self) -> int:
-        return int(self.client.llen(self.QUEUE_KEY)) + int(self.client.llen(self.PRIORITY_KEY))
+        return int(self.client.llen(self.QUEUE_KEY)) + int(
+            self.client.llen(self.PRIORITY_KEY)
+        )
 
     def clear(self) -> None:
         self.client.delete(self.QUEUE_KEY, self.PRIORITY_KEY, self.STATE_KEY)

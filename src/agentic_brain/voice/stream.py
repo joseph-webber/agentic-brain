@@ -48,7 +48,9 @@ def _normalize_bootstrap_servers(
     if bootstrap_servers is None:
         bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
     if isinstance(bootstrap_servers, str):
-        return [server.strip() for server in bootstrap_servers.split(",") if server.strip()]
+        return [
+            server.strip() for server in bootstrap_servers.split(",") if server.strip()
+        ]
     return [str(server).strip() for server in bootstrap_servers if str(server).strip()]
 
 
@@ -105,7 +107,9 @@ class VoiceEventProducer:
                 bootstrap_servers=self.bootstrap_servers,
                 acks="all",
                 retries=3,
-                value_serializer=lambda payload: serialize_event(payload).encode("utf-8"),
+                value_serializer=lambda payload: serialize_event(payload).encode(
+                    "utf-8"
+                ),
             )
             return True
         except Exception as exc:  # pragma: no cover - network dependent
@@ -253,7 +257,9 @@ class VoiceEventConsumer:
             self._consumer = None
             return False
 
-    def poll(self, max_records: int = 100, timeout_ms: int = 1000) -> list[VoiceSpeechRequested]:
+    def poll(
+        self, max_records: int = 100, timeout_ms: int = 1000
+    ) -> list[VoiceSpeechRequested]:
         if not self._ensure_consumer():
             return []
 

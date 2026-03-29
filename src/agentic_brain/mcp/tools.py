@@ -811,6 +811,7 @@ def get_analytics(days: int = 7) -> str:
 
 # ── Live Voice tools (Project Aria) ──────────────────────────────────
 
+
 def voice_live_start(
     voice: str = "Karen",
     rate: int = 155,
@@ -833,6 +834,7 @@ def voice_live_start(
     """
     try:
         from agentic_brain.voice.live_session import start_live_session
+
         result = start_live_session(
             voice=voice,
             rate=rate,
@@ -849,6 +851,7 @@ def voice_live_stop() -> str:
     """Stop the live voice conversation session and return final metrics."""
     try:
         from agentic_brain.voice.live_session import stop_live_session
+
         result = stop_live_session()
         return json.dumps(result, indent=2)
     except Exception as e:
@@ -860,6 +863,7 @@ def voice_live_status() -> str:
     """Get the current live voice session status and metrics."""
     try:
         from agentic_brain.voice.live_session import live_session_status
+
         result = live_session_status()
         return json.dumps(result, indent=2)
     except Exception as e:
@@ -952,11 +956,12 @@ def get_all_tools() -> dict[str, Any]:
     # Import clock tools
     try:
         from agentic_brain.mcp.clock_server import get_clock_tools
+
         clock_tools = get_clock_tools()
     except ImportError:
         logger.warning("Clock server not available")
         clock_tools = {}
-    
+
     # Merge all tools
     all_tools = TOOLS.copy()
     all_tools.update(clock_tools)

@@ -69,8 +69,10 @@ class _TimingProcess:
 
 def _make_timing_factory(speech_log: list, duration: float = 0.02):
     """Return a Popen side_effect that creates _TimingProcess instances."""
+
     def factory(*_args, **_kwargs):
         return _TimingProcess(speech_log, duration)
+
     return factory
 
 
@@ -107,6 +109,7 @@ def assert_minimum_gap(speech_log: list, min_gap: float, label: str = "") -> Non
 # ═══════════════════════════════════════════════════════════════════════
 # Original serializer unit tests (preserved)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestVoiceSerializer:
     def setup_method(self):
@@ -177,7 +180,10 @@ class TestVoiceSerializer:
     @patch(_SAY_PATCH, return_value="/usr/bin/say")
     @patch(_POPEN_PATCH)
     def test_serializer_uses_configured_pause(
-        self, popen_mock, _which_mock, sleep_mock,
+        self,
+        popen_mock,
+        _which_mock,
+        sleep_mock,
     ):
         serializer = get_voice_serializer()
         serializer._audit_enabled = False
@@ -215,27 +221,34 @@ class TestVoiceSerializer:
 # Overlap audit tests (preserved)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestOverlapAudit:
     """Tests for audit_no_concurrent_say() runtime enforcement."""
 
     @patch("agentic_brain.voice.serializer.subprocess.run")
     def test_audit_passes_with_zero_say(self, run_mock):
         run_mock.return_value = subprocess.CompletedProcess(
-            args=["pgrep", "-x", "say"], returncode=1, stdout="",
+            args=["pgrep", "-x", "say"],
+            returncode=1,
+            stdout="",
         )
         audit_no_concurrent_say()
 
     @patch("agentic_brain.voice.serializer.subprocess.run")
     def test_audit_passes_with_one_say(self, run_mock):
         run_mock.return_value = subprocess.CompletedProcess(
-            args=["pgrep", "-x", "say"], returncode=0, stdout="12345\n",
+            args=["pgrep", "-x", "say"],
+            returncode=0,
+            stdout="12345\n",
         )
         audit_no_concurrent_say()
 
     @patch("agentic_brain.voice.serializer.subprocess.run")
     def test_audit_raises_on_multiple_say(self, run_mock):
         run_mock.return_value = subprocess.CompletedProcess(
-            args=["pgrep", "-x", "say"], returncode=0, stdout="12345\n67890\n",
+            args=["pgrep", "-x", "say"],
+            returncode=0,
+            stdout="12345\n67890\n",
         )
         with pytest.raises(RuntimeError, match="CRITICAL.*concurrent.*say"):
             audit_no_concurrent_say()
@@ -258,6 +271,7 @@ class TestOverlapAudit:
 # ═══════════════════════════════════════════════════════════════════════
 # Deprecation warning tests (preserved)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestDeprecationWarnings:
 
@@ -297,6 +311,7 @@ class TestDeprecationWarnings:
 # speak_safe tests (preserved)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestSpeakSafe:
 
     def test_speak_safe_routes_through_serializer(self):
@@ -325,6 +340,7 @@ class TestSpeakSafe:
 # Speech lock deprecation test (preserved)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestSpeechLockDeprecation:
 
     def test_global_speak_deprecation_warning(self):
@@ -347,6 +363,7 @@ class TestSpeechLockDeprecation:
 # ═══════════════════════════════════════════════════════════════════════
 # Integration tests (preserved)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestVoiceModuleIntegration:
     def setup_method(self):
@@ -401,7 +418,9 @@ class TestVoiceModuleIntegration:
             lambda voice: SimpleNamespace(full_name=voice),
         )
         conv = ConversationalVoice()
-        assert conv.speak("Conversation serializer path", voice="Karen", pause_after=0.6)
+        assert conv.speak(
+            "Conversation serializer path", voice="Karen", pause_after=0.6
+        )
         assert len(calls) == 1
         text, voice, rate, pause_after, wait = calls[0]
         assert text == "Conversation serializer path"
@@ -416,7 +435,9 @@ class TestVoiceModuleIntegration:
 
         class FakeSerializer:
             async def run_serialized_async(self, message, executor=None, wait=True):
-                calls.append((message.text, message.voice, message.rate, wait, executor))
+                calls.append(
+                    (message.text, message.voice, message.rate, wait, executor)
+                )
                 return True
 
         monkeypatch.setattr(
@@ -430,7 +451,10 @@ class TestVoiceModuleIntegration:
         assert len(calls) == 1
         text, voice, rate, wait, executor = calls[0]
         assert (text, voice, rate, wait) == (
-            "Resilient serializer path", "Karen", 155, True,
+            "Resilient serializer path",
+            "Karen",
+            155,
+            True,
         )
         assert callable(executor)
 
@@ -438,6 +462,7 @@ class TestVoiceModuleIntegration:
 # ═══════════════════════════════════════════════════════════════════════
 # NEW: Multi-thread stress test (20 threads)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestMultiThreadStress:
     """20 threads all trying to speak at once - MUST serialize."""
@@ -526,6 +551,7 @@ class TestMultiThreadStress:
 # NEW: Async stress test (20 async tasks)
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestAsyncStress:
     """20 async tasks all calling speak_async - MUST serialize."""
 
@@ -598,6 +624,7 @@ class TestAsyncStress:
 # NEW: Mixed sync + async stress test
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestMixedSyncAsync:
     """Combination of sync threads AND async tasks at the same time."""
 
@@ -624,15 +651,11 @@ class TestMixedSyncAsync:
         def sync_worker(idx):
             serializer.speak(f"Sync worker {idx}")
 
-        threads = [
-            threading.Thread(target=sync_worker, args=(i,)) for i in range(10)
-        ]
+        threads = [threading.Thread(target=sync_worker, args=(i,)) for i in range(10)]
         for t in threads:
             t.start()
 
-        async_tasks = [
-            serializer.speak_async(f"Async worker {i}") for i in range(10)
-        ]
+        async_tasks = [serializer.speak_async(f"Async worker {i}") for i in range(10)]
         await asyncio.gather(*async_tasks)
 
         for t in threads:
@@ -645,6 +668,7 @@ class TestMixedSyncAsync:
 # ═══════════════════════════════════════════════════════════════════════
 # NEW: Rapid fire test (50 calls)
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestRapidFire:
     """50 speak calls in quick succession."""
@@ -715,6 +739,7 @@ class TestRapidFire:
 # NEW: Minimum gap enforcement
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestMinimumGap:
     """Verify the inter-utterance pause is respected."""
 
@@ -763,6 +788,7 @@ class TestMinimumGap:
 # ═══════════════════════════════════════════════════════════════════════
 # NEW: Long utterance interrupt test
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestLongUtteranceInterrupt:
     """Verify that a long speech cannot be interrupted by another."""
@@ -855,6 +881,7 @@ class TestLongUtteranceInterrupt:
 # NEW: Cross-module test
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestCrossModule:
     """Calls from queue.py, resilient.py, conversation.py simultaneously."""
 
@@ -875,6 +902,7 @@ class TestCrossModule:
 
         class RecordingSerializer:
             """Drop-in replacement that tracks timing."""
+
             current_process = None
 
             def speak(self, text, voice="Karen", rate=155, pause_after=None, wait=True):
@@ -986,6 +1014,7 @@ class TestCrossModule:
 # ═══════════════════════════════════════════════════════════════════════
 # NEW: Process crash recovery
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestProcessCrashRecovery:
     """What happens if the say process dies mid-speech?"""
@@ -1155,6 +1184,7 @@ class TestProcessCrashRecovery:
 # ═══════════════════════════════════════════════════════════════════════
 # NEW: wait_until_idle correctness
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestWaitUntilIdle:
     """Verify the idle-wait helper under load."""

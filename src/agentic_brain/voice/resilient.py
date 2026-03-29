@@ -196,7 +196,9 @@ class ResilientVoice:
         lock = get_global_lock()
         owns_lock = not lock.is_held
         if owns_lock:
-            acquired = await asyncio.to_thread(lock.acquire, timeout=cls._config.timeout)
+            acquired = await asyncio.to_thread(
+                lock.acquire, timeout=cls._config.timeout
+            )
             if not acquired:
                 logger.warning("say_with_voice: could not acquire speech lock")
                 return False
@@ -211,7 +213,9 @@ class ResilientVoice:
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
-            returncode = await asyncio.wait_for(proc.wait(), timeout=cls._config.timeout)
+            returncode = await asyncio.wait_for(
+                proc.wait(), timeout=cls._config.timeout
+            )
             return returncode == 0
         except TimeoutError:
             logger.warning("say_with_voice timeout")
@@ -231,7 +235,9 @@ class ResilientVoice:
         lock = get_global_lock()
         owns_lock = not lock.is_held
         if owns_lock:
-            acquired = await asyncio.to_thread(lock.acquire, timeout=cls._config.timeout)
+            acquired = await asyncio.to_thread(
+                lock.acquire, timeout=cls._config.timeout
+            )
             if not acquired:
                 logger.warning("say_default: could not acquire speech lock")
                 return False
@@ -242,7 +248,9 @@ class ResilientVoice:
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
-            returncode = await asyncio.wait_for(proc.wait(), timeout=cls._config.timeout)
+            returncode = await asyncio.wait_for(
+                proc.wait(), timeout=cls._config.timeout
+            )
             return returncode == 0
         except TimeoutError:
             logger.warning("say_default timeout")
@@ -262,7 +270,9 @@ class ResilientVoice:
         lock = get_global_lock()
         owns_lock = not lock.is_held
         if owns_lock:
-            acquired = await asyncio.to_thread(lock.acquire, timeout=cls._config.timeout)
+            acquired = await asyncio.to_thread(
+                lock.acquire, timeout=cls._config.timeout
+            )
             if not acquired:
                 logger.warning("osascript_voice: could not acquire speech lock")
                 return False
@@ -278,7 +288,9 @@ class ResilientVoice:
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
-            returncode = await asyncio.wait_for(proc.wait(), timeout=cls._config.timeout)
+            returncode = await asyncio.wait_for(
+                proc.wait(), timeout=cls._config.timeout
+            )
             return returncode == 0
         except TimeoutError:
             logger.warning("osascript_voice timeout")
@@ -298,7 +310,9 @@ class ResilientVoice:
         lock = get_global_lock()
         owns_lock = not lock.is_held
         if owns_lock:
-            acquired = await asyncio.to_thread(lock.acquire, timeout=cls._config.timeout)
+            acquired = await asyncio.to_thread(
+                lock.acquire, timeout=cls._config.timeout
+            )
             if not acquired:
                 logger.warning("osascript_default: could not acquire speech lock")
                 return False
@@ -312,7 +326,9 @@ class ResilientVoice:
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
-            returncode = await asyncio.wait_for(proc.wait(), timeout=cls._config.timeout)
+            returncode = await asyncio.wait_for(
+                proc.wait(), timeout=cls._config.timeout
+            )
             return returncode == 0
         except TimeoutError:
             logger.warning("osascript_default timeout")
@@ -407,7 +423,9 @@ class ResilientVoice:
 
         return await serializer.run_serialized_async(
             message,
-            executor=lambda queued_message: cls._run_serialized_fallbacks(queued_message),
+            executor=lambda queued_message: cls._run_serialized_fallbacks(
+                queued_message
+            ),
         )
 
     @classmethod
@@ -514,7 +532,9 @@ class VoiceDaemon:
         self._running = True
         try:
             self._task = asyncio.create_task(self._process_queue())
-            worker_ready = await asyncio.to_thread(serializer.wait_until_worker_ready, 5.0)
+            worker_ready = await asyncio.to_thread(
+                serializer.wait_until_worker_ready, 5.0
+            )
             if not worker_ready:
                 raise TimeoutError("Voice serializer worker did not become ready")
             await asyncio.sleep(self._startup_silence_seconds)

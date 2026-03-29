@@ -852,7 +852,9 @@ def voice_live_command(args: argparse.Namespace) -> int:
         wake_words = default_wake_words
 
     session_timeout = float(timeout_val) if timeout_val else 30.0
-    use_whisper = transcriber != "macos"  # default to whisper unless --transcriber macos
+    use_whisper = (
+        transcriber != "macos"
+    )  # default to whisper unless --transcriber macos
 
     try:
         if use_daemon and action in ("start", "stop", "status"):
@@ -889,7 +891,9 @@ def voice_live_command(args: argparse.Namespace) -> int:
             )
             print(f"   Wake words: {', '.join(wake_words)}")
             print(f"   Timeout: {session_timeout:.0f}s of silence")
-            print(f"   Transcriber: {'whisper.cpp' if use_whisper else 'macOS dictation'}")
+            print(
+                f"   Transcriber: {'whisper.cpp' if use_whisper else 'macOS dictation'}"
+            )
             return 0
 
         elif action == "stop":
@@ -1131,7 +1135,9 @@ def voice_history_command(args: argparse.Namespace) -> int:
 
     print()
     health = mem.health()
-    print(f"   Total: {health['in_memory_count']} | Redis: {'✓' if health['redis_available'] else '✗'}")
+    print(
+        f"   Total: {health['in_memory_count']} | Redis: {'✓' if health['redis_available'] else '✗'}"
+    )
     return 0
 
 
