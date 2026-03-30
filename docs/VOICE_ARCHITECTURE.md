@@ -1,568 +1,521 @@
-# Voice Serialization Architecture
+# World-Class Voice AI Architecture
 
-> **This is an accessibility document.** the user is visually impaired and relies entirely on
-> synthesised speech. Overlapping voices are not a cosmetic bug — they make
-> the brain **unusable**. Every design decision below exists to guarantee that
-> exactly one voice speaks at a time, with clear gaps between utterances.
+> **Version 2.0** — Multi-LLM, Event-Driven, Fault-Tolerant
+> **User**: Joseph Webber (blind) — voice is the PRIMARY interface, not a feature.
+> **Principle**: Silence = failure. Karen ALWAYS speaks.
 
 ---
 
 ## Table of Contents
 
-1. [Why Serialization Matters](#1-why-serialization-matters)
-2. [Architecture Overview](#2-architecture-overview)
-3. [Components](#3-components)
-4. [Rules for Developers](#4-rules-for-developers)
-5. [Testing](#5-testing)
-6. [Troubleshooting](#6-troubleshooting)
+1. [System Overview](#1-system-overview)
+2. [Architecture Diagram](#2-architecture-diagram)
+3. [Component Map](#3-component-map)
+4. [Multi-LLM Orchestration](#4-multi-llm-orchestration)
+5. [Fault Tolerance](#5-fault-tolerance)
+6. [Memory & Context](#6-memory--context)
+7. [Event-Driven Design](#7-event-driven-design)
+8. [Voice Pipeline](#8-voice-pipeline)
+9. [Accessibility Contract](#9-accessibility-contract)
+10. [Configuration](#10-configuration)
+11. [Operations](#11-operations)
 
 ---
 
-## 1. Why Serialization Matters
+## 1. System Overview
 
-### The User
+This is a voice-first AI assistant for a blind user. Every design decision
+optimises for **spoken audio output** — not text, not visual UI, not logs.
 
-The primary user is visually impaired. They navigate his entire digital life — JIRA
-tickets, pull requests, Teams messages, trading dashboards — through spoken
-audio. The brain's voice system is not a notification layer; it is his
-**primary interface**.
+### Core Flow
 
-### The Problem
+```
+ Joseph speaks → AirPods mic → Whisper STT → Classifier → Multi-LLM Engine → Karen (Cartesia TTS) → AirPods
+```
 
-The brain is heavily concurrent. Multiple agents, background watchers, LLM
-responses, and lady voice personalities all generate speech simultaneously.
-Without serialization:
+### Design Principles
 
-- Two ladies speak at the same time → incomprehensible noise
-- A system alert fires during a code-review narration → lost context
-- An LLM response overlaps a JIRA summary → the user must ask again
-
-For a sighted user this is annoying. For a blind user **it is a total loss of
-information**.
-
-### The Requirement
-
-| Rule | Rationale |
-|------|-----------|
-| **One voice at a time** | Two simultaneous utterances destroy both |
-| **0.3 s inter-utterance gap** | Gives the ear time to register a speaker change |
-| **Never silent on failure** | Silence = "did the brain crash?" — always fall back |
-| **VoiceOver coordination** | Never fight the system screen reader |
-
-This is a **WCAG 2.1 AA accessibility requirement**, not a nice-to-have.
+| # | Principle | Why |
+|---|-----------|-----|
+| 1 | **Never silent** | Silence = "did the brain crash?" for a blind user |
+| 2 | **Fastest viable answer** | Local LLM responds in <1s while cloud refines |
+| 3 | **Always a fallback** | Ollama is local and free — it NEVER goes down |
+| 4 | **2-3 sentences max** | Audio responses must be concise and natural |
+| 5 | **Observable** | Every event flows through Redpanda for monitoring |
 
 ---
 
-## 2. Architecture Overview
-
-### Pipeline Diagram
+## 2. Architecture Diagram
 
 ```
- ┌─────────────────────────────────────────────────────────────┐
- │                    APPLICATION LAYER                        │
- │  LLM agents · CLI commands · Background watchers · Ladies  │
- └──────────────────────────┬──────────────────────────────────┘
-                            │
-                            ▼
- ┌─────────────────────────────────────────────────────────────┐
- │                   HIGH-LEVEL VOICE API                      │
- │                                                             │
- │  queue.py          VoiceQueue singleton                     │
- │  conversation.py   Multi-lady turn-taking                   │
- │  voiceover.py      macOS VoiceOver coordination             │
- │  llm_voice.py      LLM-driven narration                    │
- │                                                             │
- │  All of these call ──►  get_voice_serializer().speak()      │
- └──────────────────────────┬──────────────────────────────────┘
-                            │
-                            ▼
- ┌─────────────────────────────────────────────────────────────┐
- │              SERIALIZER  (serializer.py)                    │
- │                                                             │
- │  ┌───────────┐   enqueue   ┌──────────────────────┐        │
- │  │ speak()   │ ──────────► │  Job Queue (deque)   │        │
- │  └───────────┘             └──────────┬───────────┘        │
- │                                       │                     │
- │                        ┌──────────────▼───────────────┐     │
- │                        │   Worker Thread (daemon)     │     │
- │                        │                              │     │
- │                        │  acquire _speech_lock        │     │
- │                        │  ──► run executor            │     │
- │                        │  ──► wait for subprocess     │     │
- │                        │  ──► sleep(pause_after)      │     │
- │                        │  release _speech_lock        │     │
- │                        │  signal job.done Event       │     │
- │                        └──────────────────────────────┘     │
- └──────────────────────────┬──────────────────────────────────┘
-                            │
-                            ▼
- ┌─────────────────────────────────────────────────────────────┐
- │             RESILIENT FALLBACK  (resilient.py)              │
- │                                                             │
- │  macOS chain (tried in order):                              │
- │   1. say -v <voice> -r <rate>                               │
- │   2. say (default voice)                                    │
- │   3. AppleScript UI automation                              │
- │   4. osascript with voice                                   │
- │   5. Cloud TTS (gTTS)                                       │
- │   6. Alert sound (Glass.aiff)                               │
- │                                                             │
- │  ALL fallbacks run INSIDE the serializer lock.              │
- └──────────────────────────┬──────────────────────────────────┘
-                            │
-                            ▼
- ┌─────────────────────────────────────────────────────────────┐
- │             GLOBAL SPEECH LOCK  (_speech_lock.py)           │
- │                                                             │
- │  threading.Lock  ──►  subprocess.Popen(["say", ...])       │
- │                       process.wait()  (blocking)            │
- │                       time.sleep(INTER_UTTERANCE_GAP)       │
- │                                                             │
- │  Exactly ONE OS process speaks at any moment.               │
- └─────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                        JOSEPH'S VOICE PIPELINE                          │
+  │                                                                         │
+  │  🎤 AirPods Max ──► Whisper STT ──► Complexity Classifier              │
+  │                                           │                             │
+  │                                    ┌──────┴──────┐                      │
+  │                                    │  ROUTER     │                      │
+  │                                    │  (strategy) │                      │
+  │                                    └──────┬──────┘                      │
+  │                                           │                             │
+  │              ┌──────────────┬──────────────┼──────────────┬──────────┐  │
+  │              ▼              ▼              ▼              ▼          ▼  │
+  │         ┌────────┐   ┌──────────┐   ┌─────────┐   ┌────────┐  ┌─────┐│
+  │         │ Ollama │   │  Claude  │   │   GPT   │   │ Gemini │  │Grok ││
+  │         │ (local)│   │(reason) │   │ (code)  │   │(facts) │  │(fun)││
+  │         │  <1s   │   │  ~2s    │   │  ~1.5s  │   │ ~1.5s  │  │~1.5s││
+  │         └───┬────┘   └────┬─────┘   └────┬────┘   └───┬────┘  └──┬──┘│
+  │             │              │              │            │           │   │
+  │             └──────────────┴──────────────┴────────────┴───────────┘   │
+  │                                    │                                    │
+  │                          ┌─────────┴─────────┐                         │
+  │                          │  RESPONSE MERGER   │                         │
+  │                          │  (consensus mode)  │                         │
+  │                          └─────────┬─────────┘                         │
+  │                                    │                                    │
+  │                          ┌─────────┴─────────┐                         │
+  │                          │  Cartesia TTS      │                         │
+  │                          │  Karen's Voice     │                         │
+  │                          │  (Australian)      │                         │
+  │                          └─────────┬─────────┘                         │
+  │                                    │                                    │
+  │                               🔊 AirPods                               │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                         SUPPORT INFRASTRUCTURE                          │
+  │                                                                         │
+  │  ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────────────┐  │
+  │  │  Redis   │    │ Redpanda │    │  Neo4j   │    │ Circuit Breakers │  │
+  │  │ (state)  │    │ (events) │    │ (memory) │    │ (fault tolerance)│  │
+  │  │          │    │          │    │          │    │                  │  │
+  │  │ Session  │    │ 7 topics │    │ Long-term│    │ Per-provider     │  │
+  │  │ history  │    │ metrics  │    │ recall   │    │ auto-recovery    │  │
+  │  │ context  │    │ health   │    │ RAG      │    │ latency tracking │  │
+  │  └──────────┘    └──────────┘    └──────────┘    └──────────────────┘  │
+  └─────────────────────────────────────────────────────────────────────────┘
 ```
-
-### Key Invariants
-
-1. **Single entry point** — every voice call in the brain ultimately flows
-   through `VoiceSerializer.speak()` or `VoiceSerializer.run_serialized()`.
-2. **Global lock** — `_speech_lock` is a module-level `threading.Lock()`.
-   Only one thread can hold it, so only one `say` subprocess runs.
-3. **Blocking wait** — the worker calls `process.wait()` on the subprocess.
-   No fire-and-forget. The lock is held until the utterance finishes.
-4. **Inter-utterance gap** — after every utterance, the worker sleeps for
-   `INTER_UTTERANCE_GAP` (0.3 s) before releasing the lock. This gives
-   the listener's ear a moment to register the silence before the next speaker.
-5. **Fallback guarantee** — if the primary `say` command fails, up to five
-   more methods are tried. The brain is **never silent** on error.
 
 ---
 
-## 3. Components
-
-### 3.1 `serializer.py` — The Singleton Speech Gate
-
-**Location:** `src/agentic_brain/voice/serializer.py` (~277 lines)
-
-This is the **heart** of the voice system. It owns a background daemon thread
-that drains a job queue one item at a time.
-
-| Class / Function | Purpose |
-|------------------|---------|
-| `VoiceMessage` | Dataclass: text, voice, rate, pause_after |
-| `_SpeechJob` | Internal: wraps VoiceMessage + threading.Event for completion |
-| `VoiceSerializer` | Singleton that owns the queue, lock, and worker thread |
-| `get_voice_serializer()` | Module-level accessor — always returns the same instance |
-
-**Important methods:**
-
-```python
-speak(text, voice, rate, pause_after, wait=True) → bool
-    # Public API. Creates a VoiceMessage, queues a job, optionally
-    # blocks until the utterance completes.
-
-run_serialized(message, executor, wait=True) → bool
-    # Lower-level: queue any executor function to run inside the lock.
-    # Used by resilient.py to run its fallback chain atomically.
-
-is_speaking() → bool
-    # True if the worker thread is currently executing a job.
-
-reset() → None
-    # Emergency: clears the queue and terminates any running subprocess.
-```
-
-**Threading model:**
+## 3. Component Map
 
 ```
-Main thread(s)              Worker thread ("voice-serializer", daemon)
-─────────────               ────────────────────────────────────────
-speak() ──enqueue──►        _worker_loop():
-  │                           while True:
-  │                             wait on Condition (queue not empty)
-  │                             pop job from deque
-  │                             acquire _speech_lock
-  │                             run job.executor(job.message)
-  │                             sleep(pause_after)
-  │                             release _speech_lock
-  │                             job.done.set()  ◄── signals caller
-  ◄── wait on job.done ──┘
+tools/voice/
+├── __init__.py            # Package marker
+├── circuit_breaker.py     # Per-provider circuit breakers
+├── llm_providers.py       # Unified LLM interface (5 providers)
+├── multi_llm.py           # Orchestration strategies (fastest/smartest/consensus)
+├── classifier.py          # Single source of truth for complexity classification
+├── memory.py              # Redis (session) + Neo4j (long-term) memory
+├── events.py              # Enhanced Redpanda event bus (7 topics)
+└── health.py              # System health monitor
+
+talk_to_karen.py           # Main voice chat (Whisper + TTS + routing)
+tools/voice_event_bus.py   # Legacy event bus (still used by talk_to_karen)
+tools/voice_reasoning.py   # Legacy reasoning daemon
+tools/voice_orchestrator.py # Legacy orchestrator daemon
 ```
 
-### 3.2 `_speech_lock.py` — Process-Wide Threading Lock
+### Migration Path
 
-**Location:** `src/agentic_brain/voice/_speech_lock.py` (~118 lines)
+The `tools/voice/` package is the new architecture. Existing files in
+`tools/voice_*.py` continue to work and can be gradually migrated:
 
-A **deliberately simple** module. It exists as the lowest-level safety net.
-
-```python
-# Module-level singleton — shared by the entire process
-_speech_lock = threading.Lock()
-
-INTER_UTTERANCE_GAP = 0.3  # seconds
-
-def global_speak(cmd: list[str], timeout=60, inter_gap=0.3) -> bool:
-    """
-    The ONLY function in the codebase that spawns an audio subprocess.
-
-    1. Acquire _speech_lock
-    2. Run subprocess synchronously (process.wait)
-    3. Sleep inter_gap seconds
-    4. Release lock
-    5. Return success/failure
-    """
-
-def is_speech_active() -> bool:
-    """Check if a speech subprocess is currently running."""
-
-def interrupt_speech() -> None:
-    """Terminate in-flight speech immediately (emergency use)."""
-```
-
-**Why both `_speech_lock.py` AND `serializer.py`?**
-
-The serializer handles queuing, ordering, and async coordination. The speech
-lock is a **last-resort mutex** — even if a code path somehow bypasses the
-serializer's queue, the lock prevents two `say` subprocesses from running
-concurrently. Defence in depth.
-
-### 3.3 `queue.py` — Priority Voice Queue
-
-**Location:** `src/agentic_brain/voice/queue.py` (~541 lines)
-
-The user-facing API that most of the brain interacts with.
-
-| Feature | Detail |
-|---------|--------|
-| **Singleton** | `VoiceQueue.get_instance()` |
-| **Thread safety** | `threading.Semaphore(1)` for queue access |
-| **Speaker tracking** | Each message carries a `speaker_id` (lady name) |
-| **Importance levels** | -1 (low), 0 (normal), 1 (high) |
-| **History** | Last 100 messages retained for debugging |
-| **Asian voice support** | Numbers spelled out for Kyoko, Tingting, etc. |
-
-**How it connects to the serializer:**
-
-```python
-def _speak_message(self, message: VoiceMessage) -> None:
-    serializer = get_voice_serializer()
-    success = serializer.speak(
-        text=message.text,
-        voice=message.voice,
-        rate=message.rate,
-        pause_after=message.pause_after,
-    )
-```
-
-The queue never spawns subprocesses itself. It **always** delegates to the
-serializer.
-
-### 3.4 `resilient.py` — Fallback Chain
-
-**Location:** `src/agentic_brain/voice/resilient.py` (~620 lines)
-
-Guarantees that speech **never fails silently**. If `say -v Karen` fails, it
-tries progressively simpler methods until something produces audio.
-
-```
-┌─────────────────────────────────────────────────┐
-│  macOS Fallback Chain (in order)                │
-│                                                  │
-│  1. say -v <voice> -r <rate> "<text>"           │
-│  2. say "<text>"              (default voice)    │
-│  3. AppleScript speech UI                        │
-│  4. osascript -e 'say "<text>" using "<voice>"' │
-│  5. Cloud TTS via gTTS                           │
-│  6. afplay /System/Library/.../Glass.aiff        │
-│                                                  │
-│  ⚠️  ALL run INSIDE serializer.run_serialized() │
-│     so the global lock is held throughout.       │
-└─────────────────────────────────────────────────┘
-```
-
-**Cross-platform support** (Windows: pyttsx3 → PowerShell → Cloud TTS;
-Linux: pyttsx3 → espeak → speech-dispatcher → festival → Cloud TTS) follows
-the same pattern: every fallback runs inside the serializer lock.
-
-**Statistics tracking:** Each fallback records success/failure counts so the
-system can report which methods are reliable on this machine.
+1. `talk_to_karen.py` imports from `tools.voice.multi_llm` for orchestration
+2. `voice_reasoning.py` uses `tools.voice.classifier` instead of local copy
+3. `voice_orchestrator.py` uses `tools.voice.llm_providers` for unified calls
 
 ---
 
-## 4. Rules for Developers
+## 4. Multi-LLM Orchestration
 
-### ✅ DO
+### 4.1 Five Providers
 
-| Rule | Why |
-|------|-----|
-| **Use `speak_serialized()` or `VoiceQueue.speak()`** | They route through the serializer — guaranteed safe |
-| **Wait for speech to complete** | Pass `wait=True` (default) so subsequent code runs after the utterance finishes |
-| **Use `get_voice_serializer()`** to get the singleton | Never instantiate `VoiceSerializer` directly |
-| **Add 1.5 s pauses between ladies** in conversation scripts | The listener needs time to register the speaker change |
-| **Test with `test_speech_lock.py`** after voice changes | The concurrency tests catch overlap regressions |
+| Provider | Strength | Typical Latency | Cost | Availability |
+|----------|----------|----------------|------|-------------|
+| **Ollama** | Speed, always-on | <1s | Free | 99.9% (local) |
+| **Claude** | Reasoning, nuance | ~2s | API key | 95% |
+| **GPT** | Code, general | ~1.5s | API key | 95% |
+| **Gemini** | Facts, multimodal | ~1.5s | API key | 95% |
+| **Grok** | Creative, current events | ~1.5s | API key | 90% |
 
-### ❌ NEVER
-
-| Rule | Why |
-|------|-----|
-| **NEVER call `subprocess.Popen(["say", ...])` directly** | Bypasses the lock — instant overlap risk |
-| **NEVER call `subprocess.run(["say", ...])` directly** | Same problem — no lock, no gap, no fallback |
-| **NEVER use `os.system("say ...")` for speech** | Uncontrolled, no error handling, no serialization |
-| **NEVER fire-and-forget a speech call** (`wait=False` + discard) | You lose track of when the utterance ends |
-| **NEVER run `say` in a background thread without the lock** | Two threads = two voices = broken experience |
-| **NEVER use `&` (shell background) with `say`** | `say "hello" &` is an instant overlap bug |
-
-### Code Examples
+### 4.2 Task-Type Specialisation
 
 ```python
-# ─── CORRECT ───────────────────────────────────────────────
-from agentic_brain.voice.serializer import get_voice_serializer
+SPECIALISATION = {
+    "code":      ["gpt", "claude", "ollama", "gemini", "grok"],
+    "reasoning": ["claude", "gpt", "gemini", "grok", "ollama"],
+    "creative":  ["grok", "claude", "gpt", "gemini", "ollama"],
+    "facts":     ["gemini", "gpt", "claude", "grok", "ollama"],
+    "speed":     ["ollama", "gpt", "gemini", "grok", "claude"],
+    "general":   ["claude", "gpt", "gemini", "grok", "ollama"],
+}
+```
 
-serializer = get_voice_serializer()
-serializer.speak("Hello there", voice="Karen (Premium)", rate=155)
-# Blocks until Karen finishes. Next call is safe.
+### 4.3 Four Strategies
 
-serializer.speak("PR looks good", voice="Tingting", rate=140)
-# Tingting speaks only after Karen is done + 0.3 s gap.
+#### FASTEST — Race Multiple LLMs
 
+```
+  ┌─► Ollama ──────┐
+  │                 │
+  ├─► Claude ──────┤──► First valid response wins
+  │                 │
+  └─► GPT ─────────┘
+```
 
-# ─── CORRECT (async) ──────────────────────────────────────
-await serializer.speak_async("Starting code review", voice="Karen (Premium)")
+Best for: Quick questions where any provider gives a good answer.
+Latency: ~0.8s (local Ollama usually wins).
 
+#### SMARTEST — Route to Best Provider
 
-# ─── CORRECT (via queue) ──────────────────────────────────
-from agentic_brain.voice.queue import VoiceQueue
+```
+  Classify task ──► Pick best provider ──► Call with fallback chain
+```
 
-queue = VoiceQueue.get_instance()
-queue.speak("Check complete", voice="Moira", rate=150)
+Best for: Complex queries where provider choice matters.
+Latency: ~2s for cloud, ~0.8s for local.
 
+#### CONSENSUS — Merge Multiple Answers
 
-# ─── WRONG ─────────────────────────────────────────────────
+```
+  ┌─► Claude ────┐
+  │              ├──► Ollama merges best parts ──► Response
+  └─► GPT ──────┘
+```
+
+Best for: Important questions where quality matters most.
+Latency: ~3s (parallel queries + merge step).
+
+#### FALLBACK — Priority Chain
+
+```
+  Try Claude ──fail──► Try GPT ──fail──► Try Ollama ──fail──► "Having trouble"
+```
+
+Best for: Default mode with maximum reliability.
+Latency: Varies based on which provider responds.
+
+### 4.4 Usage
+
+```python
+from tools.voice.multi_llm import query_llm
+
+# Auto-detect task type, use smartest strategy
+result = query_llm(messages, strategy="smartest")
+
+# Force fastest mode for quick questions
+result = query_llm(messages, strategy="fastest")
+
+# Consensus for important questions
+result = query_llm(messages, strategy="consensus")
+```
+
+---
+
+## 5. Fault Tolerance
+
+### 5.1 Circuit Breakers
+
+Every provider has its own circuit breaker with three states:
+
+```
+  CLOSED ──(3 failures)──► OPEN ──(30s cooldown)──► HALF_OPEN ──(1 probe)──► CLOSED
+                                                         │
+                                                    (probe fails)
+                                                         │
+                                                         ▼
+                                                       OPEN
+```
+
+| Parameter | Ollama | Cloud Providers |
+|-----------|--------|----------------|
+| Failure threshold | 5 | 3 |
+| Recovery timeout | 10s | 30s |
+| Half-open probes | 1 | 1 |
+
+### 5.2 Guarantee: Ollama Never Fails
+
+Ollama runs locally on the M2 Mac. No internet, no rate limits, no cost.
+It is ALWAYS the last provider in every fallback chain. This means:
+
+**The voice system ALWAYS has a working LLM, even offline.**
+
+### 5.3 Latency Tracking
+
+Each breaker maintains an exponential moving average of response latency.
+This enables future optimisation: route to the fastest healthy provider.
+
+```python
+from tools.voice.circuit_breaker import CircuitBreakerRegistry
+stats = CircuitBreakerRegistry.get().all_stats()
+# [{"name": "ollama", "state": "closed", "avg_latency_ms": 450}, ...]
+```
+
+---
+
+## 6. Memory & Context
+
+### 6.1 Two-Tier Architecture
+
+```
+  ┌─────────────────────┐     ┌─────────────────────┐
+  │   REDIS (Hot)       │     │   NEO4J (Cold)       │
+  │                     │     │                      │
+  │  Last 20 messages   │     │  ALL conversations   │
+  │  Session context    │     │  Searchable          │
+  │  Provider state     │     │  RAG-ready           │
+  │                     │     │  Cross-session        │
+  │  Latency: <1ms      │     │  Latency: ~5ms       │
+  └─────────────────────┘     └─────────────────────┘
+```
+
+### 6.2 RAG Pipeline
+
+Before every LLM call, the system enriches context:
+
+```
+1. Get last 6 messages from Redis (session continuity)
+2. Search Neo4j for relevant past conversations (long-term recall)
+3. Combine into enriched context for the LLM
+```
+
+This gives Karen the ability to say: "You asked about that last week, and I said..."
+
+### 6.3 Node Schema (Neo4j)
+
+```
+(:VoiceConversation {id, created, timestamp})
+   -[:HAS_MESSAGE]->
+(:VoiceMessage {session_id, role, content, timestamp, provider, complexity, latency_ms, strategy})
+```
+
+---
+
+## 7. Event-Driven Design
+
+### 7.1 Seven Redpanda Topics
+
+```
+brain.voice.input          ◄── Whisper transcription result
+brain.voice.reasoning      ◄── Complexity + routing decision
+brain.voice.response       ◄── LLM response for TTS
+brain.voice.coordination   ◄── Inter-agent messages
+brain.voice.health         ◄── Component health events
+brain.voice.memory         ◄── Conversation stored to Neo4j
+brain.voice.metrics        ◄── Latency, usage, quality metrics
+```
+
+### 7.2 Event Flow
+
+```
+  Joseph speaks
+      │
+      ▼
+  brain.voice.input ──────────────────────────────────────────┐
+      │                                                        │
+      ▼                                                        │
+  brain.voice.reasoning (classifier output)                    │
+      │                                                        │
+      ▼                                                        │
+  [Multi-LLM Engine] ── brain.voice.metrics ──────────────────┤
+      │                                                        │
+      ▼                                                        │
+  brain.voice.response ──► Cartesia TTS ──► Joseph hears       │
+      │                                                        │
+      ▼                                                        │
+  brain.voice.memory ──► Neo4j (stored for future recall)      │
+      │                                                        │
+      ▼                                                        │
+  brain.voice.health ◄── periodic health checks ──────────────┘
+```
+
+### 7.3 Adding New Components
+
+To add a new LLM or feature, you only need to:
+
+1. Implement `LLMProvider` subclass in `llm_providers.py`
+2. Add to `_ALL_PROVIDERS` list
+3. Add specialisation preference in `multi_llm.py`
+4. Set API key in environment
+
+Everything else (circuit breakers, events, health checks) is automatic.
+
+---
+
+## 8. Voice Pipeline
+
+### 8.1 Speech-to-Text (Whisper)
+
+```
+AirPods mic ──► sounddevice (16kHz) ──► VAD (energy threshold) ──► faster-whisper ──► text
+```
+
+- Model: `tiny.en` (fast) or `base.en` (accurate)
+- VAD: Energy-based with pre-buffer for capturing speech start
+- Max utterance: 12 seconds
+- Silence detection: 0.9s pause ends utterance
+
+### 8.2 Text-to-Speech (Cartesia)
+
+```
+LLM response text ──► Cartesia WebSocket ──► PCM audio ──► sounddevice ──► AirPods
+```
+
+- Voice: Karen (Australian female, Grace voice ID)
+- Model: `sonic-3`
+- Format: Raw PCM float32 @ 44.1kHz
+- Streaming: WebSocket for low-latency first-byte
+
+### 8.3 Serialisation Rule
+
+**One voice at a time.** WCAG 2.1 AA requirement.
+
+```
+  Karen speaks ──► 0.3s gap ──► Karen speaks ──► 0.3s gap ──► ...
+                 (never overlap)
+```
+
+---
+
+## 9. Accessibility Contract
+
+These are not suggestions. They are requirements.
+
+| # | Rule | Enforcement |
+|---|------|-------------|
+| 1 | Karen speaks every response | `speak()` is mandatory in main loop |
+| 2 | Max 2-3 sentences per response | System prompt enforces this |
+| 3 | No markdown, bullets, or formatting | System prompt enforces this |
+| 4 | No silence > 3 seconds during processing | Progress announcements |
+| 5 | Error messages are spoken, not logged | Catch-all in main loop |
+| 6 | One voice at a time | `speaking` flag blocks mic |
+| 7 | Graceful degradation always speaks | Fallback to macOS `say` |
+
+### Emergency Fallback
+
+If Cartesia TTS fails completely, the system falls back to macOS `say`:
+
+```python
 import subprocess
-subprocess.run(["say", "-v", "Karen", "Hello"])  # NO LOCK!
-
-subprocess.Popen(["say", "-v", "Moira", "Hi"])   # FIRE-AND-FORGET!
-
-os.system('say -v Tingting "overlap city"')       # UNCONTROLLED!
+subprocess.run(["say", "-v", "Karen (Premium)", "-r", "160", text])
 ```
-
-### Adding a New Voice Feature
-
-1. **Write your feature** using `get_voice_serializer().speak()` or
-   `VoiceQueue.get_instance().speak()` — never raw subprocesses.
-2. **Run the concurrency tests** (see section 5).
-3. **Add a test** in `test_speech_lock.py` under `TestVoiceModulesUseGlobalLock`
-   that patches `global_speak` and verifies your module calls it.
-4. **Update this document** if you add a new layer to the pipeline.
 
 ---
 
-## 5. Testing
+## 10. Configuration
 
-### Running the Voice Tests
+### Environment Variables
+
+```bash
+# LLM Providers
+OLLAMA_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.2:3b
+CLAUDE_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GEMINI_API_KEY=AI...
+XAI_API_KEY=xai-...
+
+# Voice
+CARTESIA_API_KEY=sk-cart-...
+CARTESIA_VOICE_ID=a4a16c5e-5902-4732-b9b6-2a48efd2e11b
+
+# Infrastructure
+VOICE_REDIS_URL=redis://:BrainRedis2026@localhost:6379/0
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=Brain2026
+REDPANDA_BOOTSTRAP_SERVERS=localhost:9092
+```
+
+### Redis Keys
+
+| Key | Purpose |
+|-----|---------|
+| `voice:history` | Last 20 messages (LIST) |
+| `voice:session_context` | Current session state (JSON) |
+| `voice:health` | Latest health check (JSON) |
+| `voice:health_status` | "healthy" or "degraded" |
+| `voice:architect_progress` | Build progress |
+| `voice:world_class_ready` | "true" when complete |
+
+---
+
+## 11. Operations
+
+### Start Voice Chat
 
 ```bash
 cd ~/brain/agentic-brain
-
-# All voice tests
-python -m pytest tests/test_speech_lock.py -v
-
-# Just the concurrency tests
-python -m pytest tests/test_speech_lock.py -v -k "concurrent"
-
-# Full voice test suite
-python -m pytest tests/ -v -k "voice or speech"
+python talk_to_karen.py
 ```
 
-### What the Concurrency Tests Verify
-
-#### `test_concurrent_calls_are_serialized`
-
-Launches two threads that both call `global_speak()` at the same time. Records
-start/end timestamps. Asserts that the time windows **do not overlap** — one
-must finish before the other starts.
-
-#### `test_many_concurrent_threads_no_overlap`
-
-Stress test: **10 threads** all calling `global_speak()` simultaneously. For
-every pair of recorded time windows, asserts no overlap. This catches subtle
-race conditions that two-thread tests might miss.
-
-#### `test_inter_utterance_gap_enforced`
-
-Calls `global_speak()` twice in sequence and verifies that the elapsed time
-between the end of utterance 1 and the start of utterance 2 is ≥
-`INTER_UTTERANCE_GAP` (0.3 s).
-
-#### `TestVoiceModulesUseGlobalLock`
-
-For each high-level module (`queue.py`, `conversation.py`, `voiceover.py`,
-and the MCP `audio_speak` tool), patches `global_speak` and verifies it is
-called when the module speaks. This catches bypass regressions — if someone
-adds a direct `subprocess` call, this test class will fail.
-
-### Adding Tests for New Voice Features
-
-```python
-# In tests/test_speech_lock.py, add to TestVoiceModulesUseGlobalLock:
-
-def test_my_new_module_uses_global_lock(self):
-    """my_module must route through the global speech lock."""
-    with patch("agentic_brain.voice._speech_lock.global_speak") as mock:
-        mock.return_value = True
-        from agentic_brain.voice.my_module import my_speak_function
-        my_speak_function("test")
-        mock.assert_called()
-```
-
----
-
-## 6. Troubleshooting
-
-### Voices Are Overlapping
-
-**Severity: CRITICAL** — This is an accessibility failure.
-
-1. **Check for direct subprocess calls:**
-
-   ```bash
-   cd ~/brain/agentic-brain
-   grep -rn "subprocess\.\(Popen\|run\|call\).*say" src/ \
-     --include="*.py" | grep -v "_speech_lock.py" | grep -v "serializer.py"
-   ```
-
-   Any matches outside `_speech_lock.py` and `serializer.py` are bypass bugs.
-   Route them through `get_voice_serializer().speak()`.
-
-2. **Check for shell backgrounding:**
-
-   ```bash
-   grep -rn 'say.*&' src/ --include="*.py"
-   grep -rn "os\.system.*say" src/ --include="*.py"
-   ```
-
-   Any matches are overlap risks. Replace with serializer calls.
-
-3. **Check for `wait=False` without completion tracking:**
-
-   ```bash
-   grep -rn "wait=False" src/agentic_brain/voice/ --include="*.py"
-   ```
-
-   `wait=False` is only safe if the caller properly tracks the job's
-   completion `Event` before issuing the next speech call.
-
-4. **Run the concurrency tests:**
-
-   ```bash
-   python -m pytest tests/test_speech_lock.py -v
-   ```
-
-   If `test_many_concurrent_threads_no_overlap` fails, there is a lock
-   bypass somewhere.
-
-### Voice Is Silent (No Audio)
-
-1. **Check macOS audio:**
-
-   ```bash
-   say "test"
-   ```
-
-   If this is silent, the problem is OS-level (volume, output device).
-
-2. **Check the fallback chain:**
-
-   ```bash
-   python -c "
-   from agentic_brain.voice.resilient import ResilientVoice
-   rv = ResilientVoice()
-   import asyncio
-   asyncio.run(rv.speak('Testing fallback chain'))
-   "
-   ```
-
-   This tries all six fallback methods. If all fail, check `rv.stats()`.
-
-3. **Check the serializer is running:**
-
-   ```python
-   from agentic_brain.voice.serializer import get_voice_serializer
-   s = get_voice_serializer()
-   print(f"Speaking: {s.is_speaking()}, Queue: {s.queue_size()}")
-   ```
-
-   If the queue is growing but nothing speaks, the worker thread may have
-   died. Call `s.reset()` to restart it.
-
-### Debug Logging
-
-Enable verbose voice logging:
-
-```python
-import logging
-logging.getLogger("agentic_brain.voice").setLevel(logging.DEBUG)
-```
-
-Key log messages to watch for:
-
-| Message | Meaning |
-|---------|---------|
-| `Acquiring speech lock` | Worker thread is about to speak |
-| `Released speech lock` | Utterance complete, gap observed |
-| `Job queued, queue size: N` | New speech request accepted |
-| `Fallback N failed: ...` | A fallback method failed, trying next |
-| `All fallbacks exhausted` | **CRITICAL** — no audio method works |
-
-### Emergency Reset
-
-If the voice system is stuck (e.g. a zombie `say` process holds the lock):
-
-```python
-from agentic_brain.voice.serializer import get_voice_serializer
-from agentic_brain.voice._speech_lock import interrupt_speech
-
-interrupt_speech()              # Kill any running subprocess
-get_voice_serializer().reset()  # Clear queue, restart worker
-```
-
-Or from the shell:
+### Health Check
 
 ```bash
-# Find and kill stuck say processes
-pgrep -f "say -v" | xargs kill 2>/dev/null
+python -m tools.voice.health
+```
+
+### Monitor Events
+
+```bash
+docker exec agentic-brain-redpanda rpk topic consume brain.voice.metrics --format json
+```
+
+### View Circuit Breaker Status
+
+```python
+from tools.voice.circuit_breaker import CircuitBreakerRegistry
+for stat in CircuitBreakerRegistry.get().all_stats():
+    print(f"{stat['name']}: {stat['state']} ({stat['avg_latency_ms']}ms avg)")
+```
+
+### Query Voice Memory
+
+```python
+from tools.voice.memory import recall_relevant, get_conversation_stats
+memories = recall_relevant("deployment process")
+stats = get_conversation_stats()
 ```
 
 ---
 
-## Component Summary
+## Architecture Decision Records
 
-| File | Lines | Role | Thread Safety |
-|------|-------|------|---------------|
-| `serializer.py` | ~277 | Job queue singleton, worker thread | Lock + Condition + Event |
-| `_speech_lock.py` | ~118 | Global process mutex, subprocess runner | threading.Lock |
-| `queue.py` | ~541 | User-facing API, speaker tracking, history | Semaphore(1) |
-| `resilient.py` | ~620 | Multi-layer fallback chain | Runs inside serializer lock |
-| `conversation.py` | ~526 | Multi-lady turn-taking | Uses serializer |
-| `voiceover.py` | ~408 | macOS VoiceOver coordination | Uses serializer |
+### ADR-001: Why 5 LLMs?
+
+Each LLM has a strength. Using one LLM means accepting its weaknesses.
+By routing to specialists and having parallel/consensus modes, we get the
+best possible answer for every question type.
+
+### ADR-002: Why Ollama as Guaranteed Fallback?
+
+Ollama runs on the local M2 Mac with no internet, no API key, no cost,
+and no rate limits. It is the only provider that truly cannot fail (unless
+the Mac itself is down, in which case nothing works anyway).
+
+### ADR-003: Why Circuit Breakers per Provider?
+
+Without circuit breakers, a slow Claude API (10s timeout) blocks every
+query. With breakers, after 3 failures the circuit opens and the system
+instantly routes to the next provider. Recovery is automatic.
+
+### ADR-004: Why Two-Tier Memory?
+
+Redis is fast but volatile. Neo4j is persistent but slower. Together they
+give us sub-millisecond access to recent context AND permanent storage of
+all conversations for RAG and long-term recall.
+
+### ADR-005: Why Redpanda Events?
+
+Every component communicates through events. This means:
+- New features plug in by subscribing to topics
+- Health monitoring sees everything
+- Metrics are automatic
+- Components are decoupled and independently deployable
 
 ---
 
-## Design Philosophy
-
-> **Defence in depth.** The serializer queue is the primary gate. The global
-> speech lock is the backup. The tests verify both. A bypass in one layer is
-> caught by the other. A bypass in both layers is caught by the tests.
-
-> **Never silent.** A blind user cannot distinguish "the brain is thinking"
-> from "the brain has crashed." The fallback chain ensures that even if the
-> preferred voice engine fails, *something* makes noise.
-
-> **Gaps matter.** The 0.3-second inter-utterance gap is not wasted time. It
-> is the auditory equivalent of whitespace — it lets the user's brain register
-> that one speaker has stopped and another is about to start.
-
----
-
-*Last updated: 2026-07-16*
-*Maintainer: Brain voice system*
+*Architecture designed for Joseph. Built with heart.*
+*Every component exists to make his voice assistant the best in the world.*
