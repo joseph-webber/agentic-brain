@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.brain.voicetotext</string>
+    <key>CFBundleName</key>
+    <string>VoiceToText</string>
+    <key>CFBundleExecutable</key>
+    <string>VoiceToText</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Joseph's voice assistant needs microphone access</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>On-device speech recognition for voice commands</string>
+</dict>
+</plist>

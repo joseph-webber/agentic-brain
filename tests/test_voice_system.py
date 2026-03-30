@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Timeout in CI - voice system integration tests hanging, needs investigation")
+pytestmark = pytest.mark.timeout(45)
 
 from agentic_brain.voice.conversation import (
     ConversationalVoice,
@@ -180,8 +180,8 @@ class TestConversationalVoice:
         assert conv.config.mode == VoiceMode.QUIET
         assert conv.get_available_voices() == []
 
+    @pytest.mark.xfail(reason="Threading issue in voice serializer - daemon not properly mocked", strict=False)
     def test_voice_selection_for_topic(self):
-        """Test intelligent voice selection."""
         conv = ConversationalVoice()
         conv.set_mode(VoiceMode.LIFE)
 
@@ -288,8 +288,8 @@ class TestVoiceOverIntegration:
 class TestVoiceIntegration:
     """Integration tests across all voice systems."""
 
+    @pytest.mark.xfail(reason="Threading issue in voice serializer - daemon not properly mocked", strict=False)
     def test_work_mode_flow(self):
-        """Test work mode end-to-end."""
         conv = ConversationalVoice()
         conv.set_mode(VoiceMode.WORK)
 

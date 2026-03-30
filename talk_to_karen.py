@@ -3,11 +3,23 @@
 
 from __future__ import annotations
 
+import sys
+import types
+
+# Python 3.14 fix: when loaded via importlib.util.spec_from_file_location
+# (e.g. from MicRequestApp.app), the module is not yet in sys.modules when
+# @dataclass(frozen=True) runs, causing AttributeError in _is_type.
+# Registering ourselves now fixes that.
+if __name__ not in sys.modules:
+    _self_mod = types.ModuleType(__name__)
+    _self_mod.__file__ = __file__
+    _self_mod.__spec__ = __spec__ if "__spec__" in dir() else None
+    sys.modules[__name__] = _self_mod
+
 import argparse
 import json
 import os
 import queue
-import sys
 import time
 from collections import deque
 from dataclasses import dataclass
@@ -43,17 +55,35 @@ WHISPER_CACHE = CACHE_DIR / "whisper"
 DEFAULT_CARTESIA_VOICE_ID = "a4a16c5e-5902-4732-b9b6-2a48efd2e11b"  # Grace, Australian female
 DEFAULT_TTS_MODEL = "sonic-3"
 DEFAULT_OLLAMA_MODEL = "llama3.2:3b"
-DEFAULT_CLAUDE_MODEL = "claude-3-5-sonnet-latest"
+DEFAULT_CLAUDE_MODEL = "claude-sonnet-4-20250514"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
-DEFAULT_GROK_MODEL = "grok-2"
+DEFAULT_GROK_MODEL = "grok-4-fast-non-reasoning"
 DEFAULT_WHISPER_MODEL = "tiny.en"
 DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434"
 DEFAULT_XAI_URL = "https://api.x.ai/v1"
 DEFAULT_OPENROUTER_URL = "https://openrouter.ai/api/v1"
 DEFAULT_OPENROUTER_GEMINI_MODEL = "google/gemini-2.0-flash-001"
-DEFAULT_OPENROUTER_GROK_MODEL = "x-ai/grok-2"
-GROK_MODEL_CANDIDATES = ("grok-2", "grok-beta", "grok-3", "grok-3-mini-fast")
+DEFAULT_OPENROUTER_GROK_MODEL = "x-ai/grok-4-fast"
+GEMINI_MODEL_CANDIDATES = (
+    "gemini-2.0-flash",
+    "gemini-2.5-flash",
+    "gemini-pro",
+)
+CLAUDE_MODEL_CANDIDATES = (
+    "claude-sonnet-4-20250514",
+    "claude-3-5-sonnet-latest",
+)
+GROK_MODEL_CANDIDATES = (
+    "grok-4-fast-non-reasoning",
+    "grok-4-1-fast-non-reasoning",
+    "grok-4-fast-reasoning",
+    "grok-4-1-fast-reasoning",
+    "grok-4-0709",
+    "grok-3-mini",
+    "grok-3",
+    "grok-beta",
+)
 REDIS_URL = "redis://:BrainRedis2026@localhost:6379/0"
 SAMPLE_RATE = 16000
 TTS_SAMPLE_RATE = 44100
@@ -73,6 +103,8 @@ VOICE_CURRENT_RESPONSE_KEY = "voice:current_response"
 VOICE_LLM_USED_KEY = "voice:llm_used"
 VOICE_GPT_PROGRESS_KEY = "voice:gpt_progress"
 VOICE_GPT_REDPANDA_PROGRESS_KEY = "voice:gpt_redpanda_progress"
+VOICE_GROK_PROGRESS_KEY = "voice:grok_progress"
+VOICE_GROK_READY_KEY = "voice:grok_ready"
 VOICE_HISTORY_KEY = "voice:history"
 VOICE_INTEGRATION_COMPLETE_KEY = "voice:integration_complete"
 VOICE_ALL_LLMS_READY_KEY = "voice:all_llms_ready"
@@ -141,7 +173,8 @@ GPT_SIGNALS = frozenset(
 GROK_SIGNALS = frozenset(
     {
         "creative", "fun", "joke", "jokes", "witty", "humour", "humor",
-        "story", "poem", "brainstorm", "playful", "edgy",
+        "story", "poem", "brainstorm", "playful", "edgy", "funny",
+        "make me laugh", "roast", "banter", "meme", "snark", "silly",
     }
 )
 GEMINI_SIGNALS = frozenset(
@@ -435,6 +468,41 @@ def wants_gemini(text: str) -> bool:
     return any(signal in lower for signal in GEMINI_SIGNALS)
 
 
+def grok_response(
+    text: str,
+    *,
+    api_key: str | None = None,
+    model: str | None = None,
+    base_url: str = DEFAULT_XAI_URL,
+    max_tokens: int = 200,
+) -> str:
+    load_env_files(ROOT_ENV, APP_ENV, LOCAL_ENV)
+    key = api_key or os.getenv("XAI_API_KEY")
+    if not key:
+        raise RuntimeError("Missing XAI_API_KEY")
+
+    chosen_model = model or os.getenv("GROK_MODEL", DEFAULT_GROK_MODEL)
+    response = requests.post(
+        f"{base_url.rstrip('/')}/chat/completions",
+        headers={
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": chosen_model,
+            "messages": [{"role": "user", "content": text}],
+            "max_tokens": max_tokens,
+            "temperature": 0.7,
+        },
+        timeout=120,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    return (
+        ((payload.get("choices") or [{}])[0].get("message") or {}).get("content", "").strip()
+    )
+
+
 class KarenVoiceChat:
     def __init__(self, whisper_model: str = DEFAULT_WHISPER_MODEL, input_device: str | None = None) -> None:
         load_env_files(ROOT_ENV, APP_ENV, LOCAL_ENV)
@@ -468,6 +536,7 @@ class KarenVoiceChat:
             "OPENROUTER_GROK_MODEL", DEFAULT_OPENROUTER_GROK_MODEL
         )
         self.redis = RedisBridge(REDIS_URL)
+        self._grok_models_cache: tuple[str, ...] = ()
         self.session_id = f"karen-{uuid4().hex[:12]}"
         self.response_timeout = float(os.getenv("KAREN_RESPONSE_TIMEOUT", "45"))
         self.allow_local_fallback = os.getenv(
@@ -475,6 +544,7 @@ class KarenVoiceChat:
         ).lower() in {"1", "true", "yes", "on"}
         self.redis.set(VOICE_INTEGRATION_COMPLETE_KEY, "false")
         self.redis.set(VOICE_ALL_LLMS_READY_KEY, "false")
+        self.redis.set(VOICE_GROK_READY_KEY, "false", publish=True)
         self.redis.set(VOICE_GPT_REDPANDA_PROGRESS_KEY, "initialising Karen voice chat")
         mark_redpanda_ready("false")
         self._set_progress("initialising Karen voice chat")
@@ -525,6 +595,12 @@ class KarenVoiceChat:
         except Exception:
             pass
 
+    def _set_grok_progress(self, text: str) -> None:
+        self.redis.set(VOICE_GROK_PROGRESS_KEY, text, publish=True)
+
+    def _set_grok_ready(self, ready: bool) -> None:
+        self.redis.set(VOICE_GROK_READY_KEY, "true" if ready else "false", publish=True)
+
     def _publish_current_input(self, text: str) -> None:
         self.redis.set(VOICE_CURRENT_INPUT_KEY, text, publish=True)
         self.redis.push_history("user", text)
@@ -562,6 +638,62 @@ class KarenVoiceChat:
 
     def _record_response_event(self, payload: dict[str, Any]) -> None:
         self.redis.set(VOICE_CURRENT_RESPONSE_KEY, json.dumps(payload), publish=True)
+
+    def _discover_grok_models(self, *, force: bool = False) -> tuple[str, ...]:
+        if self._grok_models_cache and not force:
+            return self._grok_models_cache
+        if not self.xai_api_key:
+            self._set_grok_progress("xAI API key missing")
+            self._set_grok_ready(False)
+            return ()
+
+        self._set_grok_progress("checking xAI model availability")
+        response = requests.get(
+            f"{os.getenv('XAI_BASE_URL', DEFAULT_XAI_URL).rstrip('/')}/models",
+            headers={"Authorization": f"Bearer {self.xai_api_key}"},
+            timeout=30,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        model_ids = [
+            item.get("id", "")
+            for item in payload.get("data", [])
+            if isinstance(item, dict)
+        ]
+        text_models = tuple(
+            model_id
+            for model_id in model_ids
+            if model_id.startswith("grok") and "imagine" not in model_id
+        )
+        ordered = tuple(
+            candidate for candidate in GROK_MODEL_CANDIDATES if candidate in text_models
+        )
+        extras = tuple(model_id for model_id in text_models if model_id not in ordered)
+        self._grok_models_cache = ordered + extras
+        if self._grok_models_cache:
+            if self.grok_model not in self._grok_models_cache:
+                self.grok_model = self._grok_models_cache[0]
+            self._set_grok_progress(
+                f"xAI ready with {len(self._grok_models_cache)} Grok models; defaulting to {self.grok_model}"
+            )
+            self._set_grok_ready(True)
+        else:
+            self._set_grok_progress("xAI responded but no Grok text models were available")
+            self._set_grok_ready(False)
+        return self._grok_models_cache
+
+    def _available_ollama_models(self) -> tuple[str, ...]:
+        try:
+            response = requests.get(f"{self.ollama_url}/api/tags", timeout=10)
+            response.raise_for_status()
+            payload = response.json()
+            return tuple(
+                item.get("name", "")
+                for item in payload.get("models", [])
+                if isinstance(item, dict) and item.get("name")
+            )
+        except Exception:
+            return ()
 
     def _wait_for_bus_response(self, request_id: str) -> dict[str, Any] | None:
         payload = wait_for_voice_event(
@@ -630,6 +762,12 @@ class KarenVoiceChat:
 
     def check_services(self) -> None:
         ensure_voice_topics()
+        if self.grok_client:
+            try:
+                self._discover_grok_models()
+            except Exception as exc:
+                self._set_grok_progress(f"xAI model discovery failed: {exc}")
+                self._set_grok_ready(False)
         status = self.provider_status()
         providers = []
         if status.ollama_available:
@@ -860,27 +998,57 @@ class KarenVoiceChat:
         return unique
 
     def _call_ollama(self, messages: Sequence[dict[str, str]], model: str) -> str:
-        response = requests.post(
-            f"{self.ollama_url}/api/chat",
-            json={
-                "model": model,
-                "messages": list(messages),
-                "stream": False,
-                "options": {
-                    "temperature": 0.7,
-                    "num_predict": 120,
-                },
-            },
-            timeout=120,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        return payload.get("message", {}).get("content", "").strip()
+        candidates = [model]
+        for local_model in self._available_ollama_models():
+            if local_model not in candidates:
+                candidates.append(local_model)
+
+        last_error: Exception | None = None
+        for candidate in candidates:
+            try:
+                response = requests.post(
+                    f"{self.ollama_url}/api/chat",
+                    json={
+                        "model": candidate,
+                        "messages": list(messages),
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.7,
+                            "num_predict": 120,
+                        },
+                    },
+                    timeout=180,
+                )
+                response.raise_for_status()
+                payload = response.json()
+                reply = payload.get("message", {}).get("content", "").strip()
+                if reply:
+                    self.ollama_model = candidate
+                    return reply
+                last_error = RuntimeError(f"Ollama returned an empty response for {candidate}")
+            except Exception as exc:
+                last_error = exc
+
+        raise last_error or RuntimeError("Ollama client is not configured")
 
     def _call_claude(self, messages: Sequence[dict[str, str]], model: str) -> str:
         if not self.claude_client:
             raise RuntimeError("Claude client is not configured")
-        return self.claude_client.reply(messages, model)
+        candidates = [model]
+        for fallback_model in CLAUDE_MODEL_CANDIDATES:
+            if fallback_model not in candidates:
+                candidates.append(fallback_model)
+
+        last_error: Exception | None = None
+        for candidate in candidates:
+            try:
+                reply = self.claude_client.reply(messages, candidate)
+                self.claude_model = candidate
+                return reply
+            except Exception as exc:
+                last_error = exc
+
+        raise last_error or RuntimeError("Claude client is not configured")
 
     def _call_openai(self, messages: Sequence[dict[str, str]], model: str) -> str:
         if not self.openai_client:
@@ -889,32 +1057,63 @@ class KarenVoiceChat:
 
     def _call_gemini(self, messages: Sequence[dict[str, str]], model: str) -> str:
         if self.gemini_client:
-            try:
-                return self.gemini_client.reply(messages, model)
-            except Exception:
-                if not self.openrouter_client:
-                    raise
+            candidates = [model]
+            for fallback_model in GEMINI_MODEL_CANDIDATES:
+                if fallback_model not in candidates:
+                    candidates.append(fallback_model)
+            last_error: Exception | None = None
+            for candidate in candidates:
+                try:
+                    reply = self.gemini_client.reply(messages, candidate)
+                    self.gemini_model = candidate
+                    return reply
+                except Exception as exc:
+                    last_error = exc
+            if not self.openrouter_client and last_error:
+                raise last_error
         if self.openrouter_client:
             return self.openrouter_client.reply(messages, self.openrouter_gemini_model)
         raise RuntimeError("Gemini client is not configured")
 
     def _call_grok(self, messages: Sequence[dict[str, str]], model: str) -> str:
         if self.grok_client:
-            candidates = [model]
+            discovered_models = self._discover_grok_models()
+            preferred_models = list(discovered_models or GROK_MODEL_CANDIDATES)
+            if model in preferred_models:
+                candidates = [model]
+                candidates.extend(fallback_model for fallback_model in preferred_models if fallback_model != model)
+            else:
+                candidates = preferred_models[:]
+                if model:
+                    candidates.append(model)
             for fallback_model in GROK_MODEL_CANDIDATES:
                 if fallback_model not in candidates:
                     candidates.append(fallback_model)
             last_error: Exception | None = None
             for candidate in candidates:
+                self._set_grok_progress(f"trying xAI model {candidate}")
                 try:
-                    return self.grok_client.reply(messages, candidate)
+                    reply = self.grok_client.reply(messages, candidate)
+                    self.grok_model = candidate
+                    self._set_grok_progress(f"xAI reply succeeded with {candidate}")
+                    self._set_grok_ready(True)
+                    return reply
                 except Exception as exc:
                     last_error = exc
+                    self._set_grok_progress(f"xAI model {candidate} failed: {exc}")
             if not self.openrouter_client and last_error:
+                self._set_grok_ready(False)
                 raise last_error
         if self.openrouter_client:
+            self._set_grok_progress(
+                f"xAI unavailable, falling back to OpenRouter model {self.openrouter_grok_model}"
+            )
             return self.openrouter_client.reply(messages, self.openrouter_grok_model)
         raise RuntimeError("Grok client is not configured")
+
+    def grok_response(self, text: str) -> str:
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": text}]
+        return self._call_grok(messages, self._model_for_provider("grok"))
 
     def _call_provider(self, decision: RouteDecision, messages: Sequence[dict[str, str]]) -> str:
         if decision.provider == "claude":

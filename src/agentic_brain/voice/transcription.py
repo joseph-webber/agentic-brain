@@ -160,6 +160,17 @@ class StreamingTranscriptionResult:
     stable_text: str = ""
 
 
+@dataclass
+class VADStreamingUpdate:
+    """State update from VAD-gated streaming transcription."""
+
+    is_speech: bool
+    speech_started: bool = False
+    speech_ended: bool = False
+    partials: list[StreamingTranscriptionResult] = field(default_factory=list)
+    final: Optional[StreamingTranscriptionResult] = None
+
+
 class StreamingBuffer:
     """Manages overlapping audio windows for streaming transcription.
 
@@ -305,9 +316,7 @@ class StreamingStitcher:
     def finalize(self) -> str:
         """Finalize and return complete transcription."""
         if self._last_partial:
-            self._stable_text = (
-                self._stable_text + " " + self._last_partial
-            ).strip()
+            self._stable_text = (self._stable_text + " " + self._last_partial).strip()
         result = self._stable_text
         self.reset()
         return result
@@ -486,6 +495,201 @@ class BaseTranscriber(ABC):
     @property
     def name(self) -> str:
         return self.__class__.__name__
+
+
+class VADStreamingTranscriber:
+    """Wire Silero VAD speech boundaries to streaming transcription.
+
+    This coordinator keeps a rolling VAD window so speech start/end can be
+    detected from microphone-sized chunks, then gates faster-whisper streaming
+    so we only transcribe active utterances.  When speech starts, the recent
+    pre-roll audio is sent into the streaming transcriber immediately.  When
+    speech ends, the transcriber is flushed to emit a final transcript.
+    """
+
+    def __init__(
+        self,
+        transcriber: Optional[BaseTranscriber] = None,
+        vad: Optional[Any] = None,
+        *,
+        model_name: str = "tiny.en",
+        sample_rate: int = 16_000,
+        window_secs: float = 0.5,
+        overlap_secs: float = 0.1,
+        vad_threshold: float = 0.5,
+        min_speech_duration_ms: int = 100,
+        min_silence_duration_ms: int = 100,
+        vad_window_ms: Optional[int] = None,
+    ) -> None:
+        from agentic_brain.voice.vad import SileroVAD, VADConfig
+
+        self.sample_rate = sample_rate
+        self._transcriber = transcriber or get_streaming_transcriber(
+            model_name=model_name,
+            window_secs=window_secs,
+            overlap_secs=overlap_secs,
+            prefer_faster_whisper=True,
+        )
+        self._transcriber.configure_streaming(
+            window_secs=window_secs,
+            overlap_secs=overlap_secs,
+            sample_rate=sample_rate,
+            enabled=True,
+        )
+
+        vad_config = VADConfig(
+            threshold=vad_threshold,
+            min_speech_duration_ms=min_speech_duration_ms,
+            min_silence_duration_ms=min_silence_duration_ms,
+            sample_rate=sample_rate,
+        )
+        self._vad = vad or SileroVAD(config=vad_config)
+        self._speech_active = False
+        self._silence_samples = 0
+        self._utterance_chunks: list[bytes] = []
+        self._min_detection_samples = max(
+            vad_config.window_size_samples,
+            int(sample_rate * min_speech_duration_ms / 1000),
+        )
+        default_vad_window_ms = max(
+            int(window_secs * 1000),
+            min_speech_duration_ms + min_silence_duration_ms,
+        )
+        self._vad_window_samples = max(
+            self._min_detection_samples,
+            int(sample_rate * (vad_window_ms or default_vad_window_ms) / 1000),
+        )
+        self._vad_window: list[int] = []
+
+    @property
+    def speech_active(self) -> bool:
+        """Return True when an utterance is currently being streamed."""
+        return self._speech_active
+
+    def process_chunk(self, audio_chunk: bytes) -> VADStreamingUpdate:
+        """Process one PCM chunk and emit VAD/transcription updates."""
+        samples = self._chunk_to_samples(audio_chunk)
+        update = VADStreamingUpdate(is_speech=self._speech_active)
+        if not samples:
+            return update
+
+        self._append_vad_samples(samples)
+        is_speech_now = self._detect_speech()
+        update.is_speech = self._speech_active or is_speech_now
+
+        if is_speech_now:
+            self._silence_samples = 0
+            if not self._speech_active:
+                self._speech_active = True
+                update.speech_started = True
+                self._transcriber.reset_streaming()
+                seed_audio = self._samples_to_bytes(self._vad_window)
+                self._utterance_chunks = [seed_audio] if seed_audio else []
+                if seed_audio:
+                    update.partials.extend(
+                        self._transcriber.transcribe_streaming(
+                            seed_audio,
+                            sample_rate=self.sample_rate,
+                        )
+                    )
+                return update
+
+        if not self._speech_active:
+            return update
+
+        if not update.speech_started:
+            self._utterance_chunks.append(audio_chunk)
+            update.partials.extend(
+                self._transcriber.transcribe_streaming(
+                    audio_chunk,
+                    sample_rate=self.sample_rate,
+                )
+            )
+
+        if is_speech_now:
+            return update
+
+        self._silence_samples += len(samples)
+        if self._silence_samples >= self._speech_end_samples:
+            update.speech_ended = True
+            update.final = self._build_final_result()
+            self.reset()
+            update.is_speech = False
+
+        return update
+
+    def finalize(self) -> Optional[StreamingTranscriptionResult]:
+        """Force completion of the current utterance."""
+        if not self._speech_active:
+            return None
+        result = self._build_final_result()
+        self.reset()
+        return result
+
+    def reset(self) -> None:
+        """Reset VAD and streaming state for a new utterance."""
+        self._speech_active = False
+        self._silence_samples = 0
+        self._vad_window = []
+        self._utterance_chunks = []
+        self._transcriber.reset_streaming()
+
+    @property
+    def _speech_end_samples(self) -> int:
+        return int(self.sample_rate * self._vad.config.min_silence_duration_ms / 1000)
+
+    def _detect_speech(self) -> bool:
+        if not _HAS_NUMPY or len(self._vad_window) < self._min_detection_samples:
+            return False
+        audio = self._samples_to_ndarray(self._vad_window)
+        return any(True for _ in self._vad.detect_speech(audio))
+
+    def _append_vad_samples(self, samples: list[int]) -> None:
+        self._vad_window.extend(samples)
+        if len(self._vad_window) > self._vad_window_samples:
+            self._vad_window = self._vad_window[-self._vad_window_samples :]
+
+    def _build_final_result(self) -> Optional[StreamingTranscriptionResult]:
+        audio_data = b"".join(self._utterance_chunks)
+        if not audio_data:
+            return None
+        result = self._transcriber.transcribe_bytes(
+            audio_data,
+            sample_rate=self.sample_rate,
+        )
+        if not result or not result.text.strip():
+            return None
+        return StreamingTranscriptionResult(
+            text=result.text.strip(),
+            is_partial=False,
+            is_final=True,
+            confidence=result.confidence,
+            stable_text=result.text.strip(),
+            timestamp_ms=time.monotonic() * 1000,
+        )
+
+    def _chunk_to_samples(self, audio_chunk: bytes) -> list[int]:
+        if not audio_chunk:
+            return []
+        if _HAS_NUMPY:
+            return np.frombuffer(audio_chunk, dtype=np.int16).tolist()
+        n_samples = len(audio_chunk) // 2
+        if n_samples <= 0:
+            return []
+        try:
+            return list(struct.unpack(f"<{n_samples}h", audio_chunk))
+        except struct.error:
+            return []
+
+    def _samples_to_bytes(self, samples: list[int]) -> bytes:
+        if not samples:
+            return b""
+        if _HAS_NUMPY:
+            return np.array(samples, dtype=np.int16).tobytes()
+        return struct.pack(f"<{len(samples)}h", *samples)
+
+    def _samples_to_ndarray(self, samples: list[int]) -> Any:
+        return np.array(samples, dtype=np.int16)
 
 
 # ── Whisper.cpp Transcriber ──────────────────────────────────────────
@@ -754,9 +958,7 @@ class FasterWhisperTranscriber(BaseTranscriber):
 
             except Exception as exc:
                 self.metrics.record_error()
-                logger.warning(
-                    "FasterWhisperTranscriber: transcription error: %s", exc
-                )
+                logger.warning("FasterWhisperTranscriber: transcription error: %s", exc)
                 return None
 
     def _transcribe_segment(
@@ -817,9 +1019,7 @@ class FasterWhisperTranscriber(BaseTranscriber):
                 )
 
             except Exception as exc:
-                logger.warning(
-                    "FasterWhisperTranscriber: segment error: %s", exc
-                )
+                logger.warning("FasterWhisperTranscriber: segment error: %s", exc)
                 return None
 
 
@@ -1108,20 +1308,20 @@ def get_transcriber(
 
 
 def get_streaming_transcriber(
-    model_name: str = "base.en",
-    window_secs: float = 2.0,
-    overlap_secs: float = 0.5,
+    model_name: str = "tiny.en",
+    window_secs: float = 0.5,
+    overlap_secs: float = 0.1,
     prefer_faster_whisper: bool = True,
 ) -> BaseTranscriber:
-    """Create a transcriber optimised for streaming with sub-500ms latency.
+    """Create a transcriber optimised for low-latency streaming.
 
     Convenience wrapper around :func:`get_transcriber` with streaming enabled
     and optimal settings for real-time voice input.
 
     Args:
         model_name: Whisper model to load (smaller = faster).
-        window_secs: Audio window size in seconds.
-        overlap_secs: Overlap between windows to avoid word cuts.
+        window_secs: Audio window size in seconds. Defaults to 500ms.
+        overlap_secs: Overlap between windows to avoid word cuts. Defaults to 100ms.
         prefer_faster_whisper: Use faster-whisper for best latency.
 
     Returns:
@@ -1134,6 +1334,27 @@ def get_streaming_transcriber(
         streaming=True,
         streaming_window_secs=window_secs,
         streaming_overlap_secs=overlap_secs,
+    )
+
+
+def get_vad_streaming_transcriber(
+    model_name: str = "tiny.en",
+    sample_rate: int = 16_000,
+    window_secs: float = 0.5,
+    overlap_secs: float = 0.1,
+    vad_threshold: float = 0.5,
+    min_speech_duration_ms: int = 100,
+    min_silence_duration_ms: int = 100,
+) -> VADStreamingTranscriber:
+    """Create a Silero-VAD-gated streaming transcriber."""
+    return VADStreamingTranscriber(
+        model_name=model_name,
+        sample_rate=sample_rate,
+        window_secs=window_secs,
+        overlap_secs=overlap_secs,
+        vad_threshold=vad_threshold,
+        min_speech_duration_ms=min_speech_duration_ms,
+        min_silence_duration_ms=min_silence_duration_ms,
     )
 
 

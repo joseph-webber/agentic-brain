@@ -30,7 +30,7 @@ from agentic_brain.voice.resilient import ResilientVoice
 from agentic_brain.voice.serializer import VoiceSerializer, get_voice_serializer
 
 
-@pytest.mark.skip(reason="Timeout in CI - async voice tests hanging, needs investigation")
+@pytest.mark.timeout(30)
 class TestNoVoiceOverlap:
     """Verify that voices never overlap."""
 

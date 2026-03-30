@@ -26,7 +26,6 @@ from agentic_brain.voice.resilient import ResilientVoice
 from agentic_brain.voice.serializer import (
     VoiceMessage,
     VoiceSerializer,
-    _legacy_speak,
     _warn_direct_say,
     audit_no_concurrent_say,
     get_voice_serializer,
@@ -283,28 +282,6 @@ class TestDeprecationWarnings:
             assert issubclass(w[0].category, DeprecationWarning)
             assert "test_caller" in str(w[0].message)
             assert "speak_serialized" in str(w[0].message)
-
-    @patch(_SAY_PATCH, return_value="/usr/bin/say")
-    @patch(_POPEN_PATCH)
-    def test_legacy_speak_emits_warning_and_works(self, popen_mock, _which):
-        serializer = get_voice_serializer()
-        serializer._audit_enabled = False
-        serializer.set_pause_between(0)
-
-        process = MagicMock()
-        process.wait.return_value = 0
-        process.poll.return_value = 0
-        popen_mock.return_value = process
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = _legacy_speak("hello from legacy")
-            assert result is True
-            deprecation_warnings = [
-                x for x in w if issubclass(x.category, DeprecationWarning)
-            ]
-            assert len(deprecation_warnings) >= 1
-            assert "deprecated" in str(deprecation_warnings[0].message).lower()
 
 
 # ═══════════════════════════════════════════════════════════════════════

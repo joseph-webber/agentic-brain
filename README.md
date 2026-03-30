@@ -107,6 +107,30 @@ ab voice conversation --demo
 python demo_voice_system.py
 ```
 
+### Voice Copilot integration
+
+Joseph can now speak to either a direct Claude voice agent or GitHub Copilot CLI:
+
+```bash
+# Standalone Claude voice agent
+python voice_launcher.py --mode standalone
+
+# One-turn smoke test without microphone input
+python voice_launcher.py --mode standalone --once --text "Say hello to Joseph in one sentence." --no-speak
+
+# Route voice into GitHub Copilot CLI
+python voice_launcher.py --mode copilot --repo-path /Users/joe/brain
+
+# One-turn Copilot bridge smoke test
+python voice_launcher.py --mode copilot --once --text "Summarize what this repository is for." --no-speak
+```
+
+Files:
+
+- `voice_standalone.py` - sox recording, OpenAI transcription, Claude responses, Redis state in `voice:standalone:*`
+- `voice_copilot_bridge.py` - same audio pipeline bridged into `gh copilot`, Redis state in `voice:bridge:*`
+- `voice_launcher.py` - accessible entry point for both modes, Redis launch reporting in `voice:integrator:*`
+
 ### Voice docs
 
 - **[Voice System Overview](./docs/voice/README.md)** - architecture, roster, configuration
@@ -114,6 +138,32 @@ python demo_voice_system.py
 - **[Live Mode](./docs/voice/LIVE_MODE.md)** - current status of Project Aria style live input
 - **[Streaming](./docs/voice/STREAMING.md)** - Redpanda topics, priorities, monitoring
 - **[Voice Troubleshooting](./docs/voice/TROUBLESHOOTING.md)** - overlap, locks, Redis, watchdogs
+
+## 🐝 Redis Swarm Coordination
+
+Agentic Brain supports Redis-based multi-agent coordination for parallel development.
+
+### Features
+- **Agent Registration** - Agents register via Redis keys
+- **Task Distribution** - Work distributed via Redis lists
+- **Real-time Coordination** - Pub/sub for instant communication
+- **Result Aggregation** - Collect and merge findings
+- **Health Monitoring** - Track agent status
+
+### Quick Example
+```python
+from agentic_brain.swarm import RedisCoordinator
+
+coord = RedisCoordinator()
+coord.register_agent("searcher", capabilities=["github", "web"])
+coord.submit_task({"action": "search", "query": "voice chat llm"})
+results = coord.collect_results(timeout=60)
+```
+
+### Documentation
+- [Quick Start Guide](docs/SWARM_QUICKSTART.md)
+- [Full Development Guide](docs/SWARM_DEVELOPMENT.md)
+- [API Reference](docs/SWARM_API_REFERENCE.md)
 
 ---
 

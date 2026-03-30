@@ -34,6 +34,7 @@ teaching mode.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import importlib
 import logging
@@ -477,6 +478,31 @@ class HybridVoiceRouter:
             wait=wait,
         )
 
+    async def speak_async(
+        self,
+        text: str,
+        lady: str = "Karen",
+        rate: int = 155,
+        *,
+        wait: bool = True,
+        use_native_voice: bool = False,
+    ) -> bool:
+        """Async variant of :meth:`speak` for event-loop friendly playback."""
+        config = LADY_VOICE_MAP.get(lady, LADY_VOICE_MAP["Karen"])
+        serializer = get_voice_serializer()
+        message = VoiceMessage(text=text, voice=lady, rate=rate)
+        return await serializer.run_serialized_async(
+            message,
+            executor=lambda queued_message: asyncio.run(
+                self._speak_serialized_async(
+                    queued_message,
+                    config,
+                    use_native_voice=use_native_voice,
+                )
+            ),
+            wait=wait,
+        )
+
     def teach_phrase(self, english: str, native: str, lady: str) -> bool:
         """Teach a phrase using Karen for guidance and the lady for pronunciation."""
         language_name = LADY_LANGUAGES.get(lady, "that language")
@@ -521,6 +547,45 @@ class HybridVoiceRouter:
             )
             return self._speak_with_apple(message.text, fallback, message.rate)
 
+    async def _speak_serialized_async(
+        self,
+        message: VoiceMessage,
+        config: LadyVoiceConfig,
+        *,
+        use_native_voice: bool,
+    ) -> bool:
+        engine, voice_name, language, fallback = self._resolve_route(
+            config,
+            use_native_voice=use_native_voice,
+        )
+
+        if engine == "apple":
+            return await self._speak_with_apple_async(
+                message.text, voice_name, message.rate
+            )
+
+        try:
+            speed = max(0.75, min(1.35, message.rate / 155.0))
+            audio_path = await asyncio.to_thread(
+                self._kokoro.render_to_path,
+                message.text,
+                voice=voice_name,
+                language=language,
+                speed=speed,
+            )
+            return await self._play_audio_async(audio_path)
+        except Exception as exc:
+            logger.warning(
+                "Kokoro speak failed for %s via %s (%s). Falling back to Apple %s.",
+                message.voice,
+                voice_name,
+                exc,
+                fallback,
+            )
+            return await self._speak_with_apple_async(
+                message.text, fallback, message.rate
+            )
+
     @staticmethod
     def _resolve_route(
         config: LadyVoiceConfig,
@@ -548,6 +613,23 @@ class HybridVoiceRouter:
         return completed.returncode == 0
 
     @staticmethod
+    async def _speak_with_apple_async(text: str, voice: str, rate: int) -> bool:
+        if shutil.which("say") is None:
+            logger.warning("macOS 'say' command not available")
+            return False
+        process = await asyncio.create_subprocess_exec(
+            "say",
+            "-v",
+            voice,
+            "-r",
+            str(rate),
+            text,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        return await process.wait() == 0
+
+    @staticmethod
     def _play_audio(audio_path: Path) -> bool:
         if shutil.which("afplay") is None:
             logger.warning("afplay not available for Kokoro playback")
@@ -559,6 +641,19 @@ class HybridVoiceRouter:
             stderr=subprocess.DEVNULL,
         )
         return completed.returncode == 0
+
+    @staticmethod
+    async def _play_audio_async(audio_path: Path) -> bool:
+        if shutil.which("afplay") is None:
+            logger.warning("afplay not available for Kokoro playback")
+            return False
+        process = await asyncio.create_subprocess_exec(
+            "afplay",
+            str(audio_path),
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        return await process.wait() == 0
 
 
 def get_official_kokoro_voice_ids(

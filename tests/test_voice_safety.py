@@ -21,7 +21,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Timeout in CI - voice safety tests hanging, needs investigation")
+pytestmark = pytest.mark.timeout(30)
 
 from tests.fixtures.voice_test_phrases import pick_voice_phrase, pick_voice_phrases
 

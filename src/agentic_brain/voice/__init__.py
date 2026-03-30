@@ -109,7 +109,6 @@ from agentic_brain.voice.resilient import (
 )
 from agentic_brain.voice.serializer import (
     VoiceSerializer,
-    _legacy_speak,
     _warn_direct_say,
     audit_no_concurrent_say,
     get_voice_serializer,
@@ -356,6 +355,26 @@ __all__ = [
     "WakeWordResult",
     "get_wake_word_detector",
     "detect_wake_word",
+    # ── PHASE 6: Voice Conversation Loop (real-time bidirectional) ──
+    "_lazy_conversation_loop",
+    "VoiceConversationLoop",
+    "ConversationConfig",
+    "ConversationState",
+    "get_conversation_loop",
+    "start_conversation",
+    # ── PHASE 7: Cartesia TTS Streaming Bridge (40ms TTFA) ──
+    "_lazy_cartesia_bridge",
+    "CartesiaLiveMode",
+    "CartesiaStreamPlayer",
+    "get_cartesia_live_mode",
+    # ── PHASE 8: TTS Fallback Chain (NEVER fails!) ──
+    "_lazy_tts_fallback",
+    "TTSFallbackChain",
+    "TTSResult",
+    "TTSBackend",
+    "TTSChainHealth",
+    "BackendHealth",
+    "get_tts_chain",
     # Classes
     "Audio",
     "AudioConfig",
@@ -570,6 +589,63 @@ def _lazy_wake_word():
     )
 
 
+def _lazy_conversation_loop():
+    """Lazy import for real-time voice conversation loop."""
+    from agentic_brain.voice.conversation_loop import (
+        ConversationConfig,
+        ConversationState,
+        VoiceConversationLoop,
+        get_conversation_loop,
+        start_conversation,
+    )
+
+    return (
+        VoiceConversationLoop,
+        ConversationConfig,
+        ConversationState,
+        get_conversation_loop,
+        start_conversation,
+    )
+
+
+def _lazy_cartesia_bridge():
+    """Lazy import for CartesiaTTS streaming bridge."""
+    from agentic_brain.voice.cartesia_bridge import (
+        CartesiaLiveMode,
+        CartesiaStreamPlayer,
+        get_cartesia_live_mode,
+    )
+
+    return CartesiaLiveMode, CartesiaStreamPlayer, get_cartesia_live_mode
+
+
+def _lazy_tts_fallback():
+    """Lazy import for TTS fallback chain - NEVER fails!"""
+    from agentic_brain.voice.tts_fallback import (
+        BackendHealth,
+        TTSBackend,
+        TTSChainHealth,
+        TTSFallbackChain,
+        TTSResult,
+        get_tts_chain,
+        health_check,
+        speak,
+        speak_sync,
+    )
+
+    return (
+        TTSFallbackChain,
+        TTSResult,
+        TTSBackend,
+        TTSChainHealth,
+        BackendHealth,
+        get_tts_chain,
+        speak,
+        speak_sync,
+        health_check,
+    )
+
+
 _VOICE_EXPORTS = {
     "KokoroVoice": ("agentic_brain.voice.kokoro_tts", "KokoroVoice"),
     "KokoroTTS": ("agentic_brain.voice.kokoro_tts", "KokoroVoice"),
@@ -613,4 +689,36 @@ _VOICE_EXPORTS = {
     "WakeWordResult": ("agentic_brain.voice.wake_word", "WakeWordResult"),
     "get_wake_word_detector": ("agentic_brain.voice.wake_word", "get_wake_word_detector"),
     "detect_wake_word": ("agentic_brain.voice.wake_word", "detect_wake_word"),
+    # Voice Conversation Loop (real-time bidirectional voice)
+    "VoiceConversationLoop": (
+        "agentic_brain.voice.conversation_loop",
+        "VoiceConversationLoop",
+    ),
+    "ConversationConfig": (
+        "agentic_brain.voice.conversation_loop",
+        "ConversationConfig",
+    ),
+    "ConversationState": (
+        "agentic_brain.voice.conversation_loop",
+        "ConversationState",
+    ),
+    "get_conversation_loop": (
+        "agentic_brain.voice.conversation_loop",
+        "get_conversation_loop",
+    ),
+    "start_conversation": (
+        "agentic_brain.voice.conversation_loop",
+        "start_conversation",
+    ),
+    # Cartesia TTS streaming bridge (40ms TTFA)
+    "CartesiaLiveMode": ("agentic_brain.voice.cartesia_bridge", "CartesiaLiveMode"),
+    "CartesiaStreamPlayer": ("agentic_brain.voice.cartesia_bridge", "CartesiaStreamPlayer"),
+    "get_cartesia_live_mode": ("agentic_brain.voice.cartesia_bridge", "get_cartesia_live_mode"),
+    # TTS Fallback Chain - NEVER fails (Cartesia → Kokoro → macOS say)
+    "TTSFallbackChain": ("agentic_brain.voice.tts_fallback", "TTSFallbackChain"),
+    "TTSResult": ("agentic_brain.voice.tts_fallback", "TTSResult"),
+    "TTSBackend": ("agentic_brain.voice.tts_fallback", "TTSBackend"),
+    "TTSChainHealth": ("agentic_brain.voice.tts_fallback", "TTSChainHealth"),
+    "BackendHealth": ("agentic_brain.voice.tts_fallback", "BackendHealth"),
+    "get_tts_chain": ("agentic_brain.voice.tts_fallback", "get_tts_chain"),
 }

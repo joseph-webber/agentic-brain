@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.josephwebber.agenticbrain</string>
+    <key>CFBundleName</key>
+    <string>AgenticBrain</string>
+    <key>CFBundleDisplayName</key>
+    <string>Agentic Brain</string>
+    <key>CFBundleExecutable</key>
+    <string>AgenticBrain</string>
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Agentic Brain needs microphone access so Joseph can speak commands instead of typing. This is essential for accessibility.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Agentic Brain uses speech recognition to convert Joseph's voice to text commands. This enables hands-free control.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Agentic Brain needs to control other apps to execute commands and automate tasks for Joseph.</string>
+</dict>
+</plist>

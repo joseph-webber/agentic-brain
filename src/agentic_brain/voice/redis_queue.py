@@ -11,7 +11,7 @@ import json
 import time
 import uuid
 from dataclasses import asdict, dataclass
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from agentic_brain.core.redis_pool import RedisConfig, RedisPoolManager
 
@@ -40,6 +40,7 @@ class VoiceJob:
     timestamp: float = 0.0
     pause_after: Optional[float] = None
     job_id: str = ""
+    sequence: int = 0
 
     def __post_init__(self) -> None:
         self.text = self.text.strip()
@@ -95,7 +96,7 @@ class RedisVoiceQueue:
     def dequeue(self) -> Optional[VoiceJob]:
         raw = self._dequeue_priority()
         if raw is None:
-            raw = self.client.rpop(self.QUEUE_KEY)
+            raw = self._dequeue_fifo(self.QUEUE_KEY)
         self._refresh_depths()
         if raw is None:
             return None
@@ -171,18 +172,55 @@ class RedisVoiceQueue:
         if not items:
             return None
 
-        urgent_candidate: Optional[str] = None
-        for raw in reversed(items):
-            payload = _json_load(raw)
-            if payload.get("priority") == "urgent":
-                urgent_candidate = raw
-                break
+        urgent_candidate = self._select_lowest_sequence(
+            items,
+            predicate=lambda payload: payload.get("priority") == "urgent",
+        )
+        if urgent_candidate is None:
+            for raw in reversed(items):
+                payload = _json_load(raw)
+                if payload.get("priority") == "urgent":
+                    urgent_candidate = raw
+                    break
 
         if urgent_candidate is not None:
             self.client.lrem(self.PRIORITY_KEY, 1, urgent_candidate)
             return urgent_candidate
 
-        return self.client.rpop(self.PRIORITY_KEY)
+        return self._dequeue_fifo(self.PRIORITY_KEY)
+
+    def _dequeue_fifo(self, key: str) -> Optional[str]:
+        items = self.client.lrange(key, 0, -1)
+        if not items:
+            return None
+
+        sequenced_candidate = self._select_lowest_sequence(items)
+        if sequenced_candidate is not None:
+            self.client.lrem(key, 1, sequenced_candidate)
+            return sequenced_candidate
+
+        return self.client.rpop(key)
+
+    @staticmethod
+    def _select_lowest_sequence(
+        items: list[str],
+        predicate: Optional[Callable[[dict[str, Any]], bool]] = None,
+    ) -> Optional[str]:
+        selected_raw: Optional[str] = None
+        selected_sequence: Optional[int] = None
+
+        for raw in items:
+            payload = _json_load(raw)
+            if predicate is not None and not predicate(payload):
+                continue
+            sequence = int(payload.get("sequence", 0) or 0)
+            if sequence <= 0:
+                continue
+            if selected_sequence is None or sequence < selected_sequence:
+                selected_raw = raw
+                selected_sequence = sequence
+
+        return selected_raw
 
     def _refresh_depths(self) -> None:
         normal_depth = int(self.client.llen(self.QUEUE_KEY))

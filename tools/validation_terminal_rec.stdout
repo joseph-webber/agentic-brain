@@ -1,0 +1,7 @@
+Launching rec capture in Terminal.app for 2 second(s)...
+Output: /Users/joe/brain/agentic-brain/tools/validation_terminal_rec.wav
+Log:    /Users/joe/brain/agentic-brain/tools/validation_terminal_rec.log
+Done:   /Users/joe/brain/agentic-brain/tools/validation_terminal_rec.done
+
+If Terminal prompts for microphone access, choose Allow.
+channels=1 rate=24000 frames=48000 rms=2509697

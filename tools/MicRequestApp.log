@@ -1,0 +1,43 @@
+=== MicRequestApp launched ===
+Bundle ID: com.josephbrain.micrequestapp
+Bundle path: /Users/joe/brain/agentic-brain/tools/MicRequestApp.app
+Agentic dir: /Users/joe/brain/agentic-brain
+Script path: /Users/joe/brain/agentic-brain/talk_to_karen.py
+Site-packages: /Users/joe/brain/venv/lib/python3.14/site-packages
+Venv python: /Users/joe/brain/venv/bin/python3
+Mode: talk-to-karen
+✅ Microphone already authorised.
+Launching embedded Python inside the app process.
+[audio] Auto-detected AirPods input [0]: Joseph’s AirPods Max  @ 24000 Hz
+✅ Karen is live. Say 'stop' to end.
+
+🎤 Listening... speak naturally.
+📝 Heard you, transcribing when you pause...
+… I didn't catch that. Try again.
+
+🎤 Listening... speak naturally.
+📝 Heard you, transcribing when you pause...
+… I didn't catch that. Try again.
+
+🎤 Listening... speak naturally.
+📝 Heard you, transcribing when you pause...
+… I didn't catch that. Try again.
+
+🎤 Listening... speak naturally.
+📝 Heard you, transcribing when you pause...
+… I didn't catch that. Try again.
+
+🎤 Listening... speak naturally.
+📝 Heard you, transcribing when you pause...
+… I didn't catch that. Try again.
+
+🎤 Listening... speak naturally.
+📝 Heard you, transcribing when you pause...
+… I didn't catch that. Try again.
+
+🎤 Listening... speak naturally.
+📝 Heard you, transcribing when you pause...
+
+You: Thank you.
+/opt/homebrew/Cellar/python@3.14/3.14.3_1/Frameworks/Python.framework/Versions/3.14/lib/python3.14/multiprocessing/resource_tracker.py:396: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-gby879qf'}
+  warnings.warn(

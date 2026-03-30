@@ -70,8 +70,7 @@ def _sleep_safe(delay: float) -> None:
             f"Sync function called from async context with sleep({delay:.2f}s). "
             "This blocks the event loop. Consider using the async version instead."
         )
-        # Do a minimal sleep to avoid busy-waiting
-        time.sleep(min(0.01, delay))
+        return
     except RuntimeError:
         # No running loop, sync context is fine
         time.sleep(delay)

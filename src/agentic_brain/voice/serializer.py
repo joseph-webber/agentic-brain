@@ -45,7 +45,7 @@ import subprocess
 import threading
 import time
 import warnings
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from typing import Callable, List, Optional
 
@@ -93,6 +93,41 @@ def audit_no_concurrent_say() -> None:
         logger.debug("audit_no_concurrent_say: subprocess mocked, skipping")
 
 
+async def audit_no_concurrent_say_async() -> None:
+    """Async variant of :func:`audit_no_concurrent_say`.
+
+    Uses ``asyncio.create_subprocess_exec`` so async callers can perform the
+    overlap audit without blocking the event loop.
+    """
+    process: asyncio.subprocess.Process | None = None
+    try:
+        process = await asyncio.create_subprocess_exec(
+            "pgrep",
+            "-x",
+            "say",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, _stderr = await asyncio.wait_for(process.communicate(), timeout=2)
+        pids: List[str] = [
+            p for p in stdout.decode(errors="ignore").strip().splitlines() if p
+        ]
+        if len(pids) > 1:
+            raise RuntimeError(
+                f"CRITICAL: {len(pids)} concurrent 'say' processes detected "
+                f"(pids: {', '.join(pids)}).  Voice overlap is occurring!"
+            )
+    except FileNotFoundError:
+        logger.debug("audit_no_concurrent_say_async: pgrep unavailable, skipping")
+    except TimeoutError:
+        logger.debug("audit_no_concurrent_say_async: pgrep timed out, skipping")
+        if process is not None and process.returncode is None:
+            process.kill()
+            await process.wait()
+    except ValueError:
+        logger.debug("audit_no_concurrent_say_async: subprocess mocked, skipping")
+
+
 # ── Deprecation helper ───────────────────────────────────────────────
 
 
@@ -123,6 +158,7 @@ class VoiceMessage:
     emotion: VoiceEmotion = VoiceEmotion.NEUTRAL
     pause_after: Optional[float] = None
     lady: Optional[str] = None  # When set, route through spatial audio
+    sequence: int = 0
 
     def __post_init__(self) -> None:
         self.text = self.text.strip()
@@ -215,6 +251,7 @@ class VoiceSerializer:
         self._mode_switch_lock = threading.Lock()
         self._queue: list[_SpeechJob] = []
         self._pending_jobs: dict[str, _SpeechJob] = {}
+        self._submission_sequence = 0
         self._current_message: Optional[VoiceMessage] = None
         self._current_process: Optional[subprocess.Popen] = None
         self._job_pending = False
@@ -345,6 +382,21 @@ class VoiceSerializer:
             self._mode_switch_ready.set()
             self._mode_switch_lock.release()
 
+    @asynccontextmanager
+    async def mode_switch_async(self, timeout: float = 10.0):
+        await asyncio.to_thread(self._mode_switch_lock.acquire)
+        self._mode_switch_ready.clear()
+        try:
+            deadline = time.monotonic() + timeout
+            while self.is_speaking():
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("Timed out waiting for active speech to finish")
+                await asyncio.sleep(0.01)
+            yield
+        finally:
+            self._mode_switch_ready.set()
+            self._mode_switch_lock.release()
+
     def queue_size(self) -> int:
         if self._redis_queue is not None:
             try:
@@ -359,6 +411,7 @@ class VoiceSerializer:
         with self._queue_ready:
             self._queue.clear()
             self._pending_jobs.clear()
+            self._submission_sequence = 0
 
         if self._redis_queue is not None:
             try:
@@ -391,6 +444,15 @@ class VoiceSerializer:
             if self.queue_size() == 0 and not self.is_busy():
                 return True
             time.sleep(0.01)
+        return self.queue_size() == 0 and not self.is_busy()
+
+    async def wait_until_idle_async(self, timeout: float = 5.0) -> bool:
+        """Async variant of :meth:`wait_until_idle`."""
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if self.queue_size() == 0 and not self.is_busy():
+                return True
+            await asyncio.sleep(0.01)
         return self.queue_size() == 0 and not self.is_busy()
 
     def speak(
@@ -500,10 +562,13 @@ class VoiceSerializer:
         wait: bool = True,
     ) -> bool:
         """Run a speech job through the singleton queue."""
+        if message.sequence <= 0:
+            message.sequence = self._reserve_sequence()
         job = _SpeechJob(message=message, executor=executor or self._speak_with_say)
         with self._queue_ready:
             if self._redis_queue is None:
                 self._queue.append(job)
+                self._queue.sort(key=lambda queued_job: queued_job.message.sequence)
             else:
                 try:
                     queued_job = VoiceJob(
@@ -515,6 +580,7 @@ class VoiceSerializer:
                         emotion=message.emotion.value,
                         priority="normal",
                         pause_after=message.pause_after,
+                        sequence=message.sequence,
                     )
                     self._pending_jobs[queued_job.job_id] = job
                     self._redis_queue.enqueue(queued_job)
@@ -545,11 +611,19 @@ class VoiceSerializer:
         wait: bool = True,
     ) -> bool:
         """Async wrapper for a serialized speech job."""
+        if message.sequence <= 0:
+            message.sequence = self._reserve_sequence()
         loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             None,
             lambda: self.run_serialized(message, executor=executor, wait=wait),
         )
+
+    def _reserve_sequence(self) -> int:
+        """Allocate the next FIFO sequence number for a speech request."""
+        with self._queue_ready:
+            self._submission_sequence += 1
+            return self._submission_sequence
 
     def _worker_loop(self) -> None:
         if self._startup_silence_seconds > 0:
@@ -667,6 +741,7 @@ class VoiceSerializer:
                             volume=redis_job.volume,
                             emotion=VoiceEmotion(redis_job.emotion),
                             pause_after=redis_job.pause_after,
+                            sequence=redis_job.sequence,
                         ),
                         executor=self._speak_with_say,
                     )

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.josephwebber.brainvoice</string>
+    <key>CFBundleName</key>
+    <string>BrainVoice</string>
+    <key>CFBundleDisplayName</key>
+    <string>Brain Voice</string>
+    <key>CFBundleExecutable</key>
+    <string>BrainVoice</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSUIElement</key>
+    <false/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Brain Voice needs microphone to hear your voice commands. This is essential for hands-free control.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Brain Voice uses speech recognition to convert your voice to text commands.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Brain Voice needs to control other apps to execute your commands.</string>
+</dict>
+</plist>

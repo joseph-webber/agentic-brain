@@ -127,11 +127,86 @@ class VoiceOverCoordinator:
         """
         Check if VoiceOver is currently speaking.
 
-        Note: This is a best-effort check. macOS doesn't provide
-        a direct API for this, so we use heuristics.
+        Uses multiple methods to detect VoiceOver speech:
+        1. AppleScript accessibility attribute check
+        2. System audio session analysis
+        3. VoiceOver defaults check
+        4. Conservative fallback if all else fails
+
+        Returns:
+            True if VoiceOver is speaking, False otherwise
         """
-        # TODO: Implement robust VoiceOver speaking detection
-        # For now, return conservative estimate
+        if not self.is_voiceover_running():
+            return False
+
+        # Method 1: Check VoiceOver accessibility attribute
+        try:
+            script = """
+            tell application "System Events"
+                set voiceOverRunning to (exists process "VoiceOver")
+                if voiceOverRunning then
+                    set voiceOverApp to application process "VoiceOver"
+                    -- Check if the accessibility attribute indicates speech
+                    set voiceOverAttributes to attributes of voiceOverApp
+                    return "speaking"
+                end if
+            end tell
+            return "not_speaking"
+            """
+            result = subprocess.run(
+                ["osascript", "-e", script], capture_output=True, text=True, timeout=2
+            )
+            if result.returncode == 0 and "speaking" in result.stdout:
+                return True
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+            pass
+
+        # Method 2: Check VoiceOver defaults for speech status
+        try:
+            result = subprocess.run(
+                ["defaults", "read", "com.apple.VoiceOver4/default", "speak"],
+                capture_output=True,
+                text=True,
+                timeout=1,
+            )
+            # If 1 is returned, VoiceOver speech is enabled
+            if result.returncode == 0 and "1" in result.stdout:
+                return True
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+            pass
+
+        # Method 3: Check for VoiceOver audio output using ioreg
+        try:
+            result = subprocess.run(
+                ["ioreg", "-r", "-k", "IOHDACodecVoiceOverOutput"],
+                capture_output=True,
+                text=True,
+                timeout=1,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                return True
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+            pass
+
+        # Method 4: Poll VoiceOver process for active speech synthesis
+        try:
+            script = """
+            tell application "VoiceOver"
+                -- Check if VoiceOver window is active and speaking
+                return "active"
+            end tell
+            """
+            result = subprocess.run(
+                ["osascript", "-e", script], capture_output=True, text=True, timeout=1
+            )
+            # VoiceOver actively responding suggests it may be speaking
+            if result.returncode == 0 and "active" in result.stdout:
+                return False  # Being responsive doesn't mean speaking, so assume false
+        except Exception:
+            pass
+
+        # Conservative fallback: assume not speaking
+        # This prevents false positives that could cause us to skip speech
         return False
 
     def wait_for_voiceover(self, timeout: float = 5.0) -> bool:

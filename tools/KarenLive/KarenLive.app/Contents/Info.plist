@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>KarenLive</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.brain.karenlive</string>
+    <key>CFBundleName</key>
+    <string>Karen Live</string>
+    <key>CFBundleDisplayName</key>
+    <string>Karen Live</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Karen Live needs microphone access to hear your voice commands and transcribe them for AI processing.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Karen Live uses speech recognition to convert your spoken words into text for AI conversation.</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+</dict>
+</plist>

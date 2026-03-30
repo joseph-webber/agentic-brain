@@ -27,6 +27,7 @@ Usage::
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 import threading
@@ -62,6 +63,7 @@ class LiveVoiceMode:
         self._active = False
         self._interrupted = False
         self._lock = threading.Lock()
+        self._async_lock = asyncio.Lock()
         self._sentences_spoken: int = 0
         self._total_chars: int = 0
         self._start_time: Optional[float] = None
@@ -145,6 +147,40 @@ class LiveVoiceMode:
             return False
 
         return self._do_speak(chunk)
+
+    async def start_async(
+        self,
+        voice: Optional[str] = None,
+        rate: Optional[int] = None,
+    ) -> None:
+        """Async-safe variant of :meth:`start`."""
+        async with self._async_lock:
+            self.start(voice=voice, rate=rate)
+
+    async def stop_async(self) -> None:
+        """Async-safe variant of :meth:`stop`."""
+        async with self._async_lock:
+            await asyncio.to_thread(self.stop)
+
+    async def interrupt_async(self) -> None:
+        """Async-safe variant of :meth:`interrupt`."""
+        async with self._async_lock:
+            self.interrupt()
+
+    async def feed_async(self, text: str) -> int:
+        """Async-safe variant of :meth:`feed`."""
+        async with self._async_lock:
+            return await asyncio.to_thread(self.feed, text)
+
+    async def flush_async(self) -> bool:
+        """Async-safe variant of :meth:`flush`."""
+        async with self._async_lock:
+            return await asyncio.to_thread(self.flush)
+
+    async def status_async(self) -> Dict:
+        """Async-safe variant of :meth:`status`."""
+        async with self._async_lock:
+            return self.status()
 
     # ── Status ───────────────────────────────────────────────────────
 

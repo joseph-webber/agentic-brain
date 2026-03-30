@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.josephbrain.micrequestapp</string>
+    <key>CFBundleName</key>
+    <string>MicRequestApp</string>
+    <key>CFBundleDisplayName</key>
+    <string>Mic Permission Request</string>
+    <key>CFBundleExecutable</key>
+    <string>MicRequestApp</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleVersion</key>
+    <string>1.1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app requests microphone access so Brain can run talk_to_karen.py and record from your AirPods Max or Mac microphone.</string>
+    <key>LSUIElement</key>
+    <false/>
+</dict>
+</plist>
