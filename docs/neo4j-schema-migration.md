@@ -68,21 +68,21 @@ RETURN a, r, b
 Run in order, one at a time. Each is idempotent (uses MERGE).
 
 ```cypher
--- Step 1: Standardise HookEvent→Session to PART_OF only
+// Step 1: Standardise HookEvent→Session to PART_OF only
 MATCH (h:HookEvent)-[r:OCCURRED_IN|RELATED_TO|IN_SESSION]->(s:Session)
 MERGE (h)-[:PART_OF]->(s)
 DELETE r;
 
--- Step 2: Standardise Session→Topic to DISCUSSES only
+// Step 2: Standardise Session→Topic to DISCUSSES only
 MATCH (s:Session)-[r:RELATED_TO|COVERS]->(t:Topic)
 MERGE (s)-[:DISCUSSES]->(t)
 DELETE r;
 
--- Step 3: Remove Checkpoint→Topic DISCUSSES (rule violation)
+// Step 3: Remove Checkpoint→Topic DISCUSSES (rule violation)
 MATCH (c:Checkpoint)-[r:DISCUSSES]->(t:Topic)
 DELETE r;
 
--- Step 4: Add CONTINUES chain between consecutive Sessions
+// Step 4: Add CONTINUES chain between consecutive Sessions
 MATCH (s:Session)
 WHERE s.timestamp IS NOT NULL
 WITH s ORDER BY s.timestamp
@@ -102,7 +102,7 @@ MERGE (s1)-[:CONTINUES]->(s2);
 ## Verification Queries
 
 ```cypher
--- All should return 0
+// All should return 0
 MATCH (h:HookEvent)-[r:OCCURRED_IN|RELATED_TO|IN_SESSION]->(s:Session)
 RETURN count(r) AS leftover_hookevent_rels;
 
@@ -112,11 +112,11 @@ RETURN count(r) AS leftover_session_topic_rels;
 MATCH (c:Checkpoint)-[r:DISCUSSES]->(t:Topic)
 RETURN count(r) AS leftover_checkpoint_topic_rels;
 
--- Should return > 0
+// Should return > 0
 MATCH (s1:Session)-[r:CONTINUES]->(s2:Session)
 RETURN count(r) AS continues_count;
 
--- Full picture after migration
+// Full picture after migration
 MATCH (a)-[r]->(b)
 WHERE any(l IN labels(a) WHERE l IN ['HookEvent','Checkpoint','Session','Topic'])
   AND any(l IN labels(b) WHERE l IN ['HookEvent','Checkpoint','Session','Topic'])
