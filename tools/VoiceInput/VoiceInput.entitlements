@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Microphone access (required for AVAudioEngine input tap) -->
+    <key>com.apple.security.device.microphone</key>
+    <true/>
+
+    <!-- Audio input (belt-and-suspenders alongside microphone key) -->
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+
+    <!-- Allow running unsigned code / JIT — not needed here but harmless -->
+    <!-- <key>com.apple.security.cs.allow-jit</key><true/> -->
+</dict>
+</plist>

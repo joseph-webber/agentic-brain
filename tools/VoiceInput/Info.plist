@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Bundle identity -->
+    <key>CFBundleIdentifier</key>
+    <string>com.josephwebber.brain.voiceinput</string>
+    <key>CFBundleName</key>
+    <string>VoiceInput</string>
+    <key>CFBundleDisplayName</key>
+    <string>VoiceInput</string>
+    <key>CFBundleExecutable</key>
+    <string>VoiceInput</string>
+    <key>CFBundleVersion</key>
+    <string>1.0.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+
+    <!-- Minimum macOS version -->
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+
+    <!-- No Dock icon once permissions are granted — handled dynamically in code -->
+    <!-- LSUIElement is set at runtime based on permission state -->
+    <!-- <key>LSUIElement</key><true/> -->
+
+    <!-- Required: TCC privacy usage descriptions (shown in permission dialogs) -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>VoiceInput captures your voice so you can dictate commands to GitHub Copilot CLI without using a keyboard.</string>
+
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>VoiceInput uses on-device speech recognition to transcribe your voice commands privately and quickly.</string>
+
+    <!-- Tell the system this is a standard Cocoa application -->
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+
+    <!-- High-resolution display support -->
+    <key>NSHighResolutionCapable</key>
+    <true/>
+</dict>
+</plist>
