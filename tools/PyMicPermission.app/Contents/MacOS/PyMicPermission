@@ -1,0 +1,7 @@
+#!/bin/bash
+# PyMicPermission launcher — runs inside the .app bundle
+# TCC attributes the microphone request to this bundle (com.josephbrain.pymicpermission)
+# NOT to /opt/homebrew/bin/python3
+
+SCRIPT_DIR="$(cd "$(dirname "$0")/../Resources" && pwd)"
+exec /opt/homebrew/bin/python3 "$SCRIPT_DIR/mic_request.py" "$@"
