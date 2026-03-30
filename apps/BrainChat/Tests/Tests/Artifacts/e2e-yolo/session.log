@@ -1,0 +1,32 @@
+STEP: App launches
+SPEAK: G'day Joseph
+STEP: User presses space and speaks: Enable yolo mode
+USER: Enable yolo mode
+STEP: Transcription appears
+STEP: User requests YOLO mode
+SPEAK: YOLO mode enabled. I’ll announce every action.
+STEP: User presses space and speaks: Create a REST API
+USER: Create a REST API
+STEP: Transcription appears
+STEP: Creating FastAPI entrypoint
+SPEAK: Creating FastAPI entrypoint
+STEP: Creating API routes
+SPEAK: Creating API routes
+STEP: Saving dependencies
+SPEAK: Saving dependencies
+STEP: User presses space and speaks: Yolo off
+USER: Yolo off
+STEP: Transcription appears
+STEP: User disables YOLO mode
+SPEAK: YOLO mode off.
+
+TRANSCRIPT
+Karen: G'day Joseph
+Joseph: Enable yolo mode
+Karen: YOLO mode enabled. I’ll announce every action.
+Joseph: Create a REST API
+Karen: Creating FastAPI entrypoint
+Karen: Creating API routes
+Karen: Saving dependencies
+Joseph: Yolo off
+Karen: YOLO mode off.

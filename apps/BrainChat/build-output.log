@@ -1,0 +1,210 @@
+/Users/joe/brain/agentic-brain/apps/BrainChat/AirPodsManager.swift:104:13: warning: capture of 'changeHandler' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+102 |         stopMonitoring()
+103 |         monitoringTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+104 |             changeHandler()
+    |             |- warning: capture of 'changeHandler' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+    |             `- note: a function type must be marked '@Sendable' to conform to 'Sendable'
+105 |         }
+106 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/AudioSession.swift:135:87: warning: passing non-Sendable parameter 'completion' to function expecting a '@Sendable' closure
+128 |     }
+129 | 
+130 |     func play(buffer: AVAudioPCMBuffer, at time: AVAudioTime? = nil, completion: (() -> Void)? = nil) throws {
+    |                                                                      `- note: parameter 'completion' is implicitly non-Sendable
+131 |         if !audioEngine.isRunning {
+132 |             try audioEngine.start()
+133 |         }
+134 | 
+135 |         playbackNode.scheduleBuffer(buffer, at: time, options: [], completionHandler: completion)
+    |                                                                                       `- warning: passing non-Sendable parameter 'completion' to function expecting a '@Sendable' closure
+136 |         if !playbackNode.isPlaying {
+137 |             playbackNode.play()
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:13:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 11 |     @Published var speechRate: Float = 160.0
+ 12 | 
+ 13 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     private var delegate: SpeechDelegate?
+ 15 |     private var speechQueue: [String] = []
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:109:38: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+107 |     }
+108 | 
+109 |     func speechSynthesizer(_ sender: NSSpeechSynthesizer, didFinishSpeaking finishedSpeaking: Bool) {
+    |                                      `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+110 |         Task { @MainActor in
+111 |             manager?.didFinishSpeaking()
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:102:47: warning: 'NSSpeechSynthesizerDelegate' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+100 | }
+101 | 
+102 | private final class SpeechDelegate: NSObject, NSSpeechSynthesizerDelegate {
+    |                                               `- warning: 'NSSpeechSynthesizerDelegate' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+103 |     weak var manager: VoiceManager?
+104 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:27:21: warning: 'delegate' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 25 |     init() {
+ 26 |         delegate = SpeechDelegate(manager: self)
+ 27 |         synthesizer.delegate = delegate
+    |                     `- warning: 'delegate' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 28 |         loadVoices()
+ 29 |         selectVoice(named: selectedVoiceName)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:33:22: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 31 | 
+ 32 |     func loadVoices() {
+ 33 |         let voices = NSSpeechSynthesizer.availableVoices.compactMap { voiceID -> VoiceInfo? in
+    |                      `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 34 |             guard
+ 35 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:33:42: warning: 'availableVoices' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 31 | 
+ 32 |     func loadVoices() {
+ 33 |         let voices = NSSpeechSynthesizer.availableVoices.compactMap { voiceID -> VoiceInfo? in
+    |                                          `- warning: 'availableVoices' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 34 |             guard
+ 35 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:35:34: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 33 |         let voices = NSSpeechSynthesizer.availableVoices.compactMap { voiceID -> VoiceInfo? in
+ 34 |             guard
+ 35 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+    |                                  `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 36 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+ 37 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:35:54: warning: 'attributes(forVoice:)' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 33 |         let voices = NSSpeechSynthesizer.availableVoices.compactMap { voiceID -> VoiceInfo? in
+ 34 |             guard
+ 35 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+    |                                                      `- warning: 'attributes(forVoice:)' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 36 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+ 37 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:36:39: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 34 |             guard
+ 35 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+ 36 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+    |                                       `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 37 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+ 38 |             else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:36:59: warning: 'VoiceAttributeKey' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 34 |             guard
+ 35 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+ 36 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+    |                                                           `- warning: 'VoiceAttributeKey' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 37 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+ 38 |             else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:36:77: warning: 'name' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 34 |             guard
+ 35 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+ 36 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+    |                                                                             `- warning: 'name' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 37 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+ 38 |             else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:37:43: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 35 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+ 36 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+ 37 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+    |                                           `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 38 |             else {
+ 39 |                 return nil
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:37:63: warning: 'VoiceAttributeKey' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 35 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+ 36 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+ 37 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+    |                                                               `- warning: 'VoiceAttributeKey' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 38 |             else {
+ 39 |                 return nil
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:57:25: warning: 'setVoice' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 55 |             $0.name.localizedCaseInsensitiveContains(name.replacingOccurrences(of: " (Premium)", with: ""))
+ 56 |         }) {
+ 57 |             synthesizer.setVoice(NSSpeechSynthesizer.VoiceName(rawValue: voice.id))
+    |                         `- warning: 'setVoice' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 58 |         } else if let karenVoice = NSSpeechSynthesizer.availableVoices.first(where: { $0.rawValue.lowercased().contains("karen") }) {
+ 59 |             synthesizer.setVoice(karenVoice)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:57:34: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 55 |             $0.name.localizedCaseInsensitiveContains(name.replacingOccurrences(of: " (Premium)", with: ""))
+ 56 |         }) {
+ 57 |             synthesizer.setVoice(NSSpeechSynthesizer.VoiceName(rawValue: voice.id))
+    |                                  `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 58 |         } else if let karenVoice = NSSpeechSynthesizer.availableVoices.first(where: { $0.rawValue.lowercased().contains("karen") }) {
+ 59 |             synthesizer.setVoice(karenVoice)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:57:54: warning: 'VoiceName' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 55 |             $0.name.localizedCaseInsensitiveContains(name.replacingOccurrences(of: " (Premium)", with: ""))
+ 56 |         }) {
+ 57 |             synthesizer.setVoice(NSSpeechSynthesizer.VoiceName(rawValue: voice.id))
+    |                                                      `- warning: 'VoiceName' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 58 |         } else if let karenVoice = NSSpeechSynthesizer.availableVoices.first(where: { $0.rawValue.lowercased().contains("karen") }) {
+ 59 |             synthesizer.setVoice(karenVoice)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:58:36: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 56 |         }) {
+ 57 |             synthesizer.setVoice(NSSpeechSynthesizer.VoiceName(rawValue: voice.id))
+ 58 |         } else if let karenVoice = NSSpeechSynthesizer.availableVoices.first(where: { $0.rawValue.lowercased().contains("karen") }) {
+    |                                    `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 59 |             synthesizer.setVoice(karenVoice)
+ 60 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:58:56: warning: 'availableVoices' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 56 |         }) {
+ 57 |             synthesizer.setVoice(NSSpeechSynthesizer.VoiceName(rawValue: voice.id))
+ 58 |         } else if let karenVoice = NSSpeechSynthesizer.availableVoices.first(where: { $0.rawValue.lowercased().contains("karen") }) {
+    |                                                        `- warning: 'availableVoices' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 59 |             synthesizer.setVoice(karenVoice)
+ 60 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:59:25: warning: 'setVoice' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 57 |             synthesizer.setVoice(NSSpeechSynthesizer.VoiceName(rawValue: voice.id))
+ 58 |         } else if let karenVoice = NSSpeechSynthesizer.availableVoices.first(where: { $0.rawValue.lowercased().contains("karen") }) {
+ 59 |             synthesizer.setVoice(karenVoice)
+    |                         `- warning: 'setVoice' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 60 |         }
+ 61 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:72:21: warning: 'startSpeaking' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 70 |         speechQueue.removeAll()
+ 71 |         synthesizer.rate = speechRate
+ 72 |         synthesizer.startSpeaking(text)
+    |                     `- warning: 'startSpeaking' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 73 |         isSpeaking = true
+ 74 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:77:21: warning: 'stopSpeaking()' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 75 | 
+ 76 |     func stop() {
+ 77 |         synthesizer.stopSpeaking()
+    |                     `- warning: 'stopSpeaking()' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 78 |         speechQueue.removeAll()
+ 79 |         isProcessingQueue = false
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:88:21: warning: 'startSpeaking' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 86 |         let text = speechQueue.removeFirst()
+ 87 |         synthesizer.rate = speechRate
+ 88 |         synthesizer.startSpeaking(text)
+    |                     `- warning: 'startSpeaking' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 89 |         isSpeaking = true
+ 90 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceBridge.swift:150:17: warning: reference to captured var 'self' in concurrently-executing code [#SendableClosureCaptures]
+148 |         socket.onClose = { [weak self] id in
+149 |             self?.queue.async {
+150 |                 self?.connections.removeValue(forKey: id)
+    |                 `- warning: reference to captured var 'self' in concurrently-executing code [#SendableClosureCaptures]
+151 |             }
+152 |         }
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[#SendableClosureCaptures]: <https://docs.swift.org/compiler/documentation/diagnostics/sendable-closure-captures>
+built /Users/joe/brain/agentic-brain/apps/BrainChat/build/Brain Chat.app

@@ -1,0 +1,40 @@
+name: BrainChat E2E
+
+on:
+  push:
+    paths:
+      - "apps/BrainChat/**"
+      - ".github/workflows/e2e.yml"
+  pull_request:
+    paths:
+      - "apps/BrainChat/**"
+      - ".github/workflows/e2e.yml"
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: macos-14
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Prepare artifact directories
+        run: mkdir -p apps/BrainChat/Tests/Artifacts
+
+      - name: Run full BrainChat E2E suite
+        run: swift test --package-path apps/BrainChat/Tests --no-parallel
+
+      - name: Upload E2E artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brainchat-e2e-artifacts
+          path: |
+            apps/BrainChat/Tests/Artifacts
+            apps/BrainChat/Tests/.build/debug/*.xctest
+          if-no-files-found: warn

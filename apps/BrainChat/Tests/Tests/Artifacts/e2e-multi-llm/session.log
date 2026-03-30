@@ -1,0 +1,41 @@
+STEP: App launches
+SPEAK: G'day Joseph
+STEP: Switched LLM provider to Claude
+STEP: User presses space and speaks: Test Claude
+USER: Test Claude
+STEP: Transcription appears
+STEP: AI processes and shows thinking state
+SPEAK: Claude handled: Test Claude
+STEP: Message appears in conversation history
+STEP: Switched LLM provider to GPT
+STEP: User presses space and speaks: Test GPT
+USER: Test GPT
+STEP: Transcription appears
+STEP: AI processes and shows thinking state
+SPEAK: GPT handled: Test GPT
+STEP: Message appears in conversation history
+STEP: Switched LLM provider to Ollama
+STEP: User presses space and speaks: Test Ollama
+USER: Test Ollama
+STEP: Transcription appears
+STEP: AI processes and shows thinking state
+SPEAK: Ollama handled: Test Ollama
+STEP: Message appears in conversation history
+STEP: Switched LLM provider to Copilot
+STEP: User presses space and speaks: Test Copilot
+USER: Test Copilot
+STEP: Transcription appears
+STEP: AI processes and shows thinking state
+SPEAK: Copilot handled: Test Copilot
+STEP: Message appears in conversation history
+
+TRANSCRIPT
+Karen: G'day Joseph
+Joseph: Test Claude
+Karen: Claude handled: Test Claude
+Joseph: Test GPT
+Karen: GPT handled: Test GPT
+Joseph: Test Ollama
+Karen: Ollama handled: Test Ollama
+Joseph: Test Copilot
+Karen: Copilot handled: Test Copilot

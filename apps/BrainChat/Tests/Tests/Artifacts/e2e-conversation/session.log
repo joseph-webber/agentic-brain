@@ -1,0 +1,45 @@
+STEP: App launches
+SPEAK: G'day Joseph
+STEP: User presses space and speaks: Hello Karen
+USER: Hello Karen
+STEP: Transcription appears
+STEP: AI processes and shows thinking state
+SPEAK: G'day Joseph, lovely to hear from you.
+STEP: Message appears in conversation history
+STEP: User presses space and speaks: How are you today?
+USER: How are you today?
+STEP: Transcription appears
+STEP: AI processes and shows thinking state
+SPEAK: I’m feeling sharp and ready to help.
+STEP: Message appears in conversation history
+STEP: User presses space and speaks: What can you do?
+USER: What can you do?
+STEP: Transcription appears
+STEP: AI processes and shows thinking state
+SPEAK: I can chat, code, and drive tasks step by step.
+STEP: Message appears in conversation history
+STEP: User presses space and speaks: Tell me a quick joke
+USER: Tell me a quick joke
+STEP: Transcription appears
+STEP: AI processes and shows thinking state
+SPEAK: Why do programmers mix up Halloween and Christmas? Because OCT 31 equals DEC 25.
+STEP: Message appears in conversation history
+STEP: User presses space and speaks: Thanks Karen
+USER: Thanks Karen
+STEP: Transcription appears
+STEP: AI processes and shows thinking state
+SPEAK: Always a pleasure, Joseph.
+STEP: Message appears in conversation history
+
+TRANSCRIPT
+Karen: G'day Joseph
+Joseph: Hello Karen
+Karen: G'day Joseph, lovely to hear from you.
+Joseph: How are you today?
+Karen: I’m feeling sharp and ready to help.
+Joseph: What can you do?
+Karen: I can chat, code, and drive tasks step by step.
+Joseph: Tell me a quick joke
+Karen: Why do programmers mix up Halloween and Christmas? Because OCT 31 equals DEC 25.
+Joseph: Thanks Karen
+Karen: Always a pleasure, Joseph.

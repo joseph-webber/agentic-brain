@@ -68,3 +68,6 @@ user_profile.json
 .env.user
 .env.local
 .env.*.local
+
+# BrainChat generated E2E artifacts
+apps/BrainChat/Tests/Artifacts/

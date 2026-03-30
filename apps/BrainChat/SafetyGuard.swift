@@ -56,7 +56,7 @@ struct AuditEntry: Identifiable, Codable, Sendable {
 
 // MARK: - SafetyGuard
 
-final class SafetyGuard {
+final class SafetyGuard: @unchecked Sendable {
     static let shared = SafetyGuard()
 
     // MARK: - Blocked Patterns (NEVER allowed, even in YOLO)

@@ -1,0 +1,221 @@
+name: BrainChat Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/BrainChat/**'
+      - '.github/workflows/brainchat-test.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/BrainChat/**'
+      - '.github/workflows/brainchat-test.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: brainchat-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Unit & Integration Tests
+    runs-on: macos-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: |
+          echo "=== Swift ==="
+          swift --version
+          echo ""
+          echo "=== Xcode ==="
+          xcodebuild -version
+
+      - name: Resolve dependencies
+        working-directory: apps/BrainChat
+        run: swift package resolve
+
+      - name: Build library
+        working-directory: apps/BrainChat
+        run: swift build 2>&1 | tail -20
+
+      - name: Run tests
+        working-directory: apps/BrainChat
+        run: |
+          swift test --parallel 2>&1 | tee test-output.txt
+          TEST_EXIT=$?
+          echo ""
+          echo "=== Test Summary ==="
+          grep -E '(Test Suite|Test Case|Executed|passed|failed)' test-output.txt || true
+          exit $TEST_EXIT
+
+      - name: Parse test results
+        if: always()
+        working-directory: apps/BrainChat
+        run: |
+          echo "## BrainChat Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f test-output.txt ]; then
+            PASSED=$(grep -c '\bpassed\b' test-output.txt 2>/dev/null || echo "0")
+            FAILED=$(grep -c '\bfailed\b' test-output.txt 2>/dev/null || echo "0")
+            echo "| Status | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Passed | $PASSED |" >> $GITHUB_STEP_SUMMARY
+            echo "| Failed | $FAILED |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            if [ "$FAILED" != "0" ]; then
+              echo "### Failed Tests" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              grep -A 5 'failed' test-output.txt >> $GITHUB_STEP_SUMMARY || true
+              echo '```' >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+  accessibility-audit:
+    name: Accessibility Audit
+    runs-on: macos-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Audit accessibility labels
+        working-directory: apps/BrainChat
+        run: |
+          echo "=== Accessibility Audit ==="
+          echo ""
+
+          ISSUES=0
+          TOTAL_FILES=0
+
+          for f in *.swift; do
+            [ -f "$f" ] || continue
+            TOTAL_FILES=$((TOTAL_FILES + 1))
+
+            # Check for Button without accessibilityLabel
+            BUTTONS=$(grep -c 'Button(' "$f" 2>/dev/null || true)
+            A11Y_LABELS=$(grep -c 'accessibilityLabel\|\.accessibilityLabel\|aria-label\|\.help(' "$f" 2>/dev/null || true)
+
+            # Check for Image without accessibility
+            IMAGES=$(grep -c 'Image(' "$f" 2>/dev/null || true)
+            IMG_A11Y=$(grep -c 'decorative\|accessibilityLabel\|accessibilityHidden' "$f" 2>/dev/null || true)
+
+            if [ "$BUTTONS" -gt 0 ] && [ "$A11Y_LABELS" -eq 0 ]; then
+              echo "WARNING: $f has $BUTTONS Button(s) but no accessibility labels"
+              ISSUES=$((ISSUES + 1))
+            fi
+
+            if [ "$IMAGES" -gt 0 ] && [ "$IMG_A11Y" -eq 0 ]; then
+              echo "WARNING: $f has $IMAGES Image(s) without accessibility info"
+              ISSUES=$((ISSUES + 1))
+            fi
+          done
+
+          echo ""
+          echo "Files scanned: $TOTAL_FILES"
+          echo "Issues found: $ISSUES"
+
+          # Check for VoiceOver support patterns
+          echo ""
+          echo "=== VoiceOver Support Check ==="
+          ANNOUNCEMENT=$(grep -rl 'UIAccessibility.post\|NSAccessibility\|accessibilityElement\|AccessibilityFocusState\|accessibilityAction' *.swift 2>/dev/null | wc -l | tr -d ' ')
+          echo "Files with VoiceOver support: $ANNOUNCEMENT"
+
+          FOCUS_MGMT=$(grep -rl 'FocusState\|focusable\|focused\|AccessibilityFocusState' *.swift 2>/dev/null | wc -l | tr -d ' ')
+          echo "Files with focus management: $FOCUS_MGMT"
+
+          KEYBOARD=$(grep -rl 'keyboardShortcut\|keyDown\|keyUp\|KeyEventHandler\|onKeyPress' *.swift 2>/dev/null | wc -l | tr -d ' ')
+          echo "Files with keyboard support: $KEYBOARD"
+
+          echo ""
+          echo "## Accessibility Audit" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Files scanned | $TOTAL_FILES |" >> $GITHUB_STEP_SUMMARY
+          echo "| Label issues | $ISSUES |" >> $GITHUB_STEP_SUMMARY
+          echo "| VoiceOver support | $ANNOUNCEMENT files |" >> $GITHUB_STEP_SUMMARY
+          echo "| Focus management | $FOCUS_MGMT files |" >> $GITHUB_STEP_SUMMARY
+          echo "| Keyboard support | $KEYBOARD files |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check accessibility description coverage
+        working-directory: apps/BrainChat
+        run: |
+          echo "=== Checking accessibilityDescription on models ==="
+
+          # ChatMessage must have accessibilityDescription
+          if grep -q 'accessibilityDescription' Models.swift; then
+            echo "ChatMessage: accessibilityDescription present"
+          else
+            echo "ERROR: ChatMessage missing accessibilityDescription"
+            exit 1
+          fi
+
+          # Check for semantic labels on system names
+          SYSTEM_NAMES=$(grep -c 'systemName:' *.swift 2>/dev/null || echo "0")
+          echo "SF Symbols used: $SYSTEM_NAMES"
+          echo "Verify each has an accessibility label in context."
+
+  compile-check:
+    name: Compile All Sources
+    runs-on: macos-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build SPM library
+        working-directory: apps/BrainChat
+        run: |
+          echo "=== Building BrainChatLib (SPM) ==="
+          swift build 2>&1
+          echo "SPM library compiles successfully"
+
+      - name: Type-check app sources
+        working-directory: apps/BrainChat
+        continue-on-error: true
+        run: |
+          echo "=== Type-checking all Swift app sources ==="
+
+          SWIFT_FILES=$(find . -maxdepth 1 -name '*.swift' ! -name 'Package.swift' | sort)
+          FILE_COUNT=$(echo "$SWIFT_FILES" | wc -l | tr -d ' ')
+          echo "Source files: $FILE_COUNT"
+
+          SDK=$(xcrun --show-sdk-path)
+
+          swiftc \
+            -typecheck \
+            -target arm64-apple-macosx14.0 \
+            -sdk "$SDK" \
+            -framework SwiftUI \
+            -framework AppKit \
+            -framework Speech \
+            -framework AVFoundation \
+            -framework Foundation \
+            -framework Security \
+            -framework CoreAudio \
+            -framework IOBluetooth \
+            -swift-version 5 \
+            $SWIFT_FILES 2>&1 | tee typecheck-output.txt
+
+          ERRORS=$(grep -c 'error:' typecheck-output.txt 2>/dev/null || echo "0")
+          WARNINGS=$(grep -c 'warning:' typecheck-output.txt 2>/dev/null || echo "0")
+
+          echo ""
+          echo "Errors: $ERRORS"
+          echo "Warnings: $WARNINGS"
+
+          echo "## Source Type Check" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Source files | $FILE_COUNT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Errors | $ERRORS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Warnings | $WARNINGS |" >> $GITHUB_STEP_SUMMARY

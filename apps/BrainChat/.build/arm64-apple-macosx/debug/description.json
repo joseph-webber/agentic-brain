@@ -1,0 +1,931 @@
+{
+  "builtTestProducts" : [
+    {
+      "binaryPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.xctest/Contents/MacOS/BrainChatPackageTests",
+      "packagePath" : "/Users/joe/brain/agentic-brain/apps/BrainChat",
+      "productName" : "BrainChatPackageTests"
+    }
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.BrainChatLib-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/sources",
+      "importPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AIManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/APIKeyManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/ClaudeAPI.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/GeminiClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/GrokClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMRouter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Models.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/OllamaAPI.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/OpenAIAPI.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "BrainChatLib",
+      "moduleOutputPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules/BrainChatLib.swiftmodule",
+      "objects" : [
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/AIManager.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/APIKeyManager.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/ClaudeAPI.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/CopilotBridge.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/CopilotClient.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/GeminiClient.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/GrokClient.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/LLMRouter.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/Models.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/OllamaAPI.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/OpenAIAPI.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j8",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/include/BrainChatLib-Swift.h",
+        "-color-diagnostics",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "brainchat"
+      ],
+      "outputFileMapPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/AIManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/APIKeyManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/ClaudeAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/CopilotBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/CopilotClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/GeminiClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/GrokClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/LLMRouter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/Models.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/OllamaAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/OpenAIAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules/BrainChatLib.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/AIManager.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/APIKeyManager.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/ClaudeAPI.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotBridge.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotClient.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/GeminiClient.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/GrokClient.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMRouter.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Models.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/OllamaAPI.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/OpenAIAPI.swift"
+      ],
+      "tempsPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.BrainChatPackageTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build/sources",
+      "importPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.derived/runner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules/BrainChatTests.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "BrainChatPackageTests",
+      "moduleOutputPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules/BrainChatPackageTests.swiftmodule",
+      "objects" : [
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build/runner.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j8",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build/include/BrainChatPackageTests-Swift.h",
+        "-color-diagnostics",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "brainchat"
+      ],
+      "outputFileMapPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules/BrainChatPackageTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.derived/runner.swift"
+      ],
+      "tempsPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.BrainChatTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/sources",
+      "importPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ClaudeTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/CopilotTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GPTTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GeminiTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GrokTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LLMRouterTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LLMTestSupport.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/OllamaTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules/BrainChatLib.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "BrainChatTests",
+      "moduleOutputPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules/BrainChatTests.swiftmodule",
+      "objects" : [
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/ClaudeTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/CopilotTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/GPTTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/GeminiTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/GrokTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/LLMRouterTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/LLMTestSupport.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/OllamaTests.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j8",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-color-diagnostics",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "brainchat"
+      ],
+      "outputFileMapPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/ClaudeTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/CopilotTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/GPTTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/GeminiTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/GrokTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/LLMRouterTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/LLMTestSupport.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/OllamaTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules/BrainChatTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ClaudeTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/CopilotTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GPTTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GeminiTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GrokTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LLMRouterTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LLMTestSupport.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/OllamaTests.swift"
+      ],
+      "tempsPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "BrainChatLib" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "BrainChatLib",
+      "-package-name",
+      "brainchat",
+      "-c",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/AIManager.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/APIKeyManager.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/ClaudeAPI.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotBridge.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotClient.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/GeminiClient.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/GrokClient.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMRouter.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Models.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/OllamaAPI.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/OpenAIAPI.swift",
+      "-I",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j8",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/include/BrainChatLib-Swift.h",
+      "-color-diagnostics",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "brainchat",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "BrainChatPackageTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "BrainChatPackageTests",
+      "-package-name",
+      "brainchat",
+      "-c",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.derived/runner.swift",
+      "-I",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j8",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build/include/BrainChatPackageTests-Swift.h",
+      "-color-diagnostics",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "brainchat",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "BrainChatTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "BrainChatTests",
+      "-package-name",
+      "brainchat",
+      "-c",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ClaudeTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/CopilotTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GPTTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GeminiTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GrokTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LLMRouterTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LLMTestSupport.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/OllamaTests.swift",
+      "-I",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j8",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-color-diagnostics",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "brainchat",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "BrainChatLib" : [
+
+    ],
+    "BrainChatPackageTests" : [
+      "BrainChatTests",
+      "BrainChatLib"
+    ],
+    "BrainChatTests" : [
+      "BrainChatLib"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+    "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.derived/runner.swift" : {
+      "inputs" : [
+
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.derived/runner.swift"
+        }
+      ]
+    }
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AIManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/APIKeyManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/ClaudeAPI.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/GeminiClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/GrokClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMRouter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Models.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/OllamaAPI.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/OpenAIAPI.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/sources"
+    },
+    "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.derived/runner.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build/sources"
+    },
+    "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/AIManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/APIKeyManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/ClaudeAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/CopilotBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/CopilotClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/GeminiClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/GrokClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/LLMRouter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/Models.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/OllamaAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatLib.build/OpenAIAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/ClaudeTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/CopilotTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/GPTTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/GeminiTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/GrokTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/LLMRouterTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/LLMTestSupport.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/OllamaTests.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatPackageTests.product/Objects.LinkFileList"
+    },
+    "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ClaudeTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/CopilotTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GPTTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GeminiTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GrokTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LLMRouterTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LLMTestSupport.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/OllamaTests.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/sources"
+    },
+    "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}
