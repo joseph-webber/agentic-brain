@@ -1,0 +1,112 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "PackageStructure": ["<PackageStructure>"]
+  "VoiceTestLib-arm64-apple-macosx-debug.module": ["<VoiceTestLib-arm64-apple-macosx-debug.module>"]
+  "VoiceTests-arm64-apple-macosx-debug.module": ["<VoiceTests-arm64-apple-macosx-debug.module>"]
+  "VoiceTestsPackageTests-arm64-apple-macosx-debug.module": ["<VoiceTestsPackageTests-arm64-apple-macosx-debug.module>"]
+  "VoiceTestsPackageTests-arm64-apple-macosx-debug.test": ["<VoiceTestsPackageTests-arm64-apple-macosx-debug.test>"]
+  "main": ["<VoiceTestLib-arm64-apple-macosx-debug.module>"]
+  "test": ["<VoiceTestLib-arm64-apple-macosx-debug.module>","<VoiceTests-arm64-apple-macosx-debug.module>","<VoiceTestsPackageTests-arm64-apple-macosx-debug.test>"]
+default: "main"
+nodes:
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Sources/VoiceTestLib/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Tests/VoiceTests/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Sources/VoiceTestLib/VoiceTestLib.swift"]
+    outputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/sources"]
+    description: "Write auxiliary file /Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/sources"
+
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Tests/VoiceTests/AudioDeviceTests.swift","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Tests/VoiceTests/EndToEndVoiceTests.swift","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Tests/VoiceTests/VoiceIntegrationTests.swift","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Tests/VoiceTests/VoiceMocks.swift"]
+    outputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/sources"]
+    description: "Write auxiliary file /Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/sources"
+
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.derived/runner.swift"]
+    outputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/sources"]
+    description: "Write auxiliary file /Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/sources"
+
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.derived/runner.swift":
+    tool: test-entry-point-tool
+    inputs: []
+    outputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.derived/runner.swift"]
+
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.product/Objects.LinkFileList":
+    tool: write-auxiliary-file
+    inputs: ["<link-file-list>","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/VoiceTestLib.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/AudioDeviceTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/EndToEndVoiceTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/VoiceIntegrationTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/VoiceMocks.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/runner.swift.o"]
+    outputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.product/Objects.LinkFileList"]
+    description: "Write auxiliary file /Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.product/Objects.LinkFileList"
+
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"]
+    outputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+
+  "<VoiceTestLib-arm64-apple-macosx-debug.module>":
+    tool: phony
+    inputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/VoiceTestLib.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTestLib.swiftmodule"]
+    outputs: ["<VoiceTestLib-arm64-apple-macosx-debug.module>"]
+
+  "<VoiceTests-arm64-apple-macosx-debug.module>":
+    tool: phony
+    inputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/AudioDeviceTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/EndToEndVoiceTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/VoiceIntegrationTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/VoiceMocks.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTests.swiftmodule"]
+    outputs: ["<VoiceTests-arm64-apple-macosx-debug.module>"]
+
+  "<VoiceTestsPackageTests-arm64-apple-macosx-debug.module>":
+    tool: phony
+    inputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/runner.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTestsPackageTests.swiftmodule"]
+    outputs: ["<VoiceTestsPackageTests-arm64-apple-macosx-debug.module>"]
+
+  "<VoiceTestsPackageTests-arm64-apple-macosx-debug.test>":
+    tool: phony
+    inputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.xctest/Contents/MacOS/VoiceTestsPackageTests"]
+    outputs: ["<VoiceTestsPackageTests-arm64-apple-macosx-debug.test>"]
+
+  "C.VoiceTestLib-arm64-apple-macosx-debug.module":
+    tool: shell
+    inputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Sources/VoiceTestLib/VoiceTestLib.swift","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/sources"]
+    outputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/VoiceTestLib.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTestLib.swiftmodule"]
+    description: "Compiling Swift Module 'VoiceTestLib' (1 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","VoiceTestLib","-emit-dependencies","-emit-module","-emit-module-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTestLib.swiftmodule","-output-file-map","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/output-file-map.json","-parse-as-library","-incremental","-c","@/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/sources","-I","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx14.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-index-store-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-j8","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/include/VoiceTestLib-Swift.h","-swift-version","5","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","voicetests"]
+
+  "C.VoiceTests-arm64-apple-macosx-debug.module":
+    tool: shell
+    inputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Tests/VoiceTests/AudioDeviceTests.swift","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Tests/VoiceTests/EndToEndVoiceTests.swift","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Tests/VoiceTests/VoiceIntegrationTests.swift","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Tests/VoiceTests/VoiceMocks.swift","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTestLib.swiftmodule","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/sources"]
+    outputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/AudioDeviceTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/EndToEndVoiceTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/VoiceIntegrationTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/VoiceMocks.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTests.swiftmodule"]
+    description: "Compiling Swift Module 'VoiceTests' (4 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","VoiceTests","-emit-dependencies","-emit-module","-emit-module-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTests.swiftmodule","-output-file-map","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/output-file-map.json","-parse-as-library","-incremental","-c","@/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/sources","-I","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx14.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-index-store-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-Xfrontend","-enable-cross-import-overlays","-j8","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-swift-version","5","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","voicetests"]
+
+  "C.VoiceTestsPackageTests-arm64-apple-macosx-debug.module":
+    tool: shell
+    inputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.derived/runner.swift","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTests.swiftmodule","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/sources"]
+    outputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/runner.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTestsPackageTests.swiftmodule"]
+    description: "Compiling Swift Module 'VoiceTestsPackageTests' (1 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","VoiceTestsPackageTests","-emit-dependencies","-emit-module","-emit-module-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTestsPackageTests.swiftmodule","-output-file-map","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/output-file-map.json","-parse-as-library","-incremental","-c","@/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/sources","-I","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx14.0","-incremental","-enable-batch-mode","-serialize-diagnostics","-index-store-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/index/store","-Onone","-enable-testing","-Xfrontend","-enable-cross-import-overlays","-j8","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/include/VoiceTestsPackageTests-Swift.h","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","voicetests"]
+
+  "C.VoiceTestsPackageTests-arm64-apple-macosx-debug.test":
+    tool: shell
+    inputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestLib.build/VoiceTestLib.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/AudioDeviceTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/EndToEndVoiceTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/VoiceIntegrationTests.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTests.build/VoiceMocks.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/runner.swift.o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.product/Objects.LinkFileList"]
+    outputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.xctest/Contents/MacOS/VoiceTestsPackageTests"]
+    description: "Linking ./.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.xctest/Contents/MacOS/VoiceTestsPackageTests"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-L","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug","-o","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.xctest/Contents/MacOS/VoiceTestsPackageTests","-module-name","VoiceTestsPackageTests","-Xlinker","-no_warn_duplicate_libraries","-Xlinker","-bundle","-Xlinker","-rpath","-Xlinker","@loader_path/../../../","@/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.product/Objects.LinkFileList","-Xlinker","-rpath","-Xlinker","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx","-target","arm64-apple-macosx14.0","-Xlinker","-add_ast_path","-Xlinker","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTestLib.swiftmodule","-Xlinker","-add_ast_path","-Xlinker","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTests.swiftmodule","-Xlinker","-add_ast_path","-Xlinker","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/Modules/VoiceTestsPackageTests.swiftmodule","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Sources/VoiceTestLib/","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Tests/VoiceTests/","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Package.swift","/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+

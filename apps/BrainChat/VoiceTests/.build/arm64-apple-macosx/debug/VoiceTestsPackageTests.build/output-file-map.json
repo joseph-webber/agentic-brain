@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/primary.swiftdeps"
+  },
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/runner.d",
+    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceTests/.build/arm64-apple-macosx/debug/VoiceTestsPackageTests.build/runner.dia"
+  }
+}
