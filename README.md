@@ -1217,6 +1217,43 @@ docker compose up -d --build
 pip install agentic-brain
 ```
 
+## ⚙️ Configuration
+
+### Quick Setup
+
+```bash
+cp .env.example .env
+cp .env.docker.example .env.docker
+# Edit files and add your API keys
+```
+
+### Free LLM Providers (No Cost!)
+
+| Provider | Setup URL | Notes |
+|----------|-----------|-------|
+| **Ollama** | https://ollama.ai | Local, private, no signup required |
+| **Groq** | https://console.groq.com | Fastest, 30 req/min free tier |
+| **Google Gemini** | https://aistudio.google.com/apikey | 1M tokens/day free |
+
+### Example `.env` Setup
+
+```bash
+# LLM Provider (choose one)
+LLM_PROVIDER=ollama                    # Local LLM (no cost)
+# LLM_PROVIDER=groq                    # Cloud LLM (fast, free tier)
+# LLM_PROVIDER=gemini                  # Google Gemini (free tier)
+
+# API Keys (optional, depends on provider)
+GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxx  # Get from https://console.groq.com
+GEMINI_API_KEY=AIzaxxxxxxxxxxxxxxxxxxxx  # Get from https://aistudio.google.com
+
+# Database
+NEO4J_PASSWORD=Brain2026
+REDIS_PASSWORD=BrainRedis2026
+```
+
+**For complete configuration details, see [Environment Setup Guide](docs/ENV_SETUP.md)**
+
 ## 🌐 Services & Ports
 
 Once installed and running, access these services:
