@@ -1,8 +1,8 @@
 # =============================================================================
-# Neo4j 2026.02.0 with GDS 2.27.0 and APOC
+# Neo4j 2026.02.3 with GDS 2.27.0 and APOC
 # =============================================================================
-# This Dockerfile ensures GDS is properly installed for Neo4j 2026.02.0
-# Works on Windows, macOS, and Linux
+# This Dockerfile ensures GDS is properly installed for Neo4j 2026.02.3
+# Works on Windows, macOS, and Linux (including corporate proxies)
 # =============================================================================
 
 FROM neo4j:2026.02.3-community
@@ -10,14 +10,14 @@ FROM neo4j:2026.02.3-community
 # Set working directory
 WORKDIR /tmp
 
-# Install curl for downloading GDS JAR
+# Install curl and ca-certificates for downloading GDS JAR
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Download GDS 2.27.0 JAR from GitHub releases
-# Use set -e to ensure build fails if download fails
-RUN curl -fL -o graph-data-science-2.27.0.jar \
+# Use -k to skip SSL verification for corporate proxies
+RUN curl -fLk -o graph-data-science-2.27.0.jar \
     https://github.com/neo4j/graph-data-science/releases/download/2.27.0/neo4j-graph-data-science-2.27.0.jar && \
     [ -f graph-data-science-2.27.0.jar ] || { echo "GDS JAR download failed"; exit 1; }
 

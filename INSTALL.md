@@ -1318,93 +1318,763 @@ If none of the above solutions work:
 
 ## 🔄 Updating Existing Installation
 
-The installer detects existing installations and updates them:
+The installer detects existing installations and handles updates intelligently:
 
 ```bash
 # Run installer again
-curl -fsSL https://..../install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.sh | bash
 
-# It will:
-# 1. Detect existing repo
-# 2. Fetch latest from origin
-# 3. Preserve existing .env
-# 4. Restart services
+# Installer will:
+# 1. Detect existing .env (preserves it)
+# 2. Fetch latest code from origin
+# 3. Check for service updates
+# 4. Restart updated services
+# 5. Run health checks
+```
+
+**Updating Specific Services:**
+
+```bash
+# Update Neo4j to latest 2026.02.3
+docker compose down neo4j
+docker pull neo4j:2026.02.3-community
+docker compose up -d neo4j
+
+# Update GDS plugin
+# (Automatically included with Neo4j image)
+
+# Update other services
+docker compose pull
+docker compose up -d
+```
+
+**Data Preservation:**
+
+```bash
+# All data is preserved in Docker volumes:
+docker volume ls
+
+# To backup before updating:
+docker compose exec neo4j neo4j-admin dump --to-stdout > neo4j-backup.dump
 ```
 
 ---
 
 ## 🏗️ Advanced Configuration
 
-### Using a Different Branch
-```bash
-# Mac/Linux
-AGENTIC_BRAIN_BRANCH=develop bash <(curl -fsSL https://..../install.sh)
+### Production Deployment
 
-# Windows
-$env:AGENTIC_BRAIN_BRANCH = "develop"
-irm https://..../install.ps1 | iex
+**1. Generate Strong Passwords:**
+
+```bash
+# macOS/Linux
+head -c 32 /dev/urandom | base64  # 64-char password
+
+# Windows PowerShell
+[System.Convert]::ToBase64String((1..32 | ForEach-Object { [byte](Get-Random -Min 0 -Max 256) }))
 ```
 
-### Production Deployment
-1. **Generate strong passwords** (don't use defaults)
-   ```bash
-   cat /dev/urandom | base64 | head -c 64  # Mac/Linux
-   ```
+**2. Use Environment Variables:**
 
-2. **Use environment variables**
-   ```bash
-   export NEO4J_PASSWORD="your-strong-password"
-   export REDIS_PASSWORD="your-strong-password"
-   ```
+```bash
+# Create .env.prod with production values
+cp .env .env.prod
+nano .env.prod
 
-3. **Enable HTTPS** - Configure SSL certificates in docker-compose.yml
+# Use strong passwords:
+NEO4J_PASSWORD=<strong-random-password>
+REDIS_PASSWORD=<strong-random-password>
+JWT_SECRET=<very-long-random-string>
+ENCRYPTION_KEY=<strong-random-password>
 
-4. **Set up monitoring** - Configure observability stack
+# Use prod environment
+export $(cat .env.prod | xargs)
+docker compose up -d
+```
+
+**3. Enable HTTPS:**
+
+```bash
+# Add SSL certificates to docker-compose.yml
+services:
+  api:
+    environment:
+      SSL_CERT_FILE: /run/secrets/cert.pem
+      SSL_KEY_FILE: /run/secrets/key.pem
+
+secrets:
+  cert.pem:
+    file: /path/to/certificate.pem
+  key.pem:
+    file: /path/to/private.key
+```
+
+**4. Configure Monitoring:**
+
+```bash
+# Add observability stack (optional)
+# Prometheus, Grafana, etc.
+# See deployment/docker-compose.monitor.yml
+```
+
+**5. Set Resource Limits:**
+
+```yaml
+# In docker-compose.yml, add deploy limits:
+services:
+  neo4j:
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 6G
+        reservations:
+          cpus: '1'
+          memory: 3G
+```
+
+**6. Configure Backups:**
+
+```bash
+# Neo4j automated backups
+docker compose exec neo4j neo4j-admin dump --to-stdout > backups/neo4j-$(date +%Y%m%d).dump
+
+# Or use backup service
+# See docker-compose.yml for backup configuration
+```
+
+### High Availability Setup
+
+For multiple nodes (advanced):
+
+```bash
+# Use Neo4j cluster docker-compose configuration
+# See deployment/ directory for HA setup
+docker compose -f docker-compose.ha.yml up -d
+
+# Configure clustering
+# Neo4j handles replication automatically
+```
+
+### Custom Networking
+
+```yaml
+# Use custom network instead of default
+networks:
+  brain:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+services:
+  neo4j:
+    networks:
+      - brain
+```
 
 ---
 
-## 🔒 Password Storage
+## 🔒 Security Hardening
 
-Passwords are stored in `.env` - **KEEP THIS FILE SECURE**:
+### 1. Secure Password Storage
 
 ```bash
-# Recommended: Only owner can read
+# Never commit .env to Git
+grep -q ".env" .gitignore || echo ".env" >> .gitignore
+git add .gitignore && git commit -m "Ensure .env not tracked"
+
+# Protect .env file permissions
 chmod 600 .env
 
-# Recommended: Add to .gitignore (already done)
-echo ".env" >> .gitignore
+# Use secret management (production)
+# AWS Secrets Manager
+# HashiCorp Vault
+# GitHub Secrets
+```
 
-# Never commit .env to version control
-git status
+### 2. Enable Authentication
+
+```bash
+# Neo4j authentication (default: enabled)
+docker compose exec neo4j cypher-shell -u neo4j -p $(grep NEO4J_PASSWORD .env | cut -d= -f2)
+
+# Redis authentication
+redis-cli -a $(grep REDIS_PASSWORD .env | cut -d= -f2) ping
+
+# API authentication (JWT)
+# See API_KEY in .env
+```
+
+### 3. Network Isolation
+
+```yaml
+# Only expose necessary ports
+services:
+  neo4j:
+    ports:
+      - "127.0.0.1:7474:7474"  # Localhost only
+      # Don't expose 7687 (bolt) externally
+
+  redis:
+    ports:
+      - "127.0.0.1:6379:6379"  # Localhost only
+```
+
+### 4. Disable Unnecessary Features
+
+```bash
+# In .env, disable unused plugins
+NEO4J_PLUGINS=["graph-data-science"]  # Only needed plugin
+
+# For Neo4j, disable APOC if not needed
+# Edit Dockerfile.neo4j to remove unnecessary extensions
+```
+
+### 5. Regular Updates
+
+```bash
+# Check for updates monthly
+docker pull neo4j:2026.02.3-community
+docker pull redpanda:latest
+docker pull redis:latest
+
+# Test updates in non-prod first
+# Then roll to production
 ```
 
 ---
 
-## 📚 Documentation
+## 📊 Monitoring & Maintenance
 
-- [API Documentation](http://localhost:8000/docs)
-- [Neo4j Documentation](https://neo4j.com/docs/)
-- [Docker Compose Docs](https://docs.docker.com/compose/)
-- [Agentic Brain Repository](https://github.com/joseph-webber/agentic-brain)
+### System Health
+
+```bash
+# Check all services
+docker compose ps
+
+# CPU/Memory usage
+docker stats
+
+# Disk usage
+docker system df
+
+# Network connectivity
+docker network inspect agentic-brain_default
+```
+
+### Service Logs
+
+```bash
+# Real-time logs
+docker compose logs -f
+
+# Last N minutes
+docker compose logs --since 10m
+
+# Last N lines
+docker compose logs --tail 100
+
+# Specific service
+docker compose logs neo4j
+```
+
+### Neo4j Health
+
+```bash
+# In Neo4j Browser (http://localhost:7474):
+CALL dbms.virtualDatabase.status()
+RETURN *
+
+# Check GDS
+CALL gds.list()
+
+# Check transactions
+CALL dbms.listConnections()
+```
+
+### Performance Tuning
+
+```bash
+# For production, tune Neo4j
+# In docker-compose.yml:
+environment:
+  NEO4J_server_memory_heap_initial_size: 4g
+  NEO4J_server_memory_heap_max_size: 8g
+  NEO4J_server_memory_pagecache_size: 4g
+
+# Then restart:
+docker compose restart neo4j
+```
 
 ---
 
-## 🤝 Support
+## 📋 Upgrade Procedures
 
-Having issues? Check:
+### Version Check
 
-1. **Logs**: `docker compose logs -f`
-2. **Status**: `docker compose ps`
-3. **GitHub Issues**: https://github.com/joseph-webber/agentic-brain/issues
-4. **Documentation**: See repo README.md
+```bash
+# Current installed versions
+docker compose ps --quiet | xargs docker inspect --format='{{.Config.Image}}'
+
+# Expected:
+# neo4j:2026.02.3-community
+# redpanda:latest (or specific version)
+# redis:latest (or specific version)
+```
+
+### Upgrade Neo4j
+
+```bash
+# Backup first (important!)
+docker compose exec neo4j neo4j-admin dump --to-stdout > backup-before-upgrade.dump
+
+# Stop Neo4j
+docker compose down neo4j
+
+# Update docker-compose.yml with new version
+# image: neo4j:2026.02.3-community
+
+# Pull new image
+docker pull neo4j:2026.02.3-community
+
+# Start with upgrade
+docker compose up -d neo4j
+
+# Monitor startup (may take 10+ minutes)
+docker compose logs -f neo4j
+
+# Verify
+docker compose exec neo4j cypher-shell "RETURN gds.version()"
+```
+
+### Upgrade GDS
+
+```bash
+# GDS upgrades with Neo4j
+# Update NEO4J_GDS_VERSION in docker-compose.yml
+
+# GDS 2.27.0 compatible with Neo4j 2026.02.3
+
+# Restart Neo4j to load new GDS
+docker compose restart neo4j
+
+# Verify
+docker compose exec neo4j cypher-shell "RETURN gds.version()"
+```
+
+### Verify No Data Loss
+
+```bash
+# After upgrade, verify data
+docker compose exec neo4j cypher-shell "MATCH (n) RETURN count(n) as node_count"
+
+# Should show your data is intact
+```
 
 ---
 
-## 📄 License
+## 🧹 Maintenance Tasks
 
-Agentic Brain - Copyright 2026 Joseph Webber
+### Daily
+
+```bash
+# Monitor logs for errors
+docker compose logs --since 1h | grep -i error
+
+# Check disk usage
+docker system df
+```
+
+### Weekly
+
+```bash
+# Backup Neo4j
+docker compose exec neo4j neo4j-admin dump --to-stdout > weekly-backup.dump
+
+# Clean old logs
+docker system prune -f
+
+# Check for available updates
+docker pull neo4j:2026.02.3-community
+docker image ls
+```
+
+### Monthly
+
+```bash
+# Full system check
+docker system df
+docker stats
+docker compose ps
+
+# Review logs for patterns
+docker compose logs --since 30d | grep -i warning
+
+# Update all images
+docker compose pull
+docker compose up -d
+```
+
+### Quarterly
+
+```bash
+# Test disaster recovery
+# Try to restore from backup
+# Verify backup integrity
+
+# Performance analysis
+# Review query logs in Neo4j
+# Check GDS algorithm performance
+
+# Security audit
+# Review .env permissions
+# Check for exposed ports
+# Review access logs
+```
+
+---
+
+## 🔐 Backup & Recovery
+
+### Create Backups
+
+```bash
+# Full Neo4j backup (with data)
+docker compose exec neo4j neo4j-admin dump \
+  --database neo4j \
+  --to-stdout > backups/neo4j-full-$(date +%Y%m%d).dump
+
+# Incremental backup (if configured)
+docker compose exec neo4j neo4j-admin backup \
+  --to-path /var/backups
+```
+
+### Restore from Backup
+
+```bash
+# Stop services
+docker compose down
+
+# Restore database
+docker compose exec neo4j neo4j-admin load \
+  --from-path /var/backups/neo4j-full-20260101.dump \
+  --database neo4j
+
+# Restart
+docker compose up -d
+
+# Verify
+docker compose exec neo4j cypher-shell "MATCH (n) RETURN count(n)"
+```
+
+### Cloud Backups
+
+```bash
+# Upload to AWS S3
+aws s3 cp backups/neo4j-full-$(date +%Y%m%d).dump \
+  s3://my-backup-bucket/neo4j/
+
+# Upload to Google Cloud Storage
+gsutil cp backups/neo4j-full-$(date +%Y%m%d).dump \
+  gs://my-backup-bucket/neo4j/
+
+# Automated daily backup
+# Add to crontab:
+# 0 2 * * * cd ~/agentic-brain && \
+#   docker compose exec neo4j neo4j-admin dump --database neo4j --to-stdout > \
+#   backups/neo4j-$(date +\%Y\%m\%d).dump && \
+#   aws s3 cp backups/neo4j-$(date +\%Y\%m\%d).dump s3://backup-bucket/
+```
+
+---
+
+## 📚 Documentation & Resources
+
+### Official Documentation
+
+- **Neo4j Docs**: https://neo4j.com/docs/
+  - Neo4j Operations Manual: https://neo4j.com/docs/operations-manual/2026.02/
+  - Cypher Query Language: https://neo4j.com/docs/cypher-manual/current/
+- **Neo4j GDS Docs**: https://neo4j.com/docs/graph-data-science/2.27/
+  - Algorithm Reference: https://neo4j.com/docs/graph-data-science/2.27/algorithms/
+  - ML Pipeline: https://neo4j.com/docs/graph-data-science/2.27/machine-learning/
+- **Docker Docs**: https://docs.docker.com/
+  - Docker Compose: https://docs.docker.com/compose/
+  - Docker Networking: https://docs.docker.com/network/
+- **Redpanda Docs**: https://docs.redpanda.com/
+- **Redis Docs**: https://redis.io/documentation
+- **FastAPI Docs**: https://fastapi.tiangolo.com/
+
+### API Documentation
+
+Once installed, access:
+- **Interactive API Docs**: http://localhost:8000/docs (Swagger UI)
+- **ReDoc Docs**: http://localhost:8000/redoc
+- **OpenAPI Schema**: http://localhost:8000/openapi.json
+
+### Repository Resources
+
+- **GitHub Issues**: https://github.com/joseph-webber/agentic-brain/issues
+- **GitHub Discussions**: https://github.com/joseph-webber/agentic-brain/discussions
+- **Pull Requests**: https://github.com/joseph-webber/agentic-brain/pulls
+- **Releases**: https://github.com/joseph-webber/agentic-brain/releases
+
+### Tutorials & Guides
+
+- **Getting Started**: See README.md in repository root
+- **Quick Start**: See QUICKSTART_API.md
+- **Docker Guide**: See DOCKER_SETUP_COMPLETE.md
+- **Neo4j Tutorial**: Neo4j Browser includes interactive tutorials
+- **GDS Tutorials**: https://neo4j.com/docs/graph-data-science/2.27/model-training/
+
+---
+
+## ❓ FAQ
+
+**Q: Where are my passwords stored?**
+A: In `.env` file in the installation directory. Keep this secure and never commit to Git.
+
+**Q: How much disk space do I need?**
+A: Minimum 20GB initially. Neo4j database grows with data. Allocate 50+ GB for production.
+
+**Q: Can I run on Raspberry Pi?**
+A: Not recommended. Minimum requirements are higher than Pi can support.
+
+**Q: How do I access services from another machine?**
+A: Edit `docker-compose.yml` - change port bindings from `127.0.0.1:port` to `0.0.0.0:port`. Then use firewall rules to restrict access.
+
+**Q: What if I lose my .env file?**
+A: Passwords are lost. Services won't start without .env. Keep secure backups of .env.
+
+**Q: Can I upgrade Neo4j to a newer version?**
+A: Yes, but ensure GDS 2.27.0 compatibility. Always backup first.
+
+**Q: How do I use multiple Neo4j databases?**
+A: By default, `neo4j` database is used. Create additional databases via Neo4j Browser.
+
+**Q: Is GDS included free?**
+A: GDS has evaluation features. See license status: `CALL gds.license.state()` in Neo4j Browser.
+
+**Q: What LLM providers are supported?**
+A: Groq, OpenAI, Anthropic, Together, and local Ollama. Set API keys in .env.
+
+**Q: Can I use this in production?**
+A: Yes, with proper configuration. See "Production Deployment" section above. Follow security hardening steps.
+
+---
+
+## 🎓 Learning Resources
+
+### Neo4j Learning
+
+- **GraphAcademy**: https://graphacademy.neo4j.com/ (Free courses)
+  - Neo4j Fundamentals
+  - Cypher Query Language
+  - Graph Data Science
+  - Application Development
+- **Interactive Sandbox**: https://sandbox.neo4j.com/
+
+### Docker Learning
+
+- **Play with Docker**: https://labs.play-with-docker.com/
+- **Docker Official Tutorial**: https://docker-101.github.io/docker-101/
+
+### Graph Data Science
+
+- **Stanford CS224W**: http://web.stanford.edu/class/cs224w/ (Graph Neural Networks)
+- **Neo4j GDS Blog**: https://neo4j.com/blog/graph-data-science/
+- **Algorithm Papers**: https://neo4j.com/docs/graph-data-science/2.27/algorithms/
+
+---
+
+## 🤝 Support & Community
+
+### Getting Help
+
+1. **Check this guide first** - Ctrl+F or Cmd+F to search
+2. **Check GitHub Issues** - Your problem might be solved
+3. **Ask in Discussions** - Community forum
+4. **Open an Issue** - If no answer found
+
+### Reporting Issues
+
+When opening an issue, include:
+1. Your platform (macOS/Linux/Windows)
+2. Version information (from error messages)
+3. Steps to reproduce
+4. Full error messages or logs (sanitized of passwords)
+5. Diagnostic bundle (see Troubleshooting section)
+
+### Contributing
+
+- Report bugs and request features on GitHub
+- Submit pull requests with improvements
+- Help others in Discussions
+- Write documentation/tutorials
+
+---
+
+## 📄 License & Legal
+
+**Agentic Brain** - Copyright 2026 Joseph Webber
 Licensed under GPL-3.0-or-later
 
+See LICENSE file for full terms.
+
+### Third-Party Licenses
+
+- **Neo4j**: See https://neo4j.com/licensing/ (Server: AGPL-3.0, Client: Apache-2.0)
+- **Redpanda**: See https://github.com/redpanda-data/redpanda/blob/dev/COPYING (Redpanda License)
+- **Redis**: See https://redis.io/topics/license (Redis Source Available License)
+- **Docker**: See https://www.docker.com/legal/docker-software-end-user-license-agreement/
+- **FastAPI**: See https://github.com/tiangolo/fastapi (MIT License)
+
 ---
 
-**🚀 Happy Brain Building! 🚀**
+## 🚀 Next Steps After Installation
+
+### Immediate (Day 1)
+
+1. ✅ **Verify all services running**
+   ```bash
+   docker compose ps
+   ```
+
+2. ✅ **Test Neo4j connection**
+   ```bash
+   open http://localhost:7474
+   ```
+
+3. ✅ **Review .env configuration**
+   ```bash
+   cat .env | grep -v "^#"
+   ```
+
+4. ✅ **Add LLM API keys (if using cloud)**
+   ```bash
+   nano .env
+   # Uncomment and set API_KEY variables
+   ```
+
+### Short-term (First Week)
+
+1. 📖 **Read the README** - Understand core concepts
+2. 🔐 **Review Security** - Change default passwords, set up backups
+3. 📊 **Explore Neo4j** - Load sample data, write test queries
+4. 🧪 **Test API** - Call endpoints, understand responses
+5. 🎓 **Take Neo4j Training** - GraphAcademy courses
+
+### Medium-term (First Month)
+
+1. 🏗️ **Understand Architecture** - How services communicate
+2. 📈 **Load Your Data** - Import domain data into Neo4j
+3. 🤖 **Configure LLM** - Set up preferred AI model
+4. 🧠 **Train GDS Models** - Use graph algorithms
+5. 🚀 **Deploy First Agent** - Create agentic application
+
+### Long-term (Production)
+
+1. 🔒 **Harden Security** - Production-grade setup
+2. 📊 **Set Up Monitoring** - Track performance
+3. 💾 **Automate Backups** - Daily backup to cloud
+4. 📈 **Optimize Performance** - GDS model tuning
+5. 🌍 **Scale Infrastructure** - High availability setup
+
+---
+
+## 💡 Tips & Tricks
+
+### Quick Commands
+
+```bash
+# After cd'ing to installation directory:
+
+# View real-time logs
+docker compose logs -f
+
+# View logs for one service
+docker compose logs -f neo4j
+
+# Monitor resource usage
+docker stats
+
+# Enter Neo4j shell
+docker compose exec neo4j cypher-shell
+
+# Full system restart (careful!)
+docker compose restart
+
+# Stop everything
+docker compose down
+
+# Start everything
+docker compose up -d
+
+# Remove everything (WARNING: deletes data)
+docker compose down -v
+```
+
+### Neo4j Browser Shortcuts
+
+- **Ctrl+Enter** / **Cmd+Enter**: Run query
+- **Ctrl+Space**: Query autocomplete
+- **:play intro**: Interactive tutorial
+- **:play apoc**: APOC library introduction
+- **MATCH (n) RETURN count(n)**: Count all nodes
+
+### Performance Optimization
+
+```bash
+# Neo4j GDS best practices:
+# 1. Use native projections for better performance
+# 2. Run algorithms on projections, not raw graphs
+# 3. Cache results for reuse
+# 4. Use implicit filtering in projections
+# 5. Monitor memory with CALL gds.listProgress()
+
+# See: https://neo4j.com/docs/graph-data-science/2.27/performance/
+```
+
+### Debugging Tips
+
+```bash
+# Check service connectivity
+docker compose exec neo4j ping redis
+docker compose exec api ping neo4j
+
+# View network details
+docker network inspect agentic-brain_default
+
+# Check resource limits
+docker compose config | grep -A5 "resources:"
+
+# Trace network traffic
+docker compose logs --since 5m | grep -i error
+```
+
+---
+
+## 🎉 Congratulations!
+
+You've successfully set up a production-grade agentic brain infrastructure.
+
+**You now have:**
+- ✅ Neo4j 2026.02.3-community with GDS 2.27.0
+- ✅ Event streaming with Redpanda
+- ✅ Caching with Redis
+- ✅ REST API with FastAPI
+- ✅ Knowledge graph for AI agents
+- ✅ Enterprise-grade architecture
+
+**Start building:** Create agents, load data, train models, and deploy to production.
+
+For questions or issues, check the troubleshooting guide above or open a GitHub issue.
+
+---
+
+**Happy Brain Building! 🧠🚀**
+
+*Last Updated: 2026*
+*Maintained by: Joseph Webber*
+*Repository: https://github.com/joseph-webber/agentic-brain*
