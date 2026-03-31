@@ -48,6 +48,158 @@ NC='\033[0m' # No Color
 BOLD='\033[1m'
 
 # ============================================================
+# Ollama installer and configuration
+# ============================================================
+
+#######################################
+# Install Ollama - Universal installer for Mac/Linux/Windows
+# Works on: macOS, Linux (Ubuntu/Debian/RHEL/Arch), Windows (via WSL)
+#######################################
+install_ollama() {
+    echo ""
+    echo "============================================"
+    echo "  OLLAMA LOCAL LLM INSTALLER"
+    echo "============================================"
+    echo ""
+    
+    # Check if already installed
+    if command -v ollama &> /dev/null; then
+        echo_success "Ollama is already installed: $(which ollama)"
+        
+        # Check if running
+        if curl -s http://localhost:11434/api/tags &> /dev/null; then
+            echo_success "Ollama is running!"
+        else
+            echo_warning "Ollama installed but not running. Starting..."
+            ollama serve &> /dev/null &
+            sleep 3
+        fi
+        
+        # Check for default model
+        echo ""
+        echo_step "Checking for default model (llama3.2:3b)..."
+        if curl -s http://localhost:11434/api/tags | grep -q "llama3.2"; then
+            echo_success "Default model already available!"
+        else
+            echo_warning "Pulling llama3.2:3b (this may take a few minutes)..."
+            ollama pull llama3.2:3b
+        fi
+        
+        return 0
+    fi
+    
+    echo_warning "Ollama not found. Installing..."
+    echo ""
+    
+    # Detect OS
+    OS="$(uname -s)"
+    case "$OS" in
+        Darwin)
+            echo_step "Detected: macOS"
+            echo ""
+            
+            # Try Homebrew first
+            if command -v brew &> /dev/null; then
+                echo_step "Installing via Homebrew..."
+                brew install ollama
+            else
+                echo_step "Installing via curl..."
+                curl -fsSL https://ollama.com/install.sh | sh
+            fi
+            ;;
+            
+        Linux)
+            echo_step "Detected: Linux"
+            echo ""
+            echo_step "Installing via curl..."
+            curl -fsSL https://ollama.com/install.sh | sh
+            ;;
+            
+        MINGW*|MSYS*|CYGWIN*)
+            echo_step "Detected: Windows (Git Bash/MSYS)"
+            echo ""
+            echo_warning "For Windows, please install Ollama using one of these methods:"
+            echo ""
+            echo "  Option 1 - winget (recommended):"
+            echo "    winget install Ollama.Ollama"
+            echo ""
+            echo "  Option 2 - Download installer:"
+            echo "    https://ollama.com/download/windows"
+            echo ""
+            echo "After installation, restart this terminal and run setup again."
+            return 1
+            ;;
+            
+        *)
+            echo_error "Unsupported OS: $OS"
+            echo "Please install Ollama manually: https://ollama.com/download"
+            return 1
+            ;;
+    esac
+    
+    # Verify installation
+    echo ""
+    sleep 2
+    if command -v ollama &> /dev/null; then
+        echo_success "Ollama installed successfully!"
+        
+        # Start the service
+        echo_step "Starting Ollama service..."
+        ollama serve &> /dev/null &
+        sleep 3
+        
+        # Pull default model
+        echo ""
+        echo_step "Pulling default model (llama3.2:3b)..."
+        echo_warning "This may take 2-5 minutes depending on your connection."
+        ollama pull llama3.2:3b
+        
+        echo ""
+        echo_success "Ollama setup complete!"
+        return 0
+    else
+        echo_error "Installation may have failed."
+        echo "Please install manually: https://ollama.com/download"
+        return 1
+    fi
+}
+
+#######################################
+# Configure Ollama as LLM provider
+#######################################
+configure_ollama() {
+    echo ""
+    echo_step "Configuring Ollama as your LLM provider..."
+    
+    # Install if needed
+    install_ollama
+    
+    # Set environment variables
+    export OLLAMA_HOST="${OLLAMA_HOST:-http://localhost:11434}"
+    export LLM_PROVIDER="ollama"
+    export LLM_MODEL="${LLM_MODEL:-llama3.2:3b}"
+    
+    # Write to .env if it exists
+    if [ -f ".env" ]; then
+        # Remove old entries
+        grep -v "^OLLAMA_HOST=" .env > .env.tmp && mv .env.tmp .env || true
+        grep -v "^LLM_PROVIDER=" .env > .env.tmp && mv .env.tmp .env || true
+        grep -v "^LLM_MODEL=" .env > .env.tmp && mv .env.tmp .env || true
+        
+        # Add new entries
+        echo "OLLAMA_HOST=$OLLAMA_HOST" >> .env
+        echo "LLM_PROVIDER=ollama" >> .env
+        echo "LLM_MODEL=$LLM_MODEL" >> .env
+    fi
+    
+    echo_success "Ollama configured!"
+    echo ""
+    echo_info "Settings:"
+    echo "  OLLAMA_HOST: $OLLAMA_HOST"
+    echo "  LLM_MODEL: $LLM_MODEL"
+}
+
+# ============================================================
 # Helper functions
 # ============================================================
 
@@ -681,6 +833,7 @@ do_install() {
     install_python_deps
     install_ui
     generate_config
+    configure_ollama
     
     show_post_install
 }
@@ -720,6 +873,7 @@ do_reset() {
     setup_virtualenv
     install_python_deps
     generate_config
+    configure_ollama
     
     show_post_install
 }

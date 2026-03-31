@@ -10,6 +10,12 @@ LABEL org.opencontainers.image.source="https://github.com/joseph-webber/agentic-
 # Configure pip for corporate proxies (Windows SSL interception)
 ENV PIP_TRUSTED_HOST="pypi.org pypi.python.org files.pythonhosted.org"
 
+# SSL/TLS settings for corporate networks with SSL inspection proxies
+ENV PYTHONHTTPSVERIFY=0
+ENV REQUESTS_CA_BUNDLE=""
+ENV CURL_CA_BUNDLE=""
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+
 WORKDIR /build
 
 # NOTE: pip config global.trusted-host doesn't work on Windows/corporate networks
@@ -45,6 +51,12 @@ FROM python:3.12-slim AS development
 
 # Configure pip for corporate proxies (Windows SSL interception)
 ENV PIP_TRUSTED_HOST="pypi.org pypi.python.org files.pythonhosted.org"
+
+# SSL/TLS settings for corporate networks with SSL inspection proxies
+ENV PYTHONHTTPSVERIFY=0
+ENV REQUESTS_CA_BUNDLE=""
+ENV CURL_CA_BUNDLE=""
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
 WORKDIR /app
 
@@ -95,6 +107,12 @@ LABEL org.opencontainers.image.source="https://github.com/joseph-webber/agentic-
 
 # Configure pip for corporate proxies (Windows SSL interception)
 ENV PIP_TRUSTED_HOST="pypi.org pypi.python.org files.pythonhosted.org"
+
+# SSL/TLS settings for corporate networks with SSL inspection proxies
+ENV PYTHONHTTPSVERIFY=0
+ENV REQUESTS_CA_BUNDLE=""
+ENV CURL_CA_BUNDLE=""
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 
 WORKDIR /app
 

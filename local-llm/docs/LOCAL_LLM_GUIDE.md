@@ -151,6 +151,81 @@ nvidia-smi
 ollama run llama3.2:3b "What GPU are you using?"
 ```
 
+### Windows
+
+#### Option 1: winget (Recommended)
+
+```powershell
+# Install Ollama
+winget install Ollama.Ollama
+
+# Refresh PATH (or restart terminal)
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+
+# Start Ollama service
+ollama serve
+
+# In a new terminal, pull a model
+ollama pull llama3.2:3b
+```
+
+#### Option 2: Direct Download
+
+1. Download from https://ollama.com/download/windows
+2. Run `OllamaSetup.exe`
+3. Follow installation prompts
+4. Ollama starts automatically as a Windows service
+
+#### Option 3: Docker (Works Everywhere)
+
+```powershell
+# Start Ollama in Docker
+docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+
+# Pull a model
+docker exec -it ollama ollama pull llama3.2:3b
+
+# Test
+curl http://localhost:11434/api/tags
+```
+
+#### Windows-Specific Notes
+
+1. **Ollama runs as a Windows Service** - It starts automatically on boot
+2. **GPU Support** - NVIDIA GPUs are auto-detected, AMD coming soon
+3. **Firewall** - Allow Ollama through Windows Firewall if prompted
+4. **WSL2** - Ollama also works in WSL2 Linux environment
+
+#### Verify Installation
+
+```powershell
+# Check Ollama is running
+curl http://localhost:11434/api/tags
+
+# Or use PowerShell
+Invoke-RestMethod -Uri http://localhost:11434/api/tags
+
+# List models
+ollama list
+
+# Test inference
+ollama run llama3.2:3b "Hello, world!"
+```
+
+#### Troubleshooting Windows
+
+**"ollama" is not recognized:**
+- Restart your terminal after installation
+- Or manually add to PATH: `C:\Users\<username>\AppData\Local\Programs\Ollama`
+
+**Connection refused on port 11434:**
+- Check if Ollama service is running in Task Manager (Services tab)
+- Start manually: `ollama serve`
+
+**GPU not detected:**
+- Update NVIDIA drivers to latest version
+- Ensure CUDA is installed for older GPUs
+
 ### Docker (Any platform)
 
 ```bash
@@ -222,6 +297,39 @@ sudo systemctl status ollama
 # View logs
 journalctl -u ollama -f
 ```
+
+### Windows (Services)
+
+Ollama automatically installs as a Windows Service and starts on boot.
+
+**Manual Service Management:**
+
+```powershell
+# Check service status
+Get-Service -Name "Ollama" | Select-Object Status, DisplayName
+
+# Start the service manually
+Start-Service -Name "Ollama"
+
+# Stop the service
+Stop-Service -Name "Ollama"
+
+# Restart the service
+Restart-Service -Name "Ollama"
+
+# View service configuration
+Get-Service -Name "Ollama" | Format-List *
+
+# View recent service logs
+Get-EventLog -LogName System -Source Service Control Manager -Newest 5 | Select-Object TimeGenerated, Message
+```
+
+**Service Details:**
+- **Service Name:** Ollama
+- **Display Name:** Ollama
+- **Startup Type:** Automatic (runs on boot)
+- **Log Location:** Windows Event Viewer → Windows Logs → System
+- **Data Directory:** `C:\Users\<username>\.ollama\`
 
 ---
 

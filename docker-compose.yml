@@ -47,6 +47,17 @@ services:
       # Logging
       OBSERVABILITY_LOG_LEVEL: ${LOG_LEVEL:-INFO}
       OBSERVABILITY_LOG_FORMAT: ${LOG_FORMAT:-text}
+      
+      # SSL/TLS settings for corporate networks with SSL inspection
+      # Set to "0" to disable SSL verification (use with caution in production!)
+      SSL_CERT_FILE: ${SSL_CERT_FILE:-}
+      REQUESTS_CA_BUNDLE: ${REQUESTS_CA_BUNDLE:-}
+      CURL_CA_BUNDLE: ${CURL_CA_BUNDLE:-}
+      PYTHONHTTPSVERIFY: ${PYTHONHTTPSVERIFY:-1}
+      
+      # Local LLM (Ollama) - connects to host or ollama container
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
     depends_on:
       neo4j:
         condition: service_healthy
@@ -175,6 +186,44 @@ services:
     networks:
       - brain-network
 
+  # ==========================================================================
+  # OLLAMA - LOCAL LLM SERVICE (OPTIONAL)
+  # ==========================================================================
+  # Provides local LLM inference - no API keys needed!
+  # GPU acceleration: Works with NVIDIA (Linux) and CPU fallback
+  # 
+  # Start with: docker compose --profile ollama up -d
+  # Test with:  curl http://localhost:11434/api/tags
+  # ==========================================================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: agentic-ollama
+    profiles:
+      - ollama
+      - full
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # Uncomment for NVIDIA GPU support on Linux:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
 # =============================================================================
 # Volumes - Persistent data storage
 # =============================================================================
@@ -189,6 +238,8 @@ volumes:
     name: agentic-brain-redis-data
   redpanda_data:
     name: agentic-brain-redpanda-data
+  ollama_data:
+    driver: local
 
 # =============================================================================
 # Networks

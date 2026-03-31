@@ -1008,6 +1008,149 @@ function Invoke-EnterprisePath {
     }
 }
 
+function Install-Ollama {
+    <#
+    .SYNOPSIS
+    Installs Ollama on Windows, Mac, or Linux with automatic detection.
+    
+    .DESCRIPTION
+    Universal Ollama installer that:
+    - Detects the operating system
+    - Uses the appropriate installation method (winget, brew, curl)
+    - Pulls a default model (llama3.2:3b)
+    - Verifies the installation
+    #>
+    
+    Write-Host ""
+    Write-Host "============================================" -ForegroundColor Cyan
+    Write-Host "  OLLAMA LOCAL LLM INSTALLER" -ForegroundColor Cyan
+    Write-Host "============================================" -ForegroundColor Cyan
+    Write-Host ""
+    
+    # Check if already installed
+    $ollamaPath = Get-Command ollama -ErrorAction SilentlyContinue
+    if ($ollamaPath) {
+        Write-Host "[OK] Ollama is already installed at: $($ollamaPath.Source)" -ForegroundColor Green
+        
+        # Check if running
+        try {
+            $response = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 5 -ErrorAction Stop
+            Write-Host "[OK] Ollama is running!" -ForegroundColor Green
+        } catch {
+            Write-Host "[!] Ollama is installed but not running. Starting..." -ForegroundColor Yellow
+            Start-Process ollama -ArgumentList "serve" -WindowStyle Hidden
+            Start-Sleep -Seconds 3
+        }
+        
+        # Pull default model if not present
+        Write-Host ""
+        Write-Host "Checking for default model (llama3.2:3b)..." -ForegroundColor Cyan
+        try {
+            $models = Invoke-RestMethod -Uri "http://localhost:11434/api/tags" -TimeoutSec 10
+            $hasModel = $models.models | Where-Object { $_.name -like "llama3.2*" }
+            if (-not $hasModel) {
+                Write-Host "Pulling llama3.2:3b (this may take a few minutes)..." -ForegroundColor Yellow
+                & ollama pull llama3.2:3b
+            } else {
+                Write-Host "[OK] Default model already available!" -ForegroundColor Green
+            }
+        } catch {
+            Write-Host "[!] Could not check models. Pull manually: ollama pull llama3.2:3b" -ForegroundColor Yellow
+        }
+        
+        return $true
+    }
+    
+    Write-Host "Ollama not found. Installing..." -ForegroundColor Yellow
+    Write-Host ""
+    
+    # Detect OS and install
+    if ($IsWindows -or $env:OS -eq "Windows_NT") {
+        Write-Host "Detected: Windows" -ForegroundColor Cyan
+        Write-Host ""
+        
+        # Try winget first
+        $winget = Get-Command winget -ErrorAction SilentlyContinue
+        if ($winget) {
+            Write-Host "Installing via winget..." -ForegroundColor Cyan
+            winget install Ollama.Ollama --accept-source-agreements --accept-package-agreements
+            
+            # Refresh PATH
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        } else {
+            # Download installer
+            Write-Host "Downloading Ollama installer..." -ForegroundColor Cyan
+            $installerUrl = "https://ollama.com/download/OllamaSetup.exe"
+            $installerPath = "$env:TEMP\OllamaSetup.exe"
+            
+            try {
+                Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath -UseBasicParsing
+                Write-Host "Running installer (please follow the prompts)..." -ForegroundColor Yellow
+                Start-Process -FilePath $installerPath -Wait
+                Remove-Item $installerPath -ErrorAction SilentlyContinue
+            } catch {
+                Write-Host "[ERROR] Failed to download installer: $_" -ForegroundColor Red
+                Write-Host ""
+                Write-Host "Manual installation:" -ForegroundColor Yellow
+                Write-Host "  1. Visit: https://ollama.com/download" -ForegroundColor White
+                Write-Host "  2. Download and run the Windows installer" -ForegroundColor White
+                Write-Host "  3. Re-run this setup script" -ForegroundColor White
+                return $false
+            }
+        }
+    } elseif ($IsMacOS) {
+        Write-Host "Detected: macOS" -ForegroundColor Cyan
+        Write-Host ""
+        
+        # Try brew first
+        $brew = Get-Command brew -ErrorAction SilentlyContinue
+        if ($brew) {
+            Write-Host "Installing via Homebrew..." -ForegroundColor Cyan
+            & brew install ollama
+        } else {
+            Write-Host "Installing via curl..." -ForegroundColor Cyan
+            & curl -fsSL https://ollama.com/install.sh | sh
+        }
+    } else {
+        # Linux
+        Write-Host "Detected: Linux" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "Installing via curl..." -ForegroundColor Cyan
+        & curl -fsSL https://ollama.com/install.sh | sh
+    }
+    
+    # Verify installation
+    Write-Host ""
+    Start-Sleep -Seconds 2
+    $ollamaPath = Get-Command ollama -ErrorAction SilentlyContinue
+    if ($ollamaPath) {
+        Write-Host "[OK] Ollama installed successfully!" -ForegroundColor Green
+        
+        # Start the service
+        Write-Host "Starting Ollama service..." -ForegroundColor Cyan
+        if ($IsWindows -or $env:OS -eq "Windows_NT") {
+            Start-Process ollama -ArgumentList "serve" -WindowStyle Hidden
+        } else {
+            & ollama serve &
+        }
+        Start-Sleep -Seconds 3
+        
+        # Pull default model
+        Write-Host ""
+        Write-Host "Pulling default model (llama3.2:3b)..." -ForegroundColor Cyan
+        Write-Host "This may take 2-5 minutes depending on your connection." -ForegroundColor Yellow
+        & ollama pull llama3.2:3b
+        
+        Write-Host ""
+        Write-Host "[OK] Ollama setup complete!" -ForegroundColor Green
+        return $true
+    } else {
+        Write-Host "[ERROR] Installation may have failed. Please install manually:" -ForegroundColor Red
+        Write-Host "  https://ollama.com/download" -ForegroundColor White
+        return $false
+    }
+}
+
 function Invoke-ProviderSetup {
     param(
         [string]$Provider,
@@ -1214,6 +1357,14 @@ function Invoke-ProviderSetup {
             Write-Step "Opening $($provConfig.signup_url) in browser..."
             Start-Process $provConfig.signup_url
             Start-Sleep -Seconds 2
+        }
+    } else {
+        # For Ollama, offer to auto-install
+        Write-Host ""
+        $installOllama = Read-Host "Would you like me to install Ollama automatically? (Y/n)"
+        if ($installOllama -ne "n" -and $installOllama -ne "N") {
+            Install-Ollama
+            Write-Host ""
         }
     }
     

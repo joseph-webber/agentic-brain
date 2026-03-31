@@ -471,6 +471,48 @@ function Main {
     Start-Services
     Wait-ForHealth
     
+    # Offer to set up local LLM
+    Write-Host ""
+    Write-Host "============================================" -ForegroundColor Cyan
+    Write-Host "  LOCAL LLM SETUP (OPTIONAL)" -ForegroundColor Cyan
+    Write-Host "============================================" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Would you like to set up Ollama for local LLM inference?"
+    Write-Host "This allows the brain to work without API keys."
+    Write-Host ""
+
+    $installOllama = Read-Host "Install Ollama? [y/N]"
+    if ($installOllama -eq 'y' -or $installOllama -eq 'Y') {
+        Write-Info "Installing Ollama..."
+        
+        # Try winget first
+        $winget = Get-Command winget -ErrorAction SilentlyContinue
+        if ($winget) {
+            winget install Ollama.Ollama --accept-source-agreements --accept-package-agreements
+        } else {
+            # Download installer
+            $installerUrl = "https://ollama.com/download/OllamaSetup.exe"
+            $installerPath = "$env:TEMP\OllamaSetup.exe"
+            Write-Info "Downloading Ollama installer..."
+            Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath -UseBasicParsing
+            Write-Info "Running Ollama installer..."
+            Start-Process -FilePath $installerPath -Wait
+            Remove-Item $installerPath -ErrorAction SilentlyContinue
+        }
+        
+        # Refresh PATH and start
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        Write-Info "Starting Ollama service..."
+        Start-Process ollama -ArgumentList "serve" -WindowStyle Hidden
+        Start-Sleep -Seconds 3
+        
+        Write-Info "Pulling default model (llama3.2:3b)..."
+        & ollama pull llama3.2:3b
+        
+        Write-Host ""
+        Write-Success "Ollama installed! The brain can now use local LLM."
+    }
+
     # Done!
     Write-SuccessMessage
 }

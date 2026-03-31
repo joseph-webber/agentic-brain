@@ -494,6 +494,36 @@ main() {
     start_services
     wait_for_health
     
+    # Offer to set up local LLM
+    echo ""
+    echo "============================================"
+    echo "  LOCAL LLM SETUP (OPTIONAL)"
+    echo "============================================"
+    echo ""
+    echo "Would you like to set up Ollama for local LLM inference?"
+    echo "This allows the brain to work without API keys."
+    echo ""
+    read -p "Install Ollama? [y/N] " -n 1 -r
+    echo ""
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        info "Installing Ollama..."
+        if command -v brew &> /dev/null; then
+            brew install ollama
+        else
+            curl -fsSL https://ollama.com/install.sh | sh
+        fi
+        
+        # Start and pull model
+        ollama serve &> /dev/null &
+        sleep 3
+        info "Pulling default model (llama3.2:3b)..."
+        ollama pull llama3.2:3b
+        
+        echo ""
+        success "Ollama installed! The brain can now use local LLM."
+    fi
+
     # Done!
     print_success
 }
