@@ -874,13 +874,12 @@ def serve_command(args: argparse.Namespace) -> int:
             # Use import string for reload/workers support
             print_info("Starting server (use Ctrl+C to stop)...")
             uvicorn.run(
-                "agentic_brain.api:app",
+                "agentic_brain.api.server:app",
                 host=args.host,
                 port=actual_port,
                 workers=1 if args.reload else args.workers,
                 reload=args.reload,
                 access_log=True,
-                factory=True,  # app is a factory function (create_app)
             )
         else:
             # Direct app object for single worker, no reload (faster startup)
