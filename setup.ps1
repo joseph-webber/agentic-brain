@@ -591,10 +591,10 @@ function Initialize-Venv {
     # Upgrade pip (with trusted-host for corporate firewalls)
     Write-Step "Upgrading pip..."
     if ($global:UV_AVAILABLE) {
-        $output = & uv pip install --upgrade pip wheel setuptools 2>&1
+        $output = & uv pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --upgrade pip wheel setuptools 2>&1
         $output | Out-File $LogFilePath -Append
     } else {
-        $output = & pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --upgrade pip wheel setuptools 2>&1
+        $output = & pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --upgrade pip wheel setuptools 2>&1
         $output | Out-File $LogFilePath -Append
     }
     
@@ -668,11 +668,11 @@ function Install-PythonDeps {
     
     if ($global:UV_AVAILABLE) {
         Write-Info "Using uv for fast installation"
-        $output = & uv pip install -e ".[all,dev]" 2>&1
+        $output = & uv pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -e ".[all,dev]" 2>&1
         $output | Out-File $LogFilePath -Append
     } else {
         # Use --trusted-host by default for corporate environments with SSL inspection
-        $output = & pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -e ".[all,dev]" 2>&1
+        $output = & pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -e ".[all,dev]" 2>&1
         $output | Out-File $LogFilePath -Append
     }
     

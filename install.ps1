@@ -188,7 +188,7 @@ function Set-Environment {
     # Upgrade pip first (critical for Windows - clears cache issues)
     Write-Info "Upgrading pip to latest version..."
     try {
-        python.exe -m pip install --upgrade pip
+        python.exe -m pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --upgrade pip
         Write-Success "pip upgraded successfully"
     } catch {
         Write-Warning "pip upgrade encountered an issue, continuing..."

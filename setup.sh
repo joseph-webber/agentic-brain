@@ -343,9 +343,9 @@ setup_virtualenv() {
     python3 -m pip cache purge 2>/dev/null || true
     
     if [[ "$UV_AVAILABLE" == "true" ]]; then
-        uv pip install --upgrade pip wheel setuptools
+        uv pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --upgrade pip wheel setuptools
     else
-        python3 -m pip install --upgrade pip wheel setuptools
+        python3 -m pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --upgrade pip wheel setuptools
     fi
     
     echo_success "Virtualenv ready"
@@ -391,22 +391,15 @@ install_python_deps() {
     # Install from pyproject.toml with extras
     echo_step "Installing agentic-brain with all extras..."
     
-    # Build pip args
-    local pip_args=("-e" ".[all,dev]")
-    
-    # Add trusted hosts if SSL issues
-    if [[ "$SKIP_SSL_VERIFY" == "true" ]]; then
-        for host in $PIP_TRUSTED_HOSTS; do
-            pip_args+=("--trusted-host" "$host")
-        done
-    fi
+    # Build pip args - ALWAYS include trusted hosts and no-cache-dir for corporate networks
+    local pip_args=("--no-cache-dir" "--trusted-host" "pypi.org" "--trusted-host" "pypi.python.org" "--trusted-host" "files.pythonhosted.org" "-e" ".[all,dev]")
     
     if [[ "$UV_AVAILABLE" == "true" ]]; then
         echo_info "Using uv for fast installation"
-        uv pip install "${pip_args[@]}"
+        uv pip install --no-cache-dir "${pip_args[@]}"
     else
         # Standard pip
-        pip install "${pip_args[@]}"
+        pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org "${pip_args[@]}"
     fi
     
     echo_success "Python dependencies installed"

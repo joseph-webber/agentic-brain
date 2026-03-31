@@ -24,9 +24,9 @@ COPY src ./src
 # Configure pip for corporate proxies (trusted hosts for Windows/SSL issues)
 RUN pip config set global.trusted-host "pypi.org pypi.python.org files.pythonhosted.org"
 
-RUN python -m pip install --upgrade pip setuptools wheel \
+RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel \
         --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org && \
-    python -m pip install ".[api]" \
+    python -m pip install --no-cache-dir ".[api]" \
         --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
 
 RUN useradd -m -u 1000 -s /bin/bash agentic && \

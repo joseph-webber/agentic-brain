@@ -17,7 +17,7 @@ fi
 # Start the app
 cd ~/brain/agentic-brain
 source venv/bin/activate 2>/dev/null || python3 -m venv venv && source venv/bin/activate
-pip install -e . --quiet
+pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -e . --quiet
 
 echo "🚀 Starting API server at http://localhost:8000"
 python -m uvicorn src.agentic_brain.api.main:app --host 0.0.0.0 --port 8000 --reload
