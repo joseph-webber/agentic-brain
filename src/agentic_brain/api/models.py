@@ -238,6 +238,44 @@ class ErrorResponse(BaseModel):
     )
 
 
+class DeleteResponse(BaseModel):
+    """Delete response model.
+
+    Attributes:
+        deleted: Whether the resource was successfully deleted
+        message: Confirmation message about the deletion
+        resource_id: Optional identifier of the deleted resource
+    """
+
+    deleted: bool = Field(default=True, description="Whether deletion was successful")
+    message: str = Field(
+        default="Resource deleted successfully",
+        description="Deletion confirmation message",
+    )
+    resource_id: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        description="Optional identifier of the deleted resource",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "deleted": True,
+                    "message": "Resource deleted successfully",
+                    "resource_id": "sess_abc123",
+                },
+                {
+                    "deleted": True,
+                    "message": "Session terminated and deleted",
+                    "resource_id": "user_xyz789",
+                },
+            ]
+        }
+    )
+
+
 # =============================================================================
 # JHipster-style API Response Wrappers
 # =============================================================================

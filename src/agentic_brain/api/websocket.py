@@ -355,7 +355,9 @@ def register_websocket_routes(app: FastAPI):
                     await websocket.send_text(
                         json.dumps(
                             {
+                                "type": "error",
                                 "error": "Invalid JSON",
+                                "error_code": "INVALID_JSON",
                                 "token": "",
                                 "is_end": True,
                                 "finish_reason": "error",
@@ -369,7 +371,9 @@ def register_websocket_routes(app: FastAPI):
                     await websocket.send_text(
                         json.dumps(
                             {
+                                "type": "error",
                                 "error": "Missing message field",
+                                "error_code": "MISSING_MESSAGE",
                                 "token": "",
                                 "is_end": True,
                                 "finish_reason": "error",
@@ -458,7 +462,9 @@ def register_websocket_routes(app: FastAPI):
                     await websocket.send_text(
                         json.dumps(
                             {
+                                "type": "error",
                                 "error": str(e),
+                                "error_code": "INTERNAL_ERROR",
                                 "token": "",
                                 "is_end": True,
                                 "finish_reason": "error",

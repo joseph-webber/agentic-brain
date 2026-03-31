@@ -8,79 +8,94 @@
 
 ---
 
+## ⚠️ Implementation Status
+
+This document reflects the **actual implemented endpoints** as of 2026. Endpoints marked with ❌ are documented for future implementation but **do not currently exist** in the codebase.
+
+---
+
 ## 📋 Quick Reference Table
+
+### ✅ Implemented Endpoints
 
 | Category | Endpoint | Method | Purpose | Auth | Rate Limit |
 |----------|----------|--------|---------|------|-----------|
 | **Health** | `/health` | GET | System status | Optional | 60/min |
-| **Health** | `/infra/health` | GET | Detailed component health | Optional | 60/min |
-| **Health** | `/healthz` | GET | Kubernetes liveness | Optional | 60/min |
-| **Health** | `/readyz` | GET | Kubernetes readiness | Optional | 60/min |
-| **Health** | `/metrics` | GET | Prometheus metrics | Optional | 60/min |
-| **Health** | `/version` | GET | Version info | Optional | 60/min |
 | **Chat** | `/chat` | POST | Synchronous message | Optional | 60/min |
 | **Chat** | `/chat/stream` | GET | SSE streaming | Optional | 60/min |
-| **Chat** | `/chat/complete` | POST | Message completion | Optional | 60/min |
-| **Chat** | `/chat/context` | POST | Add context | Optional | 60/min |
-| **Chat** | `/chat/models` | GET | List models | Optional | 60/min |
-| **WebSocket** | `/ws/chat` | WS | Real-time bidirectional | Optional* | 50/min |
-| **WebSocket** | `/ws/events` | WS | Events stream | Optional* | 50/min |
 | **Sessions** | `/session/{id}` | GET | Get session info | Optional | 60/min |
 | **Sessions** | `/session/{id}/messages` | GET | Get chat history | Optional | 60/min |
 | **Sessions** | `/session/{id}` | DELETE | Clear session | Optional | 60/min |
-| **Sessions** | `/sessions` | GET | List sessions | Admin | 60/min |
 | **Sessions** | `/sessions` | DELETE | Clear all sessions | Admin | 60/min |
-| **Sessions** | `/session/{id}/export` | POST | Export session | Optional | 30/min |
-| **Sessions** | `/session/{id}/import` | POST | Import messages | Optional | 30/min |
-| **Sessions** | `/session/{id}/metadata` | PUT | Update metadata | Optional | 60/min |
-| **Auth** | `/auth/login` | POST | Username/password | None | 5/min |
-| **Auth** | `/auth/register` | POST | User registration | None | 5/min |
-| **Auth** | `/auth/logout` | POST | Logout | Optional | 60/min |
-| **Auth** | `/auth/token/refresh` | POST | Refresh JWT | None | 30/min |
-| **Auth** | `/auth/token/revoke` | POST | Revoke token | Optional | 60/min |
-| **Auth** | `/auth/me` | GET | Current user info | Optional | 60/min |
-| **Auth** | `/auth/mfa/setup` | POST | Setup 2FA | Optional | 30/min |
-| **Auth** | `/auth/mfa/verify` | POST | Verify MFA | None | 5/min |
-| **Auth** | `/auth/api-keys` | POST | Create API key | Optional | 30/min |
-| **Auth** | `/auth/api-keys` | GET | List API keys | Optional | 60/min |
-| **Auth** | `/auth/api-keys/{id}` | DELETE | Delete API key | Optional | 60/min |
+| **Setup** | `/setup` | GET | Provider config | Optional | 60/min |
+| **Setup** | `/setup/help/{provider}` | GET | Setup guide | Optional | 60/min |
 | **Auth** | `/auth/saml/login` | POST | SAML SSO | None | 5/min |
 | **Auth** | `/auth/saml/acs` | POST | SAML ACS | None | 5/min |
 | **Auth** | `/auth/saml/metadata` | GET | SAML metadata | None | 60/min |
 | **Auth** | `/auth/sso/{provider}/login` | GET | OAuth2/OIDC | None | 5/min |
 | **Auth** | `/auth/sso/{provider}/callback` | GET | OAuth callback | None | 5/min |
-| **Setup** | `/setup` | GET | Provider config | Optional | 60/min |
-| **Setup** | `/setup/help/{provider}` | GET | Setup guide | Optional | 60/min |
-| **Setup** | `/setup/test/{provider}` | GET | Test connection | Optional | 30/min |
-| **Diagnostics** | `/diagnostics` | GET | System diagnostics | Admin | 60/min |
-| **Diagnostics** | `/logs` | GET | System logs | Admin | 60/min |
-| **Dashboard** | `/dashboard` | GET | Admin interface | Optional | 60/min |
-| **Dashboard** | `/dashboard/api/stats` | GET | System stats | Optional | 60/min |
-| **Dashboard** | `/dashboard/api/health` | GET | Dashboard health | Optional | 60/min |
-| **Dashboard** | `/dashboard/api/sessions` | GET | List sessions | Admin | 60/min |
-| **Dashboard** | `/dashboard/api/sessions` | DELETE | Clear sessions | Admin | 30/min |
-| **Dashboard** | `/dashboard/api/users` | GET | List users | Admin | 60/min |
-| **Dashboard** | `/dashboard/api/audit-log` | GET | Audit log | Admin | 60/min |
-| **Dashboard** | `/dashboard/api/backup` | POST | Create backup | Admin | 5/min |
-| **Dashboard** | `/dashboard/api/providers` | GET | Providers status | Admin | 60/min |
-| **Webhooks** | `/webhooks/woocommerce` | POST | WooCommerce events | HMAC | Unlimited |
-| **Webhooks** | `/webhooks/stripe` | POST | Stripe events | HMAC | Unlimited |
-| **Webhooks** | `/webhooks/github` | POST | GitHub events | HMAC | Unlimited |
-| **Webhooks** | `/webhooks` | GET | List webhooks | Admin | 60/min |
-| **Webhooks** | `/webhooks/test/{provider}` | POST | Test webhook | Admin | 30/min |
-| **Workflows** | `/workflows` | POST | Create workflow | Optional | 30/min |
-| **Workflows** | `/workflows` | GET | List workflows | Optional | 60/min |
-| **Workflows** | `/workflows/{id}` | GET | Get workflow | Optional | 60/min |
-| **Workflows** | `/workflows/{id}` | PUT | Update workflow | Optional | 30/min |
-| **Workflows** | `/workflows/{id}` | DELETE | Delete workflow | Optional | 30/min |
-| **Workflows** | `/workflows/{id}/executions` | GET | Workflow executions | Optional | 60/min |
-| **Workflows** | `/workflows/{id}/test` | POST | Test workflow | Optional | 30/min |
-| **Workflows** | `/workflows/{id}/enable` | POST | Enable workflow | Optional | 30/min |
-| **Workflows** | `/workflows/{id}/disable` | POST | Disable workflow | Optional | 30/min |
-| **Batch** | `/batch/create` | POST | Create batch | Optional | 30/min |
-| **Batch** | `/batch/{id}` | GET | Batch status | Optional | 60/min |
-| **Batch** | `/batch/{id}/results` | GET | Batch results | Optional | 60/min |
-| **Batch** | `/batch/{id}` | DELETE | Cancel batch | Optional | 60/min |
+
+### ❌ TODO: Not Implemented
+
+The following endpoints are **planned but not yet implemented**:
+
+| Category | Endpoint | Method | Purpose | Status |
+|----------|----------|--------|---------|--------|
+| **Health** | `/infra/health` | GET | Detailed component health | TODO |
+| **Health** | `/healthz` | GET | Kubernetes liveness | TODO |
+| **Health** | `/readyz` | GET | Kubernetes readiness | TODO |
+| **Health** | `/metrics` | GET | Prometheus metrics | TODO |
+| **Health** | `/version` | GET | Version info | TODO |
+| **Chat** | `/chat/complete` | POST | Message completion | TODO |
+| **Chat** | `/chat/context` | POST | Add context | TODO |
+| **Chat** | `/chat/models` | GET | List models | TODO |
+| **WebSocket** | `/ws/chat` | WS | Real-time bidirectional | TODO |
+| **WebSocket** | `/ws/events` | WS | Events stream | TODO |
+| **Sessions** | `/sessions` | GET | List sessions | TODO |
+| **Sessions** | `/session/{id}/export` | POST | Export session | TODO |
+| **Sessions** | `/session/{id}/import` | POST | Import messages | TODO |
+| **Sessions** | `/session/{id}/metadata` | PUT | Update metadata | TODO |
+| **Auth** | `/auth/login` | POST | Username/password | TODO |
+| **Auth** | `/auth/register` | POST | User registration | TODO |
+| **Auth** | `/auth/logout` | POST | Logout | TODO |
+| **Auth** | `/auth/token/refresh` | POST | Refresh JWT | TODO |
+| **Auth** | `/auth/token/revoke` | POST | Revoke token | TODO |
+| **Auth** | `/auth/me` | GET | Current user info | TODO |
+| **Auth** | `/auth/mfa/setup` | POST | Setup 2FA | TODO |
+| **Auth** | `/auth/mfa/verify` | POST | Verify MFA | TODO |
+| **Auth** | `/auth/api-keys` | POST | Create API key | TODO |
+| **Auth** | `/auth/api-keys` | GET | List API keys | TODO |
+| **Auth** | `/auth/api-keys/{id}` | DELETE | Delete API key | TODO |
+| **Setup** | `/setup/test/{provider}` | GET | Test connection | TODO |
+| **Diagnostics** | `/diagnostics` | GET | System diagnostics | TODO |
+| **Diagnostics** | `/logs` | GET | System logs | TODO |
+| **Dashboard** | `/dashboard` | GET | Admin interface | TODO |
+| **Dashboard** | `/dashboard/api/stats` | GET | System stats | TODO |
+| **Dashboard** | `/dashboard/api/health` | GET | Dashboard health | TODO |
+| **Dashboard** | `/dashboard/api/sessions` | GET | List sessions | TODO |
+| **Dashboard** | `/dashboard/api/sessions` | DELETE | Clear sessions | TODO |
+| **Dashboard** | `/dashboard/api/users` | GET | List users | TODO |
+| **Dashboard** | `/dashboard/api/audit-log` | GET | Audit log | TODO |
+| **Dashboard** | `/dashboard/api/backup` | POST | Create backup | TODO |
+| **Dashboard** | `/dashboard/api/providers` | GET | Providers status | TODO |
+| **Webhooks** | `/webhooks/woocommerce` | POST | WooCommerce events | TODO |
+| **Webhooks** | `/webhooks/stripe` | POST | Stripe events | TODO |
+| **Webhooks** | `/webhooks/github` | POST | GitHub events | TODO |
+| **Webhooks** | `/webhooks` | GET | List webhooks | TODO |
+| **Webhooks** | `/webhooks/test/{provider}` | POST | Test webhook | TODO |
+| **Workflows** | `/workflows` | POST | Create workflow | TODO |
+| **Workflows** | `/workflows` | GET | List workflows | TODO |
+| **Workflows** | `/workflows/{id}` | GET | Get workflow | TODO |
+| **Workflows** | `/workflows/{id}` | PUT | Update workflow | TODO |
+| **Workflows** | `/workflows/{id}` | DELETE | Delete workflow | TODO |
+| **Workflows** | `/workflows/{id}/executions` | GET | Workflow executions | TODO |
+| **Workflows** | `/workflows/{id}/test` | POST | Test workflow | TODO |
+| **Workflows** | `/workflows/{id}/enable` | POST | Enable workflow | TODO |
+| **Workflows** | `/workflows/{id}/disable` | POST | Disable workflow | TODO |
+| **Batch** | `/batch/create` | POST | Create batch | TODO |
+| **Batch** | `/batch/{id}` | GET | Batch status | TODO |
+| **Batch** | `/batch/{id}/results` | GET | Batch results | TODO |
+| **Batch** | `/batch/{id}` | DELETE | Cancel batch | TODO |
 
 ---
 
@@ -184,7 +199,7 @@ X-RateLimit-Reset: 1234567890
 
 ## 1️⃣ Health & Monitoring Endpoints
 
-### `GET /health` - System Health
+### `GET /health` - System Health ✅
 
 Quick system status check.
 
@@ -238,7 +253,9 @@ curl -X GET http://localhost:8000/health \
 
 ---
 
-### `GET /infra/health` - Detailed Component Health
+### `GET /infra/health` - Detailed Component Health ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Comprehensive infrastructure health report with latency metrics.
 
@@ -285,7 +302,9 @@ curl -X GET http://localhost:8000/infra/health \
 
 ---
 
-### `GET /healthz` - Kubernetes Liveness Probe
+### `GET /healthz` - Kubernetes Liveness Probe ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Liveness check for Kubernetes deployments.
 
@@ -307,7 +326,9 @@ OK
 
 ---
 
-### `GET /readyz` - Kubernetes Readiness Probe
+### `GET /readyz` - Kubernetes Readiness Probe ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Readiness check for Kubernetes deployments (includes all dependencies).
 
@@ -335,7 +356,9 @@ NOT_READY
 
 ---
 
-### `GET /metrics` - Prometheus Metrics
+### `GET /metrics` - Prometheus Metrics ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Export system metrics in Prometheus format for monitoring.
 
@@ -363,7 +386,9 @@ agentic_brain_response_time_ms_bucket{le="+Inf"} 1050
 
 ---
 
-### `GET /version` - Get Version Info
+### `GET /version` - Get Version Info ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get detailed version and build information.
 
@@ -388,24 +413,9 @@ curl -X GET http://localhost:8000/version
 
 ## 2️⃣ Chat Endpoints
 
-### `POST /chat` - Synchronous Chat
+### `POST /chat` - Synchronous Chat ✅
 
 Send a message and receive a response synchronously.
-
-**Request:**
-```bash
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "message": "What is GraphRAG?",
-    "session_id": "sess_abc123",
-    "user_id": "user_456",
-    "metadata": {
-      "source": "cli"
-    }
-  }'
-```
 
 **Simple Request (no auth):**
 ```bash
@@ -416,16 +426,19 @@ curl -X POST http://localhost:8000/chat \
   }'
 ```
 
-**With Custom Model:**
+**Full Request with all parameters:**
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
-    "message": "What is machine learning?",
-    "provider": "groq",
-    "model": "mixtral-8x7b-32768",
-    "temperature": 0.7,
-    "max_tokens": 500
+    "message": "What is GraphRAG?",
+    "session_id": "sess_abc123",
+    "user_id": "user_456",
+    "metadata": {
+      "source": "cli",
+      "client_version": "1.0.0"
+    }
   }'
 ```
 
@@ -440,34 +453,27 @@ curl -X POST http://localhost:8000/chat \
   }'
 ```
 
-**Request Model:**
+**Request Model (actual implementation):**
 ```python
 {
-  "message": str,           # 1-32,000 characters (required)
-  "session_id": str,        # optional, UUID format
-  "user_id": str,           # optional
-  "provider": str,          # optional, default: ollama
-  "model": str,             # optional
-  "temperature": float,     # optional, 0.0-2.0
-  "max_tokens": int,        # optional
-  "metadata": dict          # optional, custom metadata
+  "message": str,           # 1-32,000 characters (REQUIRED)
+  "session_id": str | None, # Optional, alphanumeric with hyphens/underscores, max 64 chars
+  "user_id": str | None,    # Optional, alphanumeric with hyphens/underscores, max 64 chars
+  "metadata": dict | None   # Optional, custom metadata (max 10,000 chars when serialized)
 }
 ```
+
+> **Note:** The following parameters are NOT currently implemented in the ChatRequest model:
+> `provider`, `model`, `temperature`, `max_tokens`. These are planned for future releases.
+> To customize LLM behavior, use the `metadata` field or configure via environment variables.
 
 **Response (200 OK):**
 ```json
 {
-  "response": "GraphRAG is a framework combining graph-based retrieval with RAG (Retrieval-Augmented Generation) to provide contextual, knowledge-rich responses...",
+  "response": "GraphRAG is a framework combining graph-based retrieval with RAG...",
   "session_id": "sess_abc123",
   "message_id": "msg_def456",
-  "timestamp": "2026-01-15T10:30:45.123Z",
-  "model": "llama3.1:8b",
-  "provider": "ollama",
-  "tokens": {
-    "prompt": 25,
-    "completion": 150,
-    "total": 175
-  }
+  "timestamp": "2026-01-15T10:30:45.123Z"
 }
 ```
 
@@ -502,7 +508,7 @@ curl -X POST http://localhost:8000/chat \
 
 ---
 
-### `GET /chat/stream` - Server-Sent Events (SSE) Streaming
+### `GET /chat/stream` - Server-Sent Events (SSE) Streaming ✅
 
 Stream responses in real-time using Server-Sent Events.
 
@@ -517,28 +523,17 @@ curl -N "http://localhost:8000/chat/stream?message=What%20is%20AI%3F&session_id=
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-**With API Key:**
-```bash
-curl -N "http://localhost:8000/chat/stream?message=Tell%20me%20about%20vector%20databases&api_key=your_api_key"
-```
-
-**Real-time Streaming with Verbose Output:**
-```bash
-curl -N "http://localhost:8000/chat/stream?message=Explain%20quantum%20computing" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -v
-```
-
-**Query Parameters:**
+**Query Parameters (actual implementation):**
 | Parameter | Type | Required | Description | Default | Range |
 |-----------|------|----------|-------------|---------|-------|
 | `message` | string | Yes | User message | - | 1-10,000 chars |
 | `session_id` | string | No | Session identifier | Generated UUID | - |
-| `user_id` | string | No | User identifier | Anonymous | - |
-| `provider` | string | No | LLM provider | "ollama" | ollama, openai, anthropic, groq, google, together, openrouter, xai |
+| `user_id` | string | No | User identifier | - | - |
+| `provider` | string | No | LLM provider | "ollama" | ollama, openai, anthropic |
 | `model` | string | No | Model name | "llama3.1:8b" | Provider-specific |
 | `temperature` | float | No | Sampling temperature | 0.7 | 0.0-2.0 |
-| `max_tokens` | int | No | Max tokens in response | 1000 | 1-32000 |
+
+> **Note:** `max_tokens` parameter is NOT currently implemented in the stream endpoint.
 
 **Response (200 OK):**
 ```
@@ -546,7 +541,7 @@ data: {"token":"Machine","is_start":true,"is_end":false,"finish_reason":null,"me
 data: {"token":" learning","is_start":false,"is_end":false,"finish_reason":null,"metadata":{}}
 data: {"token":" involves","is_start":false,"is_end":false,"finish_reason":null,"metadata":{}}
 ...
-data: {"token":".","is_start":false,"is_end":true,"finish_reason":"stop","metadata":{"total_tokens":250}}
+data: {"token":".","is_start":false,"is_end":true,"finish_reason":"stop","metadata":{}}
 ```
 
 **Stream Event Model:**
@@ -560,18 +555,15 @@ data: {"token":".","is_start":false,"is_end":true,"finish_reason":"stop","metada
 }
 ```
 
-**Error Response (400 Bad Request):**
-```
-data: {"error":"Invalid message","token":"","is_end":true,"finish_reason":"error"}
-```
-
 ---
 
-### `POST /chat/complete` - Message Completion
+### `POST /chat/complete` - Message Completion ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get completions for partial messages.
 
-**Request:**
+**Planned Request:**
 ```bash
 curl -X POST http://localhost:8000/chat/complete \
   -H "Content-Type: application/json" \
@@ -593,7 +585,9 @@ curl -X POST http://localhost:8000/chat/complete \
 
 ---
 
-### `POST /chat/context` - Add Context to Session
+### `POST /chat/context` - Add Context to Session ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Add context/instructions for the chat session.
 
@@ -619,7 +613,9 @@ curl -X POST http://localhost:8000/chat/context \
 
 ---
 
-### `GET /chat/models` - Available Models
+### `GET /chat/models` - Available Models ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 List all available LLM models.
 
@@ -658,7 +654,7 @@ curl -X GET "http://localhost:8000/chat/models?provider=groq"
 
 ## 3️⃣ Session Management Endpoints
 
-### `GET /session/{session_id}` - Get Session Info
+### `GET /session/{session_id}` - Get Session Info ✅
 
 Retrieve metadata about a session.
 
@@ -706,7 +702,7 @@ curl -X GET http://localhost:8000/session/sess_abc123 \
 
 ---
 
-### `GET /session/{session_id}/messages` - Get Chat History
+### `GET /session/{session_id}/messages` - Get Chat History ✅
 
 Retrieve all messages in a session with pagination.
 
@@ -767,7 +763,7 @@ curl -X GET 'http://localhost:8000/session/sess_abc123/messages?limit=10' \
 
 ---
 
-### `DELETE /session/{session_id}` - Delete Session
+### `DELETE /session/{session_id}` - Delete Session ✅
 
 Clear a session and all its messages.
 
@@ -798,7 +794,7 @@ curl -X DELETE http://localhost:8000/session/sess_abc123?force=true \
 
 ---
 
-### `DELETE /sessions` - Clear All Sessions
+### `DELETE /sessions` - Clear All Sessions ✅
 
 **⚠️ Admin-only endpoint** - Remove all sessions from the system.
 
@@ -830,7 +826,9 @@ curl -X DELETE http://localhost:8000/sessions \
 
 ---
 
-### `GET /sessions` - List All Sessions
+### `GET /sessions` - List All Sessions ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get all active sessions (admin-only).
 
@@ -879,7 +877,9 @@ curl -X GET "http://localhost:8000/sessions?user_id=user_456" \
 
 ---
 
-### `POST /session/{session_id}/export` - Export Session
+### `POST /session/{session_id}/export` - Export Session ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Export a session as JSON or CSV.
 
@@ -924,7 +924,9 @@ curl -X POST http://localhost:8000/session/sess_abc123/export \
 
 ---
 
-### `POST /session/{session_id}/import` - Import Messages
+### `POST /session/{session_id}/import` - Import Messages ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Import messages into a session.
 
@@ -958,7 +960,9 @@ curl -X POST http://localhost:8000/session/sess_abc123/import \
 
 ---
 
-### `PUT /session/{session_id}/metadata` - Update Session Metadata
+### `PUT /session/{session_id}/metadata` - Update Session Metadata ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Update metadata for a session.
 
@@ -990,7 +994,9 @@ curl -X PUT http://localhost:8000/session/sess_abc123/metadata \
 
 ## 4️⃣ WebSocket Endpoints
 
-### `WS /ws/chat` - Real-Time Bidirectional Chat
+### `WS /ws/chat` - Real-Time Bidirectional Chat ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Establish a WebSocket connection for real-time streaming chat.
 
@@ -1152,7 +1158,9 @@ async function connectWebSocket() {
 
 ---
 
-### `WS /ws/events` - Real-Time Events Stream
+### `WS /ws/events` - Real-Time Events Stream ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Subscribe to real-time events (sessions, messages, system).
 
@@ -1219,7 +1227,9 @@ asyncio.run(listen_events())
 
 ## 5️⃣ Authentication Endpoints
 
-### `POST /auth/login` - Username/Password Login
+### `POST /auth/login` - Username/Password Login ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Basic authentication endpoint for username and password.
 
@@ -1257,7 +1267,9 @@ curl -X POST http://localhost:8000/auth/login \
 
 ---
 
-### `POST /auth/register` - User Registration
+### `POST /auth/register` - User Registration ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Register a new user account.
 
@@ -1293,7 +1305,9 @@ curl -X POST http://localhost:8000/auth/register \
 
 ---
 
-### `POST /auth/token/refresh` - Refresh JWT Token
+### `POST /auth/token/refresh` - Refresh JWT Token ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get a new access token using a refresh token.
 
@@ -1317,7 +1331,9 @@ curl -X POST http://localhost:8000/auth/token/refresh \
 
 ---
 
-### `POST /auth/token/revoke` - Revoke Token
+### `POST /auth/token/revoke` - Revoke Token ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Revoke/invalidate an access token.
 
@@ -1338,7 +1354,9 @@ curl -X POST http://localhost:8000/auth/token/revoke \
 
 ---
 
-### `POST /auth/logout` - Logout
+### `POST /auth/logout` - Logout ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Invalidate the current session/token.
 
@@ -1355,7 +1373,7 @@ curl -X POST http://localhost:8000/auth/logout \
 
 ---
 
-### `POST /auth/saml/login` - Initiate SAML SSO
+### `POST /auth/saml/login` - Initiate SAML SSO ✅
 
 Start a SAML single sign-on flow.
 
@@ -1379,7 +1397,7 @@ curl -X POST http://localhost:8000/auth/saml/login \
 
 ---
 
-### `POST /auth/saml/acs` - SAML Assertion Consumer Service
+### `POST /auth/saml/acs` - SAML Assertion Consumer Service ✅
 
 Handle SAML authentication response from IdP.
 
@@ -1407,7 +1425,7 @@ curl -X POST http://localhost:8000/auth/saml/acs \
 
 ---
 
-### `GET /auth/saml/metadata` - SAML Service Provider Metadata
+### `GET /auth/saml/metadata` - SAML Service Provider Metadata ✅
 
 Get SP metadata for IdP configuration.
 
@@ -1442,7 +1460,7 @@ curl -X GET http://localhost:8000/auth/saml/metadata
 
 ---
 
-### `GET /auth/sso/{provider}/login` - OAuth2/OIDC Authorization
+### `GET /auth/sso/{provider}/login` - OAuth2/OIDC Authorization ✅
 
 Get authorization URL for OAuth2/OIDC login.
 
@@ -1484,7 +1502,7 @@ curl -X GET 'http://localhost:8000/auth/sso/okta/login?redirect_uri=http://local
 
 ---
 
-### `GET /auth/sso/{provider}/callback` - OAuth2/OIDC Callback
+### `GET /auth/sso/{provider}/callback` - OAuth2/OIDC Callback ✅
 
 Handle OAuth2/OIDC callback from provider.
 
@@ -1532,7 +1550,9 @@ curl -X GET 'http://localhost:8000/auth/sso/google/callback?code=4/0AX4Xcg...&st
 
 ---
 
-### `GET /auth/me` - Get Current User Info
+### `GET /auth/me` - Get Current User Info ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get information about the currently authenticated user.
 
@@ -1558,7 +1578,9 @@ curl -X GET http://localhost:8000/auth/me \
 
 ---
 
-### `POST /auth/mfa/setup` - Setup Two-Factor Authentication
+### `POST /auth/mfa/setup` - Setup Two-Factor Authentication ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Initialize 2FA/MFA setup.
 
@@ -1587,7 +1609,9 @@ curl -X POST http://localhost:8000/auth/mfa/setup \
 
 ---
 
-### `POST /auth/mfa/verify` - Verify MFA Code
+### `POST /auth/mfa/verify` - Verify MFA Code ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Verify MFA code during login.
 
@@ -1611,7 +1635,9 @@ curl -X POST http://localhost:8000/auth/mfa/verify \
 
 ---
 
-### `POST /auth/api-keys` - Create API Key
+### `POST /auth/api-keys` - Create API Key ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Generate a new API key for programmatic access.
 
@@ -1641,7 +1667,9 @@ curl -X POST http://localhost:8000/auth/api-keys \
 
 ---
 
-### `GET /auth/api-keys` - List API Keys
+### `GET /auth/api-keys` - List API Keys ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 List all API keys for the current user.
 
@@ -1667,7 +1695,9 @@ curl -X GET http://localhost:8000/auth/api-keys \
 
 ---
 
-### `DELETE /auth/api-keys/{key_id}` - Delete API Key
+### `DELETE /auth/api-keys/{key_id}` - Delete API Key ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Revoke an API key.
 
@@ -1686,7 +1716,7 @@ curl -X DELETE http://localhost:8000/auth/api-keys/api_key_abc123 \
 
 ## 6️⃣ Setup & Diagnostics Endpoints
 
-### `GET /setup` - Check LLM Provider Configuration
+### `GET /setup` - Check LLM Provider Configuration ✅
 
 Get the setup status and available LLM providers.
 
@@ -1737,7 +1767,7 @@ curl -X GET http://localhost:8000/setup \
 
 ---
 
-### `GET /setup/help/{provider}` - Provider Setup Instructions
+### `GET /setup/help/{provider}` - Provider Setup Instructions ✅
 
 Get setup instructions for a specific provider.
 
@@ -1772,7 +1802,9 @@ curl -X GET http://localhost:8000/setup/help/openai
 
 ---
 
-### `GET /setup/test/{provider}` - Test Provider Connection
+### `GET /setup/test/{provider}` - Test Provider Connection ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Test connection to a specific provider.
 
@@ -1800,7 +1832,9 @@ curl -X GET "http://localhost:8000/setup/test/groq?model=mixtral-8x7b-32768"
 
 ---
 
-### `GET /diagnostics` - System Diagnostics
+### `GET /diagnostics` - System Diagnostics ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get comprehensive system diagnostics information.
 
@@ -1844,7 +1878,9 @@ curl -X GET http://localhost:8000/diagnostics \
 
 ---
 
-### `GET /logs` - Get System Logs
+### `GET /logs` - Get System Logs ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Retrieve system logs with filtering.
 
@@ -1892,7 +1928,9 @@ curl -X GET 'http://localhost:8000/logs?since=2026-01-15T10:00:00Z&limit=200' \
 
 ## 7️⃣ Dashboard Endpoints
 
-### `GET /dashboard` - Admin Dashboard
+### `GET /dashboard` - Admin Dashboard ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Access the admin dashboard HTML interface.
 
@@ -1919,7 +1957,9 @@ curl -X GET http://localhost:8000/dashboard
 
 ---
 
-### `GET /dashboard/api/stats` - System Statistics
+### `GET /dashboard/api/stats` - System Statistics ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get current system metrics and performance data.
 
@@ -1951,7 +1991,9 @@ curl -X GET "http://localhost:8000/dashboard/api/stats?metrics=sessions,memory,c
 
 ---
 
-### `GET /dashboard/api/health` - Dashboard Health Status
+### `GET /dashboard/api/health` - Dashboard Health Status ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get comprehensive health status for the dashboard.
 
@@ -1985,7 +2027,9 @@ curl -X GET http://localhost:8000/dashboard/api/health
 
 ---
 
-### `GET /dashboard/api/sessions` - List Active Sessions
+### `GET /dashboard/api/sessions` - List Active Sessions ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get all currently active sessions with metadata.
 
@@ -2033,7 +2077,9 @@ curl -X GET "http://localhost:8000/dashboard/api/sessions?limit=20&sort=last_acc
 
 ---
 
-### `DELETE /dashboard/api/sessions` - Clear All Sessions
+### `DELETE /dashboard/api/sessions` - Clear All Sessions ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Remove all sessions (admin-only).
 
@@ -2057,7 +2103,9 @@ curl -X DELETE http://localhost:8000/dashboard/api/sessions \
 
 ---
 
-### `GET /dashboard/api/users` - List Users
+### `GET /dashboard/api/users` - List Users ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get all users (admin-only).
 
@@ -2086,7 +2134,9 @@ curl -X GET 'http://localhost:8000/dashboard/api/users?limit=50' \
 
 ---
 
-### `GET /dashboard/api/audit-log` - Audit Log
+### `GET /dashboard/api/audit-log` - Audit Log ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get audit/activity logs.
 
@@ -2117,7 +2167,9 @@ curl -X GET 'http://localhost:8000/dashboard/api/audit-log?limit=100' \
 
 ---
 
-### `POST /dashboard/api/backup` - Create Backup
+### `POST /dashboard/api/backup` - Create Backup ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Trigger a system backup.
 
@@ -2143,7 +2195,9 @@ curl -X POST http://localhost:8000/dashboard/api/backup \
 
 ---
 
-### `GET /dashboard/api/providers` - LLM Providers Status
+### `GET /dashboard/api/providers` - LLM Providers Status ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get status of all LLM providers.
 
@@ -2179,7 +2233,9 @@ curl -X GET http://localhost:8000/dashboard/api/providers \
 
 ## 8️⃣ Commerce/Webhooks Endpoints
 
-### `POST /webhooks/woocommerce` - WooCommerce Events
+### `POST /webhooks/woocommerce` - WooCommerce Events ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Receive and process WooCommerce events.
 
@@ -2307,7 +2363,9 @@ curl -X POST http://localhost:8000/webhooks/woocommerce \
 
 ---
 
-### `POST /webhooks/stripe` - Stripe Payment Events
+### `POST /webhooks/stripe` - Stripe Payment Events ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Receive and process Stripe webhook events.
 
@@ -2344,7 +2402,9 @@ curl -X POST http://localhost:8000/webhooks/stripe \
 
 ---
 
-### `POST /webhooks/github` - GitHub Events
+### `POST /webhooks/github` - GitHub Events ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Receive and process GitHub webhook events.
 
@@ -2383,7 +2443,9 @@ curl -X POST http://localhost:8000/webhooks/github \
 
 ---
 
-### `GET /webhooks` - List Active Webhooks
+### `GET /webhooks` - List Active Webhooks ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 List all registered webhooks (admin-only).
 
@@ -2419,7 +2481,9 @@ curl -X GET http://localhost:8000/webhooks \
 
 ---
 
-### `POST /webhooks/test/{provider}` - Test Webhook
+### `POST /webhooks/test/{provider}` - Test Webhook ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Send a test webhook event.
 
@@ -2446,7 +2510,9 @@ curl -X POST http://localhost:8000/webhooks/test/woocommerce \
 
 ## 9️⃣ Workflows Endpoints
 
-### `POST /workflows` - Create Workflow
+### `POST /workflows` - Create Workflow ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Create a new workflow definition.
 
@@ -2499,7 +2565,9 @@ curl -X POST http://localhost:8000/workflows \
 
 ---
 
-### `GET /workflows` - List Workflows
+### `GET /workflows` - List Workflows ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get all workflows.
 
@@ -2533,7 +2601,9 @@ curl -X GET "http://localhost:8000/workflows?status=active&limit=20"
 
 ---
 
-### `GET /workflows/{workflow_id}` - Get Workflow Details
+### `GET /workflows/{workflow_id}` - Get Workflow Details ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get detailed workflow information.
 
@@ -2572,7 +2642,9 @@ curl -X GET http://localhost:8000/workflows/workflow_abc123 \
 
 ---
 
-### `PUT /workflows/{workflow_id}` - Update Workflow
+### `PUT /workflows/{workflow_id}` - Update Workflow ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Update an existing workflow.
 
@@ -2599,7 +2671,9 @@ curl -X PUT http://localhost:8000/workflows/workflow_abc123 \
 
 ---
 
-### `DELETE /workflows/{workflow_id}` - Delete Workflow
+### `DELETE /workflows/{workflow_id}` - Delete Workflow ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Delete a workflow.
 
@@ -2616,7 +2690,9 @@ curl -X DELETE http://localhost:8000/workflows/workflow_abc123 \
 
 ---
 
-### `GET /workflows/{workflow_id}/executions` - List Workflow Executions
+### `GET /workflows/{workflow_id}/executions` - List Workflow Executions ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get execution history of a workflow.
 
@@ -2649,7 +2725,9 @@ curl -X GET 'http://localhost:8000/workflows/workflow_abc123/executions?limit=50
 
 ---
 
-### `POST /workflows/{workflow_id}/test` - Test Workflow
+### `POST /workflows/{workflow_id}/test` - Test Workflow ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Test a workflow with sample data.
 
@@ -2681,7 +2759,9 @@ curl -X POST http://localhost:8000/workflows/workflow_abc123/test \
 
 ---
 
-### `POST /workflows/{workflow_id}/enable` - Enable Workflow
+### `POST /workflows/{workflow_id}/enable` - Enable Workflow ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Enable a workflow.
 
@@ -2702,7 +2782,9 @@ curl -X POST http://localhost:8000/workflows/workflow_abc123/enable \
 
 ---
 
-### `POST /workflows/{workflow_id}/disable` - Disable Workflow
+### `POST /workflows/{workflow_id}/disable` - Disable Workflow ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Disable a workflow.
 
@@ -2725,7 +2807,9 @@ curl -X POST http://localhost:8000/workflows/workflow_abc123/disable \
 
 ## 1️⃣4️⃣ Batch Processing Endpoints
 
-### `POST /batch/create` - Create Batch Job
+### `POST /batch/create` - Create Batch Job ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Submit a batch of requests for processing.
 
@@ -2761,7 +2845,9 @@ curl -X POST http://localhost:8000/batch/create \
 
 ---
 
-### `GET /batch/{batch_id}` - Get Batch Status
+### `GET /batch/{batch_id}` - Get Batch Status ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get the status of a batch job.
 
@@ -2787,7 +2873,9 @@ curl -X GET http://localhost:8000/batch/batch_abc123 \
 
 ---
 
-### `GET /batch/{batch_id}/results` - Get Batch Results
+### `GET /batch/{batch_id}/results` - Get Batch Results ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Get results of a completed batch job.
 
@@ -2822,7 +2910,9 @@ curl -X GET http://localhost:8000/batch/batch_abc123/results \
 
 ---
 
-### `DELETE /batch/{batch_id}` - Cancel Batch
+### `DELETE /batch/{batch_id}` - Cancel Batch ❌ TODO: Not Implemented
+
+> **⚠️ This endpoint is documented for future implementation but does not currently exist.**
 
 Cancel a batch job.
 
