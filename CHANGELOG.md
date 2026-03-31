@@ -5,18 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.0] - 2026-04-01
+## [3.1.0] - 2026-03-31
 
-### 🐛 Bug Fixes
+### Added
+- One-liner installers for Mac/Linux (install.sh) and Windows (install.ps1)
+- Neo4j 2026.02.3-community with GDS 2.27.0 pre-installed for GraphRAG
+- Automatic random password generation during installation
+- JWT_SECRET auto-generation for secure WebSocket authentication
+- Comprehensive service health checks in docker-compose.yml
+- SSL certificate bypass for corporate proxy environments
 
-- Fixed Neo4j Docker tag to use `2026.02.3-community` for proper community edition support
-- Fixed SSL certificate issues for corporate proxy environments
-- Fixed pip cache not being cleared during installation (added pip upgrade step)
+### Fixed
+- FastAPI ASGI app factory error (removed incorrect factory=True flag)
+- Redis connection using correct Docker hostname (redis not localhost)
+- Neo4j Docker tag (2026.02.3-community instead of non-existent 2026.02.0)
+- Redpanda AIO errors on Windows (dev-container mode)
+- All pip install commands now include --trusted-host flags for SSL bypass
+- GDS JAR download with curl -k for SSL certificate issues
 
-### ✨ Added
+### Changed
+- Upgraded Neo4j from 5.x to 2026.02.3-community (calendar versioning)
+- Upgraded GDS plugin from 2.6.x to 2.27.0 for full GraphRAG support
+- All Dockerfiles now include pip cache purge and trusted-host flags
+- docker-compose.yml now passes all environment variables correctly
 
-- Added GDS (Graph Data Science) 2.27.0 for GraphRAG support
-- Improved Windows installer with enhanced compatibility checks
+### Documentation
+- Complete README overhaul with service ports and credentials
+- New QUICK_INSTALL.md for fast setup
+- Updated INSTALL.md with troubleshooting guide
+- Added INSTALLER_FEATURES.md documenting all installer capabilities
 
 ---
 
