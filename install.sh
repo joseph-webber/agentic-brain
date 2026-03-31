@@ -516,6 +516,22 @@ main() {
         success "Ollama installed! The brain can now use local LLM."
     fi
 
+    # Optional LLM API key setup
+    echo ""
+    echo "============================================"
+    echo "  LLM API KEY SETUP (OPTIONAL)"
+    echo "============================================"
+    echo ""
+    echo "Would you like to set up LLM API keys now? [y/N]"
+    read -r SETUP_KEYS
+    if [ "$SETUP_KEYS" = "y" ] || [ "$SETUP_KEYS" = "Y" ]; then
+        if [ -f "./scripts/setup-keys.sh" ]; then
+            bash ./scripts/setup-keys.sh
+        else
+            echo "Run 'bash scripts/setup-keys.sh' later to configure API keys."
+        fi
+    fi
+
     # Done!
     print_success
 }

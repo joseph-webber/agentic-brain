@@ -514,6 +514,21 @@ function Main {
         Write-Success "Ollama installed! The brain can now use local LLM."
     }
 
+    # Offer to set up API keys
+    Write-Host ""
+    Write-Host "============================================" -ForegroundColor Cyan
+    Write-Host "  API KEY SETUP (OPTIONAL)" -ForegroundColor Cyan
+    Write-Host "============================================" -ForegroundColor Cyan
+    Write-Host ""
+    $setupKeys = Read-Host "Would you like to set up LLM API keys now? [y/N]"
+    if ($setupKeys -eq "y" -or $setupKeys -eq "Y") {
+        if (Test-Path "./scripts/setup-keys.ps1") {
+            & "./scripts/setup-keys.ps1"
+        } else {
+            Write-Host "Run '.\scripts\setup-keys.ps1' later to configure API keys." -ForegroundColor Yellow
+        }
+    }
+
     # Done!
     Write-SuccessMessage
 }
