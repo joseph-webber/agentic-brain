@@ -496,6 +496,7 @@ markers = [
     "requires_temporal: Requires Temporal service to be running",
     "requires_docker: Requires Docker to be running",
     "requires_firebase: Requires Firebase emulator",
+    "requires_kafka: Requires Kafka/Redpanda to be running",
     "docker: Tests that require Docker",
     "asyncio: Async tests (provided by pytest-asyncio)",
 ]

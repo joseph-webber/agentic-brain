@@ -75,6 +75,7 @@ def pytest_collection_modifyitems(config, items):
     skip_temporal = pytest.mark.skip(reason="Temporal not available")
     skip_docker = pytest.mark.skip(reason="Docker not available")
     skip_firebase = pytest.mark.skip(reason="Firebase not available")
+    skip_kafka = pytest.mark.skip(reason="Kafka/Redpanda not available")
     skip_e2e = pytest.mark.skip(reason="E2E tests disabled in CI")
     skip_integration = pytest.mark.skip(reason="Integration tests disabled in CI")
     skip_cultural = pytest.mark.skip(reason="Cultural sensitivity tests disabled in CI")
@@ -91,6 +92,7 @@ def pytest_collection_modifyitems(config, items):
     firebase_ok = _module_available("firebase_admin") and bool(
         os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
     )
+    kafka_ok = bool(os.getenv("KAFKA_BOOTSTRAP_SERVERS"))
 
     for item in items:
         nodeid = item.nodeid.lower()
@@ -133,6 +135,12 @@ def pytest_collection_modifyitems(config, items):
             "firebase" in nodeid or item.get_closest_marker("requires_firebase")
         ) and not firebase_ok:
             item.add_marker(skip_firebase)
+        if (
+            "kafka" in nodeid
+            or "redpanda" in nodeid
+            or item.get_closest_marker("requires_kafka")
+        ) and not kafka_ok:
+            item.add_marker(skip_kafka)
         if "/e2e/" in path and not os.getenv("CI_RUN_E2E"):
             item.add_marker(skip_e2e)
         if (

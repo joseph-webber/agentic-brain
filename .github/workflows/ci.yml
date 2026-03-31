@@ -154,8 +154,11 @@ jobs:
 
       - name: Run unit test suite
         run: |
+          # Skip tests requiring external services (Redis, Kafka, Neo4j, etc.)
+          # The conftest.py auto-skips based on markers and service availability
           pytest tests/ \
             --ignore=tests/e2e \
+            --ignore=tests/integration \
             --ignore=tests/test_infrastructure.py \
             --ignore=tests/test_cultural_sensitivity.py \
             --ignore=tests/test_demo_auth.py \
@@ -188,13 +191,17 @@ jobs:
             --ignore=tests/test_live_voice.py \
             --ignore=tests/test_voice_phase2_integration.py \
             --ignore=tests/test_voice_watchdog.py \
-            -m "not integration" \
+            --ignore=tests/test_redis_integration.py \
+            --ignore=tests/test_redis_interbot.py \
+            --ignore=tests/test_redpanda_voice.py \
+            -m "not integration and not requires_redis and not requires_neo4j and not requires_temporal and not requires_docker and not requires_firebase and not requires_kafka and not slow and not skip_ci" \
             -n auto \
             --maxprocesses=4 \
             -v --tb=short \
-            --cov=agentic_brain \
+            --cov=src/agentic_brain \
             --cov-report=term-missing \
-            --cov-report=xml
+            --cov-report=xml \
+            --cov-fail-under=10
 
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4

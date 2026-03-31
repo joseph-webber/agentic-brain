@@ -19,7 +19,7 @@ import re
 from datetime import UTC, datetime, timezone
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
 
 class ChatRequest(BaseModel):
@@ -562,3 +562,239 @@ class HealthResponse(BaseModel):
             overall = "healthy"
 
         return cls(status=overall, components=indicators)
+
+
+# =============================================================================
+# Message and Session Management Models
+# =============================================================================
+
+from pydantic import RootModel
+
+
+class MessageListResponse(RootModel[list[dict]]):
+    """Response model for message list endpoint.
+
+    Attributes:
+        root: List of messages from a session
+    """
+
+    root: list[dict] = Field(
+        ...,
+        description="List of messages with id, role, content, and timestamp",
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                [
+                    {
+                        "id": "msg_001",
+                        "role": "user",
+                        "content": "Hello, how are you?",
+                        "timestamp": "2026-01-01T10:00:00Z",
+                    },
+                    {
+                        "id": "msg_002",
+                        "role": "assistant",
+                        "content": "I'm doing well, thank you for asking!",
+                        "timestamp": "2026-01-01T10:00:01Z",
+                    },
+                ]
+            ]
+        }
+    )
+
+
+class ProviderStatus(BaseModel):
+    """Status of a single LLM provider.
+
+    Attributes:
+        name: Provider name (e.g., "groq", "openai")
+        reason: Status reason/explanation
+    """
+
+    name: str = Field(..., description="Provider name")
+    reason: str = Field(..., description="Status reason")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"name": "groq", "reason": "GROQ_API_KEY is configured"},
+                {"name": "openai", "reason": "OPENAI_API_KEY not configured"},
+            ]
+        }
+    )
+
+
+class ProviderInfo(BaseModel):
+    """Provider availability information.
+
+    Attributes:
+        available: List of available providers
+        unavailable: List of unavailable providers
+    """
+
+    available: list[ProviderStatus] = Field(
+        default_factory=list, description="Available providers"
+    )
+    unavailable: list[ProviderStatus] = Field(
+        default_factory=list, description="Unavailable providers"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "available": [
+                        {"name": "groq", "reason": "GROQ_API_KEY is configured"}
+                    ],
+                    "unavailable": [
+                        {"name": "openai", "reason": "OPENAI_API_KEY not configured"}
+                    ],
+                }
+            ]
+        }
+    )
+
+
+class SetupStatusResponse(BaseModel):
+    """Setup status and diagnostics response.
+
+    Attributes:
+        status: Overall setup status ("configured", "needs_setup", or "error")
+        message: Human-readable status message
+        providers: Information about available/unavailable providers
+        setup_guide: Optional setup instructions
+        quick_start: Optional quick start guide
+    """
+
+    status: str = Field(
+        ..., description="Setup status: configured, needs_setup, or error"
+    )
+    message: str = Field(..., description="Human-readable status message")
+    providers: ProviderInfo = Field(..., description="Provider availability info")
+    setup_guide: Optional[str] = Field(
+        default=None, description="Detailed setup instructions"
+    )
+    quick_start: Optional[dict[str, Any]] = Field(
+        default=None, description="Quick start guide"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "status": "configured",
+                    "message": "✓ 1 provider(s) ready",
+                    "providers": {
+                        "available": [
+                            {"name": "groq", "reason": "GROQ_API_KEY is configured"}
+                        ],
+                        "unavailable": [
+                            {"name": "openai", "reason": "OPENAI_API_KEY not configured"}
+                        ],
+                    },
+                    "setup_guide": "Your system is ready to use Groq...",
+                },
+                {
+                    "status": "needs_setup",
+                    "message": "❌ No LLM providers configured",
+                    "providers": {
+                        "available": [],
+                        "unavailable": [
+                            {"name": "groq", "reason": "GROQ_API_KEY not configured"},
+                            {"name": "openai", "reason": "OPENAI_API_KEY not configured"},
+                        ],
+                    },
+                    "quick_start": {
+                        "option_1": "GROQ (FREE, recommended)",
+                        "steps": [
+                            "1. Visit: https://console.groq.com",
+                            "2. Sign up and get API key",
+                            "3. Add to .env: GROQ_API_KEY=gsk_...",
+                            "4. Restart the server",
+                        ],
+                    },
+                },
+            ]
+        }
+    )
+
+
+class ProviderSetupStep(BaseModel):
+    """A step in provider setup instructions.
+
+    Attributes:
+        step: Step number or order
+        title: Step title
+        instruction: Detailed instruction
+        code: Optional code snippet or command
+    """
+
+    step: int = Field(..., description="Step number")
+    title: str = Field(..., description="Step title")
+    instruction: str = Field(..., description="Step instruction")
+    code: Optional[str] = Field(default=None, description="Optional code/command")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "step": 1,
+                    "title": "Create Account",
+                    "instruction": "Visit Groq console and create an account",
+                    "code": "# No code needed for this step",
+                }
+            ]
+        }
+    )
+
+
+class SetupHelpResponse(BaseModel):
+    """Detailed setup help for a specific provider.
+
+    Attributes:
+        provider: Provider name
+        title: Setup title
+        description: Provider description
+        documentation_url: Link to provider documentation
+        steps: List of setup steps
+        pricing_info: Pricing information
+        troubleshooting: Troubleshooting tips
+    """
+
+    provider: str = Field(..., description="Provider name (e.g., 'groq')")
+    title: str = Field(..., description="Setup title")
+    description: str = Field(..., description="Provider description")
+    documentation_url: str = Field(..., description="Link to documentation")
+    steps: list[ProviderSetupStep] = Field(
+        default_factory=list, description="Setup steps"
+    )
+    pricing_info: Optional[str] = Field(default=None, description="Pricing info")
+    troubleshooting: Optional[dict[str, str]] = Field(
+        default=None, description="Troubleshooting tips"
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "provider": "groq",
+                    "title": "Setup Groq (FREE, Recommended)",
+                    "description": "Groq provides fast, free LLM inference via API",
+                    "documentation_url": "https://console.groq.com",
+                    "steps": [
+                        {
+                            "step": 1,
+                            "title": "Create Account",
+                            "instruction": "Visit Groq console and create an account",
+                        }
+                    ],
+                    "pricing_info": "FREE tier: Unlimited requests (rate limited)",
+                    "troubleshooting": {
+                        "rate_limit": "See https://console.groq.com/docs/rate-limits"
+                    },
+                }
+            ]
+        }
+    )
