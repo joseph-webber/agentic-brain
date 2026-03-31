@@ -111,10 +111,19 @@ services:
       # APOC is auto-installed via this environment variable
       NEO4J_PLUGINS: '["apoc", "graph-data-science"]'
       
-      # Memory settings (reasonable defaults for cross-platform)
-      NEO4J_dbms_memory_heap_initial_size: ${NEO4J_HEAP_INIT:-256m}
-      NEO4J_dbms_memory_heap_max_size: ${NEO4J_HEAP_MAX:-512m}
-      NEO4J_dbms_memory_pagecache_size: ${NEO4J_PAGECACHE:-256m}
+      # =======================================================================
+      # MEMORY SETTINGS - Neo4j 5.x syntax (NOT 4.x!)
+      # =======================================================================
+      # WARNING: Neo4j 5.x renamed ALL dbms.* settings to server.*
+      # Old: dbms.memory.heap.max_size  (4.x - WILL FAIL!)
+      # New: server.memory.heap.max_size (5.x - USE THIS!)
+      # =======================================================================
+      NEO4J_server_memory_heap_initial__size: ${NEO4J_HEAP_INIT:-256m}
+      NEO4J_server_memory_heap_max__size: ${NEO4J_HEAP_MAX:-512m}
+      NEO4J_server_memory_pagecache_size: ${NEO4J_PAGECACHE:-256m}
+      
+      # Allow binding to all interfaces
+      NEO4J_server_default__listen__address: "0.0.0.0"
       
       # APOC and GDS config - unrestricted for core functionality
       NEO4J_dbms_security_procedures_unrestricted: apoc.*,gds.*
@@ -168,7 +177,7 @@ services:
     container_name: agentic-brain-redpanda
     ports:
       - "${KAFKA_PORT:-9092}:9092"      # Kafka API
-      - "${PANDAPROXY_PORT:-8082}:8082" # HTTP Proxy
+      - "${PANDAPROXY_PORT:-18082}:8082" # HTTP Proxy (changed to 18082 to avoid conflicts!)
       - "${ADMIN_PORT:-9644}:9644"      # Admin API
     environment:
       # Enable development mode to bypass AIO limitations on Windows/Docker Desktop
@@ -179,7 +188,7 @@ services:
       - start
       - --mode=dev-container
       - --smp=1
-      - --memory=512M
+      - --memory=1G
       - --overprovisioned
       - --kafka-addr=internal://0.0.0.0:29092,external://0.0.0.0:9092
       - --advertise-kafka-addr=internal://redpanda:29092,external://localhost:9092
