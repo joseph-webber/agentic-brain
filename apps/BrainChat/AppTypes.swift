@@ -45,6 +45,42 @@ enum AIServiceError: LocalizedError {
 
 enum AIStreamEvent: Sendable { case providerChanged(String), reset, delta(String) }
 
+// MARK: - Speech-to-Text Engines
+enum SpeechEngine: String, CaseIterable, Identifiable {
+    case apple = "Apple Dictation"
+    case whisperKit = "WhisperKit (Local)"
+    case whisperAPI = "OpenAI Whisper API"
+    case whisperCpp = "whisper.cpp (Local)"
+    
+    var id: String { rawValue }
+    
+    var description: String {
+        switch self {
+        case .apple: return "Native macOS - fast, requires internet"
+        case .whisperKit: return "Local Python faster-whisper bridge - private and offline"
+        case .whisperAPI: return "Cloud API - highest accuracy, uses OpenAI key"
+        case .whisperCpp: return "Local C++ - works offline, very fast"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .apple: return "apple.logo"
+        case .whisperKit: return "cpu"
+        case .whisperAPI: return "cloud"
+        case .whisperCpp: return "terminal"
+        }
+    }
+    
+    var requiresAPIKey: Bool {
+        self == .whisperAPI
+    }
+    
+    var isLocal: Bool {
+        self == .whisperKit || self == .whisperCpp
+    }
+}
+
 struct ChatMessage: Identifiable, Equatable {
     let id: UUID
     let role: Role
@@ -134,6 +170,13 @@ final class AppSettings: ObservableObject {
     @AppStorage("speechRate") var speechRate: Double = 160
     @AppStorage("continuousListening") var continuousListening: Bool = false
     @AppStorage("autoSpeak") var autoSpeak: Bool = true
+    @AppStorage("speechEngineRaw") private var speechEngineRaw: String = SpeechEngine.apple.rawValue
+    
+    var speechEngine: SpeechEngine {
+        get { SpeechEngine(rawValue: speechEngineRaw) ?? .apple }
+        set { speechEngineRaw = newValue.rawValue }
+    }
+    
     @Published var claudeAPIKey: String = ""
     @Published var openAIKey: String = ""
     @Published var grokAPIKey: String = ""
@@ -252,8 +295,4 @@ Respond in a friendly Australian manner. Keep responses SHORT - Joseph listens t
     }
 }
 
-struct AudioDevice: Identifiable, Hashable {
-    let id: String
-    let name: String
-    let isAirPodsMax: Bool
-}
+// AudioDevice is defined in SpeechManager.swift

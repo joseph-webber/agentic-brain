@@ -22,6 +22,12 @@ struct SpeechRecognitionUpdate: Equatable {
     static func level(_ value: Float) -> SpeechRecognitionUpdate { .init(kind: .level, text: "", level: value) }
 }
 
+struct AudioDevice: Identifiable, Equatable, Hashable {
+    let id: String
+    let name: String
+    let isAirPodsMax: Bool
+}
+
 protocol SpeechRecognitionControlling {
     var currentAuthorizationStatus: SFSpeechRecognizerAuthorizationStatus { get }
     var isRecognizerAvailable: Bool { get }
@@ -98,14 +104,13 @@ final class AppleSpeechRecognitionController: SpeechRecognitionControlling {
     }
 
     func startRecognition(handler: @escaping (SpeechRecognitionUpdate) -> Void) throws {
+        // Clean up any existing session first
+        stopRecognition()
+        
         guard let recognizer = recognizer else {
             handler(.failure("Speech recognizer not available"))
             return
         }
-        
-        // Cancel any existing task
-        recognitionTask?.cancel()
-        recognitionTask = nil
         
         // Create recognition request
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
@@ -159,8 +164,13 @@ final class AppleSpeechRecognitionController: SpeechRecognitionControlling {
             }
         }
         
-        audioEngine.prepare()
-        try audioEngine.start()
+        do {
+            audioEngine.prepare()
+            try audioEngine.start()
+        } catch {
+            stopRecognition()  // Clean up on failure
+            throw error
+        }
     }
 
     func stopRecognition() {
@@ -183,22 +193,56 @@ final class SpeechManager: ObservableObject {
     @Published var inputDevices: [AudioDevice] = []
     @Published var selectedDevice: AudioDevice?
     @Published var audioLevel: Float = 0.0
+    @Published var currentEngine: SpeechEngine = .apple
+    @Published var engineStatus: String = ""
 
     var onTranscriptFinalized: ((String) -> Void)?
 
-    private let controller: SpeechRecognitionControlling
+    private var appleController: AppleSpeechRecognitionController
+    private var whisperAPIEngine: WhisperAPIEngine?
+    private var whisperCppEngine: WhisperCppEngine?
+    private let fasterWhisperBridge = FasterWhisperBridge.shared
+    private var audioRecorder: AVAudioRecorder?
+    private var recordingURL: URL?
+    private var openAIKey: String = ""
 
-    init(controller: SpeechRecognitionControlling = AppleSpeechRecognitionController(), requestAuthorizationOnInit: Bool = true) {
-        self.controller = controller
-        authorizationStatus = controller.currentAuthorizationStatus
+    init(requestAuthorizationOnInit: Bool = true) {
+        self.appleController = AppleSpeechRecognitionController()
+        self.whisperCppEngine = WhisperCppEngine()
+        authorizationStatus = appleController.currentAuthorizationStatus
         if requestAuthorizationOnInit {
             requestAuthorization()
         }
         refreshDevices()
+        updateEngineStatus()
+    }
+    
+    func setOpenAIKey(_ key: String) {
+        openAIKey = key
+        whisperAPIEngine = key.isEmpty ? nil : WhisperAPIEngine(apiKey: key)
+        updateEngineStatus()
+    }
+    
+    func setEngine(_ engine: SpeechEngine) {
+        currentEngine = engine
+        updateEngineStatus()
+    }
+    
+    private func updateEngineStatus() {
+        switch currentEngine {
+        case .apple:
+            engineStatus = appleController.isRecognizerAvailable ? "Ready" : "Not available"
+        case .whisperKit:
+            engineStatus = fasterWhisperBridge.isAvailable ? "Ready (Python faster-whisper)" : "Install faster-whisper for /usr/bin/python3"
+        case .whisperAPI:
+            engineStatus = openAIKey.isEmpty ? "Needs OpenAI key" : "Ready"
+        case .whisperCpp:
+            engineStatus = whisperCppEngine?.isAvailable == true ? "Ready" : "Install: brew install whisper-cpp"
+        }
     }
 
     func requestAuthorization() {
-        controller.requestAuthorization { [weak self] status in
+        appleController.requestAuthorization { [weak self] status in
             Task { @MainActor in
                 guard let self else { return }
                 self.authorizationStatus = status
@@ -224,7 +268,7 @@ final class SpeechManager: ObservableObject {
     }
 
     func refreshDevices() {
-        let devices = controller.availableInputDevices()
+        let devices = appleController.availableInputDevices()
         let resolved = devices.isEmpty ? [AudioDevice(id: "default", name: "Built-in Microphone", isAirPodsMax: false)] : devices
         inputDevices = resolved
         if let airPods = resolved.first(where: { $0.isAirPodsMax }) {
@@ -235,22 +279,35 @@ final class SpeechManager: ObservableObject {
     }
 
     func startListening() {
+        guard !isListening else { return }
+        
+        currentTranscript = ""
+        errorMessage = nil
+        audioLevel = 0
+        isListening = true
+        
+        switch currentEngine {
+        case .apple:
+            startAppleRecognition()
+        case .whisperAPI, .whisperCpp, .whisperKit:
+            startRecording()
+        }
+    }
+    
+    private func startAppleRecognition() {
         guard authorizationStatus == .authorized else {
             errorMessage = "Speech recognition not authorized."
+            isListening = false
             return
         }
-        guard !isListening else { return }
-        guard controller.isRecognizerAvailable else {
+        guard appleController.isRecognizerAvailable else {
             errorMessage = "Speech recognizer is not available."
+            isListening = false
             return
         }
-
+        
         do {
-            currentTranscript = ""
-            errorMessage = nil
-            audioLevel = 0
-            isListening = true
-            try controller.startRecognition { [weak self] update in
+            try appleController.startRecognition { [weak self] update in
                 Task { @MainActor in
                     self?.handle(update)
                 }
@@ -260,11 +317,136 @@ final class SpeechManager: ObservableObject {
             errorMessage = "Failed to start: \(error.localizedDescription)"
         }
     }
+    
+    private func startRecording() {
+        // Check microphone permission BEFORE recording
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            break  // Good to go
+        case .notDetermined:
+            requestMicrophoneAccess()
+            isListening = false
+            return
+        default:
+            errorMessage = "Microphone access not authorized."
+            isListening = false
+            return
+        }
+        
+        // Record audio for Whisper transcription as PCM (16kHz mono 16-bit)
+        let tempDir = FileManager.default.temporaryDirectory
+        recordingURL = tempDir.appendingPathComponent("brain_chat_\(UUID().uuidString).wav")
+        
+        let settings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatLinearPCM,
+            AVSampleRateKey: 16_000,
+            AVNumberOfChannelsKey: 1,
+            AVLinearPCMBitDepthKey: 16,
+            AVLinearPCMIsFloatKey: false
+        ]
+        
+        do {
+            audioRecorder = try AVAudioRecorder(url: recordingURL!, settings: settings)
+            audioRecorder?.isMeteringEnabled = true
+            
+            // Check audioRecorder.record() return value
+            guard audioRecorder?.record() == true else {
+                errorMessage = "Failed to start microphone capture."
+                isListening = false
+                return
+            }
+            
+            // Update audio level periodically
+            Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
+                guard let self = self, self.isListening else {
+                    timer.invalidate()
+                    return
+                }
+                self.audioRecorder?.updateMeters()
+                let level = self.audioRecorder?.averagePower(forChannel: 0) ?? -160
+                // Convert dB to 0-1 range
+                let normalized = max(0, min(1, (level + 50) / 50))
+                Task { @MainActor in
+                    self.audioLevel = Float(normalized)
+                }
+            }
+        } catch {
+            errorMessage = "Failed to start recording: \(error.localizedDescription)"
+            isListening = false
+        }
+    }
 
     func stopListening() {
-        controller.stopRecognition()
-        isListening = false
+        guard isListening else { return }
+        
+        switch currentEngine {
+        case .apple:
+            appleController.stopRecognition()
+            isListening = false
+            audioLevel = 0
+        case .whisperAPI, .whisperCpp, .whisperKit:
+            stopRecordingAndTranscribe()
+        }
+    }
+    
+    private func stopRecordingAndTranscribe() {
+        audioRecorder?.stop()
+        audioRecorder = nil
         audioLevel = 0
+        
+        guard let url = recordingURL else {
+            isListening = false
+            errorMessage = "No recording found"
+            return
+        }
+        
+        // Copy values for detached task to avoid data races
+        let engine = self.currentEngine
+        let whisperAPI = self.whisperAPIEngine
+        let whisperCpp = self.whisperCppEngine
+        let fasterWhisperBridge = self.fasterWhisperBridge
+        
+        Task {
+            do {
+                let transcript: String
+                
+                switch engine {
+                case .whisperAPI:
+                    guard let api = whisperAPI else {
+                        throw WhisperError.missingAPIKey
+                    }
+                    transcript = try await api.transcribe(audioURL: url)
+                    
+                case .whisperCpp:
+                    guard let cpp = whisperCpp else {
+                        throw WhisperError.recordingFailed
+                    }
+                    transcript = try await cpp.transcribe(audioURL: url)
+
+                case .whisperKit:
+                    guard fasterWhisperBridge.isAvailable else {
+                        throw WhisperError.apiError(1, "faster-whisper bridge is not available")
+                    }
+                    transcript = try await fasterWhisperBridge.transcribe(audioURL: url)
+                    
+                default:
+                    throw WhisperError.recordingFailed
+                }
+                
+                self.currentTranscript = transcript
+                self.isListening = false
+                if !transcript.isEmpty {
+                    self.onTranscriptFinalized?(transcript)
+                }
+            } catch {
+                self.errorMessage = error.localizedDescription
+                self.isListening = false
+            }
+            
+            // Cleanup
+            try? FileManager.default.removeItem(at: url)
+            self.recordingURL = nil
+        }
     }
 
     func handle(_ update: SpeechRecognitionUpdate) {

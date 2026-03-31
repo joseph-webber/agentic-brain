@@ -21,7 +21,7 @@ struct ConversationView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .id(message.id)
                         .accessibilityElement(children: .combine)
-                        .accessibilityLabel("\(message.role.rawValue): \(message.content)")
+                        .accessibilityLabel(message.accessibilityDescription)
                     }
                 }
                 .padding()

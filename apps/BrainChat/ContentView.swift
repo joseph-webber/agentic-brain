@@ -14,10 +14,14 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 LLMSelector()
                     .environmentObject(llmRouter)
                     .environmentObject(settings)
+                
+                SpeechEngineSelector()
+                    .environmentObject(settings)
+                
                 Spacer()
                 
                 // Mic toggle button - ONE CLICK to toggle live/muted
@@ -34,14 +38,16 @@ struct ContentView: View {
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(isMicLive ? "Microphone is live. Double tap to mute." : "Microphone is muted. Double tap to go live.")
-                .accessibilityHint("Toggle microphone on or off")
+                .accessibilityLabel("Microphone")
+                .accessibilityValue(isMicLive ? "Live" : "Muted")
+                .accessibilityHint(isMicLive ? "Double tap to mute" : "Double tap to go live")
                 
                 Button(action: { store.clear() }) { 
                     Image(systemName: "trash") 
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Clear conversation")
+                .accessibilityHint("Deletes all messages in the current conversation")
             }
             .padding(12)
 
@@ -60,6 +66,9 @@ struct ContentView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
                 .background(Color.green.opacity(0.1))
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Live transcript")
+                .accessibilityValue(speechManager.currentTranscript)
             }
 
             HStack(spacing: 10) {
@@ -67,6 +76,8 @@ struct ContentView: View {
                     .textFieldStyle(.roundedBorder)
                     .focused($isTextFieldFocused)
                     .onSubmit { sendTextMessage() }
+                    .accessibilityLabel("Message")
+                    .accessibilityHint("Type your message and press Return to send")
                 Button(action: sendTextMessage) { Image(systemName: "paperplane.fill") }
                     .buttonStyle(.borderedProminent)
                     .disabled(textInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -75,6 +86,7 @@ struct ContentView: View {
             .padding(12)
         }
         .onAppear {
+            isTextFieldFocused = true
             voiceManager.selectVoice(named: settings.voiceName)
             voiceManager.speechRate = Float(settings.speechRate)
             speechManager.requestMicrophoneAccess()
@@ -114,6 +126,7 @@ struct ContentView: View {
         guard !text.isEmpty else { return }
         textInput = ""
         handleUserMessage(text)
+        isTextFieldFocused = true
     }
 
     private func handleUserMessage(_ text: String) {
