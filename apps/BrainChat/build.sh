@@ -75,6 +75,17 @@ swiftc \
     -parse-as-library \
     "${SWIFT_FILES[@]}"
 
+# Code sign the app bundle with ad-hoc signature, entitlements, and sealed resources
+# This is required for microphone permission to work on macOS
+ENTITLEMENTS="${SRC_DIR}/BrainChat.entitlements"
+if [ -f "$ENTITLEMENTS" ]; then
+    codesign --force --deep --sign - --entitlements "$ENTITLEMENTS" "${APP_BUNDLE}"
+    echo "Signed with entitlements: $ENTITLEMENTS"
+else
+    echo "WARNING: No entitlements file found at $ENTITLEMENTS"
+    codesign --force --deep --sign - "${APP_BUNDLE}"
+fi
+
 if $DO_INSTALL; then
     rm -rf "${INSTALL_PATH}"
     cp -R "${APP_BUNDLE}" "${INSTALL_PATH}"

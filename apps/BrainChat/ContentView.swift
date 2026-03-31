@@ -38,6 +38,7 @@ struct ContentView: View {
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("micButton")
                 .accessibilityLabel("Microphone")
                 .accessibilityValue(isMicLive ? "Live" : "Muted")
                 .accessibilityHint(isMicLive ? "Double tap to mute" : "Double tap to go live")
@@ -89,7 +90,8 @@ struct ContentView: View {
             isTextFieldFocused = true
             voiceManager.selectVoice(named: settings.voiceName)
             voiceManager.speechRate = Float(settings.speechRate)
-            speechManager.requestMicrophoneAccess()
+            // Don't request permission here - wait for user to click mic button
+            // This prevents race condition: request on launch, then check on button click
             speechManager.onTranscriptFinalized = { transcript in
                 Task { @MainActor in 
                     handleUserMessage(transcript)
@@ -108,16 +110,27 @@ struct ContentView: View {
 
     // Simple toggle - click once to go live, click again to mute
     private func toggleMic() {
-        isMicLive.toggle()
-        
+        NSLog("BRAINCHAT: toggleMic() CALLED - isMicLive=\(isMicLive)")
+        // If turning OFF, just stop
         if isMicLive {
-            speechManager.startListening()
-            voiceManager.speak("Mic is live")
-            store.addMessage(role: .system, content: "🎤 Microphone is now LIVE - speak anytime")
-        } else {
+            isMicLive = false
             speechManager.stopListening()
             voiceManager.speak("Mic muted")
             store.addMessage(role: .system, content: "🔇 Microphone muted")
+            return
+        }
+        
+        // Turning ON - check permission FIRST (like KarenVoice does)
+        speechManager.requestMicrophonePermissionWithCompletion { [self] granted in
+            if granted {
+                isMicLive = true
+                speechManager.startListening()
+                voiceManager.speak("Mic is live")
+                store.addMessage(role: .system, content: "🎤 Microphone is now LIVE - speak anytime")
+            } else {
+                store.addMessage(role: .system, content: "⚠️ Microphone permission denied. Enable in System Settings > Privacy & Security > Microphone")
+                voiceManager.speak("Please enable microphone access in System Settings")
+            }
         }
     }
 

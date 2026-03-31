@@ -18,6 +18,10 @@ This is the **simplest and most reliable** method for Windows users.
    - Download: https://github.com/git-for-windows/git/releases/download/v2.53.0.windows.2/Git-2.53.0.2-64-bit.exe
    - This provides a Unix-like shell for running setup scripts
 
+3. **Python 3.10, 3.11, or 3.12** (NOT 3.13 or 3.14!)
+   - Some dependencies like `rapidocr-onnxruntime` don't support Python 3.13+
+   - Download Python 3.12: https://www.python.org/downloads/release/python-3129/
+
 ### Installation Steps
 
 **Step 1: Clone and Setup**
@@ -29,26 +33,25 @@ cd agentic-brain/
 ./setup.sh
 ```
 
-**Step 2: Configure Environment**
+**Step 2: Verify Environment Files Created**
 
-Copy the example environment file and configure it:
+The setup script should create these files automatically:
+- `.env` - Main application config
+- `.env.dev` - Docker dev config (REQUIRED for docker-compose.dev.yml)
+- `.env.docker` - Docker production config
+
+If `.env.dev` is missing, create it manually:
 ```bash
 cp .env.dev.example .env.dev
 ```
 
-Edit `.env.dev` with your settings (Neo4j password, Redis password, etc.).
-
-**Step 3: Corporate Proxy Configuration (If Needed)**
-
-If you're behind a corporate proxy and encounter SSL/certificate errors during Docker builds, the Dockerfile already includes trusted-host configuration for pip. No additional action needed.
-
-**Step 4: Start Services**
+**Step 3: Start Services**
 
 ```bash
 docker compose --env-file .env.dev -f docker/docker-compose.dev.yml up -d
 ```
 
-**Step 5: Verify**
+**Step 4: Verify**
 
 ```bash
 # Check containers are running
@@ -56,6 +59,65 @@ docker ps
 
 # View logs
 docker compose --env-file .env.dev -f docker/docker-compose.dev.yml logs -f
+```
+
+---
+
+## ⚠️ Common Issues and Fixes
+
+### "NEO4J_PASSWORD must be set in .env.dev"
+
+**Cause:** The `.env.dev` file doesn't exist or is empty.
+
+**Fix:**
+```bash
+# Create from example
+cp .env.dev.example .env.dev
+
+# OR create manually with these contents:
+cat > .env.dev << 'EOF'
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=Brain2026
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=BrainRedis2026
+ENVIRONMENT=dev
+DEBUG=true
+EOF
+```
+
+### "REDIS_PASSWORD must be set in .env.dev"
+
+Same fix as above - the `.env.dev` file needs `REDIS_PASSWORD=BrainRedis2026`.
+
+### "No matching distribution found for rapidocr-onnxruntime"
+
+**Cause:** You're using Python 3.13 or 3.14, which is too new.
+
+**Fix:** Install Python 3.12 instead:
+```powershell
+winget install Python.Python.3.12
+```
+
+Then recreate your virtualenv:
+```bash
+rm -rf .venv
+python3.12 -m venv .venv
+./setup.sh
+```
+
+### "Failed to read config: Unrecognized setting URI"
+
+**Cause:** Neo4j container is receiving invalid environment variables.
+
+**Fix:** Check your `.env.dev` file - make sure there's no `URI=` line without `NEO4J_` prefix:
+```bash
+# WRONG:
+URI=bolt://localhost:7687
+
+# CORRECT:
+NEO4J_URI=bolt://localhost:7687
 ```
 
 ---

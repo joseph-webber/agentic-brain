@@ -35,7 +35,10 @@ let package = Package(
                 "E2ECodingTests.swift",
                 "E2EYoloTests.swift",
                 "E2EMultiLLMTests.swift",
-                "RedpandaBridgeTests.swift"
+                "RedpandaBridgeTests.swift",
+                "SpeechEngineTests.swift",
+                "AccessibilityTests.swift",
+                "CodeSigningTests.swift"
             ]
         )
     ]

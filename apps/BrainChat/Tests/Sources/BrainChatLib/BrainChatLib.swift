@@ -288,3 +288,116 @@ public struct CommandSafety {
         return Self.blockedCommands.contains { lower.hasPrefix($0) || lower == $0 }
     }
 }
+
+// MARK: - Speech Engine Types
+
+/// Speech engine options for STT
+public enum SpeechEngine: String, CaseIterable, Identifiable {
+    case appleDictation = "apple"
+    case whisperAPI = "whisperAPI"
+    case whisperCpp = "whisperCpp"
+    case whisperKit = "whisperKit"  // Actually faster-whisper Python
+    
+    public var id: String { rawValue }
+    
+    public var description: String {
+        switch self {
+        case .appleDictation: return "Apple Dictation"
+        case .whisperAPI: return "OpenAI Whisper API"
+        case .whisperCpp: return "whisper.cpp (Local)"
+        case .whisperKit: return "faster-whisper (Local)"
+        }
+    }
+    
+    public var requiresAPIKey: Bool {
+        switch self {
+        case .whisperAPI: return true
+        default: return false
+        }
+    }
+}
+
+/// Whisper-related errors
+public enum WhisperError: LocalizedError {
+    case missingAPIKey
+    case invalidResponse
+    case apiError(Int, String)
+    case recordingFailed
+    case noAudioData
+    
+    public var errorDescription: String? {
+        switch self {
+        case .missingAPIKey: return "OpenAI API key required for Whisper API"
+        case .invalidResponse: return "Invalid response from Whisper API"
+        case .apiError(let code, let message): return "Whisper API error \(code): \(message)"
+        case .recordingFailed: return "Failed to record audio"
+        case .noAudioData: return "No audio data captured"
+        }
+    }
+}
+
+/// App settings for testing
+public struct AppSettings {
+    public var speechEngine: SpeechEngine
+    public var openAIKey: String
+    public var ollamaModel: String
+    public var claudeModel: String
+    public var openAIModel: String
+    public var grokModel: String
+    public var geminiModel: String
+    
+    public init(
+        speechEngine: SpeechEngine = .appleDictation,
+        openAIKey: String = "",
+        ollamaModel: String = "llama3.2:3b",
+        claudeModel: String = "claude-sonnet-4-20250514",
+        openAIModel: String = "gpt-4o",
+        grokModel: String = "grok-3-latest",
+        geminiModel: String = "gemini-2.5-flash"
+    ) {
+        self.speechEngine = speechEngine
+        self.openAIKey = openAIKey
+        self.ollamaModel = ollamaModel
+        self.claudeModel = claudeModel
+        self.openAIModel = openAIModel
+        self.grokModel = grokModel
+        self.geminiModel = geminiModel
+    }
+    
+    public static var defaults: AppSettings {
+        AppSettings()
+    }
+}
+
+/// Mock speech recognition controller for testing
+public class MockSpeechRecognitionController {
+    public var isRecognising: Bool = false
+    public var startCallCount: Int = 0
+    public var stopCallCount: Int = 0
+    public var authorizationStatus: String = "authorized"
+    public var isRecognizerAvailable: Bool = true
+    public var authorizationRequestCount: Int = 0
+    
+    public init() {}
+    
+    public func startRecognition() throws {
+        guard authorizationStatus == "authorized" else {
+            throw NSError(domain: "SpeechAuth", code: 1, userInfo: [NSLocalizedDescriptionKey: "Not authorized"])
+        }
+        guard isRecognizerAvailable else {
+            throw NSError(domain: "SpeechAvail", code: 2, userInfo: [NSLocalizedDescriptionKey: "Recognizer unavailable"])
+        }
+        isRecognising = true
+        startCallCount += 1
+    }
+    
+    public func stopRecognition() {
+        isRecognising = false
+        stopCallCount += 1
+    }
+    
+    public func requestAuthorization(_ completion: @escaping (String) -> Void) {
+        authorizationRequestCount += 1
+        completion(authorizationStatus)
+    }
+}

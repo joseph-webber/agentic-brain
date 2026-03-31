@@ -7,11 +7,11 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
-        .library(name: "BrainChatLib", targets: ["BrainChatLib"])
+        .executable(name: "BrainChat", targets: ["BrainChat"])
     ],
     targets: [
-        .target(
-            name: "BrainChatLib",
+        .executableTarget(
+            name: "BrainChat",
             path: ".",
             exclude: [
                 ".build",
@@ -22,25 +22,33 @@ let package = Package(
                 "build.sh",
                 "install.sh",
                 "voice_bridge_daemon.py",
+                "LLMSelector.swift",
+                "VoiceTests",
+                "__pycache__",
+                "runtime",
+                "bridge-daemon.log",
+                "build-output.log"
+            ],
+            sources: [
+                "BrainChat.swift",
+                "BrainChatCoordinator.swift",
                 "AirPodsManager.swift",
                 "AudioPlayer.swift",
                 "AudioSession.swift",
-                "BrainChat.swift",
-                "BrainChatCoordinator.swift",
                 "BridgeDaemon.swift",
                 "CartesiaVoice.swift",
                 "CodeAssistant.swift",
                 "ContentView.swift",
                 "ConversationView.swift",
                 "CopilotVoiceRouter.swift",
-                "EventTypes.swift",
-                "LLMSelector.swift",
+                "FasterWhisperBridge.swift",
                 "PandaproxyClient.swift",
                 "RedpandaBridge.swift",
                 "SafetyGuard.swift",
                 "SettingsView.swift",
                 "SpatialAudio.swift",
                 "SpeechManager.swift",
+                "SpeechEngineSelector.swift",
                 "SystemCommands.swift",
                 "VoiceBridge.swift",
                 "VoiceManager.swift",
@@ -48,14 +56,8 @@ let package = Package(
                 "YoloExecutor.swift",
                 "YoloMode.swift",
                 "YoloSession.swift",
-                "VoiceTests",
+                "WhisperEngines.swift",
                 "AppTypes.swift",
-                "__pycache__",
-                "runtime",
-                "bridge-daemon.log",
-                "build-output.log"
-            ],
-            sources: [
                 "AIManager.swift",
                 "APIKeyManager.swift",
                 "ClaudeAPI.swift",
@@ -66,13 +68,12 @@ let package = Package(
                 "LLMRouter.swift",
                 "Models.swift",
                 "OllamaAPI.swift",
-                "OpenAIAPI.swift",
-                "Sources/BrainChat/BrainChatLib.swift"
+                "OpenAIAPI.swift"
             ]
         ),
         .testTarget(
             name: "BrainChatTests",
-            dependencies: ["BrainChatLib"],
+            dependencies: ["BrainChat"],
             path: "Tests",
             exclude: [
                 "AppTests",

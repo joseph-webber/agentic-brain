@@ -21,9 +21,9 @@
 
   ],
   "swiftCommands" : {
-    "C.BrainChatLib-arm64-apple-macosx-release.module" : {
+    "C.BrainChat-arm64-apple-macosx-release.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/sources",
+      "fileList" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/sources",
       "importPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/Modules",
       "inputs" : [
         {
@@ -36,7 +36,51 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AirPodsManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AppTypes.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AudioPlayer.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AudioSession.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/BrainChat.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/BrainChatCoordinator.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/BridgeDaemon.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CartesiaVoice.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/ClaudeAPI.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CodeAssistant.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/ContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/ConversationView.swift"
         },
         {
           "kind" : "file",
@@ -45,6 +89,14 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotVoiceRouter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/FasterWhisperBridge.swift"
         },
         {
           "kind" : "file",
@@ -72,32 +124,121 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/PandaproxyClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/RedpandaBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SafetyGuard.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SettingsView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SpatialAudio.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechEngineSelector.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SystemCommands.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceSelector.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/WhisperEngines.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloExecutor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloMode.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloSession.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/sources"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/sources"
         }
       ],
-      "isLibrary" : true,
-      "moduleName" : "BrainChatLib",
-      "moduleOutputPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/Modules/BrainChatLib.swiftmodule",
+      "isLibrary" : false,
+      "moduleName" : "BrainChat",
+      "moduleOutputPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/Modules/BrainChat.swiftmodule",
       "objects" : [
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AIManager.swift.o",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/APIKeyManager.swift.o",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/ClaudeAPI.swift.o",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/CopilotBridge.swift.o",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/CopilotClient.swift.o",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GeminiClient.swift.o",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GrokClient.swift.o",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMRouter.swift.o",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/Models.swift.o",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/OllamaAPI.swift.o",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/OpenAIAPI.swift.o"
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AIManager.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/APIKeyManager.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AirPodsManager.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AppTypes.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AudioPlayer.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AudioSession.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BrainChat.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BrainChatCoordinator.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BridgeDaemon.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CartesiaVoice.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ClaudeAPI.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CodeAssistant.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ContentView.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ConversationView.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotBridge.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotClient.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotVoiceRouter.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/FasterWhisperBridge.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/GeminiClient.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/GrokClient.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/LLMRouter.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/Models.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/OllamaAPI.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/OpenAIAPI.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/PandaproxyClient.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/RedpandaBridge.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SafetyGuard.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SettingsView.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpatialAudio.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpeechEngineSelector.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpeechManager.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SystemCommands.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceBridge.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceManager.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceSelector.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/WhisperEngines.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloExecutor.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloMode.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloSession.swift.o"
       ],
       "otherArguments" : [
         "-target",
         "arm64-apple-macosx14.0",
+        "-v",
         "-whole-module-optimization",
         "-num-threads",
         "8",
@@ -109,10 +250,10 @@
         "-module-cache-path",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/ModuleCache",
         "-parseable-output",
-        "-parse-as-library",
-        "-emit-objc-header",
-        "-emit-objc-header-path",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/include/BrainChatLib-Swift.h",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "BrainChat_main",
         "-swift-version",
         "5",
         "-plugin-path",
@@ -141,72 +282,212 @@
         "-package-name",
         "brainchat"
       ],
-      "outputFileMapPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/output-file-map.json",
+      "outputFileMapPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/output-file-map.json",
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AIManager.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AIManager.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/APIKeyManager.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/APIKeyManager.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/ClaudeAPI.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AirPodsManager.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/CopilotBridge.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AppTypes.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/CopilotClient.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AudioPlayer.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GeminiClient.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AudioSession.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GrokClient.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BrainChat.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMRouter.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BrainChatCoordinator.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/Models.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BridgeDaemon.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/OllamaAPI.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CartesiaVoice.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/OpenAIAPI.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ClaudeAPI.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/Modules/BrainChatLib.swiftmodule"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CodeAssistant.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ConversationView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotVoiceRouter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/FasterWhisperBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/GeminiClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/GrokClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/LLMRouter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/Models.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/OllamaAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/OpenAIAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/PandaproxyClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/RedpandaBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SafetyGuard.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SettingsView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpatialAudio.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpeechEngineSelector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpeechManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SystemCommands.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceSelector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/WhisperEngines.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloExecutor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloMode.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloSession.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/Modules/BrainChat.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
         "/Users/joe/brain/agentic-brain/apps/BrainChat/AIManager.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/APIKeyManager.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/AirPodsManager.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/AppTypes.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/AudioPlayer.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/AudioSession.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/BrainChat.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/BrainChatCoordinator.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/BridgeDaemon.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/CartesiaVoice.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/ClaudeAPI.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/CodeAssistant.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/ContentView.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/ConversationView.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotBridge.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotClient.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotVoiceRouter.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/FasterWhisperBridge.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/GeminiClient.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/GrokClient.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMRouter.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Models.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/OllamaAPI.swift",
-        "/Users/joe/brain/agentic-brain/apps/BrainChat/OpenAIAPI.swift"
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/OpenAIAPI.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/PandaproxyClient.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/RedpandaBridge.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/SafetyGuard.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/SettingsView.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/SpatialAudio.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechEngineSelector.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/SystemCommands.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceBridge.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceSelector.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/WhisperEngines.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloExecutor.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloMode.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloSession.swift"
       ],
-      "tempsPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build",
+      "tempsPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build",
       "wholeModuleOptimization" : true
     },
     "C.BrainChatPackageTests-arm64-apple-macosx-release.module" : {
@@ -240,6 +521,7 @@
       "otherArguments" : [
         "-target",
         "arm64-apple-macosx14.0",
+        "-v",
         "-whole-module-optimization",
         "-num-threads",
         "8",
@@ -345,7 +627,7 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/Modules/BrainChatLib.swiftmodule"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat"
         },
         {
           "kind" : "file",
@@ -368,6 +650,7 @@
       "otherArguments" : [
         "-target",
         "arm64-apple-macosx14.0",
+        "-v",
         "-whole-module-optimization",
         "-num-threads",
         "8",
@@ -471,28 +754,57 @@
 
   },
   "swiftTargetScanArgs" : {
-    "BrainChatLib" : [
+    "BrainChat" : [
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "-module-name",
-      "BrainChatLib",
+      "BrainChat",
       "-package-name",
       "brainchat",
       "-c",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/AIManager.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/APIKeyManager.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/AirPodsManager.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/AppTypes.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/AudioPlayer.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/AudioSession.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/BrainChat.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/BrainChatCoordinator.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/BridgeDaemon.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/CartesiaVoice.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/ClaudeAPI.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/CodeAssistant.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/ContentView.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/ConversationView.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotBridge.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotClient.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotVoiceRouter.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/FasterWhisperBridge.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/GeminiClient.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/GrokClient.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMRouter.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Models.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/OllamaAPI.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/OpenAIAPI.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/PandaproxyClient.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/RedpandaBridge.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/SafetyGuard.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/SettingsView.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/SpatialAudio.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechEngineSelector.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/SystemCommands.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceBridge.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceSelector.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/WhisperEngines.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloExecutor.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloMode.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloSession.swift",
       "-I",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/Modules",
       "-target",
       "arm64-apple-macosx14.0",
+      "-v",
       "-whole-module-optimization",
       "-num-threads",
       "8",
@@ -504,10 +816,10 @@
       "-module-cache-path",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/ModuleCache",
       "-parseable-output",
-      "-parse-as-library",
-      "-emit-objc-header",
-      "-emit-objc-header-path",
-      "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/include/BrainChatLib-Swift.h",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "BrainChat_main",
       "-swift-version",
       "5",
       "-plugin-path",
@@ -550,6 +862,7 @@
       "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/Modules",
       "-target",
       "arm64-apple-macosx14.0",
+      "-v",
       "-whole-module-optimization",
       "-num-threads",
       "8",
@@ -615,6 +928,7 @@
       "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/Modules",
       "-target",
       "arm64-apple-macosx14.0",
+      "-v",
       "-whole-module-optimization",
       "-num-threads",
       "8",
@@ -664,15 +978,15 @@
     ]
   },
   "targetDependencyMap" : {
-    "BrainChatLib" : [
+    "BrainChat" : [
 
     ],
     "BrainChatPackageTests" : [
       "BrainChatTests",
-      "BrainChatLib"
+      "BrainChat"
     ],
     "BrainChatTests" : [
-      "BrainChatLib"
+      "BrainChat"
     ]
   },
   "testDiscoveryCommands" : {
@@ -697,7 +1011,7 @@
     }
   },
   "writeCommands" : {
-    "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/sources" : {
+    "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -714,7 +1028,51 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AirPodsManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AppTypes.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AudioPlayer.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AudioSession.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/BrainChat.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/BrainChatCoordinator.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/BridgeDaemon.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CartesiaVoice.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/ClaudeAPI.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CodeAssistant.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/ContentView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/ConversationView.swift"
         },
         {
           "kind" : "file",
@@ -723,6 +1081,14 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/CopilotVoiceRouter.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/FasterWhisperBridge.swift"
         },
         {
           "kind" : "file",
@@ -747,9 +1113,235 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/OpenAIAPI.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/PandaproxyClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/RedpandaBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SafetyGuard.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SettingsView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SpatialAudio.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechEngineSelector.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SystemCommands.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceBridge.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceSelector.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/WhisperEngines.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloExecutor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloMode.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/YoloSession.swift"
         }
       ],
-      "outputFilePath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/sources"
+      "outputFilePath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/sources"
+    },
+    "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AIManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/APIKeyManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AirPodsManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AppTypes.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AudioPlayer.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AudioSession.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BrainChat.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BrainChatCoordinator.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BridgeDaemon.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CartesiaVoice.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ClaudeAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CodeAssistant.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ConversationView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotVoiceRouter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/FasterWhisperBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/GeminiClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/GrokClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/LLMRouter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/Models.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/OllamaAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/OpenAIAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/PandaproxyClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/RedpandaBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SafetyGuard.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SettingsView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpatialAudio.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpeechEngineSelector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpeechManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SystemCommands.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceSelector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/WhisperEngines.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloExecutor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloMode.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloSession.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.product/Objects.LinkFileList"
     },
     "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatPackageTests.build/sources" : {
       "alwaysOutOfDate" : false,
@@ -774,47 +1366,159 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AIManager.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AIManager.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/APIKeyManager.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/APIKeyManager.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/ClaudeAPI.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AirPodsManager.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/CopilotBridge.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AppTypes.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/CopilotClient.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AudioPlayer.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GeminiClient.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/AudioSession.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GrokClient.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BrainChat.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMRouter.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BrainChatCoordinator.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/Models.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/BridgeDaemon.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/OllamaAPI.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CartesiaVoice.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/OpenAIAPI.swift.o"
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ClaudeAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CodeAssistant.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ContentView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/ConversationView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/CopilotVoiceRouter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/FasterWhisperBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/GeminiClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/GrokClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/LLMRouter.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/Models.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/OllamaAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/OpenAIAPI.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/PandaproxyClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/RedpandaBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SafetyGuard.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SettingsView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpatialAudio.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpeechEngineSelector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SpeechManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/SystemCommands.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceBridge.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/VoiceSelector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/WhisperEngines.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloExecutor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloMode.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChat.build/YoloSession.swift.o"
         },
         {
           "kind" : "file",

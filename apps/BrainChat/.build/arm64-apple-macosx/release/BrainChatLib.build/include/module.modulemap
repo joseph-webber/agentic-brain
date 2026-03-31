@@ -1,3 +1,0 @@
-module BrainChatLib {
-    header "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/include/BrainChatLib-Swift.h"
-}

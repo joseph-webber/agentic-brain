@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- 
+    BRAIN CHAT PERMISSION LAUNCHER
+    ==============================
+    This LaunchAgent solves the TCC permission dialog issue.
+    
+    PROBLEM: Apps launched from SSH sessions inherit SSH ancestry.
+             macOS TCC blocks permission dialogs for SSH processes.
+             
+    SOLUTION: This LaunchAgent runs from launchd (clean ancestry).
+              When triggered, it opens Brain Chat via Finder/open command.
+              The "responsible process" becomes launchd, not sshd.
+              
+    USAGE:
+      Install: launchctl load ~/Library/LaunchAgents/com.josephwebber.brainchat.launcher.plist
+      Trigger: launchctl start com.josephwebber.brainchat.launcher
+    -->
+    
+    <key>Label</key>
+    <string>com.josephwebber.brainchat.launcher</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/open</string>
+        <string>-a</string>
+        <string>/Applications/Brain Chat.app</string>
+        <string>--args</string>
+        <string>--launched-from-launchd</string>
+    </array>
+    
+    <!-- Run in GUI session (Aqua) - CRITICAL for TCC -->
+    <key>LimitLoadToSessionType</key>
+    <string>Aqua</string>
+    
+    <!-- Don't auto-run at login - we trigger manually -->
+    <key>RunAtLoad</key>
+    <false/>
+    
+    <!-- Keep around after running so we can trigger again -->
+    <key>KeepAlive</key>
+    <false/>
+    
+    <!-- Allow immediate retriggering -->
+    <key>LaunchOnlyOnce</key>
+    <false/>
+    
+    <!-- Standard output for debugging -->
+    <key>StandardOutPath</key>
+    <string>/tmp/brainchat-launcher.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/brainchat-launcher.log</string>
+    
+    <!-- Nice process priority -->
+    <key>Nice</key>
+    <integer>0</integer>
+    
+    <!-- ProcessType - Interactive for GUI apps -->
+    <key>ProcessType</key>
+    <string>Interactive</string>
+</dict>
+</plist>

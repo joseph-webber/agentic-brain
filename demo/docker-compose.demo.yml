@@ -104,7 +104,7 @@ services:
     networks:
       - demo-network
     healthcheck:
-      test: ["CMD", "redis-cli", "--pass", "${DEMO_REDIS_PASSWORD:-demo_redis_2026}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${DEMO_REDIS_PASSWORD:-demo_redis_2026}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

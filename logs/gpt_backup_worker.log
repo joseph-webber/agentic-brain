@@ -1,0 +1,116 @@
+Traceback (most recent call last):
+  File "/Users/joe/brain/agentic-brain/src/agentic_brain/router/gpt_backup.py", line 294, in run_forever
+    self.process_task_queue()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/joe/brain/agentic-brain/src/agentic_brain/router/gpt_backup.py", line 263, in process_task_queue
+    raw = self.redis.lpop(self.task_list_key)
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/commands/core.py", line 3053, in lpop
+    return self.execute_command("LPOP", name)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/client.py", line 716, in execute_command
+    return self._execute_command(*args, **options)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/client.py", line 736, in _execute_command
+    result = conn.retry.call_with_retry(
+        lambda: self._send_command_parse_response(
+    ...<3 lines>...
+        with_failure_count=True,
+    )
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/retry.py", line 132, in call_with_retry
+    raise error
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/retry.py", line 120, in call_with_retry
+    return do()
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/client.py", line 737, in <lambda>
+    lambda: self._send_command_parse_response(
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        conn, command_name, *args, **options
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/client.py", line 682, in _send_command_parse_response
+    return self.parse_response(conn, command_name, **options)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/client.py", line 780, in parse_response
+    response = connection.read_response()
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/connection.py", line 1342, in read_response
+    response = self._parser.read_response(disable_decoding=disable_decoding)
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/_parsers/resp2.py", line 15, in read_response
+    result = self._read_response(disable_decoding=disable_decoding)
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/_parsers/resp2.py", line 25, in _read_response
+    raw = self._buffer.readline()
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/_parsers/socket.py", line 115, in readline
+    self._read_from_socket()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/_parsers/socket.py", line 68, in _read_from_socket
+    raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+redis.exceptions.ConnectionError: Connection closed by server.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/connection.py", line 1003, in connect_check_health
+    sock = self._connect()
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/connection.py", line 1515, in _connect
+    raise err
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/connection.py", line 1499, in _connect
+    sock.connect(socket_address)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+ConnectionRefusedError: [Errno 61] Connection refused
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/joe/brain/agentic-brain/src/agentic_brain/router/gpt_backup.py", line 334, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/Users/joe/brain/agentic-brain/src/agentic_brain/router/gpt_backup.py", line 326, in main
+    service.run_forever(poll_interval=args.poll_interval)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/joe/brain/agentic-brain/src/agentic_brain/router/gpt_backup.py", line 301, in run_forever
+    self.set_status("stopped")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/Users/joe/brain/agentic-brain/src/agentic_brain/router/gpt_backup.py", line 81, in set_status
+    self.redis.set(self.status_key, status)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/utils.py", line 493, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/commands/core.py", line 2668, in set
+    return self.execute_command("SET", *pieces, **options)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/client.py", line 716, in execute_command
+    return self._execute_command(*args, **options)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/client.py", line 722, in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/utils.py", line 236, in wrapper
+    return func(*args, **kwargs)
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/connection.py", line 3041, in get_connection
+    connection.connect()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/connection.py", line 976, in connect
+    self.retry.call_with_retry(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        lambda: self.connect_check_health(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        lambda error: self.disconnect(error),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/retry.py", line 132, in call_with_retry
+    raise error
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/retry.py", line 120, in call_with_retry
+    return do()
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/connection.py", line 977, in <lambda>
+    lambda: self.connect_check_health(
+            ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        check_health=True, retry_socket_connect=False
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "/Users/joe/Library/Python/3.14/lib/python/site-packages/redis/connection.py", line 1025, in connect_check_health
+    raise e
+redis.exceptions.ConnectionError: Error 61 connecting to localhost:6379. Connection refused.

@@ -2,7 +2,55 @@ import AVFoundation
 import Combine
 import CoreAudio
 import Foundation
+import os.log
 import Speech
+
+// MARK: - Microphone Debug Logger
+private let micLogger = Logger(subsystem: "com.josephwebber.brainchat", category: "Microphone")
+
+/// Write debug logs to file for verification (Console.app + file)
+private func logMic(_ message: String, level: OSLogType = .debug) {
+    let logPath = FileManager.default.homeDirectoryForCurrentUser
+        .appendingPathComponent("brain/agentic-brain/apps/BrainChat/runtime/mic-debug.log")
+    let timestamp = ISO8601DateFormatter().string(from: Date())
+    let levelStr: String
+    switch level {
+    case .error: levelStr = "ERROR"
+    case .fault: levelStr = "FAULT"
+    case .info: levelStr = "INFO"
+    default: levelStr = "DEBUG"
+    }
+    let line = "[\(timestamp)] [\(levelStr)] \(message)\n"
+    
+    // Log to os_log (Console.app)
+    micLogger.log(level: level, "\(message)")
+    
+    // Also write to file for easy verification
+    if let data = line.data(using: .utf8) {
+        let dir = logPath.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        
+        if FileManager.default.fileExists(atPath: logPath.path) {
+            if let handle = try? FileHandle(forWritingTo: logPath) {
+                handle.seekToEndOfFile()
+                handle.write(data)
+                try? handle.close()
+            }
+        } else {
+            try? data.write(to: logPath)
+        }
+    }
+}
+
+private func micPermissionStatusString(_ status: AVAuthorizationStatus) -> String {
+    switch status {
+    case .notDetermined: return "notDetermined"
+    case .restricted: return "restricted"
+    case .denied: return "denied"
+    case .authorized: return "authorized"
+    @unknown default: return "unknown(\(status.rawValue))"
+    }
+}
 
 struct SpeechRecognitionUpdate: Equatable {
     enum Kind: Equatable {
@@ -207,14 +255,22 @@ final class SpeechManager: ObservableObject {
     private var openAIKey: String = ""
 
     init(requestAuthorizationOnInit: Bool = true) {
+        logMic("=== SpeechManager INIT ===", level: .info)
         self.appleController = AppleSpeechRecognitionController()
         self.whisperCppEngine = WhisperCppEngine()
         authorizationStatus = appleController.currentAuthorizationStatus
+        
+        let micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
+        logMic("Initial microphone status: \(micPermissionStatusString(micStatus))", level: .info)
+        logMic("Initial speech auth status: \(authorizationStatus.rawValue)")
+        
         if requestAuthorizationOnInit {
+            logMic("Requesting speech authorization on init")
             requestAuthorization()
         }
         refreshDevices()
         updateEngineStatus()
+        logMic("SpeechManager init complete")
     }
     
     func setOpenAIKey(_ key: String) {
@@ -251,19 +307,79 @@ final class SpeechManager: ObservableObject {
         }
     }
 
-    func requestMicrophoneAccess() {
+    func requestMicrophoneAccess(thenStartListening: Bool = false) {
+        logMic("=== requestMicrophoneAccess() CALLED ===", level: .info)
+        logMic("thenStartListening: \(thenStartListening)")
+        
+        // Log current status BEFORE request
+        let statusBefore = AVCaptureDevice.authorizationStatus(for: .audio)
+        logMic("Permission status BEFORE request: \(micPermissionStatusString(statusBefore))", level: .info)
+        
         UserDefaults.standard.set(true, forKey: "BrainChatDidRequestMicrophoneAccess")
         let runtimeDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("brain/agentic-brain/apps/BrainChat/runtime", isDirectory: true)
         try? FileManager.default.createDirectory(at: runtimeDir, withIntermediateDirectories: true)
         try? "requested".write(to: runtimeDir.appendingPathComponent("microphone-requested.txt"), atomically: true, encoding: .utf8)
 
+        logMic("Calling AVCaptureDevice.requestAccess(for: .audio)...")
+        
         AVCaptureDevice.requestAccess(for: .audio) { [weak self] granted in
+            // Log result immediately in callback (background thread)
+            logMic("=== AVCaptureDevice.requestAccess CALLBACK ===", level: .info)
+            logMic("Granted: \(granted)", level: .info)
+            
+            let statusAfter = AVCaptureDevice.authorizationStatus(for: .audio)
+            logMic("Permission status AFTER request: \(micPermissionStatusString(statusAfter))", level: .info)
+            
             Task { @MainActor in
-                guard let self else { return }
-                if !granted {
+                guard let self else {
+                    logMic("Self is nil in callback, returning")
+                    return
+                }
+                if granted {
+                    logMic("Permission GRANTED - writing marker file", level: .info)
+                    try? "granted".write(to: runtimeDir.appendingPathComponent("microphone-granted.txt"), atomically: true, encoding: .utf8)
+                    // If user was trying to start listening, auto-start after permission granted
+                    if thenStartListening {
+                        logMic("thenStartListening=true, calling startListening()")
+                        self.startListening()
+                    }
+                } else {
+                    logMic("Permission DENIED by user or system", level: .error)
                     self.errorMessage = "Microphone access not authorized. Enable in System Settings > Privacy > Microphone."
                 }
             }
+        }
+    }
+    
+    /// Check if microphone permission is currently granted
+    func isMicrophoneAuthorized() -> Bool {
+        let status = AVCaptureDevice.authorizationStatus(for: .audio)
+        logMic("Checking microphone authorization: \(micPermissionStatusString(status))")
+        return status == .authorized
+    }
+
+    /// Request permission with completion handler (like KarenVoice)
+    func requestMicrophonePermissionWithCompletion(completion: @Sendable @escaping (Bool) -> Void) {
+        let status = AVCaptureDevice.authorizationStatus(for: .audio)
+        logMic("requestMicrophonePermissionWithCompletion - current status: \(micPermissionStatusString(status))", level: .info)
+        
+        switch status {
+        case .authorized:
+            logMic("Already authorized, calling completion(true)")
+            completion(true)
+        case .notDetermined:
+            logMic("Not determined, requesting access...")
+            AVCaptureDevice.requestAccess(for: .audio) { granted in
+                logMic("Permission dialog result: \(granted)", level: .info)
+                DispatchQueue.main.async {
+                    completion(granted)
+                }
+            }
+        case .denied, .restricted:
+            logMic("Permission denied or restricted", level: .error)
+            completion(false)
+        @unknown default:
+            completion(false)
         }
     }
 
@@ -279,32 +395,80 @@ final class SpeechManager: ObservableObject {
     }
 
     func startListening() {
-        guard !isListening else { return }
+        logMic("=== startListening() CALLED ===", level: .info)
+        logMic("Current isListening state: \(isListening)")
+        logMic("Current engine: \(currentEngine)")
+        
+        guard !isListening else {
+            logMic("Already listening, returning early")
+            return
+        }
+        
+        // Log microphone permission status at entry
+        let micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
+        logMic("Microphone permission at startListening: \(micPermissionStatusString(micStatus))", level: .info)
         
         currentTranscript = ""
         errorMessage = nil
         audioLevel = 0
         isListening = true
         
+        logMic("Set isListening = true, about to start engine")
+        
         switch currentEngine {
         case .apple:
+            logMic("Starting Apple recognition engine")
             startAppleRecognition()
         case .whisperAPI, .whisperCpp, .whisperKit:
+            logMic("Starting Whisper recording (engine: \(currentEngine))")
             startRecording()
         }
     }
     
     private func startAppleRecognition() {
+        logMic("=== startAppleRecognition() CALLED ===", level: .info)
+        logMic("authorizationStatus: \(authorizationStatus.rawValue)")
+        logMic("isRecognizerAvailable: \(appleController.isRecognizerAvailable)")
+        
+        // CHECK MIC PERMISSION FIRST - request if needed (like KarenVoice does)
+        let micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
+        logMic("Microphone status: \(micPermissionStatusString(micStatus))", level: .info)
+        
+        switch micStatus {
+        case .authorized:
+            logMic("Mic authorized, proceeding...")
+        case .notDetermined:
+            logMic("Mic not determined - REQUESTING NOW", level: .info)
+            requestMicrophoneAccess(thenStartListening: true)
+            isListening = false
+            errorMessage = "Requesting microphone permission..."
+            return
+        case .denied, .restricted:
+            logMic("Mic denied/restricted", level: .error)
+            errorMessage = "Microphone access denied. Enable in System Settings > Privacy > Microphone."
+            isListening = false
+            return
+        @unknown default:
+            logMic("Mic unknown status", level: .error)
+            errorMessage = "Unknown microphone permission status."
+            isListening = false
+            return
+        }
+        
         guard authorizationStatus == .authorized else {
+            logMic("Speech recognition NOT authorized", level: .error)
             errorMessage = "Speech recognition not authorized."
             isListening = false
             return
         }
         guard appleController.isRecognizerAvailable else {
+            logMic("Speech recognizer NOT available", level: .error)
             errorMessage = "Speech recognizer is not available."
             isListening = false
             return
         }
+        
+        logMic("Starting Apple speech recognition...")
         
         do {
             try appleController.startRecognition { [weak self] update in
@@ -312,30 +476,57 @@ final class SpeechManager: ObservableObject {
                     self?.handle(update)
                 }
             }
+            logMic("Apple speech recognition started successfully", level: .info)
         } catch {
+            logMic("Failed to start Apple recognition: \(error.localizedDescription)", level: .error)
             isListening = false
             errorMessage = "Failed to start: \(error.localizedDescription)"
         }
     }
     
     private func startRecording() {
+        logMic("=== startRecording() CALLED ===", level: .info)
+        
         // Check microphone permission BEFORE recording
-        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        let status = AVCaptureDevice.authorizationStatus(for: .audio)
+        logMic("Checking AVCaptureDevice.authorizationStatus(for: .audio)", level: .info)
+        logMic("Current status: \(micPermissionStatusString(status)) (rawValue: \(status.rawValue))", level: .info)
+        
+        switch status {
         case .authorized:
-            break  // Good to go
+            logMic("STATUS: authorized - proceeding with recording", level: .info)
+            // Good to go
         case .notDetermined:
-            requestMicrophoneAccess()
+            logMic("STATUS: notDetermined - will request permission", level: .info)
+            // Request permission and auto-start listening when granted
+            requestMicrophoneAccess(thenStartListening: true)
+            isListening = false
+            errorMessage = "Requesting microphone permission..."
+            logMic("Set isListening=false, errorMessage=requesting permission")
+            return
+        case .denied:
+            logMic("STATUS: denied - user denied in System Settings", level: .error)
+            errorMessage = "Microphone access denied. Enable in System Settings > Privacy > Microphone."
             isListening = false
             return
-        default:
-            errorMessage = "Microphone access not authorized."
+        case .restricted:
+            logMic("STATUS: restricted - device policy restriction", level: .error)
+            errorMessage = "Microphone access denied. Enable in System Settings > Privacy > Microphone."
+            isListening = false
+            return
+        @unknown default:
+            logMic("STATUS: unknown (\(status.rawValue)) - unexpected value!", level: .fault)
+            errorMessage = "Unknown microphone permission status."
             isListening = false
             return
         }
         
+        logMic("Permission OK - setting up AVAudioRecorder")
+        
         // Record audio for Whisper transcription as PCM (16kHz mono 16-bit)
         let tempDir = FileManager.default.temporaryDirectory
         recordingURL = tempDir.appendingPathComponent("brain_chat_\(UUID().uuidString).wav")
+        logMic("Recording URL: \(recordingURL?.path ?? "nil")")
         
         let settings: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,
@@ -344,17 +535,27 @@ final class SpeechManager: ObservableObject {
             AVLinearPCMBitDepthKey: 16,
             AVLinearPCMIsFloatKey: false
         ]
+        logMic("Audio settings: 16kHz mono 16-bit PCM")
         
         do {
+            logMic("Creating AVAudioRecorder...")
             audioRecorder = try AVAudioRecorder(url: recordingURL!, settings: settings)
             audioRecorder?.isMeteringEnabled = true
+            logMic("AVAudioRecorder created successfully")
             
             // Check audioRecorder.record() return value
-            guard audioRecorder?.record() == true else {
+            logMic("Calling audioRecorder.record()...")
+            let recordStarted = audioRecorder?.record() == true
+            logMic("audioRecorder.record() returned: \(recordStarted)", level: recordStarted ? .info : .error)
+            
+            guard recordStarted else {
+                logMic("FAILED to start recording - record() returned false", level: .error)
                 errorMessage = "Failed to start microphone capture."
                 isListening = false
                 return
             }
+            
+            logMic("Recording STARTED successfully!", level: .info)
             
             // Update audio level periodically
             Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
@@ -371,22 +572,33 @@ final class SpeechManager: ObservableObject {
                 }
             }
         } catch {
+            logMic("EXCEPTION creating/starting AVAudioRecorder: \(error.localizedDescription)", level: .error)
+            logMic("Error details: \(error)", level: .error)
             errorMessage = "Failed to start recording: \(error.localizedDescription)"
             isListening = false
         }
     }
 
     func stopListening() {
-        guard isListening else { return }
+        logMic("=== stopListening() CALLED ===", level: .info)
+        logMic("isListening: \(isListening), currentEngine: \(currentEngine)")
+        
+        guard isListening else {
+            logMic("Not listening, returning early")
+            return
+        }
         
         switch currentEngine {
         case .apple:
+            logMic("Stopping Apple recognition")
             appleController.stopRecognition()
             isListening = false
             audioLevel = 0
         case .whisperAPI, .whisperCpp, .whisperKit:
+            logMic("Stopping Whisper recording and transcribing")
             stopRecordingAndTranscribe()
         }
+        logMic("stopListening() complete")
     }
     
     private func stopRecordingAndTranscribe() {
