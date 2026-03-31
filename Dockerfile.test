@@ -3,6 +3,9 @@
 # ============================================================================
 FROM python:3.12-slim
 
+# Configure pip for corporate proxies (Windows SSL interception)
+ENV PIP_TRUSTED_HOST="pypi.org pypi.python.org files.pythonhosted.org"
+
 WORKDIR /app
 
 # Install system dependencies for testing

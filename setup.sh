@@ -23,6 +23,13 @@ PYTHON_MIN_VERSION="3.10"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RESET_BRANCH="main"
 
+# SSL/TLS workaround for corporate networks
+# Set to "true" to skip SSL verification (use with caution!)
+SKIP_SSL_VERIFY="${AGENTIC_SKIP_SSL:-false}"
+
+# Pip trusted hosts for corporate networks with SSL inspection
+PIP_TRUSTED_HOSTS="pypi.org pypi.python.org files.pythonhosted.org"
+
 # ============================================================
 # Colors and formatting
 # ============================================================
@@ -119,8 +126,13 @@ detect_os() {
     elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || [[ -n "$WINDIR" ]]; then
         OS_TYPE="windows"
         ARCH="$(uname -m)"
-        echo_warning "Detected: Windows (Git Bash/MSYS/Cygwin)"
-        echo_info "For best results on Windows, use setup.ps1 or WSL"
+        echo_info "Detected: Windows (Git Bash/MSYS/Cygwin)"
+        echo_info "This script works on Git Bash! For native PowerShell, use setup.ps1"
+        
+        # Windows Git Bash may need SSL workarounds for corporate networks
+        if [[ -n "${REQUESTS_CA_BUNDLE:-}" ]] || [[ -n "${SSL_CERT_FILE:-}" ]]; then
+            echo_info "Custom SSL certificate detected"
+        fi
     else
         OS_TYPE="linux"
         ARCH="$(uname -m)"
@@ -332,6 +344,27 @@ setup_virtualenv() {
 }
 
 # ============================================================
+# Configure pip for SSL issues (corporate networks)
+# ============================================================
+configure_pip_ssl() {
+    if [[ "$SKIP_SSL_VERIFY" == "true" ]]; then
+        echo_warning "SSL verification disabled (AGENTIC_SKIP_SSL=true)"
+        export PIP_TRUSTED_HOST="$PIP_TRUSTED_HOSTS"
+        export PIP_DISABLE_PIP_VERSION_CHECK=1
+        
+        # For requests/urllib3
+        export PYTHONHTTPSVERIFY=0
+        export REQUESTS_CA_BUNDLE=""
+        export CURL_CA_BUNDLE=""
+    fi
+    
+    # If corporate CA bundle is set, use it
+    if [[ -n "${REQUESTS_CA_BUNDLE:-}" ]]; then
+        echo_info "Using custom CA bundle: $REQUESTS_CA_BUNDLE"
+    fi
+}
+
+# ============================================================
 # Install Python dependencies
 # ============================================================
 install_python_deps() {
@@ -340,15 +373,28 @@ install_python_deps() {
     cd "$SCRIPT_DIR"
     activate_venv
     
+    # Configure SSL for corporate networks
+    configure_pip_ssl
+    
     # Install from pyproject.toml with extras
     echo_step "Installing agentic-brain with all extras..."
     
+    # Build pip args
+    local pip_args=("-e" ".[all,dev]")
+    
+    # Add trusted hosts if SSL issues
+    if [[ "$SKIP_SSL_VERIFY" == "true" ]]; then
+        for host in $PIP_TRUSTED_HOSTS; do
+            pip_args+=("--trusted-host" "$host")
+        done
+    fi
+    
     if [[ "$UV_AVAILABLE" == "true" ]]; then
         echo_info "Using uv for fast installation"
-        uv pip install -e ".[all,dev]"
+        uv pip install "${pip_args[@]}"
     else
         # Standard pip
-        pip install -e ".[all,dev]"
+        pip install "${pip_args[@]}"
     fi
     
     echo_success "Python dependencies installed"
@@ -464,6 +510,22 @@ EOF
             echo_info "This file is required for: docker compose up"
         fi
     fi
+    
+    # Create .env.test for running tests
+    if [[ ! -f ".env.test" ]]; then
+        if [[ -f ".env.test.example" ]]; then
+            echo_step "Creating .env.test from example..."
+            cp .env.test.example .env.test
+            echo_success ".env.test file created"
+        fi
+    fi
+    
+    echo ""
+    echo_info "Configuration files created:"
+    echo_info "  .env        - Main config (LLM providers, API keys)"
+    echo_info "  .env.dev    - Docker development (Neo4j, Redis)"
+    echo_info "  .env.docker - Docker production"
+    echo_info "  .env.test   - Test environment"
 }
 
 # ============================================================
@@ -531,10 +593,16 @@ show_post_install() {
     fi
     echo ""
     
-    echo -e "${BOLD}Quick Start:${NC}"
+    echo -e "${BOLD}Quick Start (Native):${NC}"
     echo -e "    ${CYAN}agentic-brain --help${NC}          Show all commands"
     echo -e "    ${CYAN}agentic-brain chat${NC}            Start interactive chat"
     echo -e "    ${CYAN}agentic-brain serve${NC}           Start API server"
+    echo ""
+    
+    echo -e "${BOLD}Quick Start (Docker):${NC}"
+    echo -e "    ${CYAN}docker compose -f docker/docker-compose.dev.yml up -d${NC}"
+    echo -e "    Then verify with: ${CYAN}curl http://localhost:7474${NC} (Neo4j)"
+    echo -e "                      ${CYAN}redis-cli -a BrainRedis2026 ping${NC} (Redis)"
     echo ""
     
     echo -e "${BOLD}Configuration:${NC}"
@@ -546,6 +614,17 @@ show_post_install() {
         echo -e "    Metal GPU acceleration is automatically enabled"
         echo ""
     fi
+    
+    if [[ "$OS_TYPE" == "windows" ]]; then
+        echo -e "${BOLD}🪟 Windows Notes:${NC}"
+        echo -e "    If you have SSL errors, run: ${CYAN}export AGENTIC_SKIP_SSL=true${NC}"
+        echo -e "    Then re-run the installer"
+        echo ""
+    fi
+    
+    echo -e "${BOLD}Verify Installation:${NC}"
+    echo -e "    ${CYAN}python -c \"import agentic_brain; print(agentic_brain.__version__)\"${NC}"
+    echo ""
     
     echo -e "${BOLD}Documentation:${NC}"
     echo -e "    ${CYAN}https://github.com/ecomlounge/brain${NC}"
@@ -567,12 +646,17 @@ show_help() {
     echo "  -r, --reset       Hard reset and clean install"
     echo "  -c, --config      Generate/regenerate config files"
     echo "  -d, --deps-only   Install system dependencies only"
+    echo "  -D, --docker      Show Docker quick start guide"
     echo "  -h, --help        Show this help message"
     echo ""
+    echo "Environment Variables:"
+    echo "  AGENTIC_SKIP_SSL=true    Skip SSL verification (corporate networks)"
+    echo ""
     echo "Examples:"
-    echo "  ./setup.sh -i            # Fresh install"
-    echo "  ./setup.sh -u            # Pull latest and update"
-    echo "  ./setup.sh -r            # Nuclear option - reset everything"
+    echo "  ./setup.sh -i                        # Fresh install"
+    echo "  ./setup.sh -u                        # Pull latest and update"
+    echo "  ./setup.sh -r                        # Nuclear option - reset everything"
+    echo "  AGENTIC_SKIP_SSL=true ./setup.sh -i  # Install with SSL workarounds"
     echo ""
 }
 
@@ -636,6 +720,49 @@ do_reset() {
 }
 
 # ============================================================
+# Docker quick start guide
+# ============================================================
+show_docker_guide() {
+    echo_block "$CYAN" "🐳 Docker Quick Start"
+    
+    echo -e "${BOLD}Prerequisites:${NC}"
+    echo -e "  - Docker Desktop (or Docker Engine + Docker Compose)"
+    echo -e "  - Git (to clone the repo)"
+    echo ""
+    
+    echo -e "${BOLD}Step 1: Create Environment Files${NC}"
+    echo -e "    ${CYAN}./setup.sh -c${NC}   # Creates all .env files automatically"
+    echo ""
+    
+    echo -e "${BOLD}Step 2: Start Services${NC}"
+    echo -e "    ${CYAN}docker compose -f docker/docker-compose.dev.yml up -d${NC}"
+    echo ""
+    
+    echo -e "${BOLD}Step 3: Verify Services${NC}"
+    echo -e "    Neo4j Browser:  ${CYAN}http://localhost:7474${NC}"
+    echo -e "    Redis:          ${CYAN}redis-cli -a BrainRedis2026 ping${NC}"
+    echo ""
+    
+    echo -e "${BOLD}Services Included:${NC}"
+    echo -e "  ${GREEN}neo4j-dev${NC}   - Graph database for memory/knowledge (port 7474, 7687)"
+    echo -e "  ${GREEN}redis-dev${NC}   - Cache and session storage (port 6379)"
+    echo ""
+    
+    echo -e "${BOLD}Default Credentials:${NC}"
+    echo -e "  Neo4j:  neo4j / Brain2026"
+    echo -e "  Redis:  BrainRedis2026"
+    echo ""
+    
+    echo -e "${BOLD}Stop Services:${NC}"
+    echo -e "    ${CYAN}docker compose -f docker/docker-compose.dev.yml down${NC}"
+    echo ""
+    
+    echo -e "${BOLD}View Logs:${NC}"
+    echo -e "    ${CYAN}docker compose -f docker/docker-compose.dev.yml logs -f${NC}"
+    echo ""
+}
+
+# ============================================================
 # Parse arguments and run
 # ============================================================
 main() {
@@ -657,6 +784,9 @@ main() {
         -d|--deps-only)
             detect_os
             install_system_deps
+            ;;
+        -D|--docker)
+            show_docker_guide
             ;;
         -h|--help)
             show_help

@@ -1,0 +1,34 @@
+# =============================================================================
+# Neo4j 2026.02.0 with GDS 2.27.0 and APOC
+# =============================================================================
+# This Dockerfile ensures GDS is properly installed for Neo4j 2026.02.0
+# Works on Windows, macOS, and Linux
+# =============================================================================
+
+FROM neo4j:2026.02.0-community
+
+# Set working directory
+WORKDIR /tmp
+
+# Install curl for downloading GDS JAR
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Download GDS 2.27.0 JAR from GitHub releases
+RUN curl -L -o graph-data-science-2.27.0.jar \
+    https://github.com/neo4j/graph-data-science/releases/download/2.27.0/neo4j-graph-data-science-2.27.0.jar
+
+# Copy GDS JAR to plugins directory
+RUN mv graph-data-science-2.27.0.jar /var/lib/neo4j/plugins/ && \
+    chmod 644 /var/lib/neo4j/plugins/graph-data-science-2.27.0.jar
+
+# APOC will be auto-installed via NEO4J_PLUGINS environment variable
+# This Dockerfile just handles GDS which can't be auto-installed in community edition
+
+WORKDIR /var/lib/neo4j
+
+# Expose ports
+EXPOSE 7474 7687
+
+# Start Neo4j with default entrypoint

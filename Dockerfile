@@ -7,6 +7,9 @@ LABEL org.opencontainers.image.title="Agentic Brain"
 LABEL org.opencontainers.image.description="Universal AI Assistant Framework"
 LABEL org.opencontainers.image.source="https://github.com/joseph-webber/agentic-brain"
 
+# Configure pip for corporate proxies (Windows SSL interception)
+ENV PIP_TRUSTED_HOST="pypi.org pypi.python.org files.pythonhosted.org"
+
 WORKDIR /build
 
 # NOTE: pip config global.trusted-host doesn't work on Windows/corporate networks
@@ -23,14 +26,21 @@ COPY pyproject.toml README.md ./
 COPY src/ ./src/
 
 # Build wheel (with trusted hosts for corporate proxies)
-RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org build && \
+RUN pip install --no-cache-dir \
+    --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org \
+    build && \
     python -m build --wheel && \
-    pip wheel --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org --wheel-dir /wheels dist/*.whl
+    pip wheel --no-cache-dir \
+    --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org \
+    --wheel-dir /wheels dist/*.whl
 
 # ============================================================================
 # STAGE 2: Development - Hot reload and tooling
 # ============================================================================
 FROM python:3.12-slim AS development
+
+# Configure pip for corporate proxies (Windows SSL interception)
+ENV PIP_TRUSTED_HOST="pypi.org pypi.python.org files.pythonhosted.org"
 
 WORKDIR /app
 
@@ -75,6 +85,9 @@ LABEL org.opencontainers.image.title="Agentic Brain"
 LABEL org.opencontainers.image.description="Universal AI Assistant Framework"
 LABEL org.opencontainers.image.source="https://github.com/joseph-webber/agentic-brain"
 
+# Configure pip for corporate proxies (Windows SSL interception)
+ENV PIP_TRUSTED_HOST="pypi.org pypi.python.org files.pythonhosted.org"
+
 WORKDIR /app
 
 # Install only runtime dependencies
@@ -83,9 +96,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy wheels from builder and install
+# Copy wheels from builder and install (with trusted hosts for corporate proxies)
 COPY --from=builder /wheels /wheels
-RUN pip install --no-cache-dir /wheels/*.whl && \
+RUN pip install --no-cache-dir \
+    --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org \
+    /wheels/*.whl && \
     rm -rf /wheels
 
 # Create non-root user for security

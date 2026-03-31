@@ -1178,30 +1178,75 @@ Learn more in [Why Agentic Brain?](#-why-agentic-brain)
 
 ## ⚡ Quick Start
 
+### Option 1: Docker (Recommended for all platforms)
+
+The fastest path to a working setup:
+
+```bash
+# Clone and cd into the repo
+git clone https://github.com/agentic-brain-project/agentic-brain.git
+cd agentic-brain
+
+# Create env files and start services
+./setup.sh -c                                              # Create .env files
+docker compose -f docker/docker-compose.dev.yml up -d      # Start Neo4j + Redis
+
+# Verify services
+curl http://localhost:7474                                 # Neo4j Browser
+redis-cli -a BrainRedis2026 ping                          # Redis (should say PONG)
+```
+
+**Services included:**
+| Service | Port | Purpose | Default Password |
+|---------|------|---------|------------------|
+| Neo4j | 7474, 7687 | Knowledge Graph & Memory | `Brain2026` |
+| Redis | 6379 | Cache & Session Storage | `BrainRedis2026` |
+
+### Option 2: Native Install (macOS/Linux/Windows)
+
+```bash
+# macOS/Linux
+./setup.sh -i
+
+# Windows PowerShell
+.\setup.ps1 -Install
+
+# Windows (Git Bash) - also works!
+./setup.sh -i
+```
+
+**Corporate networks with SSL issues?**
+```bash
+# Set this before running the installer
+export AGENTIC_SKIP_SSL=true
+./setup.sh -i
+```
+
+### Option 3: pip install (minimal)
+
+```bash
+pip install agentic-brain
+```
+
 ### Prerequisites
 - Python 3.11+
 - [Ollama](https://ollama.ai) (recommended for local AI) or an API key (OpenAI/Anthropic)
 - Optional: Neo4j for GraphRAG + Knowledge Graph workloads
 
-### 1. Install
-```bash
-pip install agentic-brain
-```
-
-### 2. Configure (one-time)
+### Configure (one-time)
 ```bash
 ab config init
 ab config set llm.provider openai   # or anthropic / ollama
 ab config set llm.api_key $OPENAI_API_KEY
 ```
 
-### 3. Run
+### Run
 ```bash
 # Start the CLI chat
 ab chat "Hello, Brain!"
 ```
 
-### 4. Usage Examples (SDK)
+### Usage Examples (SDK)
 
 **Chat with Memory:**
 ```python
