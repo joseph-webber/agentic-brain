@@ -47,6 +47,8 @@ except ImportError:
 
 
 # Custom style for the wizard (accessible colors)
+# NOTE: 'instruction' style removed - causes PromptSession error in questionary 2.1.1
+# when used with autocomplete(). See: https://github.com/tmbo/questionary/issues
 WIZARD_STYLE = None
 if Style:
     WIZARD_STYLE = Style(
@@ -58,7 +60,6 @@ if Style:
             ("highlighted", "fg:cyan bold"),
             ("selected", "fg:green"),
             ("separator", "fg:gray"),
-            ("instruction", "fg:gray italic"),
             ("text", ""),
             ("disabled", "fg:gray italic"),
         ]
@@ -220,10 +221,9 @@ def ask_template() -> str:
     ]
 
     return questionary.select(
-        "Select installation template:",
+        "Select installation template: (Use arrow keys)",
         choices=choices,
         style=WIZARD_STYLE,
-        instruction="(Use arrow keys)",
     ).ask()
 
 
@@ -281,10 +281,9 @@ def ask_llm_provider() -> dict[str, Any]:
     ]
 
     provider = questionary.select(
-        "Select LLM provider:",
+        "Select LLM provider: (Use arrow keys)",
         choices=provider_choices,
         style=WIZARD_STYLE,
-        instruction="(Use arrow keys)",
     ).ask()
 
     if provider is None:
@@ -299,11 +298,10 @@ def ask_llm_provider() -> dict[str, Any]:
     # Select model with autocomplete for long lists
     if len(provider_info["models"]) > 5:
         model = questionary.autocomplete(
-            f"Select {provider_info['name']} model:",
+            f"Select {provider_info['name']} model: (Type to filter, arrows to select)",
             choices=provider_info["models"],
             default=provider_info["default_model"],
             style=WIZARD_STYLE,
-            instruction="(Type to filter, arrows to select)",
         ).ask()
     else:
         model = questionary.select(
@@ -339,10 +337,9 @@ def ask_memory_config() -> dict[str, Any]:
     ).ask()
 
     enable_rag = questionary.confirm(
-        "Enable RAG (Retrieval-Augmented Generation)?",
+        "Enable RAG (Retrieval-Augmented Generation)? (Use for knowledge base features)",
         default=False,
         style=WIZARD_STYLE,
-        instruction="(Use for knowledge base features)",
     ).ask()
 
     result = {
@@ -430,10 +427,9 @@ def ask_integrations() -> list[dict[str, Any]]:
         return []
 
     selected = questionary.checkbox(
-        "Select integrations to enable:",
+        "Select integrations to enable: (Space to select, Enter to confirm)",
         choices=[questionary.Choice(i["name"], value=i) for i in INTEGRATIONS],
         style=WIZARD_STYLE,
-        instruction="(Space to select, Enter to confirm)",
     ).ask()
 
     result = []
@@ -643,10 +639,9 @@ def ask_self_bootstrap() -> bool:
     print("   The brain itself can help you configure advanced features.\n")
 
     return questionary.confirm(
-        "Would you like me to help you set up more features?",
+        "Would you like me to help you set up more features? (Start a chat session to configure advanced settings)",
         default=True,
         style=WIZARD_STYLE,
-        instruction="(Start a chat session to configure advanced settings)",
     ).ask()
 
 
