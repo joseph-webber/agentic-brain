@@ -334,18 +334,10 @@ start_services() {
     info "Starting Agentic Brain services..."
     cd "$INSTALL_DIR"
     
-    # Pull images first (shows progress)
-    info "Pulling Docker images (this may take a few minutes)..."
-    if $COMPOSE_CMD pull --quiet 2>/dev/null; then
-        success "Docker images pulled"
-    else
-        info "Pulling images..."
-        $COMPOSE_CMD pull
-    fi
-    
-    # Start services
-    info "Starting services with: $COMPOSE_CMD up -d"
-    if $COMPOSE_CMD up -d; then
+    # Start services with --build to ensure Dockerfile is executed
+    # (instead of just pulling pre-built images)
+    info "Building and starting services with: $COMPOSE_CMD up -d --build"
+    if $COMPOSE_CMD up -d --build; then
         success "Services started successfully"
     else
         error "Failed to start services"

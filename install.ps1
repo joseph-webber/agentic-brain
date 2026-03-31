@@ -305,30 +305,31 @@ function Start-Services {
     Write-Info "Starting Agentic Brain services..."
     Set-Location $InstallDir
     
-    # Pull images
-    Write-Info "Pulling Docker images (this may take a few minutes)..."
+    # Pull images for external services (Neo4j, Redis, Redpanda only)
+    # Note: agentic-brain will be built from Dockerfile
+    Write-Info "Pulling Docker images for external services..."
     try {
         if ($ComposeCmd -eq "docker compose") {
-            docker compose pull --quiet 2>&1 | Out-Null
+            docker compose pull neo4j redis redpanda --quiet 2>&1 | Out-Null
         } else {
-            docker-compose pull --quiet 2>&1 | Out-Null
+            docker-compose pull neo4j redis redpanda --quiet 2>&1 | Out-Null
         }
-        Write-Success "Docker images pulled"
+        Write-Success "Docker images pulled for neo4j, redis, redpanda"
     } catch {
         Write-Info "Pulling images with output..."
         if ($ComposeCmd -eq "docker compose") {
-            docker compose pull
+            docker compose pull neo4j redis redpanda
         } else {
-            docker-compose pull
+            docker-compose pull neo4j redis redpanda
         }
     }
     
-    # Start services
-    Write-Info "Starting services with: $ComposeCmd up -d"
+    # Start services (--build flag ensures Dockerfile is run to build agentic-brain image)
+    Write-Info "Starting services with: $ComposeCmd up -d --build"
     if ($ComposeCmd -eq "docker compose") {
-        docker compose up -d
+        docker compose up -d --build
     } else {
-        docker-compose up -d
+        docker-compose up -d --build
     }
     
     Write-Success "Services started successfully"

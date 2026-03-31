@@ -83,6 +83,9 @@ COPY tests/ ./tests/
 # Install package in editable mode with dev extras (with trusted hosts for corporate proxies)
 RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -e ".[dev]"
 
+# Explicitly install uvicorn with standard extras for API server support
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org uvicorn[standard]
+
 # Create non-root user for development
 RUN useradd -m -u 1000 -s /bin/bash agentic && \
     mkdir -p /app/data && \
@@ -128,6 +131,9 @@ RUN pip install --no-cache-dir \
     --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org \
     /wheels/*.whl && \
     rm -rf /wheels
+
+# Explicitly install uvicorn with standard extras for API server support
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org uvicorn[standard]
 
 # Create non-root user for security
 RUN useradd -m -u 1000 -s /bin/bash agentic && \

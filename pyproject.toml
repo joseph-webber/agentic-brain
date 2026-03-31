@@ -74,6 +74,9 @@ dependencies = [
     "firebase-admin>=6.0.0,<7.0.0",  # Firebase auth, Firestore, RTDB, and Storage
     "temporalio>=1.4.0,<2.0.0",  # Durable workflow execution
     "kafka-python>=2.0.2,<3.0.0",  # Redpanda/Kafka voice coordination
+    "fastapi>=0.104.0,<1.0.0",  # Modern async web framework
+    "uvicorn[standard]>=0.27.0",  # ASGI server for FastAPI (with standard extras)
+    "httpx>=0.25.0,<1.0.0",  # Async HTTP client for API calls
 ]
 
 [project.optional-dependencies]
