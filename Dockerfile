@@ -9,8 +9,8 @@ LABEL org.opencontainers.image.source="https://github.com/joseph-webber/agentic-
 
 WORKDIR /build
 
-# Configure pip for corporate proxies (trusted hosts)
-RUN pip config set global.trusted-host "pypi.org pypi.python.org files.pythonhosted.org"
+# NOTE: pip config global.trusted-host doesn't work on Windows/corporate networks
+# Use --trusted-host flags on EVERY pip command instead
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -22,10 +22,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
 
-# Build wheel
-RUN pip install --no-cache-dir build && \
+# Build wheel (with trusted hosts for corporate proxies)
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org build && \
     python -m build --wheel && \
-    pip wheel --no-cache-dir --wheel-dir /wheels dist/*.whl
+    pip wheel --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org --wheel-dir /wheels dist/*.whl
 
 # ============================================================================
 # STAGE 2: Development - Hot reload and tooling
@@ -33,6 +33,9 @@ RUN pip install --no-cache-dir build && \
 FROM python:3.12-slim AS development
 
 WORKDIR /app
+
+# Configure pip for corporate proxies (trusted hosts) - MUST be in EACH stage!
+RUN pip config set global.trusted-host "pypi.org pypi.python.org files.pythonhosted.org"
 
 # Install development and testing dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -47,8 +50,8 @@ COPY pyproject.toml README.md ./
 COPY src/ ./src/
 COPY tests/ ./tests/
 
-# Install package in editable mode with dev extras
-RUN pip install --no-cache-dir -e ".[dev]"
+# Install package in editable mode with dev extras (with trusted hosts for corporate proxies)
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -e ".[dev]"
 
 # Create non-root user for development
 RUN useradd -m -u 1000 -s /bin/bash agentic && \

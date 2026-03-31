@@ -14,8 +14,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy project files
 COPY . .
 
-# Install package with test dependencies
-RUN pip install --no-cache-dir -e ".[test]"
+# Configure pip for corporate proxies (trusted hosts)
+RUN pip config set global.trusted-host "pypi.org pypi.python.org files.pythonhosted.org"
+
+# Install package with test dependencies (with trusted hosts for corporate proxies)
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -e ".[test]"
 
 # Run the same reliable subset as CI by default
 CMD ["pytest", "tests/", "--ignore=tests/e2e", "--ignore=tests/test_infrastructure.py", "--ignore=tests/test_cultural_sensitivity.py", "--ignore=tests/test_demo_auth.py", "--ignore=tests/test_documented_features.py", "--ignore=tests/test_devops_loaders.py", "--ignore=tests/test_installer_enhanced.py", "--ignore=tests/test_new_loaders.py", "-m", "not integration", "-v", "--tb=short", "--color=yes", "--cov=agentic_brain", "--cov-report=xml", "--cov-report=term", "--timeout=60"]

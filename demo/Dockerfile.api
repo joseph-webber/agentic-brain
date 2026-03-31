@@ -20,8 +20,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml README.md ./
 COPY src ./src
 
-RUN python -m pip install --upgrade pip setuptools wheel && \
-    python -m pip install ".[api]"
+# Configure pip for corporate proxies (trusted hosts for Windows/SSL issues)
+RUN pip config set global.trusted-host "pypi.org pypi.python.org files.pythonhosted.org"
+
+RUN python -m pip install --upgrade pip setuptools wheel \
+        --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org && \
+    python -m pip install ".[api]" \
+        --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
 
 RUN useradd -m -u 1000 -s /bin/bash agentic && \
     mkdir -p /app/data && \
