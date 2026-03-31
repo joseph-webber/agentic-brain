@@ -39,6 +39,7 @@ See: docs/KAFKA_CLIENTS.md for the full client comparison.
 import asyncio
 import json
 import logging
+import os
 import time
 import uuid
 from collections import defaultdict
@@ -179,12 +180,12 @@ class TaskQueue:
     def __init__(
         self,
         queue_name: str,
-        bootstrap_servers: str = "localhost:9092",
+        bootstrap_servers: Optional[str] = None,
         consumer_group: Optional[str] = None,
         visibility_timeout: float = 300.0,
     ):
         self.queue_name = queue_name
-        self.bootstrap_servers = bootstrap_servers
+        self.bootstrap_servers = bootstrap_servers or os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
         self.consumer_group = consumer_group or f"workers-{queue_name}"
         self.visibility_timeout = visibility_timeout
 
@@ -466,8 +467,8 @@ class TaskQueueManager:
     - Visibility timeout checker
     """
 
-    def __init__(self, bootstrap_servers: str = "localhost:9092"):
-        self.bootstrap_servers = bootstrap_servers
+    def __init__(self, bootstrap_servers: Optional[str] = None):
+        self.bootstrap_servers = bootstrap_servers or os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
         self._queues: Dict[str, TaskQueue] = {}
         self._running = False
         self._timeout_checker: Optional[asyncio.Task] = None
@@ -548,7 +549,7 @@ NOTIFICATION_QUEUE = "notifications"  # Async notifications
 
 
 async def create_task_queue_manager(
-    bootstrap_servers: str = "localhost:9092",
+    bootstrap_servers: Optional[str] = None,
 ) -> TaskQueueManager:
     """Factory function to create and start a task queue manager"""
     manager = TaskQueueManager(bootstrap_servers=bootstrap_servers)

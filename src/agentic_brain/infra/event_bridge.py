@@ -35,6 +35,7 @@ See: docs/KAFKA_CLIENTS.md for the full comparison and migration notes.
 import asyncio
 import json
 import logging
+import os
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -120,7 +121,7 @@ class RedisRedpandaBridge(EventBridge):
         redis_host: str = "localhost",
         redis_port: int = 6379,
         redis_password: Optional[str] = None,
-        redpanda_brokers: str = "localhost:9092",
+        redpanda_brokers: Optional[str] = None,
         redpanda_admin_port: int = 9644,
         bridge_channels: Optional[list] = None,
         persistent_channels: Optional[Set[str]] = None,
@@ -140,7 +141,9 @@ class RedisRedpandaBridge(EventBridge):
         self.redis_host = redis_host
         self.redis_port = redis_port
         self.redis_password = redis_password
-        self.redpanda_brokers = redpanda_brokers
+        self.redpanda_brokers = redpanda_brokers or os.getenv(
+            "KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"
+        )
         self.redpanda_admin_port = redpanda_admin_port
         self.bridge_channels = bridge_channels or [
             "brain.llm.*",

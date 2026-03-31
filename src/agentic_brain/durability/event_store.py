@@ -73,7 +73,7 @@ class EventStoreConfig:
     """Configuration for event store"""
 
     # Redpanda/Kafka connection
-    bootstrap_servers: str = "localhost:9092"
+    bootstrap_servers: str | None = None
 
     # Topic settings
     topic_prefix: str = "workflow"
@@ -96,11 +96,18 @@ class EventStoreConfig:
     request_timeout_ms: int = 30000
     session_timeout_ms: int = 10000
 
+    def __post_init__(self) -> None:
+        self.bootstrap_servers = self.bootstrap_servers or os.getenv(
+            "KAFKA_BOOTSTRAP_SERVERS", os.getenv("REDPANDA_SERVERS", "localhost:9092")
+        )
+
     @classmethod
     def from_env(cls) -> EventStoreConfig:
         """Create config from environment variables"""
         return cls(
-            bootstrap_servers=os.getenv("REDPANDA_SERVERS", "localhost:9092"),
+            bootstrap_servers=os.getenv(
+                "KAFKA_BOOTSTRAP_SERVERS", os.getenv("REDPANDA_SERVERS", "localhost:9092")
+            ),
             topic_prefix=os.getenv("EVENT_TOPIC_PREFIX", "workflow"),
             consumer_group=os.getenv("EVENT_CONSUMER_GROUP", "agentic-brain-workers"),
             compression=os.getenv("EVENT_COMPRESSION", "true").lower() == "true",
