@@ -54,7 +54,11 @@ function New-RandomPassword($Length) {
     $rng = [System.Security.Cryptography.RNGCryptoServiceProvider]::new()
     $rng.GetBytes($bytes)
     $rng.Dispose()
-    [Convert]::ToBase64String($bytes) -replace '[+/=]' | Select-Object -First 1 | ForEach-Object { $_.Substring(0, [Math]::Min($Length, $_.Length)) }
+    $base64 = [Convert]::ToBase64String($bytes)
+    # Remove special characters that might cause issues with URLs/shells
+    $base64 -replace '[+/=]', '' | Select-Object -First 1 -OutVariable password | ForEach-Object {
+        $_.Substring(0, [Math]::Min($Length, $_.Length))
+    }
 }
 
 # Check Docker
@@ -180,6 +184,15 @@ function Set-Environment {
     $RedisPassword = New-RandomPassword 64
     $EncryptionKey = New-RandomPassword 64
     $JwtSecret = New-RandomPassword 256
+    
+    # Upgrade pip first (critical for Windows - clears cache issues)
+    Write-Info "Upgrading pip to latest version..."
+    try {
+        python.exe -m pip install --upgrade pip
+        Write-Success "pip upgraded successfully"
+    } catch {
+        Write-Warning "pip upgrade encountered an issue, continuing..."
+    }
     
     # Handle corporate SSL/proxy
     if ($env:REQUESTS_CA_BUNDLE -or $env:SSL_CERT_FILE) {
@@ -346,7 +359,7 @@ function Wait-ForHealth {
             
             # Check Redis
             if (-not $RedisReady) {
-                $redis = docker exec agentic-brain-redis redis-cli ping 2>&1
+                $redis = docker exec agentic-brain-redis redis-cli -a "$RedisPassword" ping 2>&1
                 if ($redis -match "PONG") {
                     Write-Success "✓ Redis is ready"
                     $RedisReady = $true

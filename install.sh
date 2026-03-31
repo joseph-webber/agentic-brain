@@ -356,6 +356,12 @@ wait_for_health() {
     local redis_ready=false
     local redpanda_ready=false
     
+    # Load REDIS_PASSWORD from .env if not already set
+    if [ -z "$REDIS_PASSWORD" ] && [ -f "$ENV_FILE" ]; then
+        REDIS_PASSWORD=$(grep "^REDIS_PASSWORD=" "$ENV_FILE" | cut -d'=' -f2)
+    fi
+    REDIS_PASSWORD="${REDIS_PASSWORD:-BrainRedis2026}"
+    
     echo ""
     while [ $waited -lt $max_wait ]; do
         # Check Neo4j (port 7687 or 7474 HTTP)

@@ -20,6 +20,10 @@ COPY . .
 # Configure pip for corporate proxies (trusted hosts)
 RUN pip config set global.trusted-host "pypi.org pypi.python.org files.pythonhosted.org"
 
+# Upgrade pip first to clear cache
+RUN pip install --no-cache-dir --upgrade pip \
+    --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
+
 # Install package with test dependencies (with trusted hosts for corporate proxies)
 RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -e ".[test]"
 

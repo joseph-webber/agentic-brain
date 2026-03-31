@@ -15,6 +15,10 @@ WORKDIR /build
 # NOTE: pip config global.trusted-host doesn't work on Windows/corporate networks
 # Use --trusted-host flags on EVERY pip command instead
 
+# Upgrade pip first to clear cache
+RUN pip install --no-cache-dir --upgrade pip \
+    --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
+
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -46,6 +50,10 @@ WORKDIR /app
 
 # Configure pip for corporate proxies (trusted hosts) - MUST be in EACH stage!
 RUN pip config set global.trusted-host "pypi.org pypi.python.org files.pythonhosted.org"
+
+# Upgrade pip first to clear cache
+RUN pip install --no-cache-dir --upgrade pip \
+    --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org
 
 # Install development and testing dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \

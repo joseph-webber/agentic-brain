@@ -16,6 +16,11 @@
 set -e
 
 # ============================================================
+# Error handling and cleanup
+# ============================================================
+trap 'echo_error "Script failed on line $LINENO"; exit 1' ERR
+
+# ============================================================
 # Configuration
 # ============================================================
 VENV_DIR=".venv"
@@ -334,10 +339,13 @@ setup_virtualenv() {
     
     # Upgrade pip
     echo_step "Upgrading pip..."
+    # Clear pip cache to avoid stale package issues (critical for local installs)
+    python3 -m pip cache purge 2>/dev/null || true
+    
     if [[ "$UV_AVAILABLE" == "true" ]]; then
         uv pip install --upgrade pip wheel setuptools
     else
-        pip install --upgrade pip wheel setuptools
+        python3 -m pip install --upgrade pip wheel setuptools
     fi
     
     echo_success "Virtualenv ready"
@@ -375,6 +383,10 @@ install_python_deps() {
     
     # Configure SSL for corporate networks
     configure_pip_ssl
+    
+    # Clear pip cache to avoid stale package issues (critical for local installs)
+    echo_step "Clearing pip cache..."
+    python3 -m pip cache purge 2>/dev/null || true
     
     # Install from pyproject.toml with extras
     echo_step "Installing agentic-brain with all extras..."

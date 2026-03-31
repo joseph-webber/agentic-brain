@@ -60,8 +60,8 @@ services:
       - ./src:/app/src
 
   # ---------------------------------------------------------------------------
-  # Neo4j - Graph Database with GDS 2.16 and APOC plugins
-  # Neo4j 5.15.0 with manually installed GDS (community edition compatible)
+  # Neo4j - Graph Database with GDS 2.27.0 and APOC plugins
+  # Neo4j 2026.02.0 with manually installed GDS (community edition compatible)
   # ---------------------------------------------------------------------------
   neo4j:
     build:
@@ -76,7 +76,7 @@ services:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-Brain2026}
       
       # Enable both APOC and GDS plugins
-      # GDS 2.16 is manually installed in Dockerfile.neo4j
+      # GDS 2.27.0 is manually installed in Dockerfile.neo4j
       # APOC is auto-installed via this environment variable
       NEO4J_PLUGINS: '["apoc", "graph-data-science"]'
       
