@@ -1178,31 +1178,7 @@ Learn more in [Why Agentic Brain?](#-why-agentic-brain)
 
 ## ⚡ Quick Start
 
-### Option 1: Docker (Recommended for all platforms)
-
-The fastest path to a working setup:
-
-```bash
-# Clone and cd into the repo
-git clone https://github.com/agentic-brain-project/agentic-brain.git
-cd agentic-brain
-
-# Create env files and start services
-./setup.sh -c                                              # Create .env files
-docker compose -f docker/docker-compose.dev.yml up -d      # Start Neo4j + Redis
-
-# Verify services
-curl http://localhost:7474                                 # Neo4j Browser
-redis-cli -a BrainRedis2026 ping                          # Redis (should say PONG)
-```
-
-**Services included:**
-| Service | Port | Purpose | Default Password |
-|---------|------|---------|------------------|
-| Neo4j | 7474, 7687 | Knowledge Graph & Memory | `Brain2026` |
-| Redis | 6379 | Cache & Session Storage | `BrainRedis2026` |
-
-### Option 2: One-Liner Install
+### One-Liner Install (Recommended)
 
 **macOS/Linux:**
 ```bash
@@ -1221,11 +1197,70 @@ export AGENTIC_SKIP_SSL=true
 curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.sh | bash
 ```
 
+### Manual Docker Install
+
+```bash
+git clone https://github.com/joseph-webber/agentic-brain.git
+cd agentic-brain
+docker compose up -d --build
+```
+
 ### Option 3: pip install (minimal)
 
 ```bash
 pip install agentic-brain
 ```
+
+## 🌐 Services & Ports
+
+Once installed and running, access these services:
+
+| Service | Port | URL | Credentials |
+|---------|------|-----|-------------|
+| **Agentic Brain API** | 8000 | http://localhost:8000 | - |
+| **Neo4j Browser** | 7474 | http://localhost:7474 | neo4j / Brain2026 |
+| **Neo4j Bolt** | 7687 | bolt://localhost:7687 | neo4j / Brain2026 |
+| **Redis** | 6379 | redis://localhost:6379 | BrainRedis2026 |
+| **Redpanda Kafka** | 9092 | localhost:9092 | - |
+| **Redpanda Admin** | 9644 | http://localhost:9644 | - |
+
+## 📡 API Endpoints
+
+Core API endpoints for integration:
+
+- **Health Check:** http://localhost:8000/health
+- **API Docs:** http://localhost:8000/docs
+- **Dashboard:** http://localhost:8000/dashboard
+- **WebSocket Chat:** ws://localhost:8000/ws/chat
+
+## ✅ Testing Services
+
+Verify all services are running:
+
+```bash
+# Test Agentic Brain API
+curl http://localhost:8000/health
+
+# Test Neo4j
+curl http://localhost:7474
+
+# Test Redis
+docker exec agentic-brain-redis redis-cli -a BrainRedis2026 ping
+
+# Test Redpanda Kafka cluster health
+curl http://localhost:9644/v1/cluster/health
+```
+
+## 📦 System Versions
+
+Current stack versions:
+
+- **Agentic Brain:** 3.1.0
+- **Neo4j:** 2026.02.3-community
+- **Neo4j GDS Plugin:** 2.27.0 (GraphRAG support)
+- **Redis:** 7-alpine
+- **Redpanda:** latest
+- **Python:** 3.11+
 
 ### Prerequisites
 - Python 3.11+
