@@ -52,6 +52,16 @@ random() {
     cat /dev/urandom | base64 | head -c "$1" | tr -d +/ | tr -d '='; 
 }
 
+# Random hex generator for JWT_SECRET (using openssl)
+random_hex() {
+    if command -v openssl >/dev/null 2>&1; then
+        openssl rand -hex "$1"
+    else
+        # Fallback if openssl not available
+        random $((2 * $1))
+    fi
+}
+
 # Detect OS
 detect_os() {
     case "$(uname -s)" in
@@ -213,7 +223,7 @@ setup_env() {
     NEO4J_PASSWORD=$(random 64)
     REDIS_PASSWORD=$(random 64)
     ENCRYPTION_KEY=$(random 64)
-    JWT_SECRET=$(random 256)
+    JWT_SECRET=$(random_hex 32)
     
     # Handle corporate SSL/proxy issues
     if [ -n "$REQUESTS_CA_BUNDLE" ] || [ -n "$SSL_CERT_FILE" ]; then

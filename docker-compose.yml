@@ -36,6 +36,9 @@ services:
       # Kafka/Redpanda connection
       KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
       
+      # Security & Authentication
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-key-change-in-production}
+      
       # Logging
       OBSERVABILITY_LOG_LEVEL: ${LOG_LEVEL:-INFO}
       OBSERVABILITY_LOG_FORMAT: ${LOG_FORMAT:-text}

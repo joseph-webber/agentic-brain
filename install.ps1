@@ -183,7 +183,8 @@ function Set-Environment {
     $Neo4jPassword = New-RandomPassword 64
     $RedisPassword = New-RandomPassword 64
     $EncryptionKey = New-RandomPassword 64
-    $JwtSecret = New-RandomPassword 256
+    # JWT_SECRET: Generate using GUID combination for better randomness
+    $JwtSecret = [System.Guid]::NewGuid().ToString().Replace("-", "") + [System.Guid]::NewGuid().ToString().Replace("-", "")
     
     # Upgrade pip first (critical for Windows - clears cache issues)
     Write-Info "Upgrading pip to latest version..."
