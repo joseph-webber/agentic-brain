@@ -1,60 +1,64 @@
-# Quick Install Guide
+# Quick Install
 
-## One-Liner Install (Recommended)
+Pick your platform and run one command:
 
-### Mac/Linux
+## Mac/Linux
 ```bash
 curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.sh | bash
 ```
 
-### Windows PowerShell (Run as Administrator)
+## Windows PowerShell
 ```powershell
-Set-ExecutionPolicy Bypass -Scope Process -Force
-irm https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.ps1 | iex
 ```
 
-## What Gets Installed
+## Windows Bash/WSL
+```bash
+curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.sh | bash
+```
 
-| Service | Port | Purpose |
-|---------|------|---------|
-| Agentic Brain | 8000 | Main AI API |
-| Neo4j + GDS 2.27.0 | 7474, 7687 | Graph Database with GraphRAG |
-| Redis | 6379 | Cache & Sessions |
-| Redpanda | 9092 | Event Bus (Kafka-compatible) |
+## Docker Manual
+```bash
+git clone https://github.com/joseph-webber/agentic-brain.git
+cd agentic-brain
+docker compose up -d --build
+```
+
+## Verify Installation
+
+```bash
+curl http://localhost:8000/health
+```
+
+## Service URLs
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| API Docs | http://localhost:8000/docs | Interactive API explorer |
+| Dashboard | http://localhost:8000/dashboard | Brain dashboard |
+| Neo4j | http://localhost:7474 | Graph database browser |
+| API Health | http://localhost:8000/health | Service health check |
 
 ## Default Credentials
 
 | Service | Username | Password |
 |---------|----------|----------|
 | Neo4j | neo4j | Brain2026 |
-| Redis | - | BrainRedis2026 |
+| Redis | (none) | BrainRedis2026 |
 
-## After Installation
+## Common Issues
 
+### SSL Errors
 ```bash
-# Check all services
-docker compose ps
-
-# View logs
-docker compose logs -f
-
-# Access services
-open http://localhost:8000/docs      # API Docs
-open http://localhost:8000/dashboard # Dashboard
-open http://localhost:7474           # Neo4j Browser
+export PIP_TRUSTED_HOST="files.pythonhosted.org pypi.python.org pypi.org"
 ```
 
-## Troubleshooting
-
-### SSL Certificate Errors (Corporate Networks)
-The installer automatically handles SSL certificate issues with --trusted-host flags.
-
-### Windows AIO Errors
-Redpanda runs in dev-container mode to avoid AIO issues on Windows.
-
-### Service Not Starting
+### Rebuild All Services
 ```bash
-docker compose down -v
-docker compose up -d --build
-docker compose logs [service-name]
+docker compose down -v && docker compose up -d --build
+```
+
+### Check Service Status
+```bash
+docker compose ps
 ```

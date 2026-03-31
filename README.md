@@ -1197,6 +1197,12 @@ export AGENTIC_SKIP_SSL=true
 curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.sh | bash
 ```
 
+### ⚡ Quick Install (One-Liner)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.sh | bash
+```
+
 ### Manual Docker Install
 
 ```bash
@@ -1217,12 +1223,13 @@ Once installed and running, access these services:
 
 | Service | Port | URL | Credentials |
 |---------|------|-----|-------------|
-| **Agentic Brain API** | 8000 | http://localhost:8000 | - |
+| **Brain API** | 8000 | http://localhost:8000 | - |
 | **Neo4j Browser** | 7474 | http://localhost:7474 | neo4j / Brain2026 |
 | **Neo4j Bolt** | 7687 | bolt://localhost:7687 | neo4j / Brain2026 |
 | **Redis** | 6379 | redis://localhost:6379 | BrainRedis2026 |
-| **Redpanda Kafka** | 9092 | localhost:9092 | - |
+| **Redpanda Broker** | 9092 | localhost:9092 | - |
 | **Redpanda Admin** | 9644 | http://localhost:9644 | - |
+| **Ollama (Local LLM)** | 11434 | http://localhost:11434 | - |
 
 ## 📡 API Endpoints
 
@@ -1383,7 +1390,7 @@ ab mode list             # See all 42 modes
 **One command to launch everything:**
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 Then visit:
@@ -1405,6 +1412,51 @@ docker compose logs -f neo4j
 ```bash
 docker compose down
 ```
+
+### 🤖 Ollama Local LLM Setup
+
+Run local LLMs without API keys. Agentic Brain supports Ollama models like llama2, mistral, and neural-chat.
+
+**macOS/Linux:**
+```bash
+# Download and install
+curl https://ollama.ai/install.sh | sh
+
+# Start Ollama service
+ollama serve
+
+# In another terminal, pull a model
+ollama pull llama2  # ~4GB
+```
+
+**Windows:**
+```powershell
+# Install via Winget (recommended)
+winget install Ollama.Ollama
+
+# Or download from https://ollama.ai
+
+# Then start Ollama in PowerShell
+ollama serve
+
+# Pull a model
+ollama pull llama2
+```
+
+**Configure Agentic Brain to use Ollama:**
+```bash
+ab config set llm.provider ollama
+ab config set llm.base_url http://localhost:11434
+ab config set llm.model llama2
+```
+
+**Corporate Network Note:**
+If behind a corporate proxy with SSL inspection, add:
+```bash
+export PYTHONHTTPSVERIFY=0
+```
+
+Then run Agentic Brain.
 
 ---
 

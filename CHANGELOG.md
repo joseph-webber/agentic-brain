@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-04-01
+
+### Fixed
+- **CRITICAL**: Added `--build` flag to install.sh and install.ps1 - without this, Docker tried to pull images instead of building from Dockerfile
+- Added explicit uvicorn[standard] installation to Dockerfile (both dev and prod stages)
+- Added fastapi, uvicorn, httpx to main dependencies in pyproject.toml
+- install.ps1 now only pulls external service images (neo4j, redis, redpanda), not agentic-brain
+
+### Added
+- Universal Ollama installer for Windows, Mac, Linux
+- Ollama service in docker-compose.yml (use --profile ollama)
+- SSL bypass utility (ssl_bypass.py) for corporate networks
+- Comprehensive Windows section in LOCAL_LLM_GUIDE.md
+- Complete troubleshooting documentation
+
+### Changed
+- docker compose commands now use --build flag by default
+- Dependencies moved from optional extras to main requirements
+
+---
+
 ## [3.1.0] - 2026-03-31
 
 ### Added
