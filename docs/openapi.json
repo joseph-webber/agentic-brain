@@ -480,6 +480,227 @@
         }
       }
     },
+    "/auth/saml/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Initiate SAML login",
+        "description": "Generate a SAML AuthnRequest for SP-initiated SSO flows.",
+        "operationId": "saml_login_auth_saml_login_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Saml Login Auth Saml Login Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/saml/acs": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "SAML Assertion Consumer Service (ACS)",
+        "description": "Validate a SAML Response and extract user attributes.",
+        "operationId": "saml_acs_auth_saml_acs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Saml Acs Auth Saml Acs Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/saml/metadata": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "SAML Service Provider metadata",
+        "description": "Get minimal SP metadata XML for IdP configuration.",
+        "operationId": "saml_metadata_auth_saml_metadata_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/sso/{provider}/login": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Initiate OAuth2/OIDC SSO login",
+        "description": "Generate an authorization URL for the given SSO provider.",
+        "operationId": "sso_login_auth_sso__provider__login_get",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Sso Login Auth Sso  Provider  Login Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/sso/{provider}/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "OAuth2/OIDC SSO callback",
+        "description": "Handle the OAuth2/OIDC callback by exchanging the authorization code for tokens and (optionally) validating the ID token.",
+        "operationId": "sso_callback_auth_sso__provider__callback_get",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Provider"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Sso Callback Auth Sso  Provider  Callback Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/woocommerce": {
+      "post": {
+        "tags": [
+          "commerce",
+          "webhooks"
+        ],
+        "summary": "WooCommerce webhook endpoint",
+        "description": "Secure WooCommerce webhook receiver with HMAC-SHA256 signature verification and dispatch into the agentic-brain hooks system.",
+        "operationId": "woocommerce_webhook_webhooks_woocommerce_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
     "/dashboard": {
       "get": {
         "tags": [

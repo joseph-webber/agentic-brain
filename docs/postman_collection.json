@@ -1,0 +1,415 @@
+{
+  "info": {
+    "name": "Agentic Brain API",
+    "description": "Complete API collection for Agentic Brain - Multi-LLM orchestration platform with GraphRAG, Unified Brain, and real-time chat",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "api_key",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "session_id",
+      "value": "sess_abc123",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "user_xyz789",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "\ud83c\udfe5 Health & Status",
+      "description": "System health and status endpoints",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Quick health check endpoint to verify API server status.\n\nProvides comprehensive health information including:\n- Current server status\n- API version\n- Server timestamp\n- Number of active sessions\n- Redis availability\n- LLM configuration\n- Neo4j configuration"
+          },
+          "response": []
+        },
+        {
+          "name": "Setup Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/setup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "setup"
+              ]
+            },
+            "description": "Get the current setup status and configuration requirements"
+          },
+          "response": []
+        },
+        {
+          "name": "Setup Help",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/setup/help/groq",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "setup",
+                "help",
+                "groq"
+              ]
+            },
+            "description": "Get help for a specific LLM provider setup.\n\nSupported providers: groq, openai, anthropic, ollama"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udcac Chat",
+      "description": "Chat and messaging endpoints",
+      "item": [
+        {
+          "name": "Send Chat Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_key}}",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What is the weather today?\",\n  \"session_id\": \"{{session_id}}\",\n  \"user_id\": \"{{user_id}}\",\n  \"metadata\": {\n    \"source\": \"postman\",\n    \"client_version\": \"1.0\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/chat",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "chat"
+              ]
+            },
+            "description": "Send a message to the chat API and receive a response.\n\n**Request Body:**\n- `message` (string, required): The user's message (1-32000 characters)\n- `session_id` (string, optional): Session ID for conversation tracking\n- `user_id` (string, optional): User ID for multi-user support\n- `metadata` (object, optional): Additional metadata about the request\n\n**Response:**\n- `response`: The chatbot's response\n- `session_id`: The session ID for this conversation\n- `message_id`: Unique identifier for this message exchange\n- `timestamp`: When the response was generated"
+          },
+          "response": []
+        },
+        {
+          "name": "Stream Chat Response",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/event-stream"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_key}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chat/stream?message=What is machine learning?&session_id={{session_id}}&user_id={{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "chat",
+                "stream"
+              ],
+              "query": [
+                {
+                  "key": "message",
+                  "value": "What is machine learning?"
+                },
+                {
+                  "key": "session_id",
+                  "value": "{{session_id}}"
+                },
+                {
+                  "key": "user_id",
+                  "value": "{{user_id}}"
+                }
+              ]
+            },
+            "description": "Stream chat response using Server-Sent Events (SSE).\n\nUseful for real-time streaming of long responses.\n\n**Query Parameters:**\n- `message` (string, required): The user's message\n- `session_id` (string, optional): Session ID for tracking\n- `user_id` (string, optional): User ID for multi-user support"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udcdd Sessions",
+      "description": "Session management endpoints",
+      "item": [
+        {
+          "name": "Get Session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_key}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/session/{{session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "session",
+                "{{session_id}}"
+              ]
+            },
+            "description": "Retrieve information about a specific session.\n\n**Response:**\n- `id`: Session identifier\n- `message_count`: Number of messages in session\n- `created_at`: Session creation timestamp\n- `last_accessed`: Last access timestamp\n- `user_id`: Associated user ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Session Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_key}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/session/{{session_id}}/messages",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "session",
+                "{{session_id}}",
+                "messages"
+              ]
+            },
+            "description": "Retrieve all messages for a specific session.\n\nUseful for:\n- Recovering conversation history\n- Analytics and logging\n- Session replay\n\n**Response:**\nArray of message objects with timestamps, user info, and content"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Session",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_key}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/session/{{session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "session",
+                "{{session_id}}"
+              ]
+            },
+            "description": "Delete a specific session and all associated data.\n\n\u26a0\ufe0f **Warning:** This is a destructive operation and cannot be undone.\n\n**Response:**\n- Success message with session ID that was deleted"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "\ud83d\udd10 Authentication",
+      "description": "Authentication and authorization endpoints",
+      "item": [
+        {
+          "name": "SAML Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"saml_response\": \"your_saml_response_here\",\n  \"relay_state\": \"optional_relay_state\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/saml/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "saml",
+                "login"
+              ]
+            },
+            "description": "Authenticate using SAML 2.0 Single Sign-On.\n\nUseful for enterprise integrations with Active Directory, Okta, etc."
+          },
+          "response": []
+        },
+        {
+          "name": "SAML Metadata",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/saml/metadata",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "saml",
+                "metadata"
+              ]
+            },
+            "description": "Get SAML service provider metadata.\n\nRequired for configuring SAML integration with identity providers."
+          },
+          "response": []
+        },
+        {
+          "name": "SSO Login",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/sso/google/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "sso",
+                "google",
+                "login"
+              ]
+            },
+            "description": "Initiate Single Sign-On with a provider.\n\nSupported providers: google, github, azure, okta\n\nRedirects to provider's login page."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "\ud83c\udf10 WebSocket",
+      "description": "WebSocket real-time communication",
+      "item": [
+        {
+          "name": "WebSocket Chat",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{api_key}}",
+                "disabled": true
+              }
+            ],
+            "url": {
+              "raw": "ws://{{base_url}}/ws/chat?session_id={{session_id}}&user_id={{user_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "ws",
+                "chat"
+              ],
+              "query": [
+                {
+                  "key": "session_id",
+                  "value": "{{session_id}}"
+                },
+                {
+                  "key": "user_id",
+                  "value": "{{user_id}}"
+                }
+              ]
+            },
+            "description": "Establish a WebSocket connection for real-time bidirectional chat.\n\n**Connection Parameters:**\n- `session_id`: Session identifier for conversation tracking\n- `user_id`: User identifier for multi-user support\n\n**Message Format (JSON):**\n```json\n{\n  \"message\": \"Your message here\",\n  \"type\": \"chat\",\n  \"metadata\": {}\n}\n```\n\n**Features:**\n- Real-time message delivery\n- Automatic reconnection\n- Presence tracking\n- Typing indicators\n- Message history sync"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

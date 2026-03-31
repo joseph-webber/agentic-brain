@@ -19,7 +19,7 @@ import re
 from datetime import UTC, datetime, timezone
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ChatRequest(BaseModel):
@@ -89,14 +89,22 @@ class ChatRequest(BaseModel):
             raise ValueError("Metadata cannot exceed 10000 characters when serialized")
         return v
 
-    model_config = {
-        "example": {
-            "message": "What is the weather today?",
-            "session_id": "sess_abc123",
-            "user_id": "user_xyz789",
-            "metadata": {"source": "web_ui"},
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "message": "What is the weather today?",
+                    "session_id": "sess_abc123",
+                    "user_id": "user_xyz789",
+                    "metadata": {"source": "web_ui"},
+                },
+                {
+                    "message": "Explain machine learning",
+                    "session_id": "sess_def456",
+                },
+            ]
         }
-    }
+    )
 
 
 class ChatResponse(BaseModel):
@@ -117,14 +125,24 @@ class ChatResponse(BaseModel):
     )
     message_id: str = Field(..., description="Unique message identifier")
 
-    model_config = {
-        "example": {
-            "response": "The weather looks sunny today!",
-            "session_id": "sess_abc123",
-            "timestamp": "2026-01-01T12:00:00Z",
-            "message_id": "msg_def456",
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "response": "The weather looks sunny today!",
+                    "session_id": "sess_abc123",
+                    "timestamp": "2026-01-01T12:00:00Z",
+                    "message_id": "msg_def456",
+                },
+                {
+                    "response": "Machine learning is a subset of artificial intelligence that enables systems to learn from data.",
+                    "session_id": "sess_abc123",
+                    "timestamp": "2026-01-01T12:05:00Z",
+                    "message_id": "msg_def457",
+                },
+            ]
         }
-    }
+    )
 
 
 class SessionInfo(BaseModel):
@@ -168,15 +186,25 @@ class SessionInfo(BaseModel):
             )
         return v
 
-    model_config = {
-        "example": {
-            "id": "sess_abc123",
-            "message_count": 5,
-            "created_at": "2026-01-01T10:00:00Z",
-            "last_accessed": "2026-01-01T12:30:00Z",
-            "user_id": "user_xyz789",
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "id": "sess_abc123",
+                    "message_count": 5,
+                    "created_at": "2026-01-01T10:00:00Z",
+                    "last_accessed": "2026-01-01T12:30:00Z",
+                    "user_id": "user_xyz789",
+                },
+                {
+                    "id": "sess_def456",
+                    "message_count": 12,
+                    "created_at": "2026-01-01T08:00:00Z",
+                    "last_accessed": "2026-01-01T13:15:00Z",
+                },
+            ]
         }
-    }
+    )
 
 
 class ErrorResponse(BaseModel):
@@ -192,13 +220,22 @@ class ErrorResponse(BaseModel):
     detail: Optional[str] = Field(default=None, description="Detailed error info")
     status_code: int = Field(..., description="HTTP status code")
 
-    model_config = {
-        "example": {
-            "error": "Session not found",
-            "detail": "Session ID sess_invalid does not exist",
-            "status_code": 404,
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "error": "Session not found",
+                    "detail": "Session ID sess_invalid does not exist",
+                    "status_code": 404,
+                },
+                {
+                    "error": "Invalid request",
+                    "detail": "Message cannot be empty",
+                    "status_code": 400,
+                },
+            ]
         }
-    }
+    )
 
 
 # =============================================================================
@@ -220,6 +257,25 @@ class PaginationInfo(BaseModel):
     size: int = Field(default=20, ge=1, le=100, description="Items per page")
     total_items: int = Field(default=0, ge=0, description="Total item count")
     total_pages: int = Field(default=0, ge=0, description="Total page count")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "page": 0,
+                    "size": 20,
+                    "total_items": 150,
+                    "total_pages": 8,
+                },
+                {
+                    "page": 1,
+                    "size": 20,
+                    "total_items": 75,
+                    "total_pages": 4,
+                },
+            ]
+        }
+    )
 
     @classmethod
     def from_total(cls, page: int, size: int, total_items: int) -> "PaginationInfo":
@@ -266,20 +322,40 @@ class ApiResponse(BaseModel):
         description="Response timestamp",
     )
 
-    model_config = {
-        "populate_by_name": True,
-        "json_schema_extra": {
-            "example": {
-                "success": True,
-                "data": {"id": "123", "name": "Example"},
-                "message": "Resource retrieved successfully",
-                "errors": [],
-                "pagination": None,
-                "links": {"self": "/api/v1/resource/123"},
-                "timestamp": "2026-01-01T12:00:00Z",
-            },
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "examples": [
+                {
+                    "success": True,
+                    "data": {"id": "123", "name": "Example Resource"},
+                    "message": "Resource retrieved successfully",
+                    "errors": [],
+                    "pagination": None,
+                    "links": {"self": "/api/v1/resource/123"},
+                    "timestamp": "2026-01-01T12:00:00Z",
+                },
+                {
+                    "success": False,
+                    "data": None,
+                    "message": "Request failed",
+                    "errors": ["Invalid input provided"],
+                    "pagination": None,
+                    "links": {},
+                    "timestamp": "2026-01-01T12:05:00Z",
+                },
+                {
+                    "success": True,
+                    "data": [{"id": "1"}, {"id": "2"}],
+                    "message": "Items retrieved successfully",
+                    "errors": [],
+                    "pagination": {"page": 0, "size": 20, "total_items": 2, "total_pages": 1},
+                    "links": {"self": "/api/v1/items?page=0&size=20"},
+                    "timestamp": "2026-01-01T12:10:00Z",
+                },
+            ]
         },
-    }
+    )
 
     @classmethod
     def ok(
@@ -367,6 +443,21 @@ class HealthIndicator(BaseModel):
         description="Additional health details",
     )
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "status": "healthy",
+                    "details": {"uptime": 99.9, "response_time_ms": 45},
+                },
+                {
+                    "status": "degraded",
+                    "details": {"uptime": 95.5, "response_time_ms": 250},
+                },
+            ]
+        }
+    )
+
 
 class HealthResponse(BaseModel):
     """
@@ -393,19 +484,30 @@ class HealthResponse(BaseModel):
         description="Health check timestamp",
     )
 
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "status": "healthy",
-                "components": {
-                    "neo4j": {"status": "healthy", "details": {"connections": 5}},
-                    "llm": {"status": "healthy", "details": {"provider": "openai"}},
-                    "disk": {"status": "healthy", "details": {"free_gb": 50.2}},
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "status": "healthy",
+                    "components": {
+                        "neo4j": {"status": "healthy", "details": {"connections": 5}},
+                        "llm": {"status": "healthy", "details": {"provider": "openai"}},
+                        "disk": {"status": "healthy", "details": {"free_gb": 50.2}},
+                    },
+                    "timestamp": "2026-01-01T12:00:00Z",
                 },
-                "timestamp": "2026-01-01T12:00:00Z",
-            }
+                {
+                    "status": "degraded",
+                    "components": {
+                        "neo4j": {"status": "healthy", "details": {"connections": 5}},
+                        "llm": {"status": "degraded", "details": {"provider": "local", "latency_ms": 1500}},
+                        "disk": {"status": "healthy", "details": {"free_gb": 10.5}},
+                    },
+                    "timestamp": "2026-01-01T12:05:00Z",
+                },
+            ]
         }
-    }
+    )
 
     @classmethod
     def from_indicators(

@@ -1,0 +1,152 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║               AGENTIC BRAIN API - POSTMAN COLLECTION QUICK REF             ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📦 COLLECTION FILE
+  Location: docs/postman_collection.json
+  Endpoints: 13 (organized in 5 categories)
+  Format: Postman Collection v2.1.0
+
+🔧 ENVIRONMENT VARIABLES
+  {{base_url}}    → Default: http://localhost:8000
+  {{api_key}}     → Your API key (leave empty for local dev)
+  {{session_id}}  → Default: sess_abc123
+  {{user_id}}     → Default: user_xyz789
+
+📋 API ENDPOINTS BY CATEGORY
+
+┌─ 🏥 HEALTH & STATUS ─────────────────────────────────────────────────────┐
+│                                                                            │
+│  1. Health Check                    GET    /health                        │
+│     └─ Quick server health status, version, active sessions              │
+│                                                                            │
+│  2. Setup Status                    GET    /setup                         │
+│     └─ Configuration and requirements status                             │
+│                                                                            │
+│  3. Setup Help                      GET    /setup/help/{provider}         │
+│     └─ Provider setup instructions (groq, openai, anthropic, ollama)     │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ 💬 CHAT ────────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  4. Send Message                    POST   /chat                          │
+│     Body: { message, session_id, user_id, metadata }                     │
+│                                                                            │
+│  5. Stream Response                 GET    /chat/stream                   │
+│     Query: ?message=X&session_id=Y&user_id=Z                            │
+│     Real-time streaming via Server-Sent Events                           │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ 📝 SESSIONS ────────────────────────────────────────────────────────────┐
+│                                                                            │
+│  6. Get Session                     GET    /session/{session_id}          │
+│     └─ Metadata: created, last_accessed, message_count                   │
+│                                                                            │
+│  7. Get Messages                    GET    /session/{session_id}/messages │
+│     └─ Retrieve full conversation history                                │
+│                                                                            │
+│  8. Delete Session                  DELETE /session/{session_id}          │
+│     └─ ⚠️  Destructive - cannot be undone                                 │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ 🔐 AUTHENTICATION ──────────────────────────────────────────────────────┐
+│                                                                            │
+│  9. SAML Login                      POST   /auth/saml/login               │
+│     └─ Enterprise SAML 2.0 authentication                                │
+│                                                                            │
+│  10. SAML Metadata                  GET    /auth/saml/metadata            │
+│      └─ Service provider metadata for SSO setup                          │
+│                                                                            │
+│  11. SSO Login                      GET    /auth/sso/{provider}/login     │
+│      └─ Social login (google, github, azure, okta)                       │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─ 🌐 WEBSOCKET ──────────────────────────────────────────────────────────┐
+│                                                                            │
+│  12. WebSocket Chat                 WS     /ws/chat                       │
+│      Query: ?session_id=X&user_id=Y                                      │
+│      Real-time bidirectional communication                               │
+│      Message: { message, type: "chat", metadata }                        │
+│                                                                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+⚡ QUICK WORKFLOW
+
+  1. Verify Health
+     GET /health
+     └─ Check status, version, active sessions
+
+  2. Send Message
+     POST /chat
+     └─ Get instant response from AI
+
+  3. Stream Long Response
+     GET /chat/stream
+     └─ Real-time streaming for lengthy outputs
+
+  4. Retrieve History
+     GET /session/{session_id}/messages
+     └─ Access full conversation
+
+  5. Clean Up (Optional)
+     DELETE /session/{session_id}
+     └─ Remove session when done
+
+🚀 GETTING STARTED
+
+  1. Import: postman_collection.json into Postman
+  2. Set: Environment variables (base_url, api_key, etc.)
+  3. Test: Click Health Check endpoint
+  4. Explore: Try Chat endpoints
+  5. Debug: Check /docs or /redoc for full API docs
+
+📚 HEADERS & AUTH
+
+  Content-Type: application/json
+  Authorization: Bearer {{api_key}}  [optional, for protected APIs]
+
+  For local dev without auth:
+    - Leave {{api_key}} empty
+    - Disable Authorization header
+
+✅ COMMON TESTS
+
+  • Health Check should return status: "healthy"
+  • Chat response includes: response, session_id, message_id
+  • Messages endpoint returns array of message objects
+  • WebSocket connects successfully to ws://base_url/ws/chat
+
+❓ TROUBLESHOOTING
+
+  "Connection refused"
+    → Verify base_url is correct
+    → Check API server is running (http://localhost:8000/health)
+
+  "Unauthorized" (401)
+    → Set {{api_key}} if authentication required
+    → Check Authorization header is enabled
+
+  "WebSocket fails"
+    → Use ws:// not http:// for WebSocket URLs
+    → Verify session_id is valid
+
+  "Empty response"
+    → Check LLM provider configured (GET /health)
+    → Verify LLM API key set (if required)
+
+📖 FULL DOCUMENTATION
+
+  Interactive API Docs:    http://localhost:8000/docs
+  ReDoc Docs:             http://localhost:8000/redoc
+  Setup Guide:            docs/POSTMAN_SETUP.md
+  API README:             docs/README.md
+
+═══════════════════════════════════════════════════════════════════════════════
+Version: 1.0.0
+Last Updated: 2026-01-15
+Compatible with: Postman 10.0+, Python 3.11+, Node.js 18+
+═══════════════════════════════════════════════════════════════════════════════
