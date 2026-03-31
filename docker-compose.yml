@@ -16,6 +16,8 @@ services:
       dockerfile: Dockerfile
       target: development  # Use 'production' for prod builds
     container_name: agentic-brain
+    env_file:
+      - .env.docker
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
@@ -48,12 +50,22 @@ services:
       OBSERVABILITY_LOG_LEVEL: ${LOG_LEVEL:-INFO}
       OBSERVABILITY_LOG_FORMAT: ${LOG_FORMAT:-text}
       
-      # SSL/TLS settings for corporate networks with SSL inspection
-      # Set to "0" to disable SSL verification (use with caution in production!)
+      # =======================================================================
+      # ⚠️  SSL/TLS SETTINGS FOR CORPORATE NETWORKS - DEVELOPMENT ONLY ⚠️
+      # =======================================================================
+      # If your corporate proxy intercepts SSL (causes SSLCertVerificationError),
+      # set these in your .env.docker file:
+      #   PYTHONHTTPSVERIFY=0
+      #   SSL_VERIFY=false
+      #
+      # WARNING: This disables certificate verification! Only use for development
+      # behind corporate proxies. Never use in production with real API keys!
+      # =======================================================================
       SSL_CERT_FILE: ${SSL_CERT_FILE:-}
       REQUESTS_CA_BUNDLE: ${REQUESTS_CA_BUNDLE:-}
       CURL_CA_BUNDLE: ${CURL_CA_BUNDLE:-}
       PYTHONHTTPSVERIFY: ${PYTHONHTTPSVERIFY:-1}
+      SSL_VERIFY: ${SSL_VERIFY:-true}
       
       # Local LLM (Ollama) - connects to host or ollama container
       OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}

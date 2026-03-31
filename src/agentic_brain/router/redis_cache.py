@@ -65,14 +65,23 @@ class RedisInterBotComm:
 
     def __init__(
         self,
-        host: str = "localhost",
-        port: int = 6379,
+        host: str | None = None,
+        port: int | None = None,
         password: str | None = None,
         *,
         pool: RedisPoolManager | None = None,
         client: Any | None = None,
     ):
-        """Initialize Redis inter-bot communication with password support."""
+        """Initialize Redis inter-bot communication with password support.
+        
+        Uses environment variables for configuration in Docker:
+        - REDIS_HOST: Redis hostname (default: localhost)
+        - REDIS_PORT: Redis port (default: 6379)
+        - REDIS_PASSWORD: Redis password (optional)
+        """
+        # Use environment variables if not explicitly provided
+        host = host or os.getenv("REDIS_HOST", "localhost")
+        port = port or int(os.getenv("REDIS_PORT", "6379"))
         password = password or os.getenv("REDIS_PASSWORD")
         config = RedisConfig(host=host, port=port, password=password, db=0)
         self._pool = pool or RedisPoolManager(config, client=client)
