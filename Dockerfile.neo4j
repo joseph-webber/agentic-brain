@@ -5,7 +5,7 @@
 # Works on Windows, macOS, and Linux
 # =============================================================================
 
-FROM neo4j:2026.02.0-community
+FROM neo4j:2026.02.3-community
 
 # Set working directory
 WORKDIR /tmp
