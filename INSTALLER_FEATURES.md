@@ -1,5 +1,19 @@
 # 🛠️ Agentic Brain Bulletproof Installer - Technical Overview
 
+## 📦 System Components
+
+### Versions
+- **Neo4j**: 2026.02.3-community
+- **Graph Data Science (GDS)**: 2.27.0
+
+### Recent Fixes & Improvements
+- ✅ **SSL trusted hosts for corporate proxies** - Auto-detect and configure PIP_TRUSTED_HOST for secure enterprise environments
+- ✅ **Redpanda dev-container mode for Windows** - Optimized event streaming for Windows development environments
+- ✅ **pip upgrade for cache clearing** - Ensures clean dependency installation and prevents cached issues
+- ✅ **Correct Neo4j Docker tag** - Verified and updated to latest stable community build
+
+---
+
 ## Architecture
 
 The installer follows the **Retool install pattern** with two implementations:

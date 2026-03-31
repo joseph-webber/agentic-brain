@@ -85,6 +85,8 @@ docker compose restart neo4j
 
 ## 🐛 Troubleshooting
 
+### General
+
 **Docker not running?**
 ```bash
 # Mac: Start Docker Desktop
@@ -92,12 +94,18 @@ open -a Docker
 
 # Linux: Start Docker service
 sudo systemctl start docker
+
+# Windows: Start Docker Desktop
+# Click the Docker Desktop icon in Start Menu
 ```
 
 **Port already in use?**
 ```bash
-# Find what's using the port
-lsof -i :8000  # Mac/Linux
+# Mac/Linux: Find what's using the port
+lsof -i :8000
+
+# Windows PowerShell: Find what's using the port
+Get-Process -Id (Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue).OwningProcess
 ```
 
 **Need to see the logs?**
@@ -105,6 +113,62 @@ lsof -i :8000  # Mac/Linux
 docker compose logs neo4j
 docker compose logs redis
 docker compose logs app
+```
+
+### Windows-Specific Issues
+
+**PowerShell execution policy prevents install?**
+```powershell
+# Run PowerShell as Administrator, then:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+# Then run the install command again
+irm https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.ps1 | iex
+```
+
+**WSL2 backend not installed?**
+```powershell
+# Install WSL2 (Windows Subsystem for Linux 2)
+wsl --install
+# Restart your computer, then start Docker Desktop
+```
+
+**Docker Desktop won't start?**
+```powershell
+# Check if Hyper-V is enabled (required for Docker)
+Get-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V -Online
+
+# If not enabled, run as Administrator:
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+# Then restart your computer
+```
+
+**Line endings issue on Windows?**
+```powershell
+# If scripts fail with "line ending" errors:
+git config --global core.autocrlf false
+git clone https://github.com/joseph-webber/agentic-brain.git
+cd agentic-brain
+./install.ps1
+```
+
+**"Command not recognized" errors?**
+```powershell
+# Ensure you're using PowerShell (not Command Prompt)
+# Windows 11: Use Windows Terminal (recommended)
+# Right-click and select "Open with Windows Terminal"
+```
+
+**Services starting but not healthy?**
+```bash
+# Check individual service status
+docker compose ps
+
+# Restart all services
+docker compose down
+docker compose up -d
+
+# Wait 30 seconds for services to initialize
+docker compose ps
 ```
 
 ---
@@ -119,7 +183,8 @@ See [INSTALLER_FEATURES.md](./INSTALLER_FEATURES.md) for technical details
 
 ## ✨ What You Get
 
-- **Neo4j** Graph Database → http://localhost:7474
+- **Neo4j 2026.02.3-community** Graph Database → http://localhost:7474
+- **GDS 2.27.0** Graph Data Science Library
 - **Redis** Cache Layer → localhost:6379  
 - **Redpanda** Message Queue → http://localhost:9644
 - **API Server** → http://localhost:8000

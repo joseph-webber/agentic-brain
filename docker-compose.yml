@@ -61,7 +61,7 @@ services:
 
   # ---------------------------------------------------------------------------
   # Neo4j - Graph Database with GDS 2.27.0 and APOC plugins
-  # Neo4j 2026.02.0 with manually installed GDS (community edition compatible)
+  # Neo4j 2026.02.3-community with manually installed GDS (community edition compatible)
   # ---------------------------------------------------------------------------
   neo4j:
     build:

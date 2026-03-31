@@ -446,7 +446,7 @@ Get a production-ready environment running in seconds:
 [![CI](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/agentic-brain-project/agentic-brain/actions/workflows/ci.yml)
 
 **Services Required:**
-- Neo4j 5.15+ (with APOC plugin)
+- Neo4j 2026.02.3 (with GDS 2.27.0 and APOC plugins)
 - Redis 7+
 - Redpanda (Kafka-compatible event bus)
 
@@ -1202,24 +1202,23 @@ redis-cli -a BrainRedis2026 ping                          # Redis (should say PO
 | Neo4j | 7474, 7687 | Knowledge Graph & Memory | `Brain2026` |
 | Redis | 6379 | Cache & Session Storage | `BrainRedis2026` |
 
-### Option 2: Native Install (macOS/Linux/Windows)
+### Option 2: One-Liner Install
 
+**macOS/Linux:**
 ```bash
-# macOS/Linux
-./setup.sh -i
+curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.sh | bash
+```
 
-# Windows PowerShell
-.\setup.ps1 -Install
-
-# Windows (Git Bash) - also works!
-./setup.sh -i
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.ps1 | iex
 ```
 
 **Corporate networks with SSL issues?**
 ```bash
-# Set this before running the installer
+# macOS/Linux
 export AGENTIC_SKIP_SSL=true
-./setup.sh -i
+curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.sh | bash
 ```
 
 ### Option 3: pip install (minimal)
@@ -1344,14 +1343,32 @@ ab mode status           # View current mode
 ab mode list             # See all 42 modes
 ```
 
-### Docker (Zero Setup)
+### Quick Start (Docker)
+
+**One command to launch everything:**
 
 ```bash
-# Run with one command
-curl -fsSL https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/setup.sh | bash
-
-# Or via Docker Compose
 docker compose up -d
+```
+
+Then visit:
+- **API**: http://localhost:8000
+- **Neo4j Browser**: http://localhost:7474
+- **Health Check**: http://localhost:8000/health
+
+**Credentials:**
+- Neo4j: `neo4j` / `Brain2026`
+- Redis: `:BrainRedis2026`
+
+**View logs:**
+```bash
+docker compose logs -f agentic-brain
+docker compose logs -f neo4j
+```
+
+**Stop everything:**
+```bash
+docker compose down
 ```
 
 ---
