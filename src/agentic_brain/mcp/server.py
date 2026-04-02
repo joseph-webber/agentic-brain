@@ -41,12 +41,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from agentic_brain.core.neo4j_pool import (
-    configure_pool as configure_neo4j_pool,
-)
-from agentic_brain.core.neo4j_pool import (
-    get_driver as get_shared_neo4j_driver,
-)
+# LAZY IMPORT: Neo4j pool imported inside _connect_neo4j() to avoid blocking at startup
+# See: MCP_STARTUP_AUDIT.md for why lazy loading is critical
 
 from . import MCPServer
 from .tools import (
@@ -186,6 +182,9 @@ class AgenticMCPServer:
         """
         Connect to Neo4j database.
 
+        LAZY IMPORT: Neo4j pool is imported here, not at module level,
+        to avoid blocking MCP server startup. This can save 2+ seconds.
+
         Returns:
             True if connection successful
         """
@@ -194,6 +193,12 @@ class AgenticMCPServer:
             return False
 
         try:
+            # LAZY IMPORT: Import here to avoid blocking MCP server startup!
+            from agentic_brain.core.neo4j_pool import (
+                configure_pool as configure_neo4j_pool,
+                get_driver as get_shared_neo4j_driver,
+            )
+
             configure_neo4j_pool(
                 uri=self.config.neo4j_uri,
                 user=self.config.neo4j_user,
