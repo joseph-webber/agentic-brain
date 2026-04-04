@@ -147,6 +147,46 @@ final class VoiceCodingCommandTests: XCTestCase {
         XCTAssertEqual(engine.parse("do it again"), .repeatLast)
     }
 
+    // MARK: - Replace Commands
+
+    func testReplaceParsing() {
+        XCTAssertEqual(engine.parse("replace foo with bar"), .replaceText("foo", "bar"))
+        XCTAssertEqual(engine.parse("replace 'hello' with 'world'"), .replaceText("hello", "world"))
+    }
+
+    // MARK: - Insert Commands
+
+    func testInsertLineParsing() {
+        let result = engine.parse("insert at line 5 print('hi')")
+        if case .insertLine(let n, let content) = result {
+            XCTAssertEqual(n, 5)
+            XCTAssertTrue(content.contains("print"))
+        } else {
+            XCTFail("Expected insertLine, got \(result)")
+        }
+    }
+
+    // MARK: - Open / Read File Commands
+
+    func testOpenFileParsing() {
+        XCTAssertEqual(engine.parse("open file test.py"), .openFile("test.py"))
+        XCTAssertEqual(engine.parse("open main.swift"), .openFile("main.swift"))
+        XCTAssertEqual(engine.parse("read file utils.js"), .openFile("utils.js"))
+    }
+
+    // MARK: - Create Function Commands
+
+    func testCreateFunctionParsing() {
+        let result = engine.parse("create function calculate")
+        if case .createFunction(let name, _) = result {
+            XCTAssertEqual(name, "calculate")
+        } else {
+            XCTFail("Expected createFunction, got \(result)")
+        }
+    }
+
+    // MARK: - Non-commands
+
     func testNonCommandReturnsNone() {
         XCTAssertEqual(engine.parse("hello world"), .none)
         XCTAssertEqual(engine.parse("what's the weather"), .none)
@@ -232,6 +272,34 @@ final class CodeSpeakerTests: XCTestCase {
         let result = speaker.spellIdentifier("HandleInput")
         XCTAssertTrue(result.contains("Pascal case"))
         XCTAssertTrue(result.contains("2 parts"))
+    }
+
+    func testSpellCamelCaseLowerStart() {
+        let result = speaker.spellIdentifier("handleInput")
+        XCTAssertTrue(result.contains("camel case"))
+        XCTAssertTrue(result.contains("2 parts"))
+        XCTAssertTrue(result.contains("handle"))
+        XCTAssertTrue(result.contains("Input"))
+    }
+
+    func testFormatRange() {
+        let lines = ["first", "second", "third", "fourth", "fifth"]
+        let result = speaker.formatRange(lines: lines, from: 2, to: 4)
+        XCTAssertTrue(result.contains("Line 2:"))
+        XCTAssertTrue(result.contains("Line 3:"))
+        XCTAssertTrue(result.contains("Line 4:"))
+        XCTAssertFalse(result.contains("Line 1:"))
+        XCTAssertFalse(result.contains("Line 5:"))
+    }
+
+    func testPronounceMoreOperators() {
+        XCTAssertTrue(speaker.pronounceCode("x += 1").contains("plus equals"))
+        XCTAssertTrue(speaker.pronounceCode("x -= 1").contains("minus equals"))
+        XCTAssertTrue(speaker.pronounceCode("x <= y").contains("less than or equal to"))
+        XCTAssertTrue(speaker.pronounceCode("a => b").contains("arrow"))
+        XCTAssertTrue(speaker.pronounceCode("x...y").contains("dot dot dot"))
+        XCTAssertTrue(speaker.pronounceCode("0..<10").contains("up to"))
+        XCTAssertTrue(speaker.pronounceCode("Foo::bar").contains("scope"))
     }
 
     func testDetectLanguageFromFilename() {

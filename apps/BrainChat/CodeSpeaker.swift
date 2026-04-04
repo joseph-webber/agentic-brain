@@ -67,7 +67,7 @@ final class CodeSpeaker: @unchecked Sendable {
             for segment in segments {
                 parts.append("  \(segment): \(spellWord(segment))")
             }
-        } else if name.first?.isUppercase == true && name.contains(where: { $0.isLowercase }) {
+        } else if name.contains(where: { $0.isUppercase }) && name.contains(where: { $0.isLowercase }) {
             // PascalCase or camelCase
             let segments = splitCamelCase(name)
             let caseType = name.first!.isUppercase ? "Pascal case" : "camel case"
