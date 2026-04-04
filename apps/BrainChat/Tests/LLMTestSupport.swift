@@ -60,6 +60,7 @@ func makeConfig(
     yoloMode: Bool = false,
     claudeAPIKey: String = "claude-key",
     openAIAPIKey: String = "openai-key",
+    groqAPIKey: String = "groq-key",
     grokAPIKey: String = "grok-key",
     geminiAPIKey: String = "gemini-key",
     ollamaEndpoint: String = "http://localhost:11434/api/chat"
@@ -71,12 +72,14 @@ func makeConfig(
         bridgeWebSocketURL: "ws://localhost:8765",
         claudeAPIKey: claudeAPIKey,
         openAIAPIKey: openAIAPIKey,
+        groqAPIKey: groqAPIKey,
         grokAPIKey: grokAPIKey,
         geminiAPIKey: geminiAPIKey,
         ollamaEndpoint: ollamaEndpoint,
         ollamaModel: "llama3.2:3b",
         claudeModel: "claude-sonnet-4-20250514",
         openAIModel: "gpt-4o",
+        groqModel: "llama-3.1-8b-instant",
         grokModel: "grok-3-latest",
         geminiModel: "gemini-2.5-flash"
     )
@@ -104,6 +107,15 @@ struct MockOllamaStreamer: OllamaStreaming {
     var handler: @Sendable (String, String, [AIChatMessage]) async throws -> String
     func streamResponse(endpoint: String, model: String, messages: [AIChatMessage], onDelta: @escaping @Sendable (String) -> Void) async throws -> String {
         let result = try await handler(endpoint, model, messages)
+        onDelta(result)
+        return result
+    }
+}
+
+struct MockGroqStreamer: GroqStreaming {
+    var handler: @Sendable (String, String, [AIChatMessage]) async throws -> String
+    func streamResponse(apiKey: String, model: String, messages: [AIChatMessage], onDelta: @escaping @Sendable (String) -> Void) async throws -> String {
+        let result = try await handler(apiKey, model, messages)
         onDelta(result)
         return result
     }

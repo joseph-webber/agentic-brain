@@ -8,26 +8,26 @@ import XCTest
 //   Layer 3 — DEEP     (Claude/GPT/Gemini,  2-10s)
 //   Layer 4 — CONSENSUS (multi-LLM verify,  10s+)
 
-final class LLMResponseLayerTests: XCTestCase {
+final class LayerTierTests: XCTestCase {
 
     // MARK: - Layer Ordering
 
     func testLayerRawValuesAreStrictlyAscending() {
-        XCTAssertEqual(LLMResponseLayer.instant.rawValue,   1)
-        XCTAssertEqual(LLMResponseLayer.fastLocal.rawValue, 2)
-        XCTAssertEqual(LLMResponseLayer.deep.rawValue,      3)
-        XCTAssertEqual(LLMResponseLayer.consensus.rawValue, 4)
+        XCTAssertEqual(LayerTier.instant.rawValue,   1)
+        XCTAssertEqual(LayerTier.fastLocal.rawValue, 2)
+        XCTAssertEqual(LayerTier.deep.rawValue,      3)
+        XCTAssertEqual(LayerTier.consensus.rawValue, 4)
     }
 
     func testLayersAreComparableByPriority() {
-        XCTAssertLessThan(LLMResponseLayer.instant,   .fastLocal)
-        XCTAssertLessThan(LLMResponseLayer.fastLocal, .deep)
-        XCTAssertLessThan(LLMResponseLayer.deep,      .consensus)
-        XCTAssertLessThan(LLMResponseLayer.instant,   .consensus)
+        XCTAssertLessThan(LayerTier.instant,   .fastLocal)
+        XCTAssertLessThan(LayerTier.fastLocal, .deep)
+        XCTAssertLessThan(LayerTier.deep,      .consensus)
+        XCTAssertLessThan(LayerTier.instant,   .consensus)
     }
 
     func testLayersSortedAscendingGivesCorrectOrder() {
-        let shuffled: [LLMResponseLayer] = [.consensus, .instant, .deep, .fastLocal]
+        let shuffled: [LayerTier] = [.consensus, .instant, .deep, .fastLocal]
         let sorted = shuffled.sorted()
         XCTAssertEqual(sorted, [.instant, .fastLocal, .deep, .consensus])
     }
@@ -35,20 +35,20 @@ final class LLMResponseLayerTests: XCTestCase {
     // MARK: - Layer Descriptions
 
     func testAllLayersHaveNonEmptyDescription() {
-        for layer in [LLMResponseLayer.instant, .fastLocal, .deep, .consensus] {
+        for layer in [LayerTier.instant, .fastLocal, .deep, .consensus] {
             XCTAssertFalse(layer.description.isEmpty)
         }
     }
 
     func testLayerDescriptionsMatchExpected() {
-        XCTAssertEqual(LLMResponseLayer.instant.description,   "Instant")
-        XCTAssertEqual(LLMResponseLayer.fastLocal.description, "Local")
-        XCTAssertEqual(LLMResponseLayer.deep.description,      "Deep")
-        XCTAssertEqual(LLMResponseLayer.consensus.description, "Consensus")
+        XCTAssertEqual(LayerTier.instant.description,   "Instant")
+        XCTAssertEqual(LayerTier.fastLocal.description, "Local")
+        XCTAssertEqual(LayerTier.deep.description,      "Deep")
+        XCTAssertEqual(LayerTier.consensus.description, "Consensus")
     }
 
     func testAllLayersHaveSystemImageIcon() {
-        for layer in [LLMResponseLayer.instant, .fastLocal, .deep, .consensus] {
+        for layer in [LayerTier.instant, .fastLocal, .deep, .consensus] {
             XCTAssertFalse(layer.icon.isEmpty, "\(layer) needs a SF Symbol icon")
         }
     }
@@ -56,17 +56,17 @@ final class LLMResponseLayerTests: XCTestCase {
     // MARK: - Layer Timeouts
 
     func testInstantLayerHasShortestTimeout() {
-        XCTAssertLessThan(LLMResponseLayer.instant.timeoutSeconds,
-                          LLMResponseLayer.fastLocal.timeoutSeconds)
+        XCTAssertLessThan(LayerTier.instant.timeoutSeconds,
+                          LayerTier.fastLocal.timeoutSeconds)
     }
 
     func testConsensusLayerHasLongestTimeout() {
-        XCTAssertGreaterThan(LLMResponseLayer.consensus.timeoutSeconds,
-                             LLMResponseLayer.deep.timeoutSeconds)
+        XCTAssertGreaterThan(LayerTier.consensus.timeoutSeconds,
+                             LayerTier.deep.timeoutSeconds)
     }
 
     func testTimeoutsAreStrictlyIncreasing() {
-        let timeouts = [LLMResponseLayer.instant, .fastLocal, .deep, .consensus]
+        let timeouts = [LayerTier.instant, .fastLocal, .deep, .consensus]
             .map(\.timeoutSeconds)
         for i in timeouts.indices.dropLast() {
             XCTAssertLessThan(timeouts[i], timeouts[i + 1],
@@ -75,7 +75,7 @@ final class LLMResponseLayerTests: XCTestCase {
     }
 
     func testInstantTimeoutUnder10Seconds() {
-        XCTAssertLessThanOrEqual(LLMResponseLayer.instant.timeoutSeconds, 10,
+        XCTAssertLessThanOrEqual(LayerTier.instant.timeoutSeconds, 10,
                                  "Instant layer must respond quickly")
     }
 }
@@ -127,7 +127,8 @@ final class LayerResultTests: XCTestCase {
             source: "groq",
             fullText: "Fast response",
             latencyMs: 320,
-            succeeded: true
+            succeeded: true,
+            error: nil
         )
         XCTAssertTrue(result.succeeded)
         XCTAssertNil(result.error)
@@ -149,16 +150,16 @@ final class LayerResultTests: XCTestCase {
 
     func testLatencyIsNonNegative() {
         let result = LayerResult(layer: .fastLocal, source: "ollama",
-                                 fullText: "ok", latencyMs: 0, succeeded: true)
+                                 fullText: "ok", latencyMs: 0, succeeded: true, error: nil)
         XCTAssertGreaterThanOrEqual(result.latencyMs, 0)
     }
 
     func testResultsCanBeSortedByLayer() {
         let results: [LayerResult] = [
-            LayerResult(layer: .deep,      source: "claude", fullText: "deep",      latencyMs: 3000, succeeded: true),
-            LayerResult(layer: .instant,   source: "groq",   fullText: "fast",      latencyMs: 300,  succeeded: true),
-            LayerResult(layer: .fastLocal, source: "ollama", fullText: "local",     latencyMs: 800,  succeeded: true),
-            LayerResult(layer: .consensus, source: "multi",  fullText: "consensus", latencyMs: 9000, succeeded: true),
+            LayerResult(layer: .deep,      source: "claude", fullText: "deep",      latencyMs: 3000, succeeded: true, error: nil),
+            LayerResult(layer: .instant,   source: "groq",   fullText: "fast",      latencyMs: 300,  succeeded: true, error: nil),
+            LayerResult(layer: .fastLocal, source: "ollama", fullText: "local",     latencyMs: 800,  succeeded: true, error: nil),
+            LayerResult(layer: .consensus, source: "multi",  fullText: "consensus", latencyMs: 9000, succeeded: true, error: nil),
         ]
         let sorted = results.sorted { $0.layer < $1.layer }
         XCTAssertEqual(sorted[0].source, "groq")
@@ -193,7 +194,7 @@ final class LayeredResponseEventTests: XCTestCase {
 
     func testLayerCompletedEventWrapsResult() {
         let result = LayerResult(layer: .deep, source: "gpt", fullText: "Answer",
-                                 latencyMs: 2200, succeeded: true)
+                                 latencyMs: 2200, succeeded: true, error: nil)
         let event = LayeredResponseEvent.layerCompleted(result)
         guard case .layerCompleted(let r) = event else {
             XCTFail("Expected .layerCompleted"); return
@@ -203,9 +204,9 @@ final class LayeredResponseEventTests: XCTestCase {
 
     func testAllLayersCompleteEventCarriesAllResults() {
         let results = [
-            LayerResult(layer: .instant,   source: "groq",   fullText: "fast", latencyMs: 310,  succeeded: true),
-            LayerResult(layer: .fastLocal, source: "ollama", fullText: "ok",   latencyMs: 900,  succeeded: true),
-            LayerResult(layer: .deep,      source: "claude", fullText: "best", latencyMs: 3100, succeeded: true),
+            LayerResult(layer: .instant,   source: "groq",   fullText: "fast", latencyMs: 310,  succeeded: true, error: nil),
+            LayerResult(layer: .fastLocal, source: "ollama", fullText: "ok",   latencyMs: 900,  succeeded: true, error: nil),
+            LayerResult(layer: .deep,      source: "claude", fullText: "best", latencyMs: 3100, succeeded: true, error: nil),
         ]
         let event = LayeredResponseEvent.allLayersComplete(results)
         guard case .allLayersComplete(let rs) = event else {
