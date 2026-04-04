@@ -458,6 +458,10 @@ class Lexer:
             elif ch == ";":
                 self._advance()
                 toks.append(Token(TokenKind.SEMICOLON, ";", line, col))
+            elif ch == "*":
+                # JDL wildcard: treat as identifier
+                self._advance()
+                toks.append(Token(TokenKind.IDENT, "*", line, col))
             else:
                 raise ADLParseError(
                     f"Unexpected character '{ch}' at line {line} column {col}"
@@ -525,6 +529,30 @@ class RelationshipDef:
 
 
 @dataclass
+class PaginationDef:
+    """JDL-style pagination directive: ``paginate Entity with pagination``."""
+
+    entities: List[str]  # entity names or ["*"] / ["all"]
+    style: str  # "pagination", "infinite-scroll", "pager"
+
+
+@dataclass
+class DtoDef:
+    """JDL-style DTO directive: ``dto Entity with mapstruct``."""
+
+    entities: List[str]
+    mapper: str  # "mapstruct", "dataclass", "pydantic"
+
+
+@dataclass
+class ServiceDef:
+    """JDL-style service directive: ``service Entity with serviceImpl``."""
+
+    entities: List[str]
+    impl: str  # "serviceImpl", "serviceClass"
+
+
+@dataclass
 class ADLConfig:
     """Top-level parsed representation of an ADL file."""
 
@@ -541,6 +569,11 @@ class ADLConfig:
     entities: Dict[str, EntityDef] = field(default_factory=dict)
     enums: Dict[str, EnumDef] = field(default_factory=dict)
     relationships: List[RelationshipDef] = field(default_factory=list)
+
+    # JDL-style directives
+    paginations: List[PaginationDef] = field(default_factory=list)
+    dtos: List[DtoDef] = field(default_factory=list)
+    services: List[ServiceDef] = field(default_factory=list)
 
     # Raw blocks for forward-compat / unknown keywords
     raw_blocks: List[Block] = field(default_factory=list)
@@ -869,6 +902,32 @@ class Parser:
 
         return rels
 
+    # ---- JDL-style directives ----
+
+    def _parse_directive(self) -> tuple:
+        """Parse ``<targets> with <impl>`` used by paginate/dto/service.
+
+        Returns (entity_list, impl_string).
+        """
+        entities: List[str] = []
+        while True:
+            tok = self._peek()
+            if tok.kind != TokenKind.IDENT:
+                raise ADLParseError(
+                    f"Expected entity name or '*' in directive at line {tok.line} column {tok.column}"
+                )
+            if tok.value.lower() == "with":
+                break
+            entities.append(self._advance().value)
+            self._skip_newlines()
+            self._accept(TokenKind.COMMA)
+            self._skip_newlines()
+
+        # consume 'with'
+        self._expect(TokenKind.IDENT, "Expected 'with' in directive")
+        impl_tok = self._expect(TokenKind.IDENT, "Expected implementation name")
+        return (entities, impl_tok.value)
+
     # ---- top-level ----
 
     def parse(self) -> ADLConfig:
@@ -914,6 +973,42 @@ class Parser:
                 rels = self._parse_relationship_body(rel_kind, annotations)
                 cfg.relationships.extend(rels)
                 continue
+
+            # JDL-style directives: paginate/dto/service <targets> with <impl>
+            if keyword_lower == "paginate":
+                directive = self._parse_directive()
+                cfg.paginations.append(
+                    PaginationDef(entities=directive[0], style=directive[1])
+                )
+                continue
+
+            if keyword_lower == "dto":
+                directive = self._parse_directive()
+                cfg.dtos.append(DtoDef(entities=directive[0], mapper=directive[1]))
+                continue
+
+            if keyword_lower == "service":
+                # Peek ahead: if next is LBRACE or an IDENT followed by LBRACE,
+                # it's a block (not a directive).  Directives have "... with ..."
+                saved = self.index
+                is_directive = False
+                try:
+                    while self._peek().kind == TokenKind.IDENT:
+                        if self._peek().value.lower() == "with":
+                            is_directive = True
+                            break
+                        self._advance()
+                        self._accept(TokenKind.COMMA)
+                except ADLParseError:
+                    pass
+                self.index = saved  # rewind
+
+                if is_directive:
+                    directive = self._parse_directive()
+                    cfg.services.append(
+                        ServiceDef(entities=directive[0], impl=directive[1])
+                    )
+                    continue
 
             # Optional name for most blocks except global blocks.
             name: Optional[str] = None

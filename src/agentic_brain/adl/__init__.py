@@ -18,7 +18,20 @@ Public entry points:
 """
 
 from .generator import ADLGenerationResult, generate_from_adl
-from .parser import ADLConfig, parse_adl, parse_adl_file
+from .parser import (
+    ADLConfig,
+    DtoDef,
+    EntityDef,
+    EnumDef,
+    FieldDef,
+    PaginationDef,
+    RelationshipDef,
+    RelationshipEnd,
+    ServiceDef,
+    Validator,
+    parse_adl,
+    parse_adl_file,
+)
 from .personas import (
     PERSONA_TEMPLATES,
     PersonaTemplate,
@@ -31,6 +44,15 @@ from .personas import (
 __all__ = [
     "ADLConfig",
     "ADLGenerationResult",
+    "DtoDef",
+    "EntityDef",
+    "EnumDef",
+    "FieldDef",
+    "PaginationDef",
+    "RelationshipDef",
+    "RelationshipEnd",
+    "ServiceDef",
+    "Validator",
     "generate_from_adl",
     "parse_adl",
     "parse_adl_file",

@@ -233,6 +233,17 @@ def _write_python_config(config_path: Path, cfg: ADLConfig) -> None:
             }
         )
 
+    # JDL-style directives
+    paginations_list: List[Dict[str, Any]] = [
+        {"entities": p.entities, "style": p.style} for p in cfg.paginations
+    ]
+    dtos_list: List[Dict[str, Any]] = [
+        {"entities": d.entities, "mapper": d.mapper} for d in cfg.dtos
+    ]
+    services_list: List[Dict[str, Any]] = [
+        {"entities": s.entities, "impl": s.impl} for s in cfg.services
+    ]
+
     primary_llm_name = next(iter(cfg.llms.keys()), None)
     primary_llm = cfg.llms[primary_llm_name].values if primary_llm_name else {}
 
@@ -270,6 +281,10 @@ VOICE_ANNOTATIONS: Dict[str, List[Dict[str, Any]]] = {voice_annotations!r}
 ENUMS: Dict[str, Any] = {enums_dict!r}
 ENTITIES: Dict[str, Any] = {entities_dict!r}
 RELATIONSHIPS: List[Dict[str, Any]] = {relationships_list!r}
+
+PAGINATIONS: List[Dict[str, Any]] = {paginations_list!r}
+DTOS: List[Dict[str, Any]] = {dtos_list!r}
+SERVICES: List[Dict[str, Any]] = {services_list!r}
 
 PRIMARY_LLM_NAME: Optional[str] = {primary_llm_name!r}
 PRIMARY_LLM: Dict[str, Any] = {primary_llm!r}
