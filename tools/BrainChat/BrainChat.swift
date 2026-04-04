@@ -3,6 +3,59 @@ import Speech
 import AVFoundation
 import Darwin
 
+// MARK: - FourCharCode Helper
+
+extension FourCharCode {
+    init(_ string: String) {
+        let chars = string.utf8
+        var code: FourCharCode = 0
+        for (index, char) in chars.prefix(4).enumerated() {
+            code |= FourCharCode(char) << (24 - index * 8)
+        }
+        self = code
+    }
+}
+
+// MARK: - NSApplication AppleScript Properties Extension
+
+extension NSApplication {
+    /// Current chat mode accessible via AppleScript
+    @objc var currentMode: String {
+        get { ScriptingState.shared.appDelegate?.currentModeForScript.rawValue ?? "chat" }
+        set {
+            if let mode = ChatMode(rawValue: newValue.lowercased()) {
+                DispatchQueue.main.async {
+                    ScriptingState.shared.appDelegate?.setModeFromScript(mode)
+                }
+            }
+        }
+    }
+    
+    /// Whether speech recognition is currently active
+    @objc var isListening: Bool {
+        ScriptingState.shared.appDelegate?.isListeningForScript ?? false
+    }
+    
+    /// The most recent response from the brain
+    @objc var lastResponse: String {
+        ScriptingState.shared.lastResponse
+    }
+    
+    /// Current status message
+    @objc var status: String {
+        ScriptingState.shared.currentStatus
+    }
+    
+    /// Whether the Redpanda bridge is connected
+    @objc var bridgeConnected: Bool {
+        guard let delegate = ScriptingState.shared.appDelegate else { return false }
+        switch delegate.bridgeAvailabilityForScript {
+        case .connected: return true
+        case .unavailable: return false
+        }
+    }
+}
+
 struct BridgeResponse {
     let text: String
     let requestID: String?
@@ -552,6 +605,577 @@ struct ModePreferences {
     }
 }
 
+// MARK: - LLM Orchestration Mode
+
+/// Defines how BrainChat routes LLM queries.
+enum LLMMode: String, CaseIterable {
+    case single = "single"
+    case multiBot = "multi_bot"
+    case consensus = "consensus"
+
+    var displayName: String {
+        switch self {
+        case .single:    return "Single LLM"
+        case .multiBot:  return "Multi-Bot"
+        case .consensus: return "Consensus"
+        }
+    }
+
+    var accessibilityDescription: String {
+        switch self {
+        case .single:    return "Single L L M mode. All queries go to one provider."
+        case .multiBot:  return "Multi-bot mode. Primary L L M orchestrates others."
+        case .consensus: return "Consensus mode. All L L Ms vote and majority wins."
+        }
+    }
+}
+
+/// Supported LLM providers for orchestration.
+enum LLMProvider: String, CaseIterable, Codable {
+    case ollama  = "ollama"
+    case groq    = "groq"
+    case claude  = "claude"
+    case gemini  = "gemini"
+    case openai  = "openai"
+
+    var displayName: String {
+        switch self {
+        case .ollama: return "Ollama (Local)"
+        case .groq:   return "Groq (Instant)"
+        case .claude: return "Claude (Anthropic)"
+        case .gemini: return "Gemini (Google)"
+        case .openai: return "OpenAI (GPT)"
+        }
+    }
+
+    var shortName: String {
+        switch self {
+        case .ollama: return "Ollama"
+        case .groq:   return "Groq"
+        case .claude: return "Claude"
+        case .gemini: return "Gemini"
+        case .openai: return "OpenAI"
+        }
+    }
+
+    var defaultModel: String {
+        switch self {
+        case .ollama: return "llama3.2:3b"
+        case .groq:   return "llama-3.1-8b-instant"
+        case .claude: return "claude-sonnet-4-20250514"
+        case .gemini: return "gemini-2.5-flash"
+        case .openai: return "gpt-4o"
+        }
+    }
+
+    var baseURL: URL {
+        switch self {
+        case .ollama: return URL(string: "http://localhost:11434/v1/chat/completions")!
+        case .groq:   return URL(string: "https://api.groq.com/openai/v1/chat/completions")!
+        case .claude: return URL(string: "https://api.anthropic.com/v1/messages")!
+        case .gemini: return URL(string: "https://generativelanguage.googleapis.com/v1beta/models")!
+        case .openai: return URL(string: "https://api.openai.com/v1/chat/completions")!
+        }
+    }
+
+    var requiresAPIKey: Bool {
+        switch self {
+        case .ollama: return false
+        case .groq, .claude, .gemini, .openai: return true
+        }
+    }
+
+    var isFree: Bool {
+        switch self {
+        case .ollama, .groq: return true
+        case .claude, .gemini, .openai: return false
+        }
+    }
+}
+
+/// Persisted settings for LLM orchestration. Stored in UserDefaults (not in repo).
+struct LLMOrchestratorSettings {
+    private static let modeKey = "brainchat.llm_mode"
+    private static let primaryKey = "brainchat.primary_llm"
+    private static let secondaryKey = "brainchat.secondary_llms"
+
+    static var mode: LLMMode {
+        get {
+            if let raw = UserDefaults.standard.string(forKey: modeKey),
+               let m = LLMMode(rawValue: raw) { return m }
+            return .single
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: modeKey) }
+    }
+
+    static var primaryLLM: LLMProvider {
+        get {
+            if let raw = UserDefaults.standard.string(forKey: primaryKey),
+               let p = LLMProvider(rawValue: raw) { return p }
+            return .ollama
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: primaryKey) }
+    }
+
+    static var secondaryLLMs: [LLMProvider] {
+        get {
+            guard let data = UserDefaults.standard.data(forKey: secondaryKey),
+                  let decoded = try? JSONDecoder().decode([LLMProvider].self, from: data) else {
+                return []
+            }
+            return decoded
+        }
+        set {
+            if let encoded = try? JSONEncoder().encode(newValue) {
+                UserDefaults.standard.set(encoded, forKey: secondaryKey)
+            }
+        }
+    }
+}
+
+/// Orchestrates multiple LLM providers with single, multi-bot, and consensus modes.
+/// Thread-safe and designed for accessibility (VoiceOver-friendly status updates).
+final class LLMOrchestrator: NSObject {
+    static let shared = LLMOrchestrator()
+
+    var primaryLLM: LLMProvider {
+        didSet { LLMOrchestratorSettings.primaryLLM = primaryLLM }
+    }
+    var secondaryLLMs: [LLMProvider] {
+        didSet { LLMOrchestratorSettings.secondaryLLMs = secondaryLLMs }
+    }
+    var mode: LLMMode {
+        didSet { LLMOrchestratorSettings.mode = mode }
+    }
+
+    /// API keys indexed by provider (stored in memory, loaded from Keychain/env).
+    private var apiKeys: [LLMProvider: String] = [:]
+
+    /// Called on main thread with status updates for VoiceOver.
+    var onStatusUpdate: ((String) -> Void)?
+
+    private let queue = DispatchQueue(label: "brainchat.orchestrator", qos: .userInitiated)
+
+    private override init() {
+        self.mode = LLMOrchestratorSettings.mode
+        self.primaryLLM = LLMOrchestratorSettings.primaryLLM
+        self.secondaryLLMs = LLMOrchestratorSettings.secondaryLLMs
+        super.init()
+        loadAPIKeysFromEnvironment()
+    }
+
+    // MARK: - API Key Management
+
+    func setAPIKey(_ key: String, for provider: LLMProvider) {
+        apiKeys[provider] = key
+    }
+
+    func apiKey(for provider: LLMProvider) -> String? {
+        apiKeys[provider]
+    }
+
+    private func loadAPIKeysFromEnvironment() {
+        let env = ProcessInfo.processInfo.environment
+        if let key = env["GROQ_API_KEY"] { apiKeys[.groq] = key }
+        if let key = env["CLAUDE_API_KEY"] ?? env["ANTHROPIC_API_KEY"] { apiKeys[.claude] = key }
+        if let key = env["GEMINI_API_KEY"] { apiKeys[.gemini] = key }
+        if let key = env["OPENAI_API_KEY"] { apiKeys[.openai] = key }
+    }
+
+    // MARK: - Query Routing
+
+    /// Main entry point for queries. Routes based on current mode.
+    func query(_ prompt: String, systemPrompt: String = "", completion: @escaping (String, Error?) -> Void) {
+        queue.async { [weak self] in
+            guard let self else { return }
+            switch self.mode {
+            case .single:
+                self.querySingle(prompt, systemPrompt: systemPrompt, completion: completion)
+            case .multiBot:
+                self.queryMultiBot(prompt, systemPrompt: systemPrompt, completion: completion)
+            case .consensus:
+                self.queryConsensus(prompt, systemPrompt: systemPrompt, completion: completion)
+            }
+        }
+    }
+
+    /// Async/await wrapper for query.
+    func query(_ prompt: String, systemPrompt: String = "") async -> String {
+        await withCheckedContinuation { continuation in
+            query(prompt, systemPrompt: systemPrompt) { response, _ in
+                continuation.resume(returning: response)
+            }
+        }
+    }
+
+    // MARK: - Single LLM Mode
+
+    private func querySingle(_ prompt: String, systemPrompt: String, completion: @escaping (String, Error?) -> Void) {
+        updateStatus("Querying \(primaryLLM.shortName)…")
+        queryLLM(primaryLLM, prompt: prompt, systemPrompt: systemPrompt, completion: completion)
+    }
+
+    // MARK: - Multi-Bot Mode (Primary Routes to Others)
+
+    private func queryMultiBot(_ prompt: String, systemPrompt: String, completion: @escaping (String, Error?) -> Void) {
+        updateStatus("Primary \(primaryLLM.shortName) analyzing request…")
+
+        let routingPrompt = """
+        You are an LLM orchestrator. Analyze this user request and decide which LLM should handle it.
+        Available LLMs: \(secondaryLLMs.map(\.shortName).joined(separator: ", "))
+        
+        For simple questions, respond directly.
+        For complex tasks, specify which LLM to delegate to by responding with:
+        [DELEGATE:\(secondaryLLMs.first?.rawValue ?? "ollama")] then your delegation instructions.
+        
+        User request: \(prompt)
+        """
+
+        queryLLM(primaryLLM, prompt: routingPrompt, systemPrompt: systemPrompt) { [weak self] response, error in
+            guard let self else { return }
+
+            if let error {
+                completion(response, error)
+                return
+            }
+
+            // Check if primary wants to delegate
+            if let delegateMatch = response.range(of: #"\[DELEGATE:(\w+)\]"#, options: .regularExpression) {
+                let delegateInfo = String(response[delegateMatch])
+                let providerName = delegateInfo.replacingOccurrences(of: "[DELEGATE:", with: "")
+                    .replacingOccurrences(of: "]", with: "").lowercased()
+
+                if let targetProvider = LLMProvider(rawValue: providerName),
+                   self.secondaryLLMs.contains(targetProvider) {
+                    self.updateStatus("Delegating to \(targetProvider.shortName)…")
+                    self.queryLLM(targetProvider, prompt: prompt, systemPrompt: systemPrompt, completion: completion)
+                    return
+                }
+            }
+
+            // Primary handled it directly
+            completion(response, nil)
+        }
+    }
+
+    // MARK: - Consensus Mode (All LLMs Vote)
+
+    private func queryConsensus(_ prompt: String, systemPrompt: String, completion: @escaping (String, Error?) -> Void) {
+        let allProviders = [primaryLLM] + secondaryLLMs
+        guard !allProviders.isEmpty else {
+            completion("No LLM providers configured.", nil)
+            return
+        }
+
+        updateStatus("Querying \(allProviders.count) LLMs for consensus…")
+
+        let group = DispatchGroup()
+        var responses: [(provider: LLMProvider, response: String)] = []
+        let responseLock = NSLock()
+
+        for provider in allProviders {
+            group.enter()
+            queryLLM(provider, prompt: prompt, systemPrompt: systemPrompt) { response, _ in
+                responseLock.lock()
+                if !response.isEmpty {
+                    responses.append((provider, response))
+                }
+                responseLock.unlock()
+                group.leave()
+            }
+        }
+
+        group.notify(queue: queue) { [weak self] in
+            guard let self else { return }
+
+            if responses.isEmpty {
+                completion("All LLM providers failed to respond.", nil)
+                return
+            }
+
+            // Synthesize consensus
+            let synthesis = self.synthesizeConsensus(responses, originalPrompt: prompt)
+            self.updateStatus("Consensus reached from \(responses.count) providers.")
+            completion(synthesis, nil)
+        }
+    }
+
+    private func synthesizeConsensus(_ responses: [(provider: LLMProvider, response: String)], originalPrompt: String) -> String {
+        guard responses.count > 1 else {
+            return responses.first?.response ?? ""
+        }
+
+        // Simple synthesis: use primary LLM to combine responses
+        let synthesisPrompt = """
+        You are synthesizing responses from multiple AI assistants to find consensus.
+        Original question: \(originalPrompt)
+        
+        Responses:
+        \(responses.map { "[\($0.provider.shortName)]: \($0.response)" }.joined(separator: "\n\n"))
+        
+        Provide a unified response that captures the consensus. Note any disagreements.
+        """
+
+        var result = ""
+        let semaphore = DispatchSemaphore(value: 0)
+
+        queryLLM(primaryLLM, prompt: synthesisPrompt, systemPrompt: "") { response, _ in
+            result = response.isEmpty ? responses.first?.response ?? "" : response
+            semaphore.signal()
+        }
+
+        _ = semaphore.wait(timeout: .now() + 30)
+        return result
+    }
+
+    // MARK: - Individual LLM Query
+
+    private func queryLLM(_ provider: LLMProvider, prompt: String, systemPrompt: String, completion: @escaping (String, Error?) -> Void) {
+        // Build config based on provider
+        let effectiveSystemPrompt = systemPrompt.isEmpty
+            ? "You are a helpful AI assistant."
+            : systemPrompt
+
+        let config = LLMConfig(
+            url: provider.baseURL,
+            model: provider.defaultModel,
+            systemPrompt: effectiveSystemPrompt,
+            apiKey: apiKeys[provider]
+        )
+
+        var accumulated = ""
+        let client = LLMStreamingClient()
+
+        client.stream(
+            config: config,
+            userText: prompt,
+            onToken: { token in accumulated += token },
+            onComplete: { fullText, error in
+                DispatchQueue.main.async {
+                    completion(fullText.isEmpty ? accumulated : fullText, error)
+                }
+            }
+        )
+    }
+
+    // MARK: - Status Updates (Accessibility)
+
+    private func updateStatus(_ message: String) {
+        DispatchQueue.main.async { [weak self] in
+            self?.onStatusUpdate?(message)
+        }
+    }
+
+    // MARK: - AppleScript Support
+
+    /// Set LLM mode via AppleScript command.
+    @objc func setLLMMode(_ modeString: String) -> Bool {
+        guard let newMode = LLMMode(rawValue: modeString.lowercased()) else { return false }
+        mode = newMode
+        return true
+    }
+
+    /// Set primary LLM via AppleScript command.
+    @objc func setPrimaryLLM(_ providerString: String) -> Bool {
+        guard let provider = LLMProvider(rawValue: providerString.lowercased()) else { return false }
+        primaryLLM = provider
+        return true
+    }
+
+    /// Add a secondary LLM via AppleScript command.
+    @objc func addSecondaryLLM(_ providerString: String) -> Bool {
+        guard let provider = LLMProvider(rawValue: providerString.lowercased()) else { return false }
+        if !secondaryLLMs.contains(provider) {
+            secondaryLLMs.append(provider)
+        }
+        return true
+    }
+
+    /// Remove a secondary LLM via AppleScript command.
+    @objc func removeSecondaryLLM(_ providerString: String) -> Bool {
+        guard let provider = LLMProvider(rawValue: providerString.lowercased()) else { return false }
+        secondaryLLMs.removeAll { $0 == provider }
+        return true
+    }
+
+    /// Get current orchestrator status for AppleScript.
+    @objc func getStatus() -> String {
+        "mode=\(mode.rawValue), primary=\(primaryLLM.rawValue), secondary=[\(secondaryLLMs.map(\.rawValue).joined(separator: ","))]"
+    }
+}
+
+// MARK: - LLM Selector UI (Keyboard Accessible)
+
+/// A simple terminal-based LLM selector for keyboard navigation.
+final class LLMSelectorUI {
+    private let orchestrator = LLMOrchestrator.shared
+
+    func printCurrentConfig() {
+        print("""
+        
+        \(TerminalANSI.bold)LLM Configuration\(TerminalANSI.reset)
+        ─────────────────────────────────
+        Mode:      \(orchestrator.mode.displayName)
+        Primary:   \(orchestrator.primaryLLM.displayName)
+        Secondary: \(orchestrator.secondaryLLMs.map(\.shortName).joined(separator: ", ").isEmpty ? "None" : orchestrator.secondaryLLMs.map(\.shortName).joined(separator: ", "))
+        
+        """)
+    }
+
+    func printHelp() {
+        print("""
+        
+        \(TerminalANSI.bold)LLM Commands\(TerminalANSI.reset)
+        ─────────────────────────────────
+        /llm mode single      - Use single LLM (default)
+        /llm mode multibot    - Primary LLM orchestrates others
+        /llm mode consensus   - All LLMs vote, majority wins
+        
+        /llm primary ollama   - Set primary to Ollama (local)
+        /llm primary groq     - Set primary to Groq (instant)
+        /llm primary claude   - Set primary to Claude
+        /llm primary gemini   - Set primary to Gemini
+        /llm primary openai   - Set primary to OpenAI
+        
+        /llm add groq         - Add Groq as secondary
+        /llm remove groq      - Remove Groq from secondary
+        
+        /llm status           - Show current configuration
+        
+        """)
+    }
+
+    func handleCommand(_ input: String) -> Bool {
+        let parts = input.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+            .split(separator: " ").map(String.init)
+
+        guard parts.first == "/llm", parts.count >= 2 else { return false }
+
+        switch parts[1] {
+        case "mode" where parts.count >= 3:
+            let modeStr = parts[2]
+            if let mode = LLMMode(rawValue: modeStr == "multibot" ? "multi_bot" : modeStr) {
+                orchestrator.mode = mode
+                print("\(TerminalANSI.green)LLM mode set to \(mode.displayName)\(TerminalANSI.reset)")
+            } else {
+                print("\(TerminalANSI.red)Unknown mode. Use: single, multibot, consensus\(TerminalANSI.reset)")
+            }
+            return true
+
+        case "primary" where parts.count >= 3:
+            if let provider = LLMProvider(rawValue: parts[2]) {
+                orchestrator.primaryLLM = provider
+                print("\(TerminalANSI.green)Primary LLM set to \(provider.displayName)\(TerminalANSI.reset)")
+            } else {
+                print("\(TerminalANSI.red)Unknown provider. Use: ollama, groq, claude, gemini, openai\(TerminalANSI.reset)")
+            }
+            return true
+
+        case "add" where parts.count >= 3:
+            if let provider = LLMProvider(rawValue: parts[2]) {
+                _ = orchestrator.addSecondaryLLM(parts[2])
+                print("\(TerminalANSI.green)Added \(provider.shortName) as secondary LLM\(TerminalANSI.reset)")
+            } else {
+                print("\(TerminalANSI.red)Unknown provider\(TerminalANSI.reset)")
+            }
+            return true
+
+        case "remove" where parts.count >= 3:
+            if let provider = LLMProvider(rawValue: parts[2]) {
+                _ = orchestrator.removeSecondaryLLM(parts[2])
+                print("\(TerminalANSI.green)Removed \(provider.shortName) from secondary LLMs\(TerminalANSI.reset)")
+            } else {
+                print("\(TerminalANSI.red)Unknown provider\(TerminalANSI.reset)")
+            }
+            return true
+
+        case "status":
+            printCurrentConfig()
+            return true
+
+        case "help":
+            printHelp()
+            return true
+
+        default:
+            printHelp()
+            return true
+        }
+    }
+}
+
+// MARK: - AppleScript Commands for LLM Orchestrator
+
+final class SetLLMModeCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let modeString = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No mode provided. Use: single, multi_bot, consensus"
+            return nil
+        }
+        let success = LLMOrchestrator.shared.setLLMMode(modeString)
+        if !success {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "Unknown mode: \(modeString). Use: single, multi_bot, consensus"
+        }
+        return success ? "OK" : nil
+    }
+}
+
+final class SetPrimaryLLMCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let providerString = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No provider provided. Use: ollama, groq, claude, gemini, openai"
+            return nil
+        }
+        let success = LLMOrchestrator.shared.setPrimaryLLM(providerString)
+        if !success {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "Unknown provider: \(providerString). Use: ollama, groq, claude, gemini, openai"
+        }
+        return success ? "OK" : nil
+    }
+}
+
+final class GetLLMStatusCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        LLMOrchestrator.shared.getStatus()
+    }
+}
+
+final class AddSecondaryLLMCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let providerString = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No provider provided. Use: ollama, groq, claude, gemini, openai"
+            return nil
+        }
+        let success = LLMOrchestrator.shared.addSecondaryLLM(providerString)
+        if !success {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "Unknown provider: \(providerString). Use: ollama, groq, claude, gemini, openai"
+        }
+        return success ? "OK" : nil
+    }
+}
+
+final class RemoveSecondaryLLMCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let providerString = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No provider provided."
+            return nil
+        }
+        let success = LLMOrchestrator.shared.removeSecondaryLLM(providerString)
+        if !success {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "Unknown provider: \(providerString)"
+        }
+        return success ? "OK" : nil
+    }
+}
+
 // MARK: - LLM Streaming
 
 /// Configuration for a streaming LLM endpoint (OpenAI-compatible or native Ollama).
@@ -1055,13 +1679,18 @@ final class TerminalChatController {
     }
 
     private func renderWelcome() {
+        let orchestrator = LLMOrchestrator.shared
         writeLine(colorize("Brain Chat — terminal mode. Ctrl+C exits.", color: TerminalANSI.bold + TerminalANSI.magenta))
         writeLine("Mode: " + colorize(currentMode.displayName, color: currentMode.promptANSIColor + TerminalANSI.bold)
                   + "  " + currentMode.modeDescription)
+        writeLine("LLM:  " + colorize(orchestrator.mode.displayName, color: TerminalANSI.cyan + TerminalANSI.bold)
+                  + " → Primary: \(orchestrator.primaryLLM.shortName)"
+                  + (orchestrator.secondaryLLMs.isEmpty ? "" : ", Secondary: \(orchestrator.secondaryLLMs.map(\.shortName).joined(separator: ", "))"))
         writeLine("Switch: /chat  /code  /terminal  /yolo  /voice  /work   (/modes for list)")
+        writeLine("LLM:    /llm status  /llm mode <mode>  /llm primary <provider>  (/llm help)")
         writeLine("Tip: set BRAINCHAT_ACCESSIBLE_TERMINAL=1 to disable ANSI colours.")
         DispatchQueue.main.async {
-            self.speaker.speak("Brain Chat ready in \(self.currentMode.displayName) mode. Type a message and press Return.")
+            self.speaker.speak("Brain Chat ready in \(self.currentMode.displayName) mode. Using \(orchestrator.primaryLLM.shortName) as primary L L M. Type a message and press Return.")
         }
     }
 
@@ -1080,13 +1709,59 @@ final class TerminalChatController {
         let requestID = UUID().uuidString
         currentStreamID = requestID
         streamPrefixShown = false
-        writeStatus("Connecting to local AI…")
+
+        let orchestrator = LLMOrchestrator.shared
+        let llmMode = orchestrator.mode
+
+        // Use orchestrator for multi-bot and consensus modes
+        if llmMode == .multiBot || llmMode == .consensus {
+            writeStatus("Using \(llmMode.displayName) mode…")
+            orchestrator.onStatusUpdate = { [weak self] status in
+                self?.uiQueue.async { self?.writeStatus(status) }
+            }
+            orchestrator.query(text, systemPrompt: currentMode.systemPrompt) { [weak self] response, error in
+                self?.uiQueue.async {
+                    guard let self, self.currentStreamID == requestID else { return }
+                    if response.isEmpty {
+                        self.writeStatus("LLM orchestrator failed. Trying fallback…")
+                        self.useRedpandaPath(text: text, requestID: requestID)
+                    } else {
+                        // Show the response
+                        if self.promptVisible {
+                            self.writeRaw("\r" + (self.richTTYEnabled ? TerminalANSI.clearLine : ""))
+                            self.promptVisible = false
+                        }
+                        self.writeRaw(self.colorize("Brain> ", color: TerminalANSI.green + TerminalANSI.bold))
+                        self.writeRaw(ANSIText.strip(response))
+                        self.writeRaw("\r\n")
+                        self.writeStatus("Ready. \(self.currentMode.displayName) mode (\(llmMode.displayName)).")
+                        if self.currentMode.speaksResponses {
+                            DispatchQueue.main.async { self.speaker.speak(response) }
+                        }
+                        self.renderPrompt()
+                    }
+                }
+            }
+            return
+        }
+
+        // Single LLM mode (default) - use direct streaming
+        writeStatus("Connecting to \(orchestrator.primaryLLM.shortName)…")
 
         let client = LLMStreamingClient()
         streamingClient = client
 
+        // Build config based on orchestrator's primary LLM
+        let primaryProvider = orchestrator.primaryLLM
+        let config = LLMConfig(
+            url: primaryProvider.baseURL,
+            model: primaryProvider.defaultModel,
+            systemPrompt: currentMode.systemPrompt,
+            apiKey: orchestrator.apiKey(for: primaryProvider)
+        )
+
         client.stream(
-            config: .mode(currentMode),
+            config: config,
             userText: text,
             onToken: { [weak self] token in
                 self?.uiQueue.async {
@@ -1109,7 +1784,7 @@ final class TerminalChatController {
                     self.streamingClient = nil
                     if fullText.isEmpty {
                         // Stream produced nothing — fall back to Redpanda then local.
-                        self.writeStatus("Local AI unavailable. Trying Redpanda…")
+                        self.writeStatus("Primary LLM unavailable. Trying Redpanda…")
                         self.useRedpandaPath(text: text, requestID: requestID)
                     } else {
                         self.writeRaw("\r\n")
@@ -1284,8 +1959,18 @@ final class TerminalChatController {
 
     // MARK: - Mode Commands
 
+    private let llmSelector = LLMSelectorUI()
+
     private func handleModeCommand(_ input: String) {
         let cmd = input.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Handle /llm commands
+        if cmd.hasPrefix("/llm") {
+            _ = llmSelector.handleCommand(input)
+            renderPrompt()
+            return
+        }
+
         if cmd == "/modes" || cmd == "/help" || cmd == "/?" {
             writeLine(colorize("Available modes:", color: TerminalANSI.bold))
             for mode in ChatMode.allCases {
@@ -1293,6 +1978,10 @@ final class TerminalChatController {
                 writeLine(colorize(m + mode.switchCommand, color: mode.promptANSIColor + TerminalANSI.bold)
                           + "  " + mode.modeDescription)
             }
+            writeLine("")
+            writeLine(colorize("LLM Orchestration:", color: TerminalANSI.bold))
+            writeLine("  /llm status    - Show LLM configuration")
+            writeLine("  /llm help      - Show LLM commands")
             renderPrompt(); return
         }
         if let mode = ChatMode.allCases.first(where: { cmd == $0.switchCommand }) {
@@ -1372,6 +2061,356 @@ final class TerminalChatController {
     }
 }
 
+// MARK: - AppleScript Support
+
+/// Shared state accessible to AppleScript command handlers
+final class ScriptingState {
+    static let shared = ScriptingState()
+    
+    var appDelegate: AppDelegate?
+    var lastResponse: String = ""
+    var lastRequestID: String?
+    var currentStatus: String = "Ready"
+    var customLLMModel: String?
+    
+    private init() {}
+}
+
+// MARK: - AppleScript Command Classes
+
+/// Base class for Brain Chat scripting commands
+class BrainChatScriptCommand: NSScriptCommand {
+    var appDelegate: AppDelegate? { ScriptingState.shared.appDelegate }
+}
+
+/// set mode "chat" / "code" / "terminal" / "yolo" / "voice" / "work"
+@objc(BrainChatSetModeCommand)
+final class BrainChatSetModeCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let modeStr = directParameter as? String else {
+            scriptErrorNumber = errAEParamMissed
+            return "Error: mode parameter required"
+        }
+        guard let mode = ChatMode(rawValue: modeStr.lowercased()) else {
+            scriptErrorNumber = errAECoercionFail
+            return "Error: invalid mode '\(modeStr)'. Use: chat, code, terminal, yolo, voice, or work"
+        }
+        DispatchQueue.main.async {
+            self.appDelegate?.setModeFromScript(mode)
+        }
+        return "Switched to \(mode.displayName) mode"
+    }
+}
+
+/// get mode
+@objc(BrainChatGetModeCommand)
+final class BrainChatGetModeCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        return appDelegate?.currentModeForScript.rawValue ?? "chat"
+    }
+}
+
+/// list modes
+@objc(BrainChatListModesCommand)
+final class BrainChatListModesCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        return ChatMode.allCases.map { "\($0.rawValue): \($0.modeDescription)" }.joined(separator: "\n")
+    }
+}
+
+/// start listening
+@objc(BrainChatStartListeningCommand)
+final class BrainChatStartListeningCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        DispatchQueue.main.async {
+            self.appDelegate?.startListeningFromScript()
+        }
+        return true
+    }
+}
+
+/// stop listening
+@objc(BrainChatStopListeningCommand)
+final class BrainChatStopListeningCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        var result = ""
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = self.appDelegate?.stopListeningFromScript() ?? ""
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 5)
+        return result
+    }
+}
+
+/// speak "text"
+@objc(BrainChatSpeakCommand)
+final class BrainChatSpeakCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let text = directParameter as? String else {
+            scriptErrorNumber = errAEParamMissed
+            return nil
+        }
+        DispatchQueue.main.async {
+            self.appDelegate?.speakFromScript(text)
+        }
+        return nil
+    }
+}
+
+/// stop speaking
+@objc(BrainChatStopSpeakingCommand)
+final class BrainChatStopSpeakingCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        DispatchQueue.main.async {
+            self.appDelegate?.stopSpeakingFromScript()
+        }
+        return nil
+    }
+}
+
+/// send message "text" — synchronous, waits for response
+@objc(BrainChatSendMessageCommand)
+final class BrainChatSendMessageCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let message = directParameter as? String else {
+            scriptErrorNumber = errAEParamMissed
+            return "Error: message parameter required"
+        }
+        
+        let sem = DispatchSemaphore(value: 0)
+        var response = ""
+        
+        DispatchQueue.main.async {
+            self.appDelegate?.sendMessageFromScript(message) { result in
+                response = result
+                sem.signal()
+            }
+        }
+        
+        // Wait up to 60 seconds for response
+        let waitResult = sem.wait(timeout: .now() + 60)
+        if waitResult == .timedOut {
+            return "Error: response timed out after 60 seconds"
+        }
+        return response
+    }
+}
+
+/// send async "text" — returns immediately with request ID
+@objc(BrainChatSendAsyncCommand)
+final class BrainChatSendAsyncCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let message = directParameter as? String else {
+            scriptErrorNumber = errAEParamMissed
+            return "Error: message parameter required"
+        }
+        
+        let requestID = UUID().uuidString
+        DispatchQueue.main.async {
+            self.appDelegate?.sendMessageAsyncFromScript(message, requestID: requestID)
+        }
+        return requestID
+    }
+}
+
+/// get response
+@objc(BrainChatGetResponseCommand)
+final class BrainChatGetResponseCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        return ScriptingState.shared.lastResponse
+    }
+}
+
+/// get transcript [lines N]
+@objc(BrainChatGetTranscriptCommand)
+final class BrainChatGetTranscriptCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        let lineCount = evaluatedArguments?["lines"] as? Int
+        var result = ""
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = self.appDelegate?.getTranscriptFromScript(lines: lineCount) ?? ""
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 2)
+        return result
+    }
+}
+
+/// clear transcript
+@objc(BrainChatClearTranscriptCommand)
+final class BrainChatClearTranscriptCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        DispatchQueue.main.async {
+            self.appDelegate?.clearTranscriptFromScript()
+        }
+        return nil
+    }
+}
+
+/// execute yolo "command"
+@objc(BrainChatExecuteYoloCommand)
+final class BrainChatExecuteYoloCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let command = directParameter as? String else {
+            scriptErrorNumber = errAEParamMissed
+            return "Error: command parameter required"
+        }
+        
+        let sem = DispatchSemaphore(value: 0)
+        var result = ""
+        
+        DispatchQueue.main.async {
+            self.appDelegate?.executeYoloFromScript(command) { response in
+                result = response
+                sem.signal()
+            }
+        }
+        
+        _ = sem.wait(timeout: .now() + 30)
+        return result.isEmpty ? "YOLO command published: \(command)" : result
+    }
+}
+
+/// connect bridge
+@objc(BrainChatConnectBridgeCommand)
+final class BrainChatConnectBridgeCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        DispatchQueue.main.async {
+            self.appDelegate?.connectBridgeFromScript()
+        }
+        return true
+    }
+}
+
+/// disconnect bridge
+@objc(BrainChatDisconnectBridgeCommand)
+final class BrainChatDisconnectBridgeCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        DispatchQueue.main.async {
+            self.appDelegate?.disconnectBridgeFromScript()
+        }
+        return nil
+    }
+}
+
+/// bridge status
+@objc(BrainChatBridgeStatusCommand)
+final class BrainChatBridgeStatusCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        var result = ""
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = self.appDelegate?.bridgeStatusFromScript() ?? "Unknown"
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 2)
+        return result
+    }
+}
+
+/// get status
+@objc(BrainChatGetStatusCommand)
+final class BrainChatGetStatusCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        return ScriptingState.shared.currentStatus
+    }
+}
+
+/// health check
+@objc(BrainChatHealthCheckCommand)
+final class BrainChatHealthCheckCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        var result = ""
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = self.appDelegate?.healthCheckFromScript() ?? "Health check unavailable"
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 5)
+        return result
+    }
+}
+
+/// set llm "model"
+@objc(BrainChatSetLLMCommand)
+final class BrainChatSetLLMCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let model = directParameter as? String else {
+            scriptErrorNumber = errAEParamMissed
+            return "Error: model parameter required"
+        }
+        ScriptingState.shared.customLLMModel = model
+        return "LLM set to \(model)"
+    }
+}
+
+/// get llm
+@objc(BrainChatGetLLMCommand)
+final class BrainChatGetLLMCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        if let custom = ScriptingState.shared.customLLMModel {
+            return custom
+        }
+        return appDelegate?.currentModeForScript.llmModel ?? "llama3.2:3b"
+    }
+}
+
+/// show window
+@objc(BrainChatShowWindowCommand)
+final class BrainChatShowWindowCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        DispatchQueue.main.async {
+            self.appDelegate?.showWindowFromScript()
+        }
+        return nil
+    }
+}
+
+/// hide window
+@objc(BrainChatHideWindowCommand)
+final class BrainChatHideWindowCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        DispatchQueue.main.async {
+            self.appDelegate?.hideWindowFromScript()
+        }
+        return nil
+    }
+}
+
+/// announce "text" [priority "normal"]
+@objc(BrainChatAnnounceCommand)
+final class BrainChatAnnounceCommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let text = directParameter as? String else {
+            scriptErrorNumber = errAEParamMissed
+            return nil
+        }
+        let priority = evaluatedArguments?["priority"] as? String ?? "normal"
+        DispatchQueue.main.async {
+            self.appDelegate?.announceFromScript(text, priority: priority)
+        }
+        return nil
+    }
+}
+
+/// describe ui
+@objc(BrainChatDescribeUICommand)
+final class BrainChatDescribeUICommand: BrainChatScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        var result = ""
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = self.appDelegate?.describeUIFromScript() ?? "UI description unavailable"
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 2)
+        return result
+    }
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow!
     private let listenButton = NSButton(title: "Press Enter to Talk", target: nil, action: nil)
@@ -1406,6 +2445,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var tokenFlushTimer: Timer?            // coalescing display timer (~30 fps)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Register for AppleScript support
+        ScriptingState.shared.appDelegate = self
+        
+        // Register AppleEvent handlers for scripting
+        registerAppleEventHandlers()
+        
         setupWindow()
         configureBridge()
         requestPermissions()
@@ -1676,13 +2721,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let requestID = UUID().uuidString
         currentStreamID = requestID
         streamHeaderShown = false
-        updateStatus("Connecting to local AI…")
+
+        let orchestrator = LLMOrchestrator.shared
+        let llmMode = orchestrator.mode
+
+        // Use orchestrator for multi-bot and consensus modes
+        if llmMode == .multiBot || llmMode == .consensus {
+            updateStatus("Using \(llmMode.displayName) mode…")
+            orchestrator.onStatusUpdate = { [weak self] status in
+                DispatchQueue.main.async { self?.updateStatus(status) }
+            }
+            orchestrator.query(text, systemPrompt: currentMode.systemPrompt) { [weak self] response, error in
+                DispatchQueue.main.async {
+                    guard let self, self.currentStreamID == requestID else { return }
+                    if response.isEmpty {
+                        self.updateStatus("LLM orchestrator failed. Trying fallback…")
+                        self.useRedpandaPath(text: text, requestID: requestID)
+                    } else {
+                        self.appendTranscript(speaker: "Brain", text: response)
+                        if self.currentMode.speaksResponses { self.speaker.speak(response) }
+                        self.updateStatus("Ready. \(self.currentMode.displayName) mode (\(llmMode.displayName)). Press Enter to talk.")
+                    }
+                }
+            }
+            return
+        }
+
+        // Single LLM mode (default) - use direct streaming
+        updateStatus("Connecting to \(orchestrator.primaryLLM.shortName)…")
 
         let client = LLMStreamingClient()
         streamingClient = client
 
+        // Build config based on orchestrator's primary LLM
+        let primaryProvider = orchestrator.primaryLLM
+        let config = LLMConfig(
+            url: primaryProvider.baseURL,
+            model: primaryProvider.defaultModel,
+            systemPrompt: currentMode.systemPrompt,
+            apiKey: orchestrator.apiKey(for: primaryProvider)
+        )
+
         client.stream(
-            config: .mode(currentMode),
+            config: config,
             userText: text,
             onToken: { [weak self] token in
                 guard let self, self.currentStreamID == requestID else { return }
@@ -1822,6 +2903,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func updateStatus(_ text: String) {
         statusLabel.stringValue = text
+        ScriptingState.shared.currentStatus = text
     }
 
     private func appendTranscript(speaker: String, text: String) {
@@ -1834,14 +2916,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Mode Management
 
+    private let appLLMSelector = LLMSelectorUI()
+
     private func handleAppModeCommand(_ input: String) {
         let cmd = input.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Handle /llm commands
+        if cmd.hasPrefix("/llm") {
+            let handled = appLLMSelector.handleCommand(input)
+            if handled {
+                // Announce the change for accessibility
+                let orchestrator = LLMOrchestrator.shared
+                speakAndLog("LLM configuration updated. Mode: \(orchestrator.mode.displayName), Primary: \(orchestrator.primaryLLM.shortName)", speaker: "Brain")
+            }
+            return
+        }
+
         if cmd == "/modes" || cmd == "/help" {
             var lines = ["Available modes:"]
             for mode in ChatMode.allCases {
                 lines.append((mode == currentMode ? "> " : "  ")
                              + mode.switchCommand + ": " + mode.modeDescription)
             }
+            lines.append("")
+            lines.append("LLM Commands:")
+            lines.append("  /llm status - Show LLM configuration")
+            lines.append("  /llm help - Show all LLM commands")
             speakAndLog(lines.joined(separator: "\n"), speaker: "Brain")
             return
         }
@@ -1876,6 +2976,462 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func speakAndLog(_ text: String, speaker: String) {
         appendTranscript(speaker: speaker, text: text)
         self.speaker.speak(text)
+    }
+    
+    // MARK: - AppleScript Handler Methods
+    
+    /// Expose current mode for AppleScript
+    var currentModeForScript: ChatMode { currentMode }
+    
+    /// Expose listening state for AppleScript
+    var isListeningForScript: Bool { isListening }
+    
+    /// Expose bridge availability for AppleScript
+    var bridgeAvailabilityForScript: RedpandaBridge.Availability { bridgeAvailability }
+    
+    /// Register AppleEvent handlers for direct scripting support
+    private func registerAppleEventHandlers() {
+        let em = NSAppleEventManager.shared()
+        
+        // Register for custom Apple Events
+        // BrCh = Brain Chat suite code
+        let brChCode = FourCharCode("BrCh")
+        
+        // set mode command (BrChSMod)
+        em.setEventHandler(self, andSelector: #selector(handleSetModeEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("SMod"))
+        
+        // get mode command (BrChGMod)
+        em.setEventHandler(self, andSelector: #selector(handleGetModeEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("GMod"))
+        
+        // list modes command (BrChLMod)
+        em.setEventHandler(self, andSelector: #selector(handleListModesEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("LMod"))
+        
+        // send message command (BrChSend)
+        em.setEventHandler(self, andSelector: #selector(handleSendMessageEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("Send"))
+        
+        // get response command (BrChResp)
+        em.setEventHandler(self, andSelector: #selector(handleGetResponseEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("Resp"))
+        
+        // speak command (BrChSpek)
+        em.setEventHandler(self, andSelector: #selector(handleSpeakEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("Spek"))
+        
+        // start listening command (BrChStLs)
+        em.setEventHandler(self, andSelector: #selector(handleStartListeningEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("StLs"))
+        
+        // stop listening command (BrChSpLs)
+        em.setEventHandler(self, andSelector: #selector(handleStopListeningEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("SpLs"))
+        
+        // get status command (BrChGSta)
+        em.setEventHandler(self, andSelector: #selector(handleGetStatusEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("GSta"))
+        
+        // health check command (BrChHlth)
+        em.setEventHandler(self, andSelector: #selector(handleHealthCheckEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("Hlth"))
+        
+        // bridge status command (BrChBrSt)
+        em.setEventHandler(self, andSelector: #selector(handleBridgeStatusEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("BrSt"))
+        
+        // get transcript command (BrChTrns)
+        em.setEventHandler(self, andSelector: #selector(handleGetTranscriptEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("Trns"))
+        
+        // clear transcript command (BrChClTr)
+        em.setEventHandler(self, andSelector: #selector(handleClearTranscriptEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("ClTr"))
+        
+        // execute yolo command (BrChYolo)
+        em.setEventHandler(self, andSelector: #selector(handleYoloEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("Yolo"))
+        
+        // set llm command (BrChSLLM)
+        em.setEventHandler(self, andSelector: #selector(handleSetLLMEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("SLLM"))
+        
+        // get llm command (BrChGLLM)
+        em.setEventHandler(self, andSelector: #selector(handleGetLLMEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("GLLM"))
+        
+        // show window command (BrChShWn)
+        em.setEventHandler(self, andSelector: #selector(handleShowWindowEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("ShWn"))
+        
+        // hide window command (BrChHdWn)
+        em.setEventHandler(self, andSelector: #selector(handleHideWindowEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("HdWn"))
+        
+        // announce command (BrChAnno)
+        em.setEventHandler(self, andSelector: #selector(handleAnnounceEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("Anno"))
+        
+        // describe ui command (BrChDsUI)
+        em.setEventHandler(self, andSelector: #selector(handleDescribeUIEvent(_:withReply:)),
+                          forEventClass: brChCode, andEventID: FourCharCode("DsUI"))
+    }
+    
+    // MARK: - AppleEvent Handlers
+    
+    @objc func handleSetModeEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        if let param = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue,
+           let mode = ChatMode(rawValue: param.lowercased()) {
+            DispatchQueue.main.async { self.setModeFromScript(mode) }
+            reply.setDescriptor(NSAppleEventDescriptor(string: "Switched to \(mode.displayName) mode"), forKeyword: keyDirectObject)
+        }
+    }
+    
+    @objc func handleGetModeEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        reply.setDescriptor(NSAppleEventDescriptor(string: currentMode.rawValue), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleListModesEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        let modes = ChatMode.allCases.map { "\($0.rawValue): \($0.modeDescription)" }.joined(separator: "\n")
+        reply.setDescriptor(NSAppleEventDescriptor(string: modes), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleSendMessageEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        guard let message = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue else { return }
+        
+        // For synchronous operation, we need to use a semaphore
+        let sem = DispatchSemaphore(value: 0)
+        var responseText = ""
+        
+        DispatchQueue.main.async {
+            self.sendMessageFromScript(message) { result in
+                responseText = result
+                sem.signal()
+            }
+        }
+        
+        // Wait up to 60 seconds
+        _ = sem.wait(timeout: .now() + 60)
+        reply.setDescriptor(NSAppleEventDescriptor(string: responseText), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleGetResponseEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        reply.setDescriptor(NSAppleEventDescriptor(string: ScriptingState.shared.lastResponse), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleSpeakEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        if let text = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue {
+            DispatchQueue.main.async { self.speakFromScript(text) }
+        }
+    }
+    
+    @objc func handleStartListeningEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        DispatchQueue.main.async { self.startListeningFromScript() }
+        reply.setDescriptor(NSAppleEventDescriptor(boolean: true), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleStopListeningEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        var heardText = ""
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            heardText = self.stopListeningFromScript()
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 5)
+        reply.setDescriptor(NSAppleEventDescriptor(string: heardText), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleGetStatusEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        reply.setDescriptor(NSAppleEventDescriptor(string: ScriptingState.shared.currentStatus), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleHealthCheckEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        var result = ""
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = self.healthCheckFromScript()
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 5)
+        reply.setDescriptor(NSAppleEventDescriptor(string: result), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleBridgeStatusEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        var result = ""
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = self.bridgeStatusFromScript()
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 2)
+        reply.setDescriptor(NSAppleEventDescriptor(string: result), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleGetTranscriptEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        let lines = event.paramDescriptor(forKeyword: FourCharCode("lins"))?.int32Value
+        var result = ""
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = self.getTranscriptFromScript(lines: lines.map { Int($0) })
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 2)
+        reply.setDescriptor(NSAppleEventDescriptor(string: result), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleClearTranscriptEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        DispatchQueue.main.async { self.clearTranscriptFromScript() }
+    }
+    
+    @objc func handleYoloEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        guard let command = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue else { return }
+        
+        let sem = DispatchSemaphore(value: 0)
+        var result = ""
+        
+        DispatchQueue.main.async {
+            self.executeYoloFromScript(command) { response in
+                result = response
+                sem.signal()
+            }
+        }
+        
+        _ = sem.wait(timeout: .now() + 30)
+        reply.setDescriptor(NSAppleEventDescriptor(string: result), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleSetLLMEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        if let model = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue {
+            ScriptingState.shared.customLLMModel = model
+            reply.setDescriptor(NSAppleEventDescriptor(string: "LLM set to \(model)"), forKeyword: keyDirectObject)
+        }
+    }
+    
+    @objc func handleGetLLMEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        let model = ScriptingState.shared.customLLMModel ?? currentMode.llmModel
+        reply.setDescriptor(NSAppleEventDescriptor(string: model), forKeyword: keyDirectObject)
+    }
+    
+    @objc func handleShowWindowEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        DispatchQueue.main.async { self.showWindowFromScript() }
+    }
+    
+    @objc func handleHideWindowEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        DispatchQueue.main.async { self.hideWindowFromScript() }
+    }
+    
+    @objc func handleAnnounceEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        if let text = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue {
+            let priority = event.paramDescriptor(forKeyword: FourCharCode("prio"))?.stringValue ?? "normal"
+            DispatchQueue.main.async { self.announceFromScript(text, priority: priority) }
+        }
+    }
+    
+    @objc func handleDescribeUIEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        var result = ""
+        let sem = DispatchSemaphore(value: 0)
+        DispatchQueue.main.async {
+            result = self.describeUIFromScript()
+            sem.signal()
+        }
+        _ = sem.wait(timeout: .now() + 2)
+        reply.setDescriptor(NSAppleEventDescriptor(string: result), forKeyword: keyDirectObject)
+    }
+    
+    func setModeFromScript(_ mode: ChatMode) {
+        currentMode = mode
+        ModePreferences.save(mode)
+        modeBadgeLabel.stringValue = "\(mode.displayName) Mode"
+        modeBadgeLabel.setAccessibilityLabel("Current mode: \(mode.displayName)")
+        speakAndLog("Switched to \(mode.displayName) mode via AppleScript.", speaker: "Brain")
+        updateStatus("Mode: \(mode.displayName)")
+    }
+    
+    func startListeningFromScript() {
+        if !isListening {
+            toggleListening()
+        }
+    }
+    
+    func stopListeningFromScript() -> String {
+        let heardText = lastHeardText
+        if isListening {
+            toggleListening()
+        }
+        return heardText
+    }
+    
+    func speakFromScript(_ text: String) {
+        speaker.speak(text)
+    }
+    
+    func stopSpeakingFromScript() {
+        // SpeechVoice stops any current speech when speak() is called with empty
+        // For explicit stop, we'd need to expose the synthesizer
+        speaker.speak("")
+    }
+    
+    func sendMessageFromScript(_ message: String, completion: @escaping (String) -> Void) {
+        appendTranscript(speaker: "You (AppleScript)", text: message)
+        updateStatus("Processing AppleScript message…")
+        
+        let config = ScriptingState.shared.customLLMModel.map { model in
+            LLMConfig(
+                url: URL(string: "http://localhost:11434/v1/chat/completions")!,
+                model: model,
+                systemPrompt: currentMode.systemPrompt
+            )
+        } ?? .mode(currentMode)
+        
+        let client = LLMStreamingClient()
+        var fullResponse = ""
+        
+        client.stream(
+            config: config,
+            userText: message,
+            onToken: { token in
+                fullResponse += token
+            },
+            onComplete: { [weak self] text, error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        let errMsg = "Error: \(error.localizedDescription)"
+                        ScriptingState.shared.lastResponse = errMsg
+                        self?.appendTranscript(speaker: "Brain", text: errMsg)
+                        self?.updateStatus("Error occurred")
+                        completion(errMsg)
+                    } else {
+                        let response = text.isEmpty ? fullResponse : text
+                        ScriptingState.shared.lastResponse = response
+                        self?.appendTranscript(speaker: "Brain", text: response)
+                        self?.updateStatus("Ready. \(self?.currentMode.displayName ?? "Chat") mode.")
+                        if self?.currentMode.speaksResponses == true {
+                            self?.speaker.speak(response)
+                        }
+                        completion(response)
+                    }
+                }
+            }
+        )
+        
+        streamingClient = client
+    }
+    
+    func sendMessageAsyncFromScript(_ message: String, requestID: String) {
+        ScriptingState.shared.lastRequestID = requestID
+        sendMessageFromScript(message) { _ in }
+    }
+    
+    func getTranscriptFromScript(lines: Int?) -> String {
+        let fullText = transcriptView.string
+        guard let lines = lines, lines > 0 else { return fullText }
+        
+        let allLines = fullText.components(separatedBy: "\n")
+        let recentLines = allLines.suffix(lines)
+        return recentLines.joined(separator: "\n")
+    }
+    
+    func clearTranscriptFromScript() {
+        transcriptView.string = ""
+        speakAndLog("Transcript cleared via AppleScript.", speaker: "Brain")
+    }
+    
+    func executeYoloFromScript(_ command: String, completion: @escaping (String) -> Void) {
+        appendTranscript(speaker: "YOLO (AppleScript)", text: command)
+        updateStatus("Publishing YOLO command…")
+        
+        let reqID = UUID().uuidString
+        bridge.publish(text: "yolo: \(command)", requestID: reqID) { [weak self] success, reason in
+            DispatchQueue.main.async {
+                if success {
+                    let msg = "YOLO command published: \(command)"
+                    self?.appendTranscript(speaker: "Brain", text: msg)
+                    self?.updateStatus("Ready. Press Enter to talk.")
+                    completion(msg)
+                } else {
+                    let msg = "YOLO publish failed: \(reason ?? "unknown error")"
+                    self?.appendTranscript(speaker: "Brain", text: msg)
+                    self?.updateStatus("YOLO publish failed.")
+                    completion(msg)
+                }
+            }
+        }
+    }
+    
+    func connectBridgeFromScript() {
+        bridge.start()
+        speakAndLog("Bridge connection initiated via AppleScript.", speaker: "Brain")
+    }
+    
+    func disconnectBridgeFromScript() {
+        bridge.stop()
+        speakAndLog("Bridge disconnected via AppleScript.", speaker: "Brain")
+    }
+    
+    func bridgeStatusFromScript() -> String {
+        switch bridgeAvailability {
+        case .connected:
+            return "Connected to Redpanda"
+        case .unavailable(let reason):
+            return "Unavailable: \(reason)"
+        }
+    }
+    
+    func healthCheckFromScript() -> String {
+        var health: [String] = []
+        health.append("Brain Chat Health Check")
+        health.append("=======================")
+        health.append("Mode: \(currentMode.displayName)")
+        health.append("LLM: \(ScriptingState.shared.customLLMModel ?? currentMode.llmModel)")
+        health.append("Bridge: \(bridgeStatusFromScript())")
+        health.append("Listening: \(isListening ? "Yes" : "No")")
+        health.append("Speech Permission: \(speechPermissionGranted ? "Granted" : "Not Granted")")
+        health.append("Microphone Permission: \(microphonePermissionGranted ? "Granted" : "Not Granted")")
+        return health.joined(separator: "\n")
+    }
+    
+    func showWindowFromScript() {
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+    
+    func hideWindowFromScript() {
+        window.orderOut(nil)
+    }
+    
+    func announceFromScript(_ text: String, priority: String) {
+        // Use NSAccessibilityPriorityKey directly
+        let priorityNumber: Int
+        switch priority.lowercased() {
+        case "high":
+            priorityNumber = 1  // NSAccessibilityPriorityHigh
+        case "low":
+            priorityNumber = 3  // NSAccessibilityPriorityLow
+        default:
+            priorityNumber = 2  // NSAccessibilityPriorityMedium
+        }
+        
+        let userInfo: [NSAccessibility.NotificationUserInfoKey: Any] = [
+            .announcement: text,
+            .priority: NSNumber(value: priorityNumber)
+        ]
+        NSAccessibility.post(element: window as Any, notification: .announcementRequested, userInfo: userInfo)
+        speaker.speak(text)
+    }
+    
+    func describeUIFromScript() -> String {
+        var description: [String] = []
+        description.append("Brain Chat Window")
+        description.append("Current mode: \(currentMode.displayName)")
+        description.append("Status: \(statusLabel.stringValue)")
+        description.append("Listen button: \(listenButton.title)")
+        description.append("Listening: \(isListening ? "Active" : "Inactive")")
+        
+        let transcriptLines = transcriptView.string.components(separatedBy: "\n").count
+        description.append("Transcript: \(transcriptLines) lines")
+        
+        return description.joined(separator: "\n")
     }
 }
 

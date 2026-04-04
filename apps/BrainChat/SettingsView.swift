@@ -55,6 +55,13 @@ struct SettingsView: View {
                         .disabled(!securityManager.canUseYolo())
                 }
 
+                // MARK: LLM Orchestration Group
+                Section("LLM Orchestration") {
+                    LLMModeSelector()
+                        .accessibilityElement(children: .contain)
+                        .accessibilityLabel("LLM orchestration settings")
+                }
+
                 // MARK: Security Group
                 Section("Security") {
                     SecurityModeView(securityManager: securityManager)

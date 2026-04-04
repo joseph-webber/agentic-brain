@@ -398,6 +398,102 @@ final class GetCopilotStatusCommand: NSScriptCommand {
     }
 }
 
+// MARK: - LLM Orchestration Commands
+
+final class SetLLMModeCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let modeString = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No mode provided. Use: single, multi_bot, consensus"
+            return nil
+        }
+        return onMain {
+            MainActor.assumeIsolated {
+                let success = LLMOrchestrator.shared.setLLMMode(modeString)
+                if !success {
+                    self.scriptErrorNumber = errOSAGeneralError
+                    self.scriptErrorString = "Unknown mode: \(modeString). Use: single, multi_bot, consensus"
+                    return nil
+                }
+                return "OK" as Any
+            }
+        }
+    }
+}
+
+final class SetPrimaryLLMCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let providerString = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No provider provided. Use: ollama, groq, claude, gpt, grok, gemini, copilot"
+            return nil
+        }
+        return onMain {
+            MainActor.assumeIsolated {
+                let success = LLMOrchestrator.shared.setPrimaryLLM(providerString)
+                if !success {
+                    self.scriptErrorNumber = errOSAGeneralError
+                    self.scriptErrorString = "Unknown provider: \(providerString)"
+                    return nil
+                }
+                return "OK" as Any
+            }
+        }
+    }
+}
+
+final class GetLLMStatusCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        onMain {
+            MainActor.assumeIsolated {
+                LLMOrchestrator.shared.getStatus()
+            }
+        }
+    }
+}
+
+final class AddSecondaryLLMCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let providerString = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No provider provided."
+            return nil
+        }
+        return onMain {
+            MainActor.assumeIsolated {
+                let success = LLMOrchestrator.shared.addSecondaryLLM(providerString)
+                return success ? "OK" as Any : nil
+            }
+        }
+    }
+}
+
+final class RemoveSecondaryLLMCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let providerString = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No provider provided."
+            return nil
+        }
+        return onMain {
+            MainActor.assumeIsolated {
+                let success = LLMOrchestrator.shared.removeSecondaryLLM(providerString)
+                return success ? "OK" as Any : nil
+            }
+        }
+    }
+}
+
+final class GetLLMModeCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        onMain {
+            MainActor.assumeIsolated {
+                LLMOrchestrator.shared.mode.rawValue
+            }
+        }
+    }
+}
+
 // MARK: - Helpers
 
 /// Execute a block on the main thread, returning its result.

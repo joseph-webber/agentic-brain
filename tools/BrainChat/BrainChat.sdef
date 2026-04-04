@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary title="Brain Chat Terminology">
+    <suite name="Standard Suite" code="????" description="Standard commands for all applications.">
+        <command name="open" code="aevtodoc" description="Open a document.">
+            <direct-parameter description="The file(s) to be opened.">
+                <type type="file" list="yes"/>
+            </direct-parameter>
+        </command>
+        <command name="quit" code="aevtquit" description="Quit the application."/>
+    </suite>
+    
+    <suite name="Brain Chat Suite" code="BrCh" description="Commands for controlling Brain Chat, Joseph's accessible AI assistant.">
+        
+        <!-- Application Class -->
+        <class name="application" code="capp" description="Brain Chat application">
+            <cocoa class="NSApplication"/>
+            <property name="name" code="pnam" type="text" access="r" description="Application name"/>
+            <property name="version" code="vers" type="text" access="r" description="Application version"/>
+            <property name="current mode" code="cmod" type="text" access="rw" description="Current chat mode (chat, code, terminal, yolo, voice, work)"/>
+            <property name="is listening" code="list" type="boolean" access="r" description="Whether speech recognition is active"/>
+            <property name="last response" code="lrsp" type="text" access="r" description="The most recent response from the brain"/>
+            <property name="status" code="stat" type="text" access="r" description="Current status message"/>
+            <property name="bridge connected" code="bcon" type="boolean" access="r" description="Whether Redpanda bridge is connected"/>
+        </class>
+        
+        <!-- Mode Control -->
+        <command name="set mode" code="BrChSMod" description="Switch to a different chat mode.">
+            <cocoa class="BrainChatSetModeCommand"/>
+            <direct-parameter type="text" description="Mode name: chat, code, terminal, yolo, voice, or work"/>
+            <result type="text" description="Confirmation message"/>
+        </command>
+        
+        <command name="get mode" code="BrChGMod" description="Get the current chat mode.">
+            <cocoa class="BrainChatGetModeCommand"/>
+            <result type="text" description="Current mode name"/>
+        </command>
+        
+        <command name="list modes" code="BrChLMod" description="List all available chat modes.">
+            <cocoa class="BrainChatListModesCommand"/>
+            <result type="text" description="List of modes with descriptions"/>
+        </command>
+        
+        <!-- Voice Control -->
+        <command name="start listening" code="BrChStLs" description="Start speech recognition (press Enter equivalent).">
+            <cocoa class="BrainChatStartListeningCommand"/>
+            <result type="boolean" description="True if listening started successfully"/>
+        </command>
+        
+        <command name="stop listening" code="BrChSpLs" description="Stop speech recognition and process the heard text.">
+            <cocoa class="BrainChatStopListeningCommand"/>
+            <result type="text" description="The text that was recognized"/>
+        </command>
+        
+        <command name="speak" code="BrChSpek" description="Have Brain Chat speak text aloud using Karen voice.">
+            <cocoa class="BrainChatSpeakCommand"/>
+            <direct-parameter type="text" description="Text to speak"/>
+        </command>
+        
+        <command name="stop speaking" code="BrChSpSt" description="Immediately stop any speech in progress.">
+            <cocoa class="BrainChatStopSpeakingCommand"/>
+        </command>
+        
+        <!-- Chat/Message Commands -->
+        <command name="send message" code="BrChSend" description="Send a message to the brain and get a response.">
+            <cocoa class="BrainChatSendMessageCommand"/>
+            <direct-parameter type="text" description="Message to send"/>
+            <result type="text" description="The brain's response"/>
+        </command>
+        
+        <command name="send async" code="BrChAsyn" description="Send a message without waiting for response.">
+            <cocoa class="BrainChatSendAsyncCommand"/>
+            <direct-parameter type="text" description="Message to send"/>
+            <result type="text" description="Request ID for tracking"/>
+        </command>
+        
+        <command name="get response" code="BrChResp" description="Get the last response from the brain.">
+            <cocoa class="BrainChatGetResponseCommand"/>
+            <result type="text" description="The most recent response"/>
+        </command>
+        
+        <command name="get transcript" code="BrChTrns" description="Get the full conversation transcript.">
+            <cocoa class="BrainChatGetTranscriptCommand"/>
+            <parameter name="lines" code="lins" type="integer" optional="yes" description="Number of recent lines (default: all)"/>
+            <result type="text" description="Conversation transcript"/>
+        </command>
+        
+        <command name="clear transcript" code="BrChClTr" description="Clear the conversation history.">
+            <cocoa class="BrainChatClearTranscriptCommand"/>
+        </command>
+        
+        <!-- YOLO Mode Commands -->
+        <command name="execute yolo" code="BrChYolo" description="Execute a YOLO autonomous command.">
+            <cocoa class="BrainChatExecuteYoloCommand"/>
+            <direct-parameter type="text" description="YOLO command to execute"/>
+            <result type="text" description="Execution result"/>
+        </command>
+        
+        <!-- Bridge Control -->
+        <command name="connect bridge" code="BrChCoBr" description="Start the Redpanda bridge connection.">
+            <cocoa class="BrainChatConnectBridgeCommand"/>
+            <result type="boolean" description="True if connection initiated"/>
+        </command>
+        
+        <command name="disconnect bridge" code="BrChDiBr" description="Stop the Redpanda bridge connection.">
+            <cocoa class="BrainChatDisconnectBridgeCommand"/>
+        </command>
+        
+        <command name="bridge status" code="BrChBrSt" description="Get detailed bridge connection status.">
+            <cocoa class="BrainChatBridgeStatusCommand"/>
+            <result type="text" description="Bridge status details"/>
+        </command>
+        
+        <!-- Status and Info -->
+        <command name="get status" code="BrChGSta" description="Get current Brain Chat status.">
+            <cocoa class="BrainChatGetStatusCommand"/>
+            <result type="text" description="Status information"/>
+        </command>
+        
+        <command name="health check" code="BrChHlth" description="Run a full health check on Brain Chat systems.">
+            <cocoa class="BrainChatHealthCheckCommand"/>
+            <result type="text" description="Health check report"/>
+        </command>
+        
+        <!-- LLM Configuration -->
+        <command name="set llm" code="BrChSLLM" description="Set the LLM model to use for responses.">
+            <cocoa class="BrainChatSetLLMCommand"/>
+            <direct-parameter type="text" description="Model name (e.g., llama3.2:3b, llama3.1:8b)"/>
+            <result type="text" description="Confirmation"/>
+        </command>
+        
+        <command name="get llm" code="BrChGLLM" description="Get the current LLM model.">
+            <cocoa class="BrainChatGetLLMCommand"/>
+            <result type="text" description="Current model name"/>
+        </command>
+        
+        <!-- LLM Orchestration -->
+        <command name="set llm mode" code="BrChLMod" description="Set the LLM orchestration mode.">
+            <cocoa class="SetLLMModeCommand"/>
+            <direct-parameter type="text" description="Mode: single, multi_bot, or consensus"/>
+            <result type="text" description="OK on success"/>
+        </command>
+        
+        <command name="set primary llm" code="BrChPLLM" description="Set the primary LLM provider.">
+            <cocoa class="SetPrimaryLLMCommand"/>
+            <direct-parameter type="text" description="Provider: ollama, groq, claude, gemini, or openai"/>
+            <result type="text" description="OK on success"/>
+        </command>
+        
+        <command name="get llm status" code="BrChLLSt" description="Get LLM orchestration status.">
+            <cocoa class="GetLLMStatusCommand"/>
+            <result type="text" description="Mode, primary, and secondary LLMs"/>
+        </command>
+        
+        <command name="add secondary llm" code="BrChALLM" description="Add a secondary LLM for multi-bot mode.">
+            <cocoa class="AddSecondaryLLMCommand"/>
+            <direct-parameter type="text" description="Provider: ollama, groq, claude, gemini, or openai"/>
+            <result type="text" description="OK on success"/>
+        </command>
+        
+        <command name="remove secondary llm" code="BrChRLLM" description="Remove a secondary LLM.">
+            <cocoa class="RemoveSecondaryLLMCommand"/>
+            <direct-parameter type="text" description="Provider to remove"/>
+            <result type="text" description="OK on success"/>
+        </command>
+        
+        <!-- Window Control -->
+        <command name="show window" code="BrChShWn" description="Show and activate the Brain Chat window.">
+            <cocoa class="BrainChatShowWindowCommand"/>
+        </command>
+        
+        <command name="hide window" code="BrChHdWn" description="Hide the Brain Chat window.">
+            <cocoa class="BrainChatHideWindowCommand"/>
+        </command>
+        
+        <!-- Accessibility Helpers -->
+        <command name="announce" code="BrChAnno" description="Make a VoiceOver-compatible announcement.">
+            <cocoa class="BrainChatAnnounceCommand"/>
+            <direct-parameter type="text" description="Text to announce"/>
+            <parameter name="priority" code="prio" type="text" optional="yes" description="Priority: low, normal, high (default: normal)"/>
+        </command>
+        
+        <command name="describe ui" code="BrChDsUI" description="Get accessibility description of current UI state.">
+            <cocoa class="BrainChatDescribeUICommand"/>
+            <result type="text" description="UI state description for VoiceOver users"/>
+        </command>
+        
+    </suite>
+</dictionary>
