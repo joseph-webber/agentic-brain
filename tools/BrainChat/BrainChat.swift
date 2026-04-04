@@ -493,6 +493,113 @@ struct LLMConfig {
         model: "llama3.2:3b",
         systemPrompt: "You are Iris Lumina, an AI assistant for Joseph, who is blind and uses VoiceOver on macOS. Keep responses concise and clear. No filler phrases."
     )
+
+    /// Claude via Anthropic Messages API.
+    static func claude(apiKey: String, model: String = "claude-sonnet-4-20250514") -> LLMConfig {
+        LLMConfig(
+            url: URL(string: "https://api.anthropic.com/v1/messages")!,
+            model: model,
+            systemPrompt: "You are Iris Lumina, an AI assistant for Joseph, who is blind and uses VoiceOver on macOS. Keep responses concise and clear. No filler phrases.",
+            apiKey: apiKey, maxTokens: 1024
+        )
+    }
+
+    /// OpenAI-compatible endpoint (GPT, Groq, etc).
+    static func openAI(apiKey: String, url: String = "https://api.openai.com/v1/chat/completions",
+                        model: String = "gpt-4o-mini") -> LLMConfig {
+        LLMConfig(
+            url: URL(string: url)!,
+            model: model,
+            systemPrompt: "You are Iris Lumina, an AI assistant for Joseph, who is blind and uses VoiceOver on macOS. Keep responses concise and clear. No filler phrases.",
+            apiKey: apiKey, maxTokens: 1024
+        )
+    }
+}
+
+// MARK: - Speech Batcher
+
+/// Batches incoming tokens into speakable chunks at natural sentence/clause boundaries.
+final class SpeechBatcher {
+    var onChunkReady: ((String) -> Void)?
+    private var buffer = ""
+    private var flushTimer: DispatchSourceTimer?
+    private let flushInterval: TimeInterval
+    private let minChunkLength: Int
+
+    init(flushInterval: TimeInterval = 1.2, minChunkLength: Int = 40) {
+        self.flushInterval  = flushInterval
+        self.minChunkLength = minChunkLength
+    }
+
+    func feed(_ token: String) {
+        buffer += token
+        resetTimer()
+        if buffer.last == "." || buffer.last == "!" || buffer.last == "?" {
+            emitAll(); return
+        }
+        if buffer.count >= minChunkLength,
+           (buffer.last == "," || buffer.last == ";" || buffer.last == ":") {
+            emitAll(); return
+        }
+        if buffer.hasSuffix("\n") {
+            let t = buffer.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !t.isEmpty { emitAll() }
+        }
+    }
+
+    func flush() {
+        cancelTimer()
+        let t = buffer.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { buffer = ""; return }
+        emitAll()
+    }
+
+    func cancel() { cancelTimer(); buffer = "" }
+
+    private func emitAll() {
+        let chunk = buffer.trimmingCharacters(in: .whitespacesAndNewlines)
+        buffer = ""
+        guard !chunk.isEmpty else { return }
+        cancelTimer(); onChunkReady?(chunk)
+    }
+
+    private func resetTimer() {
+        cancelTimer()
+        let t = DispatchSource.makeTimerSource(queue: .main)
+        t.schedule(deadline: .now() + flushInterval)
+        t.setEventHandler { [weak self] in self?.flush() }
+        t.resume()
+        flushTimer = t
+    }
+
+    private func cancelTimer() { flushTimer?.cancel(); flushTimer = nil }
+    deinit { cancelTimer() }
+}
+
+// MARK: - Typing Indicator
+
+/// Animates "..." dots while waiting for the first LLM token.
+final class TypingIndicator {
+    var onFrame: ((String) -> Void)?
+    private var timer: DispatchSourceTimer?
+    private var dotCount = 0
+    private(set) var isActive = false
+
+    func start() {
+        guard !isActive else { return }
+        isActive = true; dotCount = 0
+        let t = DispatchSource.makeTimerSource(queue: .main)
+        t.schedule(deadline: .now(), repeating: .milliseconds(400))
+        t.setEventHandler { [weak self] in
+            guard let self, self.isActive else { return }
+            self.dotCount = (self.dotCount % 3) + 1
+            self.onFrame?(String(repeating: ".", count: self.dotCount))
+        }
+        t.resume(); timer = t
+    }
+
+    func stop() { isActive = false; timer?.cancel(); timer = nil }
+    deinit { stop() }
 }
 
 /// Streams LLM responses token-by-token via URLSession delegate callbacks.
@@ -512,13 +619,15 @@ struct LLMConfig {
 final class LLMStreamingClient: NSObject, URLSessionDataDelegate {
 
     enum StreamError: LocalizedError {
-        case httpError(Int)
+        case httpError(Int, String?)
         case connectionFailed(Error)
-
+        case cancelled
         var errorDescription: String? {
             switch self {
-            case .httpError(let code):       return "HTTP \(code)"
+            case .httpError(let code, let body):
+                return body.map { "HTTP \(code): \($0)" } ?? "HTTP \(code)"
             case .connectionFailed(let err): return err.localizedDescription
+            case .cancelled: return "Generation cancelled"
             }
         }
     }
@@ -530,20 +639,23 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate {
     var onToken: ((String) -> Void)?
     var onComplete: ((String, Error?) -> Void)?
 
-    private lazy var session: URLSession = {
+    private var _session: URLSession?
+    private var session: URLSession {
+        if let s = _session { return s }
         let cfg = URLSessionConfiguration.default
-        cfg.timeoutIntervalForRequest  = 10    // fast failure for localhost
-        cfg.timeoutIntervalForResource = 120   // allow long completions
+        cfg.timeoutIntervalForRequest  = 10
+        cfg.timeoutIntervalForResource = 180
         cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return URLSession(configuration: cfg, delegate: self, delegateQueue: nil)
-    }()
+        let s = URLSession(configuration: cfg, delegate: self, delegateQueue: nil)
+        _session = s; return s
+    }
 
     private var currentTask: URLSessionDataTask?
-
-    // Per-stream state
-    private var utf8Tail    = Data()   // incomplete UTF-8 tail bytes from the last chunk
-    private var lineBuf     = ""       // text assembled since the last newline
-    private var accumulated = ""       // full content received so far
+    private var utf8Tail    = Data()
+    private var lineBuf     = ""
+    private var accumulated = ""
+    private var errorBody   = Data()
+    private var currentSSEEventType: String?
 
     // Retry state
     private var pendingConfig:   LLMConfig?
@@ -568,15 +680,21 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate {
         utf8Tail    = Data()
         lineBuf     = ""
         isStreaming = true
+        errorBody = Data(); currentSSEEventType = nil
         sendRequest()
     }
 
     func cancel() {
+        guard isStreaming else { return }
         isStreaming = false
-        currentTask?.cancel()
-        currentTask = nil
-        session.invalidateAndCancel()   // break URLSession → delegate retain cycle
+        currentTask?.cancel(); currentTask = nil
+        _session?.invalidateAndCancel(); _session = nil
+        let text = accumulated
+        DispatchQueue.main.async { [weak self] in
+            self?.onComplete?(text, text.isEmpty ? StreamError.cancelled : nil)
+        }
     }
+
 
     // MARK: Private: request
 
@@ -587,17 +705,25 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate {
         req.httpMethod = "POST"
         req.setValue("application/json",                     forHTTPHeaderField: "Content-Type")
         req.setValue("text/event-stream, application/json",  forHTTPHeaderField: "Accept")
-        if let key = config.apiKey {
+        let isAnthropic = config.url.host?.contains("anthropic") == true
+            || config.model.hasPrefix("claude")
+        if isAnthropic {
+            if let key = config.apiKey { req.setValue(key, forHTTPHeaderField: "x-api-key") }
+            req.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        } else if let key = config.apiKey {
             req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         }
 
-        let body: [String: Any] = [
-            "model":       config.model,
-            "messages":    pendingMessages,
-            "stream":      true,
-            "temperature": config.temperature,
-            "max_tokens":  config.maxTokens,
-        ]
+        let body: [String: Any]
+        if isAnthropic {
+            let userMsgs = pendingMessages.filter { ($0["role"] as? String) != "system" }
+            body = ["model": config.model, "system": config.systemPrompt,
+                    "messages": userMsgs, "stream": true,
+                    "temperature": config.temperature, "max_tokens": config.maxTokens]
+        } else {
+            body = ["model": config.model, "messages": pendingMessages, "stream": true,
+                    "temperature": config.temperature, "max_tokens": config.maxTokens]
+        }
         guard let bodyData = try? JSONSerialization.data(withJSONObject: body) else {
             finish(error: StreamError.connectionFailed(
                 NSError(domain: "LLM", code: -1,
@@ -606,9 +732,7 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate {
         }
         req.httpBody = bodyData
 
-        // Reset per-attempt buffers; accumulated persists across retries.
-        utf8Tail = Data()
-        lineBuf  = ""
+        utf8Tail = Data(); lineBuf = ""; errorBody = Data(); currentSSEEventType = nil
 
         let task = session.dataTask(with: req)
         currentTask = task
@@ -623,21 +747,23 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate {
                     completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
         guard let http = response as? HTTPURLResponse else {
             completionHandler(.cancel)
-            finish(error: StreamError.httpError(-1))
+            finish(error: StreamError.httpError(-1, nil))
             return
         }
         if (200..<300).contains(http.statusCode) {
             completionHandler(.allow)
         } else {
-            completionHandler(.cancel)
-            finish(error: StreamError.httpError(http.statusCode))
+            errorBody = Data()
+            completionHandler(.allow)  // collect error body for reporting
         }
     }
 
     func urlSession(_ session: URLSession,
                     dataTask: URLSessionDataTask,
                     didReceive data: Data) {
-        // Merge new bytes with any leftover partial UTF-8 sequence from the last chunk.
+        if let http = dataTask.response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            errorBody.append(data); return
+        }
         utf8Tail.append(data)
 
         // Find the longest decodable UTF-8 prefix, leaving incomplete bytes in the tail.
@@ -664,7 +790,10 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate {
     func urlSession(_ session: URLSession,
                     task: URLSessionTask,
                     didCompleteWithError error: Error?) {
-        // Flush any partial last line that arrived without a trailing newline.
+        if let http = task.response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            let bodyStr = String(data: errorBody, encoding: .utf8).map { String($0.prefix(500)) }
+            finish(error: StreamError.httpError(http.statusCode, bodyStr)); return
+        }
         if !lineBuf.isEmpty {
             processLine(lineBuf)
             lineBuf = ""
@@ -703,24 +832,45 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate {
         let line = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !line.isEmpty else { return }
 
-        // Strip SSE "data: " prefix when present.
+        // Track SSE event type (used by Anthropic).
+        if line.hasPrefix("event:") {
+            currentSSEEventType = String(line.dropFirst("event:".count)).trimmingCharacters(in: .whitespaces)
+            return
+        }
+        if line.hasPrefix(":") { return }  // SSE comment
+
         let jsonStr: String
         if line.hasPrefix("data: ") {
-            let payload = String(line.dropFirst("data: ".count))
-            if payload == "[DONE]" { return }
-            jsonStr = payload
-        } else {
-            jsonStr = line
+            let p = String(line.dropFirst("data: ".count))
+            if p == "[DONE]" { currentSSEEventType = nil; return }
+            jsonStr = p
+        } else if line.hasPrefix("data:") {
+            let p = String(line.dropFirst("data:".count)).trimmingCharacters(in: .whitespaces)
+            if p == "[DONE]" { currentSSEEventType = nil; return }
+            jsonStr = p
+        } else { jsonStr = line }
+
+        guard let jd = jsonStr.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: jd) as? [String: Any] else {
+            currentSSEEventType = nil; return
         }
 
-        guard let jsonData = jsonStr.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return }
-
-        // OpenAI chat-completion chunk: choices[0].delta.content
+        // OpenAI format
         if let choices = json["choices"] as? [[String: Any]],
-           let delta   = choices.first?["delta"] as? [String: Any],
+           let delta = choices.first?["delta"] as? [String: Any],
            let content = delta["content"] as? String, !content.isEmpty {
-            emit(content); return
+            emit(content); currentSSEEventType = nil; return
+        }
+        // Anthropic content_block_delta
+        if let t = json["type"] as? String, t == "content_block_delta",
+           let delta = json["delta"] as? [String: Any],
+           let text = delta["text"] as? String, !text.isEmpty {
+            emit(text); currentSSEEventType = nil; return
+        }
+        if currentSSEEventType == "content_block_delta",
+           let delta = json["delta"] as? [String: Any],
+           let text = delta["text"] as? String, !text.isEmpty {
+            emit(text); currentSSEEventType = nil; return
         }
 
         // Ollama /api/chat: {"message":{"content":"…"},"done":false}
@@ -741,8 +891,9 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate {
     }
 
     private func finish(error: Error?) {
+        guard isStreaming else { return }
         isStreaming = false
-        session.finishTasksAndInvalidate()   // break URLSession → delegate retain cycle
+        _session?.finishTasksAndInvalidate(); _session = nil
         let text = accumulated
         DispatchQueue.main.async { [weak self] in self?.onComplete?(text, error) }
     }
@@ -783,76 +934,6 @@ final class TerminalMode {
     }
 }
 
-// MARK: - YOLO Commands
-
-struct YOLOCommand: Codable {
-    let id: String
-    let command: String
-    let timestamp: String
-    let context: String
-}
-
-/// Publishes YOLO commands to the `brain.yolo.commands` Redpanda topic
-/// via the Pandaproxy REST API running on localhost:8082.
-final class YOLOCommandPublisher {
-    private let pandaproxyURL = URL(string: "http://localhost:8082/topics/brain.yolo.commands")!
-    private let iso8601 = ISO8601DateFormatter()
-
-    /// Returns the trimmed command string if `input` starts with "yolo:" (case-insensitive),
-    /// or nil if the input is not a YOLO command.
-    static func parse(_ input: String) -> String? {
-        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        let prefix = "yolo:"
-        guard trimmed.lowercased().hasPrefix(prefix) else { return nil }
-        let command = trimmed.dropFirst(prefix.count)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return command.isEmpty ? nil : command
-    }
-
-    /// Publishes a YOLO command to `brain.yolo.commands` via Pandaproxy HTTP POST.
-    func publish(command: String, context: String, completion: @escaping (Bool, String?) -> Void) {
-        let yolo = YOLOCommand(
-            id: UUID().uuidString,
-            command: command,
-            timestamp: iso8601.string(from: Date()),
-            context: context
-        )
-
-        guard let payload = buildPayload(yolo) else {
-            completion(false, "Failed to encode YOLO command as JSON")
-            return
-        }
-
-        var request = URLRequest(url: pandaproxyURL)
-        request.httpMethod = "POST"
-        request.setValue("application/vnd.kafka.json.v2+json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = payload
-        request.timeoutInterval = 5
-
-        URLSession.shared.dataTask(with: request) { _, response, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    completion(false, error.localizedDescription)
-                    return
-                }
-                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
-                if (200...299).contains(statusCode) {
-                    completion(true, nil)
-                } else {
-                    completion(false, "Pandaproxy returned HTTP \(statusCode)")
-                }
-            }
-        }.resume()
-    }
-
-    private func buildPayload(_ yolo: YOLOCommand) -> Data? {
-        guard let valueData = try? JSONEncoder().encode(yolo),
-              let valueJSON = try? JSONSerialization.jsonObject(with: valueData) else { return nil }
-        let envelope: [String: Any] = ["records": [["value": valueJSON]]]
-        return try? JSONSerialization.data(withJSONObject: envelope)
-    }
-}
-
 final class TerminalChatController {
     private struct QueuedChunk {
         let requestID: String?
@@ -866,9 +947,9 @@ final class TerminalChatController {
     }
 
     private let bridge = RedpandaBridge()
+    private let agentResultsSubscriber = AgentResultsSubscriber()
     private let fallbackResponder = LocalFallbackResponder()
     private let speaker = SpeechVoice()
-    private let yoloPublisher = YOLOCommandPublisher()
     private let terminalMode = TerminalMode()
     private let uiQueue = DispatchQueue(label: "brainchat.terminal.ui")
     private let stdoutHandle = FileHandle.standardOutput
@@ -889,6 +970,9 @@ final class TerminalChatController {
     private var streamingClient: LLMStreamingClient?
     private var currentStreamID: String?
     private var streamPrefixShown = false   // true once "Brain> " has been written
+    private let copilotBridge = GHCopilotBridge()
+    private let speechBatcher = SpeechBatcher()
+    private let typingIndicator = TypingIndicator()
 
     private lazy var richTTYEnabled: Bool = {
         guard isatty(STDOUT_FILENO) == 1 else { return false }
@@ -917,9 +1001,11 @@ final class TerminalChatController {
         }
 
         configureBridge()
+        configureAgentSubscriber()
         setupInputSource()
         renderWelcome()
         bridge.start()
+        agentResultsSubscriber.start()
         renderPrompt()
     }
 
@@ -939,6 +1025,28 @@ final class TerminalChatController {
         bridge.onResponse = { [weak self] response in
             self?.uiQueue.async {
                 self?.handleRemoteResponse(response)
+            }
+        }
+    }
+
+    private func configureAgentSubscriber() {
+        agentResultsSubscriber.onStatusChanged = { [weak self] (message: String) in
+            self?.uiQueue.async { self?.writeStatus(message) }
+        }
+
+        agentResultsSubscriber.onResult = { [weak self] (result: AgentResultsSubscriber.AgentResult) in
+            self?.uiQueue.async {
+                guard let self else { return }
+                let label = result.agentName.map { "\($0) (Agent)" } ?? "Agent"
+                let taskSuffix = result.taskID.map { " [\($0)]" } ?? ""
+                let cleanText = ANSIText.strip(result.text)
+                self.writeTranscriptLine(
+                    prefix: label + taskSuffix,
+                    text: cleanText,
+                    color: TerminalANSI.magenta
+                )
+                DispatchQueue.main.async { self.speaker.speak(cleanText) }
+                self.renderPrompt()
             }
         }
     }
@@ -982,9 +1090,18 @@ final class TerminalChatController {
 
         switch byte {
         case 3, 4:
-            shutdown(exitCode: 0)
+            // Ctrl+C/D: cancel stream if active, otherwise exit.
+            if streamingClient?.isStreaming == true {
+                cancelCurrentStream(reason: "Stopped by user")
+            } else {
+                shutdown(exitCode: 0)
+            }
         case 27:
-            escapeSequencePending = true
+            if streamingClient?.isStreaming == true {
+                cancelCurrentStream(reason: "Stopped by user")
+            } else {
+                escapeSequencePending = true
+            }
         case 10, 13:
             let text = inputBuffer.trimmingCharacters(in: .whitespacesAndNewlines)
             inputBuffer = ""
@@ -1010,6 +1127,17 @@ final class TerminalChatController {
         }
     }
 
+    private func cancelCurrentStream(reason: String?) {
+        typingIndicator.stop()
+        speechBatcher.cancel()
+        streamingClient?.cancel()
+        streamingClient = nil
+        currentStreamID = nil
+        writeRaw("\r\n")
+        if let reason { writeStatus(reason) }
+        renderPrompt()
+    }
+
     private func renderWelcome() {
         let intro = ANSIText.strip("Brain Chat terminal mode is ready. Type a message and press Return. Press Control C to exit.")
         writeLine(colorize(intro, color: TerminalANSI.bold + TerminalANSI.magenta))
@@ -1020,21 +1148,26 @@ final class TerminalChatController {
     }
 
     private func processInput(_ text: String) {
-        // YOLO commands are published directly to brain.yolo.commands and bypass the LLM path.
-        if let yoloCommand = YOLOCommandPublisher.parse(text) {
-            handleYOLOCommand(yoloCommand)
-            return
-        }
-
-        // Cancel any in-progress stream before starting a new request.
-        streamingClient?.cancel()
-        streamingClient = nil
+        cancelCurrentStream(reason: nil)
 
         writeTranscriptLine(prefix: "You", text: text, color: TerminalANSI.cyan)
         let requestID = UUID().uuidString
         currentStreamID = requestID
         streamPrefixShown = false
-        writeStatus("Connecting to local AI…")
+
+        typingIndicator.onFrame = { [weak self] dots in
+            guard let self, self.richTTYEnabled else { return }
+            self.writeRaw("\r" + TerminalANSI.clearLine)
+            self.writeRaw(self.colorize("Brain> ", color: TerminalANSI.dim + TerminalANSI.green) + dots)
+        }
+        typingIndicator.start()
+
+        speechBatcher.cancel()
+        speechBatcher.onChunkReady = { [weak self] chunk in
+            DispatchQueue.main.async { self?.speaker.speak(chunk) }
+        }
+
+        writeStatus("Connecting to local AI\u{2026} (Esc to cancel)")
 
         let client = LLMStreamingClient()
         streamingClient = client
@@ -1046,57 +1179,39 @@ final class TerminalChatController {
                 self?.uiQueue.async {
                     guard let self, self.currentStreamID == requestID else { return }
                     if !self.streamPrefixShown {
+                        self.typingIndicator.stop()
                         self.streamPrefixShown = true
-                        // Clear the prompt line before printing the Brain prefix.
-                        if self.promptVisible {
-                            self.writeRaw("\r" + (self.richTTYEnabled ? TerminalANSI.clearLine : ""))
-                            self.promptVisible = false
+                        if self.richTTYEnabled {
+                            self.writeRaw("\r" + TerminalANSI.clearLine)
                         }
+                        self.promptVisible = false
                         self.writeRaw(self.colorize("Brain> ", color: TerminalANSI.green + TerminalANSI.bold))
                     }
                     self.writeRaw(ANSIText.strip(token))
+                    self.speechBatcher.feed(token)
                 }
             },
             onComplete: { [weak self] fullText, error in
                 self?.uiQueue.async {
                     guard let self, self.currentStreamID == requestID else { return }
+                    self.typingIndicator.stop()
+                    self.speechBatcher.flush()
                     self.streamingClient = nil
                     if fullText.isEmpty {
-                        // Stream produced nothing — fall back to Redpanda then local.
-                        self.writeStatus("Local AI unavailable. Trying Redpanda…")
+                        self.writeStatus("Local AI unavailable. Trying Redpanda\u{2026}")
                         self.useRedpandaPath(text: text, requestID: requestID)
                     } else {
                         self.writeRaw("\r\n")
-                        self.writeStatus("Ready.")
-                        DispatchQueue.main.async { self.speaker.speak(fullText) }
+                        if let error {
+                            self.writeStatus("Stream ended: \(error.localizedDescription)")
+                        } else {
+                            self.writeStatus("Ready. (Esc to stop, Ctrl+C to exit)")
+                        }
                         self.renderPrompt()
                     }
                 }
             }
         )
-    }
-
-    private func handleYOLOCommand(_ command: String) {
-        writeTranscriptLine(prefix: "YOLO", text: command, color: TerminalANSI.yellow)
-        writeStatus("Publishing YOLO command to brain.yolo.commands…")
-        yoloPublisher.publish(command: command, context: "terminal") { [weak self] success, reason in
-            self?.uiQueue.async {
-                guard let self else { return }
-                if success {
-                    let msg = "YOLO command published: \(command)"
-                    self.writeTranscriptLine(prefix: "Brain", text: msg, color: TerminalANSI.green)
-                    self.writeStatus("Ready.")
-                    DispatchQueue.main.async { self.speaker.speak(msg) }
-                } else {
-                    let fallback = reason ?? "unknown error"
-                    let msg = "Failed to publish YOLO command: \(fallback)"
-                    self.writeTranscriptLine(prefix: "Brain", text: msg, color: TerminalANSI.yellow)
-                    self.writeStatus("YOLO publish failed.")
-                    DispatchQueue.main.async { self.speaker.speak(msg) }
-                }
-                self.renderPrompt()
-            }
-        }
     }
 
     private func useRedpandaPath(text: String, requestID: String) {
@@ -1255,11 +1370,108 @@ final class TerminalChatController {
         return color + text + TerminalANSI.reset
     }
 
-    private func shutdown(exitCode: Int32) {
+    // MARK: - Copilot Integration
+
+    private func handleCopilotCommand(_ command: GHCopilotBridge.CopilotCommand) {
+        switch command {
+        case .startSession:
+            writeStatus("Starting Copilot chat session…")
+            do {
+                try copilotBridge.startSession(mode: .chat)
+                let msg = "Copilot chat session started. Use /copilot followed by your message."
+                writeTranscriptLine(prefix: "Copilot", text: msg, color: TerminalANSI.magenta)
+                DispatchQueue.main.async { self.speaker.speak(msg) }
+            } catch {
+                writeTranscriptLine(prefix: "Copilot", text: error.localizedDescription, color: TerminalANSI.yellow)
+            }
+            renderPrompt()
+        case .stopSession:
+            copilotBridge.endSession()
+            writeTranscriptLine(prefix: "Copilot", text: "Copilot session ended.", color: TerminalANSI.magenta)
+            DispatchQueue.main.async { self.speaker.speak("Copilot session ended.") }
+            renderPrompt()
+        case .restartSession:
+            do { try copilotBridge.restartSession()
+                writeTranscriptLine(prefix: "Copilot", text: "Copilot session restarted.", color: TerminalANSI.magenta)
+            } catch {
+                writeTranscriptLine(prefix: "Copilot", text: error.localizedDescription, color: TerminalANSI.yellow)
+            }
+            renderPrompt()
+        case .chat(let prompt):
+            writeTranscriptLine(prefix: "You (Copilot)", text: prompt, color: TerminalANSI.cyan)
+            if copilotBridge.isSessionActive {
+                writeStatus("Sending to Copilot…")
+                streamPrefixShown = false
+                copilotBridge.onToken = { [weak self] token in
+                    self?.uiQueue.async { guard let self else { return }
+                        if !self.streamPrefixShown {
+                            self.streamPrefixShown = true
+                            if self.promptVisible { self.writeRaw("\r" + (self.richTTYEnabled ? TerminalANSI.clearLine : "")); self.promptVisible = false }
+                            self.writeRaw(self.colorize("Copilot> ", color: TerminalANSI.magenta + TerminalANSI.bold))
+                        }
+                        self.writeRaw(ANSIText.strip(token))
+                    }
+                }
+                copilotBridge.onComplete = { [weak self] fullText, _ in
+                    self?.uiQueue.async { guard let self else { return }
+                        self.writeRaw("\r\n"); self.writeStatus("Ready."); self.streamPrefixShown = false
+                        if !fullText.isEmpty { DispatchQueue.main.async { self.speaker.speak(fullText) } }
+                        self.renderPrompt()
+                    }
+                }
+                do { try copilotBridge.sendChat(prompt) } catch {
+                    writeTranscriptLine(prefix: "Copilot", text: error.localizedDescription, color: TerminalANSI.yellow); renderPrompt()
+                }
+            } else {
+                writeStatus("Running Copilot one-shot…")
+                copilotBridge.executeOneShot(mode: .chat, prompt: prompt) { [weak self] result in
+                    self?.uiQueue.async { guard let self else { return }
+                        switch result {
+                        case .success(let t): self.writeTranscriptLine(prefix: "Copilot", text: t, color: TerminalANSI.magenta)
+                            DispatchQueue.main.async { self.speaker.speak(t) }
+                        case .failure(let e): self.writeTranscriptLine(prefix: "Copilot", text: e.localizedDescription, color: TerminalANSI.yellow)
+                        }
+                        self.writeStatus("Ready."); self.renderPrompt()
+                    }
+                }
+            }
+        case .suggest(let prompt):
+            writeTranscriptLine(prefix: "You (Suggest)", text: prompt, color: TerminalANSI.cyan)
+            copilotBridge.executeOneShot(mode: .suggest, prompt: prompt) { [weak self] result in
+                self?.uiQueue.async { guard let self else { return }
+                    switch result {
+                    case .success(let t): self.writeTranscriptLine(prefix: "Copilot", text: t, color: TerminalANSI.magenta)
+                        DispatchQueue.main.async { self.speaker.speak(t) }
+                    case .failure(let e): self.writeTranscriptLine(prefix: "Copilot", text: e.localizedDescription, color: TerminalANSI.yellow)
+                    }
+                    self.writeStatus("Ready."); self.renderPrompt()
+                }
+            }
+        case .explain(let prompt):
+            writeTranscriptLine(prefix: "You (Explain)", text: prompt, color: TerminalANSI.cyan)
+            copilotBridge.executeOneShot(mode: .explain, prompt: prompt) { [weak self] result in
+                self?.uiQueue.async { guard let self else { return }
+                    switch result {
+                    case .success(let t): self.writeTranscriptLine(prefix: "Copilot", text: t, color: TerminalANSI.magenta)
+                        DispatchQueue.main.async { self.speaker.speak(t) }
+                    case .failure(let e): self.writeTranscriptLine(prefix: "Copilot", text: e.localizedDescription, color: TerminalANSI.yellow)
+                    }
+                    self.writeStatus("Ready."); self.renderPrompt()
+                }
+            }
+        }
+    }
+
+        private func shutdown(exitCode: Int32) {
         guard !shuttingDown else { return }
         shuttingDown = true
+        typingIndicator.stop()
+        speechBatcher.cancel()
+        streamingClient?.cancel()
+        streamingClient = nil
         pendingFallbacks.values.forEach { $0.cancel() }
         pendingFallbacks.removeAll()
+        agentResultsSubscriber.stop()
         bridge.stop()
         inputSource?.cancel()
         inputSource = nil
@@ -1293,7 +1505,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let speaker = SpeechVoice()
     private let fallbackResponder = LocalFallbackResponder()
     private let bridge = RedpandaBridge()
-    private let yoloPublisher = YOLOCommandPublisher()
+    private let agentResultsSubscriber = AgentResultsSubscriber()
     private var bridgeAvailability: RedpandaBridge.Availability = .unavailable("Connecting…")
     private var pendingFallbacks: [String: DispatchWorkItem] = [:]
     private var pendingRequestOrder: [String] = []
@@ -1304,12 +1516,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var streamHeaderShown = false          // true once "Brain: " has been appended
     private var pendingTokens = ""                 // tokens buffered for the next 30-fps flush
     private var tokenFlushTimer: Timer?            // coalescing display timer (~30 fps)
+    private let copilotBridge = GHCopilotBridge()
+    private let speechBatcher = SpeechBatcher()
+    private let typingIndicator = TypingIndicator()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupWindow()
         configureBridge()
+        configureAgentSubscriber()
         requestPermissions()
         bridge.start()
+        agentResultsSubscriber.start()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             self.speakAndLog("Brain Chat is ready. Press Enter to talk.", speaker: "Brain")
@@ -1320,6 +1537,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         streamingClient?.cancel()
         streamingClient = nil
         tokenFlushTimer?.invalidate()
+        agentResultsSubscriber.stop()
         bridge.stop()
         stopListeningSession(cancelRecognition: true)
     }
@@ -1415,6 +1633,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func configureAgentSubscriber() {
+        agentResultsSubscriber.onStatusChanged = { [weak self] (message: String) in
+            guard let self else { return }
+            self.updateStatus(message)
+        }
+
+        agentResultsSubscriber.onResult = { [weak self] (result: AgentResultsSubscriber.AgentResult) in
+            guard let self else { return }
+            let label = result.agentName.map { "\($0) (Agent)" } ?? "Agent"
+            let taskSuffix = result.taskID.map { " [\($0)]" } ?? ""
+            let cleanText = ANSIText.strip(result.text)
+            self.appendTranscript(speaker: label + taskSuffix, text: cleanText)
+            self.updateStatus("Agent result received from \(result.topic)")
+            self.speaker.speak(cleanText)
+        }
+    }
+
     private func requestPermissions() {
         listenButton.isEnabled = false
         updateStatus("Requesting microphone and speech recognition permissions…")
@@ -1448,6 +1683,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func toggleListening() {
+        // If streaming, pressing the button cancels generation.
+        if streamingClient?.isStreaming == true {
+            speechBatcher.cancel()
+            typingIndicator.stop()
+            streamingClient?.cancel()
+            streamingClient = nil
+            currentStreamID = nil
+            tokenFlushTimer?.invalidate()
+            tokenFlushTimer = nil
+            flushPendingTokens()
+            appendRaw(" [stopped]\n\n")
+            listenButton.title = "Press Enter to Talk"
+            updateStatus("Generation stopped. Press Enter to talk.")
+            return
+        }
+
         if isListening {
             let text = lastHeardText.trimmingCharacters(in: .whitespacesAndNewlines)
             if !text.isEmpty && !didProcessFinalResult {
@@ -1556,24 +1807,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func processInput(_ text: String) {
-        // YOLO commands are published directly to brain.yolo.commands and bypass the LLM path.
-        if let yoloCommand = YOLOCommandPublisher.parse(text) {
-            handleYOLOCommand(yoloCommand)
-            return
-        }
-
-        // Cancel any previous stream before starting a fresh one.
         streamingClient?.cancel()
         streamingClient = nil
         tokenFlushTimer?.invalidate()
         tokenFlushTimer = nil
         pendingTokens = ""
+        speechBatcher.cancel()
+        typingIndicator.stop()
 
         appendTranscript(speaker: "You", text: text)
         let requestID = UUID().uuidString
         currentStreamID = requestID
         streamHeaderShown = false
-        updateStatus("Connecting to local AI…")
+
+        speechBatcher.onChunkReady = { [weak self] chunk in
+            self?.speaker.speak(chunk)
+        }
+        typingIndicator.onFrame = { [weak self] dots in
+            self?.updateStatus("Thinking\(dots)")
+        }
+        typingIndicator.start()
+        listenButton.title = "Stop Generation (Enter)"
 
         let client = LLMStreamingClient()
         streamingClient = client
@@ -1623,16 +1877,74 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         speaker.speak(response)
     }
 
-    // MARK: - Streaming Display
+    // MARK: - Copilot Integration (GUI)
+
+    private func handleCopilotCommand(_ command: GHCopilotBridge.CopilotCommand) {
+        switch command {
+        case .startSession:
+            do { try copilotBridge.startSession(mode: .chat)
+                speakAndLog("Copilot chat session started. Use /copilot followed by your message.", speaker: "Copilot")
+            } catch { speakAndLog("Could not start Copilot: \(error.localizedDescription)", speaker: "Copilot") }
+        case .stopSession:
+            copilotBridge.endSession()
+            speakAndLog("Copilot session ended.", speaker: "Copilot")
+        case .restartSession:
+            do { try copilotBridge.restartSession(); speakAndLog("Copilot session restarted.", speaker: "Copilot") }
+            catch { speakAndLog("Could not restart Copilot: \(error.localizedDescription)", speaker: "Copilot") }
+        case .chat(let prompt):
+            appendTranscript(speaker: "You (Copilot)", text: prompt)
+            if copilotBridge.isSessionActive {
+                updateStatus("Sending to Copilot…")
+                copilotBridge.onComplete = { [weak self] fullText, error in
+                    guard let self else { return }
+                    if let error { self.speakAndLog("Copilot error: \(error.localizedDescription)", speaker: "Copilot") }
+                    else if !fullText.isEmpty { self.appendTranscript(speaker: "Copilot", text: fullText); self.speaker.speak(fullText) }
+                    self.updateStatus("Ready. Press Enter to talk.")
+                }
+                do { try copilotBridge.sendChat(prompt) } catch { speakAndLog("Copilot error: \(error.localizedDescription)", speaker: "Copilot") }
+            } else {
+                updateStatus("Running Copilot one-shot…")
+                copilotBridge.executeOneShot(mode: .chat, prompt: prompt) { [weak self] result in
+                    guard let self else { return }
+                    switch result {
+                    case .success(let t): self.appendTranscript(speaker: "Copilot", text: t); self.speaker.speak(t)
+                    case .failure(let e): self.speakAndLog("Copilot failed: \(e.localizedDescription)", speaker: "Copilot")
+                    }; self.updateStatus("Ready. Press Enter to talk.")
+                }
+            }
+        case .suggest(let prompt):
+            appendTranscript(speaker: "You (Suggest)", text: prompt)
+            copilotBridge.executeOneShot(mode: .suggest, prompt: prompt) { [weak self] result in
+                guard let self else { return }
+                switch result {
+                case .success(let t): self.appendTranscript(speaker: "Copilot", text: t); self.speaker.speak(t)
+                case .failure(let e): self.speakAndLog("Suggest failed: \(e.localizedDescription)", speaker: "Copilot")
+                }; self.updateStatus("Ready. Press Enter to talk.")
+            }
+        case .explain(let prompt):
+            appendTranscript(speaker: "You (Explain)", text: prompt)
+            copilotBridge.executeOneShot(mode: .explain, prompt: prompt) { [weak self] result in
+                guard let self else { return }
+                switch result {
+                case .success(let t): self.appendTranscript(speaker: "Copilot", text: t); self.speaker.speak(t)
+                case .failure(let e): self.speakAndLog("Explain failed: \(e.localizedDescription)", speaker: "Copilot")
+                }; self.updateStatus("Ready. Press Enter to talk.")
+            }
+        }
+    }
+
+        // MARK: - Streaming Display
 
     private func handleIncomingToken(_ token: String) {
-        // Defer adding the "Brain: " label until the first real token arrives —
+        // Stop typing indicator on first real token. Defer "Brain: " label until now —
         // so nothing appears in the transcript if the stream fails immediately.
         if !streamHeaderShown {
+            typingIndicator.stop()
             streamHeaderShown = true
             appendRaw("Brain: ")
         }
         pendingTokens += token
+        speechBatcher.feed(token)
         updateStatus("Receiving response…")
         scheduleTokenFlush()
     }
@@ -1661,7 +1973,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         tokenFlushTimer?.invalidate()
         tokenFlushTimer = nil
         flushPendingTokens()
+        typingIndicator.stop()
+        speechBatcher.flush()
         streamingClient = nil
+        listenButton.title = "Press Enter to Talk"
 
         if fullText.isEmpty {
             // Stream produced no content — fall through to Redpanda then local fallback.
@@ -1671,8 +1986,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Finalize the streamed entry with a blank separator line and speak it.
             appendRaw("\n\n")
             transcriptView.scrollToEndOfDocument(nil)
-            speaker.speak(fullText)
-            updateStatus("Ready. Press Enter to talk.")
+            if let error {
+                updateStatus("Stream ended: \(error.localizedDescription)")
+            } else {
+                updateStatus("Ready. Press Enter to talk.")
+            }
         }
     }
 
@@ -1688,24 +2006,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 self.updateStatus("Redpanda publish failed. Using local fallback.")
                 self.respondLocally(to: text, requestID: requestID, reason: reason ?? "publish failed")
-            }
-        }
-    }
-
-    private func handleYOLOCommand(_ command: String) {
-        appendTranscript(speaker: "You", text: "yolo: \(command)")
-        updateStatus("Publishing YOLO command to brain.yolo.commands…")
-        yoloPublisher.publish(command: command, context: "gui") { [weak self] success, reason in
-            guard let self else { return }
-            if success {
-                let msg = "YOLO command published: \(command)"
-                self.speakAndLog(msg, speaker: "Brain")
-                self.updateStatus("Ready. Press Enter to talk.")
-            } else {
-                let fallback = reason ?? "unknown error"
-                let msg = "Failed to publish YOLO command: \(fallback)"
-                self.speakAndLog(msg, speaker: "Brain")
-                self.updateStatus("YOLO publish failed.")
             }
         }
     }
@@ -1751,6 +2051,203 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.speaker.speak(text)
     }
 }
+
+// MARK: - Agent Results Subscriber (Pandaproxy REST consumer)
+
+final class AgentResultsSubscriber {
+    struct AgentResult {
+        let text: String
+        let agentName: String?
+        let taskID: String?
+        let topic: String
+    }
+
+    var onResult: ((AgentResult) -> Void)?
+    var onStatusChanged: ((String) -> Void)?
+
+    private let pandaproxyBaseURL = "http://localhost:8082"
+    private let groupID = "brainchat-group"
+    private let instanceName = "brainchat"
+    private let resultsTopic = "brain.agent.results"
+    private let pollInterval: Double = 2.0
+
+    private var pollTimer: DispatchSourceTimer?
+    private var isConsumerCreated = false
+    private var isSubscribed = false
+    private let queue = DispatchQueue(label: "brainchat.agentresults")
+
+    func start() {
+        queue.async { self.createConsumer() }
+    }
+
+    func stop() {
+        pollTimer?.cancel()
+        pollTimer = nil
+        deleteConsumer()
+    }
+
+    // MARK: - Consumer lifecycle
+
+    private func createConsumer() {
+        guard !isConsumerCreated else {
+            subscribeToTopic()
+            return
+        }
+
+        var request = URLRequest(url: URL(string: "\(pandaproxyBaseURL)/consumers/\(groupID)")!)
+        request.httpMethod = "POST"
+        request.setValue("application/vnd.kafka.v2+json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/vnd.kafka.v2+json", forHTTPHeaderField: "Accept")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["name": instanceName, "format": "json"])
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let self else { return }
+            if let error = error {
+                self.onStatusChanged?("Agent results: create failed (\(error.localizedDescription))")
+                self.queue.asyncAfter(deadline: .now() + 5) { self.createConsumer() }
+                return
+            }
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            if status == 200 || status == 409 {
+                self.isConsumerCreated = true
+                self.subscribeToTopic()
+            } else {
+                let body = data.flatMap { String(data: $0, encoding: .utf8) } ?? ""
+                self.onStatusChanged?("Agent results: create status \(status): \(body)")
+                self.queue.asyncAfter(deadline: .now() + 5) { self.createConsumer() }
+            }
+        }.resume()
+    }
+
+    private func subscribeToTopic() {
+        let urlStr = "\(pandaproxyBaseURL)/consumers/\(groupID)/instances/\(instanceName)/subscription"
+        var request = URLRequest(url: URL(string: urlStr)!)
+        request.httpMethod = "POST"
+        request.setValue("application/vnd.kafka.v2+json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/vnd.kafka.v2+json", forHTTPHeaderField: "Accept")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["topics": [resultsTopic]])
+
+        URLSession.shared.dataTask(with: request) { [weak self] _, response, error in
+            guard let self else { return }
+            if let error = error {
+                self.onStatusChanged?("Agent results: subscribe failed (\(error.localizedDescription))")
+                self.queue.asyncAfter(deadline: .now() + 5) { self.subscribeToTopic() }
+                return
+            }
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            if status == 200 || status == 204 {
+                self.isSubscribed = true
+                self.onStatusChanged?("Subscribed to \(self.resultsTopic)")
+                self.startPolling()
+            } else {
+                self.queue.asyncAfter(deadline: .now() + 5) { self.subscribeToTopic() }
+            }
+        }.resume()
+    }
+
+    private func startPolling() {
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        timer.schedule(deadline: .now() + pollInterval, repeating: pollInterval)
+        timer.setEventHandler { [weak self] in self?.poll() }
+        timer.resume()
+        pollTimer = timer
+    }
+
+    private func poll() {
+        guard isSubscribed else { return }
+        let urlStr = "\(pandaproxyBaseURL)/consumers/\(groupID)/instances/\(instanceName)/records?max_bytes=1048576"
+        var request = URLRequest(url: URL(string: urlStr)!)
+        request.setValue("application/vnd.kafka.json.v2+json", forHTTPHeaderField: "Accept")
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+            guard let self else { return }
+            if let error = error {
+                let nsError = error as NSError
+                let isConnRefused = nsError.domain == NSURLErrorDomain
+                    && (nsError.code == NSURLErrorCannotConnectToHost
+                        || nsError.code == NSURLErrorNetworkConnectionLost
+                        || nsError.code == -1004)
+                if !isConnRefused {
+                    self.onStatusChanged?("Agent results poll error: \(error.localizedDescription)")
+                }
+                return
+            }
+            guard let data = data, !data.isEmpty,
+                  let records = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+                return
+            }
+            for record in records {
+                if let result = self.parseRecord(record) {
+                    DispatchQueue.main.async { self.onResult?(result) }
+                }
+            }
+        }.resume()
+    }
+
+    // MARK: - Parsing
+
+    private func parseRecord(_ record: [String: Any]) -> AgentResult? {
+        let topic = record["topic"] as? String ?? resultsTopic
+
+        var valueDict: [String: Any]?
+        if let dict = record["value"] as? [String: Any] {
+            valueDict = dict
+        } else if let str = record["value"] as? String,
+                  let data = str.data(using: .utf8),
+                  let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            valueDict = dict
+        }
+
+        let text: String
+        if let dict = valueDict {
+            text = extractText(from: dict)
+        } else if let raw = record["value"] as? String, !raw.isEmpty {
+            text = raw
+        } else {
+            return nil
+        }
+
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+
+        let agentName = valueDict.flatMap { (d: [String: Any]) -> String? in
+            (d["agent"] as? String) ?? (d["agent_name"] as? String) ?? (d["source"] as? String)
+        }
+        let taskID = valueDict.flatMap { (d: [String: Any]) -> String? in
+            (d["task_id"] as? String) ?? (d["request_id"] as? String) ?? (d["id"] as? String)
+        }
+        return AgentResult(text: text, agentName: agentName, taskID: taskID, topic: topic)
+    }
+
+    private func extractText(from dict: [String: Any]) -> String {
+        for key in ["result", "output", "text", "response", "message", "content", "data"] {
+            if let value = dict[key] as? String,
+               !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return value
+            }
+            if let nested = dict[key] as? [String: Any],
+               let t = nested["text"] as? String, !t.isEmpty {
+                return t
+            }
+        }
+        if let data = try? JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted]),
+           let str = String(data: data, encoding: .utf8) {
+            return str
+        }
+        return ""
+    }
+
+    private func deleteConsumer() {
+        guard isConsumerCreated else { return }
+        isConsumerCreated = false
+        isSubscribed = false
+        let urlStr = "\(pandaproxyBaseURL)/consumers/\(groupID)/instances/\(instanceName)"
+        var request = URLRequest(url: URL(string: urlStr)!)
+        request.httpMethod = "DELETE"
+        request.setValue("application/vnd.kafka.v2+json", forHTTPHeaderField: "Content-Type")
+        URLSession.shared.dataTask(with: request).resume()
+    }
+}
+
 
 if TerminalChatController.shouldRunInTerminal {
     let terminalChat = TerminalChatController()
