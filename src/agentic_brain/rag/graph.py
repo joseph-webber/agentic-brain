@@ -156,6 +156,10 @@ class GraphRAGConfig:
     rerank: bool = True
 
 
+EnhancedGraphRAGConfig = GraphRAGConfig
+"""Alias exported by __init__.py for backward compatibility."""
+
+
 class EnhancedGraphRAG:
     """
     Enhanced Graph RAG with Neo4j native vector search and knowledge graph construction.
@@ -166,7 +170,10 @@ class EnhancedGraphRAG:
     - Relationship mapping between entities
     - Multi-hop graph traversal
     - Hybrid retrieval combining vector + graph signals
-    - Community detection for hierarchical retrieval
+    - Hierarchical community detection (Leiden → Louvain → connected components)
+    - Community summarization for global search context
+    - Entity resolution / deduplication
+    - Reciprocal-rank fusion across vector, graph, and keyword signals
     """
 
     def __init__(self, config: Optional[GraphRAGConfig] = None):
@@ -181,6 +188,7 @@ class EnhancedGraphRAG:
             self.config.embedding_dimension
         )
         self._initialized = False
+        self._community_hierarchy = None
 
     def _get_session(self):
         """Get Neo4j session using lazy pool."""
@@ -435,6 +443,21 @@ class EnhancedGraphRAG:
         logger.info(
             f"Indexed document {doc_id} with {len(entities)} entities and {len(chunks)} chunks"
         )
+
+        # Run entity resolution to merge duplicates
+        try:
+            from .community_detection import resolve_entities
+
+            with self._get_session() as session:
+                merged = resolve_entities(session)
+                if merged:
+                    logger.info(f"Entity resolution merged {merged} duplicates after indexing {doc_id}")
+        except Exception as exc:
+            logger.debug(f"Entity resolution skipped: {exc}")
+
+        # Invalidate community cache (graph structure changed)
+        self._community_hierarchy = None
+
         return doc_id
 
     def _extract_entities(self, text: str) -> List[Dict[str, Any]]:
@@ -759,10 +782,13 @@ class EnhancedGraphRAG:
 
     async def _community_retrieve(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """
-        Retrieve using community detection for broader context.
+        Retrieve using hierarchical community detection for broader context.
 
-        Uses Neo4j GDS community detection to identify clusters of related entities
-        and then retrieves chunks connected to the most relevant communities.
+        Microsoft GraphRAG-style community retrieval:
+        1. Detect multi-level community hierarchy (Leiden → Louvain → components)
+        2. Match query against community entities and summaries
+        3. Walk hierarchy for broader context when needed
+        4. Return chunks from matching communities ranked by relevance
 
         Args:
             query: Query text
@@ -771,6 +797,13 @@ class EnhancedGraphRAG:
         Returns:
             List of results from relevant communities
         """
+        from .community_detection import (
+            Community,
+            CommunityHierarchy,
+            detect_communities_hierarchical,
+            summarize_all_communities,
+        )
+
         query_terms = {term.lower() for term in query.split() if term.strip()}
         if not query_terms:
             logger.info(
@@ -779,35 +812,77 @@ class EnhancedGraphRAG:
             return await self._hybrid_retrieve(query, top_k)
 
         with self._get_session() as session:
-            try:
-                from .community_detection import detect_communities
+            # Run hierarchical community detection (cached across calls)
+            if self._community_hierarchy is None:
+                try:
+                    self._community_hierarchy = detect_communities_hierarchical(session)
+                    # Generate summaries for leaf-level communities
+                    summarize_all_communities(
+                        session, self._community_hierarchy, level=0,
+                    )
+                except Exception as exc:
+                    logger.warning(f"Community detection failed: {exc}")
+                    return await self._hybrid_retrieve(query, top_k)
 
-                communities = detect_communities(session)
-            except Exception as exc:
-                logger.warning(f"Community detection failed: {exc}")
-                return await self._hybrid_retrieve(query, top_k)
-
-            if not communities:
+            hierarchy = self._community_hierarchy
+            if not hierarchy.communities:
                 logger.info("No communities detected - falling back to hybrid")
                 return await self._hybrid_retrieve(query, top_k)
 
-            entity_to_community: Dict[str, int] = {}
-            matched_entities: List[str] = []
-            for cid, entities in communities.items():
-                for entity in entities:
-                    entity_to_community[entity] = cid
-                if any(
-                    term in entity.lower()
-                    for entity in entities
-                    for term in query_terms
-                ):
-                    matched_entities.extend(entities)
+            # Score communities: match query terms against entities AND summaries
+            scored_communities: list[tuple[int, float]] = []
+            for cid, community in hierarchy.communities.items():
+                score = 0.0
+                # Entity name matching
+                for entity in community.entities:
+                    entity_lower = entity.lower()
+                    for term in query_terms:
+                        if term in entity_lower:
+                            score += 2.0
+                # Summary matching
+                if community.summary:
+                    summary_lower = community.summary.lower()
+                    for term in query_terms:
+                        if term in summary_lower:
+                            score += 1.0
+                # Boost leaf-level communities (most specific)
+                if community.level == 0:
+                    score *= 1.2
 
-            matched_entities = sorted(set(matched_entities))
-            if not matched_entities:
+                if score > 0:
+                    scored_communities.append((cid, score))
+
+            if not scored_communities:
+                # Walk up hierarchy for coarser matches
+                for cid, community in hierarchy.communities.items():
+                    if community.level > 0:
+                        for entity in community.entities:
+                            for term in query_terms:
+                                if term in entity.lower():
+                                    scored_communities.append((cid, 0.5))
+                                    break
+
+            if not scored_communities:
                 logger.info(
                     "Community retrieval found no matches - falling back to hybrid"
                 )
+                return await self._hybrid_retrieve(query, top_k)
+
+            # Sort by score, collect entity names from top communities
+            scored_communities.sort(key=lambda x: x[1], reverse=True)
+            matched_entities: list[str] = []
+            matched_community_ids: list[int] = []
+            community_summaries: dict[int, str] = {}
+
+            for cid, _ in scored_communities[:10]:
+                community = hierarchy.communities[cid]
+                matched_entities.extend(community.entities)
+                matched_community_ids.append(cid)
+                if community.summary:
+                    community_summaries[cid] = community.summary
+
+            matched_entities = sorted(set(matched_entities))
+            if not matched_entities:
                 return await self._hybrid_retrieve(query, top_k)
 
             results = self._run_query(
@@ -837,11 +912,18 @@ class EnhancedGraphRAG:
             entities = record.get("entities") or []
             community_ids = sorted(
                 {
-                    entity_to_community.get(entity)
+                    hierarchy.entity_to_community.get(entity)
                     for entity in entities
-                    if entity in entity_to_community
+                    if entity in hierarchy.entity_to_community
                 }
+                - {None}
             )
+            # Attach community summaries as context
+            context_summaries = [
+                community_summaries[cid]
+                for cid in community_ids
+                if cid in community_summaries
+            ]
             formatted.append(
                 {
                     "chunk_id": record.get("chunk_id"),
@@ -852,6 +934,8 @@ class EnhancedGraphRAG:
                     "score": float(record.get("community_score", 0.0)),
                     "entities": entities,
                     "community_ids": community_ids,
+                    "community_summaries": context_summaries,
+                    "hierarchy_method": hierarchy.detection_method,
                     "strategy": "community",
                 }
             )

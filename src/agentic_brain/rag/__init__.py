@@ -186,6 +186,24 @@ from .graph_rag import (
     SearchStrategy,
 )
 
+# Enhanced Graph RAG (community-aware, hierarchical)
+from .graph import (
+    EnhancedGraphRAG,
+    EnhancedGraphRAGConfig,
+    RetrievalStrategy,
+)
+
+# Community detection (hierarchical, multi-algorithm)
+from .community_detection import (
+    Community,
+    CommunityHierarchy,
+    detect_communities,
+    detect_communities_hierarchical,
+    resolve_entities,
+    summarize_community,
+    summarize_all_communities,
+)
+
 # Graph traversal (Neo4j relationship-aware retrieval)
 from .graph_traversal import (
     EntityCentricRetriever,
@@ -537,6 +555,14 @@ __all__ = [
     "EnhancedGraphRAG",
     "EnhancedGraphRAGConfig",
     "RetrievalStrategy",
+    # Community Detection (hierarchical)
+    "Community",
+    "CommunityHierarchy",
+    "detect_communities",
+    "detect_communities_hierarchical",
+    "resolve_entities",
+    "summarize_community",
+    "summarize_all_communities",
     # GraphQL API
     "STRAWBERRY_AVAILABLE",
     "create_graphql_app",
