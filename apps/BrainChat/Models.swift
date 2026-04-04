@@ -56,12 +56,13 @@ struct ChatMessage: Identifiable, Equatable {
     enum Role: String {
         case user = "You"
         case assistant = "Karen"
+        case copilot = "Copilot"
         case system = "System"
 
         var aiRole: AIRole {
             switch self {
             case .user: return .user
-            case .assistant: return .assistant
+            case .assistant, .copilot: return .assistant
             case .system: return .system
             }
         }
@@ -95,7 +96,12 @@ final class ConversationStore: ObservableObject {
 
     @discardableResult
     func beginStreamingAssistantMessage() -> UUID {
-        let message = ChatMessage(role: .assistant, content: "")
+        beginStreamingMessage(role: .assistant)
+    }
+
+    @discardableResult
+    func beginStreamingMessage(role: ChatMessage.Role) -> UUID {
+        let message = ChatMessage(role: role, content: "")
         messages.append(message)
         return message.id
     }
@@ -136,6 +142,19 @@ final class AppSettings: ObservableObject {
     @AppStorage("bridgeWebSocketURL") var bridgeWebSocketURL: String = "ws://localhost:8765"
     @AppStorage("continuousListening") var continuousListening: Bool = false
     @AppStorage("autoSpeak") var autoSpeak: Bool = true
+    @AppStorage("speechEngineRaw") private var speechEngineRaw: String = SpeechEngine.appleDictation.rawValue
+    @AppStorage("voiceOutputEngineRaw") private var voiceOutputEngineRaw: String = VoiceOutputEngine.macOS.rawValue
+    @Published var speechEngine: SpeechEngine {
+        didSet {
+            speechEngineRaw = speechEngine.rawValue
+        }
+    }
+
+    var voiceOutputEngine: VoiceOutputEngine {
+        get { VoiceOutputEngine(rawValue: voiceOutputEngineRaw) ?? .macOS }
+        set { voiceOutputEngineRaw = newValue.rawValue }
+    }
+
     @Published var claudeAPIKey: String = ""
     @Published var openAIKey: String = ""
     @Published var grokAPIKey: String = ""
@@ -144,6 +163,9 @@ final class AppSettings: ObservableObject {
     @Published var showSettings = false
 
     init() {
+        let persistedSpeechEngine = SpeechEngine(storedValue: speechEngineRaw) ?? .appleDictation
+        _speechEngine = Published(initialValue: persistedSpeechEngine)
+        speechEngineRaw = persistedSpeechEngine.rawValue
         loadAPIKeys()
     }
 
@@ -207,8 +229,4 @@ final class AppSettings: ObservableObject {
     }
 }
 
-struct AudioDevice: Identifiable, Hashable {
-    let id: String
-    let name: String
-    let isAirPodsMax: Bool
-}
+// AudioDevice is defined in SpeechManager.swift

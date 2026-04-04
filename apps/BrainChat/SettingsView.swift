@@ -18,17 +18,29 @@ struct SettingsView: View {
             .tabItem { Label("General", systemImage: "gear") }
 
             Form {
-                Picker("Voice", selection: $settings.voiceName) {
-                    ForEach(voiceManager.availableVoices) { voice in
-                        Text(voice.name).tag(voice.name)
+                Section("Voice Output Engine") {
+                    HStack {
+                        Text("TTS Engine")
+                        Spacer()
+                        VoiceOutputSelector()
                     }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Text-to-speech engine selector")
                 }
-                .onChange(of: settings.voiceName) { _, newValue in voiceManager.selectVoice(named: newValue) }
 
-                Slider(value: $settings.speechRate, in: 100...250, step: 5) { Text("Speech Rate") }
-                    .onChange(of: settings.speechRate) { _, newValue in voiceManager.speechRate = Float(newValue) }
+                Section("Voice Settings") {
+                    Picker("Voice", selection: $settings.voiceName) {
+                        ForEach(voiceManager.availableVoices) { voice in
+                            Text(voice.name).tag(voice.name)
+                        }
+                    }
+                    .onChange(of: settings.voiceName) { _, newValue in voiceManager.selectVoice(named: newValue) }
 
-                Button("Test Voice") { voiceManager.speakImmediately("Brain Chat voice bridge is ready.") }
+                    Slider(value: $settings.speechRate, in: 100...250, step: 5) { Text("Speech Rate") }
+                        .onChange(of: settings.speechRate) { _, newValue in voiceManager.speechRate = Float(newValue) }
+
+                    Button("Test Voice") { voiceManager.speakImmediately("Brain Chat voice bridge is ready.") }
+                }
             }
             .formStyle(.grouped)
             .tabItem { Label("Voice", systemImage: "waveform") }
