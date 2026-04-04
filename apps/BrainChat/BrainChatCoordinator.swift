@@ -145,7 +145,7 @@ final class BrainChatCoordinator {
         sendUserMessage(transcript)
     }
 
-    func runCopilotWorkflow(prompt: String, completion: @escaping (AssistantResponse) -> Void) {
+    func runCopilotWorkflow(prompt: String, completion: @escaping @Sendable (AssistantResponse) -> Void) {
         store.addMessage(role: .user, content: prompt)
         store.isProcessing = true
         codeAssistant.process(prompt) { [weak self] response in

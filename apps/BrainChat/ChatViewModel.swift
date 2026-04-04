@@ -1,4 +1,5 @@
 import Combine
+import AppKit
 import SwiftUI
 
 enum ChatMode {
@@ -33,6 +34,7 @@ final class ChatViewModel: ObservableObject {
     private let copilotBridge: CopilotBridge
     private let layeredManager: LayeredResponseManager
     private var speechManager: SpeechManager?
+    private var hasAnnouncedStreaming = false
 
     // MARK: - Cancellables
     private var cancellables = Set<AnyCancellable>()
@@ -106,6 +108,7 @@ final class ChatViewModel: ObservableObject {
     func clearConversation() {
         store?.clear()
         layeredMessageStore.clear()
+        announce("Conversation cleared")
     }
 
     // MARK: - Actions
@@ -118,6 +121,7 @@ final class ChatViewModel: ObservableObject {
             speechManager.stopListening()
             voiceManager?.speak("Mic muted")
             store.addMessage(role: .system, content: "🔇 Microphone muted")
+            announce("Microphone muted")
             return
         }
 
@@ -129,6 +133,7 @@ final class ChatViewModel: ObservableObject {
                     speechManager.startListening()
                     self.voiceManager?.speak("Mic is live")
                     store.addMessage(role: .system, content: "🎤 Microphone is now LIVE - speak anytime")
+                    self.announce("Microphone live")
                 } else {
                     let message = "⚠️ Microphone permission denied. Enable in System Settings > Privacy & Security > Microphone"
                     self.error = message
@@ -159,6 +164,7 @@ final class ChatViewModel: ObservableObject {
             yoloMode: llmRouter.yoloMode
         )
         let assistantMessageID = store.beginStreamingAssistantMessage()
+        hasAnnouncedStreaming = false
         updateProcessing(true)
         currentMode = yolo.isActive ? .yolo : .chat
 
@@ -181,6 +187,10 @@ final class ChatViewModel: ObservableObject {
                 case .reset:
                     store.replaceMessageContent(id: assistantMessageID, content: "")
                 case .delta(let delta):
+                    if !self.hasAnnouncedStreaming, !delta.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        self.hasAnnouncedStreaming = true
+                        self.announce("Response streaming")
+                    }
                     store.appendToMessage(id: assistantMessageID, delta: delta)
                 }
                 self.isProcessing = store.isProcessing
@@ -293,7 +303,8 @@ final class ChatViewModel: ObservableObject {
             systemPrompt: configuration.effectiveSystemPrompt
         )
         let layeredState = layeredMessageStore.getOrCreate(for: assistantMessageID)
-        var spokenInstant = false
+        nonisolated(unsafe) var spokenInstant = false
+        hasAnnouncedStreaming = false
 
         let response = await layeredManager.getLayeredResponse(
             messages: messages,
@@ -307,6 +318,10 @@ final class ChatViewModel: ObservableObject {
                 case .layerDelta(let chunk):
                     switch chunk.layer {
                     case .instant:
+                        if !self.hasAnnouncedStreaming, !chunk.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            self.hasAnnouncedStreaming = true
+                            self.announce("Response streaming")
+                        }
                         layeredState.appendInstant(chunk.content)
                         store.replaceMessageContent(id: assistantMessageID, content: layeredState.instantText)
                     case .fastLocal:
@@ -316,6 +331,7 @@ final class ChatViewModel: ObservableObject {
                     }
                 case .deepThinkingStarted:
                     layeredState.setThinkingDeeper(true)
+                    self.announce("Thinking deeper")
                     if settings.autoSpeak, !layeredState.instantText.isEmpty, !spokenInstant {
                         spokenInstant = true
                         self.voiceManager?.speak(layeredState.instantText)
@@ -323,6 +339,7 @@ final class ChatViewModel: ObservableObject {
                 case .enhancedResponseReady(let deepText):
                     layeredState.setDeepResponse(deepText)
                     store.replaceMessageContent(id: assistantMessageID, content: deepText)
+                    self.announce("Enhanced response available")
                     if settings.autoSpeak, spokenInstant {
                         self.voiceManager?.speak("Let me add to that. " + String(deepText.prefix(400)))
                     }
@@ -421,6 +438,7 @@ final class ChatViewModel: ObservableObject {
         }
 
         let messageID = store.beginStreamingMessage(role: .copilot)
+        hasAnnouncedStreaming = false
         updateProcessing(true)
         updateCopilotSessionState(active: true, status: "Copilot thinking")
 
@@ -430,6 +448,10 @@ final class ChatViewModel: ObservableObject {
                 onDelta: { [weak self] delta in
                     guard let self else { return }
                     Task { @MainActor in
+                        if !self.hasAnnouncedStreaming, !delta.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            self.hasAnnouncedStreaming = true
+                            self.announce("Copilot response streaming")
+                        }
                         store.appendToMessage(id: messageID, delta: delta)
                         self.isProcessing = store.isProcessing
                     }
@@ -477,6 +499,7 @@ final class ChatViewModel: ObservableObject {
         guard let store else { return }
 
         let messageID = store.beginStreamingMessage(role: .copilot)
+        hasAnnouncedStreaming = false
         updateProcessing(true)
         updateCopilotSessionState(
             active: copilotBridge.isSessionActive,
@@ -489,6 +512,10 @@ final class ChatViewModel: ObservableObject {
             onDelta: { [weak self] delta in
                 guard let self else { return }
                 Task { @MainActor in
+                    if !self.hasAnnouncedStreaming, !delta.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        self.hasAnnouncedStreaming = true
+                        self.announce("Copilot response streaming")
+                    }
                     store.appendToMessage(id: messageID, delta: delta)
                     self.isProcessing = store.isProcessing
                 }
@@ -568,6 +595,15 @@ final class ChatViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        settings.$voiceOutputEngine
+            .sink { [weak self] engine in
+                guard let self else { return }
+                Task { @MainActor in
+                    self.voiceManager?.setOutputEngine(engine)
+                }
+            }
+            .store(in: &cancellables)
+
         llmRouter.$yoloMode
             .sink { [weak self] enabled in
                 guard let self else { return }
@@ -605,11 +641,26 @@ final class ChatViewModel: ObservableObject {
         guard let settings, let speechManager else { return }
         voiceManager?.selectVoice(named: settings.voiceName)
         voiceManager?.speechRate = Float(settings.speechRate)
+        voiceManager?.setOutputEngine(settings.voiceOutputEngine)
+        voiceManager?.refreshEngineStatus()
         speechManager.setEngine(settings.speechEngine)
         speechManager.setOpenAIKey(settings.openAIKey)
+
+        // Route SystemCommands.speak() through VoiceManager so CodeAssistant,
+        // YoloMode, and YoloExecutor respect the selected TTS engine.
+        if let vm = voiceManager {
+            SystemCommands.shared.registerSpeechDelegate { text in
+                Task { @MainActor in
+                    vm.speak(text)
+                }
+            }
+        }
     }
 
     private func updateProcessing(_ processing: Bool) {
+        if processing, !isProcessing {
+            announce("Loading response")
+        }
         store?.isProcessing = processing
         isProcessing = processing
     }
@@ -747,8 +798,23 @@ final class ChatViewModel: ObservableObject {
     }
 
     private func updateCopilotSessionState(active: Bool, status: String) {
+        if copilotStatusText != status {
+            announce(status)
+        }
         isCopilotSessionActive = active
         copilotStatusText = status
+    }
+
+    private func announce(_ message: String, priority: Int = 50) {
+        guard !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        NSAccessibility.post(
+            element: NSApp as Any,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: message,
+                .priority: priority
+            ]
+        )
     }
 
     private func friendlyErrorMessage(for error: Error, context: String) -> String {

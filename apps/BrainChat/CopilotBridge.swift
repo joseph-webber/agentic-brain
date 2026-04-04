@@ -269,7 +269,7 @@ final class CopilotBridge: @unchecked Sendable {
         return nil
     }
 
-    func execute(prompt: String, completion: @escaping (Result<CopilotResponse, Error>) -> Void) {
+    func execute(prompt: String, completion: @escaping @Sendable (Result<CopilotResponse, Error>) -> Void) {
         commandQueue.async { [weak self] in
             guard let self else { return }
             guard !self.isExecuting else {
@@ -318,8 +318,8 @@ final class CopilotBridge: @unchecked Sendable {
     func executeOneShot(
         mode: CopilotCommandMode,
         prompt: String,
-        onDelta: ((String) -> Void)? = nil,
-        completion: @escaping (Result<CopilotResponse, Error>) -> Void
+        onDelta: (@Sendable (String) -> Void)? = nil,
+        completion: @escaping @Sendable (Result<CopilotResponse, Error>) -> Void
     ) {
         commandQueue.async { [weak self] in
             guard let self else { return }

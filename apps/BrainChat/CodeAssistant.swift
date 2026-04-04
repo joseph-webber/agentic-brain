@@ -136,7 +136,7 @@ enum SystemAction {
 protocol CopilotExecuting {
     var isAvailable: Bool { get }
     var isBusy: Bool { get }
-    func execute(prompt: String, completion: @escaping (Result<CopilotResponse, Error>) -> Void)
+    func execute(prompt: String, completion: @escaping @Sendable (Result<CopilotResponse, Error>) -> Void)
     func cancelCurrent()
 }
 
@@ -193,7 +193,7 @@ final class CodeAssistant: @unchecked Sendable {
         return score >= 6 ? .copilot : .general
     }
 
-    func process(_ message: String, completion: @escaping (AssistantResponse) -> Void) {
+    func process(_ message: String, completion: @escaping @Sendable (AssistantResponse) -> Void) {
         let route = detectRoute(for: message)
         let started = Date()
         switch route {
@@ -224,7 +224,7 @@ final class CodeAssistant: @unchecked Sendable {
         }
     }
 
-    private func handleCopilot(_ message: String, started: Date, completion: @escaping (AssistantResponse) -> Void) {
+    private func handleCopilot(_ message: String, started: Date, completion: @escaping @Sendable (AssistantResponse) -> Void) {
         system.speak("Sending to Copilot", voice: "Karen (Premium)", rate: 155)
         copilot.execute(prompt: message) { [weak self] result in
             switch result {
@@ -240,7 +240,7 @@ final class CodeAssistant: @unchecked Sendable {
         }
     }
 
-    private func handleSystem(_ message: String, started: Date, completion: @escaping (AssistantResponse) -> Void) {
+    private func handleSystem(_ message: String, started: Date, completion: @escaping @Sendable (AssistantResponse) -> Void) {
         let action = matchSystemAction(message.lowercased())
 
         // Route voice coding commands to VoiceCodingEngine
@@ -314,7 +314,7 @@ final class CodeAssistant: @unchecked Sendable {
         completion(AssistantResponse(text: resultText, route: .system, duration: Date().timeIntervalSince(started), codeBlocks: []))
     }
 
-    private func handleGeneral(_ message: String, started: Date, completion: @escaping (AssistantResponse) -> Void) {
+    private func handleGeneral(_ message: String, started: Date, completion: @escaping @Sendable (AssistantResponse) -> Void) {
         guard let handler = generalAIHandlerBox else {
             handleCopilot(message, started: started, completion: completion)
             return

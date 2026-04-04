@@ -4,7 +4,7 @@ import Combine
 import CoreAudio
 import Foundation
 
-final class AudioPlayer: ObservableObject {
+final class AudioPlayer: ObservableObject, @unchecked Sendable {
     struct OutputRoute: Equatable {
         let name: String
         let isAirPods: Bool
