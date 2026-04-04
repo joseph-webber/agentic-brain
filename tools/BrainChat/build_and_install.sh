@@ -9,8 +9,24 @@ APP_BUNDLE="$BUILD_DIR/$APP_NAME.app"
 CONTENTS_DIR="$APP_BUNDLE/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 APPLICATIONS_APP="/Applications/$APP_NAME.app"
+ENTITLEMENTS="$SCRIPT_DIR/entitlements.plist"
+
+# Find Developer ID Application certificate for code signing
+DEVELOPER_ID=$(security find-identity -v -p codesigning 2>/dev/null | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)"/\1/' || true)
+
+if [ -z "$DEVELOPER_ID" ]; then
+    # Fallback to Apple Development if no Developer ID
+    DEVELOPER_ID=$(security find-identity -v -p codesigning 2>/dev/null | grep "Apple Development" | head -1 | sed 's/.*"\(.*\)"/\1/' || true)
+fi
+
+if [ -n "$DEVELOPER_ID" ]; then
+    echo "✅ Found signing identity: $DEVELOPER_ID"
+else
+    echo "⚠️  No code signing identity found - app will be unsigned"
+fi
 
 mkdir -p "$MACOS_DIR"
+mkdir -p "$CONTENTS_DIR/Resources"
 
 # Snapshot BrainChat.swift to avoid mid-build mutations from other processes.
 SNAPSHOT="$BUILD_DIR/BrainChat_snapshot.swift"
@@ -79,9 +95,43 @@ swiftc \
   -o "$MACOS_DIR/$EXECUTABLE_NAME"
 
 cp "$SCRIPT_DIR/Info.plist" "$CONTENTS_DIR/Info.plist"
+cp "$SCRIPT_DIR/BrainChat.sdef" "$CONTENTS_DIR/Resources/BrainChat.sdef"
 chmod +x "$MACOS_DIR/$EXECUTABLE_NAME"
+
+# Code sign the app bundle before copying to Applications
+if [ -n "$DEVELOPER_ID" ]; then
+    echo "🔏 Signing app with: $DEVELOPER_ID"
+    
+    # Sign with entitlements for microphone, network, etc.
+    codesign --force --deep --options runtime \
+        --entitlements "$ENTITLEMENTS" \
+        --sign "$DEVELOPER_ID" \
+        "$APP_BUNDLE"
+    
+    echo "🔍 Verifying signature..."
+    codesign --verify --verbose "$APP_BUNDLE"
+    
+    # Check Gatekeeper assessment
+    if spctl --assess --verbose "$APP_BUNDLE" 2>&1; then
+        echo "✅ Gatekeeper: App is properly signed"
+    else
+        echo "⚠️  Gatekeeper check failed (may need notarization for distribution)"
+    fi
+fi
+
 rm -rf "$APPLICATIONS_APP"
 ditto "$APP_BUNDLE" "$APPLICATIONS_APP"
+
+# Re-sign in Applications folder if we have a signing identity
+if [ -n "$DEVELOPER_ID" ]; then
+    echo "🔏 Signing installed app..."
+    codesign --force --deep --options runtime \
+        --entitlements "$ENTITLEMENTS" \
+        --sign "$DEVELOPER_ID" \
+        "$APPLICATIONS_APP"
+    
+    echo "✅ Code signing complete"
+fi
 
 echo "Built: $APP_BUNDLE"
 echo "Installed: $APPLICATIONS_APP"

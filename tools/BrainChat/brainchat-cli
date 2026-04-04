@@ -1,0 +1,85 @@
+#!/bin/bash
+# BrainChat CLI - AppleScript-friendly command interface
+# Usage: brainchat-cli <command> [args...]
+
+APP_PATH="/Applications/Brain Chat.app"
+DEFAULTS_DOMAIN="com.irislumina.brainchat"
+
+case "$1" in
+    get-mode)
+        defaults read "$DEFAULTS_DOMAIN" "brainchat.current_mode" 2>/dev/null || echo "chat"
+        ;;
+    set-mode)
+        if [ -z "$2" ]; then
+            echo "Usage: brainchat-cli set-mode <chat|code|terminal|yolo|voice|work>"
+            exit 1
+        fi
+        defaults write "$DEFAULTS_DOMAIN" "brainchat.current_mode" "$2"
+        echo "Mode set to $2"
+        ;;
+    list-modes)
+        echo "chat: General conversation with voice responses"
+        echo "code: Code assistance (explain / suggest / fix)"
+        echo "terminal: Shell command help — prefix ! to execute"
+        echo "yolo: Autonomous task execution via brain.yolo.commands"
+        echo "voice: Short voice-optimised responses for hands-free use"
+        echo "work: CITB professional mode: JIRA, PRs, formal tone"
+        ;;
+    speak)
+        shift
+        TEXT="$*"
+        say -v "Karen (Premium)" "$TEXT" 2>/dev/null || say -v Karen "$TEXT"
+        ;;
+    status)
+        if pgrep -x "BrainChat" > /dev/null; then
+            echo "Brain Chat is running"
+            echo "Mode: $(defaults read "$DEFAULTS_DOMAIN" "brainchat.current_mode" 2>/dev/null || echo 'chat')"
+        else
+            echo "Brain Chat is not running"
+        fi
+        ;;
+    start)
+        open -a "Brain Chat"
+        echo "Brain Chat started"
+        ;;
+    quit)
+        osascript -e 'tell application "Brain Chat" to quit' 2>/dev/null
+        echo "Brain Chat quit"
+        ;;
+    send)
+        shift
+        MESSAGE="$*"
+        # Use Ollama directly for CLI queries
+        curl -s http://localhost:11434/api/chat \
+            -d "{\"model\":\"llama3.2:3b\",\"messages\":[{\"role\":\"user\",\"content\":\"$MESSAGE\"}],\"stream\":false}" \
+            2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('message',{}).get('content',''))" 2>/dev/null
+        ;;
+    health)
+        echo "Brain Chat Health Check"
+        echo "======================="
+        echo "App Running: $(pgrep -x 'BrainChat' > /dev/null && echo 'Yes' || echo 'No')"
+        echo "Mode: $(defaults read "$DEFAULTS_DOMAIN" "brainchat.current_mode" 2>/dev/null || echo 'chat')"
+        echo "Ollama: $(curl -s http://localhost:11434/api/tags > /dev/null 2>&1 && echo 'Running' || echo 'Not Running')"
+        echo "Redpanda: $(curl -s http://localhost:9092 > /dev/null 2>&1 && echo 'Running' || echo 'Not Running')"
+        ;;
+    help|--help|-h)
+        echo "BrainChat CLI - AppleScript-friendly command interface"
+        echo ""
+        echo "Commands:"
+        echo "  get-mode           Get current chat mode"
+        echo "  set-mode <mode>    Set chat mode (chat, code, terminal, yolo, voice, work)"
+        echo "  list-modes         List all available modes"
+        echo "  speak <text>       Speak text using Karen voice"
+        echo "  status             Get app status"
+        echo "  start              Start Brain Chat app"
+        echo "  quit               Quit Brain Chat app"
+        echo "  send <message>     Send message to LLM and get response"
+        echo "  health             Run health check"
+        echo "  help               Show this help"
+        ;;
+    *)
+        echo "Unknown command: $1"
+        echo "Use 'brainchat-cli help' for usage"
+        exit 1
+        ;;
+esac
