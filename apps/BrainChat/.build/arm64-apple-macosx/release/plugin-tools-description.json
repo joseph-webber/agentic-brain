@@ -136,6 +136,14 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMOrchestrator.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMOrchestratorView.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMRouter.swift"
         },
         {
@@ -310,6 +318,8 @@
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GeminiClient.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GrokClient.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GroqClient.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMOrchestrator.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMOrchestratorView.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMRouter.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMSelector.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LayeredResponseManager.swift.o",
@@ -363,7 +373,6 @@
         "-entry-point-function-name",
         "-Xfrontend",
         "BrainChatLib_main",
-        "-color-diagnostics",
         "-swift-version",
         "5",
         "-plugin-path",
@@ -501,6 +510,14 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GroqClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMOrchestrator.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMOrchestratorView.swift.o"
         },
         {
           "kind" : "file",
@@ -672,6 +689,8 @@
         "/Users/joe/brain/agentic-brain/apps/BrainChat/GeminiClient.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/GrokClient.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/GroqClient.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMOrchestrator.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMOrchestratorView.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMRouter.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMSelector.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/LayeredResponseManager.swift",
@@ -759,7 +778,6 @@
         "-emit-objc-header",
         "-emit-objc-header-path",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatPackageTests.build/include/BrainChatPackageTests-Swift.h",
-        "-color-diagnostics",
         "-plugin-path",
         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
         "-sdk",
@@ -967,7 +985,6 @@
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/ModuleCache",
         "-parseable-output",
         "-parse-as-library",
-        "-color-diagnostics",
         "-swift-version",
         "5",
         "-plugin-path",
@@ -1168,6 +1185,8 @@
       "/Users/joe/brain/agentic-brain/apps/BrainChat/GeminiClient.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/GrokClient.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/GroqClient.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMOrchestrator.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMOrchestratorView.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMRouter.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMSelector.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/LayeredResponseManager.swift",
@@ -1221,7 +1240,6 @@
       "-entry-point-function-name",
       "-Xfrontend",
       "BrainChatLib_main",
-      "-color-diagnostics",
       "-swift-version",
       "5",
       "-plugin-path",
@@ -1282,7 +1300,6 @@
       "-emit-objc-header",
       "-emit-objc-header-path",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatPackageTests.build/include/BrainChatPackageTests-Swift.h",
-      "-color-diagnostics",
       "-plugin-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
       "-sdk",
@@ -1363,7 +1380,6 @@
       "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/ModuleCache",
       "-parseable-output",
       "-parse-as-library",
-      "-color-diagnostics",
       "-swift-version",
       "5",
       "-plugin-path",
@@ -1547,6 +1563,14 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GroqClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMOrchestrator.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMOrchestratorView.swift.o"
         },
         {
           "kind" : "file",
@@ -1797,6 +1821,14 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/GroqClient.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMOrchestrator.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/LLMOrchestratorView.swift"
         },
         {
           "kind" : "file",
@@ -2069,6 +2101,14 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/GroqClient.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMOrchestrator.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/LLMOrchestratorView.swift.o"
         },
         {
           "kind" : "file",

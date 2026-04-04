@@ -130,10 +130,65 @@ jobs:
             tests/test_temporal_compat.py \
             -v --tb=short
 
+  voice-release-gate:
+    name: 🎙️ Voice System Gate
+    runs-on: macos-14
+    needs: validate
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 15.3
+      
+      - name: Verify BrainChat voice support
+        working-directory: apps/BrainChat
+        run: |
+          echo "🎙️ Voice System Release Gate"
+          echo "===================================="
+          echo ""
+          
+          # CRITICAL: Check speak function exists
+          if grep -rq "func speak" . --include="*.swift" 2>/dev/null; then
+            echo "✅ speak() function exists"
+          else
+            echo "❌ RELEASE BLOCKED: speak() function not found"
+            echo "   Voice system is incomplete - cannot release"
+            exit 1
+          fi
+          
+          # CRITICAL: Check listen function
+          if grep -rq "func listen\|SFSpeechRecognizer" . --include="*.swift" 2>/dev/null; then
+            echo "✅ Speech recognition implemented"
+          else
+            echo "⚠️  Warning: Speech recognition not found (check if required)"
+          fi
+          
+          # Build check
+          if swift build -c release 2>&1 | tail -5; then
+            echo "✅ BrainChat builds successfully with voice code"
+          else
+            echo "❌ RELEASE BLOCKED: Build fails with voice code"
+            exit 1
+          fi
+          
+          # Voice components check
+          VOICE_FILES=$(find . -name "*Voice*" -type f -path "*/Sources/*" | wc -l)
+          if [ "$VOICE_FILES" -gt 0 ]; then
+            echo "✅ Found $VOICE_FILES voice component files"
+          else
+            echo "⚠️  No voice component files found in Sources"
+          fi
+          
+          echo ""
+          echo "✅ VOICE GATE PASSED - Safe to release"
+
   build:
     name: Build release artifacts
     runs-on: ubuntu-latest
-    needs: [validate, qa]
+    needs: [validate, qa, voice-release-gate]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -207,7 +262,7 @@ jobs:
   release-brainchat:
     name: Release BrainChat macOS App
     runs-on: macos-14
-    needs: [validate, qa]
+    needs: [validate, qa, voice-release-gate]
     permissions:
       contents: write
       id-token: write

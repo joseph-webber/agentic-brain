@@ -28,5 +28,9 @@
     <string>Brain Chat needs microphone access so Joseph can speak voice commands to the brain.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>Brain Chat uses speech recognition to transcribe spoken commands before sending them to the brain.</string>
+    <key>NSAppleScriptEnabled</key>
+    <true/>
+    <key>OSAScriptingDefinition</key>
+    <string>BrainChat.sdef</string>
 </dict>
 </plist>

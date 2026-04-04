@@ -612,11 +612,164 @@ jobs:
             echo "::warning::$ANIMATION_ISSUES motion/animation accessibility issues found"
           fi
 
+  voice-integration-test:
+    name: "🎙️ Voice Integration Tests"
+    runs-on: ${{ env.MACOS_VERSION }}
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Verify voice components exist
+        working-directory: apps/BrainChat
+        run: |
+          echo "=== Voice Component Verification ==="
+          echo ""
+          
+          VOICE_FILES=0
+          
+          # Check for VoiceManager
+          if [ -f "Sources/Voice/VoiceManager.swift" ] || [ -f "VoiceManager.swift" ]; then
+            echo "✅ VoiceManager found"
+            VOICE_FILES=$((VOICE_FILES + 1))
+          else
+            echo "❌ VoiceManager.swift NOT FOUND - voice system incomplete"
+            exit 1
+          fi
+          
+          # Check for SpeechManager
+          if [ -f "Sources/Voice/SpeechManager.swift" ] || [ -f "SpeechManager.swift" ]; then
+            echo "✅ SpeechManager found"
+            VOICE_FILES=$((VOICE_FILES + 1))
+          else
+            echo "⚠️  SpeechManager.swift not found (optional)"
+          fi
+          
+          echo ""
+          echo "Voice files found: $VOICE_FILES"
+
+      - name: Verify speak() function
+        working-directory: apps/BrainChat
+        run: |
+          echo "🎤 Checking speak() implementation..."
+          
+          if grep -rq "func speak" Sources/ 2>/dev/null || grep -rq "func speak" . --include="*.swift" 2>/dev/null; then
+            echo "✅ speak() function implemented"
+          else
+            echo "❌ speak() function NOT FOUND - required for voice output"
+            exit 1
+          fi
+          
+          # Verify it uses AVSpeechSynthesizer
+          if grep -rq "AVSpeechSynthesizer\|speakUtterance" Sources/ 2>/dev/null || \
+             grep -rq "AVSpeechSynthesizer" . --include="*.swift" 2>/dev/null; then
+            echo "✅ Uses AVSpeechSynthesizer for TTS"
+          else
+            echo "⚠️  Consider using AVSpeechSynthesizer for TTS"
+          fi
+
+      - name: Verify listen() function
+        working-directory: apps/BrainChat
+        run: |
+          echo "👂 Checking listen() implementation..."
+          
+          if grep -rq "func listen" Sources/ 2>/dev/null || grep -rq "func listen" . --include="*.swift" 2>/dev/null; then
+            echo "✅ listen() function implemented"
+          else
+            echo "⚠️  listen() function not found (optional - may use different API)"
+          fi
+          
+          # Verify it uses SFSpeechRecognizer
+          if grep -rq "SFSpeechRecognizer" Sources/ 2>/dev/null || \
+             grep -rq "SFSpeechRecognizer" . --include="*.swift" 2>/dev/null; then
+            echo "✅ Uses SFSpeechRecognizer for speech recognition"
+          else
+            echo "⚠️  Consider using SFSpeechRecognizer for speech recognition"
+          fi
+
+      - name: Build with voice components
+        working-directory: apps/BrainChat
+        run: |
+          echo "🔨 Building with voice components..."
+          
+          if swift build -c release 2>&1 | tee build.log; then
+            echo "✅ Build successful with voice code"
+          else
+            echo "❌ Build failed - voice code has compilation errors"
+            echo ""
+            echo "=== Build errors ==="
+            grep -A 5 "error:" build.log || cat build.log | tail -30
+            exit 1
+          fi
+
+      - name: Verify voice permissions
+        working-directory: apps/BrainChat
+        run: |
+          echo "🔐 Checking voice permissions..."
+          
+          # Check for Microphone usage description
+          if grep -rq "NSMicrophoneUsageDescription\|Privacy - Microphone" . --include="*.plist" --include="*.swift" 2>/dev/null; then
+            echo "✅ Microphone permission declared"
+          else
+            echo "⚠️  Microphone permission may need declaration"
+          fi
+          
+          # Check for Speech Recognition permission
+          if grep -rq "NSSpeechRecognitionUsageDescription\|Privacy - Speech Recognition" . --include="*.plist" --include="*.swift" 2>/dev/null; then
+            echo "✅ Speech recognition permission declared"
+          else
+            echo "⚠️  Speech recognition permission may need declaration"
+          fi
+
+      - name: Run voice unit tests
+        working-directory: apps/BrainChat
+        run: |
+          echo "🧪 Running voice unit tests..."
+          
+          if swift test --filter "Voice" 2>&1 | tee voice-tests.log; then
+            echo "✅ Voice tests passed"
+          else
+            # Voice tests may not exist yet, that's OK
+            if grep -q "No tests matched" voice-tests.log; then
+              echo "⚠️  No voice tests found (optional)"
+            else
+              echo "❌ Voice tests failed"
+              cat voice-tests.log
+              exit 1
+            fi
+          fi
+
+      - name: Generate voice integration report
+        working-directory: apps/BrainChat
+        if: always()
+        run: |
+          echo "## 🎙️ Voice Integration Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Voice Components" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          [ -f "Sources/Voice/VoiceManager.swift" ] || [ -f "VoiceManager.swift" ] && echo "| VoiceManager | ✅ |" >> $GITHUB_STEP_SUMMARY || echo "| VoiceManager | ❌ |" >> $GITHUB_STEP_SUMMARY
+          [ -f "Sources/Voice/SpeechManager.swift" ] || [ -f "SpeechManager.swift" ] && echo "| SpeechManager | ✅ |" >> $GITHUB_STEP_SUMMARY || echo "| SpeechManager | ⚠️ |" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Voice Features" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎤 Text-to-Speech (speak)" >> $GITHUB_STEP_SUMMARY
+          echo "- 👂 Speech Recognition (listen)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔐 Microphone Permission" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎧 Audio Session Management" >> $GITHUB_STEP_SUMMARY
+
   accessibility-matrix:
     name: "Accessibility: A11y Testing Matrix"
     runs-on: ${{ env.MACOS_VERSION }}
     timeout-minutes: 20
-    needs: [accessibility-compliance, voiceover-interaction-test, accessibility-contrast-audit, accessibility-motion-test]
+    needs: [accessibility-compliance, voiceover-interaction-test, accessibility-contrast-audit, accessibility-motion-test, voice-integration-test]
 
     steps:
       - name: Checkout

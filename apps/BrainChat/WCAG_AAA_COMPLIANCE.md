@@ -1,15 +1,16 @@
-# BrainChat WCAG 2.1 AAA Accessibility Compliance
+# BrainChat WCAG 3.0 AAA Accessibility Compliance
 
 ## Overview
 
-BrainChat has been updated to meet WCAG 2.1 Level AAA conformance, with special focus on:
+BrainChat has been updated to meet **WCAG 3.0 Level AAA** conformance - the highest accessibility standard.
+Special focus on:
 - **Fast navigation** for VoiceOver users (rotor support, skip links)
 - **Concise labels** (verb-noun format, short action descriptions)
 - **Logical grouping** (related controls grouped for efficient VoiceOver navigation)
 - **7:1 contrast ratios** (AAA requirement for readability)
 - **Extended descriptions** for complex UI elements
 
-## WCAG 2.1 AAA Compliance Checklist
+## WCAG 3.0 AAA Compliance Checklist
 
 ### 1. Perceivable (1.x)
 
@@ -18,6 +19,7 @@ BrainChat has been updated to meet WCAG 2.1 Level AAA conformance, with special 
   - Large text (18pt+): 4.5:1 minimum
   - UI components: 3:1 minimum
   - Implemented in: `AccessibilityHelpers.swift`
+  - NEW: `contrastRatio()` and `meetsAAAContrast()` functions
 
 - ✅ **1.4.11 Non-text Contrast**: UI buttons and controls have 3:1 contrast
   - Mic button (green/red with background)

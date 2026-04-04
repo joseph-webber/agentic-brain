@@ -368,7 +368,6 @@ final class ChatViewModel: ObservableObject {
             systemPrompt: configuration.effectiveSystemPrompt
         )
         let layeredState = layeredMessageStore.getOrCreate(for: assistantMessageID)
-        nonisolated(unsafe) var spokenInstant = false
         hasAnnouncedStreaming = false
 
         let response = await layeredManager.getLayeredResponse(
@@ -391,9 +390,9 @@ final class ChatViewModel: ObservableObject {
                         store.replaceMessageContent(id: assistantMessageID, content: layeredState.instantText)
                         
                         // OPTIMIZATION: Start voice on FIRST chunk immediately (< 100ms)
-                        if settings.autoSpeak, !spokenInstant, !layeredState.instantText.isEmpty, 
+                        if settings.autoSpeak, !layeredState.spokenInstant, !layeredState.instantText.isEmpty, 
                            layeredState.instantText.count > 20 {  // Wait for meaningful content
-                            spokenInstant = true
+                            layeredState.spokenInstant = true
                             self.voiceManager?.speak(layeredState.instantText)
                         }
                     case .fastLocal:
@@ -404,15 +403,15 @@ final class ChatViewModel: ObservableObject {
                 case .deepThinkingStarted:
                     layeredState.setThinkingDeeper(true)
                     self.announce("Thinking deeper")
-                    if settings.autoSpeak, !layeredState.instantText.isEmpty, !spokenInstant {
-                        spokenInstant = true
+                    if settings.autoSpeak, !layeredState.instantText.isEmpty, !layeredState.spokenInstant {
+                        layeredState.spokenInstant = true
                         self.voiceManager?.speak(layeredState.instantText)
                     }
                 case .enhancedResponseReady(let deepText):
                     layeredState.setDeepResponse(deepText)
                     store.replaceMessageContent(id: assistantMessageID, content: deepText)
                     self.announce("Enhanced response available")
-                    if settings.autoSpeak, spokenInstant {
+                    if settings.autoSpeak, layeredState.spokenInstant {
                         self.voiceManager?.speak("Let me add to that. " + String(deepText.prefix(400)))
                     }
                 case .layerCompleted:
@@ -427,7 +426,7 @@ final class ChatViewModel: ObservableObject {
 
         store.finishStreamingMessage(id: assistantMessageID, fallbackContent: response)
         updateProcessing(false)
-        if settings.autoSpeak, !spokenInstant {
+        if settings.autoSpeak, !layeredState.spokenInstant {
             voiceManager?.speak(response)
         }
         currentMode = yolo.isActive ? .yolo : .chat
@@ -755,8 +754,35 @@ final class ChatViewModel: ObservableObject {
     }
 
     private func speakIfEnabled(_ text: String) {
-        guard settings?.autoSpeak == true else { return }
-        voiceManager?.speak(text)
+        // CRITICAL: Joseph is BLIND - always speak responses unless explicitly disabled
+        // Log for debugging
+        let autoSpeakEnabled = settings?.autoSpeak ?? true
+        let hasVoiceManager = voiceManager != nil
+        print("🔊 speakIfEnabled: autoSpeak=\(autoSpeakEnabled), hasVoiceManager=\(hasVoiceManager), text=\(text.prefix(50))...")
+        
+        // Default to speaking if settings not configured (accessibility first)
+        guard autoSpeakEnabled else { 
+            print("🔇 Speaking disabled by settings")
+            return 
+        }
+        
+        if let vm = voiceManager {
+            vm.speak(text)
+        } else {
+            // FALLBACK: Use system speech directly if VoiceManager not available
+            print("⚠️ VoiceManager nil, using system fallback")
+            speakWithSystemFallback(text)
+        }
+    }
+    
+    /// Emergency fallback speech for when VoiceManager is unavailable
+    private func speakWithSystemFallback(_ text: String) {
+        Task {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/say")
+            process.arguments = ["-v", "Karen", "-r", "180", text]
+            try? process.run()
+        }
     }
 
     private func presentSecurityMessage(_ message: String) {

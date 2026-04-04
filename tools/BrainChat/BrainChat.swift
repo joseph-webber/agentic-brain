@@ -118,13 +118,25 @@ final class LocalFallbackResponder {
 
 final class SpeechVoice {
     private var speakProcess: Process?
-    private let voiceName = "Karen (Premium)"
+    
+    /// Gets the current voice name from settings
+    private var voiceName: String {
+        let voice = VoiceSettings.currentVoice
+        // Try premium version first
+        return "\(voice.rawValue) (Premium)"
+    }
+    
+    /// Gets the current speech rate from settings
+    private var speechRate: Int {
+        VoiceSettings.speechRate
+    }
     
     init() {}
     
     func speak(_ text: String) {
         let cleanText = ANSIText.strip(text)
         guard !cleanText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard VoiceSettings.isEnabled else { return }  // Respect voice enabled setting
         
         // Kill any existing speech
         stopSpeaking()
@@ -132,7 +144,7 @@ final class SpeechVoice {
         // Use macOS 'say' command - much more reliable than AVSpeechSynthesizer
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/say")
-        process.arguments = ["-v", voiceName, "-r", "175", cleanText]
+        process.arguments = ["-v", voiceName, "-r", "\(speechRate)", cleanText]
         
         // Run in background so we don't block
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -141,10 +153,11 @@ final class SpeechVoice {
                 try process.run()
                 // Don't wait - let it play in background
             } catch {
-                // Fallback to default voice if Karen Premium not available
+                // Fallback to base voice if Premium not available
+                let baseVoice = VoiceSettings.currentVoice.rawValue
                 let fallbackProcess = Process()
                 fallbackProcess.executableURL = URL(fileURLWithPath: "/usr/bin/say")
-                fallbackProcess.arguments = ["-v", "Karen", "-r", "175", cleanText]
+                fallbackProcess.arguments = ["-v", baseVoice, "-r", "\(self?.speechRate ?? 175)", cleanText]
                 try? fallbackProcess.run()
             }
         }
@@ -709,6 +722,265 @@ enum LLMProvider: String, CaseIterable, Codable {
         case .ollama, .groq: return true
         case .claude, .gemini, .openai: return false
         }
+    }
+}
+
+// MARK: - Security Role System
+
+/// Security roles for controlling BrainChat capabilities.
+/// Based on 4-tier security model for accessibility-first AI assistants.
+enum SecurityRole: String, CaseIterable, Codable {
+    case developer = "developer"    // Full access, can modify system
+    case admin = "admin"            // Admin access, safe operations only
+    case user = "user"              // Standard user, limited capabilities  
+    case guest = "guest"            // Read-only, very limited access
+    
+    var displayName: String {
+        switch self {
+        case .developer: return "Developer"
+        case .admin:     return "Admin"
+        case .user:      return "User"
+        case .guest:     return "Guest"
+        }
+    }
+    
+    var accessibilityDescription: String {
+        switch self {
+        case .developer: return "Developer role. Full system access including code execution and configuration changes."
+        case .admin:     return "Admin role. Administrative access with safety guardrails."
+        case .user:      return "User role. Standard access for daily tasks."
+        case .guest:     return "Guest role. Read-only access with limited features."
+        }
+    }
+    
+    /// What capabilities this role allows
+    var allowsCodeExecution: Bool {
+        switch self {
+        case .developer: return true
+        case .admin:     return true
+        case .user:      return false
+        case .guest:     return false
+        }
+    }
+    
+    var allowsYOLOMode: Bool {
+        switch self {
+        case .developer: return true
+        case .admin:     return true
+        case .user:      return false
+        case .guest:     return false
+        }
+    }
+    
+    var allowsSystemCommands: Bool {
+        switch self {
+        case .developer: return true
+        case .admin:     return true
+        case .user:      return false
+        case .guest:     return false
+        }
+    }
+    
+    var allowsRAGStorage: Bool {
+        switch self {
+        case .developer, .admin, .user: return true
+        case .guest: return false
+        }
+    }
+    
+    var maxDailyQueries: Int {
+        switch self {
+        case .developer: return Int.max
+        case .admin:     return 10000
+        case .user:      return 1000
+        case .guest:     return 100
+        }
+    }
+}
+
+/// Persisted security role settings
+struct SecuritySettings {
+    private static let roleKey = "brainchat.security_role"
+    
+    static var currentRole: SecurityRole {
+        get {
+            if let raw = UserDefaults.standard.string(forKey: roleKey),
+               let role = SecurityRole(rawValue: raw) { return role }
+            return .developer  // Default to developer for Joseph
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: roleKey) }
+    }
+}
+
+// MARK: - Voice Engine Configuration
+
+/// Available voice engines for text-to-speech output.
+enum VoiceEngine: String, CaseIterable, Codable {
+    case systemSay = "say"              // macOS `say` command (most reliable)
+    case avSpeech = "avspeech"          // AVSpeechSynthesizer (native Swift)
+    case cartesia = "cartesia"          // Cartesia TTS API (ultra-fast)
+    case elevenLabs = "elevenlabs"      // ElevenLabs (high quality)
+    
+    var displayName: String {
+        switch self {
+        case .systemSay:  return "System Say"
+        case .avSpeech:   return "AV Speech"
+        case .cartesia:   return "Cartesia"
+        case .elevenLabs: return "Eleven Labs"
+        }
+    }
+    
+    var accessibilityDescription: String {
+        switch self {
+        case .systemSay:  return "Mac OS system say command. Most reliable for Voice Over users."
+        case .avSpeech:   return "Native A V Speech Synthesizer. Good quality, built-in."
+        case .cartesia:   return "Cartesia cloud T T S. Ultra-fast, low latency."
+        case .elevenLabs: return "Eleven Labs cloud T T S. Highest quality voices."
+        }
+    }
+    
+    var isLocal: Bool {
+        switch self {
+        case .systemSay, .avSpeech: return true
+        case .cartesia, .elevenLabs: return false
+        }
+    }
+    
+    var requiresAPIKey: Bool {
+        switch self {
+        case .systemSay, .avSpeech: return false
+        case .cartesia, .elevenLabs: return true
+        }
+    }
+}
+
+/// Available voice options for the selected engine
+enum VoiceOption: String, CaseIterable, Codable {
+    // System voices (macOS)
+    case karen = "Karen"                // Australian English (PREFERRED for Joseph)
+    case samantha = "Samantha"          // US English
+    case daniel = "Daniel"              // British English
+    case moira = "Moira"                // Irish English
+    case tessa = "Tessa"                // South African English
+    case fiona = "Fiona"                // Scottish English
+    case veena = "Veena"                // Indian English
+    
+    var displayName: String { rawValue }
+    
+    var accessibilityDescription: String {
+        switch self {
+        case .karen:    return "Karen. Australian English voice. Preferred for Joseph."
+        case .samantha: return "Samantha. American English voice."
+        case .daniel:   return "Daniel. British English voice."
+        case .moira:    return "Moira. Irish English voice."
+        case .tessa:    return "Tessa. South African English voice."
+        case .fiona:    return "Fiona. Scottish English voice."
+        case .veena:    return "Veena. Indian English voice."
+        }
+    }
+    
+    var locale: String {
+        switch self {
+        case .karen:    return "en-AU"
+        case .samantha: return "en-US"
+        case .daniel:   return "en-GB"
+        case .moira:    return "en-IE"
+        case .tessa:    return "en-ZA"
+        case .fiona:    return "en-SC"
+        case .veena:    return "en-IN"
+        }
+    }
+}
+
+/// Persisted voice settings
+struct VoiceSettings {
+    private static let engineKey = "brainchat.voice_engine"
+    private static let voiceKey = "brainchat.voice_option"
+    private static let rateKey = "brainchat.voice_rate"
+    private static let enabledKey = "brainchat.voice_enabled"
+    
+    static var currentEngine: VoiceEngine {
+        get {
+            if let raw = UserDefaults.standard.string(forKey: engineKey),
+               let engine = VoiceEngine(rawValue: raw) { return engine }
+            return .systemSay  // Default to most reliable
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: engineKey) }
+    }
+    
+    static var currentVoice: VoiceOption {
+        get {
+            if let raw = UserDefaults.standard.string(forKey: voiceKey),
+               let voice = VoiceOption(rawValue: raw) { return voice }
+            return .karen  // Default to Karen for Joseph
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: voiceKey) }
+    }
+    
+    static var speechRate: Int {
+        get { 
+            let rate = UserDefaults.standard.integer(forKey: rateKey)
+            return rate > 0 ? rate : 175  // Default 175 WPM
+        }
+        set { UserDefaults.standard.set(newValue, forKey: rateKey) }
+    }
+    
+    static var isEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
+    }
+}
+
+// MARK: - Dictation Engine Configuration
+
+/// Available dictation/speech recognition engines
+enum DictationEngine: String, CaseIterable, Codable {
+    case apple = "apple"          // Apple SFSpeechRecognizer (default)
+    case whisper = "whisper"      // OpenAI Whisper (local or API)
+    case deepgram = "deepgram"    // Deepgram API (fast, accurate)
+    
+    var displayName: String {
+        switch self {
+        case .apple:    return "Apple Speech"
+        case .whisper:  return "Whisper"
+        case .deepgram: return "Deepgram"
+        }
+    }
+    
+    var accessibilityDescription: String {
+        switch self {
+        case .apple:    return "Apple Speech Recognition. Built-in, works offline."
+        case .whisper:  return "Open A I Whisper. High accuracy, supports many languages."
+        case .deepgram: return "Deepgram. Real-time transcription, very fast."
+        }
+    }
+    
+    var isLocal: Bool {
+        switch self {
+        case .apple: return true
+        case .whisper: return true  // Can run locally with Whisper.cpp
+        case .deepgram: return false
+        }
+    }
+}
+
+/// Persisted dictation settings
+struct DictationSettings {
+    private static let engineKey = "brainchat.dictation_engine"
+    private static let localeKey = "brainchat.dictation_locale"
+    
+    static var currentEngine: DictationEngine {
+        get {
+            if let raw = UserDefaults.standard.string(forKey: engineKey),
+               let engine = DictationEngine(rawValue: raw) { return engine }
+            return .apple  // Default to Apple
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: engineKey) }
+    }
+    
+    static var locale: String {
+        get { UserDefaults.standard.string(forKey: localeKey) ?? "en-AU" }
+        set { UserDefaults.standard.set(newValue, forKey: localeKey) }
     }
 }
 
@@ -2944,6 +3216,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let statusLabel = NSTextField(labelWithString: "Starting Brain Chat…")
     private let transcriptView = NSTextView()
     private let scrollView = NSScrollView()
+    
+    // Settings dropdowns
+    private let llmProviderDropdown = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let voiceEngineDropdown = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let voiceOptionDropdown = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let securityRoleDropdown = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let dictationEngineDropdown = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let chatModeDropdown = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let llmModeDropdown = NSPopUpButton(frame: .zero, pullsDown: false)
 
     private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en_AU"))
     private let audioEngine = AVAudioEngine()
@@ -3002,13 +3283,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupWindow() {
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 820, height: 560),
+            contentRect: NSRect(x: 0, y: 0, width: 900, height: 700),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.title = "Brain Chat"
-        window.minSize = NSSize(width: 720, height: 480)
+        window.minSize = NSSize(width: 800, height: 600)
         window.center()
 
         let contentView = NSView(frame: window.contentView?.bounds ?? .zero)
@@ -3017,24 +3298,153 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let titleLabel = NSTextField(labelWithString: "Brain Chat")
         titleLabel.font = NSFont.systemFont(ofSize: 32, weight: .bold)
-        titleLabel.frame = NSRect(x: 40, y: 490, width: 300, height: 40)
+        titleLabel.frame = NSRect(x: 40, y: 640, width: 300, height: 40)
         titleLabel.setAccessibilityLabel("Brain Chat")
         contentView.addSubview(titleLabel)
 
         modeBadgeLabel.font = NSFont.systemFont(ofSize: 13, weight: .medium)
-        modeBadgeLabel.frame = NSRect(x: 580, y: 496, width: 200, height: 20)
+        modeBadgeLabel.frame = NSRect(x: 650, y: 646, width: 200, height: 20)
         modeBadgeLabel.alignment = .right
         modeBadgeLabel.stringValue = "\(currentMode.displayName) Mode"
         modeBadgeLabel.setAccessibilityLabel("Current mode: \(currentMode.displayName)")
         contentView.addSubview(modeBadgeLabel)
 
-        let instructionsLabel = NSTextField(wrappingLabelWithString: "Accessible voice chat for Joseph. Press Enter on the big button, speak your command, and Brain Chat will send it to Redpanda or answer locally if the broker is unavailable.")
-        instructionsLabel.font = NSFont.systemFont(ofSize: 17)
-        instructionsLabel.frame = NSRect(x: 40, y: 430, width: 740, height: 50)
+        // MARK: - Settings Row 1: LLM Provider, LLM Mode, Chat Mode
+        let settingsY1: CGFloat = 590
+        let dropdownWidth: CGFloat = 140
+        let labelHeight: CGFloat = 18
+        let dropdownHeight: CGFloat = 26
+        
+        // LLM Provider dropdown
+        let llmProviderLabel = NSTextField(labelWithString: "LLM Provider:")
+        llmProviderLabel.font = NSFont.systemFont(ofSize: 12, weight: .medium)
+        llmProviderLabel.frame = NSRect(x: 40, y: settingsY1 + dropdownHeight + 2, width: dropdownWidth, height: labelHeight)
+        contentView.addSubview(llmProviderLabel)
+        
+        llmProviderDropdown.frame = NSRect(x: 40, y: settingsY1, width: dropdownWidth, height: dropdownHeight)
+        llmProviderDropdown.removeAllItems()
+        for provider in LLMProvider.allCases {
+            llmProviderDropdown.addItem(withTitle: provider.displayName)
+        }
+        llmProviderDropdown.selectItem(withTitle: LLMProvider.ollama.displayName) // Default to Ollama (local)
+        llmProviderDropdown.target = self
+        llmProviderDropdown.action = #selector(llmProviderChanged)
+        llmProviderDropdown.setAccessibilityLabel("LLM Provider. Select which AI model to use.")
+        contentView.addSubview(llmProviderDropdown)
+        
+        // LLM Mode dropdown (Single, Multi-Bot, Consensus)
+        let llmModeLabel = NSTextField(labelWithString: "LLM Mode:")
+        llmModeLabel.font = NSFont.systemFont(ofSize: 12, weight: .medium)
+        llmModeLabel.frame = NSRect(x: 200, y: settingsY1 + dropdownHeight + 2, width: dropdownWidth, height: labelHeight)
+        contentView.addSubview(llmModeLabel)
+        
+        llmModeDropdown.frame = NSRect(x: 200, y: settingsY1, width: dropdownWidth, height: dropdownHeight)
+        llmModeDropdown.removeAllItems()
+        for mode in LLMMode.allCases {
+            llmModeDropdown.addItem(withTitle: mode.displayName)
+        }
+        llmModeDropdown.selectItem(at: 0) // Single LLM
+        llmModeDropdown.target = self
+        llmModeDropdown.action = #selector(llmModeChanged)
+        llmModeDropdown.setAccessibilityLabel("LLM Mode. Single, Multi-Bot, or Consensus.")
+        contentView.addSubview(llmModeDropdown)
+        
+        // Chat Mode dropdown
+        let chatModeLabel = NSTextField(labelWithString: "Chat Mode:")
+        chatModeLabel.font = NSFont.systemFont(ofSize: 12, weight: .medium)
+        chatModeLabel.frame = NSRect(x: 360, y: settingsY1 + dropdownHeight + 2, width: dropdownWidth, height: labelHeight)
+        contentView.addSubview(chatModeLabel)
+        
+        chatModeDropdown.frame = NSRect(x: 360, y: settingsY1, width: dropdownWidth, height: dropdownHeight)
+        chatModeDropdown.removeAllItems()
+        for mode in ChatMode.allCases {
+            chatModeDropdown.addItem(withTitle: mode.displayName)
+        }
+        chatModeDropdown.selectItem(withTitle: currentMode.displayName)
+        chatModeDropdown.target = self
+        chatModeDropdown.action = #selector(chatModeChanged)
+        chatModeDropdown.setAccessibilityLabel("Chat Mode. Changes how Brain Chat responds.")
+        contentView.addSubview(chatModeDropdown)
+        
+        // Security Role dropdown
+        let securityLabel = NSTextField(labelWithString: "Security Role:")
+        securityLabel.font = NSFont.systemFont(ofSize: 12, weight: .medium)
+        securityLabel.frame = NSRect(x: 520, y: settingsY1 + dropdownHeight + 2, width: dropdownWidth, height: labelHeight)
+        contentView.addSubview(securityLabel)
+        
+        securityRoleDropdown.frame = NSRect(x: 520, y: settingsY1, width: dropdownWidth, height: dropdownHeight)
+        securityRoleDropdown.removeAllItems()
+        for role in SecurityRole.allCases {
+            securityRoleDropdown.addItem(withTitle: role.displayName)
+        }
+        securityRoleDropdown.selectItem(withTitle: SecuritySettings.currentRole.displayName)
+        securityRoleDropdown.target = self
+        securityRoleDropdown.action = #selector(securityRoleChanged)
+        securityRoleDropdown.setAccessibilityLabel("Security Role. Controls what actions are allowed.")
+        contentView.addSubview(securityRoleDropdown)
+
+        // MARK: - Settings Row 2: Voice Engine, Voice, Dictation Engine
+        let settingsY2: CGFloat = 530
+        
+        // Voice Engine dropdown
+        let voiceEngineLabel = NSTextField(labelWithString: "Voice Engine:")
+        voiceEngineLabel.font = NSFont.systemFont(ofSize: 12, weight: .medium)
+        voiceEngineLabel.frame = NSRect(x: 40, y: settingsY2 + dropdownHeight + 2, width: dropdownWidth, height: labelHeight)
+        contentView.addSubview(voiceEngineLabel)
+        
+        voiceEngineDropdown.frame = NSRect(x: 40, y: settingsY2, width: dropdownWidth, height: dropdownHeight)
+        voiceEngineDropdown.removeAllItems()
+        for engine in VoiceEngine.allCases {
+            voiceEngineDropdown.addItem(withTitle: engine.displayName)
+        }
+        voiceEngineDropdown.selectItem(withTitle: VoiceSettings.currentEngine.displayName)
+        voiceEngineDropdown.target = self
+        voiceEngineDropdown.action = #selector(voiceEngineChanged)
+        voiceEngineDropdown.setAccessibilityLabel("Voice Engine. How responses are spoken.")
+        contentView.addSubview(voiceEngineDropdown)
+        
+        // Voice Option dropdown
+        let voiceOptionLabel = NSTextField(labelWithString: "Voice:")
+        voiceOptionLabel.font = NSFont.systemFont(ofSize: 12, weight: .medium)
+        voiceOptionLabel.frame = NSRect(x: 200, y: settingsY2 + dropdownHeight + 2, width: dropdownWidth, height: labelHeight)
+        contentView.addSubview(voiceOptionLabel)
+        
+        voiceOptionDropdown.frame = NSRect(x: 200, y: settingsY2, width: dropdownWidth, height: dropdownHeight)
+        voiceOptionDropdown.removeAllItems()
+        for voice in VoiceOption.allCases {
+            voiceOptionDropdown.addItem(withTitle: voice.displayName)
+        }
+        voiceOptionDropdown.selectItem(withTitle: VoiceSettings.currentVoice.displayName)
+        voiceOptionDropdown.target = self
+        voiceOptionDropdown.action = #selector(voiceOptionChanged)
+        voiceOptionDropdown.setAccessibilityLabel("Voice. Select which voice speaks responses. Karen is the default for Joseph.")
+        contentView.addSubview(voiceOptionDropdown)
+        
+        // Dictation Engine dropdown
+        let dictationLabel = NSTextField(labelWithString: "Dictation:")
+        dictationLabel.font = NSFont.systemFont(ofSize: 12, weight: .medium)
+        dictationLabel.frame = NSRect(x: 360, y: settingsY2 + dropdownHeight + 2, width: dropdownWidth, height: labelHeight)
+        contentView.addSubview(dictationLabel)
+        
+        dictationEngineDropdown.frame = NSRect(x: 360, y: settingsY2, width: dropdownWidth, height: dropdownHeight)
+        dictationEngineDropdown.removeAllItems()
+        for engine in DictationEngine.allCases {
+            dictationEngineDropdown.addItem(withTitle: engine.displayName)
+        }
+        dictationEngineDropdown.selectItem(withTitle: DictationSettings.currentEngine.displayName)
+        dictationEngineDropdown.target = self
+        dictationEngineDropdown.action = #selector(dictationEngineChanged)
+        dictationEngineDropdown.setAccessibilityLabel("Dictation Engine. How your voice is transcribed.")
+        contentView.addSubview(dictationEngineDropdown)
+
+        // MARK: - Main UI Elements (shifted down)
+        let instructionsLabel = NSTextField(wrappingLabelWithString: "Accessible voice chat for Joseph. Press Enter on the big button, speak your command, and Brain Chat will respond with voice.")
+        instructionsLabel.font = NSFont.systemFont(ofSize: 16)
+        instructionsLabel.frame = NSRect(x: 40, y: 480, width: 820, height: 40)
         instructionsLabel.setAccessibilityLabel("Instructions")
         contentView.addSubview(instructionsLabel)
 
-        listenButton.frame = NSRect(x: 40, y: 350, width: 740, height: 64)
+        listenButton.frame = NSRect(x: 40, y: 400, width: 820, height: 64)
         listenButton.bezelStyle = .regularSquare
         listenButton.font = NSFont.systemFont(ofSize: 28, weight: .bold)
         listenButton.target = self
@@ -3045,17 +3455,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         listenButton.setAccessibilityHelp("Starts and stops voice capture")
         contentView.addSubview(listenButton)
 
-        statusLabel.frame = NSRect(x: 40, y: 312, width: 740, height: 24)
+        statusLabel.frame = NSRect(x: 40, y: 362, width: 820, height: 24)
         statusLabel.font = NSFont.systemFont(ofSize: 16, weight: .medium)
         statusLabel.setAccessibilityLabel("Status")
         contentView.addSubview(statusLabel)
 
-        let transcriptLabel = NSTextField(labelWithString: "Conversation")
+        let transcriptLabel = NSTextField(labelWithString: "Conversation Transcript")
         transcriptLabel.font = NSFont.systemFont(ofSize: 18, weight: .semibold)
-        transcriptLabel.frame = NSRect(x: 40, y: 280, width: 200, height: 24)
+        transcriptLabel.frame = NSRect(x: 40, y: 330, width: 300, height: 24)
         contentView.addSubview(transcriptLabel)
 
-        scrollView.frame = NSRect(x: 40, y: 40, width: 740, height: 230)
+        scrollView.frame = NSRect(x: 40, y: 40, width: 820, height: 280)
         scrollView.hasVerticalScroller = true
         scrollView.borderType = .bezelBorder
         scrollView.autoresizingMask = [.width, .height]
@@ -3063,17 +3473,76 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         transcriptView.frame = scrollView.bounds
         transcriptView.isEditable = false
         transcriptView.isSelectable = true
-        transcriptView.font = NSFont.monospacedSystemFont(ofSize: 15, weight: .regular)
+        transcriptView.font = NSFont.monospacedSystemFont(ofSize: 14, weight: .regular)
         transcriptView.textContainerInset = NSSize(width: 12, height: 12)
         transcriptView.backgroundColor = NSColor.textBackgroundColor
         transcriptView.string = "Brain: Launching Brain Chat…\n"
-        transcriptView.setAccessibilityLabel("Conversation transcript")
+        transcriptView.setAccessibilityLabel("Conversation transcript. All messages are recorded here for copying and review.")
         scrollView.documentView = transcriptView
         contentView.addSubview(scrollView)
 
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(listenButton)
         NSApp.activate(ignoringOtherApps: true)
+    }
+    
+    // MARK: - Dropdown Action Handlers
+    
+    @objc private func llmProviderChanged() {
+        guard let selected = llmProviderDropdown.titleOfSelectedItem,
+              let provider = LLMProvider.allCases.first(where: { $0.displayName == selected }) else { return }
+        updateStatus("LLM Provider changed to \(provider.displayName)")
+        speakAndLog("Switched to \(provider.shortName)", speaker: "Brain")
+    }
+    
+    @objc private func llmModeChanged() {
+        guard let selected = llmModeDropdown.titleOfSelectedItem,
+              let mode = LLMMode.allCases.first(where: { $0.displayName == selected }) else { return }
+        updateStatus("LLM Mode changed to \(mode.displayName)")
+        speakAndLog("Now using \(mode.displayName) mode", speaker: "Brain")
+    }
+    
+    @objc private func chatModeChanged() {
+        guard let selected = chatModeDropdown.titleOfSelectedItem,
+              let mode = ChatMode.allCases.first(where: { $0.displayName == selected }) else { return }
+        currentMode = mode
+        ModePreferences.save(mode)
+        modeBadgeLabel.stringValue = "\(mode.displayName) Mode"
+        updateStatus("Chat mode changed to \(mode.displayName)")
+        speakAndLog("Switched to \(mode.displayName) mode. \(mode.modeDescription)", speaker: "Brain")
+    }
+    
+    @objc private func securityRoleChanged() {
+        guard let selected = securityRoleDropdown.titleOfSelectedItem,
+              let role = SecurityRole.allCases.first(where: { $0.displayName == selected }) else { return }
+        SecuritySettings.currentRole = role
+        updateStatus("Security role changed to \(role.displayName)")
+        speakAndLog("Security role is now \(role.displayName). \(role.accessibilityDescription)", speaker: "Brain")
+    }
+    
+    @objc private func voiceEngineChanged() {
+        guard let selected = voiceEngineDropdown.titleOfSelectedItem,
+              let engine = VoiceEngine.allCases.first(where: { $0.displayName == selected }) else { return }
+        VoiceSettings.currentEngine = engine
+        updateStatus("Voice engine changed to \(engine.displayName)")
+        speakAndLog("Voice engine changed to \(engine.displayName)", speaker: "Brain")
+    }
+    
+    @objc private func voiceOptionChanged() {
+        guard let selected = voiceOptionDropdown.titleOfSelectedItem,
+              let voice = VoiceOption.allCases.first(where: { $0.displayName == selected }) else { return }
+        VoiceSettings.currentVoice = voice
+        updateStatus("Voice changed to \(voice.displayName)")
+        // Speak with the new voice to demonstrate
+        speakAndLog("Hello, I'm \(voice.displayName)", speaker: "Brain")
+    }
+    
+    @objc private func dictationEngineChanged() {
+        guard let selected = dictationEngineDropdown.titleOfSelectedItem,
+              let engine = DictationEngine.allCases.first(where: { $0.displayName == selected }) else { return }
+        DictationSettings.currentEngine = engine
+        updateStatus("Dictation engine changed to \(engine.displayName)")
+        speakAndLog("Dictation engine changed to \(engine.displayName)", speaker: "Brain")
     }
 
     private func configureBridge() {

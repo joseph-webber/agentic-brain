@@ -50,10 +50,89 @@ jobs:
       - name: Type check
         run: mypy src/agentic_brain --ignore-missing-imports
 
+  security:
+    name: Security Roles Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e ".[test]"
+
+      - name: Verify all security roles exist
+        run: |
+          python -c "
+          from agentic_brain.security.roles import SecurityRole
+          
+          required_roles = ['FULL_ADMIN', 'SAFE_ADMIN', 'USER', 'GUEST']
+          defined_roles = [r.name for r in SecurityRole]
+          
+          for role in required_roles:
+              if role not in defined_roles:
+                  print(f'❌ Required role missing: {role}')
+                  exit(1)
+              print(f'✅ {role} role verified')
+          
+          print(f'✅ All {len(required_roles)} security roles exist')
+          "
+
+      - name: Test full admin permissions
+        run: pytest tests/test_security_roles.py::TestRolePermissions::test_full_admin_has_unrestricted_permissions -v
+
+      - name: Test safe admin permissions
+        run: pytest tests/test_security_roles.py::TestRolePermissions::test_safe_admin_requires_guardrails -v
+
+      - name: Test user permissions
+        run: pytest tests/test_security_roles.py::TestRolePermissions::test_user_is_api_only -v
+
+      - name: Test guest permissions
+        run: pytest tests/test_security_roles.py::TestRolePermissions::test_guest_is_help_only -v
+
+      - name: Test role ordering
+        run: pytest tests/test_security_roles.py::TestSecurityRoles::test_role_ordering -v
+
+      - name: Test dangerous command detection
+        run: pytest tests/test_security_roles.py::TestDangerousCommandDetection -v
+
+      - name: Test security guard
+        run: pytest tests/test_security_roles.py::TestSecurityGuard -v
+
+      - name: Fail if any role is missing
+        run: |
+          python -c "
+          from agentic_brain.security.roles import SecurityRole
+          
+          # This will fail if not all roles are properly defined
+          roles = list(SecurityRole)
+          if len(roles) < 4:
+              print(f'❌ CRITICAL: Only {len(roles)} roles found, expected at least 4')
+              exit(1)
+          
+          # Verify each role has proper value
+          for role in roles:
+              if not hasattr(role, 'value') or not role.value:
+                  print(f'❌ CRITICAL: Role {role.name} has no value')
+                  exit(1)
+          
+          print(f'✅ Security role CI check complete: {len(roles)} roles verified')
+          "
+
   unit:
     name: Unit tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint, security]
     timeout-minutes: 35
 
     strategy:

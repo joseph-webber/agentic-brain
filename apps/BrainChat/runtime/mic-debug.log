@@ -832,3 +832,89 @@ etermined
 [2026-04-04T14:06:56Z] [DEBUG] Initial speech auth status: 0
 [2026-04-04T14:06:56Z] [DEBUG] Requesting speech authorization on init
 [2026-04-04T14:06:56Z] [DEBUG] SpeechManager init complete
+[2026-04-04T15:30:04Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T15:30:04Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T15:30:04Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T15:30:04Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T15:30:05Z] [DEBUG] SpeechManager init complete
+[2026-04-04T15:30:45Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:30:45Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:30:48Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:30:48Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:30:52Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:30:52Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:30:55Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:30:55Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:32:16Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T15:32:16Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T15:32:16Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T15:32:16Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T15:32:16Z] [DEBUG] SpeechManager init complete
+[2026-04-04T15:32:21Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:32:21Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:32:24Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:32:24Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:32:25Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:32:25Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:32:25Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:32:25Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:32:26Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:32:26Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:32:27Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:32:27Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:32:30Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:32:30Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:32:38Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:32:38Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:32:55Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T15:32:55Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T15:59:49Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T15:59:49Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T15:59:49Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T15:59:49Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T15:59:49Z] [DEBUG] SpeechManager init complete
+[2026-04-04T16:01:32Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T16:01:32Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T16:01:32Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T16:01:32Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T16:01:33Z] [DEBUG] SpeechManager init complete
+[2026-04-04T16:01:41Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T16:01:41Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T16:01:41Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T16:01:41Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T16:01:41Z] [DEBUG] SpeechManager init complete
+[2026-04-04T16:03:10Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T16:03:10Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T16:03:10Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T16:03:10Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T16:03:11Z] [DEBUG] SpeechManager init complete
+[2026-04-04T16:05:54Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T16:05:54Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T16:05:54Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T16:05:54Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T16:05:54Z] [DEBUG] SpeechManager init complete
+[2026-04-04T16:06:15Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T16:06:15Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T16:06:15Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T16:06:15Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T16:06:15Z] [DEBUG] SpeechManager init complete
+[2026-04-04T16:09:06Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T16:09:06Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T16:09:06Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T16:09:06Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T16:09:07Z] [DEBUG] SpeechManager init complete
+[2026-04-04T16:10:12Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T16:10:12Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T16:10:12Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T16:10:12Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T16:10:12Z] [DEBUG] SpeechManager init complete
+[2026-04-04T16:10:31Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T16:10:31Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T16:10:31Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T16:10:31Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T16:10:31Z] [DEBUG] SpeechManager init complete
+[2026-04-04T16:11:23Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T16:11:23Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T16:11:23Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T16:11:23Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T16:11:23Z] [DEBUG] SpeechManager init complete

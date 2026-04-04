@@ -216,6 +216,7 @@ final class LayeredMessageState: ObservableObject, Identifiable {
     @Published var deepText: String? = nil
     @Published var isThinkingDeeper: Bool = false
     @Published var results: [LayerResult] = []
+    @Published var spokenInstant: Bool = false
 
     init(id: UUID) {
         self.id = id

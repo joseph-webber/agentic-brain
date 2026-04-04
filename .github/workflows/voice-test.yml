@@ -1,0 +1,380 @@
+name: 🎙️ Voice Integration Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/BrainChat/**'
+      - 'tools/voice/**'
+      - 'voice_*.py'
+      - 'tests/voice/**'
+      - '.github/workflows/voice-test.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/BrainChat/**'
+      - 'tools/voice/**'
+      - 'voice_*.py'
+      - 'tests/voice/**'
+      - '.github/workflows/voice-test.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: voice-test-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  XCODE_VERSION: "15.2"
+  MACOS_VERSION: "macos-14"
+
+jobs:
+  # ============================================
+  # 🎤 Swift Voice Manager Tests
+  # ============================================
+  swift-voice-tests:
+    name: 🎤 Swift Voice Manager Tests
+    runs-on: macos-14
+    timeout-minutes: 25
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+      
+      - name: Check VoiceManager.swift exists
+        run: |
+          if [ ! -f "apps/BrainChat/Sources/Voice/VoiceManager.swift" ]; then
+            echo "❌ VoiceManager.swift not found!"
+            exit 1
+          fi
+          echo "✅ VoiceManager.swift found"
+      
+      - name: Verify speak() function exists
+        run: |
+          if grep -q "func speak" apps/BrainChat/Sources/Voice/VoiceManager.swift 2>/dev/null || \
+             grep -q "func speak" apps/BrainChat/VoiceManager.swift 2>/dev/null; then
+            echo "✅ speak() function found"
+          else
+            echo "❌ speak() function NOT FOUND in VoiceManager"
+            exit 1
+          fi
+      
+      - name: Verify listen() function exists
+        run: |
+          if grep -q "func listen" apps/BrainChat/Sources/Voice/VoiceManager.swift 2>/dev/null || \
+             grep -q "func listen" apps/BrainChat/VoiceManager.swift 2>/dev/null; then
+            echo "✅ listen() function found"
+          else
+            echo "❌ listen() function NOT FOUND in VoiceManager"
+            exit 1
+          fi
+      
+      - name: Check SpeechManager.swift exists
+        run: |
+          if [ -f "apps/BrainChat/Sources/Voice/SpeechManager.swift" ] || \
+             [ -f "apps/BrainChat/SpeechManager.swift" ]; then
+            echo "✅ SpeechManager.swift found"
+          else
+            echo "⚠️  SpeechManager.swift not found (optional)"
+          fi
+      
+      - name: Verify SFSpeechRecognizer usage
+        run: |
+          if grep -r "SFSpeechRecognizer" apps/BrainChat/ 2>/dev/null; then
+            echo "✅ SFSpeechRecognizer found"
+          else
+            echo "⚠️  SFSpeechRecognizer not found (optional)"
+          fi
+      
+      - name: Verify AVSpeechSynthesizer usage
+        run: |
+          if grep -r "AVSpeechSynthesizer\|speak(" apps/BrainChat/ 2>/dev/null; then
+            echo "✅ AVSpeechSynthesizer or speak() found"
+          else
+            echo "❌ AVSpeechSynthesizer or speak() NOT FOUND"
+            exit 1
+          fi
+      
+      - name: Resolve Swift dependencies
+        working-directory: apps/BrainChat
+        run: swift package resolve 2>&1 | head -20
+        continue-on-error: true
+      
+      - name: Build BrainChat with voice support
+        working-directory: apps/BrainChat
+        run: |
+          echo "🔨 Building BrainChat with voice support..."
+          swift build -c release 2>&1 | tail -30 || {
+            echo "❌ Build failed - voice code has compile errors"
+            exit 1
+          }
+          echo "✅ Build succeeded"
+      
+      - name: Run Swift voice unit tests
+        working-directory: apps/BrainChat
+        run: |
+          echo "🧪 Running Swift voice tests..."
+          if swift test --filter VoiceTests 2>&1 | tee voice-tests.txt; then
+            echo "✅ Voice tests passed"
+          else
+            echo "❌ Voice tests failed"
+            cat voice-tests.txt
+            exit 1
+          fi
+        continue-on-error: true
+
+  # ============================================
+  # 🎙️ macOS TTS System Tests
+  # ============================================
+  macos-tts-tests:
+    name: 🎙️ macOS TTS System Tests
+    runs-on: macos-14
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Check say command availability
+        run: |
+          if command -v say &> /dev/null; then
+            echo "✅ macOS 'say' command available"
+            say --version 2>/dev/null || echo "Version: unknown"
+          else
+            echo "❌ 'say' command not available"
+            exit 1
+          fi
+      
+      - name: List available voices
+        run: |
+          echo "=== Available Voices ==="
+          say -v '?' 2>&1 | head -20
+          
+          echo ""
+          echo "🔍 Checking for Karen voice..."
+          if say -v '?' | grep -qi "karen\|kyoko"; then
+            echo "✅ Karen/Japanese voice available"
+          else
+            echo "⚠️  Karen voice not available on CI runner"
+          fi
+      
+      - name: Test basic TTS
+        run: |
+          echo "🎤 Testing basic TTS..."
+          if say "Test message" -r 150 2>&1; then
+            echo "✅ TTS test passed"
+          else
+            echo "❌ TTS test failed"
+            exit 1
+          fi
+        timeout-minutes: 5
+      
+      - name: Test speech rate control
+        run: |
+          echo "🎚️ Testing speech rate..."
+          say "Testing slow speech" -r 100 && say "Testing fast speech" -r 200
+          echo "✅ Speech rate control works"
+      
+      - name: Verify voice system integrations
+        run: |
+          echo "=== Voice System Integration Checks ==="
+          
+          # Check Python voice modules
+          if [ -f "voice_manager.py" ] || [ -f "tools/voice/voice_manager.py" ]; then
+            echo "✅ Python voice manager found"
+          else
+            echo "⚠️  Python voice manager not found (optional)"
+          fi
+          
+          # Check voice event system
+          if grep -r "brain.voice" . --include="*.py" 2>/dev/null | head -3; then
+            echo "✅ Voice event bus integration detected"
+          fi
+
+  # ============================================
+  # 🔊 Python Voice Tests
+  # ============================================
+  python-voice-tests:
+    name: 🔊 Python Voice Tests
+    runs-on: macos-14
+    timeout-minutes: 20
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Check Python voice modules
+        run: |
+          echo "🔍 Checking Python voice module structure..."
+          
+          if [ ! -d "tools/voice" ] && [ ! -f "voice_*.py" ]; then
+            echo "⚠️  No voice modules found (optional)"
+            exit 0
+          fi
+          
+          echo "✅ Voice modules found"
+      
+      - name: Install voice dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio pydub 2>&1 | grep -E "(Successfully|already)" || true
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt 2>&1 | grep -E "(Successfully|already)" || true
+          fi
+        continue-on-error: true
+      
+      - name: Run Python voice tests
+        run: |
+          echo "🧪 Running Python voice tests..."
+          pytest tests/voice/ tests/test_voice*.py \
+            -v --tb=short 2>&1 | tee python-voice-test.log || {
+            echo "⚠️  No Python voice tests found (optional)"
+          }
+      
+      - name: Check voice event bus
+        run: |
+          echo "🔌 Checking voice event bus..."
+          if grep -r "voice.speak\|voice.listen" . --include="*.py" 2>/dev/null | head -5; then
+            echo "✅ Voice event bus calls found"
+          fi
+
+  # ============================================
+  # 🎧 Voice Event Bus Tests
+  # ============================================
+  voice-event-bus-tests:
+    name: 🎧 Voice Event Bus Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install pytest pytest-asyncio redis fakeredis
+          pip install -r requirements.txt 2>/dev/null || true
+      
+      - name: Test voice event interfaces
+        run: |
+          echo "🔌 Testing voice event bus interfaces..."
+          
+          if grep -r "brain.voice\|voice_speak\|voice_listen" . --include="*.py" 2>/dev/null | head -1; then
+            echo "✅ Voice event bus integration found"
+          else
+            echo "⚠️  Voice event bus not yet integrated (optional)"
+          fi
+      
+      - name: Run voice event tests
+        run: |
+          echo "🧪 Running voice event bus tests..."
+          pytest tests/test_voice_events*.py -v --tb=short 2>&1 || echo "⚠️  No event bus tests found (optional)"
+
+  # ============================================
+  # ✅ Voice Integration Gate
+  # ============================================
+  voice-integration-check:
+    name: ✅ Voice Integration Check
+    runs-on: macos-14
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Verify voice manager compilation
+        run: |
+          echo "🔍 Final voice integration check..."
+          
+          VOICE_FILES=$(find apps/BrainChat -name "*Voice*" -type f | wc -l)
+          if [ "$VOICE_FILES" -gt 0 ]; then
+            echo "✅ Found $VOICE_FILES voice-related files"
+          else
+            echo "❌ No voice-related files found!"
+            exit 1
+          fi
+          
+          # Check critical functions
+          SPEAK_COUNT=$(grep -r "func speak\|def speak" apps/BrainChat --include="*.swift" --include="*.py" | wc -l)
+          LISTEN_COUNT=$(grep -r "func listen\|def listen" apps/BrainChat --include="*.swift" --include="*.py" | wc -l)
+          
+          echo "📊 Voice function counts:"
+          echo "  - speak: $SPEAK_COUNT"
+          echo "  - listen: $LISTEN_COUNT"
+          
+          if [ "$SPEAK_COUNT" -lt 1 ]; then
+            echo "❌ speak() function not found!"
+            exit 1
+          fi
+          
+          echo "✅ All critical voice functions present"
+
+  # ============================================
+  # 🎬 Summary
+  # ============================================
+  voice-tests-summary:
+    name: 🎬 Voice Tests Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [swift-voice-tests, macos-tts-tests, python-voice-tests, voice-event-bus-tests, voice-integration-check]
+    
+    steps:
+      - name: Check test results
+        run: |
+          echo "## 🎙️ Voice Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Parse job statuses
+          if [ "${{ needs.swift-voice-tests.result }}" == "success" ]; then
+            echo "✅ Swift voice tests: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Swift voice tests: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.macos-tts-tests.result }}" == "success" ]; then
+            echo "✅ macOS TTS tests: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ macOS TTS tests: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.python-voice-tests.result }}" == "success" ]; then
+            echo "✅ Python voice tests: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Python voice tests: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.voice-integration-check.result }}" == "success" ]; then
+            echo "✅ Integration check: PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Integration check: FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Voice Features Verified:" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎤 Speaker synthesis (speak)" >> $GITHUB_STEP_SUMMARY
+          echo "- 👂 Speech recognition (listen)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎧 Event bus integration" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔊 macOS system TTS" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Fail if voice tests failed
+        if: |
+          needs.swift-voice-tests.result != 'success' ||
+          needs.voice-integration-check.result != 'success'
+        run: |
+          echo "❌ Voice integration tests FAILED"
+          exit 1

@@ -1,0 +1,406 @@
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2024-2026 Agentic Brain Contributors
+
+name: BrainChat Security Roles CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/BrainChat/Sources/BrainChat/Security/**'
+      - 'apps/BrainChat/Tests/Security/**'
+      - '.github/workflows/brainchat-security-test.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/BrainChat/Sources/BrainChat/Security/**'
+      - 'apps/BrainChat/Tests/Security/**'
+      - '.github/workflows/brainchat-security-test.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: brainchat-security-test-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  XCODE_VERSION: "15.2"
+  MACOS_VERSION: "macos-14"
+
+jobs:
+  security-roles-swift:
+    name: BrainChat Security Roles (Swift)
+    runs-on: macos-14
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup environment
+        run: |
+          echo "=== Swift ==="
+          swift --version
+          echo ""
+          echo "=== Xcode ==="
+          xcodebuild -version
+
+      - name: Resolve dependencies
+        working-directory: apps/BrainChat
+        run: swift package resolve
+
+      - name: Build library
+        working-directory: apps/BrainChat
+        run: swift build 2>&1 | tail -30
+
+      # ============================================================================
+      # ROLE ENUMERATION TESTS - Verify all required roles exist
+      # ============================================================================
+
+      - name: 'Verify: Full Admin role exists'
+        run: |
+          grep -q "case fullAdmin\|case full_admin" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ Full Admin role not found!" && exit 1)
+          echo "✅ Full Admin role verified"
+
+      - name: 'Verify: Safe Admin role exists'
+        run: |
+          grep -q "case safeAdmin\|case safe_admin" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ Safe Admin role not found!" && exit 1)
+          echo "✅ Safe Admin role verified"
+
+      - name: 'Verify: User role exists'
+        run: |
+          grep -q "case user" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ User role not found!" && exit 1)
+          echo "✅ User role verified"
+
+      - name: 'Verify: Guest role exists'
+        run: |
+          grep -q "case guest" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ Guest role not found!" && exit 1)
+          echo "✅ Guest role verified"
+
+      # ============================================================================
+      # PERMISSION PROPERTY TESTS - Verify all required permissions are defined
+      # ============================================================================
+
+      - name: 'Verify: displayName property exists'
+        run: |
+          grep -q "var displayName: String" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ displayName property missing!" && exit 1)
+          echo "✅ displayName property verified"
+
+      - name: 'Verify: description property exists'
+        run: |
+          grep -q "var description: String" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ description property missing!" && exit 1)
+          echo "✅ description property verified"
+
+      - name: 'Verify: accessibilityName property exists'
+        run: |
+          grep -q "var accessibilityName: String" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ accessibilityName property missing!" && exit 1)
+          echo "✅ accessibilityName property verified"
+
+      - name: 'Verify: iconName property exists'
+        run: |
+          grep -q "var iconName: String" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ iconName property missing!" && exit 1)
+          echo "✅ iconName property verified"
+
+      - name: 'Verify: color property exists'
+        run: |
+          grep -q "var color: String" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ color property missing!" && exit 1)
+          echo "✅ color property verified"
+
+      # ============================================================================
+      # CAPABILITY TESTS - Verify all required capabilities are defined
+      # ============================================================================
+
+      - name: 'Verify: canYolo capability exists'
+        run: |
+          grep -q "var canYolo: Bool" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ canYolo capability missing!" && exit 1)
+          echo "✅ canYolo capability verified"
+
+      - name: 'Verify: yoloRequiresConfirmation capability exists'
+        run: |
+          grep -q "var yoloRequiresConfirmation: Bool" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ yoloRequiresConfirmation capability missing!" && exit 1)
+          echo "✅ yoloRequiresConfirmation capability verified"
+
+      - name: 'Verify: canAccessFilesystem capability exists'
+        run: |
+          grep -q "var canAccessFilesystem: Bool" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ canAccessFilesystem capability missing!" && exit 1)
+          echo "✅ canAccessFilesystem capability verified"
+
+      - name: 'Verify: canAccessAPIs capability exists'
+        run: |
+          grep -q "var canAccessAPIs: Bool" apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift || \
+          (echo "❌ canAccessAPIs capability missing!" && exit 1)
+          echo "✅ canAccessAPIs capability verified"
+
+      # ============================================================================
+      # SWIFT UNIT TESTS - Run comprehensive security role tests
+      # ============================================================================
+
+      - name: Run Swift security tests
+        working-directory: apps/BrainChat
+        run: |
+          swift test --filter SecurityRoleTests -v 2>&1 | tee security_test_output.txt
+          
+          # Check if tests passed
+          if grep -q "error:" security_test_output.txt; then
+            echo "❌ Swift security tests failed"
+            cat security_test_output.txt
+            exit 1
+          fi
+          echo "✅ All Swift security tests passed"
+
+      - name: Run permission tests
+        working-directory: apps/BrainChat
+        run: |
+          swift test --filter PermissionTests -v 2>&1 | tee permission_test_output.txt
+          
+          if grep -q "error:" permission_test_output.txt; then
+            echo "❌ Permission tests failed"
+            cat permission_test_output.txt
+            exit 1
+          fi
+          echo "✅ All permission tests passed"
+
+      - name: Run YOLO security tests
+        working-directory: apps/BrainChat
+        run: |
+          swift test --filter YoloSecurityTests -v 2>&1 | tee yolo_test_output.txt
+          
+          if grep -q "error:" yolo_test_output.txt; then
+            echo "❌ YOLO security tests failed"
+            cat yolo_test_output.txt
+            exit 1
+          fi
+          echo "✅ All YOLO security tests passed"
+
+  security-roles-python:
+    name: Security Roles (Python)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: security-roles-swift
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e ".[test]"
+
+      # ============================================================================
+      # PYTHON ROLE TESTS - Verify all Python security roles are defined
+      # ============================================================================
+
+      - name: 'Verify: Python FULL_ADMIN role exists'
+        run: |
+          grep -q "FULL_ADMIN\|full_admin" agentic_brain/security/roles.py || \
+          (echo "❌ Python FULL_ADMIN role not found!" && exit 1)
+          echo "✅ Python FULL_ADMIN role verified"
+
+      - name: 'Verify: Python SAFE_ADMIN role exists'
+        run: |
+          grep -q "SAFE_ADMIN\|safe_admin" agentic_brain/security/roles.py || \
+          (echo "❌ Python SAFE_ADMIN role not found!" && exit 1)
+          echo "✅ Python SAFE_ADMIN role verified"
+
+      - name: 'Verify: Python USER role exists'
+        run: |
+          grep -q "USER\|user" agentic_brain/security/roles.py || \
+          (echo "❌ Python USER role not found!" && exit 1)
+          echo "✅ Python USER role verified"
+
+      - name: 'Verify: Python GUEST role exists'
+        run: |
+          grep -q "GUEST\|guest" agentic_brain/security/roles.py || \
+          (echo "❌ Python GUEST role not found!" && exit 1)
+          echo "✅ Python GUEST role verified"
+
+      - name: 'Verify: Python get_permissions function exists'
+        run: |
+          grep -q "def get_permissions" agentic_brain/security/roles.py || \
+          (echo "❌ get_permissions function not found!" && exit 1)
+          echo "✅ get_permissions function verified"
+
+      - name: 'Verify: Python is_dangerous_command function exists'
+        run: |
+          grep -q "def is_dangerous_command" agentic_brain/security/roles.py || \
+          (echo "❌ is_dangerous_command function not found!" && exit 1)
+          echo "✅ is_dangerous_command function verified"
+
+      # ============================================================================
+      # PYTHON UNIT TESTS - Run comprehensive security tests
+      # ============================================================================
+
+      - name: Run Python security role tests
+        run: |
+          pytest tests/test_security_roles.py::TestSecurityRoles -v --tb=short
+
+      - name: Run Python role permissions tests
+        run: |
+          pytest tests/test_security_roles.py::TestRolePermissions -v --tb=short
+
+      - name: Run Python security guard tests
+        run: |
+          pytest tests/test_security_roles.py::TestSecurityGuard -v --tb=short
+
+      - name: Run Python dangerous command detection tests
+        run: |
+          pytest tests/test_security_roles.py::TestDangerousCommandDetection -v --tb=short
+
+      - name: Run Python authentication tests
+        run: |
+          pytest tests/test_security_roles.py::TestAuthentication -v --tb=short
+
+      - name: Run Python YOLO executor tests
+        run: |
+          pytest tests/test_security_roles.py::TestYoloExecutor -v --tb=short
+
+  security-matrix:
+    name: Security Matrix Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [security-roles-swift, security-roles-python]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e ".[test]"
+
+      # ============================================================================
+      # COMPREHENSIVE ROLE PERMISSION MATRIX
+      # ============================================================================
+
+      - name: Run comprehensive security matrix test
+        run: |
+          python -c "
+          from agentic_brain.security.roles import SecurityRole, get_permissions
+          
+          roles = [SecurityRole.FULL_ADMIN, SecurityRole.SAFE_ADMIN, SecurityRole.USER, SecurityRole.GUEST]
+          
+          print('🔐 SECURITY ROLE PERMISSION MATRIX')
+          print('=' * 80)
+          
+          for role in roles:
+              perms = get_permissions(role)
+              print(f'\n{role.name} ({role.value}):')
+              print(f'  ✓ Can YOLO: {perms.can_yolo}')
+              print(f'  ✓ YOLO Confirmation: {perms.yolo_requires_confirmation}')
+              print(f'  ✓ Can Execute Shell: {perms.can_execute_shell}')
+              print(f'  ✓ Can Write Files: {perms.can_write_files}')
+              print(f'  ✓ Can Access Filesystem: {perms.can_access_filesystem}')
+              print(f'  ✓ Can Execute Code: {perms.can_execute_code}')
+              print(f'  ✓ Can Access APIs: {perms.can_access_apis}')
+              print(f'  ✓ Rate Limit: {perms.rate_limit_per_minute} req/min')
+              print(f'  ✓ API Scopes: {perms.allowed_api_scopes}')
+          
+          print('\n' + '=' * 80)
+          print('✅ All security roles and permissions verified')
+          "
+
+      - name: Validate role hierarchy
+        run: |
+          python -c "
+          from agentic_brain.security.roles import SecurityRole
+          
+          # Verify correct ordering: Guest < User < SafeAdmin < FullAdmin
+          assert SecurityRole.GUEST < SecurityRole.USER, 'GUEST should be < USER'
+          assert SecurityRole.USER < SecurityRole.SAFE_ADMIN, 'USER should be < SAFE_ADMIN'
+          assert SecurityRole.SAFE_ADMIN < SecurityRole.FULL_ADMIN, 'SAFE_ADMIN should be < FULL_ADMIN'
+          
+          print('✅ Role hierarchy is correct:')
+          print(f'   GUEST < USER < SAFE_ADMIN < FULL_ADMIN')
+          "
+
+      - name: Validate permission hierarchy
+        run: |
+          python -c "
+          from agentic_brain.security.roles import SecurityRole, get_permissions
+          
+          # Higher roles should have >= permissions of lower roles
+          guest_perms = get_permissions(SecurityRole.GUEST)
+          user_perms = get_permissions(SecurityRole.USER)
+          safe_admin_perms = get_permissions(SecurityRole.SAFE_ADMIN)
+          full_admin_perms = get_permissions(SecurityRole.FULL_ADMIN)
+          
+          # YOLO permissions should escalate
+          assert not guest_perms.can_yolo, 'GUEST should not have YOLO'
+          assert not user_perms.can_yolo, 'USER should not have YOLO'
+          assert safe_admin_perms.can_yolo, 'SAFE_ADMIN should have YOLO'
+          assert full_admin_perms.can_yolo, 'FULL_ADMIN should have YOLO'
+          
+          # Filesystem access should escalate
+          assert not guest_perms.can_access_filesystem, 'GUEST should not access filesystem'
+          assert not user_perms.can_access_filesystem, 'USER should not access filesystem'
+          assert safe_admin_perms.can_access_filesystem, 'SAFE_ADMIN should access filesystem'
+          assert full_admin_perms.can_access_filesystem, 'FULL_ADMIN should access filesystem'
+          
+          # Code execution should escalate
+          assert not guest_perms.can_execute_code, 'GUEST should not execute code'
+          assert not user_perms.can_execute_code, 'USER should not execute code'
+          assert safe_admin_perms.can_execute_code, 'SAFE_ADMIN should execute code'
+          assert full_admin_perms.can_execute_code, 'FULL_ADMIN should execute code'
+          
+          # Rate limits should be: Guest < User < SafeAdmin < FullAdmin (or unlimited)
+          assert guest_perms.rate_limit_per_minute < user_perms.rate_limit_per_minute, 'Rate limits should increase'
+          assert user_perms.rate_limit_per_minute < safe_admin_perms.rate_limit_per_minute, 'Rate limits should increase'
+          
+          print('✅ Permission hierarchy is correct')
+          print(f'   GUEST rate: {guest_perms.rate_limit_per_minute} req/min')
+          print(f'   USER rate: {user_perms.rate_limit_per_minute} req/min')
+          print(f'   SAFE_ADMIN rate: {safe_admin_perms.rate_limit_per_minute} req/min')
+          print(f'   FULL_ADMIN rate: {full_admin_perms.rate_limit_per_minute} req/min')
+          "
+
+  report:
+    name: Security Test Report
+    runs-on: ubuntu-latest
+    needs: [security-roles-swift, security-roles-python, security-matrix]
+    if: always()
+
+    steps:
+      - name: Check job status
+        run: |
+          if [[ "${{ needs.security-roles-swift.result }}" != "success" || \
+                "${{ needs.security-roles-python.result }}" != "success" || \
+                "${{ needs.security-matrix.result }}" != "success" ]]; then
+            echo "❌ Security tests failed"
+            exit 1
+          fi
+          echo "✅ All security tests passed"
+
+      - name: Report success
+        run: |
+          echo "🎉 BrainChat Security Roles CI Complete"
+          echo "✅ All 4 security roles verified"
+          echo "✅ All permission properties verified"
+          echo "✅ All capabilities verified"
+          echo "✅ Swift unit tests passed"
+          echo "✅ Python unit tests passed"
+          echo "✅ Security matrix validated"

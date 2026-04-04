@@ -170,6 +170,7 @@ final class AppleSpeechRecognitionController: SpeechRecognitionControlling {
         }
         
         recognitionRequest.shouldReportPartialResults = true
+        recognitionRequest.taskHint = .dictation
         recognitionRequest.requiresOnDeviceRecognition = false
         
         currentHandler = handler
@@ -265,6 +266,24 @@ final class SpeechManager: ObservableObject {
         let micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
         logMic("Initial microphone status: \(micPermissionStatusString(micStatus))", level: .info)
         logMic("Initial speech auth status: \(authorizationStatus.rawValue)")
+        
+        // Note: AVAudioSession configuration is only available on iOS/Catalyst
+        // On macOS, AVAudioEngine handles everything directly
+        #if os(iOS) || targetEnvironment(macCatalyst)
+        do {
+            logMic("Configuring AVAudioSession for voice input...")
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.duckOthers, .allowBluetooth, .allowBluetoothA2DP])
+            try session.setPreferredSampleRate(16_000)  // Optimal for speech recognition
+            try session.setPreferredIOBufferDuration(0.005)
+            try session.setPreferredInputNumberOfChannels(1)
+            try session.setPreferredOutputNumberOfChannels(2)
+            try session.setActive(true, options: [])
+            logMic("AVAudioSession configured successfully", level: .info)
+        } catch {
+            logMic("WARNING: Failed to configure AVAudioSession: \(error.localizedDescription)", level: .error)
+        }
+        #endif
         
         if requestAuthorizationOnInit {
             logMic("Requesting speech authorization on init")

@@ -25,6 +25,8 @@
 /Users/joe/brain/agentic-brain/apps/BrainChat/GeminiClient.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/GrokClient.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/GroqClient.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/LLMOrchestrator.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/LLMOrchestratorView.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/LLMRouter.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/LLMSelector.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/LayeredResponseManager.swift

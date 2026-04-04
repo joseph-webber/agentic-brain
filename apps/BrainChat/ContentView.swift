@@ -127,11 +127,13 @@ struct ContentView: View {
                 .cornerRadius(8)
             }
             .buttonStyle(.plain)
-            .keyboardShortcut("l", modifiers: .command)
+            .keyboardShortcut("m", modifiers: [.command, .shift])
             .accessibilityIdentifier("microphoneButton")
-            .accessibilityLabel("Microphone")
+            .accessibilityLabel(viewModel.isMicLive ? "Microphone active" : "Microphone muted")
             .accessibilityValue(viewModel.isMicLive ? "Live" : "Muted")
-            .accessibilityHint(viewModel.isMicLive ? "Double tap to mute" : "Double tap to go live")
+            .accessibilityHint(viewModel.isMicLive ? "Double tap to mute microphone" : "Double tap to enable microphone")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityRemoveTraits(.isStaticText)
 
             Button(action: voiceManager.stop) {
                 Image(systemName: "speaker.slash.fill")
@@ -142,6 +144,8 @@ struct ContentView: View {
             .accessibilityLabel("Stop speaking")
             .accessibilityValue(voiceManager.isSpeaking ? "Speaking" : "Idle")
             .accessibilityHint("Stops any spoken response immediately")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityRemoveTraits(.isStaticText)
 
             Button(action: openSettings) {
                 Image(systemName: "gearshape")
@@ -151,6 +155,8 @@ struct ContentView: View {
             .accessibilityIdentifier("settingsButton")
             .accessibilityLabel("Open settings")
             .accessibilityHint("Opens Brain Chat settings")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityRemoveTraits(.isStaticText)
 
             Button(action: { showClearConfirmation = true }) {
                 Image(systemName: "trash")
@@ -159,6 +165,8 @@ struct ContentView: View {
             .accessibilityIdentifier("clearButton")
             .accessibilityLabel("Clear conversation")
             .accessibilityHint("Double tap to delete all messages. A confirmation dialog will appear.")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityRemoveTraits(.isStaticText)
             .confirmationDialog(
                 "Clear all messages?",
                 isPresented: $showClearConfirmation,

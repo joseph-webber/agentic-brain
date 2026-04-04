@@ -46,7 +46,8 @@ final class BrainAudioSession {
     }
 
     func configure(using manager: AirPodsManager? = nil) throws {
-        #if canImport(UIKit) || targetEnvironment(macCatalyst)
+        // AVAudioSession configuration (iOS/Catalyst only - not available on macOS)
+        #if os(iOS) || targetEnvironment(macCatalyst)
         let session = AVAudioSession.sharedInstance()
         try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.allowBluetooth, .allowBluetoothA2DP, .duckOthers])
         try session.setPreferredSampleRate(preferredSampleRate)

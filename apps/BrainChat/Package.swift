@@ -121,6 +121,8 @@ let package = Package(
                 "GrokClient.swift",
                 "LayeredResponseManager.swift",
                 "LayeredResponseView.swift",
+                "LLMOrchestrator.swift",
+                "LLMOrchestratorView.swift",
                 "LLMRouter.swift",
                 "LLMSelector.swift",
                 "Models.swift",
