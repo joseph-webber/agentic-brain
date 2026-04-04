@@ -51,7 +51,25 @@ func httpResponse(url: URL, statusCode: Int = 200, headers: [String: String] = [
 }
 
 func jsonBody(_ request: URLRequest) throws -> [String: Any] {
-    let data = try XCTUnwrap(request.httpBody)
+    // URLSession may convert httpBody to httpBodyStream when using custom URLProtocol
+    let data: Data
+    if let body = request.httpBody {
+        data = body
+    } else if let stream = request.httpBodyStream {
+        stream.open()
+        defer { stream.close() }
+        var buffer = Data()
+        let chunk = UnsafeMutablePointer<UInt8>.allocate(capacity: 4096)
+        defer { chunk.deallocate() }
+        while stream.hasBytesAvailable {
+            let count = stream.read(chunk, maxLength: 4096)
+            guard count > 0 else { break }
+            buffer.append(chunk, count: count)
+        }
+        data = buffer
+    } else {
+        data = try XCTUnwrap(nil as Data?, "Request has neither httpBody nor httpBodyStream")
+    }
     return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
 }
 

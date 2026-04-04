@@ -183,8 +183,8 @@ enum LLMRequestType: Equatable {
 
 @MainActor
 final class LLMRouter: ObservableObject {
-    @Published var selectedProvider: LLMProvider { didSet { UserDefaults.standard.set(selectedProvider.rawValue, forKey: "selectedLLMProvider") } }
-    @Published var yoloMode: Bool { didSet { UserDefaults.standard.set(yoloMode, forKey: "yoloModeEnabled") } }
+    @Published var selectedProvider: LLMProvider { didSet { defaults.set(selectedProvider.rawValue, forKey: "selectedLLMProvider") } }
+    @Published var yoloMode: Bool { didSet { defaults.set(yoloMode, forKey: "yoloModeEnabled") } }
     @Published private(set) var activeProviderName = "Idle"
     @Published private(set) var statusMessage = "Ready"
     @Published private(set) var lastErrorMessage: String?
@@ -197,6 +197,7 @@ final class LLMRouter: ObservableObject {
     private let grokClient: any GrokStreaming
     private let geminiClient: any GeminiStreaming
     private let copilotClient: any CopilotStreaming
+    private let defaults: UserDefaults
 
     init(
         claudeAPI: any ClaudeStreaming = ClaudeAPI(),
@@ -205,7 +206,8 @@ final class LLMRouter: ObservableObject {
         groqClient: any GroqStreaming = GroqClient(),
         grokClient: any GrokStreaming = GrokClient(),
         geminiClient: any GeminiStreaming = GeminiClient(),
-        copilotClient: any CopilotStreaming = CopilotClient()
+        copilotClient: any CopilotStreaming = CopilotClient(),
+        defaults: UserDefaults = .standard
     ) {
         self.claudeAPI = claudeAPI
         self.openAIAPI = openAIAPI
@@ -214,13 +216,14 @@ final class LLMRouter: ObservableObject {
         self.grokClient = grokClient
         self.geminiClient = geminiClient
         self.copilotClient = copilotClient
-        if let savedProvider = UserDefaults.standard.string(forKey: "selectedLLMProvider"),
+        self.defaults = defaults
+        if let savedProvider = defaults.string(forKey: "selectedLLMProvider"),
            let provider = LLMProvider(rawValue: savedProvider) {
             self.selectedProvider = provider
         } else {
             self.selectedProvider = .ollama
         }
-        self.yoloMode = UserDefaults.standard.bool(forKey: "yoloModeEnabled")
+        self.yoloMode = defaults.bool(forKey: "yoloModeEnabled")
     }
 
     func streamReply(history: [ChatMessage], configuration: LLMRouterConfiguration, onEvent: @escaping @Sendable (AIStreamEvent) -> Void) async -> String {
@@ -310,7 +313,7 @@ final class LLMRouter: ObservableObject {
 
         let quickHints = ["hi", "hello", "hey", "thanks", "thank you", "summarize", "one sentence", "quick", "briefly"]
         let wordCount = trimmed.split(whereSeparator: \.isWhitespace).count
-        if wordCount <= 12 || quickHints.contains(where: { lower.contains($0) }) {
+        if wordCount <= 3 || quickHints.contains(where: { lower.contains($0) }) {
             return .quick
         }
 

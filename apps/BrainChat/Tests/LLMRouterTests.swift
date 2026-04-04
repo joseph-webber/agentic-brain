@@ -3,6 +3,11 @@ import XCTest
 
 final class LLMRouterTests: XCTestCase {
 
+    private func makeDefaults() -> UserDefaults {
+        let suite = "BrainChatTests.LLMRouter.\(UUID().uuidString)"
+        return UserDefaults(suiteName: suite)!
+    }
+
 
     @MainActor
     func testProviderMetadataCoversAllComputedProperties() {
@@ -39,28 +44,32 @@ final class LLMRouterTests: XCTestCase {
 
     @MainActor
     func testInitFallsBackToOllamaForInvalidSavedProvider() {
-        UserDefaults.standard.set("invalid-provider", forKey: "selectedLLMProvider")
+        let defaults = makeDefaults()
+        defaults.set("invalid-provider", forKey: "selectedLLMProvider")
         let router = LLMRouter(
             claudeAPI: MockClaudeStreamer { _, _, _, _ in "ok" },
             openAIAPI: MockOpenAIStreamer { _, _, _ in "ok" },
             ollamaAPI: MockOllamaStreamer { _, _, _ in "ok" },
             grokClient: MockGrokStreamer { _, _, _ in "ok" },
             geminiClient: MockGeminiStreamer { _, _, _, _ in "ok" },
-            copilotClient: MockCopilotStreamer(box: CopilotRunnerBox())
+            copilotClient: MockCopilotStreamer(box: CopilotRunnerBox()),
+            defaults: defaults
         )
         XCTAssertEqual(router.selectedProvider, .ollama)
     }
 
     @MainActor
     func testInitReadsSavedProviderFromUserDefaults() {
-        UserDefaults.standard.set(LLMProvider.gpt.rawValue, forKey: "selectedLLMProvider")
+        let defaults = makeDefaults()
+        defaults.set(LLMProvider.gpt.rawValue, forKey: "selectedLLMProvider")
         let router = LLMRouter(
             claudeAPI: MockClaudeStreamer { _, _, _, _ in "ok" },
             openAIAPI: MockOpenAIStreamer { _, _, _ in "ok" },
             ollamaAPI: MockOllamaStreamer { _, _, _ in "ok" },
             grokClient: MockGrokStreamer { _, _, _ in "ok" },
             geminiClient: MockGeminiStreamer { _, _, _, _ in "ok" },
-            copilotClient: MockCopilotStreamer(box: CopilotRunnerBox())
+            copilotClient: MockCopilotStreamer(box: CopilotRunnerBox()),
+            defaults: defaults
         )
         XCTAssertEqual(router.selectedProvider, .gpt)
     }
@@ -94,18 +103,20 @@ final class LLMRouterTests: XCTestCase {
 
     @MainActor
     func testSelectedProviderAndYoloPersistToUserDefaults() {
+        let defaults = makeDefaults()
         let router = LLMRouter(
             claudeAPI: MockClaudeStreamer { _, _, _, _ in "ok" },
             openAIAPI: MockOpenAIStreamer { _, _, _ in "ok" },
             ollamaAPI: MockOllamaStreamer { _, _, _ in "ok" },
             grokClient: MockGrokStreamer { _, _, _ in "ok" },
             geminiClient: MockGeminiStreamer { _, _, _, _ in "ok" },
-            copilotClient: MockCopilotStreamer(box: CopilotRunnerBox())
+            copilotClient: MockCopilotStreamer(box: CopilotRunnerBox()),
+            defaults: defaults
         )
         router.selectedProvider = .gemini
         router.yoloMode = true
-        XCTAssertEqual(UserDefaults.standard.string(forKey: "selectedLLMProvider"), LLMProvider.gemini.rawValue)
-        XCTAssertEqual(UserDefaults.standard.bool(forKey: "yoloModeEnabled"), true)
+        XCTAssertEqual(defaults.string(forKey: "selectedLLMProvider"), LLMProvider.gemini.rawValue)
+        XCTAssertEqual(defaults.bool(forKey: "yoloModeEnabled"), true)
     }
 
     @MainActor

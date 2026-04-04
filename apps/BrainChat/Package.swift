@@ -26,7 +26,23 @@ let package = Package(
                 "__pycache__",
                 "runtime",
                 "bridge-daemon.log",
-                "build-output.log"
+                "build-output.log",
+                "launchagent",
+                "verify-mic.sh",
+                "verify-code-signing.sh",
+                "MICROPHONE-TEST-SUITE-README.md",
+                "QUICK_TEST.md",
+                "FIX_SUMMARY.md",
+                "CHECKLIST.md",
+                "MIC_PERMISSION_FIX.md",
+                "SSE_REFACTORING_SUMMARY.md",
+                "session-artifacts-build.log",
+                "test-mic-cli.swift",
+                "test-mic-automation.scpt",
+                "test_mic_permission.sh",
+                "run-mic-test.sh",
+                "apply_fix.sh",
+                "BrainChat.entitlements"
             ],
             sources: [
                 "AIManager.swift",
@@ -39,8 +55,10 @@ let package = Package(
                 "BrainChatCoordinator.swift",
                 "BridgeDaemon.swift",
                 "CartesiaVoice.swift",
+                "ChatViewModel.swift",
                 "ClaudeAPI.swift",
                 "CodeAssistant.swift",
+                "CodeSpeaker.swift",
                 "ContentView.swift",
                 "ConversationView.swift",
                 "CopilotBridge.swift",
@@ -71,6 +89,7 @@ let package = Package(
                 "SpeechManager.swift",
                 "SystemCommands.swift",
                 "VoiceBridge.swift",
+                "VoiceCodingEngine.swift",
                 "VoiceManager.swift",
                 "VoiceOutputSelector.swift",
                 "VoiceSelector.swift",
@@ -87,9 +106,14 @@ let package = Package(
             exclude: [
                 "AppTests",
                 "Comprehensive",
+                "E2ETests",
+                "IntegrationTests",
+                "UnitTests",
                 "AudioDeviceTests.swift",
                 "AIManagerTests.swift",
                 "CopilotBridgeTests.swift",
+                "CodeSigningTests.swift",
+                "MicrophoneTests.swift",
                 "E2ECodingTests.swift",
                 "E2EConversationTests.swift",
                 "E2EMultiLLMTests.swift",
@@ -102,6 +126,7 @@ let package = Package(
                 "VoiceIntegrationTests.swift",
                 "VoiceManagerTests.swift",
                 "VoiceMocks.swift",
+                "YoloTests.swift",
                 // Use stub AppSettings.defaults — only valid in E2E sub-package
                 "VoiceOutputTests.swift",
                 "SpeechEngineTests.swift",
@@ -124,7 +149,15 @@ let package = Package(
                 // Layered multi-LLM orchestration (uses real LayeredResponseManager types)
                 "LayeredResponseTests.swift",
                 // Redpanda / Pandaproxy event bus (uses real PandaproxyClient types)
-                "RedpandaIntegrationTests.swift"
+                "RedpandaIntegrationTests.swift",
+                // Yolo mode event tests (excluded: YoloCommandEvent type not in SPM target)
+                // "YoloTests.swift",
+                // Unit tests — polymorphic dispatch, enum coverage, SSE parsing
+                "UnitTests/PolymorphicUnitTests.swift",
+                // Integration tests — fallback chains, conversation store, weaving
+                "IntegrationTests/ServiceIntegrationTests.swift",
+                // E2E tests — full conversation flows, multi-provider, accessibility
+                "E2ETests/FullFlowE2ETests.swift"
             ]
         )
     ]
