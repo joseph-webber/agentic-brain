@@ -117,30 +117,51 @@ final class LocalFallbackResponder {
 }
 
 final class SpeechVoice {
-    private let synthesizer = AVSpeechSynthesizer()
-
+    private var speakProcess: Process?
+    private let voiceName = "Karen (Premium)"
+    
     init() {}
-
+    
     func speak(_ text: String) {
         let cleanText = ANSIText.strip(text)
         guard !cleanText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-
-        if synthesizer.isSpeaking {
-            synthesizer.stopSpeaking(at: .immediate)
+        
+        // Kill any existing speech
+        stopSpeaking()
+        
+        // Use macOS 'say' command - much more reliable than AVSpeechSynthesizer
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/say")
+        process.arguments = ["-v", voiceName, "-r", "175", cleanText]
+        
+        // Run in background so we don't block
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            do {
+                self?.speakProcess = process
+                try process.run()
+                // Don't wait - let it play in background
+            } catch {
+                // Fallback to default voice if Karen Premium not available
+                let fallbackProcess = Process()
+                fallbackProcess.executableURL = URL(fileURLWithPath: "/usr/bin/say")
+                fallbackProcess.arguments = ["-v", "Karen", "-r", "175", cleanText]
+                try? fallbackProcess.run()
+            }
         }
-
-        let utterance = AVSpeechUtterance(string: cleanText)
-        utterance.rate = 0.48
-        utterance.voice = Self.preferredVoice()
-        synthesizer.speak(utterance)
     }
-
-    private static func preferredVoice() -> AVSpeechSynthesisVoice? {
-        let voices = AVSpeechSynthesisVoice.speechVoices()
-        if let karen = voices.first(where: { $0.name.localizedCaseInsensitiveContains("Karen") && $0.language.hasPrefix("en-AU") }) {
-            return karen
-        }
-        return voices.first(where: { $0.language.hasPrefix("en-AU") })
+    
+    func stopSpeaking() {
+        speakProcess?.terminate()
+        speakProcess = nil
+        // Also kill any lingering say processes
+        let killTask = Process()
+        killTask.executableURL = URL(fileURLWithPath: "/usr/bin/pkill")
+        killTask.arguments = ["-f", "say -v"]
+        try? killTask.run()
+    }
+    
+    var isSpeaking: Bool {
+        speakProcess?.isRunning ?? false
     }
 }
 
@@ -575,10 +596,8 @@ enum ChatMode: String, CaseIterable {
     }
 
     var speaksResponses: Bool {
-        switch self {
-        case .chat, .voice, .work:    return true
-        case .code, .terminal, .yolo: return false
-        }
+        // ALWAYS speak responses - Joseph is blind and needs audio feedback
+        return true
     }
 
     var modeDescription: String {

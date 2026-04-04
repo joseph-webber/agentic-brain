@@ -50,9 +50,22 @@ case "$1" in
         shift
         MESSAGE="$*"
         # Use Ollama directly for CLI queries
-        curl -s http://localhost:11434/api/chat \
+        RESPONSE=$(curl -s http://localhost:11434/api/chat \
             -d "{\"model\":\"llama3.2:3b\",\"messages\":[{\"role\":\"user\",\"content\":\"$MESSAGE\"}],\"stream\":false}" \
-            2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('message',{}).get('content',''))" 2>/dev/null
+            2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('message',{}).get('content',''))" 2>/dev/null)
+        echo "$RESPONSE"
+        # ALWAYS speak the response for accessibility (Joseph is blind)
+        say -v "Karen (Premium)" "$RESPONSE" 2>/dev/null || say -v Karen "$RESPONSE" &
+        ;;
+    chat)
+        # Same as send - conversational alias
+        shift
+        MESSAGE="$*"
+        RESPONSE=$(curl -s http://localhost:11434/api/chat \
+            -d "{\"model\":\"llama3.2:3b\",\"messages\":[{\"role\":\"user\",\"content\":\"$MESSAGE\"}],\"stream\":false}" \
+            2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('message',{}).get('content',''))" 2>/dev/null)
+        echo "$RESPONSE"
+        say -v "Karen (Premium)" "$RESPONSE" 2>/dev/null || say -v Karen "$RESPONSE" &
         ;;
     health)
         echo "Brain Chat Health Check"
@@ -73,7 +86,8 @@ case "$1" in
         echo "  status             Get app status"
         echo "  start              Start Brain Chat app"
         echo "  quit               Quit Brain Chat app"
-        echo "  send <message>     Send message to LLM and get response"
+        echo "  send <message>     Send message to LLM and SPEAK response"
+        echo "  chat <message>     Same as send - conversational alias"
         echo "  health             Run health check"
         echo "  help               Show this help"
         ;;
