@@ -8,12 +8,15 @@ struct ContentView: View {
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var llmRouter: LLMRouter
     @StateObject private var yolo = YoloMode.shared
+    @StateObject private var layeredManager = LayeredResponseManager()
+    @StateObject private var layeredMessageStore = LayeredMessageStore()
 
     private let copilotBridge = CopilotBridge.shared
     @State private var textInput = ""
-    @State private var isMicLive = false  // Toggle state - muted by default
+    @State private var isMicLive = false
     @State private var isCopilotSessionActive = false
     @State private var copilotStatusText = "Copilot offline"
+    @State private var showClearConfirmation = false
     @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
@@ -65,17 +68,29 @@ struct ContentView: View {
                 .accessibilityValue(isMicLive ? "Live" : "Muted")
                 .accessibilityHint(isMicLive ? "Double tap to mute" : "Double tap to go live")
                 
-                Button(action: { store.clear() }) { 
+                Button(action: { showClearConfirmation = true }) { 
                     Image(systemName: "trash") 
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Clear conversation")
-                .accessibilityHint("Deletes all messages in the current conversation")
+                .accessibilityHint("Double tap to delete all messages. A confirmation dialog will appear.")
+                .confirmationDialog(
+                    "Clear all messages?",
+                    isPresented: $showClearConfirmation,
+                    titleVisibility: .visible
+                ) {
+                    Button("Clear Conversation", role: .destructive) { store.clear() }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("This will permanently delete all messages in this conversation.")
+                }
             }
             .padding(12)
 
             Divider()
-            ConversationView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            ConversationView()
+                .environmentObject(layeredMessageStore)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             YoloActionFeed(yolo: yolo)
             Divider()
 
@@ -100,12 +115,15 @@ struct ContentView: View {
                     .textFieldStyle(.roundedBorder)
                     .focused($isTextFieldFocused)
                     .onSubmit { sendTextMessage() }
-                    .accessibilityLabel("Message")
-                    .accessibilityHint("Type your message and press Return to send")
+                    .accessibilityLabel("Message input")
+                    .accessibilityHint("Type your message. Press Return or Command Return to send. Press Escape to clear.")
+                    .onEscapeKey { textInput = "" }
                 Button(action: sendTextMessage) { Image(systemName: "paperplane.fill") }
                     .buttonStyle(.borderedProminent)
                     .disabled(textInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .accessibilityLabel("Send message")
+                    .accessibilityHint("Send your typed message to Brain Chat")
+                    .keyboardShortcut(.return, modifiers: .command)
             }
             .padding(12)
         }
@@ -247,21 +265,89 @@ struct ContentView: View {
         let assistantMessageID = store.beginStreamingAssistantMessage()
         store.isProcessing = true
 
-        Task {
-            let response = await llmRouter.streamReply(history: history, configuration: configuration) { event in
-                switch event {
-                case .providerChanged:
-                    break
-                case .reset:
-                    Task { @MainActor in store.replaceMessageContent(id: assistantMessageID, content: "") }
-                case .delta(let delta):
-                    Task { @MainActor in store.appendToMessage(id: assistantMessageID, delta: delta) }
+        // Use layered response when enabled
+        if settings.layeredModeEnabled {
+            let layeredConfig = settings.layeredConfiguration(
+                provider: llmRouter.selectedProvider, yoloMode: llmRouter.yoloMode
+            )
+            let messages = LLMRouter.buildContext(from: history, systemPrompt: configuration.effectiveSystemPrompt)
+            let layeredState = layeredMessageStore.getOrCreate(for: assistantMessageID)
+            var spokenInstant = false
+
+            Task {
+                let response = await layeredManager.getLayeredResponse(
+                    messages: messages,
+                    configuration: layeredConfig
+                ) { event in
+                    Task { @MainActor in
+                        switch event {
+                        case .layerStarted(let layer, let source):
+                            break
+                        case .layerDelta(let chunk):
+                            switch chunk.layer {
+                            case .instant:
+                                layeredState.appendInstant(chunk.content)
+                                store.replaceMessageContent(
+                                    id: assistantMessageID,
+                                    content: layeredState.instantText
+                                )
+                            case .fastLocal:
+                                layeredState.appendLocal(chunk.content)
+                            case .deep, .consensus:
+                                break  // deep text set in bulk when complete
+                            }
+                        case .deepThinkingStarted:
+                            layeredState.setThinkingDeeper(true)
+                            // Speak instant response now while deep layer works
+                            if settings.autoSpeak && !layeredState.instantText.isEmpty && !spokenInstant {
+                                spokenInstant = true
+                                voiceManager.speak(layeredState.instantText)
+                            }
+                        case .enhancedResponseReady(let deepText):
+                            layeredState.setDeepResponse(deepText)
+                            store.replaceMessageContent(
+                                id: assistantMessageID,
+                                content: deepText
+                            )
+                            if settings.autoSpeak && spokenInstant {
+                                voiceManager.speak("Let me add to that. " + String(deepText.prefix(400)))
+                            }
+                        case .layerCompleted:
+                            break
+                        case .consensusResult(let agreed, let sources):
+                            break
+                        case .allLayersComplete(let results):
+                            layeredState.results = results
+                        }
+                    }
+                }
+                await MainActor.run {
+                    store.finishStreamingMessage(id: assistantMessageID, fallbackContent: response)
+                    store.isProcessing = false
+                    // If instant was never spoken (no deep layer), speak final
+                    if settings.autoSpeak && !spokenInstant {
+                        voiceManager.speak(response)
+                    }
                 }
             }
-            await MainActor.run {
-                store.finishStreamingMessage(id: assistantMessageID, fallbackContent: response)
-                store.isProcessing = false
-                if settings.autoSpeak { voiceManager.speak(response) }
+        } else {
+            // Original single-layer path
+            Task {
+                let response = await llmRouter.streamReply(history: history, configuration: configuration) { event in
+                    switch event {
+                    case .providerChanged:
+                        break
+                    case .reset:
+                        Task { @MainActor in store.replaceMessageContent(id: assistantMessageID, content: "") }
+                    case .delta(let delta):
+                        Task { @MainActor in store.appendToMessage(id: assistantMessageID, delta: delta) }
+                    }
+                }
+                await MainActor.run {
+                    store.finishStreamingMessage(id: assistantMessageID, fallbackContent: response)
+                    store.isProcessing = false
+                    if settings.autoSpeak { voiceManager.speak(response) }
+                }
             }
         }
     }
@@ -292,8 +378,9 @@ struct ContentView: View {
                 if settings.autoSpeak { voiceManager.speak("Copilot chat is ready.") }
             } catch {
                 updateCopilotSessionState(active: false, status: "Copilot failed")
-                store.addMessage(role: .system, content: "Copilot start failed: \(error.localizedDescription)")
-                if settings.autoSpeak { voiceManager.speak("Copilot start failed.") }
+                let msg = friendlyErrorMessage(for: error, context: "starting Copilot")
+                store.addMessage(role: .system, content: msg)
+                if settings.autoSpeak { voiceManager.speak("Couldn't start Copilot. \(msg)") }
             }
         case .stopSession:
             copilotBridge.stopSession()
@@ -308,8 +395,9 @@ struct ContentView: View {
                 if settings.autoSpeak { voiceManager.speak("Copilot restarted.") }
             } catch {
                 updateCopilotSessionState(active: false, status: "Copilot failed")
-                store.addMessage(role: .system, content: "Copilot restart failed: \(error.localizedDescription)")
-                if settings.autoSpeak { voiceManager.speak("Copilot restart failed.") }
+                let msg = friendlyErrorMessage(for: error, context: "restarting Copilot")
+                store.addMessage(role: .system, content: msg)
+                if settings.autoSpeak { voiceManager.speak("Couldn't restart Copilot. \(msg)") }
             }
         case .chat(let prompt):
             runCopilotChat(prompt: prompt)
@@ -329,8 +417,9 @@ struct ContentView: View {
             }
         } catch {
             updateCopilotSessionState(active: false, status: "Copilot failed")
-            store.addMessage(role: .system, content: "Copilot start failed: \(error.localizedDescription)")
-            if settings.autoSpeak { voiceManager.speak("Copilot start failed.") }
+            let msg = friendlyErrorMessage(for: error, context: "starting Copilot")
+            store.addMessage(role: .system, content: msg)
+            if settings.autoSpeak { voiceManager.speak("Couldn't start Copilot. \(msg)") }
             return
         }
 
@@ -355,18 +444,18 @@ struct ContentView: View {
                         }
                     case .failure(let error):
                         updateCopilotSessionState(active: copilotBridge.isSessionActive, status: copilotBridge.isSessionActive ? "Copilot chat live" : "Copilot offline")
-                        store.replaceMessageContent(id: messageID, content: "Copilot error: \(error.localizedDescription)")
-                        if settings.autoSpeak {
-                            voiceManager.speak("Copilot error.")
-                        }
+                        let msg = friendlyErrorMessage(for: error, context: "Copilot chat")
+                        store.replaceMessageContent(id: messageID, content: msg)
+                        if settings.autoSpeak { voiceManager.speak(msg) }
                     }
                 }
             })
         } catch {
             store.isProcessing = false
             updateCopilotSessionState(active: copilotBridge.isSessionActive, status: copilotBridge.isSessionActive ? "Copilot chat live" : "Copilot offline")
-            store.replaceMessageContent(id: messageID, content: "Copilot error: \(error.localizedDescription)")
-            if settings.autoSpeak { voiceManager.speak("Copilot error.") }
+            let msg = friendlyErrorMessage(for: error, context: "Copilot chat")
+            store.replaceMessageContent(id: messageID, content: msg)
+            if settings.autoSpeak { voiceManager.speak(msg) }
         }
     }
 
@@ -388,10 +477,9 @@ struct ContentView: View {
                 }
             case .failure(let error):
                 updateCopilotSessionState(active: copilotBridge.isSessionActive, status: copilotBridge.isSessionActive ? "Copilot chat live" : "Copilot failed")
-                store.replaceMessageContent(id: messageID, content: "Copilot error: \(error.localizedDescription)")
-                if settings.autoSpeak {
-                    voiceManager.speak("Copilot error.")
-                }
+                let msg = friendlyErrorMessage(for: error, context: mode == .suggest ? "Copilot suggestion" : "Copilot explanation")
+                store.replaceMessageContent(id: messageID, content: msg)
+                if settings.autoSpeak { voiceManager.speak(msg) }
             }
         })
     }
@@ -438,7 +526,31 @@ struct ContentView: View {
         isCopilotSessionActive = active
         copilotStatusText = status
     }
+
+    /// Converts a raw Swift error into a plain-English message suitable for display and speech.
+    private func friendlyErrorMessage(for error: Error, context: String) -> String {
+        let raw = error.localizedDescription
+        if raw.contains("401") || raw.contains("Unauthorized") || raw.contains("API key") {
+            return "Couldn't complete \(context): the API key appears to be invalid or missing. Check the API tab in Settings."
+        }
+        if raw.contains("429") || raw.contains("rate limit") || raw.contains("quota") {
+            return "Couldn't complete \(context): you've reached the rate limit. Please wait a moment and try again."
+        }
+        if raw.contains("timeout") || raw.contains("timed out") {
+            return "Couldn't complete \(context): the request timed out. Check your internet connection and try again."
+        }
+        if raw.contains("offline") || raw.contains("network") || raw.contains("connection") {
+            return "Couldn't complete \(context): no network connection. Check your Wi-Fi or cable and try again."
+        }
+        if raw.contains("not found") || raw.contains("404") {
+            return "Couldn't complete \(context): the AI service wasn't found. It may be down or the URL may be wrong."
+        }
+        // Fallback: strip internal technical details but stay informative
+        return "Couldn't complete \(context). Please try again, or check the Settings if the problem continues."
+    }
 }
+
+// MARK: - Keyboard helpers
 
 struct KeyEventHandlerView: NSViewRepresentable {
     let onSpaceDown: () -> Void
@@ -479,6 +591,21 @@ class KeyEventNSView: NSView {
             onSpaceUp?()
         } else {
             super.keyUp(with: event)
+        }
+    }
+}
+
+// MARK: - onEscapeKey modifier
+
+extension View {
+    /// Calls `action` when the user presses the Escape key while this view is focused.
+    /// Requires macOS 14 / iOS 17 for `onKeyPress`; falls through silently on older OS.
+    @ViewBuilder
+    func onEscapeKey(action: @escaping () -> Void) -> some View {
+        if #available(macOS 14.0, iOS 17.0, *) {
+            self.onKeyPress(.escape) { action(); return .handled }
+        } else {
+            self
         }
     }
 }

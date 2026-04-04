@@ -16,6 +16,7 @@ struct VoiceOutputSelector: View {
                                 Text(engine.rawValue)
                                 if engine.crossPlatform {
                                     Text("🌐")
+                                        .accessibilityHidden(true)
                                 }
                             }
                             Text(engine.description)
