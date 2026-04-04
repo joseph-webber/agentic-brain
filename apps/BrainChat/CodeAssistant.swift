@@ -79,6 +79,46 @@ private let systemPatterns: [(keyword: String, action: SystemAction)] = [
     ("git status", .gitStatus),
     ("what app is open", .frontmostApp),
     ("which app", .frontmostApp),
+    ("read line", .voiceCoding),
+    ("read lines", .voiceCoding),
+    ("go to function", .voiceCoding),
+    ("go to line", .voiceCoding),
+    ("explain this", .voiceCoding),
+    ("explain the code", .voiceCoding),
+    ("fix this", .voiceCoding),
+    ("fix the error", .voiceCoding),
+    ("fix error", .voiceCoding),
+    ("debug this", .voiceCoding),
+    ("what's wrong", .voiceCoding),
+    ("refactor", .voiceCoding),
+    ("list functions", .voiceCoding),
+    ("show functions", .voiceCoding),
+    ("spell ", .voiceCoding),
+    ("commit changes", .voiceCoding),
+    ("commit with", .voiceCoding),
+    ("save to ", .voiceCoding),
+    ("save as ", .voiceCoding),
+    ("open file", .voiceCoding),
+    ("close file", .voiceCoding),
+    ("delete line", .voiceCoding),
+    ("insert at line", .voiceCoding),
+    ("insert on line", .voiceCoding),
+    ("copy line", .voiceCoding),
+    ("replace ", .voiceCoding),
+    ("create file", .voiceCoding),
+    ("new file", .voiceCoding),
+    ("create function", .voiceCoding),
+    ("create a function", .voiceCoding),
+    ("git diff", .voiceCoding),
+    ("show diff", .voiceCoding),
+    ("show changes", .voiceCoding),
+    ("what changed", .voiceCoding),
+    ("undo", .voiceCoding),
+    ("repeat last", .voiceCoding),
+    ("do it again", .voiceCoding),
+    ("search for", .voiceCoding),
+    ("search code", .voiceCoding),
+    ("grep ", .voiceCoding),
 ]
 
 enum SystemAction {
@@ -90,6 +130,7 @@ enum SystemAction {
     case gitStatus
     case frontmostApp
     case runShell(String)
+    case voiceCoding
 }
 
 protocol CopilotExecuting {
@@ -201,6 +242,38 @@ final class CodeAssistant: @unchecked Sendable {
 
     private func handleSystem(_ message: String, started: Date, completion: @escaping (AssistantResponse) -> Void) {
         let action = matchSystemAction(message.lowercased())
+
+        // Route voice coding commands to VoiceCodingEngine
+        if case .voiceCoding = action {
+            let engine = VoiceCodingEngine.shared
+            let voiceAction = engine.parse(message)
+            system.speak(voiceAction.spokenConfirmation, voice: "Karen (Premium)", rate: 155)
+
+            // For explain/fix/refactor, the result is an LLM prompt
+            let needsLLM: Bool
+            switch voiceAction {
+            case .explainCode, .fixError, .refactor, .createFunction:
+                needsLLM = true
+            default:
+                needsLLM = false
+            }
+
+            Task {
+                let resultText = await engine.execute(voiceAction)
+                if needsLLM, let handler = self.generalAIHandlerBox {
+                    handler.run(resultText) { [weak self] response in
+                        let spoken = String(response.prefix(400))
+                        self?.system.speak(spoken, voice: "Karen (Premium)", rate: 155)
+                        completion(AssistantResponse(text: response, route: .system, duration: Date().timeIntervalSince(started), codeBlocks: []))
+                    }
+                } else {
+                    self.system.speak(String(resultText.prefix(300)), voice: "Karen (Premium)", rate: 155)
+                    completion(AssistantResponse(text: resultText, route: .system, duration: Date().timeIntervalSince(started), codeBlocks: []))
+                }
+            }
+            return
+        }
+
         system.speak("Running command", voice: "Karen (Premium)", rate: 155)
         let resultText: String
 
@@ -229,6 +302,9 @@ final class CodeAssistant: @unchecked Sendable {
                 resultText = "The frontmost app is \(system.frontmostApp())."
             case .runShell(let command):
                 resultText = try system.run(command, timeout: 15, workingDirectory: nil).output
+            case .voiceCoding:
+                // Already handled above, should not reach here
+                resultText = "Voice coding command was not handled."
             }
         } catch {
             resultText = "Error: \(error.localizedDescription)"

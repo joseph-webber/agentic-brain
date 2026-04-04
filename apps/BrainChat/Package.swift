@@ -46,6 +46,7 @@ let package = Package(
             ],
             sources: [
                 "AIManager.swift",
+                "AgenticBrainIntegration.swift",
                 "APIKeyManager.swift",
                 "AirPodsManager.swift",
                 "AppTypes.swift",
@@ -138,6 +139,7 @@ let package = Package(
             sources: [
                 // LLM client tests (use real app types via @testable import BrainChatLib)
                 "ClaudeTests.swift",
+                "AgenticBrainIntegrationTests.swift",
                 "CopilotTests.swift",
                 "GeminiTests.swift",
                 "GPTTests.swift",
@@ -152,12 +154,14 @@ let package = Package(
                 "RedpandaIntegrationTests.swift",
                 // Yolo mode event tests (excluded: YoloCommandEvent type not in SPM target)
                 // "YoloTests.swift",
+                // Voice coding engine and code speaker tests
+                "VoiceCodingTests.swift",
                 // Unit tests — polymorphic dispatch, enum coverage, SSE parsing
-                "UnitTests/PolymorphicUnitTests.swift",
+                "PolymorphicUnitTests.swift",
                 // Integration tests — fallback chains, conversation store, weaving
-                "IntegrationTests/ServiceIntegrationTests.swift",
+                "ServiceIntegrationTests.swift",
                 // E2E tests — full conversation flows, multi-provider, accessibility
-                "E2ETests/FullFlowE2ETests.swift"
+                "FullFlowE2ETests.swift"
             ]
         )
     ]

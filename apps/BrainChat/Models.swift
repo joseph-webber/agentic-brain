@@ -185,6 +185,18 @@ final class AppSettings: ObservableObject {
     @AppStorage("autoSpeak") var autoSpeak: Bool = true
     @AppStorage("speechEngineRaw") private var speechEngineRaw: String = SpeechEngine.appleDictation.rawValue
     @AppStorage("voiceOutputEngineRaw") private var voiceOutputEngineRaw: String = VoiceOutputEngine.macOS.rawValue
+    @AppStorage("agenticBrainEnabled") var agenticBrainEnabled: Bool = false
+    @AppStorage("agenticBrainAPIBaseURL") var agenticBrainAPIBaseURL: String = "http://localhost:8000"
+    @AppStorage("agenticBrainWebSocketURL") var agenticBrainWebSocketURL: String = ""
+    @AppStorage("agenticBrainSessionID") var agenticBrainSessionID: String = ""
+    @AppStorage("agenticBrainUserID") var agenticBrainUserID: String = ""
+    @AppStorage("graphRAGEnabled") var graphRAGEnabled: Bool = true
+    @AppStorage("graphRAGScope") var graphRAGScope: String = "session"
+    @AppStorage("adlConfigPath") var adlConfigPath: String = ""
+    @AppStorage("brainChatSystemPrompt") var systemPromptOverride: String = ""
+    @AppStorage("brainChatFallbackProviders") private var fallbackProvidersRaw: String = ""
+    @AppStorage("agenticBrainModeRaw") private var agenticBrainModeRaw: String = AgenticBrainConnectionMode.hybrid.rawValue
+    @AppStorage("brainChatProfileRaw") private var brainChatProfileRaw: String = BrainChatBehaviorProfile.developer.rawValue
     @Published var speechEngine: SpeechEngine = .appleDictation {
         didSet {
             speechEngineRaw = speechEngine.rawValue
@@ -201,8 +213,21 @@ final class AppSettings: ObservableObject {
     @Published var grokAPIKey: String = ""
     @Published var geminiAPIKey: String = ""
     @Published var groqAPIKey: String = ""
+    @Published var agenticBrainAPIKey: String = ""
+    @Published var agenticBrainBearerToken: String = ""
     @Published var keychainStatusMessage: String = ""
     @Published var showSettings = false
+    @Published var agenticBrainMode: AgenticBrainConnectionMode = .hybrid {
+        didSet {
+            agenticBrainModeRaw = agenticBrainMode.rawValue
+        }
+    }
+    @Published var behaviorProfile: BrainChatBehaviorProfile = .developer {
+        didSet {
+            brainChatProfileRaw = behaviorProfile.rawValue
+            applyProfileDefaults()
+        }
+    }
 
     // Layered response settings
     @AppStorage("layeredModeEnabled") var layeredModeEnabled: Bool = true
@@ -233,6 +258,13 @@ final class AppSettings: ObservableObject {
         if let persisted = VoiceOutputEngine(rawValue: voiceOutputEngineRaw) {
             voiceOutputEngine = persisted
         }
+        if let persisted = AgenticBrainConnectionMode(rawValue: agenticBrainModeRaw) {
+            agenticBrainMode = persisted
+        }
+        if let persisted = BrainChatBehaviorProfile(rawValue: brainChatProfileRaw) {
+            behaviorProfile = persisted
+        }
+        applyProfileDefaults()
     }
 
     func loadAPIKeys() {
@@ -242,6 +274,8 @@ final class AppSettings: ObservableObject {
             grokAPIKey = try APIKeyManager.shared.load(.grok)
             geminiAPIKey = try APIKeyManager.shared.load(.gemini)
             groqAPIKey = try APIKeyManager.shared.loadGroqAPIKey()
+            agenticBrainAPIKey = APIKeyManager.shared.key(for: "agentic-brain-api-key") ?? ""
+            agenticBrainBearerToken = APIKeyManager.shared.key(for: "agentic-brain-bearer-token") ?? ""
             keychainStatusMessage = ""
         } catch {
             keychainStatusMessage = error.localizedDescription
@@ -255,6 +289,8 @@ final class AppSettings: ObservableObject {
             try APIKeyManager.shared.save(grokAPIKey, for: .grok)
             try APIKeyManager.shared.save(geminiAPIKey, for: .gemini)
             try APIKeyManager.shared.save(groqAPIKey, for: .groq)
+            try APIKeyManager.shared.setKey(agenticBrainAPIKey, for: "agentic-brain-api-key")
+            try APIKeyManager.shared.setKey(agenticBrainBearerToken, for: "agentic-brain-bearer-token")
             keychainStatusMessage = "API keys saved securely in Keychain."
         } catch {
             keychainStatusMessage = error.localizedDescription
@@ -268,23 +304,69 @@ final class AppSettings: ObservableObject {
             try APIKeyManager.shared.delete(.grok)
             try APIKeyManager.shared.delete(.gemini)
             try APIKeyManager.shared.delete(.groq)
+            APIKeyManager.shared.removeKey(for: "agentic-brain-api-key")
+            APIKeyManager.shared.removeKey(for: "agentic-brain-bearer-token")
             claudeAPIKey = ""
             openAIKey = ""
             grokAPIKey = ""
             geminiAPIKey = ""
             groqAPIKey = ""
+            agenticBrainAPIKey = ""
+            agenticBrainBearerToken = ""
             keychainStatusMessage = "API keys removed from Keychain."
         } catch {
             keychainStatusMessage = error.localizedDescription
         }
     }
 
+    func loadADLConfiguration() {
+        let trimmedPath = adlConfigPath.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedPath.isEmpty else {
+            keychainStatusMessage = "Enter an ADL file path first."
+            return
+        }
+
+        do {
+            let summary = try ADLConfigurationLoader.load(from: URL(fileURLWithPath: trimmedPath))
+            behaviorProfile = summary.profile
+            agenticBrainMode = summary.mode
+            graphRAGEnabled = summary.graphRAGEnabled
+            if let systemPrompt = summary.systemPrompt, !systemPrompt.isEmpty {
+                systemPromptOverride = systemPrompt
+            } else {
+                systemPromptOverride = behaviorProfile.systemPrompt
+            }
+            fallbackProviders = summary.fallbackProviders
+            keychainStatusMessage = "Loaded ADL settings for \(behaviorProfile.displayName.lowercased()) mode."
+        } catch {
+            keychainStatusMessage = "Couldn't load ADL configuration. \(error.localizedDescription)"
+        }
+    }
+
     func routerConfiguration(provider: LLMProvider, yoloMode: Bool) -> LLMRouterConfiguration {
-        LLMRouterConfiguration(
-            provider: provider,
-            systemPrompt: "You are Karen, an Australian AI assistant helping Joseph code",
+        let effectiveProvider: LLMProvider = agenticBrainMode == .airlocked ? .ollama : provider
+        let effectivePrompt = systemPromptOverride.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? behaviorProfile.systemPrompt
+            : systemPromptOverride.trimmingCharacters(in: .whitespacesAndNewlines)
+        return LLMRouterConfiguration(
+            provider: effectiveProvider,
+            systemPrompt: effectivePrompt,
             yoloMode: yoloMode,
             bridgeWebSocketURL: bridgeWebSocketURL.trimmingCharacters(in: .whitespacesAndNewlines),
+            fallbackProviders: effectiveFallbackProviders(for: effectiveProvider),
+            backend: AgenticBrainBackendConfiguration(
+                enabled: agenticBrainEnabled,
+                restBaseURL: agenticBrainAPIBaseURL.trimmingCharacters(in: .whitespacesAndNewlines),
+                webSocketURL: agenticBrainWebSocketURL.trimmingCharacters(in: .whitespacesAndNewlines),
+                apiKey: agenticBrainAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
+                bearerToken: agenticBrainBearerToken.trimmingCharacters(in: .whitespacesAndNewlines),
+                sessionID: agenticBrainSessionID.trimmingCharacters(in: .whitespacesAndNewlines),
+                userID: agenticBrainUserID.trimmingCharacters(in: .whitespacesAndNewlines),
+                mode: agenticBrainMode,
+                graphRAGEnabled: graphRAGEnabled,
+                graphRAGScope: graphRAGScope.trimmingCharacters(in: .whitespacesAndNewlines)
+            ),
+            profile: behaviorProfile,
             claudeAPIKey: claudeAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             openAIAPIKey: openAIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             groqAPIKey: groqAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -307,6 +389,38 @@ final class AppSettings: ObservableObject {
             groqAPIKey: groqAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             strategy: layeredStrategy
         )
+    }
+
+    var fallbackProviders: [LLMProvider] {
+        get {
+            fallbackProvidersRaw
+                .split(separator: ",")
+                .compactMap { LLMProvider(rawValue: String($0)) }
+        }
+        set {
+            fallbackProvidersRaw = newValue.map(\.rawValue).joined(separator: ",")
+        }
+    }
+
+    private func effectiveFallbackProviders(for provider: LLMProvider) -> [LLMProvider] {
+        if agenticBrainMode == .airlocked {
+            return [.ollama]
+        }
+
+        let configured = fallbackProviders.isEmpty ? behaviorProfile.fallbackProviders : fallbackProviders
+        let withoutSelected = configured.filter { $0 != provider }
+        return withoutSelected.isEmpty ? behaviorProfile.fallbackProviders.filter { $0 != provider } : withoutSelected
+    }
+
+    private func applyProfileDefaults() {
+        if systemPromptOverride.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            systemPromptOverride = behaviorProfile.systemPrompt
+        }
+        speechEngine = behaviorProfile.preferredSpeechEngine
+        voiceOutputEngine = behaviorProfile.preferredVoiceOutput
+        if fallbackProviders.isEmpty {
+            fallbackProviders = behaviorProfile.fallbackProviders
+        }
     }
 }
 
