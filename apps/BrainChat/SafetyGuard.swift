@@ -168,9 +168,22 @@ final class SafetyGuard: @unchecked Sendable {
     func evaluate(command: String, category: ActionCategory) -> SafetyVerdict {
         let lower = command.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Check blocklist first (highest priority)
+        // Check blocklist first (highest priority) - use proper regex matching
         for entry in blockedPatterns {
-            if lower.contains(entry.pattern.lowercased()) {
+            let pattern = entry.pattern.lowercased()
+            let escaped = NSRegularExpression.escapedPattern(for: pattern)
+            
+            // Use regex with word boundaries for better matching
+            let regexPattern: String
+            if pattern.contains(" ") || pattern.contains("*") || pattern.contains(".") {
+                // For patterns with spaces or wildcards, match anywhere
+                regexPattern = escaped.replacingOccurrences(of: "\\*", with: ".*")
+            } else {
+                // For single words, use word boundaries
+                regexPattern = "\\b\(escaped)"
+            }
+            
+            if lower.range(of: regexPattern, options: .regularExpression) != nil {
                 return .blocked(reason: entry.reason)
             }
         }
@@ -201,18 +214,26 @@ final class SafetyGuard: @unchecked Sendable {
             return .allowed
 
         case .gitOperation:
-            // Check confirmation patterns for dangerous git ops
+            // Check confirmation patterns for dangerous git ops - use regex
             for entry in confirmationPatterns where entry.pattern.hasPrefix("git") {
-                if lower.contains(entry.pattern.lowercased()) {
+                let pattern = entry.pattern.lowercased()
+                let escaped = NSRegularExpression.escapedPattern(for: pattern)
+                let regexPattern = pattern.contains(" ") ? escaped : "\\b\(escaped)"
+                
+                if lower.range(of: regexPattern, options: .regularExpression) != nil {
                     return .requiresConfirmation(reason: entry.reason)
                 }
             }
             return .allowed
 
         case .shellCommand:
-            // Check all confirmation patterns
+            // Check all confirmation patterns - use regex
             for entry in confirmationPatterns {
-                if lower.contains(entry.pattern.lowercased()) {
+                let pattern = entry.pattern.lowercased()
+                let escaped = NSRegularExpression.escapedPattern(for: pattern)
+                let regexPattern = pattern.contains(" ") ? escaped : "\\b\(escaped)"
+                
+                if lower.range(of: regexPattern, options: .regularExpression) != nil {
                     return .requiresConfirmation(reason: entry.reason)
                 }
             }
@@ -223,7 +244,11 @@ final class SafetyGuard: @unchecked Sendable {
 
         case .network:
             for entry in confirmationPatterns where entry.pattern.hasPrefix("curl") {
-                if lower.contains(entry.pattern.lowercased()) {
+                let pattern = entry.pattern.lowercased()
+                let escaped = NSRegularExpression.escapedPattern(for: pattern)
+                let regexPattern = pattern.contains(" ") ? escaped : "\\b\(escaped)"
+                
+                if lower.range(of: regexPattern, options: .regularExpression) != nil {
                     return .requiresConfirmation(reason: entry.reason)
                 }
             }
@@ -235,13 +260,19 @@ final class SafetyGuard: @unchecked Sendable {
     }
 
     /// Evaluate a file path for write safety.
+    /// SECURITY FIX: Now resolves symlinks to prevent symlink attacks
     func evaluatePath(_ path: String, operation: ActionCategory) -> SafetyVerdict {
         let resolved = (path as NSString).expandingTildeInPath
         let standardised = (resolved as NSString).standardizingPath
+        
+        // SECURITY FIX: Resolve symlinks to prevent symlink attacks
+        let realPath = (standardised as NSString).resolvingSymlinksInPath
 
         // Block writes outside safe directories
         let inSafeDir = safeDirectories.contains { root in
-            standardised.hasPrefix((root as NSString).standardizingPath)
+            // SECURITY FIX: Standardize both root and path for accurate comparison
+            let standardizedRoot = (root as NSString).standardizingPath
+            return realPath.hasPrefix(standardizedRoot)
         }
 
         guard inSafeDir else {

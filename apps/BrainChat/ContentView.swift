@@ -15,10 +15,13 @@ struct ContentView: View {
     var body: some View {
         VStack(spacing: 0) {
             toolbar
+                .accessibilityIdentifier("statusSection")
+                .accessibilityLabel("Status and controls")
             Divider()
             ConversationView()
                 .environmentObject(viewModel.layeredMessageStore)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .accessibilityIdentifier("conversationSection")
             YoloActionFeed(yolo: viewModel.yolo)
             Divider()
 
@@ -52,6 +55,10 @@ struct ContentView: View {
         .onDisappear {
             viewModel.handleDisappear()
         }
+        .onChange(of: viewModel.error) { _, error in
+            guard let error else { return }
+            postAccessibilityAnnouncement(error, priority: NSAccessibilityPriorityLevel.high.rawValue)
+        }
     }
 
     private var toolbar: some View {
@@ -82,6 +89,14 @@ struct ContentView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Copilot session status")
             .accessibilityValue(viewModel.copilotStatusText)
+            .accessibilityIdentifier("statusIndicator")
+
+            ProgressView(value: Double(speechManager.audioLevel), total: 1)
+                .frame(width: 56)
+                .accessibilityIdentifier("audioLevelView")
+                .accessibilityLabel("Microphone input level")
+                .accessibilityValue(audioLevelDescription)
+                .accessibilityHint("Shows how much audio Brain Chat is hearing right now")
 
             Button(action: viewModel.toggleMic) {
                 HStack(spacing: 4) {
@@ -96,15 +111,36 @@ struct ContentView: View {
                 .cornerRadius(8)
             }
             .buttonStyle(.plain)
-            .accessibilityIdentifier("micButton")
+            .keyboardShortcut("l", modifiers: .command)
+            .accessibilityIdentifier("microphoneButton")
             .accessibilityLabel("Microphone")
             .accessibilityValue(viewModel.isMicLive ? "Live" : "Muted")
             .accessibilityHint(viewModel.isMicLive ? "Double tap to mute" : "Double tap to go live")
+
+            Button(action: voiceManager.stop) {
+                Image(systemName: "speaker.slash.fill")
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(".", modifiers: .command)
+            .accessibilityIdentifier("stopButton")
+            .accessibilityLabel("Stop speaking")
+            .accessibilityValue(voiceManager.isSpeaking ? "Speaking" : "Idle")
+            .accessibilityHint("Stops any spoken response immediately")
+
+            Button(action: openSettings) {
+                Image(systemName: "gearshape")
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(",", modifiers: .command)
+            .accessibilityIdentifier("settingsButton")
+            .accessibilityLabel("Open settings")
+            .accessibilityHint("Opens Brain Chat settings")
 
             Button(action: { showClearConfirmation = true }) {
                 Image(systemName: "trash")
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("clearButton")
             .accessibilityLabel("Clear conversation")
             .accessibilityHint("Double tap to delete all messages. A confirmation dialog will appear.")
             .confirmationDialog(
@@ -136,6 +172,8 @@ struct ContentView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Live transcript")
         .accessibilityValue(viewModel.liveTranscript)
+        .accessibilityHint("Updates while Brain Chat is listening")
+        .accessibilityIdentifier("liveTranscript")
     }
 
     private var inputBar: some View {
@@ -144,6 +182,7 @@ struct ContentView: View {
                 .textFieldStyle(.roundedBorder)
                 .focused($isTextFieldFocused)
                 .onSubmit { sendCurrentInput() }
+                .accessibilityIdentifier("messageInput")
                 .accessibilityLabel("Message input")
                 .accessibilityHint("Type your message. Press Return or Command Return to send. Press Escape to clear.")
                 .onEscapeKey { viewModel.inputText = "" }
@@ -153,11 +192,15 @@ struct ContentView: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .accessibilityIdentifier("sendButton")
             .accessibilityLabel("Send message")
+            .accessibilityValue(viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "No message entered" : "Ready to send")
             .accessibilityHint("Send your typed message to Brain Chat")
             .keyboardShortcut(.return, modifiers: .command)
         }
         .padding(12)
+        .accessibilityIdentifier("inputSection")
+        .accessibilityLabel("Message composer")
     }
 
     private func sendCurrentInput() {
@@ -167,6 +210,37 @@ struct ContentView: View {
                 isTextFieldFocused = true
             }
         }
+    }
+
+    private var audioLevelDescription: String {
+        let level = speechManager.audioLevel
+        switch level {
+        case ..<0.05:
+            return "Silent"
+        case ..<0.3:
+            return "Low"
+        case ..<0.7:
+            return "Moderate"
+        default:
+            return "High"
+        }
+    }
+
+    private func openSettings() {
+        if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+            _ = NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
+    }
+
+    private func postAccessibilityAnnouncement(_ message: String, priority: Int = 50) {
+        NSAccessibility.post(
+            element: NSApp as Any,
+            notification: .announcementRequested,
+            userInfo: [
+                .announcement: message,
+                .priority: priority
+            ]
+        )
     }
 }
 

@@ -49,6 +49,8 @@ from .temporal import (
     signal,
     workflow,
 )
+from .wordpress import WordPressAPI, WordPressRole, create_wordpress_client
+from .woocommerce import WooCommerceAPI, WooCommerceRole, create_woocommerce_client
 
 __all__ = [
     # Retool
@@ -69,4 +71,12 @@ __all__ = [
     "activity",
     # Temporal - Mixins
     "AIAgentWorkflowMixin",
+    # WordPress
+    "WordPressAPI",
+    "WordPressRole",
+    "create_wordpress_client",
+    # WooCommerce
+    "WooCommerceAPI",
+    "WooCommerceRole",
+    "create_woocommerce_client",
 ]

@@ -1020,7 +1020,7 @@ A: Yes. Built with error handling, persistence, and monitoring in mind.
 
 ## See Also
 
-- [Main Documentation](./README.md)
+- [Main Documentation](./INDEX.md)
 - [Setup Guide](./SETUP.md)
 - [Neo4j Memory Integration](./memory.md)
-- [LLM Configuration](./llm.md)
+- [LLM Configuration](./LLM_GUIDE.md)

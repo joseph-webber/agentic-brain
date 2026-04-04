@@ -419,12 +419,37 @@ final class SpeechManager: ObservableObject {
         case .appleDictation:
             logMic("Starting Apple recognition engine")
             startAppleRecognition()
-        case .whisperAPI, .whisperCpp, .whisperKit:
+        case .whisperAPI:
+            guard whisperAPIEngine != nil else {
+                fallbackToAppleRecognition(reason: "Whisper API key is missing")
+                return
+            }
+            logMic("Starting Whisper recording (engine: \(currentEngine))")
+            startRecording()
+        case .whisperCpp:
+            guard whisperCppEngine?.isAvailable == true else {
+                fallbackToAppleRecognition(reason: "whisper.cpp is unavailable")
+                return
+            }
+            logMic("Starting Whisper recording (engine: \(currentEngine))")
+            startRecording()
+        case .whisperKit:
+            guard fasterWhisperBridge.isAvailable else {
+                fallbackToAppleRecognition(reason: "faster-whisper bridge is unavailable")
+                return
+            }
             logMic("Starting Whisper recording (engine: \(currentEngine))")
             startRecording()
         }
     }
     
+    private func fallbackToAppleRecognition(reason: String) {
+        logMic("Falling back to Apple Dictation: \(reason)", level: .info)
+        engineStatus = "Falling back to Apple Dictation: \(reason)"
+        currentEngine = .appleDictation
+        startAppleRecognition()
+    }
+
     private func startAppleRecognition() {
         logMic("=== startAppleRecognition() CALLED ===", level: .info)
         logMic("authorizationStatus: \(authorizationStatus.rawValue)")

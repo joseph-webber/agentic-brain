@@ -2,7 +2,7 @@ import Foundation
 
 /// Bridge to Python faster-whisper for best local STT.
 final class FasterWhisperBridge: @unchecked Sendable {
-    nonisolated(unsafe) static let shared = FasterWhisperBridge()
+    static let shared = FasterWhisperBridge()
 
     private let scriptPath: String
     private let whisperModel: String

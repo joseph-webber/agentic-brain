@@ -1,0 +1,1866 @@
+warning: 'brainchat': found 12 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
+    /Users/joe/brain/agentic-brain/apps/BrainChat/SECURITY_INTEGRATION_SUMMARY.md
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Security/SecurityGuard.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Security/SecurityManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Security/PermissionChecker.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/BrainChat.sdef
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Sources/Terminal/TerminalBridge.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/BrainChatLib.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/EventTypes.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/RedpandaBridge.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/PandaproxyClient.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Security/DangerousCommands.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Security/SecurityRole.swift
+[0/1] Planning build
+Building for debugging...
+[0/5] Write sources
+[1/5] Write swift-version--58304C5D6DBC2206.txt
+[3/30] Compiling BrainChatLib AudioSession.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[4/30] Compiling BrainChatLib BrainChat.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[5/30] Compiling BrainChatLib BrainChatCoordinator.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[6/30] Compiling BrainChatLib BrainChatMain.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[7/33] Compiling BrainChatLib PermissionChecker.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:9:38: error: call to main actor-isolated instance method 'canUseYolo()' in a synchronous nonisolated context [#ActorIsolatedCall]
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+   |                                      `- error: call to main actor-isolated instance method 'canUseYolo()' in a synchronous nonisolated context [#ActorIsolatedCall]
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+11 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:53:10: note: calls to instance method 'canUseYolo()' from outside of its actor context are implicitly asynchronous
+ 51 |     }
+ 52 | 
+ 53 |     func canUseYolo() -> Bool {
+    |          `- note: calls to instance method 'canUseYolo()' from outside of its actor context are implicitly asynchronous
+ 54 |         PermissionChecker.canUseYolo(role: currentRole)
+ 55 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:9:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+11 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:10:84: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+   |                                                                                    `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+11 |         }
+12 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:10:77: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+   |                                                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+11 |         }
+12 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:15:43: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+   |                                           `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+16 |         
+17 |         // Admin bypasses user-level safety (but SafetyGuard still applies)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:15:36: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+   |                                    `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+16 |         
+17 |         // Admin bypasses user-level safety (but SafetyGuard still applies)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:23:38: error: call to main actor-isolated instance method 'canExecuteShellCommand' in a synchronous nonisolated context [#ActorIsolatedCall]
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+16 |         
+   :
+21 |         
+22 |         // Check if command is safe for this role
+23 |         guard SecurityManager.shared.canExecuteShellCommand(command) else {
+   |                                      `- error: call to main actor-isolated instance method 'canExecuteShellCommand' in a synchronous nonisolated context [#ActorIsolatedCall]
+24 |             throw SecurityError.dangerousCommand(command)
+25 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:77:10: note: calls to instance method 'canExecuteShellCommand' from outside of its actor context are implicitly asynchronous
+ 75 |     }
+ 76 | 
+ 77 |     func canExecuteShellCommand(_ command: String) -> Bool {
+    |          `- note: calls to instance method 'canExecuteShellCommand' from outside of its actor context are implicitly asynchronous
+ 78 |         PermissionChecker.canExecuteShellCommand(command, role: currentRole)
+ 79 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:23:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+16 |         
+   :
+21 |         
+22 |         // Check if command is safe for this role
+23 |         guard SecurityManager.shared.canExecuteShellCommand(command) else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+24 |             throw SecurityError.dangerousCommand(command)
+25 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:36:43: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+   |                                           `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:36:36: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+   |                                    `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:38:38: error: call to main actor-isolated instance method 'canUseProvider' in a synchronous nonisolated context [#ActorIsolatedCall]
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+   |                                      `- error: call to main actor-isolated instance method 'canUseProvider' in a synchronous nonisolated context [#ActorIsolatedCall]
+39 |             throw SecurityError.llmProviderNotAllowed(
+40 |                 provider: provider.rawValue,
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:61:10: note: calls to instance method 'canUseProvider' from outside of its actor context are implicitly asynchronous
+ 59 |     }
+ 60 | 
+ 61 |     func canUseProvider(_ provider: LLMProvider) -> Bool {
+    |          `- note: calls to instance method 'canUseProvider' from outside of its actor context are implicitly asynchronous
+ 62 |         PermissionChecker.canUseProvider(provider, role: currentRole)
+ 63 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:38:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+39 |             throw SecurityError.llmProviderNotAllowed(
+40 |                 provider: provider.rawValue,
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:49:47: error: call to main actor-isolated instance method 'providerRateLimit(for:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+44 |     }
+45 |     
+46 |     static func checkRateLimit(for provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkRateLimit(for:)' part of global actor 'MainActor'
+47 |         // For now, just check if rate limit exists
+48 |         // TODO: Implement actual rate tracking
+49 |         if let limit = SecurityManager.shared.providerRateLimit(for: provider) {
+   |                                               `- error: call to main actor-isolated instance method 'providerRateLimit(for:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+50 |             // In a real implementation, track requests and throw if exceeded
+51 |             print("ℹ️ Rate limit for \(provider.rawValue): \(limit.limit)/\(limit.period)")
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:65:10: note: calls to instance method 'providerRateLimit(for:)' from outside of its actor context are implicitly asynchronous
+ 63 |     }
+ 64 | 
+ 65 |     func providerRateLimit(for provider: LLMProvider) -> (limit: Int, period: String)? {
+    |          `- note: calls to instance method 'providerRateLimit(for:)' from outside of its actor context are implicitly asynchronous
+ 66 |         PermissionChecker.providerRateLimit(for: provider, role: currentRole)
+ 67 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:49:40: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+44 |     }
+45 |     
+46 |     static func checkRateLimit(for provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkRateLimit(for:)' part of global actor 'MainActor'
+47 |         // For now, just check if rate limit exists
+48 |         // TODO: Implement actual rate tracking
+49 |         if let limit = SecurityManager.shared.providerRateLimit(for: provider) {
+   |                                        `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+50 |             // In a real implementation, track requests and throw if exceeded
+51 |             print("ℹ️ Rate limit for \(provider.rawValue): \(limit.limit)/\(limit.period)")
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:58:38: error: call to main actor-isolated instance method 'canExecuteCode()' in a synchronous nonisolated context [#ActorIsolatedCall]
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+   |                                      `- error: call to main actor-isolated instance method 'canExecuteCode()' in a synchronous nonisolated context [#ActorIsolatedCall]
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:73:10: note: calls to instance method 'canExecuteCode()' from outside of its actor context are implicitly asynchronous
+ 71 |     }
+ 72 | 
+ 73 |     func canExecuteCode() -> Bool {
+    |          `- note: calls to instance method 'canExecuteCode()' from outside of its actor context are implicitly asynchronous
+ 74 |         PermissionChecker.canExecuteCode(role: currentRole)
+ 75 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:58:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:60:53: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+   |                                                     `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+61 |             )
+62 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:60:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+   |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+61 |             )
+62 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:68:38: error: call to main actor-isolated instance method 'canAccessPath(_:operation:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+65 |     // MARK: - File System Guards
+66 |     
+67 |     static func checkPathAccess(_ path: String, operation: FileOperation) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkPathAccess(_:operation:)' part of global actor 'MainActor'
+68 |         guard SecurityManager.shared.canAccessPath(path, operation: operation) else {
+   |                                      `- error: call to main actor-isolated instance method 'canAccessPath(_:operation:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+69 |             throw SecurityError.pathAccessDenied(path: path)
+70 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:81:10: note: calls to instance method 'canAccessPath(_:operation:)' from outside of its actor context are implicitly asynchronous
+ 79 |     }
+ 80 | 
+ 81 |     func canAccessPath(_ path: String, operation: FileOperation) -> Bool {
+    |          `- note: calls to instance method 'canAccessPath(_:operation:)' from outside of its actor context are implicitly asynchronous
+ 82 |         PermissionChecker.canAccessPath(path, role: currentRole, operation: operation)
+ 83 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:68:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+65 |     // MARK: - File System Guards
+66 |     
+67 |     static func checkPathAccess(_ path: String, operation: FileOperation) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkPathAccess(_:operation:)' part of global actor 'MainActor'
+68 |         guard SecurityManager.shared.canAccessPath(path, operation: operation) else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+69 |             throw SecurityError.pathAccessDenied(path: path)
+70 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+[#ActorIsolatedCall]: <https://docs.swift.org/compiler/documentation/diagnostics/actor-isolated-call>
+[8/33] Compiling BrainChatLib SecurityGuard.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:9:38: error: call to main actor-isolated instance method 'canUseYolo()' in a synchronous nonisolated context [#ActorIsolatedCall]
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+   |                                      `- error: call to main actor-isolated instance method 'canUseYolo()' in a synchronous nonisolated context [#ActorIsolatedCall]
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+11 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:53:10: note: calls to instance method 'canUseYolo()' from outside of its actor context are implicitly asynchronous
+ 51 |     }
+ 52 | 
+ 53 |     func canUseYolo() -> Bool {
+    |          `- note: calls to instance method 'canUseYolo()' from outside of its actor context are implicitly asynchronous
+ 54 |         PermissionChecker.canUseYolo(role: currentRole)
+ 55 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:9:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+11 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:10:84: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+   |                                                                                    `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+11 |         }
+12 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:10:77: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+   |                                                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+11 |         }
+12 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:15:43: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+   |                                           `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+16 |         
+17 |         // Admin bypasses user-level safety (but SafetyGuard still applies)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:15:36: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+   |                                    `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+16 |         
+17 |         // Admin bypasses user-level safety (but SafetyGuard still applies)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:23:38: error: call to main actor-isolated instance method 'canExecuteShellCommand' in a synchronous nonisolated context [#ActorIsolatedCall]
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+16 |         
+   :
+21 |         
+22 |         // Check if command is safe for this role
+23 |         guard SecurityManager.shared.canExecuteShellCommand(command) else {
+   |                                      `- error: call to main actor-isolated instance method 'canExecuteShellCommand' in a synchronous nonisolated context [#ActorIsolatedCall]
+24 |             throw SecurityError.dangerousCommand(command)
+25 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:77:10: note: calls to instance method 'canExecuteShellCommand' from outside of its actor context are implicitly asynchronous
+ 75 |     }
+ 76 | 
+ 77 |     func canExecuteShellCommand(_ command: String) -> Bool {
+    |          `- note: calls to instance method 'canExecuteShellCommand' from outside of its actor context are implicitly asynchronous
+ 78 |         PermissionChecker.canExecuteShellCommand(command, role: currentRole)
+ 79 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:23:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+16 |         
+   :
+21 |         
+22 |         // Check if command is safe for this role
+23 |         guard SecurityManager.shared.canExecuteShellCommand(command) else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+24 |             throw SecurityError.dangerousCommand(command)
+25 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:36:43: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+   |                                           `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:36:36: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+   |                                    `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:38:38: error: call to main actor-isolated instance method 'canUseProvider' in a synchronous nonisolated context [#ActorIsolatedCall]
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+   |                                      `- error: call to main actor-isolated instance method 'canUseProvider' in a synchronous nonisolated context [#ActorIsolatedCall]
+39 |             throw SecurityError.llmProviderNotAllowed(
+40 |                 provider: provider.rawValue,
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:61:10: note: calls to instance method 'canUseProvider' from outside of its actor context are implicitly asynchronous
+ 59 |     }
+ 60 | 
+ 61 |     func canUseProvider(_ provider: LLMProvider) -> Bool {
+    |          `- note: calls to instance method 'canUseProvider' from outside of its actor context are implicitly asynchronous
+ 62 |         PermissionChecker.canUseProvider(provider, role: currentRole)
+ 63 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:38:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+39 |             throw SecurityError.llmProviderNotAllowed(
+40 |                 provider: provider.rawValue,
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:49:47: error: call to main actor-isolated instance method 'providerRateLimit(for:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+44 |     }
+45 |     
+46 |     static func checkRateLimit(for provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkRateLimit(for:)' part of global actor 'MainActor'
+47 |         // For now, just check if rate limit exists
+48 |         // TODO: Implement actual rate tracking
+49 |         if let limit = SecurityManager.shared.providerRateLimit(for: provider) {
+   |                                               `- error: call to main actor-isolated instance method 'providerRateLimit(for:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+50 |             // In a real implementation, track requests and throw if exceeded
+51 |             print("ℹ️ Rate limit for \(provider.rawValue): \(limit.limit)/\(limit.period)")
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:65:10: note: calls to instance method 'providerRateLimit(for:)' from outside of its actor context are implicitly asynchronous
+ 63 |     }
+ 64 | 
+ 65 |     func providerRateLimit(for provider: LLMProvider) -> (limit: Int, period: String)? {
+    |          `- note: calls to instance method 'providerRateLimit(for:)' from outside of its actor context are implicitly asynchronous
+ 66 |         PermissionChecker.providerRateLimit(for: provider, role: currentRole)
+ 67 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:49:40: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+44 |     }
+45 |     
+46 |     static func checkRateLimit(for provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkRateLimit(for:)' part of global actor 'MainActor'
+47 |         // For now, just check if rate limit exists
+48 |         // TODO: Implement actual rate tracking
+49 |         if let limit = SecurityManager.shared.providerRateLimit(for: provider) {
+   |                                        `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+50 |             // In a real implementation, track requests and throw if exceeded
+51 |             print("ℹ️ Rate limit for \(provider.rawValue): \(limit.limit)/\(limit.period)")
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:58:38: error: call to main actor-isolated instance method 'canExecuteCode()' in a synchronous nonisolated context [#ActorIsolatedCall]
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+   |                                      `- error: call to main actor-isolated instance method 'canExecuteCode()' in a synchronous nonisolated context [#ActorIsolatedCall]
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:73:10: note: calls to instance method 'canExecuteCode()' from outside of its actor context are implicitly asynchronous
+ 71 |     }
+ 72 | 
+ 73 |     func canExecuteCode() -> Bool {
+    |          `- note: calls to instance method 'canExecuteCode()' from outside of its actor context are implicitly asynchronous
+ 74 |         PermissionChecker.canExecuteCode(role: currentRole)
+ 75 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:58:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:60:53: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+   |                                                     `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+61 |             )
+62 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:60:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+   |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+61 |             )
+62 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:68:38: error: call to main actor-isolated instance method 'canAccessPath(_:operation:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+65 |     // MARK: - File System Guards
+66 |     
+67 |     static func checkPathAccess(_ path: String, operation: FileOperation) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkPathAccess(_:operation:)' part of global actor 'MainActor'
+68 |         guard SecurityManager.shared.canAccessPath(path, operation: operation) else {
+   |                                      `- error: call to main actor-isolated instance method 'canAccessPath(_:operation:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+69 |             throw SecurityError.pathAccessDenied(path: path)
+70 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:81:10: note: calls to instance method 'canAccessPath(_:operation:)' from outside of its actor context are implicitly asynchronous
+ 79 |     }
+ 80 | 
+ 81 |     func canAccessPath(_ path: String, operation: FileOperation) -> Bool {
+    |          `- note: calls to instance method 'canAccessPath(_:operation:)' from outside of its actor context are implicitly asynchronous
+ 82 |         PermissionChecker.canAccessPath(path, role: currentRole, operation: operation)
+ 83 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:68:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+65 |     // MARK: - File System Guards
+66 |     
+67 |     static func checkPathAccess(_ path: String, operation: FileOperation) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkPathAccess(_:operation:)' part of global actor 'MainActor'
+68 |         guard SecurityManager.shared.canAccessPath(path, operation: operation) else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+69 |             throw SecurityError.pathAccessDenied(path: path)
+70 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+[#ActorIsolatedCall]: <https://docs.swift.org/compiler/documentation/diagnostics/actor-isolated-call>
+[9/33] Compiling BrainChatLib SecurityManager.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:9:38: error: call to main actor-isolated instance method 'canUseYolo()' in a synchronous nonisolated context [#ActorIsolatedCall]
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+   |                                      `- error: call to main actor-isolated instance method 'canUseYolo()' in a synchronous nonisolated context [#ActorIsolatedCall]
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+11 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:53:10: note: calls to instance method 'canUseYolo()' from outside of its actor context are implicitly asynchronous
+ 51 |     }
+ 52 | 
+ 53 |     func canUseYolo() -> Bool {
+    |          `- note: calls to instance method 'canUseYolo()' from outside of its actor context are implicitly asynchronous
+ 54 |         PermissionChecker.canUseYolo(role: currentRole)
+ 55 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:9:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+11 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:10:84: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+   |                                                                                    `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+11 |         }
+12 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:10:77: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 6 |     // MARK: - YOLO Mode Guards
+ 7 |     
+ 8 |     static func checkYoloPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkYoloPermission()' part of global actor 'MainActor'
+ 9 |         guard SecurityManager.shared.canUseYolo() else {
+10 |             throw SecurityError.yoloNotAllowed(currentRole: SecurityManager.shared.currentRole)
+   |                                                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+11 |         }
+12 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:15:43: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+   |                                           `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+16 |         
+17 |         // Admin bypasses user-level safety (but SafetyGuard still applies)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:15:36: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+   |                                    `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+16 |         
+17 |         // Admin bypasses user-level safety (but SafetyGuard still applies)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:23:38: error: call to main actor-isolated instance method 'canExecuteShellCommand' in a synchronous nonisolated context [#ActorIsolatedCall]
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+16 |         
+   :
+21 |         
+22 |         // Check if command is safe for this role
+23 |         guard SecurityManager.shared.canExecuteShellCommand(command) else {
+   |                                      `- error: call to main actor-isolated instance method 'canExecuteShellCommand' in a synchronous nonisolated context [#ActorIsolatedCall]
+24 |             throw SecurityError.dangerousCommand(command)
+25 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:77:10: note: calls to instance method 'canExecuteShellCommand' from outside of its actor context are implicitly asynchronous
+ 75 |     }
+ 76 | 
+ 77 |     func canExecuteShellCommand(_ command: String) -> Bool {
+    |          `- note: calls to instance method 'canExecuteShellCommand' from outside of its actor context are implicitly asynchronous
+ 78 |         PermissionChecker.canExecuteShellCommand(command, role: currentRole)
+ 79 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:23:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+12 |     }
+13 |     
+14 |     static func checkCommandSafety(_ command: String) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCommandSafety' part of global actor 'MainActor'
+15 |         let role = SecurityManager.shared.currentRole
+16 |         
+   :
+21 |         
+22 |         // Check if command is safe for this role
+23 |         guard SecurityManager.shared.canExecuteShellCommand(command) else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+24 |             throw SecurityError.dangerousCommand(command)
+25 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:36:43: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+   |                                           `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:36:36: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+   |                                    `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:38:38: error: call to main actor-isolated instance method 'canUseProvider' in a synchronous nonisolated context [#ActorIsolatedCall]
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+   |                                      `- error: call to main actor-isolated instance method 'canUseProvider' in a synchronous nonisolated context [#ActorIsolatedCall]
+39 |             throw SecurityError.llmProviderNotAllowed(
+40 |                 provider: provider.rawValue,
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:61:10: note: calls to instance method 'canUseProvider' from outside of its actor context are implicitly asynchronous
+ 59 |     }
+ 60 | 
+ 61 |     func canUseProvider(_ provider: LLMProvider) -> Bool {
+    |          `- note: calls to instance method 'canUseProvider' from outside of its actor context are implicitly asynchronous
+ 62 |         PermissionChecker.canUseProvider(provider, role: currentRole)
+ 63 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:38:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+33 |     // MARK: - LLM Provider Guards
+34 |     
+35 |     static func checkProviderPermission(_ provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkProviderPermission' part of global actor 'MainActor'
+36 |         let role = SecurityManager.shared.currentRole
+37 |         
+38 |         guard SecurityManager.shared.canUseProvider(provider) else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+39 |             throw SecurityError.llmProviderNotAllowed(
+40 |                 provider: provider.rawValue,
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:49:47: error: call to main actor-isolated instance method 'providerRateLimit(for:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+44 |     }
+45 |     
+46 |     static func checkRateLimit(for provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkRateLimit(for:)' part of global actor 'MainActor'
+47 |         // For now, just check if rate limit exists
+48 |         // TODO: Implement actual rate tracking
+49 |         if let limit = SecurityManager.shared.providerRateLimit(for: provider) {
+   |                                               `- error: call to main actor-isolated instance method 'providerRateLimit(for:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+50 |             // In a real implementation, track requests and throw if exceeded
+51 |             print("ℹ️ Rate limit for \(provider.rawValue): \(limit.limit)/\(limit.period)")
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:65:10: note: calls to instance method 'providerRateLimit(for:)' from outside of its actor context are implicitly asynchronous
+ 63 |     }
+ 64 | 
+ 65 |     func providerRateLimit(for provider: LLMProvider) -> (limit: Int, period: String)? {
+    |          `- note: calls to instance method 'providerRateLimit(for:)' from outside of its actor context are implicitly asynchronous
+ 66 |         PermissionChecker.providerRateLimit(for: provider, role: currentRole)
+ 67 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:49:40: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+44 |     }
+45 |     
+46 |     static func checkRateLimit(for provider: LLMProvider) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkRateLimit(for:)' part of global actor 'MainActor'
+47 |         // For now, just check if rate limit exists
+48 |         // TODO: Implement actual rate tracking
+49 |         if let limit = SecurityManager.shared.providerRateLimit(for: provider) {
+   |                                        `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+50 |             // In a real implementation, track requests and throw if exceeded
+51 |             print("ℹ️ Rate limit for \(provider.rawValue): \(limit.limit)/\(limit.period)")
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:58:38: error: call to main actor-isolated instance method 'canExecuteCode()' in a synchronous nonisolated context [#ActorIsolatedCall]
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+   |                                      `- error: call to main actor-isolated instance method 'canExecuteCode()' in a synchronous nonisolated context [#ActorIsolatedCall]
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:73:10: note: calls to instance method 'canExecuteCode()' from outside of its actor context are implicitly asynchronous
+ 71 |     }
+ 72 | 
+ 73 |     func canExecuteCode() -> Bool {
+    |          `- note: calls to instance method 'canExecuteCode()' from outside of its actor context are implicitly asynchronous
+ 74 |         PermissionChecker.canExecuteCode(role: currentRole)
+ 75 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:58:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:60:53: error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+   |                                                     `- error: main actor-isolated property 'currentRole' can not be referenced from a nonisolated context
+61 |             )
+62 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:9:33: note: property declared here
+  7 |     static let shared = SecurityManager()
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+    |                                 `- note: property declared here
+ 10 |     @Published private(set) var modeSwitchingEnabled: Bool
+ 11 |     @AppStorage("securityRole") private var storedRole: String = SecurityRole.admin.rawValue
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:60:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+55 |     // MARK: - Code Execution Guards
+56 |     
+57 |     static func checkCodeExecutionPermission() throws {
+   |                 `- note: add '@MainActor' to make static method 'checkCodeExecutionPermission()' part of global actor 'MainActor'
+58 |         guard SecurityManager.shared.canExecuteCode() else {
+59 |             throw SecurityError.codeExecutionBlocked(
+60 |                 currentRole: SecurityManager.shared.currentRole
+   |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+61 |             )
+62 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:68:38: error: call to main actor-isolated instance method 'canAccessPath(_:operation:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+65 |     // MARK: - File System Guards
+66 |     
+67 |     static func checkPathAccess(_ path: String, operation: FileOperation) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkPathAccess(_:operation:)' part of global actor 'MainActor'
+68 |         guard SecurityManager.shared.canAccessPath(path, operation: operation) else {
+   |                                      `- error: call to main actor-isolated instance method 'canAccessPath(_:operation:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+69 |             throw SecurityError.pathAccessDenied(path: path)
+70 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:81:10: note: calls to instance method 'canAccessPath(_:operation:)' from outside of its actor context are implicitly asynchronous
+ 79 |     }
+ 80 | 
+ 81 |     func canAccessPath(_ path: String, operation: FileOperation) -> Bool {
+    |          `- note: calls to instance method 'canAccessPath(_:operation:)' from outside of its actor context are implicitly asynchronous
+ 82 |         PermissionChecker.canAccessPath(path, role: currentRole, operation: operation)
+ 83 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift:68:31: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+65 |     // MARK: - File System Guards
+66 |     
+67 |     static func checkPathAccess(_ path: String, operation: FileOperation) throws {
+   |                 `- note: add '@MainActor' to make static method 'checkPathAccess(_:operation:)' part of global actor 'MainActor'
+68 |         guard SecurityManager.shared.canAccessPath(path, operation: operation) else {
+   |                               `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+69 |             throw SecurityError.pathAccessDenied(path: path)
+70 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+[#ActorIsolatedCall]: <https://docs.swift.org/compiler/documentation/diagnostics/actor-isolated-call>
+[10/33] Compiling BrainChatLib SecurityModeView.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityModeView.swift:8:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+  6 |     @State private var showingRestrictionConfirmation = false
+  7 | 
+  8 |     init(securityManager: SecurityManager = .shared) {
+    |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+  9 |         _securityManager = ObservedObject(wrappedValue: securityManager)
+ 10 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+[11/33] Compiling BrainChatLib SecurityRole.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityModeView.swift:8:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+  6 |     @State private var showingRestrictionConfirmation = false
+  7 | 
+  8 |     init(securityManager: SecurityManager = .shared) {
+    |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+  9 |         _securityManager = ObservedObject(wrappedValue: securityManager)
+ 10 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+[12/33] Compiling BrainChatLib VoiceOutputEngines.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityModeView.swift:8:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+  6 |     @State private var showingRestrictionConfirmation = false
+  7 | 
+  8 |     init(securityManager: SecurityManager = .shared) {
+    |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+  9 |         _securityManager = ObservedObject(wrappedValue: securityManager)
+ 10 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+[13/35] Compiling BrainChatLib ScriptingSupport.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[14/35] Compiling BrainChatLib SettingsView.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[15/35] Compiling BrainChatLib DangerousCommands.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[16/35] Compiling BrainChatLib BridgeDaemon.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/ChatViewModel.swift:48:45: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 46 |         layeredMessageStore: LayeredMessageStore? = nil,
+ 47 |         yolo: YoloMode? = nil,
+ 48 |         securityManager: SecurityManager = .shared
+    |                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 49 |     ) {
+ 50 |         self.copilotBridge = copilotBridge
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[17/35] Compiling BrainChatLib CLIHandler.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/ChatViewModel.swift:48:45: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 46 |         layeredMessageStore: LayeredMessageStore? = nil,
+ 47 |         yolo: YoloMode? = nil,
+ 48 |         securityManager: SecurityManager = .shared
+    |                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 49 |     ) {
+ 50 |         self.copilotBridge = copilotBridge
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[18/35] Compiling BrainChatLib CartesiaVoice.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/ChatViewModel.swift:48:45: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 46 |         layeredMessageStore: LayeredMessageStore? = nil,
+ 47 |         yolo: YoloMode? = nil,
+ 48 |         securityManager: SecurityManager = .shared
+    |                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 49 |     ) {
+ 50 |         self.copilotBridge = copilotBridge
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[19/35] Compiling BrainChatLib ChatViewModel.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/ChatViewModel.swift:48:45: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 46 |         layeredMessageStore: LayeredMessageStore? = nil,
+ 47 |         yolo: YoloMode? = nil,
+ 48 |         securityManager: SecurityManager = .shared
+    |                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 49 |     ) {
+ 50 |         self.copilotBridge = copilotBridge
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[20/37] Compiling BrainChatLib GroqClient.swift
+[21/37] Compiling BrainChatLib LLMRouter.swift
+[22/37] Compiling BrainChatLib SafetyGuard.swift
+[23/37] Emitting module BrainChatLib
+/Users/joe/brain/agentic-brain/apps/BrainChat/ChatViewModel.swift:48:45: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 46 |         layeredMessageStore: LayeredMessageStore? = nil,
+ 47 |         yolo: YoloMode? = nil,
+ 48 |         securityManager: SecurityManager = .shared
+    |                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 49 |     ) {
+ 50 |         self.copilotBridge = copilotBridge
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityModeView.swift:8:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+  6 |     @State private var showingRestrictionConfirmation = false
+  7 | 
+  8 |     init(securityManager: SecurityManager = .shared) {
+    |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+  9 |         _securityManager = ObservedObject(wrappedValue: securityManager)
+ 10 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:312:38: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+310 |     }
+311 | 
+312 |     func speechSynthesizer(_ sender: NSSpeechSynthesizer, didFinishSpeaking finishedSpeaking: Bool) {
+    |                                      `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+313 |         let utteranceID = manager?.currentSpeechUtteranceID()
+314 |         Task { @MainActor in
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:305:47: warning: 'NSSpeechSynthesizerDelegate' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+303 | }
+304 | 
+305 | private final class SpeechDelegate: NSObject, NSSpeechSynthesizerDelegate {
+    |                                               `- warning: 'NSSpeechSynthesizerDelegate' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+306 |     weak var manager: VoiceManager?
+307 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/YoloMode.swift:29:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 27 |     var maxActionsPerSession: Int = 50
+ 28 | 
+ 29 |     init(securityManager: SecurityManager = .shared) {
+    |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 30 |         self.securityManager = securityManager
+ 31 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[24/37] Compiling BrainChatLib ClaudeAPI.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/ChatViewModel.swift:48:45: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 46 |         layeredMessageStore: LayeredMessageStore? = nil,
+ 47 |         yolo: YoloMode? = nil,
+ 48 |         securityManager: SecurityManager = .shared
+    |                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 49 |     ) {
+ 50 |         self.copilotBridge = copilotBridge
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[25/37] Compiling BrainChatLib CodeAssistant.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/ChatViewModel.swift:48:45: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 46 |         layeredMessageStore: LayeredMessageStore? = nil,
+ 47 |         yolo: YoloMode? = nil,
+ 48 |         securityManager: SecurityManager = .shared
+    |                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 49 |     ) {
+ 50 |         self.copilotBridge = copilotBridge
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[26/37] Compiling BrainChatLib CodeSpeaker.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/ChatViewModel.swift:48:45: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 46 |         layeredMessageStore: LayeredMessageStore? = nil,
+ 47 |         yolo: YoloMode? = nil,
+ 48 |         securityManager: SecurityManager = .shared
+    |                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 49 |     ) {
+ 50 |         self.copilotBridge = copilotBridge
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[27/37] Compiling BrainChatLib ContentView.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/ChatViewModel.swift:48:45: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 46 |         layeredMessageStore: LayeredMessageStore? = nil,
+ 47 |         yolo: YoloMode? = nil,
+ 48 |         securityManager: SecurityManager = .shared
+    |                                             `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 49 |     ) {
+ 50 |         self.copilotBridge = copilotBridge
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[28/40] Compiling BrainChatLib VoiceOutputSelector.swift
+[29/40] Compiling BrainChatLib VoiceManager.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:16:31: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 14 |     @Published var engineStatus: String = "Ready"
+ 15 | 
+ 16 |     private let synthesizer = NSSpeechSynthesizer()
+    |                               `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 17 |     private let cartesiaVoice: CartesiaVoice
+ 18 |     private let piperVoice: PiperVoiceEngine
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:312:38: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+310 |     }
+311 | 
+312 |     func speechSynthesizer(_ sender: NSSpeechSynthesizer, didFinishSpeaking finishedSpeaking: Bool) {
+    |                                      `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+313 |         let utteranceID = manager?.currentSpeechUtteranceID()
+314 |         Task { @MainActor in
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:305:47: warning: 'NSSpeechSynthesizerDelegate' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+303 | }
+304 | 
+305 | private final class SpeechDelegate: NSObject, NSSpeechSynthesizerDelegate {
+    |                                               `- warning: 'NSSpeechSynthesizerDelegate' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+306 |     weak var manager: VoiceManager?
+307 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:51:21: warning: 'delegate' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 49 |         self.elevenLabsVoice = elevenLabsVoice
+ 50 |         delegate = SpeechDelegate(manager: self)
+ 51 |         synthesizer.delegate = delegate
+    |                     `- warning: 'delegate' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 52 |         bindExternalEngines()
+ 53 |         loadVoices()
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:59:22: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 57 | 
+ 58 |     func loadVoices() {
+ 59 |         let voices = NSSpeechSynthesizer.availableVoices.compactMap { voiceID -> VoiceInfo? in
+    |                      `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 60 |             guard
+ 61 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:59:42: warning: 'availableVoices' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 57 | 
+ 58 |     func loadVoices() {
+ 59 |         let voices = NSSpeechSynthesizer.availableVoices.compactMap { voiceID -> VoiceInfo? in
+    |                                          `- warning: 'availableVoices' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 60 |             guard
+ 61 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:61:34: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 59 |         let voices = NSSpeechSynthesizer.availableVoices.compactMap { voiceID -> VoiceInfo? in
+ 60 |             guard
+ 61 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+    |                                  `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 62 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+ 63 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:61:54: warning: 'attributes(forVoice:)' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 59 |         let voices = NSSpeechSynthesizer.availableVoices.compactMap { voiceID -> VoiceInfo? in
+ 60 |             guard
+ 61 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+    |                                                      `- warning: 'attributes(forVoice:)' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 62 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+ 63 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:62:39: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 60 |             guard
+ 61 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+ 62 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+    |                                       `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 63 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+ 64 |             else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:62:59: warning: 'VoiceAttributeKey' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 60 |             guard
+ 61 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+ 62 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+    |                                                           `- warning: 'VoiceAttributeKey' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 63 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+ 64 |             else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:62:77: warning: 'name' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 60 |             guard
+ 61 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+ 62 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+    |                                                                             `- warning: 'name' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 63 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+ 64 |             else {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:63:43: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 61 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+ 62 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+ 63 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+    |                                           `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 64 |             else {
+ 65 |                 return nil
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:63:63: warning: 'VoiceAttributeKey' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 61 |                 let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
+ 62 |                 let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
+ 63 |                 let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
+    |                                                               `- warning: 'VoiceAttributeKey' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 64 |             else {
+ 65 |                 return nil
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:100:21: warning: 'setVoice' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 98 |     func selectVoice(byID id: String) {
+ 99 |         guard let voice = availableVoices.first(where: { $0.id == id }) else { return }
+100 |         synthesizer.setVoice(NSSpeechSynthesizer.VoiceName(rawValue: voice.id))
+    |                     `- warning: 'setVoice' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+101 |         selectedVoiceID = voice.id
+102 |         selectedVoiceName = voice.name
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:100:30: warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 98 |     func selectVoice(byID id: String) {
+ 99 |         guard let voice = availableVoices.first(where: { $0.id == id }) else { return }
+100 |         synthesizer.setVoice(NSSpeechSynthesizer.VoiceName(rawValue: voice.id))
+    |                              `- warning: 'NSSpeechSynthesizer' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+101 |         selectedVoiceID = voice.id
+102 |         selectedVoiceName = voice.name
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:100:50: warning: 'VoiceName' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+ 98 |     func selectVoice(byID id: String) {
+ 99 |         guard let voice = availableVoices.first(where: { $0.id == id }) else { return }
+100 |         synthesizer.setVoice(NSSpeechSynthesizer.VoiceName(rawValue: voice.id))
+    |                                                  `- warning: 'VoiceName' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+101 |         selectedVoiceID = voice.id
+102 |         selectedVoiceName = voice.name
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:162:21: warning: 'stopSpeaking()' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+160 |     func stop() {
+161 |         currentUtteranceID = nil
+162 |         synthesizer.stopSpeaking()
+    |                     `- warning: 'stopSpeaking()' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+163 |         speechQueue.removeAll()
+164 |         isProcessingQueue = false
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:222:59: warning: 'isSpeaking' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+220 |         case .macOS:
+221 |             engineStatus = "Ready"
+222 |             isSpeaking = isProcessingQueue || synthesizer.isSpeaking
+    |                                                           `- warning: 'isSpeaking' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+223 |         case .cartesia:
+224 |             engineStatus = cartesiaVoice.hasStoredAPIKey ? "Ready" : cartesiaVoice.statusMessage
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/VoiceManager.swift:268:35: warning: 'startSpeaking' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+266 |         let utteranceID = UUID()
+267 |         currentUtteranceID = utteranceID
+268 |         let started = synthesizer.startSpeaking(text)
+    |                                   `- warning: 'startSpeaking' was deprecated in macOS 14.0: Use AVSpeechSynthesizer in AVFoundation instead [#DeprecatedDeclaration]
+269 |         if !started, currentUtteranceID == utteranceID {
+270 |             currentUtteranceID = nil
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[30/42] Compiling BrainChatLib VoiceSelector.swift
+[31/43] Compiling BrainChatLib AudioPlayer.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/AudioPlayer.swift:189:78: warning: forming 'UnsafeMutableRawPointer' to a variable of type 'CFString'; this is likely incorrect because 'CFString' may contain an object reference.
+187 |         var size = UInt32(MemoryLayout<CFString>.size)
+188 | 
+189 |         let status = AudioObjectGetPropertyData(id, &address, 0, nil, &size, &name)
+    |                                                                              `- warning: forming 'UnsafeMutableRawPointer' to a variable of type 'CFString'; this is likely incorrect because 'CFString' may contain an object reference.
+190 |         guard status == noErr else { return nil }
+191 |         return name as String
+[32/45] Compiling BrainChatLib LLMSelector.swift
+[33/45] Compiling BrainChatLib AIManager.swift
+[34/45] Compiling BrainChatLib AgenticBrainIntegration.swift
+[35/50] Compiling BrainChatLib ResponseWeavingCoordinator.swift
+[36/51] Compiling BrainChatLib LayeredResponseManager.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/LayeredResponseManager.swift:478:28: warning: immutable value 'name' was never used; consider replacing with '_' or removing it [#no-usage]
+476 | 
+477 |         await withTaskGroup(of: LayerResult.self) { group in
+478 |             for (provider, name) in activePairs {
+    |                            `- warning: immutable value 'name' was never used; consider replacing with '_' or removing it [#no-usage]
+479 |                 group.addTask {
+480 |                     await self.runDeepLayer(
+[37/51] Compiling BrainChatLib Models.swift
+[38/53] Compiling BrainChatLib YoloExecutor.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/YoloMode.swift:29:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 27 |     var maxActionsPerSession: Int = 50
+ 28 | 
+ 29 |     init(securityManager: SecurityManager = .shared) {
+    |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 30 |         self.securityManager = securityManager
+ 31 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+[39/53] Compiling BrainChatLib YoloMode.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/YoloMode.swift:29:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 27 |     var maxActionsPerSession: Int = 50
+ 28 | 
+ 29 |     init(securityManager: SecurityManager = .shared) {
+    |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 30 |         self.securityManager = securityManager
+ 31 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+[40/53] Compiling BrainChatLib YoloSession.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/YoloMode.swift:29:46: warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 27 |     var maxActionsPerSession: Int = 50
+ 28 | 
+ 29 |     init(securityManager: SecurityManager = .shared) {
+    |                                              `- warning: main actor-isolated static property 'shared' can not be referenced from a nonisolated context; this is an error in the Swift 6 language mode
+ 30 |         self.securityManager = securityManager
+ 31 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift:7:16: note: static property declared here
+  5 | @MainActor
+  6 | final class SecurityManager: ObservableObject {
+  7 |     static let shared = SecurityManager()
+    |                `- note: static property declared here
+  8 | 
+  9 |     @Published private(set) var currentRole: SecurityRole
+[41/54] Compiling BrainChatLib SpeechEngineSelector.swift
+[42/54] Compiling BrainChatLib SpeechManager.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift:587:45: warning: main actor-isolated property 'isListening' can not be referenced from a Sendable closure
+235 | @MainActor
+236 | final class SpeechManager: ObservableObject {
+237 |     @Published var isListening = false
+    |                    `- note: property declared here
+238 |     @Published var currentTranscript = ""
+239 |     @Published var authorizationStatus: SFSpeechRecognizerAuthorizationStatus = .notDetermined
+    :
+585 |             // Update audio level periodically
+586 |             Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
+587 |                 guard let self = self, self.isListening else {
+    |                                             `- warning: main actor-isolated property 'isListening' can not be referenced from a Sendable closure
+588 |                     timer.invalidate()
+589 |                     return
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift:591:22: warning: main actor-isolated property 'audioRecorder' can not be referenced from a Sendable closure
+251 |     private var whisperCppEngine: WhisperCppEngine?
+252 |     private let fasterWhisperBridge = FasterWhisperBridge.shared
+253 |     private var audioRecorder: AVAudioRecorder?
+    |                 `- note: property declared here
+254 |     private var recordingURL: URL?
+255 |     private var openAIKey: String = ""
+    :
+589 |                     return
+590 |                 }
+591 |                 self.audioRecorder?.updateMeters()
+    |                      `- warning: main actor-isolated property 'audioRecorder' can not be referenced from a Sendable closure
+592 |                 let level = self.audioRecorder?.averagePower(forChannel: 0) ?? -160
+593 |                 // Convert dB to 0-1 range
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift:592:34: warning: main actor-isolated property 'audioRecorder' can not be referenced from a Sendable closure
+251 |     private var whisperCppEngine: WhisperCppEngine?
+252 |     private let fasterWhisperBridge = FasterWhisperBridge.shared
+253 |     private var audioRecorder: AVAudioRecorder?
+    |                 `- note: property declared here
+254 |     private var recordingURL: URL?
+255 |     private var openAIKey: String = ""
+    :
+590 |                 }
+591 |                 self.audioRecorder?.updateMeters()
+592 |                 let level = self.audioRecorder?.averagePower(forChannel: 0) ?? -160
+    |                                  `- warning: main actor-isolated property 'audioRecorder' can not be referenced from a Sendable closure
+593 |                 // Convert dB to 0-1 range
+594 |                 let normalized = max(0, min(1, (level + 50) / 50))
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift:138:87: warning: forming 'UnsafeMutableRawPointer' to a variable of type 'CFString'; this is likely incorrect because 'CFString' may contain an object reference.
+136 |                 var name: CFString = "" as CFString
+137 |                 var nameSize = UInt32(MemoryLayout<CFString>.size)
+138 |                 AudioObjectGetPropertyData(deviceID, &nameAddress, 0, nil, &nameSize, &name)
+    |                                                                                       `- warning: forming 'UnsafeMutableRawPointer' to a variable of type 'CFString'; this is likely incorrect because 'CFString' may contain an object reference.
+139 |                 
+140 |                 let deviceName = name as String
+[43/54] Compiling BrainChatLib VoiceCodingEngine.swift
+[44/54] Compiling BrainChatLib SystemCommands.swift
+[45/54] Compiling BrainChatLib VoiceBridge.swift
+[46/54] Compiling BrainChatLib APIKeyManager.swift
+[47/54] Compiling BrainChatLib ConversationView.swift
+[48/54] Compiling BrainChatLib LayeredResponseView.swift
+[49/54] Compiling BrainChatLib ResponseWeavingView.swift
+[50/54] Compiling BrainChatLib CopilotBridge.swift
+[51/54] Compiling BrainChatLib EventTypes.swift

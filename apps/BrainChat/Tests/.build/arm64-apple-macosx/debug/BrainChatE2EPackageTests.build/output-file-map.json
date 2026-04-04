@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatE2EPackageTests.build/primary.swiftdeps"
+  },
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatE2EPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatE2EPackageTests.build/runner.d",
+    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatE2EPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatE2EPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatE2EPackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatE2EPackageTests.build/runner.dia"
+  }
+}

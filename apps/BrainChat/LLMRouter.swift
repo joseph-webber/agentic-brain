@@ -117,6 +117,9 @@ struct LLMRouterConfiguration: Sendable {
     let systemPrompt: String
     let yoloMode: Bool
     let bridgeWebSocketURL: String
+    let fallbackProviders: [LLMProvider]
+    let backend: AgenticBrainBackendConfiguration
+    let profile: BrainChatBehaviorProfile
     let claudeAPIKey: String
     let openAIAPIKey: String
     let groqAPIKey: String
@@ -135,6 +138,9 @@ struct LLMRouterConfiguration: Sendable {
         systemPrompt: String,
         yoloMode: Bool = false,
         bridgeWebSocketURL: String = "",
+        fallbackProviders: [LLMProvider] = [],
+        backend: AgenticBrainBackendConfiguration = .disabled,
+        profile: BrainChatBehaviorProfile = .developer,
         claudeAPIKey: String = "",
         openAIAPIKey: String = "",
         groqAPIKey: String = "",
@@ -152,6 +158,9 @@ struct LLMRouterConfiguration: Sendable {
         self.systemPrompt = systemPrompt
         self.yoloMode = yoloMode
         self.bridgeWebSocketURL = bridgeWebSocketURL
+        self.fallbackProviders = fallbackProviders
+        self.backend = backend
+        self.profile = profile
         self.claudeAPIKey = claudeAPIKey
         self.openAIAPIKey = openAIAPIKey
         self.groqAPIKey = groqAPIKey
@@ -171,7 +180,10 @@ struct LLMRouterConfiguration: Sendable {
     }
 
     var effectiveSystemPrompt: String {
-        yoloMode ? systemPrompt + "\n\n" + provider.yoloSystemPrompt : systemPrompt
+        let basePrompt = systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? profile.systemPrompt
+            : systemPrompt
+        return yoloMode ? basePrompt + "\n\n" + provider.yoloSystemPrompt : basePrompt
     }
 }
 
@@ -197,6 +209,7 @@ final class LLMRouter: ObservableObject {
     private let grokClient: any GrokStreaming
     private let geminiClient: any GeminiStreaming
     private let copilotClient: any CopilotStreaming
+    private let backendClient: any AgenticBrainBackendServing
     private let defaults: UserDefaults
 
     init(
@@ -207,6 +220,7 @@ final class LLMRouter: ObservableObject {
         grokClient: any GrokStreaming = GrokClient(),
         geminiClient: any GeminiStreaming = GeminiClient(),
         copilotClient: any CopilotStreaming = CopilotClient(),
+        backendClient: any AgenticBrainBackendServing = AgenticBrainBackendClient(),
         defaults: UserDefaults = .standard
     ) {
         self.claudeAPI = claudeAPI
@@ -216,6 +230,7 @@ final class LLMRouter: ObservableObject {
         self.grokClient = grokClient
         self.geminiClient = geminiClient
         self.copilotClient = copilotClient
+        self.backendClient = backendClient
         self.defaults = defaults
         if let savedProvider = defaults.string(forKey: "selectedLLMProvider"),
            let provider = LLMProvider(rawValue: savedProvider) {
@@ -227,15 +242,49 @@ final class LLMRouter: ObservableObject {
     }
 
     func streamReply(history: [ChatMessage], configuration: LLMRouterConfiguration, onEvent: @escaping @Sendable (AIStreamEvent) -> Void) async -> String {
+        // Security check: Validate provider access for current role
+        do {
+            try SecurityGuard.checkProviderPermission(configuration.provider)
+        } catch {
+            let errorMsg = error.localizedDescription
+            statusMessage = "Provider access denied"
+            lastErrorMessage = errorMsg
+            return "Sorry Joseph, \(errorMsg)"
+        }
+        
+        var failures: [String] = []
+        if configuration.backend.shouldUseRemoteInference {
+            activeProviderName = "Agentic Brain API"
+            statusMessage = "Connecting to Agentic Brain…"
+            onEvent(.providerChanged(activeProviderName))
+            do {
+                let response = try await backendClient.streamReply(history: history, configuration: configuration, onEvent: onEvent)
+                lastErrorMessage = nil
+                statusMessage = "Ready"
+                return response
+            } catch {
+                let failure = "Agentic Brain API: \(error.localizedDescription)"
+                failures.append(failure)
+                lastErrorMessage = failure
+                statusMessage = "Agentic Brain API failed, trying provider fallback…"
+            }
+        }
+
         let messages = Self.buildContext(from: history, systemPrompt: configuration.effectiveSystemPrompt)
         let prompt = messages.last(where: { $0.role == .user })?.content ?? ""
-        let primary = Self.recommendedProvider(
-            for: Self.classifyRequestType(for: prompt),
+        let requestType = Self.classifyRequestType(for: prompt)
+        let recommended = Self.recommendedProvider(
+            for: requestType,
             selectedProvider: configuration.provider,
             hasGroqConfiguration: configuration.hasGroqConfiguration
         )
+        let primary: LLMProvider
+        if requestType == .quick, recommended == .groq, configuration.provider != .ollama {
+            primary = configuration.provider
+        } else {
+            primary = recommended
+        }
         let providers = buildFallbackChain(primary: primary, configuration: configuration)
-        var failures: [String] = []
         for (index, provider) in providers.enumerated() {
             if index > 0 { onEvent(.reset) }
             activeProviderName = provider.rawValue
@@ -275,21 +324,39 @@ final class LLMRouter: ObservableObject {
     }
 
     func buildFallbackChain(primary: LLMProvider, configuration: LLMRouterConfiguration) -> [LLMProvider] {
+        if configuration.backend.enabled && configuration.backend.mode == .airlocked {
+            return [.ollama]
+        }
+
         var chain: [LLMProvider] = [primary]
-        if primary == .groq, configuration.provider != .groq {
-            chain.append(configuration.provider)
+        let configuredFallbacks = configuration.fallbackProviders.filter { $0 != primary }
+
+        if configuredFallbacks.isEmpty {
+            if primary == .groq, configuration.provider != .groq {
+                chain.append(configuration.provider)
+            }
+            if primary == .claude, !configuration.openAIAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                chain.append(.gpt)
+            }
+            if primary == .groq, !configuration.openAIAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                chain.append(.gpt)
+            }
+        } else {
+            chain.append(contentsOf: configuredFallbacks)
         }
-        if primary == .claude, !configuration.openAIAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            chain.append(.gpt)
-        }
-        if primary == .groq, !configuration.openAIAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            chain.append(.gpt)
-        }
+
         if primary != .ollama {
             chain.append(.ollama)
         }
         var seen = Set<LLMProvider>()
-        return chain.filter { seen.insert($0).inserted }
+        
+        // Filter chain to only include providers allowed for current role
+        let allowedChain = chain.filter { provider in
+            guard seen.insert(provider).inserted else { return false }
+            return SecurityManager.shared.canUseProvider(provider)
+        }
+        
+        return allowedChain
     }
 
     static func buildContext(from history: [ChatMessage], systemPrompt: String) -> [AIChatMessage] {

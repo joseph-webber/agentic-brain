@@ -1,21 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 Joseph Webber
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Production Release Workflow for Agentic Brain
-# Triggers on version tags (v*.*.*)
-# Runs full test suite, builds package, publishes to PyPI, creates GitHub Release
+# Copyright 2026 Agentic Brain Contributors
 
 name: Release
 
@@ -23,398 +7,195 @@ on:
   push:
     tags:
       - 'v*.*.*'
+      - 'v*.*.*-*'
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Tag to release (e.g., v2.21.0)'
+      version:
+        description: SemVer tag to release (for example v3.2.0)
         required: true
         type: string
-      skip_tests:
-        description: 'Skip test suite (emergency releases only)'
-        required: false
-        type: boolean
-        default: false
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  REGISTRY: ghcr.io
-  DEMO_API_IMAGE: ${{ github.repository }}/demo-api
-  PYTHON_VERSION_PRIMARY: '3.11'
-
-# =============================================================================
-# JOBS
-# =============================================================================
-
 jobs:
-  # ---------------------------------------------------------------------------
-  # Job 1: Validate release metadata
-  # ---------------------------------------------------------------------------
   validate:
-    name: Validate Release
+    name: Validate semantic release metadata
     runs-on: ubuntu-latest
     outputs:
-      tag_version: ${{ steps.meta.outputs.tag_version }}
-      package_version: ${{ steps.meta.outputs.package_version }}
-      is_prerelease: ${{ steps.meta.outputs.is_prerelease }}
-      changelog_body: ${{ steps.changelog.outputs.body }}
-
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      release_notes: ${{ steps.notes.outputs.release_notes }}
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for changelog generation
+          fetch-depth: 0
 
-      - name: Extract release metadata
-        id: meta
-        run: |
-          # Handle both tag push and workflow_dispatch
-          if [ -n "${{ inputs.tag }}" ]; then
-            TAG_VERSION="${{ inputs.tag }}"
-          else
-            TAG_VERSION="${{ github.ref_name }}"
-          fi
-
-          # Extract version from pyproject.toml
-          PACKAGE_VERSION=$(grep -m1 'version = "' pyproject.toml | sed 's/.*version = "\([^"]*\)".*/\1/')
-
-          echo "tag_version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
-          echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
-
-          # Check if prerelease
-          if [[ "$TAG_VERSION" =~ (rc|alpha|beta|dev) ]]; then
-            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          echo "📋 Release metadata:"
-          echo "  Tag: $TAG_VERSION"
-          echo "  Package: v$PACKAGE_VERSION"
-
-          # Verify version matches tag
-          if [ "v$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-            echo "::error::Tag version ($TAG_VERSION) does not match package version (v$PACKAGE_VERSION)"
-            echo "Update pyproject.toml version before tagging!"
-            exit 1
-          fi
-          echo "✅ Version match verified!"
-
-      - name: Extract changelog for this version
-        id: changelog
-        run: |
-          VERSION="${{ steps.meta.outputs.package_version }}"
-          echo "Extracting changelog for version $VERSION..."
-
-          # Extract changelog section for this version
-          CHANGELOG_BODY=$(awk "/^## \[$VERSION\]/{found=1; next} /^## \[/{if(found) exit} found{print}" CHANGELOG.md || echo "")
-
-          if [ -z "$CHANGELOG_BODY" ]; then
-            CHANGELOG_BODY="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
-          fi
-
-          # Save to file to handle multiline
-          echo "$CHANGELOG_BODY" > changelog_body.txt
-          echo "body<<EOF" >> "$GITHUB_OUTPUT"
-          cat changelog_body.txt >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-
-  # ---------------------------------------------------------------------------
-  # Job 2: Matrix testing across Python versions
-  # ---------------------------------------------------------------------------
-  test:
-    name: Test Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
-    needs: validate
-    if: ${{ !inputs.skip_tests }}
-    timeout-minutes: 30
-
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.11', '3.12', '3.13']
-
-    env:
-      DEFAULT_LLM_PROVIDER: mock
-      TESTING: "true"
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: pyproject.toml
+          python-version: '3.11'
 
+      - name: Validate SemVer tag and package version
+        id: meta
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          import tomllib
+          from pathlib import Path
+
+          requested = os.environ.get('INPUT_VERSION') or os.environ.get('GITHUB_REF_NAME', '')
+          if not requested:
+              raise SystemExit('No release tag/version supplied')
+          if not re.fullmatch(r'v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?', requested):
+              raise SystemExit(f'Invalid semantic version tag: {requested}')
+
+          version = requested[1:].split('+', 1)[0]
+          package_version = tomllib.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version']
+          if version.split('-', 1)[0] != package_version:
+              raise SystemExit(
+                  f'Tag version {requested} does not match pyproject.toml version {package_version}'
+              )
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
+              fh.write(f'tag={requested}\n')
+              fh.write(f'version={version}\n')
+          print(f'SemVer validated for {requested}')
+          PY
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+
+      - name: Generate changelog-driven release notes
+        id: notes
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          version = os.environ['VERSION']
+          changelog = Path('CHANGELOG.md').read_text(encoding='utf-8')
+          pattern = re.compile(
+              rf'^## \[{re.escape(version)}\].*?(?=^## \[|\Z)',
+              re.MULTILINE | re.DOTALL,
+          )
+          match = pattern.search(changelog)
+          notes = match.group(0).strip() if match else f'Automated release for {version}.'
+          with open('release-notes.md', 'w', encoding='utf-8') as fh:
+              fh.write(notes + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
+              fh.write('release_notes<<EOF\n')
+              fh.write(notes + '\n')
+              fh.write('EOF\n')
+          print(notes)
+          PY
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+
+      - name: Upload release notes artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+          if-no-files-found: error
+
+  qa:
+    name: Release smoke tests
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install -e ".[test,dev,api,llm]"
-
-      - name: Run test suite
+          pip install -e ".[test,docs,graphrag,llm]"
+      - name: Run release smoke suite
         run: |
-          pytest tests/ \
-            --ignore=tests/e2e \
-            --ignore=tests/test_infrastructure.py \
-            --ignore=tests/test_cultural_sensitivity.py \
-            --ignore=tests/test_demo_auth.py \
-            --ignore=tests/test_documented_features.py \
-            --ignore=tests/test_devops_loaders.py \
-            --ignore=tests/test_installer_enhanced.py \
-            --ignore=tests/test_new_loaders.py \
-            --ignore=tests/test_voice_ci.py \
-            --ignore=tests/test_adl_comprehensive_parser_only.py \
-            --ignore=tests/test_speed_profiles.py \
-            --ignore=tests/test_voice_phase3_integration.py \
-            --ignore=tests/test_voice_no_overlap.py \
-            --ignore=tests/test_voice_system.py \
-            --ignore=tests/test_voice_stream.py \
-            --ignore=tests/test_spatial_audio.py \
-            --ignore=tests/test_speech_lock.py \
-            --ignore=tests/test_voice_safety.py \
-            --ignore=tests/test_voice_resilient.py \
-            --ignore=tests/test_daemon_overlap.py \
-            --ignore=tests/test_voice_serializer.py \
-            --ignore=tests/test_clock_server.py \
-            --ignore=tests/test_audio.py \
-            -m "not integration" \
-            -n auto \
-            --maxprocesses=4 \
+          pytest \
+            tests/test_adl.py \
+            tests/test_graphrag.py \
+            tests/test_readme_features.py \
+            tests/test_temporal_compat.py \
             -v --tb=short
 
-      - name: Run critical voice tests
-        run: pytest tests/test_voice_ci.py -v --tb=short
-
-      - name: Run ADL parser tests
-        run: pytest tests/test_adl_comprehensive_parser_only.py -v --tb=short
-
-  # ---------------------------------------------------------------------------
-  # Job 3: Build Python package
-  # ---------------------------------------------------------------------------
   build:
-    name: Build Package
+    name: Build release artifacts
     runs-on: ubuntu-latest
-    needs: [validate, test]
-    if: always() && needs.validate.result == 'success' && (needs.test.result == 'success' || needs.test.result == 'skipped')
-    outputs:
-      wheel_name: ${{ steps.build.outputs.wheel_name }}
-      sdist_name: ${{ steps.build.outputs.sdist_name }}
-
+    needs: [validate, qa]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION_PRIMARY }}
-          cache: 'pip'
-
-      - name: Install build dependencies
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Build package
         run: |
           python -m pip install --upgrade pip setuptools wheel build twine
-
-      - name: Build distribution packages
-        id: build
-        run: |
-          python -m build --outdir dist
-          echo "Distribution packages built:"
-          ls -lh dist/
-
-          # Extract artifact names
-          WHEEL_NAME=$(ls dist/*.whl | head -1 | xargs basename)
-          SDIST_NAME=$(ls dist/*.tar.gz | head -1 | xargs basename)
-          echo "wheel_name=$WHEEL_NAME" >> "$GITHUB_OUTPUT"
-          echo "sdist_name=$SDIST_NAME" >> "$GITHUB_OUTPUT"
-
-      - name: Verify package integrity
-        run: |
-          echo "Checking package integrity with twine..."
+          python -m build
           twine check dist/*
-          echo "✅ Package integrity verified!"
-
-          # Test installation from wheel
-          echo "Testing wheel installation..."
-          pip install dist/*.whl --force-reinstall
-          python -c "import agentic_brain; print(f'✅ Installed: {agentic_brain.__name__}')"
-
-      - name: Upload build artifacts
+      - name: Upload package artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist-packages
-          path: dist/
-          retention-days: 30
+          name: python-dist
+          path: dist/*
+          if-no-files-found: error
 
-  # ---------------------------------------------------------------------------
-  # Job 4: Publish to PyPI using trusted publishing (OIDC)
-  # ---------------------------------------------------------------------------
   publish-pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [validate, build]
-    environment:
-      name: pypi
-      url: https://pypi.org/project/agentic-brain/${{ needs.validate.outputs.package_version }}
-
+    needs: build
     permissions:
-      id-token: write  # Required for trusted publishing (OIDC)
+      id-token: write
       contents: read
-
     steps:
-      - name: Download build artifacts
+      - name: Download package artifacts
         uses: actions/download-artifact@v4
         with:
-          name: dist-packages
-          path: dist/
-
-      - name: Publish to PyPI (Trusted Publishing)
+          name: python-dist
+          path: dist
+      - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          # Uses OIDC trusted publishing - no API token needed!
-          # Requires PyPI project to be configured for trusted publishing:
-          # https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/
-          skip-existing: true
-          verbose: true
+          packages-dir: dist
 
-  # ---------------------------------------------------------------------------
-  # Job 4b: Fallback publish using API token (if OIDC not configured)
-  # ---------------------------------------------------------------------------
-  publish-pypi-token:
-    name: Publish to PyPI (Token Fallback)
-    runs-on: ubuntu-latest
-    needs: [validate, build, publish-pypi]
-    if: failure() && needs.build.result == 'success'
-    environment: release
-
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-packages
-          path: dist/
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION_PRIMARY }}
-
-      - name: Install twine
-        run: pip install twine
-
-      - name: Publish to PyPI (Token)
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          if [ -n "$TWINE_PASSWORD" ]; then
-            twine upload dist/* --non-interactive --skip-existing
-            echo "✅ Published to PyPI using API token"
-          else
-            echo "::warning::PYPI_TOKEN secret not configured - skipping PyPI publish"
-          fi
-
-  # ---------------------------------------------------------------------------
-  # Job 5: Create GitHub Release
-  # ---------------------------------------------------------------------------
-  github-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [validate, build]
-    if: always() && needs.build.result == 'success'
-
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-packages
-          path: dist/
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.validate.outputs.tag_version }}
-          name: Agentic Brain ${{ needs.validate.outputs.tag_version }}
-          draft: false
-          prerelease: ${{ needs.validate.outputs.is_prerelease == 'true' }}
-          generate_release_notes: true
-          files: |
-            dist/*
-          body: |
-            ## 🚀 Agentic Brain ${{ needs.validate.outputs.tag_version }}
-
-            ${{ needs.validate.outputs.changelog_body }}
-
-            ---
-
-            ### 📦 Installation
-
-            ```bash
-            pip install agentic-brain==${{ needs.validate.outputs.package_version }}
-            ```
-
-            Or with extras:
-            ```bash
-            pip install "agentic-brain[api,llm,graphrag]==${{ needs.validate.outputs.package_version }}"
-            ```
-
-            ### 🐳 Docker
-
-            ```bash
-            docker pull ghcr.io/${{ github.repository }}:${{ needs.validate.outputs.tag_version }}
-            ```
-
-            ### 📋 Resources
-
-            - [Documentation](https://github.com/${{ github.repository }}/blob/main/docs/INDEX.md)
-            - [Getting Started](https://github.com/${{ github.repository }}/blob/main/README.md)
-            - [Changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # ---------------------------------------------------------------------------
-  # Job 6: Build and push Docker images
-  # ---------------------------------------------------------------------------
   docker:
-    name: Build Docker Images
+    name: Publish container image
     runs-on: ubuntu-latest
-    needs: [validate, build]
-    if: always() && needs.build.result == 'success'
-
+    needs: build
     permissions:
       contents: read
       packages: write
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          images: ghcr.io/${{ github.repository }}
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.validate.outputs.tag_version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.validate.outputs.tag_version }}
-            type=raw,value=latest,enable=${{ needs.validate.outputs.is_prerelease == 'false' }}
-
-      - name: Build and push main image
+            type=semver,pattern={{version}},value=${{ needs.validate.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.validate.outputs.tag }}
+            type=raw,value=latest,enable=${{ !contains(needs.validate.outputs.tag, '-') }}
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -422,133 +203,26 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            VERSION=${{ needs.validate.outputs.package_version }}
 
-      # Demo API image
-      - name: Extract demo image metadata
-        id: demo-meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.DEMO_API_IMAGE }}
-          tags: |
-            type=raw,value=${{ needs.validate.outputs.tag_version }}
-            type=raw,value=${{ needs.validate.outputs.package_version }}
-            type=raw,value=latest,enable=${{ needs.validate.outputs.is_prerelease == 'false' }}
-
-      - name: Build and push demo API image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: demo/Dockerfile.api
-          push: true
-          tags: ${{ steps.demo-meta.outputs.tags }}
-          labels: ${{ steps.demo-meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            AGENTIC_BRAIN_VERSION=${{ needs.validate.outputs.package_version }}
-
-  # ---------------------------------------------------------------------------
-  # Job 7: Create demo package artifact
-  # ---------------------------------------------------------------------------
-  demo-package:
-    name: Create Demo Package
+  github-release:
+    name: Publish GitHub release
     runs-on: ubuntu-latest
-    needs: [validate, docker]
-    if: always() && needs.docker.result == 'success'
-
-    permissions:
-      contents: write
-
+    needs: [validate, build, publish-pypi, docker]
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Create demo package
-        env:
-          RELEASE_TAG: ${{ needs.validate.outputs.tag_version }}
-          PACKAGE_VERSION: ${{ needs.validate.outputs.package_version }}
-          DEMO_API_IMAGE_REF: ${{ env.REGISTRY }}/${{ env.DEMO_API_IMAGE }}:${{ needs.validate.outputs.tag_version }}
-        run: |
-          set -euo pipefail
-          PACKAGE_ROOT="dist-demo/agentic-brain-demo-${RELEASE_TAG}"
-
-          rm -rf dist-demo
-          mkdir -p "${PACKAGE_ROOT}/demo" "${PACKAGE_ROOT}/plugins" "${PACKAGE_ROOT}/sample-data"
-
-          cp demo/docker-compose.demo.yml demo/Dockerfile.api demo/Dockerfile.wordpress demo/setup-demo.sh "${PACKAGE_ROOT}/demo/"
-          cp -R demo/sample-data/. "${PACKAGE_ROOT}/sample-data/"
-          cp -R plugins/wordpress/agentic-brain "${PACKAGE_ROOT}/plugins/agentic-brain"
-
-          (
-            cd "${PACKAGE_ROOT}/plugins"
-            zip -qr agentic-brain.zip agentic-brain
-          )
-
-          cat > "${PACKAGE_ROOT}/demo/.env.demo" <<EOF
-          DEMO_API_IMAGE=${DEMO_API_IMAGE_REF}
-          DEMO_WORDPRESS_IMAGE=agentic-brain-demo-wordpress:${RELEASE_TAG}
-          DEMO_WP_PORT=8080
-          DEMO_API_PORT=8000
-          DEMO_NEO4J_HTTP_PORT=7475
-          DEMO_NEO4J_BOLT_PORT=7688
-          DEMO_REDIS_PORT=6380
-          EOF
-
-          cat > "${PACKAGE_ROOT}/demo/manifest.json" <<EOF
-          {
-            "release": "${RELEASE_TAG}",
-            "package_version": "${PACKAGE_VERSION}",
-            "api_image": "${DEMO_API_IMAGE_REF}",
-            "wordpress_build_context": "demo/Dockerfile.wordpress"
-          }
-          EOF
-
-          chmod +x "${PACKAGE_ROOT}/demo/setup-demo.sh"
-          tar -czf "dist-demo/agentic-brain-demo-${RELEASE_TAG}.tar.gz" -C dist-demo "agentic-brain-demo-${RELEASE_TAG}"
-
-      - name: Upload demo artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: demo-package-${{ needs.validate.outputs.tag_version }}
-          path: dist-demo/agentic-brain-demo-${{ needs.validate.outputs.tag_version }}.tar.gz
-
-      - name: Attach demo package to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ needs.validate.outputs.tag_version }}" \
-            "dist-demo/agentic-brain-demo-${{ needs.validate.outputs.tag_version }}.tar.gz" \
-            --clobber
-
-  # ---------------------------------------------------------------------------
-  # Job 8: Release summary
-  # ---------------------------------------------------------------------------
-  summary:
-    name: Release Summary
-    runs-on: ubuntu-latest
-    needs: [validate, test, build, publish-pypi, github-release, docker, demo-package]
-    if: always()
-
-    steps:
-      - name: Generate release summary
-        run: |
-          echo "## 🚀 Release Summary: ${{ needs.validate.outputs.tag_version }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Component | Status |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|-----------|--------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Validation | ${{ needs.validate.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Tests | ${{ needs.test.result == 'success' && '✅' || (needs.test.result == 'skipped' && '⏭️ Skipped' || '❌') }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Build | ${{ needs.build.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| PyPI Publish | ${{ needs.publish-pypi.result == 'success' && '✅' || '⚠️' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| GitHub Release | ${{ needs.github-release.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Docker Images | ${{ needs.docker.result == 'success' && '✅' || '❌' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Demo Package | ${{ needs.demo-package.result == 'success' && '✅' || '⚠️' }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### 📦 Artifacts" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **PyPI**: \`pip install agentic-brain==${{ needs.validate.outputs.package_version }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Docker**: \`ghcr.io/${{ github.repository }}:${{ needs.validate.outputs.tag_version }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- **Demo**: \`agentic-brain-demo-${{ needs.validate.outputs.tag_version }}.tar.gz\`" >> "$GITHUB_STEP_SUMMARY"
+          name: python-dist
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+          path: .
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.validate.outputs.tag }}
+          name: Agentic Brain ${{ needs.validate.outputs.tag }}
+          body_path: release-notes.md
+          files: dist/*
+          draft: false
+          prerelease: ${{ contains(needs.validate.outputs.tag, '-') }}

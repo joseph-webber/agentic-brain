@@ -1,0 +1,659 @@
+warning: 'brainchat': Invalid Exclude '/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/UnitTests': File not found.
+warning: 'brainchat': Invalid Exclude '/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/E2ETests': File not found.
+warning: 'brainchat': Invalid Exclude '/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/IntegrationTests': File not found.
+warning: 'brainchat': found 7 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Brain Chat.app/Contents/Info.plist
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Brain Chat.app/Contents/MacOS/BrainChat
+    /Users/joe/brain/agentic-brain/apps/BrainChat/docs/VOICE_CODING_GUIDE.md
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Brain Chat.app/Contents/BrainChat.entitlements
+    /Users/joe/brain/agentic-brain/apps/BrainChat/session-artifacts/subpackage-test.log
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Brain Chat.app/Contents/_CodeSignature/CodeResources
+    /Users/joe/brain/agentic-brain/apps/BrainChat/session-artifacts/root-swift-test.log
+[0/1] Planning build
+Building for debugging...
+[0/4] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (0.24s)
+Test Suite 'All tests' started at 2026-04-04 19:19:47.586.
+Test Suite 'BrainChatPackageTests.xctest' started at 2026-04-04 19:19:47.587.
+Test Suite 'AIServiceErrorTests' started at 2026-04-04 19:19:47.587.
+Test Case '-[BrainChatTests.AIServiceErrorTests testHTTPStatusEquality]' started.
+Test Case '-[BrainChatTests.AIServiceErrorTests testHTTPStatusEquality]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.AIServiceErrorTests testInvalidResponseEquality]' started.
+Test Case '-[BrainChatTests.AIServiceErrorTests testInvalidResponseEquality]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.AIServiceErrorTests testMissingAPIKeyDescription]' started.
+Test Case '-[BrainChatTests.AIServiceErrorTests testMissingAPIKeyDescription]' passed (0.000 seconds).
+Test Suite 'AIServiceErrorTests' passed at 2026-04-04 19:19:47.588.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'AccessibilityE2ETests' started at 2026-04-04 19:19:47.588.
+Test Case '-[BrainChatTests.AccessibilityE2ETests testChatMessageAccessibilityContainsAllInfo]' started.
+Test Case '-[BrainChatTests.AccessibilityE2ETests testChatMessageAccessibilityContainsAllInfo]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.AccessibilityE2ETests testLayerTierDescriptions]' started.
+Test Case '-[BrainChatTests.AccessibilityE2ETests testLayerTierDescriptions]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.AccessibilityE2ETests testLayerTierIcons]' started.
+Test Case '-[BrainChatTests.AccessibilityE2ETests testLayerTierIcons]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.AccessibilityE2ETests testResponseLayerAccessibilityLabels]' started.
+Test Case '-[BrainChatTests.AccessibilityE2ETests testResponseLayerAccessibilityLabels]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.AccessibilityE2ETests testWeavingPhaseAccessibilityAnnouncements]' started.
+Test Case '-[BrainChatTests.AccessibilityE2ETests testWeavingPhaseAccessibilityAnnouncements]' passed (0.000 seconds).
+Test Suite 'AccessibilityE2ETests' passed at 2026-04-04 19:19:47.590.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'AgenticBrainIntegrationTests' started at 2026-04-04 19:19:47.590.
+Test Case '-[BrainChatTests.AgenticBrainIntegrationTests testADLLoaderMapsTechnicalPersonaToDeveloperProfile]' started.
+Test Case '-[BrainChatTests.AgenticBrainIntegrationTests testADLLoaderMapsTechnicalPersonaToDeveloperProfile]' passed (0.002 seconds).
+Test Case '-[BrainChatTests.AgenticBrainIntegrationTests testBackendChatAddsAuthHeadersAndGraphRAGMetadata]' started.
+Test Case '-[BrainChatTests.AgenticBrainIntegrationTests testBackendChatAddsAuthHeadersAndGraphRAGMetadata]' passed (0.008 seconds).
+Test Case '-[BrainChatTests.AgenticBrainIntegrationTests testRedpandaBridgeRecoversAfterPollFailure]' started.
+Test Case '-[BrainChatTests.AgenticBrainIntegrationTests testRedpandaBridgeRecoversAfterPollFailure]' passed (0.269 seconds).
+Test Case '-[BrainChatTests.AgenticBrainIntegrationTests testRouterFallsBackToDirectProvidersWhenBackendFails]' started.
+Test Case '-[BrainChatTests.AgenticBrainIntegrationTests testRouterFallsBackToDirectProvidersWhenBackendFails]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.AgenticBrainIntegrationTests testRouterUsesBackendBeforeDirectProviders]' started.
+Test Case '-[BrainChatTests.AgenticBrainIntegrationTests testRouterUsesBackendBeforeDirectProviders]' passed (0.000 seconds).
+Test Suite 'AgenticBrainIntegrationTests' passed at 2026-04-04 19:19:47.870.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.280 (0.280) seconds
+Test Suite 'ChatMessageTests' started at 2026-04-04 19:19:47.870.
+Test Case '-[BrainChatTests.ChatMessageTests testAccessibilityDescriptionIncludesRoleAndContent]' started.
+Test Case '-[BrainChatTests.ChatMessageTests testAccessibilityDescriptionIncludesRoleAndContent]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ChatMessageTests testAccessibilityDescriptionIncludesWeavingPhase]' started.
+Test Case '-[BrainChatTests.ChatMessageTests testAccessibilityDescriptionIncludesWeavingPhase]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ChatMessageTests testRoleToAIRoleMapping]' started.
+Test Case '-[BrainChatTests.ChatMessageTests testRoleToAIRoleMapping]' passed (0.000 seconds).
+Test Suite 'ChatMessageTests' passed at 2026-04-04 19:19:47.871.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'ClaudeTests' started at 2026-04-04 19:19:47.871.
+Test Case '-[BrainChatTests.ClaudeTests testAPIAuthenticationAndMessageFormatting]' started.
+Test Case '-[BrainChatTests.ClaudeTests testAPIAuthenticationAndMessageFormatting]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.ClaudeTests testCIUsesMockedSessionNoRealCalls]' started.
+Test Case '-[BrainChatTests.ClaudeTests testCIUsesMockedSessionNoRealCalls]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.ClaudeTests testRateLimitHandling]' started.
+Test Case '-[BrainChatTests.ClaudeTests testRateLimitHandling]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.ClaudeTests testResponseParsing]' started.
+Test Case '-[BrainChatTests.ClaudeTests testResponseParsing]' passed (0.001 seconds).
+Test Suite 'ClaudeTests' passed at 2026-04-04 19:19:47.874.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'CodeSpeakerTests' started at 2026-04-04 19:19:47.874.
+Test Case '-[BrainChatTests.CodeSpeakerTests testDetectLanguageFromCode]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testDetectLanguageFromCode]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testDetectLanguageFromFilename]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testDetectLanguageFromFilename]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testFormatBlankLine]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testFormatBlankLine]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testFormatCodeBlock]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testFormatCodeBlock]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testFormatLineWithContent]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testFormatLineWithContent]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testFormatRange]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testFormatRange]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testPronounceBraces]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testPronounceBraces]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testPronounceKeywords]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testPronounceKeywords]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testPronounceMoreOperators]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testPronounceMoreOperators]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testPronounceOperators]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testPronounceOperators]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testSpellCamelCase]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testSpellCamelCase]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testSpellCamelCaseLowerStart]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testSpellCamelCaseLowerStart]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CodeSpeakerTests testSpellSnakeCase]' started.
+Test Case '-[BrainChatTests.CodeSpeakerTests testSpellSnakeCase]' passed (0.000 seconds).
+Test Suite 'CodeSpeakerTests' passed at 2026-04-04 19:19:47.877.
+	 Executed 13 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'ConnectionTestIntegrationTests' started at 2026-04-04 19:19:47.877.
+Test Case '-[BrainChatTests.ConnectionTestIntegrationTests testFailedConnectionTestUpdatesState]' started.
+Test Case '-[BrainChatTests.ConnectionTestIntegrationTests testFailedConnectionTestUpdatesState]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ConnectionTestIntegrationTests testSuccessfulConnectionTestUpdatesState]' started.
+Test Case '-[BrainChatTests.ConnectionTestIntegrationTests testSuccessfulConnectionTestUpdatesState]' passed (0.000 seconds).
+Test Suite 'ConnectionTestIntegrationTests' passed at 2026-04-04 19:19:47.878.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'ContextBuildingIntegrationTests' started at 2026-04-04 19:19:47.878.
+Test Case '-[BrainChatTests.ContextBuildingIntegrationTests testBuildContextAddsSystemPromptFirst]' started.
+Test Case '-[BrainChatTests.ContextBuildingIntegrationTests testBuildContextAddsSystemPromptFirst]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ContextBuildingIntegrationTests testBuildContextFiltersEmptyMessages]' started.
+Test Case '-[BrainChatTests.ContextBuildingIntegrationTests testBuildContextFiltersEmptyMessages]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ContextBuildingIntegrationTests testBuildContextFiltersSystemMessages]' started.
+Test Case '-[BrainChatTests.ContextBuildingIntegrationTests testBuildContextFiltersSystemMessages]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ContextBuildingIntegrationTests testBuildContextTrimsToTenRecentMessages]' started.
+Test Case '-[BrainChatTests.ContextBuildingIntegrationTests testBuildContextTrimsToTenRecentMessages]' passed (0.000 seconds).
+Test Suite 'ContextBuildingIntegrationTests' passed at 2026-04-04 19:19:47.879.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'ConversationFlowE2ETests' started at 2026-04-04 19:19:47.879.
+Test Case '-[BrainChatTests.ConversationFlowE2ETests testChatQuestionFlowClaudeToConversation]' started.
+Test Case '-[BrainChatTests.ConversationFlowE2ETests testChatQuestionFlowClaudeToConversation]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.ConversationFlowE2ETests testCodingRequestRoutesToCopilot]' started.
+Test Case '-[BrainChatTests.ConversationFlowE2ETests testCodingRequestRoutesToCopilot]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ConversationFlowE2ETests testGracefulDegradationToLocalLLM]' started.
+Test Case '-[BrainChatTests.ConversationFlowE2ETests testGracefulDegradationToLocalLLM]' passed (0.001 seconds).
+Test Suite 'ConversationFlowE2ETests' passed at 2026-04-04 19:19:47.881.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'ConversationStoreIntegrationTests' started at 2026-04-04 19:19:47.881.
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testAddMessageAndRetrieve]' started.
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testAddMessageAndRetrieve]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testClearResetsToSystemMessage]' started.
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testClearResetsToSystemMessage]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testFinishStreamingFallsBackOnEmpty]' started.
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testFinishStreamingFallsBackOnEmpty]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testFinishStreamingKeepsExistingContent]' started.
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testFinishStreamingKeepsExistingContent]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testRecentConversationCapsAtTen]' started.
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testRecentConversationCapsAtTen]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testRecentConversationExcludesSystemMessages]' started.
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testRecentConversationExcludesSystemMessages]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testStreamingMessageAppendsDelta]' started.
+Test Case '-[BrainChatTests.ConversationStoreIntegrationTests testStreamingMessageAppendsDelta]' passed (0.000 seconds).
+Test Suite 'ConversationStoreIntegrationTests' passed at 2026-04-04 19:19:47.883.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'CopilotTests' started at 2026-04-04 19:19:47.883.
+Test Case '-[BrainChatTests.CopilotTests testCLIExecution]' started.
+Test Case '-[BrainChatTests.CopilotTests testCLIExecution]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CopilotTests testCodeBlockExtraction]' started.
+Test Case '-[BrainChatTests.CopilotTests testCodeBlockExtraction]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CopilotTests testMockCLIForCI]' started.
+Test Case '-[BrainChatTests.CopilotTests testMockCLIForCI]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CopilotTests testResponseParsing]' started.
+Test Case '-[BrainChatTests.CopilotTests testResponseParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.CopilotTests testTimeout30Seconds]' started.
+Test Case '-[BrainChatTests.CopilotTests testTimeout30Seconds]' passed (0.000 seconds).
+Test Suite 'CopilotTests' passed at 2026-04-04 19:19:47.885.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'EventCodecE2ETests' started at 2026-04-04 19:19:47.885.
+Test Case '-[BrainChatTests.EventCodecE2ETests testVoiceInputRoundTrip]' started.
+Test Case '-[BrainChatTests.EventCodecE2ETests testVoiceInputRoundTrip]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.EventCodecE2ETests testVoiceInputYoloFlagEncodesCorrectly]' started.
+Test Case '-[BrainChatTests.EventCodecE2ETests testVoiceInputYoloFlagEncodesCorrectly]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.EventCodecE2ETests testVoiceResponseRoundTrip]' started.
+Test Case '-[BrainChatTests.EventCodecE2ETests testVoiceResponseRoundTrip]' passed (0.000 seconds).
+Test Suite 'EventCodecE2ETests' passed at 2026-04-04 19:19:47.886.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'FallbackChainIntegrationTests' started at 2026-04-04 19:19:47.886.
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testAllProvidersFailReturnsStructuredSummary]' started.
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testAllProvidersFailReturnsStructuredSummary]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testFallbackChainAlwaysEndsWithOllama]' started.
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testFallbackChainAlwaysEndsWithOllama]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testFallbackChainDeduplicatesProviders]' started.
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testFallbackChainDeduplicatesProviders]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testFallbackChainForOllamaIsSingleProvider]' started.
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testFallbackChainForOllamaIsSingleProvider]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testFallbackChainFromClaudeToGPTToOllama]' started.
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testFallbackChainFromClaudeToGPTToOllama]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testStreamReplyFallsThroughChainOnFailure]' started.
+Test Case '-[BrainChatTests.FallbackChainIntegrationTests testStreamReplyFallsThroughChainOnFailure]' passed (0.000 seconds).
+Test Suite 'FallbackChainIntegrationTests' passed at 2026-04-04 19:19:47.888.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'GPTTests' started at 2026-04-04 19:19:47.888.
+Test Case '-[BrainChatTests.GPTTests testConversationContext]' started.
+Test Case '-[BrainChatTests.GPTTests testConversationContext]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.GPTTests testMockResponsesForCI]' started.
+Test Case '-[BrainChatTests.GPTTests testMockResponsesForCI]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.GPTTests testOpenAIAPIIntegrationRequest]' started.
+Test Case '-[BrainChatTests.GPTTests testOpenAIAPIIntegrationRequest]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.GPTTests testStreaming]' started.
+Test Case '-[BrainChatTests.GPTTests testStreaming]' passed (0.001 seconds).
+Test Suite 'GPTTests' passed at 2026-04-04 19:19:47.890.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'GeminiTests' started at 2026-04-04 19:19:47.890.
+Test Case '-[BrainChatTests.GeminiTests testGoogleAPI]' started.
+Test Case '-[BrainChatTests.GeminiTests testGoogleAPI]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.GeminiTests testMockForCI]' started.
+Test Case '-[BrainChatTests.GeminiTests testMockForCI]' passed (0.001 seconds).
+Test Suite 'GeminiTests' passed at 2026-04-04 19:19:47.891.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'GrokTests' started at 2026-04-04 19:19:47.891.
+Test Case '-[BrainChatTests.GrokTests testMockForCI]' started.
+Test Case '-[BrainChatTests.GrokTests testMockForCI]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.GrokTests testXAIAPI]' started.
+Test Case '-[BrainChatTests.GrokTests testXAIAPI]' passed (0.000 seconds).
+Test Suite 'GrokTests' passed at 2026-04-04 19:19:47.893.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'GroqTests' started at 2026-04-04 19:19:47.893.
+Test Case '-[BrainChatTests.GroqTests testGroqAPIStreamsOpenAICompatibleChunks]' started.
+Test Case '-[BrainChatTests.GroqTests testGroqAPIStreamsOpenAICompatibleChunks]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.GroqTests testGroqDefaultsToInstantModelWhenBlank]' started.
+Test Case '-[BrainChatTests.GroqTests testGroqDefaultsToInstantModelWhenBlank]' passed (0.000 seconds).
+Test Suite 'GroqTests' passed at 2026-04-04 19:19:47.894.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'LLMProviderPolymorphismTests' started at 2026-04-04 19:19:47.894.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testAllProvidersHaveDefaultModel]' started.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testAllProvidersHaveDefaultModel]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testAllProvidersHaveIcon]' started.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testAllProvidersHaveIcon]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testAllProvidersHaveUniqueRawValues]' started.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testAllProvidersHaveUniqueRawValues]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testCostHierarchyIsMonotonicallyNonDecreasing]' started.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testCostHierarchyIsMonotonicallyNonDecreasing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testDisplayPricingIsNonEmpty]' started.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testDisplayPricingIsNonEmpty]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testFreeProvidersDoNotRequireAPIKey]' started.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testFreeProvidersDoNotRequireAPIKey]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testKeyKindMapsCorrectlyForPaidProviders]' started.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testKeyKindMapsCorrectlyForPaidProviders]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testKeyKindNilForFreeProviders]' started.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testKeyKindNilForFreeProviders]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testPaidProvidersRequireAPIKey]' started.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testPaidProvidersRequireAPIKey]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testYoloSystemPromptContainsAutonomous]' started.
+Test Case '-[BrainChatTests.LLMProviderPolymorphismTests testYoloSystemPromptContainsAutonomous]' passed (0.000 seconds).
+Test Suite 'LLMProviderPolymorphismTests' passed at 2026-04-04 19:19:47.896.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'LLMRouterConfigurationTests' started at 2026-04-04 19:19:47.896.
+Test Case '-[BrainChatTests.LLMRouterConfigurationTests testEffectiveSystemPromptIncludesYoloWhenEnabled]' started.
+Test Case '-[BrainChatTests.LLMRouterConfigurationTests testEffectiveSystemPromptIncludesYoloWhenEnabled]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterConfigurationTests testEffectiveSystemPromptOmitsYoloWhenDisabled]' started.
+Test Case '-[BrainChatTests.LLMRouterConfigurationTests testEffectiveSystemPromptOmitsYoloWhenDisabled]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterConfigurationTests testHasGroqConfigurationDetectsKey]' started.
+Test Case '-[BrainChatTests.LLMRouterConfigurationTests testHasGroqConfigurationDetectsKey]' passed (0.000 seconds).
+Test Suite 'LLMRouterConfigurationTests' passed at 2026-04-04 19:19:47.897.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'LLMRouterTests' started at 2026-04-04 19:19:47.897.
+Test Case '-[BrainChatTests.LLMRouterTests testAllProvidersUnavailableReturnsFailureSummary]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testAllProvidersUnavailableReturnsFailureSummary]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testBuildContextTrimsHistoryToTenMessages]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testBuildContextTrimsHistoryToTenMessages]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testCodingVsChatRouting]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testCodingVsChatRouting]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testConnectionTestResultCreatesStableMetadata]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testConnectionTestResultCreatesStableMetadata]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testEmptyHistoryUsesSelectedGPTAndEmptyCopilotPromptPath]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testEmptyHistoryUsesSelectedGPTAndEmptyCopilotPromptPath]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testFallbackChainClaudeToGPTToOllama]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testFallbackChainClaudeToGPTToOllama]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testFallbackChainForOllamaStaysSingleProvider]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testFallbackChainForOllamaStaysSingleProvider]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testInitFallsBackToOllamaForInvalidSavedProvider]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testInitFallsBackToOllamaForInvalidSavedProvider]' passed (0.003 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testInitReadsSavedProviderFromUserDefaults]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testInitReadsSavedProviderFromUserDefaults]' passed (0.002 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testProviderDispatchForGeminiAndGrok]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testProviderDispatchForGeminiAndGrok]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testProviderMetadataCoversAllComputedProperties]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testProviderMetadataCoversAllComputedProperties]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testProviderMetadataCoversRemainingCases]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testProviderMetadataCoversRemainingCases]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testProviderSelection]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testProviderSelection]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testSelectedProviderAndYoloPersistToUserDefaults]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testSelectedProviderAndYoloPersistToUserDefaults]' passed (0.002 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testStreamReplyFallsBackThroughChain]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testStreamReplyFallsBackThroughChain]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testTestConnectionSuccessAndFailureUpdateState]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testTestConnectionSuccessAndFailureUpdateState]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LLMRouterTests testYoloModeActivation]' started.
+Test Case '-[BrainChatTests.LLMRouterTests testYoloModeActivation]' passed (0.000 seconds).
+Test Suite 'LLMRouterTests' passed at 2026-04-04 19:19:47.908.
+	 Executed 17 tests, with 0 failures (0 unexpected) in 0.010 (0.011) seconds
+Test Suite 'LayerResultTests' started at 2026-04-04 19:19:47.908.
+Test Case '-[BrainChatTests.LayerResultTests testFailedResultCarriesErrorMessage]' started.
+Test Case '-[BrainChatTests.LayerResultTests testFailedResultCarriesErrorMessage]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerResultTests testLatencyIsNonNegative]' started.
+Test Case '-[BrainChatTests.LayerResultTests testLatencyIsNonNegative]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerResultTests testResultsCanBeSortedByLayer]' started.
+Test Case '-[BrainChatTests.LayerResultTests testResultsCanBeSortedByLayer]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerResultTests testSucceededResultHasNoError]' started.
+Test Case '-[BrainChatTests.LayerResultTests testSucceededResultHasNoError]' passed (0.000 seconds).
+Test Suite 'LayerResultTests' passed at 2026-04-04 19:19:47.908.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'LayerTierTests' started at 2026-04-04 19:19:47.908.
+Test Case '-[BrainChatTests.LayerTierTests testAllLayersHaveNonEmptyDescription]' started.
+Test Case '-[BrainChatTests.LayerTierTests testAllLayersHaveNonEmptyDescription]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerTierTests testAllLayersHaveSystemImageIcon]' started.
+Test Case '-[BrainChatTests.LayerTierTests testAllLayersHaveSystemImageIcon]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerTierTests testConsensusLayerHasLongestTimeout]' started.
+Test Case '-[BrainChatTests.LayerTierTests testConsensusLayerHasLongestTimeout]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerTierTests testInstantLayerHasShortestTimeout]' started.
+Test Case '-[BrainChatTests.LayerTierTests testInstantLayerHasShortestTimeout]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerTierTests testInstantTimeoutUnder10Seconds]' started.
+Test Case '-[BrainChatTests.LayerTierTests testInstantTimeoutUnder10Seconds]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerTierTests testLayerDescriptionsMatchExpected]' started.
+Test Case '-[BrainChatTests.LayerTierTests testLayerDescriptionsMatchExpected]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerTierTests testLayerRawValuesAreStrictlyAscending]' started.
+Test Case '-[BrainChatTests.LayerTierTests testLayerRawValuesAreStrictlyAscending]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerTierTests testLayersAreComparableByPriority]' started.
+Test Case '-[BrainChatTests.LayerTierTests testLayersAreComparableByPriority]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerTierTests testLayersSortedAscendingGivesCorrectOrder]' started.
+Test Case '-[BrainChatTests.LayerTierTests testLayersSortedAscendingGivesCorrectOrder]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayerTierTests testTimeoutsAreStrictlyIncreasing]' started.
+Test Case '-[BrainChatTests.LayerTierTests testTimeoutsAreStrictlyIncreasing]' passed (0.000 seconds).
+Test Suite 'LayerTierTests' passed at 2026-04-04 19:19:47.911.
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'LayeredChunkTests' started at 2026-04-04 19:19:47.911.
+Test Case '-[BrainChatTests.LayeredChunkTests testChunkStoresAllFields]' started.
+Test Case '-[BrainChatTests.LayeredChunkTests testChunkStoresAllFields]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredChunkTests testChunkTimestampIsRecentOnInit]' started.
+Test Case '-[BrainChatTests.LayeredChunkTests testChunkTimestampIsRecentOnInit]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredChunkTests testEmptyContentIsAllowed]' started.
+Test Case '-[BrainChatTests.LayeredChunkTests testEmptyContentIsAllowed]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredChunkTests testFinalChunkFlagIsRespected]' started.
+Test Case '-[BrainChatTests.LayeredChunkTests testFinalChunkFlagIsRespected]' passed (0.000 seconds).
+Test Suite 'LayeredChunkTests' passed at 2026-04-04 19:19:47.911.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'LayeredResponseE2ETests' started at 2026-04-04 19:19:47.911.
+Test Case '-[BrainChatTests.LayeredResponseE2ETests testFullLayeredResponseLifecycle]' started.
+Test Case '-[BrainChatTests.LayeredResponseE2ETests testFullLayeredResponseLifecycle]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredResponseE2ETests testLayeredChunkCreation]' started.
+Test Case '-[BrainChatTests.LayeredResponseE2ETests testLayeredChunkCreation]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredResponseE2ETests testLayerResultSortsByTier]' started.
+Test Case '-[BrainChatTests.LayeredResponseE2ETests testLayerResultSortsByTier]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredResponseE2ETests testLayerTierOrderingIsCorrect]' started.
+Test Case '-[BrainChatTests.LayeredResponseE2ETests testLayerTierOrderingIsCorrect]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredResponseE2ETests testLayerTimeoutsIncreaseWithTier]' started.
+Test Case '-[BrainChatTests.LayeredResponseE2ETests testLayerTimeoutsIncreaseWithTier]' passed (0.000 seconds).
+Test Suite 'LayeredResponseE2ETests' passed at 2026-04-04 19:19:47.913.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'LayeredResponseEventTests' started at 2026-04-04 19:19:47.913.
+Test Case '-[BrainChatTests.LayeredResponseEventTests testAllLayersCompleteEventCarriesAllResults]' started.
+Test Case '-[BrainChatTests.LayeredResponseEventTests testAllLayersCompleteEventCarriesAllResults]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredResponseEventTests testConsensusResultEncodesAgreement]' started.
+Test Case '-[BrainChatTests.LayeredResponseEventTests testConsensusResultEncodesAgreement]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredResponseEventTests testLayerCompletedEventWrapsResult]' started.
+Test Case '-[BrainChatTests.LayeredResponseEventTests testLayerCompletedEventWrapsResult]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredResponseEventTests testLayerDeltaEventWrapsChunk]' started.
+Test Case '-[BrainChatTests.LayeredResponseEventTests testLayerDeltaEventWrapsChunk]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredResponseEventTests testLayerStartedEventCarriesLayerAndSource]' started.
+Test Case '-[BrainChatTests.LayeredResponseEventTests testLayerStartedEventCarriesLayerAndSource]' passed (0.000 seconds).
+Test Suite 'LayeredResponseEventTests' passed at 2026-04-04 19:19:47.914.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'LayeredStrategyTests' started at 2026-04-04 19:19:47.914.
+Test Case '-[BrainChatTests.LayeredStrategyTests testConsensusOnlyStrategyCaptured]' started.
+Test Case '-[BrainChatTests.LayeredStrategyTests testConsensusOnlyStrategyCaptured]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredStrategyTests testConsensusStrategyUsedForYoloMode]' started.
+Test Case '-[BrainChatTests.LayeredStrategyTests testConsensusStrategyUsedForYoloMode]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredStrategyTests testDefaultStrategyForNormalChatIsSpeedFirst]' started.
+Test Case '-[BrainChatTests.LayeredStrategyTests testDefaultStrategyForNormalChatIsSpeedFirst]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredStrategyTests testQualityFirstStrategyCaptured]' started.
+Test Case '-[BrainChatTests.LayeredStrategyTests testQualityFirstStrategyCaptured]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredStrategyTests testSingleLayerStrategyPreservesLayerChoice]' started.
+Test Case '-[BrainChatTests.LayeredStrategyTests testSingleLayerStrategyPreservesLayerChoice]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.LayeredStrategyTests testSpeedFirstStrategyCaptured]' started.
+Test Case '-[BrainChatTests.LayeredStrategyTests testSpeedFirstStrategyCaptured]' passed (0.000 seconds).
+Test Suite 'LayeredStrategyTests' passed at 2026-04-04 19:19:47.915.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'MultiProviderE2ETests' started at 2026-04-04 19:19:47.915.
+Test Case '-[BrainChatTests.MultiProviderE2ETests testAllSevenProvidersProduceResponses]' started.
+Test Case '-[BrainChatTests.MultiProviderE2ETests testAllSevenProvidersProduceResponses]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.MultiProviderE2ETests testStreamDeltaEventsContainText]' started.
+Test Case '-[BrainChatTests.MultiProviderE2ETests testStreamDeltaEventsContainText]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.MultiProviderE2ETests testStreamEventsReportProviderChanges]' started.
+Test Case '-[BrainChatTests.MultiProviderE2ETests testStreamEventsReportProviderChanges]' passed (0.000 seconds).
+Test Suite 'MultiProviderE2ETests' passed at 2026-04-04 19:19:47.917.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'OllamaTests' started at 2026-04-04 19:19:47.917.
+Test Case '-[BrainChatTests.OllamaTests testConnectionToLocalhost11434]' started.
+Test Case '-[BrainChatTests.OllamaTests testConnectionToLocalhost11434]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.OllamaTests testPromptResponseCycle]' started.
+Test Case '-[BrainChatTests.OllamaTests testPromptResponseCycle]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.OllamaTests testStreamingResponses]' started.
+Test Case '-[BrainChatTests.OllamaTests testStreamingResponses]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.OllamaTests testTimeoutHandling]' started.
+Test Case '-[BrainChatTests.OllamaTests testTimeoutHandling]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.OllamaTests testWhenOllamaNotRunning]' started.
+Test Case '-[BrainChatTests.OllamaTests testWhenOllamaNotRunning]' passed (0.000 seconds).
+Test Suite 'OllamaTests' passed at 2026-04-04 19:19:47.920.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'PandaproxyClientHTTPTests' started at 2026-04-04 19:19:47.920.
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testEnsureConsumerCreatesConsumerThenSubscribes]' started.
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testEnsureConsumerCreatesConsumerThenSubscribes]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testEnsureConsumerIdempotentForSameGroup]' started.
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testEnsureConsumerIdempotentForSameGroup]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testPublishSendsCorrectTopicURL]' started.
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testPublishSendsCorrectTopicURL]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testPublishSendsKafkaContentType]' started.
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testPublishSendsKafkaContentType]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testPublishThrowsOnHTTPError]' started.
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testPublishThrowsOnHTTPError]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testPublishUsesPostMethod]' started.
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testPublishUsesPostMethod]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testPublishWrapsEventInRecordsArray]' started.
+Test Case '-[BrainChatTests.PandaproxyClientHTTPTests testPublishWrapsEventInRecordsArray]' passed (0.001 seconds).
+Test Suite 'PandaproxyClientHTTPTests' passed at 2026-04-04 19:19:47.925.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'PandaproxyCodecTests' started at 2026-04-04 19:19:47.925.
+Test Case '-[BrainChatTests.PandaproxyCodecTests testMakeDecoderParsesISO8601DateString]' started.
+Test Case '-[BrainChatTests.PandaproxyCodecTests testMakeDecoderParsesISO8601DateString]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.PandaproxyCodecTests testMakeEncoderUsesISO8601DateStrategy]' started.
+Test Case '-[BrainChatTests.PandaproxyCodecTests testMakeEncoderUsesISO8601DateStrategy]' passed (0.000 seconds).
+Test Suite 'PandaproxyCodecTests' passed at 2026-04-04 19:19:47.926.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'PolymorphicLLMDispatchTests' started at 2026-04-04 19:19:47.926.
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testClaudeDispatchesViaMockProtocol]' started.
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testClaudeDispatchesViaMockProtocol]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testCopilotDispatchesViaMockProtocol]' started.
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testCopilotDispatchesViaMockProtocol]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testGeminiDispatchesViaMockProtocol]' started.
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testGeminiDispatchesViaMockProtocol]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testGPTDispatchesViaMockProtocol]' started.
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testGPTDispatchesViaMockProtocol]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testGrokDispatchesViaMockProtocol]' started.
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testGrokDispatchesViaMockProtocol]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testGroqDispatchesViaMockProtocol]' started.
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testGroqDispatchesViaMockProtocol]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testOllamaDispatchesViaMockProtocol]' started.
+Test Case '-[BrainChatTests.PolymorphicLLMDispatchTests testOllamaDispatchesViaMockProtocol]' passed (0.000 seconds).
+Test Suite 'PolymorphicLLMDispatchTests' passed at 2026-04-04 19:19:47.929.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.003 (0.003) seconds
+Test Suite 'RedpandaBridgeErrorTests' started at 2026-04-04 19:19:47.929.
+Test Case '-[BrainChatTests.RedpandaBridgeErrorTests testCancelledError]' started.
+Test Case '-[BrainChatTests.RedpandaBridgeErrorTests testCancelledError]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RedpandaBridgeErrorTests testConsumerNotReadyError]' started.
+Test Case '-[BrainChatTests.RedpandaBridgeErrorTests testConsumerNotReadyError]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RedpandaBridgeErrorTests testInvalidBaseURLError]' started.
+Test Case '-[BrainChatTests.RedpandaBridgeErrorTests testInvalidBaseURLError]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RedpandaBridgeErrorTests testResponseFailedCarriesProviderAndMessage]' started.
+Test Case '-[BrainChatTests.RedpandaBridgeErrorTests testResponseFailedCarriesProviderAndMessage]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RedpandaBridgeErrorTests testUnavailableErrorCarriesMessage]' started.
+Test Case '-[BrainChatTests.RedpandaBridgeErrorTests testUnavailableErrorCarriesMessage]' passed (0.000 seconds).
+Test Suite 'RedpandaBridgeErrorTests' passed at 2026-04-04 19:19:47.930.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'RedpandaTopicNamingTests' started at 2026-04-04 19:19:47.930.
+Test Case '-[BrainChatTests.RedpandaTopicNamingTests testConsumerGroupIDFollowsNamingConvention]' started.
+Test Case '-[BrainChatTests.RedpandaTopicNamingTests testConsumerGroupIDFollowsNamingConvention]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RedpandaTopicNamingTests testTopicsFollowDotNotationConvention]' started.
+Test Case '-[BrainChatTests.RedpandaTopicNamingTests testTopicsFollowDotNotationConvention]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RedpandaTopicNamingTests testVoiceInputTopicIsCorrect]' started.
+Test Case '-[BrainChatTests.RedpandaTopicNamingTests testVoiceInputTopicIsCorrect]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RedpandaTopicNamingTests testVoiceResponseTopicIsCorrect]' started.
+Test Case '-[BrainChatTests.RedpandaTopicNamingTests testVoiceResponseTopicIsCorrect]' passed (0.000 seconds).
+Test Suite 'RedpandaTopicNamingTests' passed at 2026-04-04 19:19:47.931.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'RequestClassificationTests' started at 2026-04-04 19:19:47.931.
+Test Case '-[BrainChatTests.RequestClassificationTests testChatRequestsDetected]' started.
+Test Case '-[BrainChatTests.RequestClassificationTests testChatRequestsDetected]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RequestClassificationTests testChatRoutesToSelectedProvider]' started.
+Test Case '-[BrainChatTests.RequestClassificationTests testChatRoutesToSelectedProvider]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RequestClassificationTests testCodingRequestsDetected]' started.
+Test Case '-[BrainChatTests.RequestClassificationTests testCodingRequestsDetected]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RequestClassificationTests testCodingRoutesToCopilot]' started.
+Test Case '-[BrainChatTests.RequestClassificationTests testCodingRoutesToCopilot]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RequestClassificationTests testEmptyPromptDefaultsToChat]' started.
+Test Case '-[BrainChatTests.RequestClassificationTests testEmptyPromptDefaultsToChat]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RequestClassificationTests testQuickRequestsDetected]' started.
+Test Case '-[BrainChatTests.RequestClassificationTests testQuickRequestsDetected]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.RequestClassificationTests testQuickRoutesToGroqWhenConfigured]' started.
+Test Case '-[BrainChatTests.RequestClassificationTests testQuickRoutesToGroqWhenConfigured]' passed (0.000 seconds).
+Test Suite 'RequestClassificationTests' passed at 2026-04-04 19:19:47.932.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'ResponseLayerIntegrationTests' started at 2026-04-04 19:19:47.932.
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testAccessibilityLabelContainsProvider]' started.
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testAccessibilityLabelContainsProvider]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testAccessibilityLabelDiffersForInstantVsDeeper]' started.
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testAccessibilityLabelDiffersForInstantVsDeeper]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testDeeperLayerFlaggedCorrectly]' started.
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testDeeperLayerFlaggedCorrectly]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testInstantLayerFlaggedCorrectly]' started.
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testInstantLayerFlaggedCorrectly]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testWeavingPrefixEmptyForInstant]' started.
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testWeavingPrefixEmptyForInstant]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testWeavingPrefixNonEmptyForDeeper]' started.
+Test Case '-[BrainChatTests.ResponseLayerIntegrationTests testWeavingPrefixNonEmptyForDeeper]' passed (0.000 seconds).
+Test Suite 'ResponseLayerIntegrationTests' passed at 2026-04-04 19:19:47.934.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'SSEStreamParserTests' started at 2026-04-04 19:19:47.934.
+Test Case '-[BrainChatTests.SSEStreamParserTests testExtractDeltaFromOpenAIFormat]' started.
+Test Case '-[BrainChatTests.SSEStreamParserTests testExtractDeltaFromOpenAIFormat]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SSEStreamParserTests testExtractDeltaReturnsNilForEmptyContent]' started.
+Test Case '-[BrainChatTests.SSEStreamParserTests testExtractDeltaReturnsNilForEmptyContent]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SSEStreamParserTests testExtractDeltaReturnsNilForMalformedJSON]' started.
+Test Case '-[BrainChatTests.SSEStreamParserTests testExtractDeltaReturnsNilForMalformedJSON]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SSEStreamParserTests testIsCompleteDetectsDONE]' started.
+Test Case '-[BrainChatTests.SSEStreamParserTests testIsCompleteDetectsDONE]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SSEStreamParserTests testParseDataLineExtractsPayload]' started.
+Test Case '-[BrainChatTests.SSEStreamParserTests testParseDataLineExtractsPayload]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SSEStreamParserTests testParseDataLineReturnsNilForNonDataLine]' started.
+Test Case '-[BrainChatTests.SSEStreamParserTests testParseDataLineReturnsNilForNonDataLine]' passed (0.000 seconds).
+Test Suite 'SSEStreamParserTests' passed at 2026-04-04 19:19:47.935.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'SafetyVerdictTests' started at 2026-04-04 19:19:47.935.
+Test Case '-[BrainChatTests.SafetyVerdictTests testAllActionCategoriesHaveRawValue]' started.
+Test Case '-[BrainChatTests.SafetyVerdictTests testAllActionCategoriesHaveRawValue]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SafetyVerdictTests testAllowedEquality]' started.
+Test Case '-[BrainChatTests.SafetyVerdictTests testAllowedEquality]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SafetyVerdictTests testBlockedCarriesReason]' started.
+Test Case '-[BrainChatTests.SafetyVerdictTests testBlockedCarriesReason]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SafetyVerdictTests testRequiresConfirmationCarriesReason]' started.
+Test Case '-[BrainChatTests.SafetyVerdictTests testRequiresConfirmationCarriesReason]' passed (0.000 seconds).
+Test Suite 'SafetyVerdictTests' passed at 2026-04-04 19:19:47.936.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'SpeechEnginePolymorphismTests' started at 2026-04-04 19:19:47.936.
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testAllSpeechEnginesHaveDescription]' started.
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testAllSpeechEnginesHaveDescription]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testAllSpeechEnginesHaveIcon]' started.
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testAllSpeechEnginesHaveIcon]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testAllSpeechEnginesHaveUniqueRawValues]' started.
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testAllSpeechEnginesHaveUniqueRawValues]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testLocalEnginesAreFlagged]' started.
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testLocalEnginesAreFlagged]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testOnlyWhisperAPIRequiresAPIKey]' started.
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testOnlyWhisperAPIRequiresAPIKey]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testStoredValueInitializerHandlesLegacyNames]' started.
+Test Case '-[BrainChatTests.SpeechEnginePolymorphismTests testStoredValueInitializerHandlesLegacyNames]' passed (0.000 seconds).
+Test Suite 'SpeechEnginePolymorphismTests' passed at 2026-04-04 19:19:47.937.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'VoiceCodingCommandTests' started at 2026-04-04 19:19:47.937.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testCloseFileParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testCloseFileParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testCommitParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testCommitParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testCopyLineParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testCopyLineParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testCreateFileParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testCreateFileParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testCreateFunctionParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testCreateFunctionParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testDeleteLineParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testDeleteLineParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testExplainParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testExplainParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testFixErrorParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testFixErrorParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testGitDiffParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testGitDiffParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testGitStatusParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testGitStatusParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testGoToFunctionParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testGoToFunctionParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testGoToLineParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testGoToLineParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testInsertLineParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testInsertLineParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testIsVoiceCodingCommand]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testIsVoiceCodingCommand]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testListFunctionsParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testListFunctionsParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testNonCommandReturnsNone]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testNonCommandReturnsNone]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testOpenFileParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testOpenFileParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testReadLineParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testReadLineParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testReadLineRangeParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testReadLineRangeParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testRefactorParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testRefactorParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testRepeatParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testRepeatParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testReplaceParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testReplaceParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testRunTestsParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testRunTestsParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testSaveParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testSaveParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testSearchCodeParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testSearchCodeParsing]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testSpellParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testSpellParsing]' passed (0.001 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testSpokenConfirmations]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testSpokenConfirmations]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testUndoParsing]' started.
+Test Case '-[BrainChatTests.VoiceCodingCommandTests testUndoParsing]' passed (0.001 seconds).
+Test Suite 'VoiceCodingCommandTests' passed at 2026-04-04 19:19:47.954.
+	 Executed 28 tests, with 0 failures (0 unexpected) in 0.015 (0.017) seconds
+Test Suite 'VoiceEventCodingTests' started at 2026-04-04 19:19:47.954.
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceInputDefaultTimestampIsNow]' started.
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceInputDefaultTimestampIsNow]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceInputEventEncodesAllFields]' started.
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceInputEventEncodesAllFields]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceInputEventRoundTrip]' started.
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceInputEventRoundTrip]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceResponseEventDecodesFromJSON]' started.
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceResponseEventDecodesFromJSON]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceResponseFailureDecodesSuccessFalse]' started.
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceResponseFailureDecodesSuccessFalse]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceResponseRoundTrip]' started.
+Test Case '-[BrainChatTests.VoiceEventCodingTests testVoiceResponseRoundTrip]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceEventCodingTests testYoloModeFlagEncodesTrue]' started.
+Test Case '-[BrainChatTests.VoiceEventCodingTests testYoloModeFlagEncodesTrue]' passed (0.000 seconds).
+Test Suite 'VoiceEventCodingTests' passed at 2026-04-04 19:19:47.956.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'VoiceOutputEnginePolymorphismTests' started at 2026-04-04 19:19:47.956.
+Test Case '-[BrainChatTests.VoiceOutputEnginePolymorphismTests testAllVoiceOutputEnginesHaveUniqueRawValues]' started.
+Test Case '-[BrainChatTests.VoiceOutputEnginePolymorphismTests testAllVoiceOutputEnginesHaveUniqueRawValues]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceOutputEnginePolymorphismTests testCloudEnginesRequireKey]' started.
+Test Case '-[BrainChatTests.VoiceOutputEnginePolymorphismTests testCloudEnginesRequireKey]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceOutputEnginePolymorphismTests testCrossPlatformFlagExcludesMacOSNative]' started.
+Test Case '-[BrainChatTests.VoiceOutputEnginePolymorphismTests testCrossPlatformFlagExcludesMacOSNative]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceOutputEnginePolymorphismTests testOfflineEnginesDoNotRequireKey]' started.
+Test Case '-[BrainChatTests.VoiceOutputEnginePolymorphismTests testOfflineEnginesDoNotRequireKey]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.VoiceOutputEnginePolymorphismTests testPlatformDefaultIsValid]' started.
+Test Case '-[BrainChatTests.VoiceOutputEnginePolymorphismTests testPlatformDefaultIsValid]' passed (0.000 seconds).
+Test Suite 'VoiceOutputEnginePolymorphismTests' passed at 2026-04-04 19:19:47.957.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'WeavingPhaseAccessibilityTests' started at 2026-04-04 19:19:47.957.
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testActivePhaseDetection]' started.
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testActivePhaseDetection]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testCompletePhaseAnnouncesForVoiceOver]' started.
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testCompletePhaseAnnouncesForVoiceOver]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testIdlePhaseHasNoAnnouncement]' started.
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testIdlePhaseHasNoAnnouncement]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testStreamingPhaseHasNoAnnouncement]' started.
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testStreamingPhaseHasNoAnnouncement]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testThinkingPhaseAnnouncesForVoiceOver]' started.
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testThinkingPhaseAnnouncesForVoiceOver]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testWeavingPhaseAnnouncesForVoiceOver]' started.
+Test Case '-[BrainChatTests.WeavingPhaseAccessibilityTests testWeavingPhaseAnnouncesForVoiceOver]' passed (0.000 seconds).
+Test Suite 'WeavingPhaseAccessibilityTests' passed at 2026-04-04 19:19:47.958.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'WeavingPhaseIntegrationTests' started at 2026-04-04 19:19:47.958.
+Test Case '-[BrainChatTests.WeavingPhaseIntegrationTests testAddLayerCreatesResponseLayer]' started.
+Test Case '-[BrainChatTests.WeavingPhaseIntegrationTests testAddLayerCreatesResponseLayer]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.WeavingPhaseIntegrationTests testAppendToLayerStreamsContent]' started.
+Test Case '-[BrainChatTests.WeavingPhaseIntegrationTests testAppendToLayerStreamsContent]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.WeavingPhaseIntegrationTests testMultipleLayersCanCoexist]' started.
+Test Case '-[BrainChatTests.WeavingPhaseIntegrationTests testMultipleLayersCanCoexist]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.WeavingPhaseIntegrationTests testWeavingPhaseLifecycle]' started.
+Test Case '-[BrainChatTests.WeavingPhaseIntegrationTests testWeavingPhaseLifecycle]' passed (0.000 seconds).
+Test Suite 'WeavingPhaseIntegrationTests' passed at 2026-04-04 19:19:47.959.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'YoloModeE2ETests' started at 2026-04-04 19:19:47.959.
+Test Case '-[BrainChatTests.YoloModeE2ETests testYoloModeRoutesToCopilotWithPrefix]' started.
+Test Case '-[BrainChatTests.YoloModeE2ETests testYoloModeRoutesToCopilotWithPrefix]' passed (0.000 seconds).
+Test Case '-[BrainChatTests.YoloModeE2ETests testYoloSystemPromptAppliedToAllProviders]' started.
+Test Case '-[BrainChatTests.YoloModeE2ETests testYoloSystemPromptAppliedToAllProviders]' passed (0.000 seconds).
+Test Suite 'YoloModeE2ETests' passed at 2026-04-04 19:19:47.960.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'BrainChatPackageTests.xctest' passed at 2026-04-04 19:19:47.960.
+	 Executed 251 tests, with 0 failures (0 unexpected) in 0.355 (0.373) seconds
+Test Suite 'All tests' passed at 2026-04-04 19:19:47.960.
+	 Executed 251 tests, with 0 failures (0 unexpected) in 0.355 (0.374) seconds
+◇ Test run started.
+↳ Testing Library Version: 1743
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.

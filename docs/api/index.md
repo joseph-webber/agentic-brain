@@ -335,7 +335,7 @@ For large-scale deployments:
 - **[Examples](../../examples/)** - Complete working examples
 - **[CLI Guide](../../README.md#cli)** - Command-line interface
 - **[Docker Setup](../../DOCKER_SETUP.md)** - Container deployment
-- **[Architecture](../../ARCHITECTURE.md)** - System design
+- **[Architecture](../architecture/ARCHITECTURE.md)** - System design
 - **[Enterprise Features](https://github.com/agentic-brain-project/brain-core)** - Advanced capabilities
 
 ---

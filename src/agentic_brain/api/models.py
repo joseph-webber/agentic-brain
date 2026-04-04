@@ -498,70 +498,56 @@ class HealthIndicator(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """
-    Health check response (JHipster Actuator pattern).
+    """Public health endpoint response."""
 
-    Provides detailed health status for all system components.
-
-    Attributes:
-        status: Overall system health status
-        components: Individual component health indicators
-        timestamp: When the health check was performed
-    """
-
-    status: str = Field(
-        default="healthy",
-        description="Overall health: healthy, degraded, or unhealthy",
-    )
-    components: dict[str, HealthIndicator] = Field(
-        default_factory=dict,
-        description="Component health indicators",
-    )
+    status: str = Field(default="healthy", description="Overall API status")
+    version: str = Field(default="3.1.0", description="Running API version")
     timestamp: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
         description="Health check timestamp",
     )
+    sessions_active: int = Field(
+        default=0,
+        ge=0,
+        description="Number of active chat sessions",
+    )
+    redis: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Redis health and availability information",
+    )
+    llm: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Configured LLM provider information",
+    )
+    neo4j: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Neo4j configuration information",
+    )
+    uptime: str = Field(default="unknown", description="Human-readable uptime")
 
     model_config = ConfigDict(
         json_schema_extra={
             "examples": [
                 {
                     "status": "healthy",
-                    "components": {
-                        "neo4j": {"status": "healthy", "details": {"connections": 5}},
-                        "llm": {"status": "healthy", "details": {"provider": "openai"}},
-                        "disk": {"status": "healthy", "details": {"free_gb": 50.2}},
-                    },
+                    "version": "3.1.0",
                     "timestamp": "2026-01-01T12:00:00Z",
-                },
-                {
-                    "status": "degraded",
-                    "components": {
-                        "neo4j": {"status": "healthy", "details": {"connections": 5}},
-                        "llm": {"status": "degraded", "details": {"provider": "local", "latency_ms": 1500}},
-                        "disk": {"status": "healthy", "details": {"free_gb": 10.5}},
+                    "sessions_active": 3,
+                    "redis": {
+                        "status": "ok",
+                        "available": True,
+                        "message": "Redis is healthy",
                     },
-                    "timestamp": "2026-01-01T12:05:00Z",
-                },
+                    "llm": {"provider": "ollama", "status": "ok"},
+                    "neo4j": {
+                        "status": "configured",
+                        "message": "Optional - chat works without it",
+                    },
+                    "uptime": "0h 2m 10s",
+                }
             ]
         }
     )
-
-    @classmethod
-    def from_indicators(
-        cls, indicators: dict[str, HealthIndicator]
-    ) -> "HealthResponse":
-        """Create health response from individual indicators."""
-        # Determine overall status
-        statuses = [ind.status for ind in indicators.values()]
-        if "unhealthy" in statuses:
-            overall = "unhealthy"
-        elif "degraded" in statuses:
-            overall = "degraded"
-        else:
-            overall = "healthy"
-
-        return cls(status=overall, components=indicators)
 
 
 # =============================================================================

@@ -64,7 +64,7 @@ pip install agentic-brain
 - **Product sync & inventory management** — real-time catalog updates, variations, stock levels, and backorders.
 - **Order processing & fulfillment** — status updates, refunds, shipping tracking, and fulfillment workflows.
 - **Analytics & reporting** — sales summaries, inventory insights, and customer metrics.
-- **Natural language commerce chatbot** — `WooCommerceChatbot` for admin, customer, and guest journeys.
+- **Natural language commerce chatbot** — `WooCommerceChatbot` aligned to FULL_ADMIN, SAFE_ADMIN, USER, and GUEST journeys.
 
 [**Explore Commerce & WordPress Docs →**](./docs/integrations/WOOCOMMERCE.md)
 
@@ -185,6 +185,9 @@ Key guides:
 - **[Neo4j Zones](./docs/NEO4J_ZONES.md)** - Five-zone lifecycle model for active and archived graph data
 - **[LLM Swarm Guide](./docs/LLM_SWARM_GUIDE.md)** - Coordinate multiple models for better results
 - **[Security](./docs/SECURITY.md)** - Production-ready security checklists
+- **[Security Roles](./docs/SECURITY_ROLES.md)** - FULL_ADMIN, SAFE_ADMIN, USER, and GUEST model
+- **[Security Quick Start](./docs/SECURITY_QUICKSTART.md)** - Set up and test the four-tier security model
+- **[Security Implementation](./docs/SECURITY_IMPLEMENTATION.md)** - Runtime and LLM guard internals
 - **[macOS Development](./docs/MACOS_DEVELOPMENT.md)** - Setup guide for Mac users
 
 Documentation hubs:
@@ -193,6 +196,59 @@ Documentation hubs:
 - **[Integrations](./docs/integrations/README.md)** - Firebase, Neo4j, Temporal, WordPress, and JHipster guides
 - **[Architecture Diagrams](./docs/diagrams/ARCHITECTURE.md)** - Visual and ASCII system diagrams
 - **[Reports & Audits](./docs/INDEX.md#-reports--audits)** - Audit, accessibility, and compliance references
+
+---
+
+## 🔐 Security Roles
+
+Agentic Brain uses a **four-tier security role model**:
+
+- **FULL_ADMIN** - Unrestricted access for Joseph
+- **SAFE_ADMIN** - Full development power with guardrails
+- **USER** - API-only access for authenticated customers
+- **GUEST** - Help-only access for anonymous visitors
+
+### Access Model Summary
+
+**Machine-capable roles**
+- `FULL_ADMIN` and `SAFE_ADMIN`
+- Can use shell commands, file access, code execution, and advanced tooling
+
+**API-only role**
+- `USER`
+- Can use approved APIs such as WordPress and WooCommerce
+- Cannot use shell commands, code execution, or direct file access
+
+**Help-only role**
+- `GUEST`
+- Can access FAQ content, setup guides, product information, user manuals, and basic troubleshooting
+- Cannot access APIs, modify data, execute code, or touch machine resources
+
+### Feature Snapshot
+
+| Feature | FULL_ADMIN | SAFE_ADMIN | USER | GUEST |
+| --- | --- | --- | --- | --- |
+| Shell Commands | ✅ | ✅ confirm | ❌ | ❌ |
+| File System | ✅ | ✅ | ❌ | ❌ |
+| API Access | ✅ | ✅ | ✅ | ❌ |
+| LLM Chat | ✅ | ✅ | ✅ | ⚠️ Limited |
+| FAQ/Help | ✅ | ✅ | ✅ | ✅ |
+| Rate Limit | None | 1000/min | 60/min | 10/min |
+
+### WordPress Examples
+
+- **USER:** "Where is my order?" → Calls WooCommerce API
+- **USER:** "Update my address" → Calls WordPress REST API
+- **GUEST:** "How do I install this?" → Shows setup guide
+- **GUEST:** "What does this product do?" → Shows product FAQ
+
+Learn more:
+
+- [Security Roles](./docs/SECURITY_ROLES.md)
+- [API Access Control Guide](./docs/API_ACCESS_CONTROL.md)
+- [Security Implementation](./docs/SECURITY_IMPLEMENTATION.md)
+- [Security Quick Start](./docs/SECURITY_QUICKSTART.md)
+- [General Security Guide](./docs/SECURITY.md)
 
 ---
 
@@ -512,7 +568,7 @@ See [CI_FIX_SUMMARY.md](CI_FIX_SUMMARY.md) for detailed CI configuration.
 - **Product sync & inventory management** for real-time stock, variations, and catalog updates.
 - **Order processing & fulfillment** including status updates, refunds, shipping, and webhook-driven flows.
 - **Analytics & reporting** for sales performance, inventory insights, and customer metrics.
-- **Natural language commerce chatbot** using `WooCommerceChatbot`, supporting admin, customer, and guest journeys.
+- **Natural language commerce chatbot** using `WooCommerceChatbot`, supporting FULL_ADMIN, SAFE_ADMIN, USER, and GUEST journeys.
 - **WordPress plugin** in `plugins/wordpress/agentic-brain/` for drop-in chat, product search, settings, and Gutenberg blocks.
 
 ## 🧠 Unified Brain Architecture — THE Key Differentiator

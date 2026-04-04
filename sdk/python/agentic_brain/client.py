@@ -1,607 +1,356 @@
-"""Core SDK client for Agentic Brain.
+"""
+Agentic Brain SDK - Universal AI Orchestration
 
-Provides the main AgenticBrain client and supporting orchestration classes
-for multi-LLM layered responses, voice I/O, and autonomous agents.
+Usage:
+    from agentic_brain import AgenticBrain
+
+    brain = AgenticBrain(mode="hybrid")
+    response = await brain.chat("Hello!")
 """
 
 from __future__ import annotations
 
 import asyncio
-import logging
+import os
 import time
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, AsyncIterator, Callable, Literal
+from typing import Any, AsyncIterator, Callable, Optional
 
-logger = logging.getLogger("agentic_brain")
-
-
-# ---------------------------------------------------------------------------
-# Enums & Data Classes
-# ---------------------------------------------------------------------------
-
-class DeploymentMode(Enum):
-    """SDK deployment modes controlling provider selection."""
-    AIRLOCKED = "airlocked"
-    CLOUD = "cloud"
-    HYBRID = "hybrid"
+import httpx
 
 
-class LayerName(Enum):
-    """LLM response layers ordered by latency."""
-    INSTANT = "instant"      # 0-500ms   (Groq, Ollama)
-    FAST = "fast"            # 500ms-2s  (Haiku, GPT-4o-mini)
-    DEEP = "deep"            # 2-10s     (Opus, GPT-4, Gemini)
-    CONSENSUS = "consensus"  # 10s+      (multi-LLM verification)
+class DeploymentMode(str, Enum):
+    AIRLOCKED = "airlocked"  # 100% local
+    CLOUD = "cloud"  # Remote APIs only
+    HYBRID = "hybrid"  # Local + cloud fallback
 
 
-@dataclass
-class LLMResponse:
-    """Response from a single LLM provider."""
-    text: str
-    provider: str
-    model: str
-    layer: LayerName
-    latency_ms: float
-    tokens_used: int = 0
-    metadata: dict[str, Any] = field(default_factory=dict)
+class ResponseLayer(str, Enum):
+    INSTANT = "instant"  # 0-500ms (Groq)
+    FAST = "fast"  # 500ms-2s (Ollama)
+    DEEP = "deep"  # 2-10s (Claude/GPT)
+    CONSENSUS = "consensus"  # 10s+ (multi-LLM)
 
 
 @dataclass
 class LayeredResponse:
-    """Aggregated response from multiple LLM layers."""
-    responses: list[LLMResponse] = field(default_factory=list)
-    consensus_text: str | None = None
-    total_latency_ms: float = 0.0
+    instant: Optional[str] = None
+    fast: Optional[str] = None
+    deep: Optional[str] = None
+    consensus: Optional[str] = None
+    final: str = ""
+    elapsed_ms: float = 0.0
 
-    @property
-    def best(self) -> LLMResponse | None:
-        """Return the highest-quality response available."""
-        if self.consensus_text:
-            return LLMResponse(
-                text=self.consensus_text,
-                provider="consensus",
-                model="multi-llm",
-                layer=LayerName.CONSENSUS,
-                latency_ms=self.total_latency_ms,
-            )
-        return self.responses[-1] if self.responses else None
-
-    @property
-    def instant(self) -> LLMResponse | None:
-        """Return the instant-layer response if available."""
-        return next(
-            (r for r in self.responses if r.layer == LayerName.INSTANT), None
-        )
-
-    @property
-    def deep(self) -> LLMResponse | None:
-        """Return the deep-layer response if available."""
-        return next(
-            (r for r in self.responses if r.layer == LayerName.DEEP), None
-        )
-
-
-@dataclass
-class VoiceConfig:
-    """Configuration for voice input/output."""
-    stt_provider: str = "whisper-local"
-    tts_provider: str = "piper"
-    tts_voice: str = "karen"
-    sample_rate: int = 16000
-    vad_enabled: bool = True
-    wake_word: str | None = None
-
-
-@dataclass
-class AgentConfig:
-    """Configuration for an autonomous agent."""
-    name: str
-    task: str
-    self_heal: bool = True
-    max_retries: int = 3
-    layers: list[str] = field(default_factory=lambda: ["instant", "deep"])
-    interval_seconds: float | None = None
-
-
-# ---------------------------------------------------------------------------
-# Provider Interfaces
-# ---------------------------------------------------------------------------
-
-class LLMProvider(ABC):
-    """Abstract base for LLM providers (Ollama, Groq, OpenAI, etc.)."""
-
-    @abstractmethod
-    async def complete(
-        self,
-        prompt: str,
-        *,
-        system: str | None = None,
-        temperature: float = 0.7,
-        max_tokens: int = 1024,
-    ) -> LLMResponse:
-        ...
-
-    @abstractmethod
-    async def stream(
-        self,
-        prompt: str,
-        *,
-        system: str | None = None,
-        temperature: float = 0.7,
-        max_tokens: int = 1024,
-    ) -> AsyncIterator[str]:
-        ...
-
-    @abstractmethod
-    async def health_check(self) -> bool:
-        ...
-
-
-class STTProvider(ABC):
-    """Abstract base for speech-to-text providers."""
-
-    @abstractmethod
-    async def transcribe(self, audio_bytes: bytes, *, language: str = "en") -> str:
-        ...
-
-
-class TTSProvider(ABC):
-    """Abstract base for text-to-speech providers."""
-
-    @abstractmethod
-    async def synthesize(self, text: str, *, voice: str = "default") -> bytes:
-        ...
-
-
-# ---------------------------------------------------------------------------
-# LLM Layer Orchestrator
-# ---------------------------------------------------------------------------
-
-class LLMLayer:
-    """Orchestrates multi-layer LLM responses with cascading fallback.
-
-    Each layer has a latency budget and preferred providers. Layers fire
-    concurrently and results stream back as they arrive.
-
-    Example::
-
-        layer = LLMLayer(mode=DeploymentMode.HYBRID)
-        response = await layer.query(
-            "Explain quantum computing",
-            layers=[LayerName.INSTANT, LayerName.DEEP],
-        )
-        # response.instant -> fast Groq answer (< 500ms)
-        # response.deep    -> detailed Claude answer (< 10s)
-    """
-
-    LAYER_DEFAULTS: dict[LayerName, dict[str, Any]] = {
-        LayerName.INSTANT: {
-            "timeout_ms": 500,
-            "providers_cloud": ["groq"],
-            "providers_local": ["ollama"],
-        },
-        LayerName.FAST: {
-            "timeout_ms": 2000,
-            "providers_cloud": ["claude-haiku", "gpt-4o-mini"],
-            "providers_local": ["ollama"],
-        },
-        LayerName.DEEP: {
-            "timeout_ms": 10000,
-            "providers_cloud": ["claude-opus", "gpt-4", "gemini-pro"],
-            "providers_local": ["ollama"],
-        },
-        LayerName.CONSENSUS: {
-            "timeout_ms": 30000,
-            "min_providers": 3,
-            "agreement_threshold": 0.8,
-        },
-    }
-
-    def __init__(
-        self,
-        mode: DeploymentMode = DeploymentMode.HYBRID,
-        providers: dict[str, LLMProvider] | None = None,
-    ) -> None:
-        self.mode = mode
-        self._providers: dict[str, LLMProvider] = providers or {}
-        self._layer_config = dict(self.LAYER_DEFAULTS)
-
-    def register_provider(self, name: str, provider: LLMProvider) -> None:
-        """Register an LLM provider by name."""
-        self._providers[name] = provider
-
-    async def query(
-        self,
-        prompt: str,
-        *,
-        layers: list[LayerName] | None = None,
-        system: str | None = None,
-    ) -> LayeredResponse:
-        """Send a prompt through the requested layers concurrently."""
-        layers = layers or [LayerName.INSTANT]
-        result = LayeredResponse()
-        start = time.monotonic()
-
-        tasks = [
-            self._query_layer(prompt, layer, system=system) for layer in layers
-        ]
-        responses = await asyncio.gather(*tasks, return_exceptions=True)
-
-        for resp in responses:
-            if isinstance(resp, LLMResponse):
-                result.responses.append(resp)
-            elif isinstance(resp, Exception):
-                logger.warning("Layer query failed: %s", resp)
-
-        result.responses.sort(key=lambda r: r.latency_ms)
-        result.total_latency_ms = (time.monotonic() - start) * 1000
-
-        if LayerName.CONSENSUS in layers and len(result.responses) >= 2:
-            result.consensus_text = self._build_consensus(result.responses)
-
-        return result
-
-    async def _query_layer(
-        self,
-        prompt: str,
-        layer: LayerName,
-        *,
-        system: str | None = None,
-    ) -> LLMResponse:
-        """Query a single layer, trying providers in priority order."""
-        config = self._layer_config[layer]
-        timeout = config["timeout_ms"] / 1000.0
-        provider_names = self._resolve_providers(layer)
-
-        for name in provider_names:
-            provider = self._providers.get(name)
-            if provider is None:
-                continue
-            try:
-                return await asyncio.wait_for(
-                    provider.complete(prompt, system=system),
-                    timeout=timeout,
-                )
-            except (TimeoutError, asyncio.TimeoutError):
-                logger.debug("Provider %s timed out for layer %s", name, layer.value)
-            except Exception:
-                logger.debug(
-                    "Provider %s failed for layer %s", name, layer.value, exc_info=True
-                )
-
-        raise RuntimeError(f"All providers exhausted for layer {layer.value}")
-
-    def _resolve_providers(self, layer: LayerName) -> list[str]:
-        """Return provider names for the layer based on deployment mode."""
-        config = self._layer_config[layer]
-        if self.mode == DeploymentMode.AIRLOCKED:
-            return config.get("providers_local", [])
-        if self.mode == DeploymentMode.CLOUD:
-            return config.get("providers_cloud", [])
-        # Hybrid: local first, then cloud
-        return config.get("providers_local", []) + config.get("providers_cloud", [])
-
-    @staticmethod
-    def _build_consensus(responses: list[LLMResponse]) -> str:
-        """Merge multiple responses into a consensus answer (placeholder)."""
-        texts = [r.text for r in responses]
-        return max(texts, key=len)
-
-
-# ---------------------------------------------------------------------------
-# Voice Manager
-# ---------------------------------------------------------------------------
-
-class VoiceManager:
-    """Manages speech-to-text and text-to-speech with provider fallback.
-
-    Supports airlocked (whisper.cpp + Piper), cloud (Groq + Cartesia),
-    and hybrid modes.
-
-    Example::
-
-        voice = VoiceManager(mode=DeploymentMode.HYBRID)
-        text = await voice.listen()           # STT
-        await voice.speak("Hello Joseph")     # TTS
-    """
-
-    def __init__(
-        self,
-        mode: DeploymentMode = DeploymentMode.HYBRID,
-        config: VoiceConfig | None = None,
-        stt_providers: dict[str, STTProvider] | None = None,
-        tts_providers: dict[str, TTSProvider] | None = None,
-    ) -> None:
-        self.mode = mode
-        self.config = config or VoiceConfig()
-        self._stt: dict[str, STTProvider] = stt_providers or {}
-        self._tts: dict[str, TTSProvider] = tts_providers or {}
-        self._listening = False
-
-    def register_stt(self, name: str, provider: STTProvider) -> None:
-        self._stt[name] = provider
-
-    def register_tts(self, name: str, provider: TTSProvider) -> None:
-        self._tts[name] = provider
-
-    async def listen(self, *, audio_bytes: bytes | None = None) -> str:
-        """Transcribe speech to text using the configured STT provider chain."""
-        if audio_bytes is None:
-            audio_bytes = await self._capture_audio()
-
-        for name, provider in self._stt.items():
-            try:
-                return await provider.transcribe(audio_bytes)
-            except Exception:
-                logger.warning("STT provider %s failed, trying next", name)
-
-        raise RuntimeError("All STT providers failed")
-
-    async def speak(self, text: str, *, voice: str | None = None) -> bytes:
-        """Synthesize text to speech using the configured TTS provider chain."""
-        voice = voice or self.config.tts_voice
-
-        for name, provider in self._tts.items():
-            try:
-                return await provider.synthesize(text, voice=voice)
-            except Exception:
-                logger.warning("TTS provider %s failed, trying next", name)
-
-        raise RuntimeError("All TTS providers failed")
-
-    async def _capture_audio(self) -> bytes:
-        """Capture audio from the default input device (platform-specific)."""
-        raise NotImplementedError(
-            "Audio capture requires a platform-specific implementation. "
-            "Pass audio_bytes directly or register a capture plugin."
-        )
-
-
-# ---------------------------------------------------------------------------
-# Agent Orchestrator
-# ---------------------------------------------------------------------------
-
-class AgentOrchestrator:
-    """Manages autonomous agents with self-healing and event-driven execution.
-
-    Agents can run on schedules, respond to events, or execute one-shot tasks.
-    Failed agents are automatically retried with exponential backoff.
-
-    Example::
-
-        orchestrator = AgentOrchestrator(llm_layer=layer)
-        agent_id = await orchestrator.spawn(AgentConfig(
-            name="code-reviewer",
-            task="Review the latest PR for security issues",
-            layers=["instant", "deep"],
-        ))
-        result = await orchestrator.wait(agent_id)
-    """
-
-    def __init__(self, llm_layer: LLMLayer) -> None:
-        self._llm = llm_layer
-        self._agents: dict[str, _RunningAgent] = {}
-        self._event_handlers: dict[str, list[Callable[..., Any]]] = {}
-
-    async def spawn(self, config: AgentConfig) -> str:
-        """Spawn an autonomous agent and return its ID."""
-        agent_id = f"agent-{config.name}-{int(time.time() * 1000)}"
-        agent = _RunningAgent(
-            id=agent_id,
-            config=config,
-            llm=self._llm,
-        )
-        self._agents[agent_id] = agent
-        asyncio.create_task(agent.run())
-        logger.info("Spawned agent %s: %s", agent_id, config.task)
-        return agent_id
-
-    async def wait(self, agent_id: str, *, timeout: float = 60.0) -> str:
-        """Wait for an agent to complete and return its result."""
-        agent = self._agents.get(agent_id)
-        if agent is None:
-            raise KeyError(f"Unknown agent: {agent_id}")
-        return await asyncio.wait_for(agent.result_future, timeout=timeout)
-
-    async def cancel(self, agent_id: str) -> None:
-        """Cancel a running agent."""
-        agent = self._agents.get(agent_id)
-        if agent and agent.task:
-            agent.task.cancel()
-            logger.info("Cancelled agent %s", agent_id)
-
-    def list_agents(self) -> list[dict[str, Any]]:
-        """Return status of all agents."""
-        return [
-            {
-                "id": a.id,
-                "name": a.config.name,
-                "status": a.status,
-                "retries": a.retries,
-            }
-            for a in self._agents.values()
-        ]
-
-    def on(self, event: str) -> Callable:
-        """Decorator to register an event handler."""
-        def decorator(fn: Callable) -> Callable:
-            self._event_handlers.setdefault(event, []).append(fn)
-            return fn
-        return decorator
-
-    async def emit(self, event: str, data: Any = None) -> None:
-        """Emit an event to all registered handlers."""
-        for handler in self._event_handlers.get(event, []):
-            try:
-                result = handler(data)
-                if asyncio.iscoroutine(result):
-                    await result
-            except Exception:
-                logger.exception("Event handler failed for %s", event)
-
-
-@dataclass
-class _RunningAgent:
-    """Internal representation of a running agent."""
-    id: str
-    config: AgentConfig
-    llm: LLMLayer
-    status: str = "pending"
-    retries: int = 0
-    task: asyncio.Task[str] | None = None
-    result_future: asyncio.Future[str] = field(
-        default_factory=lambda: asyncio.get_event_loop().create_future()
-    )
-
-    async def run(self) -> None:
-        self.status = "running"
-        layers = [LayerName(name) for name in self.config.layers]
-
-        while self.retries <= self.config.max_retries:
-            try:
-                response = await self.llm.query(self.config.task, layers=layers)
-                best = response.best
-                result = best.text if best else ""
-                self.status = "completed"
-                if not self.result_future.done():
-                    self.result_future.set_result(result)
-                return
-            except Exception as exc:
-                self.retries += 1
-                logger.warning(
-                    "Agent %s failed (attempt %d/%d): %s",
-                    self.id, self.retries, self.config.max_retries, exc,
-                )
-                if self.retries > self.config.max_retries:
-                    self.status = "failed"
-                    if not self.result_future.done():
-                        self.result_future.set_exception(exc)
-                    return
-                backoff = min(2 ** self.retries, 30)
-                await asyncio.sleep(backoff)
-
-
-# ---------------------------------------------------------------------------
-# Main Client
-# ---------------------------------------------------------------------------
 
 class AgenticBrain:
-    """Top-level SDK client -- the single entry point for all brain features.
-
-    Wraps LLM orchestration, voice I/O, and autonomous agents behind a
-    unified, mode-aware interface.
-
-    Args:
-        mode: Deployment mode ("airlocked", "cloud", "hybrid").
-        voice_config: Optional voice I/O settings.
-
-    Example::
-
-        brain = AgenticBrain(mode="hybrid")
-
-        # Simple chat
-        response = await brain.chat("What is the weather?")
-
-        # Multi-layer chat
-        layered = await brain.chat(
-            "Explain relativity",
-            layers=["instant", "deep"],
-        )
-        print(layered.instant.text)   # fast answer
-        print(layered.deep.text)      # thorough answer
-
-        # Voice conversation
-        text = await brain.listen()
-        await brain.speak("I heard you say: " + text)
-
-        # Spawn an autonomous agent
-        agent_id = await brain.spawn_agent(AgentConfig(
-            name="researcher",
-            task="Find the top 5 AI papers this week",
-        ))
-        result = await brain.wait_agent(agent_id)
-    """
+    """Main SDK client for agentic-brain."""
 
     def __init__(
         self,
-        mode: Literal["airlocked", "cloud", "hybrid"] = "hybrid",
-        voice_config: VoiceConfig | None = None,
-    ) -> None:
-        self.mode = DeploymentMode(mode)
-        self.llm = LLMLayer(mode=self.mode)
-        self.voice = VoiceManager(mode=self.mode, config=voice_config)
-        self.agents = AgentOrchestrator(llm_layer=self.llm)
-        logger.info("AgenticBrain initialised in %s mode", self.mode.value)
-
-    # -- LLM shortcuts -----------------------------------------------------
+        mode: DeploymentMode | str = DeploymentMode.HYBRID,
+        groq_key: Optional[str] = None,
+        openai_key: Optional[str] = None,
+        anthropic_key: Optional[str] = None,
+        ollama_url: str = "http://localhost:11434",
+        instant_model: str = "llama-3.1-8b-instant",
+        fast_model: str = "llama3.2:3b",
+        deep_model: str = "claude-3-5-sonnet-latest",
+        openai_model: str = "gpt-4o-mini",
+        consensus_model: str = "claude-3-5-sonnet-latest",
+        timeout: float = 60.0,
+    ):
+        self.mode = self._coerce_mode(mode)
+        self._groq_key = groq_key or os.getenv("GROQ_API_KEY")
+        self._openai_key = openai_key or os.getenv("OPENAI_API_KEY")
+        self._anthropic_key = anthropic_key or os.getenv("ANTHROPIC_API_KEY")
+        self._ollama_url = ollama_url.rstrip("/")
+        self._instant_model = instant_model
+        self._fast_model = fast_model
+        self._deep_model = deep_model
+        self._openai_model = openai_model
+        self._consensus_model = consensus_model
+        self._timeout = timeout
+        self._llm_router = None
+        self._voice_manager = None
+        self._history: list[dict[str, str]] = []
 
     async def chat(
         self,
-        prompt: str,
-        *,
-        layers: list[str] | None = None,
-        system: str | None = None,
+        message: str,
+        layers: Optional[list[ResponseLayer | str]] = None,
+        stream: bool = False,
     ) -> LayeredResponse:
-        """Send a chat message through the requested LLM layers."""
-        layer_enums = [LayerName(name) for name in (layers or ["instant"])]
-        return await self.llm.query(prompt, layers=layer_enums, system=system)
+        """Send a chat message and get layered responses."""
+        normalized_layers = self._normalize_layers(layers)
+        response = LayeredResponse()
+        started = time.perf_counter()
 
-    async def stream_chat(
+        self._history.append({"role": "user", "content": message})
+
+        async for layer, text in self._run_layers(message, normalized_layers):
+            self._assign_layer(response, layer, text)
+            if stream:
+                await asyncio.sleep(0)
+
+        response.final = self._pick_final(response)
+        response.elapsed_ms = round((time.perf_counter() - started) * 1000, 3)
+        if response.final:
+            self._history.append({"role": "assistant", "content": response.final})
+        return response
+
+    async def chat_stream(
         self,
-        prompt: str,
-        *,
-        provider: str | None = None,
-        system: str | None = None,
+        message: str,
+        layers: Optional[list[ResponseLayer | str]] = None,
     ) -> AsyncIterator[str]:
-        """Stream a response token-by-token from a single provider."""
-        name = provider or next(iter(self.llm._providers), None)
-        if name is None or name not in self.llm._providers:
-            raise RuntimeError("No LLM providers registered")
-        async for token in self.llm._providers[name].stream(prompt, system=system):
-            yield token
+        """Stream chat responses as they arrive."""
+        normalized_layers = self._normalize_layers(layers)
+        response = LayeredResponse()
+        self._history.append({"role": "user", "content": message})
 
-    # -- Voice shortcuts ---------------------------------------------------
+        async for layer, text in self._run_layers(message, normalized_layers):
+            self._assign_layer(response, layer, text)
+            yield text
 
-    async def listen(self, *, audio_bytes: bytes | None = None) -> str:
-        """Listen for speech and return transcribed text."""
-        return await self.voice.listen(audio_bytes=audio_bytes)
+        response.final = self._pick_final(response)
+        if response.final:
+            self._history.append({"role": "assistant", "content": response.final})
 
-    async def speak(self, text: str, *, voice: str | None = None) -> bytes:
-        """Speak text aloud and return the audio bytes."""
-        return await self.voice.speak(text, voice=voice)
+    async def _run_layers(
+        self,
+        message: str,
+        layers: list[ResponseLayer],
+    ) -> AsyncIterator[tuple[ResponseLayer, str]]:
+        tasks = [
+            asyncio.create_task(self._execute_layer(layer, message))
+            for layer in layers
+        ]
 
-    # -- Agent shortcuts ---------------------------------------------------
+        for completed in asyncio.as_completed(tasks):
+            layer, text = await completed
+            if text:
+                yield layer, text
 
-    async def spawn_agent(self, config: AgentConfig) -> str:
-        """Spawn an autonomous agent."""
-        return await self.agents.spawn(config)
+    async def _execute_layer(
+        self,
+        layer: ResponseLayer,
+        message: str,
+    ) -> tuple[ResponseLayer, str]:
+        layer_map = {
+            ResponseLayer.INSTANT: self._get_instant,
+            ResponseLayer.FAST: self._get_fast,
+            ResponseLayer.DEEP: self._get_deep,
+            ResponseLayer.CONSENSUS: self._get_consensus,
+        }
+        return layer, await layer_map[layer](message)
 
-    async def wait_agent(self, agent_id: str, *, timeout: float = 60.0) -> str:
-        """Wait for an agent to finish."""
-        return await self.agents.wait(agent_id, timeout=timeout)
+    async def _get_instant(self, message: str) -> str:
+        """Get instant response from Groq or local."""
+        if self.mode != DeploymentMode.AIRLOCKED and self._groq_key:
+            return await self._call_groq(model=self._instant_model, message=message)
+        return await self._get_fast(message)
 
-    # -- Event system ------------------------------------------------------
+    async def _get_fast(self, message: str) -> str:
+        """Get fast response from Ollama."""
+        if self.mode == DeploymentMode.CLOUD:
+            if self._groq_key:
+                return await self._call_groq(model=self._instant_model, message=message)
+            if self._openai_key:
+                return await self._call_openai(model=self._openai_model, message=message)
+            if self._anthropic_key:
+                return await self._call_anthropic(
+                    model="claude-3-5-haiku-latest",
+                    message=message,
+                )
+            return ""
+        return await self._call_ollama(model=self._fast_model, message=message)
 
-    def on(self, event: str) -> Callable:
-        """Register an event handler."""
-        return self.agents.on(event)
+    async def _get_deep(self, message: str) -> str:
+        """Get deep response from Claude/GPT."""
+        if self.mode == DeploymentMode.AIRLOCKED:
+            return await self._get_fast(message)
+        if self._anthropic_key:
+            return await self._call_anthropic(model=self._deep_model, message=message)
+        if self._openai_key:
+            return await self._call_openai(model=self._openai_model, message=message)
+        if self._groq_key:
+            return await self._call_groq(
+                model="llama-3.3-70b-versatile",
+                message=message,
+            )
+        return await self._get_fast(message) if self.mode == DeploymentMode.HYBRID else ""
 
-    async def emit(self, event: str, data: Any = None) -> None:
-        """Emit an event."""
-        await self.agents.emit(event, data)
+    async def _get_consensus(self, message: str) -> str:
+        """Get a synthesized consensus response from multiple layers."""
+        fast, deep = await self._gather_for_consensus(message)
+        if not deep:
+            return fast
+        if not fast or fast == deep:
+            return deep
 
-    # -- Provider registration ---------------------------------------------
+        synthesis_prompt = (
+            "Combine the following two answers into one concise, accurate response. "
+            "Prefer the more correct detail when they disagree.\n\n"
+            f"Fast answer:\n{fast}\n\n"
+            f"Deep answer:\n{deep}"
+        )
 
-    def register_llm(self, name: str, provider: LLMProvider) -> None:
-        """Register an LLM provider."""
-        self.llm.register_provider(name, provider)
+        if self.mode != DeploymentMode.AIRLOCKED and self._anthropic_key:
+            return await self._call_anthropic(
+                model=self._consensus_model,
+                message=synthesis_prompt,
+            )
+        if self.mode != DeploymentMode.AIRLOCKED and self._openai_key:
+            return await self._call_openai(
+                model=self._openai_model,
+                message=synthesis_prompt,
+            )
+        return deep
 
-    def register_stt(self, name: str, provider: STTProvider) -> None:
-        """Register a speech-to-text provider."""
-        self.voice.register_stt(name, provider)
+    async def _gather_for_consensus(self, message: str) -> tuple[str, str]:
+        fast_task = asyncio.create_task(self._get_fast(message))
+        deep_task = asyncio.create_task(self._get_deep(message))
+        return await asyncio.gather(fast_task, deep_task)
 
-    def register_tts(self, name: str, provider: TTSProvider) -> None:
-        """Register a text-to-speech provider."""
-        self.voice.register_tts(name, provider)
+    async def _call_ollama(self, model: str, message: str) -> str:
+        return await self._post_json(
+            f"{self._ollama_url}/api/generate",
+            json={
+                "model": model,
+                "prompt": message,
+                "stream": False,
+            },
+            extractor=lambda data: data.get("response", ""),
+        )
+
+    async def _call_groq(self, model: str, message: str) -> str:
+        return await self._post_json(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {self._groq_key}"},
+            json={
+                "model": model,
+                "messages": self._messages(message),
+                "temperature": 0.2,
+            },
+            extractor=self._extract_chat_completion,
+        )
+
+    async def _call_openai(self, model: str, message: str) -> str:
+        return await self._post_json(
+            "https://api.openai.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {self._openai_key}"},
+            json={
+                "model": model,
+                "messages": self._messages(message),
+                "temperature": 0.2,
+            },
+            extractor=self._extract_chat_completion,
+        )
+
+    async def _call_anthropic(self, model: str, message: str) -> str:
+        return await self._post_json(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": self._anthropic_key or "",
+                "anthropic-version": "2023-06-01",
+            },
+            json={
+                "model": model,
+                "max_tokens": 1024,
+                "messages": self._anthropic_messages(message),
+            },
+            extractor=self._extract_anthropic_message,
+        )
+
+    async def _post_json(
+        self,
+        url: str,
+        *,
+        json: dict[str, Any],
+        extractor: Callable[[dict[str, Any]], str],
+        headers: Optional[dict[str, str]] = None,
+    ) -> str:
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                response = await client.post(url, json=json, headers=headers)
+                response.raise_for_status()
+                return extractor(response.json())
+        except httpx.HTTPError:
+            return ""
+
+    def clear_history(self) -> None:
+        """Clear stored conversation history."""
+        self._history.clear()
+
+    def _messages(self, message: str) -> list[dict[str, str]]:
+        messages = [
+            {"role": entry["role"], "content": entry["content"]}
+            for entry in self._history[-10:]
+            if entry["role"] in {"user", "assistant"}
+        ]
+        if messages and messages[-1] == {"role": "user", "content": message}:
+            return messages
+        messages.append({"role": "user", "content": message})
+        return messages
+
+    def _anthropic_messages(self, message: str) -> list[dict[str, str]]:
+        return self._messages(message)
+
+    def _normalize_layers(
+        self,
+        layers: Optional[list[ResponseLayer | str]],
+    ) -> list[ResponseLayer]:
+        if layers is None:
+            return [ResponseLayer.INSTANT, ResponseLayer.DEEP]
+        return [
+            layer if isinstance(layer, ResponseLayer) else ResponseLayer(layer)
+            for layer in layers
+        ]
+
+    @staticmethod
+    def _pick_final(response: LayeredResponse) -> str:
+        return (
+            response.consensus
+            or response.deep
+            or response.fast
+            or response.instant
+            or ""
+        )
+
+    @staticmethod
+    def _assign_layer(
+        response: LayeredResponse,
+        layer: ResponseLayer,
+        text: str,
+    ) -> None:
+        if layer == ResponseLayer.INSTANT:
+            response.instant = text
+        elif layer == ResponseLayer.FAST:
+            response.fast = text
+        elif layer == ResponseLayer.DEEP:
+            response.deep = text
+        elif layer == ResponseLayer.CONSENSUS:
+            response.consensus = text
+        if text:
+            response.final = text
+
+    @staticmethod
+    def _coerce_mode(mode: DeploymentMode | str) -> DeploymentMode:
+        return mode if isinstance(mode, DeploymentMode) else DeploymentMode(mode)
+
+    @staticmethod
+    def _extract_chat_completion(data: dict[str, Any]) -> str:
+        choices = data.get("choices") or []
+        if not choices:
+            return ""
+        message = choices[0].get("message") or {}
+        return str(message.get("content", ""))
+
+    @staticmethod
+    def _extract_anthropic_message(data: dict[str, Any]) -> str:
+        content = data.get("content") or []
+        if not content:
+            return ""
+        first = content[0] or {}
+        return str(first.get("text", ""))

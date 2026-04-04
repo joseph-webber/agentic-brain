@@ -435,5 +435,5 @@ memory:
 
 - [RAG.md](./RAG.md) - Retrieval-Augmented Generation
 - [TESTING.md](./TESTING.md) - Testing memory systems
-- [NEO4J-HEALTH-GUIDE.md](./NEO4J-HEALTH-GUIDE.md) - Neo4j best practices
+- [NEO4J-HEALTH-GUIDE.md](./NEO4J_ARCHITECTURE.md) - Neo4j best practices
 - [SECURITY.md](./SECURITY.md) - Memory encryption and privacy

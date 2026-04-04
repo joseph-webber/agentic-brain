@@ -4,17 +4,19 @@ Comprehensive guide to Agentic Brain's GraphRAG stack.
 
 For the underlying Neo4j reference model, see [Neo4j Architecture](./NEO4J_ARCHITECTURE.md) and [Neo4j Zones](./NEO4J_ZONES.md).
 
-Agentic Brain exposes GraphRAG through **three complementary layers**:
+Agentic Brain exposes GraphRAG through **four complementary layers**:
 
 1. **`agentic_brain.rag.graphrag.KnowledgeExtractor`** — lightweight entity extraction, relationship persistence, and safe natural-language graph queries
 2. **`agentic_brain.rag.graph_rag.GraphRAG`** — end-to-end ingest and search pipeline with vector, graph, hybrid, community, and multi-hop search strategies
 3. **`agentic_brain.rag.graph.EnhancedGraphRAG`** — production-oriented Neo4j vector search, chunk indexing, and reciprocal-rank-fusion hybrid retrieval
+4. **`agentic_brain.rag.community.CommunityGraphRAG`** — Microsoft GraphRAG-style community detection, summaries, hierarchy building, and query routing
 
 Use the layer that matches your job:
 
 - need graph extraction from raw text → `KnowledgeExtractor`
 - need a simple GraphRAG pipeline with multiple search strategies → `GraphRAG`
 - need Neo4j-native vector indexing and chunk retrieval → `EnhancedGraphRAG`
+- need global theme summaries, hierarchical communities, or query routing by scope → `CommunityGraphRAG`
 
 ---
 
@@ -54,6 +56,7 @@ Use the layer that matches your job:
 | `KnowledgeExtractor` | `SourceDocument` + `Entity` schema, `MENTIONS` / `RELATES_TO` edges, safe Text2Cypher, heuristic fallback |
 | `GraphRAG` | Ingest workflow, entity embeddings, basic strategy selection (`VECTOR`, `GRAPH`, `HYBRID`, `COMMUNITY`, `MULTI_HOP`) |
 | `EnhancedGraphRAG` | `Document` / `Chunk` / `Entity` schema, Neo4j vector index, graph traversal scoring, reciprocal-rank fusion |
+| `CommunityGraphRAG` | Leiden community detection, community summaries, hierarchy levels (leaf/coarse/global), query routing |
 
 ---
 
@@ -142,14 +145,14 @@ pip install agentic-brain neo4j
 ### Recommended extras
 
 ```bash
-pip install "agentic-brain[enhanced]"
+pip install "agentic-brain[enhanced,graphrag]"
 ```
 
 ### Optional extras
 
 ```bash
 pip install "agentic-brain[graphrag]"   # Optional neo4j-graphrag experiments
-pip install "agentic-brain[chonkie]"    # Fast chunking
+pip install "agentic-brain[chunking]"    # Fast chunking
 pip install "agentic-brain[embeddings]" # Sentence-transformers / torch
 ```
 
@@ -370,6 +373,42 @@ RETURN d.id, d.content
 LIMIT 10;
 ```
 
+### Community GraphRAG workflow
+
+`CommunityGraphRAG` wraps the full Microsoft GraphRAG-style loop:
+
+```python
+import asyncio
+from agentic_brain.rag.community import CommunityGraphRAG
+from agentic_brain.rag.graph import EnhancedGraphRAG
+
+
+async def main():
+    rag = EnhancedGraphRAG()
+    await rag.initialize()
+
+    community_rag = CommunityGraphRAG(rag)
+    await community_rag.detect_communities()
+    await community_rag.summarize_communities()
+    hierarchy = await community_rag.build_hierarchy()
+    route = await community_rag.route_query("Summarize the main themes across the graph")
+
+    print(route)
+    print(hierarchy[3][0]["summary"])
+
+
+asyncio.run(main())
+```
+
+The hierarchy levels are:
+
+- **Level 0**: individual entities
+- **Level 1**: fine-grained leaf communities
+- **Level 2**: coarse roll-up communities
+- **Level 3**: global themes
+
+Global questions route to community summaries, specific questions route to entities, and ambiguous questions use hybrid retrieval.
+
 ### Embedding integration patterns
 
 #### Reuse existing embeddings
@@ -426,7 +465,7 @@ The extractor's embedder hook is the right integration point when you need graph
 | `max_hops` | `3` | Multi-hop traversal depth |
 | `max_relationships` | `50` | Max relationships to ingest per document |
 | `enable_communities` | `True` | Include community stage |
-| `community_algorithm` | `louvain` | Algorithm label for community stage; set to `leiden` for GDS workflows |
+| `community_algorithm` | `leiden` | Algorithm label for community stage; Microsoft GraphRAG-style community detection uses Leiden by default |
 | `cache_embeddings` | `True` | Enable embedding cache |
 | `cache_ttl` | `3600` | Embedding cache TTL in seconds |
 

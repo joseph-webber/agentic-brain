@@ -269,7 +269,7 @@ systemctl start agentic-brain
 
 ## Getting Help
 
-- **Documentation**: [docs/](./README.md)
+- **Documentation**: [docs/](./INDEX.md)
 - **Issues**: [GitHub Issues](https://github.com/yourusername/agentic-brain/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yourusername/agentic-brain/discussions)
 

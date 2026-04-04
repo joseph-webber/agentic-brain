@@ -10,12 +10,19 @@ final class VoiceManager: ObservableObject {
     @Published var selectedVoiceName: String = "Karen (Premium)"
     @Published var selectedVoiceID: String?
     @Published var speechRate: Float = 160.0
+    @Published var currentEngine: VoiceOutputEngine = .macOS
+    @Published var engineStatus: String = "Ready"
 
     private let synthesizer = NSSpeechSynthesizer()
+    private let cartesiaVoice: CartesiaVoice
+    private let piperVoice: PiperVoiceEngine
+    private let elevenLabsVoice: ElevenLabsVoiceEngine
+
     private var delegate: SpeechDelegate?
     private var speechQueue: [String] = []
     private var isProcessingQueue = false
     private var currentUtteranceID: UUID?
+    private var cancellables = Set<AnyCancellable>()
 
     private var voiceOverActive: Bool {
         NSWorkspace.shared.isVoiceOverEnabled
@@ -28,11 +35,24 @@ final class VoiceManager: ObservableObject {
         let isPremium: Bool
     }
 
-    init() {
+    convenience init() {
+        self.init(cartesiaVoice: CartesiaVoice(), piperVoice: PiperVoiceEngine(), elevenLabsVoice: ElevenLabsVoiceEngine())
+    }
+
+    init(
+        cartesiaVoice: CartesiaVoice,
+        piperVoice: PiperVoiceEngine,
+        elevenLabsVoice: ElevenLabsVoiceEngine
+    ) {
+        self.cartesiaVoice = cartesiaVoice
+        self.piperVoice = piperVoice
+        self.elevenLabsVoice = elevenLabsVoice
         delegate = SpeechDelegate(manager: self)
         synthesizer.delegate = delegate
+        bindExternalEngines()
         loadVoices()
         selectVoice(named: selectedVoiceName)
+        updateEngineStatus()
     }
 
     func loadVoices() {
@@ -63,13 +83,16 @@ final class VoiceManager: ObservableObject {
     func selectVoice(named name: String) {
         selectedVoiceName = name
         if let voice = availableVoices.first(where: {
-            $0.name.localizedCaseInsensitiveContains(name) ||
-            $0.name.localizedCaseInsensitiveContains(name.replacingOccurrences(of: " (Premium)", with: ""))
+            $0.name.localizedCaseInsensitiveContains(name)
+                || $0.name.localizedCaseInsensitiveContains(name.replacingOccurrences(of: " (Premium)", with: ""))
         }) {
             selectVoice(byID: voice.id)
         } else if let karenVoice = availableVoices.first(where: { $0.name.lowercased().contains("karen") }) {
             selectVoice(byID: karenVoice.id)
         }
+
+        cartesiaVoice.selectVoice(matching: selectedVoiceName)
+        elevenLabsVoice.selectVoice(matching: selectedVoiceName)
     }
 
     func selectVoice(byID id: String) {
@@ -79,12 +102,31 @@ final class VoiceManager: ObservableObject {
         selectedVoiceName = voice.name
     }
 
+    func setOutputEngine(_ engine: VoiceOutputEngine) {
+        currentEngine = engine
+        updateEngineStatus()
+    }
+
+    func refreshEngineStatus() {
+        updateEngineStatus()
+    }
+
     func speak(_ text: String) {
         if announceWithVoiceOverIfNeeded(text) {
             return
         }
-        speechQueue.append(text)
-        processQueue()
+
+        switch currentEngine {
+        case .macOS:
+            speechQueue.append(text)
+            processQueue()
+        case .cartesia:
+            cartesiaVoice.enqueue(text, voiceID: cartesiaVoice.selectedVoiceID)
+        case .piper:
+            piperVoice.enqueue(text, preferredVoiceName: selectedVoiceName)
+        case .elevenLabs:
+            elevenLabsVoice.enqueue(text, preferredVoiceName: selectedVoiceName)
+        }
     }
 
     func speakImmediately(_ text: String) {
@@ -93,18 +135,26 @@ final class VoiceManager: ObservableObject {
             return
         }
 
-        speechQueue.removeAll()
-        synthesizer.rate = speechRate
-        isProcessingQueue = true
-        let started = startSpeaking(text)
-        if !started {
-            isSpeaking = false
-            isProcessingQueue = false
-            processQueue()
-            return
+        switch currentEngine {
+        case .macOS:
+            speechQueue.removeAll()
+            synthesizer.rate = speechRate
+            isProcessingQueue = true
+            let started = startSpeaking(text)
+            if !started {
+                isSpeaking = false
+                isProcessingQueue = false
+                processQueue()
+                return
+            }
+            isSpeaking = true
+        case .cartesia:
+            cartesiaVoice.enqueue(text, voiceID: cartesiaVoice.selectedVoiceID)
+        case .piper:
+            piperVoice.speakImmediately(text, preferredVoiceName: selectedVoiceName)
+        case .elevenLabs:
+            elevenLabsVoice.speakImmediately(text, preferredVoiceName: selectedVoiceName)
         }
-
-        isSpeaking = true
     }
 
     func stop() {
@@ -112,10 +162,78 @@ final class VoiceManager: ObservableObject {
         synthesizer.stopSpeaking()
         speechQueue.removeAll()
         isProcessingQueue = false
+        cartesiaVoice.cancelCurrentSpeech(clearQueue: true)
+        piperVoice.cancelCurrentSpeech(clearQueue: true)
+        elevenLabsVoice.cancelCurrentSpeech(clearQueue: true)
         isSpeaking = false
     }
 
+    private func bindExternalEngines() {
+        cartesiaVoice.$isSpeaking
+            .sink { [weak self] speaking in
+                guard let self, self.currentEngine == .cartesia else { return }
+                self.isSpeaking = speaking
+            }
+            .store(in: &cancellables)
+
+        cartesiaVoice.$statusMessage
+            .sink { [weak self] status in
+                guard let self, self.currentEngine == .cartesia else { return }
+                self.engineStatus = status
+            }
+            .store(in: &cancellables)
+
+        piperVoice.$isSpeaking
+            .sink { [weak self] speaking in
+                guard let self, self.currentEngine == .piper else { return }
+                self.isSpeaking = speaking
+            }
+            .store(in: &cancellables)
+
+        piperVoice.$statusMessage
+            .sink { [weak self] status in
+                guard let self, self.currentEngine == .piper else { return }
+                self.engineStatus = status
+            }
+            .store(in: &cancellables)
+
+        elevenLabsVoice.$isSpeaking
+            .sink { [weak self] speaking in
+                guard let self, self.currentEngine == .elevenLabs else { return }
+                self.isSpeaking = speaking
+            }
+            .store(in: &cancellables)
+
+        elevenLabsVoice.$statusMessage
+            .sink { [weak self] status in
+                guard let self, self.currentEngine == .elevenLabs else { return }
+                self.engineStatus = status
+            }
+            .store(in: &cancellables)
+    }
+
+    private func updateEngineStatus() {
+        cartesiaVoice.refreshConfiguration()
+        elevenLabsVoice.refreshConfiguration()
+
+        switch currentEngine {
+        case .macOS:
+            engineStatus = "Ready"
+            isSpeaking = isProcessingQueue || synthesizer.isSpeaking
+        case .cartesia:
+            engineStatus = cartesiaVoice.hasStoredAPIKey ? "Ready" : cartesiaVoice.statusMessage
+            isSpeaking = cartesiaVoice.isSpeaking
+        case .piper:
+            engineStatus = piperVoice.isAvailable ? "Ready" : piperVoice.unavailabilityMessage
+            isSpeaking = piperVoice.isSpeaking
+        case .elevenLabs:
+            engineStatus = elevenLabsVoice.hasStoredAPIKey ? "Ready" : elevenLabsVoice.statusMessage
+            isSpeaking = elevenLabsVoice.isSpeaking
+        }
+    }
+
     private func processQueue() {
+        guard currentEngine == .macOS else { return }
         guard !isProcessingQueue, !speechQueue.isEmpty else { return }
 
         if voiceOverActive {

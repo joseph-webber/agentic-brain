@@ -62,20 +62,30 @@ struct VoiceOutputSelector: View {
     }
 
     private func isEngineAvailable(_ engine: VoiceOutputEngine) -> Bool {
-        guard engine.requiresAPIKey else { return true }
         switch engine {
-        case .cartesia:
-            return !settings.claudeAPIKey.isEmpty // Cartesia key loaded alongside others
-        case .elevenLabs:
-            return !settings.openAIKey.isEmpty // Placeholder until dedicated key added
-        default:
+        case .macOS:
             return true
+        case .cartesia:
+            return APIKeyManager.shared.hasKey(for: "cartesia")
+        case .piper:
+            return ShellPiperCommandRunner().isAvailable
+        case .elevenLabs:
+            return APIKeyManager.shared.hasKey(for: "elevenlabs")
         }
     }
 
     private func accessibilityHint(for engine: VoiceOutputEngine) -> String {
         if !isEngineAvailable(engine) {
-            return "Unavailable until an API key is configured"
+            switch engine {
+            case .cartesia:
+                return "Unavailable until a Cartesia API key is configured"
+            case .piper:
+                return "Unavailable until Piper and a compatible voice model are installed"
+            case .elevenLabs:
+                return "Unavailable until an ElevenLabs API key is configured"
+            case .macOS:
+                return engine.description
+            }
         }
         var hint = engine.description
         if engine.crossPlatform {

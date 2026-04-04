@@ -156,7 +156,12 @@ extension APIKeyManager: APIKeyManaging {
     }
 
     func setKey(_ value: String, for provider: String) throws {
-        let data = Data(value.utf8)
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            removeKey(for: provider)
+            return
+        }
+        let data = Data(trimmed.utf8)
         let query = providerQuery(provider)
         SecItemDelete(query as CFDictionary)
         var attributes = query

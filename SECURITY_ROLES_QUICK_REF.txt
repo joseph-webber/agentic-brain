@@ -1,0 +1,124 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     AGENTIC BRAIN SECURITY ROLES                             ║
+║                          Quick Reference                                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 🔓 ADMIN - Full Power (Joseph's Mode)                                       │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Use when: You are Joseph or need full system control                        │
+│ Can do:   EVERYTHING - matches GitHub Copilot + system access               │
+│ Files:    Write anywhere (*)                                                │
+│ Commands: All commands including dangerous (rm -rf, sudo)                   │
+│ Secrets:  YES                                                                │
+│ Rate:     10000/min (unlimited)                                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 💻 DEVELOPER - Power User with Guardrails                                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Use when: Active development, want to move fast but stay safe               │
+│ Can do:   ~95% of GitHub Copilot, full coding with guardrails               │
+│ Files:    Write to all dev areas (src, web, backend, skills, tests)         │
+│ Commands: Safe only (blocks rm -rf, sudo, git push --force)                 │
+│ Secrets:  NO                                                                 │
+│ Rate:     500/min                                                            │
+│                                                                              │
+│ Examples: npm install, git commit, pytest, build features, refactor         │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 👤 USER - Safe Coding Assistant                                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Use when: Customer assistance, teaching, read-only code help                │
+│ Can do:   Coding advice, examples, analysis - NO file modification          │
+│ Files:    Write ONLY to output directories (6 paths)                        │
+│ Commands: Safe only (ls, grep, python test.py)                              │
+│ Secrets:  NO                                                                 │
+│ Rate:     100/min                                                            │
+│                                                                              │
+│ Examples: Code review, explain errors, generate examples, debug advice      │
+│ Blocked:  Cannot modify source code, config, or system files                │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 👋 GUEST - Help Desk Only                                                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ Use when: Public demos, anonymous users, documentation help                 │
+│ Can do:   Read docs, answer basic questions - NO code execution             │
+│ Files:    Read docs only, NO writes                                         │
+│ Commands: NONE                                                               │
+│ Secrets:  NO                                                                 │
+│ Rate:     20/min                                                             │
+│                                                                              │
+│ Examples: "How do I install?", "What does this error mean?"                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+                          QUICK DECISION GUIDE
+═══════════════════════════════════════════════════════════════════════════════
+
+❓ Need to modify system config or access secrets?
+   → Use ADMIN
+
+❓ Building features but want guardrails?
+   → Use DEVELOPER
+
+❓ Helping customer with coding but NO file writes?
+   → Use USER
+
+❓ Public demo or documentation only?
+   → Use GUEST
+
+═══════════════════════════════════════════════════════════════════════════════
+                          GITHUB COPILOT PARITY
+═══════════════════════════════════════════════════════════════════════════════
+
+ADMIN      = 100% GitHub Copilot + system access
+DEVELOPER  = ~95% GitHub Copilot (no force ops or secrets)
+USER       = ~30% GitHub Copilot (advice only, no file writes)
+GUEST      = 0% GitHub Copilot (docs chatbot only)
+
+═══════════════════════════════════════════════════════════════════════════════
+                             WRITE PERMISSIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+Directory                    GUEST  USER  DEVELOPER  ADMIN
+─────────────────────────────────────────────────────────
+/etc/*                       ❌     ❌    ❌         ✅
+~/.bashrc                    ❌     ❌    ❌         ✅
+~/brain/src/**               ❌     ❌    ✅         ✅
+~/brain/web/**               ❌     ❌    ✅         ✅
+~/brain/backend/**           ❌     ❌    ✅         ✅
+~/brain/skills/**            ❌     ❌    ✅         ✅
+~/brain/tests/**             ❌     ❌    ✅         ✅
+~/brain/data/**              ❌     ❌    ✅         ✅
+~/brain/logs/**              ❌     ❌    ✅         ✅
+~/brain/output/**            ❌     ✅    ✅         ✅
+~/brain/test-results/**      ❌     ✅    ✅         ✅
+
+═══════════════════════════════════════════════════════════════════════════════
+                          USAGE IN CODE
+═══════════════════════════════════════════════════════════════════════════════
+
+from agentic_brain.security.roles import SecurityRole
+from agentic_brain.security.guards import SecurityGuard
+
+# For day-to-day development
+guard = SecurityGuard(SecurityRole.DEVELOPER)
+allowed, reason = guard.check_command("git commit -m 'feature'")
+
+# For customer assistance
+guard = SecurityGuard(SecurityRole.USER)
+allowed, reason = guard.check_command("ls -la")
+
+# For full power (Joseph)
+guard = SecurityGuard(SecurityRole.ADMIN)
+allowed, reason = guard.check_command("git push --force")
+
+═══════════════════════════════════════════════════════════════════════════════
+
+For full documentation see: docs/SECURITY_ROLES.md
+For changelog see: docs/SECURITY_ROLES_CHANGELOG.md
+
+Last Updated: 2026-04-02 20:26 Adelaide

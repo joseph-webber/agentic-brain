@@ -9,6 +9,22 @@ struct ConversationView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
+                    if store.messages.isEmpty && !store.isProcessing {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("No messages yet")
+                                .font(.headline)
+                            Text("Type a message or turn on the microphone to start a conversation.")
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
+                        .background(Color.secondary.opacity(0.06))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("emptyStateView")
+                        .accessibilityLabel("Conversation empty. Type a message or turn on the microphone to begin.")
+                    }
+
                     ForEach(store.messages) { message in
                         if message.role == .assistant,
                            let state = layeredStore.state(for: message.id) {
@@ -38,11 +54,16 @@ struct ConversationView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("Brain Chat is thinking, please wait")
+                        .accessibilityHint("A response is currently being generated")
+                        .accessibilityAddTraits(.updatesFrequently)
                         .id("processingIndicator")
                     }
                 }
                 .padding()
             }
+            .accessibilityIdentifier("conversationSection")
+            .accessibilityLabel("Conversation history")
+            .accessibilityHint("New messages are announced automatically and the latest message appears at the bottom")
             .onChange(of: store.messages.count) { _, _ in
                 if let last = store.messages.last?.id {
                     withAnimation { proxy.scrollTo(last, anchor: .bottom) }
@@ -104,6 +125,7 @@ struct MessageBubble: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(message.accessibilityDescription)
+        .accessibilityHint(message.role == .user ? "Your message" : "Message text can be selected and read by VoiceOver")
     }
 
     private var bubbleBackground: Color {

@@ -18,11 +18,12 @@ from __future__ import annotations
 """
 Core Agent class for agentic-brain.
 
-Combines memory, audio, and LLM routing into a cohesive agent.
+Combines memory, audio, and LLM routing into a cohesive agent with security enforcement.
 
 Example:
     >>> from agentic_brain import Agent
-    >>> agent = Agent(name="assistant")
+    >>> from agentic_brain.security import SecurityRole
+    >>> agent = Agent(name="assistant", security_role=SecurityRole.USER)
     >>> response = agent.chat("Hello!")  # sync
     >>> response = await agent.chat_async("Hello!")  # async
     >>> print(response)
@@ -37,6 +38,7 @@ from datetime import UTC, datetime, timezone
 from .audio import Audio, AudioConfig
 from .memory import DataScope, InMemoryStore, Memory, Neo4jMemory
 from .router import LLMRouter, Provider, RouterConfig
+from .security import BaseSecureAgent, SecurityRole
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +49,9 @@ class AgentConfig:
 
     name: str = "agent"
     system_prompt: str | None = None
+
+    # Security
+    security_role: SecurityRole = SecurityRole.USER
 
     # Memory
     neo4j_uri: str | None = None
@@ -66,7 +71,7 @@ class AgentConfig:
     temperature: float = 0.7
 
 
-class Agent:
+class Agent(BaseSecureAgent):
     """
     Intelligent agent with memory, voice, and LLM capabilities.
 
@@ -75,24 +80,27 @@ class Agent:
     - Cross-platform voice output
     - LLM routing with fallback
     - Data scope isolation
+    - Security role enforcement
 
     Example:
         >>> # Basic agent
-        >>> agent = Agent(name="helper")
+        >>> agent = Agent(name="helper", security_role=SecurityRole.USER)
         >>> response = agent.chat("What can you help with?")
         >>>
         >>> # Agent with Neo4j memory
         >>> agent = Agent(
         ...     name="assistant",
         ...     neo4j_uri="bolt://localhost:7687",
-        ...     neo4j_password="your-password-here"
+        ...     neo4j_password="your-password-here",
+        ...     security_role=SecurityRole.SAFE_ADMIN
         ... )
         >>>
         >>> # Customer-scoped agent (B2B isolation)
         >>> agent = Agent(
         ...     name="support",
         ...     memory_scope=DataScope.CUSTOMER,
-        ...     customer_id="acme-corp"
+        ...     customer_id="acme-corp",
+        ...     security_role=SecurityRole.USER
         ... )
     """
 
@@ -103,6 +111,7 @@ Be concise and accurate. If you don't know something, say so."""
         self,
         name: str = "agent",
         system_prompt: str | None = None,
+        security_role: SecurityRole = SecurityRole.USER,
         neo4j_uri: str | None = None,
         neo4j_user: str = "neo4j",
         neo4j_password: str = "",
@@ -118,6 +127,7 @@ Be concise and accurate. If you don't know something, say so."""
         Args:
             name: Agent name (for logging)
             system_prompt: Custom system prompt
+            security_role: Security role for this agent (default: USER)
             neo4j_uri: Neo4j connection URI (None for in-memory)
             neo4j_user: Neo4j username
             neo4j_password: Neo4j password
@@ -126,9 +136,16 @@ Be concise and accurate. If you don't know something, say so."""
             audio_enabled: Enable voice output
             voice: Default voice name
         """
+        # Initialize security first
+        super().__init__(
+            security_role=security_role,
+            agent_id=name,
+        )
+        
         self.config = AgentConfig(
             name=name,
             system_prompt=system_prompt,
+            security_role=security_role,
             neo4j_uri=neo4j_uri,
             neo4j_user=neo4j_user,
             neo4j_password=neo4j_password,
@@ -146,7 +163,7 @@ Be concise and accurate. If you don't know something, say so."""
         # Conversation history (current session)
         self._history: list[dict] = []
 
-        logger.info(f"Agent '{name}' initialized")
+        logger.info(f"Agent '{name}' initialized with role {security_role.value}")
 
     def _init_memory(self) -> None:
         """Initialize memory backend."""
@@ -442,5 +459,19 @@ Be concise and accurate. If you don't know something, say so."""
 
     def __repr__(self) -> str:
         return (
-            f"Agent(name='{self.config.name}', scope={self.config.memory_scope.value})"
+            f"Agent(name='{self.config.name}', "
+            f"scope={self.config.memory_scope.value}, "
+            f"role={self.security_role.value})"
+        )
+    
+    def _execute_impl(self, action: str, **kwargs):
+        """
+        Implementation required by BaseSecureAgent.
+        
+        This method isn't used by the Agent class's chat interface,
+        but is required for the security model.
+        """
+        raise NotImplementedError(
+            "Agent uses chat() interface, not execute() interface. "
+            "Use chat() or chat_async() instead."
         )

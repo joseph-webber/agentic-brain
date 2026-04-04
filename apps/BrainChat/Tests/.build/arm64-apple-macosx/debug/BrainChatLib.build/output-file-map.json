@@ -1,0 +1,40 @@
+{
+  "": {
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/primary.swiftdeps"
+  },
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Sources/BrainChatLib/BrainChatLib.swift": {
+    "dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/BrainChatLib.d",
+    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/BrainChatLib.swift.o",
+    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/BrainChatLib~partial.swiftmodule",
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/BrainChatLib.swiftdeps",
+    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/BrainChatLib.dia"
+  },
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Sources/BrainChatLib/EventTypes.swift": {
+    "dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/EventTypes.d",
+    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/EventTypes.swift.o",
+    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/EventTypes~partial.swiftmodule",
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/EventTypes.swiftdeps",
+    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/EventTypes.dia"
+  },
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Sources/BrainChatLib/MockURLProtocol.swift": {
+    "dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/MockURLProtocol.d",
+    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/MockURLProtocol.swift.o",
+    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/MockURLProtocol~partial.swiftmodule",
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/MockURLProtocol.swiftdeps",
+    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/MockURLProtocol.dia"
+  },
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Sources/BrainChatLib/PandaproxyClient.swift": {
+    "dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/PandaproxyClient.d",
+    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/PandaproxyClient.swift.o",
+    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/PandaproxyClient~partial.swiftmodule",
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/PandaproxyClient.swiftdeps",
+    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/PandaproxyClient.dia"
+  },
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Sources/BrainChatLib/RedpandaBridge.swift": {
+    "dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/RedpandaBridge.d",
+    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/RedpandaBridge.swift.o",
+    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/RedpandaBridge~partial.swiftmodule",
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/RedpandaBridge.swiftdeps",
+    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/.build/arm64-apple-macosx/debug/BrainChatLib.build/RedpandaBridge.dia"
+  }
+}

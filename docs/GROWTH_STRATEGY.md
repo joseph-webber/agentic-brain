@@ -4,7 +4,7 @@
 
 ## Current Position
 
-- **Version**: 2.12.0
+- **Version**: 3.1.0
 - **Tests**: 4,700+ passing
 - **Code**: 63,000+ lines
 - **Core Dependencies**: 2 (aiohttp, questionary)

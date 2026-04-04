@@ -27,7 +27,9 @@ struct LayeredResponseView: View {
                         .textSelection(.enabled)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Quick response: \(instantText)")
+                .accessibilityLabel("Quick response")
+                .accessibilityValue(instantText)
+                .accessibilityHint(isThinkingDeeper ? "An enhanced response is still on the way" : "This is the current response")
             }
 
             // Thinking deeper indicator
@@ -50,7 +52,9 @@ struct LayeredResponseView: View {
                 }
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("Enhanced response: \(deep)")
+                .accessibilityLabel("Enhanced response")
+                .accessibilityValue(deep)
+                .accessibilityHint("This adds more detail to the quick response")
             }
 
             // Layer performance badges
@@ -83,6 +87,8 @@ struct ThinkingDeeperIndicator: View {
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Thinking deeper, please wait")
+        .accessibilityHint("Brain Chat is preparing a more detailed response")
+        .accessibilityAddTraits(.updatesFrequently)
         .onReceive(timer) { _ in
             dotCount = (dotCount + 1) % 4
         }
@@ -103,6 +109,7 @@ struct LayerPerformanceBadges: View {
         .padding(.top, 4)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Response layer performance")
+        .accessibilityValue(results.sorted(by: { $0.layer < $1.layer }).map { "\($0.source) \($0.latencyMs) milliseconds" }.joined(separator: ", "))
     }
 }
 
@@ -169,6 +176,8 @@ struct LayeredMessageBubble: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(message.accessibilityDescription)
+        .accessibilityValue(layeredAccessibilityValue)
+        .accessibilityHint("VoiceOver will announce when deeper layers arrive")
     }
 
     private var backgroundColor: Color {
@@ -180,6 +189,19 @@ struct LayeredMessageBubble: View {
         case .assistant, .system:
             return Color.secondary.opacity(0.08)
         }
+    }
+
+    private var layeredAccessibilityValue: String {
+        guard let layeredState else {
+            return "Single response"
+        }
+        if let deepText = layeredState.deepText, !deepText.isEmpty {
+            return "Enhanced response ready"
+        }
+        if layeredState.isThinkingDeeper {
+            return "Thinking deeper"
+        }
+        return "Quick response ready"
     }
 }
 

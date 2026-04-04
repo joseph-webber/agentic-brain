@@ -284,31 +284,32 @@ async def test_retrieve_strategies(graph_rag, mock_session):
 @pytest.mark.asyncio
 async def test_community_retrieve(graph_rag, mock_session):
     """Test community-based retrieval."""
-    with patch("agentic_brain.rag.graph.detect_communities") as mock_detect:
-        mock_detect.return_value = {1: ["Python", "Java"]}
-        with patch("agentic_brain.core.neo4j_pool.get_session") as mock_get_session:
-            mock_get_session.return_value.__enter__.return_value = mock_session
+    with patch("agentic_brain.core.neo4j_pool.get_session") as mock_get_session:
+        mock_get_session.return_value.__enter__.return_value = mock_session
 
-            graph_rag._initialized = True
-            graph_rag._run_query = Mock(
-                return_value=[
+        graph_rag._initialized = True
+        graph_rag._community_graph_rag.query = AsyncMock(
+            return_value=Mock(
+                results=[
                     {
                         "chunk_id": "chunk-1",
                         "content": "Python content",
                         "position": 0,
                         "doc_id": "doc-1",
                         "metadata": {"source": "community"},
-                        "community_score": 2,
-                        "entities": ["Python", "Java"],
+                        "score": 2.0,
+                        "community_id": "1",
+                        "strategy": "community",
                     }
                 ]
             )
+        )
 
-            results = await graph_rag._community_retrieve("Python", top_k=5)
+        results = await graph_rag._community_retrieve("Python", top_k=5)
 
     assert results
     assert results[0]["strategy"] == "community"
-    assert results[0]["community_ids"] == [1]
+    assert results[0]["community_id"] == "1"
 
 
 @pytest.mark.asyncio

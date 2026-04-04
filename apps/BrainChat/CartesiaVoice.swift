@@ -168,7 +168,28 @@ final class CartesiaVoice: NSObject, ObservableObject {
         self.audioOutput.onStreamFinished = { [weak self] id in
             self?.handleStreamFinished(id: id)
         }
+        refreshConfiguration()
+    }
+
+    func refreshConfiguration() {
         hasStoredAPIKey = keyManager.hasKey(for: Constants.provider)
+        if !hasStoredAPIKey {
+            statusMessage = CartesiaError.missingAPIKey.localizedDescription
+        } else if statusMessage == CartesiaError.missingAPIKey.localizedDescription {
+            statusMessage = "Cartesia ready"
+        }
+    }
+
+    func selectVoice(matching preferredVoiceName: String) {
+        let normalized = preferredVoiceName.replacingOccurrences(of: " (Premium)", with: "")
+        if let match = availableVoices.first(where: { option in
+            option.name.localizedCaseInsensitiveContains(normalized)
+                || option.fallbackVoiceName.localizedCaseInsensitiveContains(normalized)
+        }) {
+            selectedVoiceID = match.voiceID
+        } else {
+            selectedVoiceID = CartesiaVoiceOption.defaultOption.voiceID
+        }
     }
 
     func setAPIKey(_ apiKey: String) throws {
@@ -287,7 +308,7 @@ final class CartesiaVoice: NSObject, ObservableObject {
             statusMessage = "Using macOS fallback voice because Cartesia failed: \(reason)"
             try fallbackSpeaker.speak(text: utterance.text, voice: utterance.voice.fallbackVoiceName, rate: 170) { [weak self] exitCode in
                 guard let self else { return }
-                self.statusMessage = exitCode == 0 ? "Fallback speech finished" : "Fallback speech failed with exit code \(exitCode)"
+                self.statusMessage = exitCode == 0 ? "Finished via fallback voice" : "Fallback speech failed with exit code \(exitCode)"
                 self.completeUtterance(id: utterance.id)
             }
         } catch {

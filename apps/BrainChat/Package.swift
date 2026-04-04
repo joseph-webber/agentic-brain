@@ -17,7 +17,6 @@ let package = Package(
                 ".build",
                 "build",
                 "Tests",
-                "Sources",
                 "Info.plist",
                 "build.sh",
                 "install.sh",
@@ -91,6 +90,12 @@ let package = Package(
                 "ResponseWeavingView.swift",
                 "SSEStreamParser.swift",
                 "SafetyGuard.swift",
+                "Sources/BrainChat/Security/SecurityRole.swift",
+                "Sources/BrainChat/Security/SecurityManager.swift",
+                "Sources/BrainChat/Security/SecurityGuard.swift",
+                "Sources/BrainChat/Security/PermissionChecker.swift",
+                "Sources/BrainChat/Security/DangerousCommands.swift",
+                "Sources/BrainChat/Security/SecurityModeView.swift",
                 "SettingsView.swift",
                 "SpatialAudio.swift",
                 "SpeechEngineSelector.swift",
@@ -139,6 +144,8 @@ let package = Package(
                 "SpeechEngineTests.swift",
                 "AccessibilityTests.swift",
                 "Package.swift",
+                "Security",
+                "BrainChatTests/Security",
                 "Sources",
                 "Tests"
             ],
@@ -170,7 +177,8 @@ let package = Package(
                 "ServiceIntegrationTests.swift",
                 // E2E tests — full conversation flows, multi-provider, accessibility
                 "FullFlowE2ETests.swift",
-                "AppleScriptTests.swift"
+                "AppleScriptTests.swift",
+                "BrainChatTests/SecurityModeTests.swift"
             ]
         )
     ]

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background-color: #0d0d0d;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #1e1e1e;
+            color: #00ff00;
+            padding: 10px 15px;
+            border-bottom: 1px solid #333;
+            font-size: 14px;
+        }
+
+        .status {
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        .status.connected {
+            color: #00ff00;
+        }
+
+        .status.disconnected {
+            color: #ff4444;
+        }
+
+        .terminal {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 15px;
+            color: #00ff00;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .terminal-output::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-output::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+
+        .terminal-output::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        .terminal-input {
+            display: flex;
+            padding: 10px 15px;
+            border-top: 1px solid #333;
+            background-color: #1a1a1a;
+        }
+
+        .terminal-input input {
+            flex: 1;
+            background-color: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .terminal-input input::placeholder {
+            color: #666;
+        }
+
+        .info {
+            color: #888;
+            font-size: 12px;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        @media (max-width: 600px) {
+            .terminal-output {
+                font-size: 11px;
+            }
+
+            .terminal-input input {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <span class="status disconnected" id="status">● Disconnected</span>
+            <span id="info"></span>
+        </div>
+    </div>
+
+    <div class="terminal">
+        <div class="terminal-output" id="output"></div>
+        <div class="terminal-input">
+            <input 
+                type="text" 
+                id="input" 
+                placeholder="Type commands here..." 
+                disabled
+            >
+        </div>
+    </div>
+
+    <script>
+        const STATUS_CONNECTED = 'connected';
+        const STATUS_DISCONNECTED = 'disconnected';
+
+        class WebTerminal {
+            constructor() {
+                this.ws = null;
+                this.output = document.getElementById('output');
+                this.input = document.getElementById('input');
+                this.statusEl = document.getElementById('status');
+                this.infoEl = document.getElementById('info');
+                this.rows = 24;
+                this.cols = 80;
+                this.history = [];
+                this.historyIndex = -1;
+
+                this.input.addEventListener('keydown', (e) => this.handleKeydown(e));
+                this.connectWebSocket();
+            }
+
+            connectWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.hostname || 'localhost';
+                const port = 8765;
+                const wsUrl = `${protocol}//${host}:${port}`;
+
+                try {
+                    this.ws = new WebSocket(wsUrl);
+                    this.ws.onopen = () => this.onOpen();
+                    this.ws.onmessage = (e) => this.onMessage(e);
+                    this.ws.onclose = () => this.onClose();
+                    this.ws.onerror = (e) => this.onError(e);
+                } catch (e) {
+                    this.setStatus(STATUS_DISCONNECTED, `Connection error: ${e.message}`);
+                }
+            }
+
+            onOpen() {
+                this.setStatus(STATUS_CONNECTED, 'Connected to terminal server');
+                this.input.disabled = false;
+                this.input.focus();
+                this.calculateTerminalSize();
+                this.sendResize();
+            }
+
+            onMessage(event) {
+                try {
+                    const msg = JSON.parse(event.data);
+
+                    if (msg.type === 'output') {
+                        this.output.textContent += msg.data;
+                        this.output.scrollTop = this.output.scrollHeight;
+                    } else if (msg.type === 'error') {
+                        this.output.textContent += `\x1b[31m[Error] ${msg.data}\x1b[0m\n`;
+                        this.output.scrollTop = this.output.scrollHeight;
+                    }
+                } catch (e) {
+                    console.error('Error parsing message:', e);
+                }
+            }
+
+            onClose() {
+                this.setStatus(STATUS_DISCONNECTED, 'Disconnected from server');
+                this.input.disabled = true;
+                this.output.textContent += '\n[Connection closed]\n';
+                this.output.scrollTop = this.output.scrollHeight;
+
+                // Try to reconnect after 3 seconds
+                setTimeout(() => this.connectWebSocket(), 3000);
+            }
+
+            onError(event) {
+                console.error('WebSocket error:', event);
+                this.setStatus(STATUS_DISCONNECTED, 'WebSocket error');
+            }
+
+            handleKeydown(e) {
+                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    e.preventDefault();
+                    return;
+                }
+
+                if (e.key === 'Enter') {
+                    const command = this.input.value;
+                    this.history.push(command);
+                    this.historyIndex = -1;
+                    
+                    this.sendInput(command + '\n');
+                    this.input.value = '';
+                    e.preventDefault();
+
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (this.history.length > 0) {
+                        this.historyIndex = Math.min(
+                            this.historyIndex + 1,
+                            this.history.length - 1
+                        );
+                        this.input.value = this.history[
+                            this.history.length - 1 - this.historyIndex
+                        ];
+                    }
+
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (this.historyIndex > 0) {
+                        this.historyIndex--;
+                        this.input.value = this.history[
+                            this.history.length - 1 - this.historyIndex
+                        ];
+                    } else {
+                        this.historyIndex = -1;
+                        this.input.value = '';
+                    }
+                }
+            }
+
+            sendInput(data) {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({
+                        type: 'input',
+                        data: data
+                    }));
+                }
+            }
+
+            calculateTerminalSize() {
+                // Rough calculation based on output area
+                const outputRect = this.output.getBoundingClientRect();
+                const charWidth = 8;  // Approximate monospace width
+                const charHeight = 18; // Approximate monospace height
+
+                this.cols = Math.floor((outputRect.width - 30) / charWidth) || 80;
+                this.rows = Math.floor((outputRect.height - 30) / charHeight) || 24;
+
+                // Minimum sizes
+                this.cols = Math.max(this.cols, 80);
+                this.rows = Math.max(this.rows, 24);
+
+                this.updateInfo();
+            }
+
+            sendResize() {
+                if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                    this.ws.send(JSON.stringify({
+                        type: 'resize',
+                        rows: this.rows,
+                        cols: this.cols
+                    }));
+                }
+            }
+
+            setStatus(status, info) {
+                this.statusEl.textContent = status === STATUS_CONNECTED 
+                    ? '● Connected' 
+                    : '● Disconnected';
+                this.statusEl.className = `status ${status}`;
+                this.infoEl.textContent = info || '';
+            }
+
+            updateInfo() {
+                this.infoEl.textContent = `${this.cols}x${this.rows}`;
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            new WebTerminal();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (window.terminal) {
+                window.terminal.calculateTerminalSize();
+                window.terminal.sendResize();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 # Dependencies Guide
 
 **Last Updated:** 2026-03-26  
-**Project:** agentic-brain v2.12.0
+**Project:** agentic-brain v3.1.0
 
 ## Overview
 

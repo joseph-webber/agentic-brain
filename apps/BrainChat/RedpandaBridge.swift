@@ -6,10 +6,13 @@ actor RedpandaBridge {
     private let consumerGroupID = "brainchat-swift"
 
     private let client: PandaproxyClient
+    private let maxReconnectAttempts = 3
     private var listenerTask: Task<Void, Never>?
     private var bufferedResponses: [VoiceResponseEvent] = []
     private var waiters: [(id: UUID, continuation: CheckedContinuation<VoiceResponseEvent, Error>)] = []
     private var responseHandler: (@Sendable (VoiceResponseEvent) -> Void)?
+    private var reconnectAttempts = 0
+    private var isStopping = false
 
     init(client: PandaproxyClient = PandaproxyClient()) {
         self.client = client
@@ -21,13 +24,16 @@ actor RedpandaBridge {
     }
 
     func startListening(onResponse: (@Sendable (VoiceResponseEvent) -> Void)? = nil) async throws {
+        isStopping = false
         responseHandler = onResponse
         try await ensureListener()
     }
 
     func stop() async {
+        isStopping = true
         listenerTask?.cancel()
         listenerTask = nil
+        reconnectAttempts = 0
 
         let pendingWaiters = waiters
         waiters.removeAll()
@@ -38,6 +44,7 @@ actor RedpandaBridge {
     }
 
     func publish(_ event: VoiceInputEvent) async throws {
+        isStopping = false
         try await ensureListener()
         try await client.publish(topic: inputTopic, event: event)
     }
@@ -110,6 +117,7 @@ actor RedpandaBridge {
         while !Task.isCancelled {
             do {
                 let records = try await client.poll(as: VoiceResponseEvent.self)
+                reconnectAttempts = 0
                 if records.isEmpty {
                     continue
                 }
@@ -124,6 +132,9 @@ actor RedpandaBridge {
 
                 let bridgeError = error as? RedpandaBridgeError
                     ?? RedpandaBridgeError.unavailable(error.localizedDescription)
+                if await attemptRecovery(after: bridgeError) {
+                    continue
+                }
                 let pendingWaiters = waiters
                 waiters.removeAll()
                 listenerTask = nil
@@ -160,6 +171,29 @@ actor RedpandaBridge {
         guard let index = waiters.firstIndex(where: { $0.id == id }) else { return }
         let waiter = waiters.remove(at: index)
         waiter.continuation.resume(throwing: error)
+    }
+
+    private func attemptRecovery(after error: RedpandaBridgeError) async -> Bool {
+        guard !isStopping, reconnectAttempts < maxReconnectAttempts else {
+            return false
+        }
+
+        reconnectAttempts += 1
+        let delay = UInt64(pow(2, Double(reconnectAttempts - 1)) * 250_000_000)
+        try? await Task.sleep(nanoseconds: delay)
+        await client.closeConsumer()
+
+        do {
+            try await client.ensureConsumer(groupID: consumerGroupID, topic: responseTopic)
+            return true
+        } catch {
+            let recoveryError = error as? RedpandaBridgeError
+                ?? RedpandaBridgeError.unavailable(error.localizedDescription)
+            let pendingWaiters = waiters
+            waiters.removeAll()
+            pendingWaiters.forEach { $0.continuation.resume(throwing: recoveryError) }
+            return false
+        }
     }
 
     nonisolated private static func withTimeout<T: Sendable>(

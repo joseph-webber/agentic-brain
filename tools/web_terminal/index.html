@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Terminal</title>
+    <!-- xterm.js library and theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.3.0/xterm.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.3.0/xterm.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.3.0/addon-fit.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.3.0/addon-web-links.min.js"></script>
+    <!-- React and ReactDOM from CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Fira Code', 'Monaco', 'Courier New', monospace;
+            background: #0d0d0d;
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #root {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0e27 0%, #0d1117 100%);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        .terminal-header {
+            background: linear-gradient(90deg, #1a1f3a 0%, #2a2f4a 100%);
+            border-bottom: 2px solid #3a3f5a;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #00d4ff;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .session-info {
+            font-size: 12px;
+            color: #88ccee;
+            font-style: italic;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: none;
+        }
+
+        .status-indicator.connected {
+            background: #00ff41;
+            box-shadow: 0 0 8px #00ff41;
+            animation: pulse-connected 2s infinite;
+        }
+
+        .status-indicator.disconnected {
+            background: #ff4444;
+            box-shadow: 0 0 8px #ff4444;
+            animation: pulse-disconnected 1s infinite;
+        }
+
+        .status-indicator.connecting {
+            background: #ffaa00;
+            box-shadow: 0 0 8px #ffaa00;
+            animation: pulse-connecting 1s infinite;
+        }
+
+        @keyframes pulse-connected {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes pulse-disconnected {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @keyframes pulse-connecting {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .connection-text {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .connection-text.connected {
+            color: #00ff41;
+        }
+
+        .connection-text.disconnected {
+            color: #ff4444;
+        }
+
+        .connection-text.connecting {
+            color: #ffaa00;
+        }
+
+        .window-size {
+            font-size: 11px;
+            color: #66bb99;
+            padding: 4px 8px;
+            background: rgba(102, 187, 153, 0.1);
+            border-radius: 3px;
+            border: 1px solid rgba(102, 187, 153, 0.2);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .terminal-body {
+            flex: 1;
+            overflow: hidden;
+            padding: 16px;
+            background: #0d0d0d;
+            position: relative;
+        }
+
+        .xterm {
+            height: 100%;
+            width: 100%;
+        }
+
+        .xterm-screen {
+            background: #0d0d0d;
+        }
+
+        .xterm-cursor {
+            background: #00ff41;
+            opacity: 0.8;
+        }
+
+        .xterm-cursor.xterm-cursor-block {
+            animation: xterm-cursor-blink 1s infinite;
+        }
+
+        @keyframes xterm-cursor-blink {
+            0%, 50% { opacity: 0.8; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* xterm color scheme customization */
+        .xterm-bold { color: #ffffff; font-weight: bold; }
+        .xterm-underline { text-decoration: underline; }
+        .xterm-blink { animation: xterm-blink 1s linear infinite; }
+
+        @keyframes xterm-blink {
+            0%, 49% { visibility: visible; }
+            50%, 100% { visibility: hidden; }
+        }
+
+        .connection-message {
+            color: #88ccee;
+            font-size: 13px;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: rgba(136, 204, 238, 0.1);
+            border-left: 3px solid #88ccee;
+            border-radius: 3px;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: rgba(255, 107, 107, 0.1);
+            border-left: 3px solid #ff6b6b;
+            border-radius: 3px;
+        }
+
+        /* Scrollbar styling */
+        .xterm-screen::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .xterm-screen::-webkit-scrollbar-track {
+            background: #0d0d0d;
+        }
+
+        .xterm-screen::-webkit-scrollbar-thumb {
+            background: #333333;
+            border-radius: 5px;
+        }
+
+        .xterm-screen::-webkit-scrollbar-thumb:hover {
+            background: #444444;
+        }
+
+        /* Selection color */
+        .xterm-selection {
+            background: rgba(0, 255, 65, 0.25);
+        }
+
+        /* Link styling */
+        .xterm-link {
+            color: #0099ff;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .xterm-link:hover {
+            color: #00ccff;
+        }
+
+        /* Footer info */
+        .terminal-footer {
+            padding: 8px 20px;
+            font-size: 11px;
+            color: #666666;
+            background: #0a0a0a;
+            border-top: 1px solid #2a2a2a;
+            display: flex;
+            justify-content: flex-end;
+            gap: 20px;
+        }
+
+        .footer-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .shortcut-hint {
+            color: #888888;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        // Terminal component
+        function TerminalApp() {
+            const [wsStatus, setWsStatus] = React.useState('disconnected'); // disconnected, connecting, connected
+            const [terminalSize, setTerminalSize] = React.useState({ cols: 80, rows: 24 });
+            const [connectionTime, setConnectionTime] = React.useState(null);
+            const terminalRef = React.useRef(null);
+            const xtermRef = React.useRef(null);
+            const wsRef = React.useRef(null);
+            const fitAddonRef = React.useRef(null);
+
+            // Initialize terminal
+            React.useEffect(() => {
+                if (!terminalRef.current) return;
+
+                // Create terminal instance
+                const term = new Terminal({
+                    fontFamily: "'Fira Code', 'Monaco', 'Courier New', monospace",
+                    fontSize: 13,
+                    lineHeight: 1.4,
+                    cursorBlink: true,
+                    cursorStyle: 'block',
+                    theme: {
+                        background: '#0d0d0d',
+                        foreground: '#e0e0e0',
+                        cursor: '#00ff41',
+                        cursorAccent: '#0d0d0d',
+                        black: '#1a1a1a',
+                        red: '#ff6b6b',
+                        green: '#00ff41',
+                        yellow: '#ffaa00',
+                        blue: '#0099ff',
+                        magenta: '#ff00ff',
+                        cyan: '#00ffff',
+                        white: '#e0e0e0',
+                        brightBlack: '#333333',
+                        brightRed: '#ff6b6b',
+                        brightGreen: '#00ff41',
+                        brightYellow: '#ffaa00',
+                        brightBlue: '#0099ff',
+                        brightMagenta: '#ff00ff',
+                        brightCyan: '#00ffff',
+                        brightWhite: '#ffffff',
+                    },
+                    scrollback: 1000,
+                    screenReaderMode: true,
+                });
+
+                term.open(terminalRef.current);
+                xtermRef.current = term;
+
+                // Load and apply fit addon
+                const fitAddon = new FitAddon.FitAddon();
+                fitAddonRef.current = fitAddon;
+                term.loadAddon(fitAddon);
+
+                // Load web links addon
+                const webLinksAddon = new WebLinksAddon.WebLinksAddon();
+                term.loadAddon(webLinksAddon);
+
+                // Handle terminal input
+                term.onData((data) => {
+                    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                        wsRef.current.send(JSON.stringify({
+                            type: 'input',
+                            data: data
+                        }));
+                    }
+                });
+
+                // Fit terminal to container
+                setTimeout(() => {
+                    fitAddon.fit();
+                    const { cols, rows } = term;
+                    setTerminalSize({ cols, rows });
+                    
+                    // Send initial size
+                    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                        wsRef.current.send(JSON.stringify({
+                            type: 'resize',
+                            cols: cols,
+                            rows: rows
+                        }));
+                    }
+                }, 100);
+
+                // Handle window resize
+                const handleResize = () => {
+                    try {
+                        fitAddon.fit();
+                        const { cols, rows } = term;
+                        setTerminalSize({ cols, rows });
+                        
+                        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                            wsRef.current.send(JSON.stringify({
+                                type: 'resize',
+                                cols: cols,
+                                rows: rows
+                            }));
+                        }
+                    } catch (e) {
+                        console.error('Error fitting terminal:', e);
+                    }
+                };
+
+                window.addEventListener('resize', handleResize);
+
+                term.writeln('\x1b[1;36m✓ Terminal Ready\x1b[0m');
+                term.writeln('\x1b[0;33mConnecting to ws://localhost:8765...\x1b[0m\n');
+
+                return () => {
+                    window.removeEventListener('resize', handleResize);
+                    if (term) term.dispose();
+                };
+            }, []);
+
+            // WebSocket connection
+            React.useEffect(() => {
+                const connectWebSocket = () => {
+                    setWsStatus('connecting');
+                    
+                    try {
+                        const ws = new WebSocket('ws://localhost:8765');
+
+                        ws.onopen = () => {
+                            setWsStatus('connected');
+                            setConnectionTime(new Date());
+                            
+                            if (xtermRef.current) {
+                                xtermRef.current.writeln('\x1b[1;32m✓ Connected to server\x1b[0m\n');
+                            }
+
+                            // Send initial resize info
+                            const { cols, rows } = terminalSize;
+                            ws.send(JSON.stringify({
+                                type: 'resize',
+                                cols: cols,
+                                rows: rows
+                            }));
+                        };
+
+                        ws.onmessage = (event) => {
+                            try {
+                                const message = JSON.parse(event.data);
+                                
+                                if (message.type === 'output' && xtermRef.current) {
+                                    xtermRef.current.write(message.data);
+                                } else if (message.type === 'error' && xtermRef.current) {
+                                    xtermRef.current.writeln(`\x1b[1;31mError: ${message.data}\x1b[0m`);
+                                }
+                            } catch (e) {
+                                // If not JSON, treat as raw output
+                                if (xtermRef.current) {
+                                    xtermRef.current.write(event.data);
+                                }
+                            }
+                        };
+
+                        ws.onerror = (error) => {
+                            setWsStatus('disconnected');
+                            if (xtermRef.current) {
+                                xtermRef.current.writeln('\x1b[1;31m✗ WebSocket error\x1b[0m');
+                            }
+                            console.error('WebSocket error:', error);
+                        };
+
+                        ws.onclose = () => {
+                            setWsStatus('disconnected');
+                            if (xtermRef.current) {
+                                xtermRef.current.writeln('\x1b[0;33m⚠ Disconnected from server\x1b[0m');
+                            }
+                            
+                            // Attempt to reconnect after 3 seconds
+                            setTimeout(connectWebSocket, 3000);
+                        };
+
+                        wsRef.current = ws;
+                    } catch (error) {
+                        setWsStatus('disconnected');
+                        console.error('Failed to create WebSocket:', error);
+                        setTimeout(connectWebSocket, 3000);
+                    }
+                };
+
+                connectWebSocket();
+
+                return () => {
+                    if (wsRef.current) {
+                        wsRef.current.close();
+                        wsRef.current = null;
+                    }
+                };
+            }, []);
+
+            // Format connection time
+            const getConnectionTimeString = () => {
+                if (!connectionTime) return '--:--:--';
+                const now = new Date();
+                const diff = Math.floor((now - connectionTime) / 1000);
+                const hours = Math.floor(diff / 3600);
+                const minutes = Math.floor((diff % 3600) / 60);
+                const seconds = diff % 60;
+                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            };
+
+            const statusColor = {
+                connected: '#00ff41',
+                disconnected: '#ff4444',
+                connecting: '#ffaa00'
+            };
+
+            const statusText = {
+                connected: 'Connected',
+                disconnected: 'Disconnected',
+                connecting: 'Connecting'
+            };
+
+            return (
+                <div className="terminal-container">
+                    {/* Header */}
+                    <div className="terminal-header">
+                        <div className="header-left">
+                            <div className="header-title">⌘ Web Terminal</div>
+                            <div className="session-info">Interactive Terminal Session</div>
+                        </div>
+                        <div className="header-right">
+                            <div className="window-size">
+                                {terminalSize.cols} × {terminalSize.rows}
+                            </div>
+                            <div className="connection-status">
+                                <span className={`status-indicator ${wsStatus}`}></span>
+                                <span className={`connection-text ${wsStatus}`}>
+                                    {statusText[wsStatus]}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Terminal Body */}
+                    <div className="terminal-body">
+                        <div ref={terminalRef} className="xterm-wrapper"></div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="terminal-footer">
+                        <div className="footer-item">
+                            <span className="shortcut-hint">Connection Time:</span>
+                            <span>{getConnectionTimeString()}</span>
+                        </div>
+                        <div className="footer-item">
+                            <span className="shortcut-hint">Cmd+C</span>
+                            <span>Interrupt</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<TerminalApp />);
+    </script>
+</body>
+</html>

@@ -21,15 +21,34 @@ final class YoloMode: ObservableObject {
     let executor = YoloExecutor()
     private let system = SystemCommands.shared
     private let safety = SafetyGuard.shared
+    private let securityManager: SecurityManager
 
     /// Maximum actions per YOLO session (configurable)
     var maxActionsPerSession: Int = 50
+
+    init(securityManager: SecurityManager? = nil) {
+        self.securityManager = securityManager ?? .shared
+    }
 
     // MARK: - Activate / Deactivate
 
     /// Enable YOLO mode. Karen announces activation.
     func activate() {
+        guard securityManager.canUseYolo() else {
+            _ = blockYoloAccess()
+            return
+        }
         guard !isActive else { return }
+        
+        // Security check: Can this role use YOLO?
+        do {
+            try SecurityGuard.checkYoloPermission()
+        } catch {
+            speak("YOLO activation denied. \(error.localizedDescription)")
+            addFeedItem(icon: "🚫", text: "YOLO denied: \(error.localizedDescription)", type: .error)
+            return
+        }
+        
         isActive = true
         let newSession = YoloSession(maxActions: maxActionsPerSession)
         session = newSession
@@ -37,9 +56,14 @@ final class YoloMode: ObservableObject {
 
         // Audio cue: activation
         playActivationSound()
-        speak("YOLO mode activated. I will execute actions autonomously. \(maxActionsPerSession) actions available.")
+        
+        let roleInfo = SecurityManager.shared.currentRole == .fullAdmin 
+            ? "with unrestricted admin privileges"
+            : "with safety guardrails enabled"
+        
+        speak("YOLO mode activated \(roleInfo). I will execute actions autonomously. \(maxActionsPerSession) actions available.")
 
-        addFeedItem(icon: "⚡", text: "YOLO mode activated", type: .system)
+        addFeedItem(icon: "⚡", text: "YOLO mode activated (\(SecurityManager.shared.currentRole.rawValue))", type: .system)
     }
 
     /// Disable YOLO mode. Karen announces deactivation with session summary.
@@ -75,6 +99,7 @@ final class YoloMode: ObservableObject {
     /// Submit a user prompt in YOLO mode: send it through the LLM with YOLO system prompt,
     /// then process the response for executable action blocks.
     func submitPrompt(_ prompt: String, targetLLM: String) async -> String {
+        guard securityManager.canUseYolo() else { return blockYoloAccess() }
         guard isActive else { return "YOLO mode is not active." }
 
         let yoloSystemMsg = Self.yoloPrompt(for: targetLLM)
@@ -109,6 +134,7 @@ final class YoloMode: ObservableObject {
     /// Process an AI response for YOLO commands. Parses and executes action blocks.
     /// Returns a summary of what was executed.
     func processAIResponse(_ response: String) async -> String {
+        guard securityManager.canUseYolo() else { return blockYoloAccess() }
         guard isActive, let session = session else {
             return "YOLO mode is not active."
         }
@@ -402,7 +428,7 @@ final class YoloMode: ObservableObject {
         let type: FeedItemType
         var succeeded: Bool?
 
-        enum FeedItemType {
+        enum FeedItemType: Equatable {
             case action, system, info, undo, error
         }
     }
@@ -455,6 +481,14 @@ final class YoloMode: ObservableObject {
 
     private func speak(_ text: String) {
         system.speak(text, voice: "Karen (Premium)", rate: 160)
+    }
+
+    @discardableResult
+    private func blockYoloAccess() -> String {
+        let message = securityManager.yoloAccessDeniedMessage()
+        addFeedItem(icon: "🔒", text: message, type: .error)
+        speak(message)
+        return message
     }
 }
 

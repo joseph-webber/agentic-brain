@@ -8,12 +8,12 @@ Complete tutorial documentation for building production-ready AI chatbots with p
 
 | Document | Duration | Level | What You'll Learn |
 |----------|----------|-------|-------------------|
-| [**Getting Started**](./getting-started.md) | 5 min | Beginner | Installation, first bot, memory basics |
-| [**Tutorial 1: Simple Chatbot**](./tutorials/01-simple-chatbot.md) | 15 min | Beginner | Custom personality, multi-turn conversations, error handling |
-| [**Tutorial 2: Adding Memory**](./tutorials/02-adding-memory.md) | 20 min | Intermediate | Neo4j integration, storing facts, semantic search |
-| [**Tutorial 3: RAG Chatbot**](./tutorials/03-rag-chatbot.md) | 25 min | Intermediate | Document retrieval, embeddings, grounded responses |
-| [**Tutorial 4: Multi-User SaaS**](./tutorials/04-multi-user.md) | 30 min | Advanced | Tenants, access control, rate limiting, multi-tenancy |
-| [**Tutorial 5: Production Deployment**](./tutorials/05-deployment.md) | 20 min | Advanced | Docker, Kubernetes, monitoring, security |
+| [**Getting Started**](../getting-started.md) | 5 min | Beginner | Installation, first bot, memory basics |
+| [**Tutorial 1: Simple Chatbot**](./01-simple-chatbot.md) | 15 min | Beginner | Custom personality, multi-turn conversations, error handling |
+| [**Tutorial 2: Adding Memory**](./02-adding-memory.md) | 20 min | Intermediate | Neo4j integration, storing facts, semantic search |
+| [**Tutorial 3: RAG Chatbot**](./03-rag-chatbot.md) | 25 min | Intermediate | Document retrieval, embeddings, grounded responses |
+| [**Tutorial 4: Multi-User SaaS**](./04-multi-user.md) | 30 min | Advanced | Tenants, access control, rate limiting, multi-tenancy |
+| [**Tutorial 5: Production Deployment**](./05-deployment.md) | 20 min | Advanced | Docker, Kubernetes, monitoring, security |
 
 **Total Time:** ~115 minutes (less than 2 hours!)  
 **Total Coverage:** From zero to production-ready SaaS chatbot
@@ -330,22 +330,22 @@ curl http://localhost:8000/health
 ### By Tutorial
 
 **Getting Started Issues?**
-→ See "Troubleshooting" section in [getting-started.md](./getting-started.md#troubleshooting)
+→ See "Troubleshooting" section in [getting-started.md](../getting-started.md#troubleshooting)
 
 **Tutorial 1 Issues?**
-→ See "Troubleshooting" section in [01-simple-chatbot.md](./tutorials/01-simple-chatbot.md#troubleshooting)
+→ See "Troubleshooting" section in [01-simple-chatbot.md](./01-simple-chatbot.md#troubleshooting)
 
 **Tutorial 2 Issues?**
-→ See "Troubleshooting" section in [02-adding-memory.md](./tutorials/02-adding-memory.md#troubleshooting)
+→ See "Troubleshooting" section in [02-adding-memory.md](./02-adding-memory.md#troubleshooting)
 
 **Tutorial 3 Issues?**
-→ See "Troubleshooting" section in [03-rag-chatbot.md](./tutorials/03-rag-chatbot.md#troubleshooting)
+→ See "Troubleshooting" section in [03-rag-chatbot.md](./03-rag-chatbot.md#troubleshooting)
 
 **Tutorial 4 Issues?**
-→ See "Troubleshooting" section in [04-multi-user.md](./tutorials/04-multi-user.md#troubleshooting)
+→ See "Troubleshooting" section in [04-multi-user.md](./04-multi-user.md#troubleshooting)
 
 **Tutorial 5 Issues?**
-→ See "Troubleshooting" section in [05-deployment.md](./tutorials/05-deployment.md#troubleshooting)
+→ See "Troubleshooting" section in [05-deployment.md](./05-deployment.md#troubleshooting)
 
 ### Common Issues Across All Tutorials
 
@@ -464,7 +464,7 @@ Found an issue or improvement?
 
 **General questions?**
 - Check the main [README](../../README.md)
-- See the [FAQ](../faq.md) if it exists
+- See the [FAQ](../TROUBLESHOOTING.md) if it exists
 - Open an issue on GitHub
 
 **Having trouble following along?**
@@ -481,7 +481,7 @@ All tutorials and documentation are part of Agentic Brain, licensed under Apache
 
 ---
 
-**Ready to build?** Start with [Getting Started](./getting-started.md) →
+**Ready to build?** Start with [Getting Started](../getting-started.md) →
 
 **Want to contribute?** See [CONTRIBUTING.md](../../CONTRIBUTING.md)
 
@@ -493,6 +493,6 @@ All tutorials and documentation are part of Agentic Brain, licensed under Apache
 
 **Made with ❤️ for developers building intelligent systems**
 
-[Getting Started](./getting-started.md) • [Tutorials](./tutorials/) • [README](../../README.md) • [Issues](https://github.com/yourusername/agentic-brain/issues)
+[Getting Started](../getting-started.md) • [Tutorials](./) • [README](../../README.md) • [Issues](https://github.com/yourusername/agentic-brain/issues)
 
 </div>

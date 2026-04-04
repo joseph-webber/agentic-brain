@@ -1,0 +1,607 @@
+warning: 'tests': found 74 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestCopilotBridge.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestAIManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestVoiceManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestAPIKeyManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestAirPodsManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ClaudeTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/VoiceOverTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestAIManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestFullConversation.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GPTTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestHelpers.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LLMTestSupport.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AgenticBrainIntegrationTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestAirPodsManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestVoiceManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestSpeechManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Sources/BrainChatLib/BrainChatLib.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/MockAudioPlayer.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-multi-llm/session.aiff
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/FullFlowE2ETests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-yolo/session.aiff
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/VoiceCodingTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/AccessibilityTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/MockHTTPClient.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestVoiceLoop.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/MockHTTPClient.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestSpeechManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/MockSpeechRecognizer.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-conversation/session.aiff
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/MockSpeechRecognizer.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LLMRouterTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/VoiceMocks.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestFixtures.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/MockCopilotCLI.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestAPIKeyManager.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestCartesiaVoice.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Sources/BrainChatLib/PandaproxyClient.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/MicrophoneTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-multi-llm/session.log
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/EndToEndVoiceTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-coding/session.aiff
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/VoiceIntegrationTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Sources/BrainChatLib/EventTypes.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Sources/BrainChatLib/RedpandaBridge.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/PolymorphicUnitTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/CopilotTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestVoiceLoop.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-yolo/workspace/rest-api/requirements.txt
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestCopilotWorkflow.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/MockCopilotCLI.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/YoloTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GroqTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-coding/session.log
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestFullConversation.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestCopilotWorkflow.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-coding/workspace/hello_world.py
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/OllamaTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-yolo/session.log
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/KeyboardNavigationTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-yolo/workspace/rest-api/main.py
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestHelpers.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GrokTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-yolo/workspace/rest-api/app/routes.py
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/GeminiTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ServiceIntegrationTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Comprehensive/TestFixtures.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Tests/Artifacts/e2e-conversation/session.log
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestCartesiaVoice.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AudioDeviceTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Sources/BrainChatLib/MockURLProtocol.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/RedpandaBridgeTests.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/AccessibilityAudit.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/MockAudioPlayer.swift
+    /Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppTests/TestCopilotBridge.swift
+[0/1] Planning build
+Building for debugging...
+[0/2] Write swift-version--58304C5D6DBC2206.txt
+[2/3] Emitting module BrainChatLib
+[3/5] Emitting module BrainChatE2ETests
+[4/5] Compiling BrainChatE2ETests LayeredResponseTests.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:16:24: error: cannot find 'LayerTier' in scope
+ 14 | 
+ 15 |     func testLayerRawValuesAreStrictlyAscending() {
+ 16 |         XCTAssertEqual(LayerTier.instant.rawValue,   1)
+    |                        `- error: cannot find 'LayerTier' in scope
+ 17 |         XCTAssertEqual(LayerTier.fastLocal.rawValue, 2)
+ 18 |         XCTAssertEqual(LayerTier.deep.rawValue,      3)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:17:24: error: cannot find 'LayerTier' in scope
+ 15 |     func testLayerRawValuesAreStrictlyAscending() {
+ 16 |         XCTAssertEqual(LayerTier.instant.rawValue,   1)
+ 17 |         XCTAssertEqual(LayerTier.fastLocal.rawValue, 2)
+    |                        `- error: cannot find 'LayerTier' in scope
+ 18 |         XCTAssertEqual(LayerTier.deep.rawValue,      3)
+ 19 |         XCTAssertEqual(LayerTier.consensus.rawValue, 4)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:18:24: error: cannot find 'LayerTier' in scope
+ 16 |         XCTAssertEqual(LayerTier.instant.rawValue,   1)
+ 17 |         XCTAssertEqual(LayerTier.fastLocal.rawValue, 2)
+ 18 |         XCTAssertEqual(LayerTier.deep.rawValue,      3)
+    |                        `- error: cannot find 'LayerTier' in scope
+ 19 |         XCTAssertEqual(LayerTier.consensus.rawValue, 4)
+ 20 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:19:24: error: cannot find 'LayerTier' in scope
+ 17 |         XCTAssertEqual(LayerTier.fastLocal.rawValue, 2)
+ 18 |         XCTAssertEqual(LayerTier.deep.rawValue,      3)
+ 19 |         XCTAssertEqual(LayerTier.consensus.rawValue, 4)
+    |                        `- error: cannot find 'LayerTier' in scope
+ 20 |     }
+ 21 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:23:27: error: cannot find 'LayerTier' in scope
+ 21 | 
+ 22 |     func testLayersAreComparableByPriority() {
+ 23 |         XCTAssertLessThan(LayerTier.instant,   .fastLocal)
+    |                           `- error: cannot find 'LayerTier' in scope
+ 24 |         XCTAssertLessThan(LayerTier.fastLocal, .deep)
+ 25 |         XCTAssertLessThan(LayerTier.deep,      .consensus)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:23:49: error: type 'Comparable' has no member 'fastLocal'
+ 21 | 
+ 22 |     func testLayersAreComparableByPriority() {
+ 23 |         XCTAssertLessThan(LayerTier.instant,   .fastLocal)
+    |                                                 `- error: type 'Comparable' has no member 'fastLocal'
+ 24 |         XCTAssertLessThan(LayerTier.fastLocal, .deep)
+ 25 |         XCTAssertLessThan(LayerTier.deep,      .consensus)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:24:27: error: cannot find 'LayerTier' in scope
+ 22 |     func testLayersAreComparableByPriority() {
+ 23 |         XCTAssertLessThan(LayerTier.instant,   .fastLocal)
+ 24 |         XCTAssertLessThan(LayerTier.fastLocal, .deep)
+    |                           `- error: cannot find 'LayerTier' in scope
+ 25 |         XCTAssertLessThan(LayerTier.deep,      .consensus)
+ 26 |         XCTAssertLessThan(LayerTier.instant,   .consensus)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:24:49: error: type 'Comparable' has no member 'deep'
+ 22 |     func testLayersAreComparableByPriority() {
+ 23 |         XCTAssertLessThan(LayerTier.instant,   .fastLocal)
+ 24 |         XCTAssertLessThan(LayerTier.fastLocal, .deep)
+    |                                                 `- error: type 'Comparable' has no member 'deep'
+ 25 |         XCTAssertLessThan(LayerTier.deep,      .consensus)
+ 26 |         XCTAssertLessThan(LayerTier.instant,   .consensus)
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:25:27: error: cannot find 'LayerTier' in scope
+ 23 |         XCTAssertLessThan(LayerTier.instant,   .fastLocal)
+ 24 |         XCTAssertLessThan(LayerTier.fastLocal, .deep)
+ 25 |         XCTAssertLessThan(LayerTier.deep,      .consensus)
+    |                           `- error: cannot find 'LayerTier' in scope
+ 26 |         XCTAssertLessThan(LayerTier.instant,   .consensus)
+ 27 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:25:49: error: type 'Comparable' has no member 'consensus'
+ 23 |         XCTAssertLessThan(LayerTier.instant,   .fastLocal)
+ 24 |         XCTAssertLessThan(LayerTier.fastLocal, .deep)
+ 25 |         XCTAssertLessThan(LayerTier.deep,      .consensus)
+    |                                                 `- error: type 'Comparable' has no member 'consensus'
+ 26 |         XCTAssertLessThan(LayerTier.instant,   .consensus)
+ 27 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:26:27: error: cannot find 'LayerTier' in scope
+ 24 |         XCTAssertLessThan(LayerTier.fastLocal, .deep)
+ 25 |         XCTAssertLessThan(LayerTier.deep,      .consensus)
+ 26 |         XCTAssertLessThan(LayerTier.instant,   .consensus)
+    |                           `- error: cannot find 'LayerTier' in scope
+ 27 |     }
+ 28 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:26:49: error: type 'Comparable' has no member 'consensus'
+ 24 |         XCTAssertLessThan(LayerTier.fastLocal, .deep)
+ 25 |         XCTAssertLessThan(LayerTier.deep,      .consensus)
+ 26 |         XCTAssertLessThan(LayerTier.instant,   .consensus)
+    |                                                 `- error: type 'Comparable' has no member 'consensus'
+ 27 |     }
+ 28 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:30:24: error: cannot find type 'LayerTier' in scope
+ 28 | 
+ 29 |     func testLayersSortedAscendingGivesCorrectOrder() {
+ 30 |         let shuffled: [LayerTier] = [.consensus, .instant, .deep, .fastLocal]
+    |                        `- error: cannot find type 'LayerTier' in scope
+ 31 |         let sorted = shuffled.sorted()
+ 32 |         XCTAssertEqual(sorted, [.instant, .fastLocal, .deep, .consensus])
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:32:9: error: type 'Any' cannot conform to 'Equatable' [#ProtocolTypeNonConformance]
+ 30 |         let shuffled: [LayerTier] = [.consensus, .instant, .deep, .fastLocal]
+ 31 |         let sorted = shuffled.sorted()
+ 32 |         XCTAssertEqual(sorted, [.instant, .fastLocal, .deep, .consensus])
+    |         |- error: type 'Any' cannot conform to 'Equatable' [#ProtocolTypeNonConformance]
+    |         |- note: only concrete types such as structs, enums and classes can conform to protocols
+    |         `- note: requirement from conditional conformance of '[Any]' to 'Equatable'
+ 33 |     }
+ 34 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:32:34: error: reference to member 'instant' cannot be resolved without a contextual type
+ 30 |         let shuffled: [LayerTier] = [.consensus, .instant, .deep, .fastLocal]
+ 31 |         let sorted = shuffled.sorted()
+ 32 |         XCTAssertEqual(sorted, [.instant, .fastLocal, .deep, .consensus])
+    |                                  `- error: reference to member 'instant' cannot be resolved without a contextual type
+ 33 |     }
+ 34 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:32:44: error: reference to member 'fastLocal' cannot be resolved without a contextual type
+ 30 |         let shuffled: [LayerTier] = [.consensus, .instant, .deep, .fastLocal]
+ 31 |         let sorted = shuffled.sorted()
+ 32 |         XCTAssertEqual(sorted, [.instant, .fastLocal, .deep, .consensus])
+    |                                            `- error: reference to member 'fastLocal' cannot be resolved without a contextual type
+ 33 |     }
+ 34 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:32:56: error: reference to member 'deep' cannot be resolved without a contextual type
+ 30 |         let shuffled: [LayerTier] = [.consensus, .instant, .deep, .fastLocal]
+ 31 |         let sorted = shuffled.sorted()
+ 32 |         XCTAssertEqual(sorted, [.instant, .fastLocal, .deep, .consensus])
+    |                                                        `- error: reference to member 'deep' cannot be resolved without a contextual type
+ 33 |     }
+ 34 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:32:63: error: reference to member 'consensus' cannot be resolved without a contextual type
+ 30 |         let shuffled: [LayerTier] = [.consensus, .instant, .deep, .fastLocal]
+ 31 |         let sorted = shuffled.sorted()
+ 32 |         XCTAssertEqual(sorted, [.instant, .fastLocal, .deep, .consensus])
+    |                                                               `- error: reference to member 'consensus' cannot be resolved without a contextual type
+ 33 |     }
+ 34 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:38:23: error: cannot find 'LayerTier' in scope
+ 36 | 
+ 37 |     func testAllLayersHaveNonEmptyDescription() {
+ 38 |         for layer in [LayerTier.instant, .fastLocal, .deep, .consensus] {
+    |                       `- error: cannot find 'LayerTier' in scope
+ 39 |             XCTAssertFalse(layer.description.isEmpty)
+ 40 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:38:43: error: reference to member 'fastLocal' cannot be resolved without a contextual type
+ 36 | 
+ 37 |     func testAllLayersHaveNonEmptyDescription() {
+ 38 |         for layer in [LayerTier.instant, .fastLocal, .deep, .consensus] {
+    |                                           `- error: reference to member 'fastLocal' cannot be resolved without a contextual type
+ 39 |             XCTAssertFalse(layer.description.isEmpty)
+ 40 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:38:55: error: reference to member 'deep' cannot be resolved without a contextual type
+ 36 | 
+ 37 |     func testAllLayersHaveNonEmptyDescription() {
+ 38 |         for layer in [LayerTier.instant, .fastLocal, .deep, .consensus] {
+    |                                                       `- error: reference to member 'deep' cannot be resolved without a contextual type
+ 39 |             XCTAssertFalse(layer.description.isEmpty)
+ 40 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:38:62: error: reference to member 'consensus' cannot be resolved without a contextual type
+ 36 | 
+ 37 |     func testAllLayersHaveNonEmptyDescription() {
+ 38 |         for layer in [LayerTier.instant, .fastLocal, .deep, .consensus] {
+    |                                                              `- error: reference to member 'consensus' cannot be resolved without a contextual type
+ 39 |             XCTAssertFalse(layer.description.isEmpty)
+ 40 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:44:24: error: cannot find 'LayerTier' in scope
+ 42 | 
+ 43 |     func testLayerDescriptionsMatchExpected() {
+ 44 |         XCTAssertEqual(LayerTier.instant.description,   "Instant")
+    |                        `- error: cannot find 'LayerTier' in scope
+ 45 |         XCTAssertEqual(LayerTier.fastLocal.description, "Local")
+ 46 |         XCTAssertEqual(LayerTier.deep.description,      "Deep")
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:45:24: error: cannot find 'LayerTier' in scope
+ 43 |     func testLayerDescriptionsMatchExpected() {
+ 44 |         XCTAssertEqual(LayerTier.instant.description,   "Instant")
+ 45 |         XCTAssertEqual(LayerTier.fastLocal.description, "Local")
+    |                        `- error: cannot find 'LayerTier' in scope
+ 46 |         XCTAssertEqual(LayerTier.deep.description,      "Deep")
+ 47 |         XCTAssertEqual(LayerTier.consensus.description, "Consensus")
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:46:24: error: cannot find 'LayerTier' in scope
+ 44 |         XCTAssertEqual(LayerTier.instant.description,   "Instant")
+ 45 |         XCTAssertEqual(LayerTier.fastLocal.description, "Local")
+ 46 |         XCTAssertEqual(LayerTier.deep.description,      "Deep")
+    |                        `- error: cannot find 'LayerTier' in scope
+ 47 |         XCTAssertEqual(LayerTier.consensus.description, "Consensus")
+ 48 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:47:24: error: cannot find 'LayerTier' in scope
+ 45 |         XCTAssertEqual(LayerTier.fastLocal.description, "Local")
+ 46 |         XCTAssertEqual(LayerTier.deep.description,      "Deep")
+ 47 |         XCTAssertEqual(LayerTier.consensus.description, "Consensus")
+    |                        `- error: cannot find 'LayerTier' in scope
+ 48 |     }
+ 49 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:51:23: error: cannot find 'LayerTier' in scope
+ 49 | 
+ 50 |     func testAllLayersHaveSystemImageIcon() {
+ 51 |         for layer in [LayerTier.instant, .fastLocal, .deep, .consensus] {
+    |                       `- error: cannot find 'LayerTier' in scope
+ 52 |             XCTAssertFalse(layer.icon.isEmpty, "\(layer) needs a SF Symbol icon")
+ 53 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:51:43: error: reference to member 'fastLocal' cannot be resolved without a contextual type
+ 49 | 
+ 50 |     func testAllLayersHaveSystemImageIcon() {
+ 51 |         for layer in [LayerTier.instant, .fastLocal, .deep, .consensus] {
+    |                                           `- error: reference to member 'fastLocal' cannot be resolved without a contextual type
+ 52 |             XCTAssertFalse(layer.icon.isEmpty, "\(layer) needs a SF Symbol icon")
+ 53 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:51:55: error: reference to member 'deep' cannot be resolved without a contextual type
+ 49 | 
+ 50 |     func testAllLayersHaveSystemImageIcon() {
+ 51 |         for layer in [LayerTier.instant, .fastLocal, .deep, .consensus] {
+    |                                                       `- error: reference to member 'deep' cannot be resolved without a contextual type
+ 52 |             XCTAssertFalse(layer.icon.isEmpty, "\(layer) needs a SF Symbol icon")
+ 53 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:51:62: error: reference to member 'consensus' cannot be resolved without a contextual type
+ 49 | 
+ 50 |     func testAllLayersHaveSystemImageIcon() {
+ 51 |         for layer in [LayerTier.instant, .fastLocal, .deep, .consensus] {
+    |                                                              `- error: reference to member 'consensus' cannot be resolved without a contextual type
+ 52 |             XCTAssertFalse(layer.icon.isEmpty, "\(layer) needs a SF Symbol icon")
+ 53 |         }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:59:27: error: cannot find 'LayerTier' in scope
+ 57 | 
+ 58 |     func testInstantLayerHasShortestTimeout() {
+ 59 |         XCTAssertLessThan(LayerTier.instant.timeoutSeconds,
+    |                           `- error: cannot find 'LayerTier' in scope
+ 60 |                           LayerTier.fastLocal.timeoutSeconds)
+ 61 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:60:27: error: cannot find 'LayerTier' in scope
+ 58 |     func testInstantLayerHasShortestTimeout() {
+ 59 |         XCTAssertLessThan(LayerTier.instant.timeoutSeconds,
+ 60 |                           LayerTier.fastLocal.timeoutSeconds)
+    |                           `- error: cannot find 'LayerTier' in scope
+ 61 |     }
+ 62 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:64:30: error: cannot find 'LayerTier' in scope
+ 62 | 
+ 63 |     func testConsensusLayerHasLongestTimeout() {
+ 64 |         XCTAssertGreaterThan(LayerTier.consensus.timeoutSeconds,
+    |                              `- error: cannot find 'LayerTier' in scope
+ 65 |                              LayerTier.deep.timeoutSeconds)
+ 66 |     }
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:65:30: error: cannot find 'LayerTier' in scope
+ 63 |     func testConsensusLayerHasLongestTimeout() {
+ 64 |         XCTAssertGreaterThan(LayerTier.consensus.timeoutSeconds,
+ 65 |                              LayerTier.deep.timeoutSeconds)
+    |                              `- error: cannot find 'LayerTier' in scope
+ 66 |     }
+ 67 | 
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:69:25: error: cannot find 'LayerTier' in scope
+ 67 | 
+ 68 |     func testTimeoutsAreStrictlyIncreasing() {
+ 69 |         let timeouts = [LayerTier.instant, .fastLocal, .deep, .consensus]
+    |                         `- error: cannot find 'LayerTier' in scope
+ 70 |             .map(\.timeoutSeconds)
+ 71 |         for i in timeouts.indices.dropLast() {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:69:45: error: reference to member 'fastLocal' cannot be resolved without a contextual type
+ 67 | 
+ 68 |     func testTimeoutsAreStrictlyIncreasing() {
+ 69 |         let timeouts = [LayerTier.instant, .fastLocal, .deep, .consensus]
+    |                                             `- error: reference to member 'fastLocal' cannot be resolved without a contextual type
+ 70 |             .map(\.timeoutSeconds)
+ 71 |         for i in timeouts.indices.dropLast() {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:69:57: error: reference to member 'deep' cannot be resolved without a contextual type
+ 67 | 
+ 68 |     func testTimeoutsAreStrictlyIncreasing() {
+ 69 |         let timeouts = [LayerTier.instant, .fastLocal, .deep, .consensus]
+    |                                                         `- error: reference to member 'deep' cannot be resolved without a contextual type
+ 70 |             .map(\.timeoutSeconds)
+ 71 |         for i in timeouts.indices.dropLast() {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:69:64: error: reference to member 'consensus' cannot be resolved without a contextual type
+ 67 | 
+ 68 |     func testTimeoutsAreStrictlyIncreasing() {
+ 69 |         let timeouts = [LayerTier.instant, .fastLocal, .deep, .consensus]
+    |                                                                `- error: reference to member 'consensus' cannot be resolved without a contextual type
+ 70 |             .map(\.timeoutSeconds)
+ 71 |         for i in timeouts.indices.dropLast() {
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:70:18: error: value of type 'Any' has no member 'timeoutSeconds'
+ 68 |     func testTimeoutsAreStrictlyIncreasing() {
+ 69 |         let timeouts = [LayerTier.instant, .fastLocal, .deep, .consensus]
+ 70 |             .map(\.timeoutSeconds)
+    |                  |- error: value of type 'Any' has no member 'timeoutSeconds'
+    |                  `- note: cast 'Any' to 'AnyObject' or use 'as!' to force downcast to a more specific type to access members
+ 71 |         for i in timeouts.indices.dropLast() {
+ 72 |             XCTAssertLessThan(timeouts[i], timeouts[i + 1],
+
+/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/LayeredResponseTests.swift:78:34: error: cannot find 'LayerTier' in scope
+ 76 | 
+ 77 |     func testInstantTimeoutUnder10Seconds() {
+ 78 |         XCTAssertLessThanOrEqual(LayerTier.instant.timeoutSeconds, 10,
+    |                                  `- error: cannot find 'LayerTier' in scope
+ 79 |                                  "Instant layer must respond quickly")
+ 80 |     }
+
+[#ProtocolTypeNonConformance]: <https://docs.swift.org/compiler/documentation/diagnostics/protocol-type-non-conformance>
+error: fatalError
+EXIT_TESTS:1
+[0/1] Planning build
+Building for debugging...
+[0/2] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (0.21s)
+Test Suite 'All tests' started at 2026-04-04 19:19:20.221.
+Test Suite 'VoiceTestsPackageTests.xctest' started at 2026-04-04 19:19:20.222.
+Test Suite 'AudioDeviceTests' started at 2026-04-04 19:19:20.222.
+Test Case '-[VoiceTests.AudioDeviceTests testAirPodsMaxAutoSelected]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testAirPodsMaxAutoSelected]' passed (0.001 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testAirPodsMaxDetectedByName]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testAirPodsMaxDetectedByName]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testAirPodsMaxDisconnectedState]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testAirPodsMaxDisconnectedState]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testAirPodsMaxHighestPriority]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testAirPodsMaxHighestPriority]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testAirPodsMaxStateObject]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testAirPodsMaxStateObject]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testBuiltInMicrophoneAlwaysPresent]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testBuiltInMicrophoneAlwaysPresent]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testCaptureSampleRate]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testCaptureSampleRate]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testCartesiaSampleRate]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testCartesiaSampleRate]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testDeviceEnumeration]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testDeviceEnumeration]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testDeviceHashability]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testDeviceHashability]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testDeviceIdentifiersAreUnique]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testDeviceIdentifiersAreUnique]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testDeviceSelectionFallbackChain]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testDeviceSelectionFallbackChain]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testDevicesFallbackToBuiltIn]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testDevicesFallbackToBuiltIn]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testEmptyPCMData]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testEmptyPCMData]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testFallbackWhenNoAirPods]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testFallbackWhenNoAirPods]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testMonitoringStartStop]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testMonitoringStartStop]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testMultipleRoutingCalls]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testMultipleRoutingCalls]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testNoNotificationOnDuplicateState]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testNoNotificationOnDuplicateState]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testOutputRouteAirPodsDetection]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testOutputRouteAirPodsDetection]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testOutputRouteNonAirPods]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testOutputRouteNonAirPods]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testPCMDataGeneration]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testPCMDataGeneration]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testPCMDataSizeCalculation]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testPCMDataSizeCalculation]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testPCMFormatSpec]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testPCMFormatSpec]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testRouteAfterReconnect]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testRouteAfterReconnect]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testRouteAudioToAirPods]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testRouteAudioToAirPods]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testRouteInputToAirPods]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testRouteInputToAirPods]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testRoutingFailsWhenDisconnected]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testRoutingFailsWhenDisconnected]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testStateChangeNotifications]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testStateChangeNotifications]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testStereoPCMDataGeneration]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testStereoPCMDataGeneration]' passed (0.000 seconds).
+Test Case '-[VoiceTests.AudioDeviceTests testStereoPCMDataSizeCalculation]' started.
+Test Case '-[VoiceTests.AudioDeviceTests testStereoPCMDataSizeCalculation]' passed (0.000 seconds).
+Test Suite 'AudioDeviceTests' passed at 2026-04-04 19:19:20.230.
+	 Executed 30 tests, with 0 failures (0 unexpected) in 0.006 (0.008) seconds
+Test Suite 'EndToEndVoiceTests' started at 2026-04-04 19:19:20.230.
+Test Case '-[VoiceTests.EndToEndVoiceTests testAIFailureRecoveryInConversation]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testAIFailureRecoveryInConversation]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testAIFailureShowsError]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testAIFailureShowsError]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testAllMessagesHaveAccessibilityDescriptions]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testAllMessagesHaveAccessibilityDescriptions]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testConversationClear]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testConversationClear]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testConversationHistoryPreservesUnicode]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testConversationHistoryPreservesUnicode]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testConversationHistoryUpdatesCorrectly]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testConversationHistoryUpdatesCorrectly]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testConversationPausesOnAirPodsDisconnect]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testConversationPausesOnAirPodsDisconnect]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testConversationResumesOnAirPodsReconnect]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testConversationResumesOnAirPodsReconnect]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testFullVoiceConversationLoop]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testFullVoiceConversationLoop]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testInterruptionDuringRecognition]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testInterruptionDuringRecognition]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testInterruptionStopsSpeechAndStartsNew]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testInterruptionStopsSpeechAndStartsNew]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testMultipleConversationExchanges]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testMultipleConversationExchanges]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testRapidFireConversation]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testRapidFireConversation]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testStreamingResponseAppearsIncrementally]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testStreamingResponseAppearsIncrementally]' passed (0.000 seconds).
+Test Case '-[VoiceTests.EndToEndVoiceTests testVoiceOutputRoutedToAirPods]' started.
+Test Case '-[VoiceTests.EndToEndVoiceTests testVoiceOutputRoutedToAirPods]' passed (0.000 seconds).
+Test Suite 'EndToEndVoiceTests' passed at 2026-04-04 19:19:20.234.
+	 Executed 15 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'VoiceIntegrationTests' started at 2026-04-04 19:19:20.234.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsAudioRouting]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsAudioRouting]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsBatteryTracking]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsBatteryTracking]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsConnectDisconnectCycle]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsConnectDisconnectCycle]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsDetectedWhenConnected]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsDetectedWhenConnected]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsMonitoring]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsMonitoring]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsNotDetectedWhenDisconnected]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsNotDetectedWhenDisconnected]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsRoutingFailsWhenDisconnected]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAirPodsRoutingFailsWhenDisconnected]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testAudioLevelClampedToRange]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAudioLevelClampedToRange]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testAudioLevelUpdates]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAudioLevelUpdates]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testAuthorizationRequestTriggered]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testAuthorizationRequestTriggered]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testBaliSpaRateIsSlower]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testBaliSpaRateIsSlower]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testDefaultSpeechRate]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testDefaultSpeechRate]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testEmptyTextNotSpoken]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testEmptyTextNotSpoken]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testFallbackSpeakerCalled]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testFallbackSpeakerCalled]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testFallbackSpeakerCancel]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testFallbackSpeakerCancel]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testFallbackSpeakerFailure]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testFallbackSpeakerFailure]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testFinalTranscriptReceived]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testFinalTranscriptReceived]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testKarenAlwaysSortedFirst]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testKarenAlwaysSortedFirst]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testKarenIsDefaultVoice]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testKarenIsDefaultVoice]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testKarenLocaleIsAustralianEnglish]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testKarenLocaleIsAustralianEnglish]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testKarenVoiceDetectionVariants]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testKarenVoiceDetectionVariants]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testMultiplePCMStreams]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testMultiplePCMStreams]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testPartialTranscriptReceived]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testPartialTranscriptReceived]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testPartyRateIsFaster]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testPartyRateIsFaster]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testPCMStreamPrepareAndPlay]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testPCMStreamPrepareAndPlay]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testPCMStreamRejectsEmptyChunk]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testPCMStreamRejectsEmptyChunk]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testRecognitionFailureReported]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testRecognitionFailureReported]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpacebarActivatesRecognition]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpacebarActivatesRecognition]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpacebarToggle]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpacebarToggle]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpeechRecognitionBlockedWhenUnauthorized]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpeechRecognitionBlockedWhenUnauthorized]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpeechRecognitionBlockedWhenUnavailable]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpeechRecognitionBlockedWhenUnavailable]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpeechRecognitionStartsSuccessfully]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpeechRecognitionStartsSuccessfully]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpeechRecognitionStartStopCycles]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpeechRecognitionStartStopCycles]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpeechRecognitionStops]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testSpeechRecognitionStops]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testStreamCancelClearsState]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testStreamCancelClearsState]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testTranscriptWithPunctuation]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testTranscriptWithPunctuation]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceOutputPlays]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceOutputPlays]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceOutputStops]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceOutputStops]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceQueueClearedOnStop]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceQueueClearedOnStop]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceQueueCountAfterMultipleAdds]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceQueueCountAfterMultipleAdds]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceQueueFIFO]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceQueueFIFO]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceQueueWithImmediateInterrupt]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceQueueWithImmediateInterrupt]' passed (0.000 seconds).
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceSwitchToOtherAndBack]' started.
+Test Case '-[VoiceTests.VoiceIntegrationTests testVoiceSwitchToOtherAndBack]' passed (0.000 seconds).
+Test Suite 'VoiceIntegrationTests' passed at 2026-04-04 19:19:20.243.
+	 Executed 43 tests, with 0 failures (0 unexpected) in 0.007 (0.009) seconds
+Test Suite 'VoiceTestsPackageTests.xctest' passed at 2026-04-04 19:19:20.243.
+	 Executed 88 tests, with 0 failures (0 unexpected) in 0.016 (0.021) seconds
+Test Suite 'All tests' passed at 2026-04-04 19:19:20.243.
+	 Executed 88 tests, with 0 failures (0 unexpected) in 0.016 (0.022) seconds
+◇ Test run started.
+↳ Testing Library Version: 1743
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
+EXIT_VOICE:0

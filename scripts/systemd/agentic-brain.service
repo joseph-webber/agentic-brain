@@ -1,0 +1,51 @@
+[Unit]
+Description=Agentic Brain Infrastructure (Neo4j, Redis, Redpanda)
+Documentation=file://%h/agentic-brain/INSTALL.md
+After=network-online.target docker.socket
+Wants=network-online.target
+Requires=docker.socket
+
+[Service]
+Type=simple
+RemainAfterExit=yes
+
+# Working directory - where docker-compose.yml is located
+WorkingDirectory=%h/brain/agentic-brain
+
+# User to run as - the currently logged-in user
+User=%u
+Group=%u
+
+# Environment variables
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+EnvironmentFile=%h/.config/systemd/user/agentic-brain.env
+
+# Docker compose commands
+# Use 'up -d' to start in background, '--no-color' to avoid ANSI codes in journal
+ExecStart=/usr/bin/docker compose --file docker-compose.yml up -d --no-color
+ExecStop=/usr/bin/docker compose --file docker-compose.yml down --remove-orphans
+
+# Restart policy - restart on failure with 10 second delay
+Restart=on-failure
+RestartSec=10s
+
+# Limits
+# Keep 10 last failed restarts in memory before giving up
+StartLimitInterval=60s
+StartLimitBurst=5
+
+# Timeout - give services time to start (60s)
+TimeoutStartSec=120
+TimeoutStopSec=30
+
+# Clean up on failure
+KillMode=mixed
+KillSignal=SIGTERM
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agentic-brain
+
+[Install]
+WantedBy=default.target

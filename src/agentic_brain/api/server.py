@@ -48,6 +48,8 @@ from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 
+from .. import __version__
+
 from ..dashboard import create_dashboard_router
 from .audit import AUDIT_ENABLED, AuditLogger, AuditMiddleware
 from .middleware import SecurityHeadersMiddleware, setup_cors, setup_exception_handlers
@@ -62,7 +64,7 @@ logger = logging.getLogger(__name__)
 
 def create_app(
     title: str = "Agentic Brain API",
-    version: str = "1.0.0",
+    version: str = __version__,
     description: str = "Multi-LLM orchestration platform with GraphRAG, Unified Brain, and real-time chat",
     cors_origins: list[str | None] = None,
 ) -> FastAPI:

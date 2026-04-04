@@ -139,7 +139,7 @@ class GraphRAGConfig:
 
     # Community detection
     enable_communities: bool = True
-    community_algorithm: str = "louvain"
+    community_algorithm: str = "leiden"
 
     # Caching
     cache_embeddings: bool = True

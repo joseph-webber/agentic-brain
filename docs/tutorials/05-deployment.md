@@ -765,10 +765,10 @@ You've completed all 5 tutorials! You now know how to:
 - Deploy your chatbot to production
 - Monitor performance and user feedback
 - Iterate and improve based on real usage
-- Check out [Advanced Topics](../README.md#advanced) for scaling patterns
+- Check out [Advanced Topics](../../README.md) for scaling patterns
 
 ---
 
-**Need help?** See the [main README](../../README.md) or check the [troubleshooting guide](../faq.md)
+**Need help?** See the [main README](../../README.md) or check the [troubleshooting guide](../TROUBLESHOOTING.md)
 
 Happy deploying! 🚀

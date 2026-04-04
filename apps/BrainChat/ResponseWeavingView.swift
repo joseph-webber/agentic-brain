@@ -22,7 +22,10 @@ struct ThinkingIndicator: View {
                 .foregroundColor(.secondary)
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
         .accessibilityLabel("Thinking deeper, please wait")
+        .accessibilityValue("Working")
+        .accessibilityHint("An enhanced response will be announced when it is ready")
         .accessibilityAddTraits(.updatesFrequently)
         .onReceive(timer) { _ in
             phase = (phase + 1) % 3
@@ -54,7 +57,9 @@ struct WeavedLayerView: View {
         .offset(y: visible ? 0 : 6)
         .animation(.easeOut(duration: 0.5), value: visible)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(layer.accessibilityLabel + ": " + layer.content)
+        .accessibilityLabel(layer.accessibilityLabel)
+        .accessibilityValue(layer.content)
+        .accessibilityHint("Additional detail for the current answer")
         .onAppear { visible = true }
     }
 }
@@ -84,6 +89,9 @@ struct WeavedMessageBubble: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.secondary.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(message.accessibilityDescription)
+        .accessibilityValue(message.weavingPhase.accessibilityAnnouncement ?? "Single response")
         .onChange(of: message.weavingPhase) { _, newPhase in
             announcePhaseChange(newPhase)
             previousPhase = newPhase

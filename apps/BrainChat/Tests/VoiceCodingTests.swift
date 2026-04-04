@@ -302,6 +302,20 @@ final class CodeSpeakerTests: XCTestCase {
         XCTAssertTrue(speaker.pronounceCode("Foo::bar").contains("scope"))
     }
 
+    func testPronounceSingleCharacterSymbols() {
+        let comparison = speaker.pronounceCode("if total > 0 {")
+        XCTAssertTrue(comparison.contains("greater than"))
+        XCTAssertTrue(comparison.contains("open brace"))
+
+        let assignment = speaker.pronounceCode("let sum = a + b")
+        XCTAssertTrue(assignment.contains("equals"))
+        XCTAssertTrue(assignment.contains("plus"))
+
+        let call = speaker.pronounceCode("print(value)")
+        XCTAssertTrue(call.contains("open paren"))
+        XCTAssertTrue(call.contains("close paren"))
+    }
+
     func testDetectLanguageFromFilename() {
         XCTAssertEqual(CodeSpeaker.detectLanguageFromFilename("test.py"), "Python")
         XCTAssertEqual(CodeSpeaker.detectLanguageFromFilename("app.swift"), "Swift")

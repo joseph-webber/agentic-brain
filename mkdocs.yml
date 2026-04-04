@@ -49,7 +49,7 @@ markdown_extensions:
       permalink: true
 
 nav:
-  - Home: index.md
+  - Home: INDEX.md
   - Getting Started:
       - Quick Start: getting-started.md
       - Installation: INSTALL_OPTIONS.md

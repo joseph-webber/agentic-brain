@@ -4,15 +4,36 @@ struct SettingsView: View {
     @EnvironmentObject var settings: AppSettings
     @EnvironmentObject var voiceManager: VoiceManager
     @EnvironmentObject var llmRouter: LLMRouter
+    @StateObject private var securityManager = SecurityManager.shared
     @State private var showingClaudeKey = false
     @State private var showingOpenAIKey = false
     @State private var showingGroqKey = false
+    @State private var showingBackendAPIKey = false
+    @State private var showingBackendBearerToken = false
     @State private var showClearKeysConfirmation = false
 
     var body: some View {
         TabView {
             // MARK: General tab
             Form {
+                Section("Behavior Profile") {
+                    Picker("Profile", selection: $settings.behaviorProfile) {
+                        ForEach(BrainChatBehaviorProfile.allCases) { profile in
+                            Text(profile.displayName).tag(profile)
+                        }
+                    }
+                    .accessibilityLabel("Brain Chat behavior profile")
+                    .accessibilityHint("Switch between beginner, developer, and enterprise behaviors")
+
+                    Picker("Connectivity Mode", selection: $settings.agenticBrainMode) {
+                        ForEach(AgenticBrainConnectionMode.allCases) { mode in
+                            Text(mode.accessibilityLabel).tag(mode)
+                        }
+                    }
+                    .accessibilityLabel("Agentic Brain connectivity mode")
+                    .accessibilityHint("Choose airlocked, hybrid, or cloud mode")
+                }
+
                 Toggle("Continuous Listening Mode", isOn: $settings.continuousListening)
                     .accessibilityHint("When enabled, the microphone stays on and transcribes continuously")
 
@@ -20,7 +41,16 @@ struct SettingsView: View {
                     .accessibilityHint("When enabled, Brain Chat reads every response aloud automatically")
 
                 Toggle("YOLO Mode", isOn: $llmRouter.yoloMode)
-                    .accessibilityHint("Autonomous mode: Brain Chat takes actions without asking for confirmation")
+                    .accessibilityHint(
+                        securityManager.canUseYolo()
+                            ? "Autonomous mode: Brain Chat takes actions without asking for confirmation"
+                            : "Unavailable outside Admin testing mode"
+                    )
+                    .disabled(!securityManager.canUseYolo())
+
+                Section("Security Mode (Testing)") {
+                    SecurityModeView(securityManager: securityManager)
+                }
 
                 Section("Layered Responses") {
                     LayerStrategyPicker(
@@ -96,6 +126,37 @@ struct SettingsView: View {
                         .accessibilityHint("Address of the local voice bridge server, e.g. ws://localhost:8765")
                 }
 
+                Section("Agentic Brain Backend") {
+                    Toggle("Enable Agentic Brain Backend", isOn: $settings.agenticBrainEnabled)
+                        .accessibilityHint("When enabled, Brain Chat routes through the agentic-brain API before direct provider fallbacks")
+
+                    TextField("REST Base URL", text: $settings.agenticBrainAPIBaseURL)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityLabel("Agentic Brain REST base URL")
+                        .accessibilityHint("For example http://localhost:8000")
+
+                    TextField("WebSocket URL", text: $settings.agenticBrainWebSocketURL)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityLabel("Agentic Brain WebSocket URL")
+                        .accessibilityHint("Optional. Leave blank to derive ws slash ws chat from the REST base URL")
+
+                    TextField("Session ID", text: $settings.agenticBrainSessionID)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityLabel("Agentic Brain session identifier")
+
+                    TextField("User ID", text: $settings.agenticBrainUserID)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityLabel("Agentic Brain user identifier")
+
+                    Toggle("Enable Graph RAG Metadata", isOn: $settings.graphRAGEnabled)
+                        .accessibilityHint("Adds graph retrieval hints to backend chat requests")
+
+                    TextField("Graph RAG Scope", text: $settings.graphRAGScope)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityLabel("Graph RAG scope")
+                        .accessibilityHint("For example session, workspace, or enterprise")
+                }
+
                 Section("Groq (Instant Layer)") {
                     APIKeyField(
                         label: "Groq API Key",
@@ -120,6 +181,34 @@ struct SettingsView: View {
                         text: $settings.openAIKey,
                         isVisible: $showingOpenAIKey
                     )
+                }
+
+                Section("Agentic Brain Authentication") {
+                    APIKeyField(
+                        label: "Agentic Brain API Key",
+                        placeholder: "X-API-Key for the backend",
+                        text: $settings.agenticBrainAPIKey,
+                        isVisible: $showingBackendAPIKey
+                    )
+
+                    APIKeyField(
+                        label: "Agentic Brain Bearer Token",
+                        placeholder: "Bearer token for backend auth",
+                        text: $settings.agenticBrainBearerToken,
+                        isVisible: $showingBackendBearerToken
+                    )
+                }
+
+                Section("ADL Configuration") {
+                    TextField("ADL File Path", text: $settings.adlConfigPath)
+                        .textFieldStyle(.roundedBorder)
+                        .accessibilityLabel("ADL file path")
+                        .accessibilityHint("Absolute path to an ADL configuration file")
+
+                    Button("Load ADL Configuration") {
+                        settings.loadADLConfiguration()
+                    }
+                    .accessibilityHint("Parses the ADL file and applies Brain Chat profile, mode, routing, and Graph RAG settings")
                 }
 
                 Section {
@@ -177,6 +266,11 @@ struct SettingsView: View {
             .tabItem { Label("API", systemImage: "key") }
         }
         .padding(20)
+        .onChange(of: securityManager.currentRole) { _, _ in
+            if !securityManager.canUseYolo() {
+                llmRouter.yoloMode = false
+            }
+        }
     }
 }
 

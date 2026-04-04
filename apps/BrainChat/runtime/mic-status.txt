@@ -1,1 +1,1 @@
-AVAudioApp result: granted=true
+Mic already granted!

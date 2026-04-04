@@ -42,7 +42,9 @@ from collections.abc import AsyncGenerator
 from types import ModuleType, TracebackType
 from typing import TYPE_CHECKING, Any
 
+from agentic_brain.exceptions import RateLimitError
 from agentic_brain.llm.router import LLMRouterCore
+from agentic_brain.security.llm_guard import LLMSecurityGuard, SecurityRole
 
 from .anthropic import stream_anthropic
 from .azure_openai import chat_azure_openai, stream_azure_openai
@@ -421,7 +423,15 @@ class LLMRouter(LLMRouterCore):
         key = provider.value
         self._provider_usage[key] = self._provider_usage.get(key, 0) + 1
 
-    def _available_routes(self) -> list[tuple[Provider, str]]:
+    @staticmethod
+    def _route_allowed(
+        route: tuple[Provider, str], security_guard: LLMSecurityGuard | None
+    ) -> bool:
+        return security_guard is None or security_guard.can_use_provider(route[0].value)
+
+    def _available_routes(
+        self, security_guard: LLMSecurityGuard | None = None
+    ) -> list[tuple[Provider, str]]:
         """Return currently available provider/model routes."""
         routes: list[tuple[Provider, str]] = []
 
@@ -463,7 +473,7 @@ class LLMRouter(LLMRouterCore):
         if xai_key:
             routes.append((Provider.XAI, "grok-2-mini"))
 
-        return routes
+        return [route for route in routes if self._route_allowed(route, security_guard)]
 
     def _select_balanced_route(
         self, routes: list[tuple[Provider, str]]
@@ -481,21 +491,36 @@ class LLMRouter(LLMRouterCore):
         )[1]
 
     def _first_available_route(
-        self, candidates: list[tuple[Provider, str]]
+        self,
+        candidates: list[tuple[Provider, str]],
+        security_guard: LLMSecurityGuard | None = None,
     ) -> tuple[Provider, str]:
         """Return the first available route from a candidate list."""
-        available_routes = self._available_routes()
+        filtered_candidates = [
+            route for route in candidates if self._route_allowed(route, security_guard)
+        ]
+        if not filtered_candidates:
+            role = security_guard.role.value if security_guard else "unknown"
+            raise PermissionError(f"No allowed LLM providers are available for role '{role}'.")
+
+        available_routes = self._available_routes(security_guard=security_guard)
         available = set(available_routes)
-        for route in candidates:
+        for route in filtered_candidates:
             if route in available:
                 return route
         if available_routes:
             return self._select_balanced_route(available_routes)
-        return candidates[0] if candidates else self.FALLBACK_CHAIN[0]
+        return filtered_candidates[0]
 
-    def _first_available_model(self, candidates: list[tuple[Provider, str]]) -> str:
+    def _first_available_model(
+        self,
+        candidates: list[tuple[Provider, str]],
+        security_guard: LLMSecurityGuard | None = None,
+    ) -> str:
         """Return the model string for the first available route."""
-        return self._first_available_route(candidates)[1]
+        return self._first_available_route(
+            candidates, security_guard=security_guard
+        )[1]
 
     def _provider_is_configured(self, provider: Provider) -> bool:
         """Return whether a provider can be selected conceptually."""
@@ -524,13 +549,22 @@ class LLMRouter(LLMRouterCore):
         return False
 
     def _first_configured_route(
-        self, candidates: list[tuple[Provider, str]]
+        self,
+        candidates: list[tuple[Provider, str]],
+        security_guard: LLMSecurityGuard | None = None,
     ) -> tuple[Provider, str]:
         """Return the first route whose provider is configured."""
-        for route in candidates:
+        filtered_candidates = [
+            route for route in candidates if self._route_allowed(route, security_guard)
+        ]
+        if not filtered_candidates:
+            role = security_guard.role.value if security_guard else "unknown"
+            raise PermissionError(f"No allowed LLM providers are available for role '{role}'.")
+
+        for route in filtered_candidates:
             if self._provider_is_configured(route[0]):
                 return route
-        return candidates[-1] if candidates else self.FALLBACK_CHAIN[0]
+        return filtered_candidates[-1]
 
     @staticmethod
     def _merge_route_lists(
@@ -755,7 +789,9 @@ class LLMRouter(LLMRouterCore):
         self._provider_rr_index = rr_index
         return distribution
 
-    def smart_route(self, message: str) -> tuple[Provider, str]:
+    def smart_route(
+        self, message: str, security_guard: LLMSecurityGuard | None = None
+    ) -> tuple[Provider, str]:
         """
         Determine the best provider and model for a given message.
 
@@ -768,7 +804,7 @@ class LLMRouter(LLMRouterCore):
         brain_route = (
             self._route_from_brain(message) if self._prefer_brain_routing else None
         )
-        if brain_route is not None:
+        if brain_route is not None and self._route_allowed(brain_route, security_guard):
             self._record_provider_use(brain_route[0])
             return brain_route
 
@@ -781,28 +817,38 @@ class LLMRouter(LLMRouterCore):
             and "code" not in msg_lower
             and "analyze" not in msg_lower
         ):
-            route = self._first_configured_route(self.FASTEST_CHAIN)
+            route = self._first_configured_route(
+                self.FASTEST_CHAIN, security_guard=security_guard
+            )
             self._record_provider_use(route[0])
             return route
 
         # 2. Complex reasoning / detailed analysis
         if "analyze" in msg_lower or "reasoning" in msg_lower or "complex" in msg_lower:
-            route = self._first_configured_route(self.REASONING_CHAIN)
+            route = self._first_configured_route(
+                self.REASONING_CHAIN, security_guard=security_guard
+            )
             self._record_provider_use(route[0])
             return route
 
         # 3. Coding tasks
         if self._is_code_task(message):
-            route = self._first_configured_route(self.CODE_CHAIN)
+            route = self._first_configured_route(
+                self.CODE_CHAIN, security_guard=security_guard
+            )
             self._record_provider_use(route[0])
             return route
 
         # Default -> Prefer configured default provider/model when available.
         preferred_route = (self.config.default_provider, self.config.default_model)
-        if self._provider_is_configured(self.config.default_provider):
+        if self._provider_is_configured(self.config.default_provider) and self._route_allowed(
+            preferred_route, security_guard
+        ):
             route = preferred_route
         else:
-            route = self._first_configured_route(self.FALLBACK_CHAIN)
+            route = self._first_configured_route(
+                self.FALLBACK_CHAIN, security_guard=security_guard
+            )
         self._record_provider_use(route[0])
         return route
 
@@ -816,6 +862,9 @@ class LLMRouter(LLMRouterCore):
         temperature: float = 0.7,
         use_cache: bool = True,
         persona: str | None = None,
+        role: SecurityRole | str | None = None,
+        user_id: str | None = None,
+        security_guard: LLMSecurityGuard | None = None,
     ) -> Response:
         """
         Send chat message to LLM (async).
@@ -836,15 +885,14 @@ class LLMRouter(LLMRouterCore):
             >>> print(response.content)
             >>> print(f"Cached: {response.cached}")
         """
-        # Smart routing if no provider/model specified
-        if provider is None and model is None:
-            provider, model = self.smart_route(message)
-        else:
-            route = self.resolve_model(model, provider)
-            provider, model = route.provider, route.model
-
-        provider = provider or self.config.default_provider
-        model = model or self.config.default_model
+        guard = security_guard or LLMSecurityGuard(role)
+        rate_limit_user = user_id or guard.default_user_id()
+        if not guard.check_rate_limit(rate_limit_user):
+            raise RateLimitError(
+                limit=guard.permissions.requests_per_minute or 0,
+                window="1 minute",
+                retry_after=max(1, guard.last_retry_after_seconds),
+            )
 
         # Apply persona if specified
         if persona:
@@ -857,9 +905,38 @@ class LLMRouter(LLMRouterCore):
             else:
                 logger.warning(f"Persona '{persona}' not found")
 
-        normalized_messages = self.normalize_messages(
-            message=message, system=system, messages=messages
+        normalized_messages = guard.filter_messages(
+            self.normalize_messages(
+                message=message, system=system, messages=messages
+            )
         )
+        filtered_system = next(
+            (item["content"] for item in normalized_messages if item["role"] == "system"),
+            None,
+        )
+        filtered_message = next(
+            (
+                item["content"]
+                for item in reversed(normalized_messages)
+                if item["role"] == "user"
+            ),
+            message,
+        )
+        route_message = filtered_message or self.prompt_text(normalized_messages)
+
+        # Smart routing if no provider/model specified
+        if provider is None and model is None:
+            provider, model = self.smart_route(route_message, security_guard=guard)
+        else:
+            route = self.resolve_model(model, provider)
+            provider, model = route.provider, route.model
+            if not guard.can_use_provider(provider.value):
+                raise PermissionError(
+                    f"Role '{guard.role.value}' cannot use provider '{provider.value}'."
+                )
+
+        provider = provider or self.config.default_provider
+        model = model or self.config.default_model
         prompt_text = self.prompt_text(normalized_messages)
 
         # Check semantic cache first
@@ -922,33 +999,44 @@ class LLMRouter(LLMRouterCore):
                     provider=provider,
                     model=model,
                     temperature=temperature,
+                    security_guard=guard,
                 )
             elif provider == Provider.OLLAMA:
-                response = await self._chat_ollama(message, system, model, temperature)
+                response = await self._chat_ollama(
+                    filtered_message, filtered_system, model, temperature
+                )
             elif provider == Provider.OPENAI:
-                response = await self._chat_openai(message, system, model, temperature)
+                response = await self._chat_openai(
+                    filtered_message, filtered_system, model, temperature
+                )
             elif provider == Provider.AZURE_OPENAI:
                 response = await self._chat_azure_openai(
-                    message, system, model, temperature
+                    filtered_message, filtered_system, model, temperature
                 )
             elif provider == Provider.ANTHROPIC:
                 response = await self._chat_anthropic(
-                    message, system, model, temperature
+                    filtered_message, filtered_system, model, temperature
                 )
             elif provider == Provider.OPENROUTER:
                 response = await self._chat_openrouter(
-                    message, system, model, temperature
+                    filtered_message, filtered_system, model, temperature
                 )
             elif provider == Provider.GROQ:
-                response = await self._chat_groq(message, system, model, temperature)
+                response = await self._chat_groq(
+                    filtered_message, filtered_system, model, temperature
+                )
             elif provider == Provider.TOGETHER:
                 response = await self._chat_together(
-                    message, system, model, temperature
+                    filtered_message, filtered_system, model, temperature
                 )
             elif provider == Provider.GOOGLE:
-                response = await self._chat_google(message, system, model, temperature)
+                response = await self._chat_google(
+                    filtered_message, filtered_system, model, temperature
+                )
             elif provider == Provider.XAI:
-                response = await self._chat_xai(message, system, model, temperature)
+                response = await self._chat_xai(
+                    filtered_message, filtered_system, model, temperature
+                )
 
             # Cache successful response
             if response is not None:

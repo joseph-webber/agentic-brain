@@ -76,6 +76,9 @@ func jsonBody(_ request: URLRequest) throws -> [String: Any] {
 func makeConfig(
     provider: LLMProvider = .claude,
     yoloMode: Bool = false,
+    fallbackProviders: [LLMProvider] = [],
+    backend: AgenticBrainBackendConfiguration = .disabled,
+    profile: BrainChatBehaviorProfile = .developer,
     claudeAPIKey: String = "claude-key",
     openAIAPIKey: String = "openai-key",
     groqAPIKey: String = "groq-key",
@@ -88,6 +91,9 @@ func makeConfig(
         systemPrompt: "System prompt",
         yoloMode: yoloMode,
         bridgeWebSocketURL: "ws://localhost:8765",
+        fallbackProviders: fallbackProviders,
+        backend: backend,
+        profile: profile,
         claudeAPIKey: claudeAPIKey,
         openAIAPIKey: openAIAPIKey,
         groqAPIKey: groqAPIKey,
@@ -154,6 +160,26 @@ struct MockGeminiStreamer: GeminiStreaming {
         let result = try await handler(apiKey, model, systemPrompt, messages)
         onDelta(result)
         return result
+    }
+}
+
+actor MockAgenticBrainBackend: AgenticBrainBackendServing {
+    var capturedHistory: [ChatMessage] = []
+    var result: Result<String, Error>
+
+    init(result: Result<String, Error>) {
+        self.result = result
+    }
+
+    func streamReply(
+        history: [ChatMessage],
+        configuration: LLMRouterConfiguration,
+        onEvent: @escaping @Sendable (AIStreamEvent) -> Void
+    ) async throws -> String {
+        capturedHistory = history
+        let response = try result.get()
+        onEvent(.delta(response))
+        return response
     }
 }
 

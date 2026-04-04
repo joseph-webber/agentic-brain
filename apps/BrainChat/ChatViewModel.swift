@@ -30,6 +30,7 @@ final class ChatViewModel: ObservableObject {
     private var voiceManager: VoiceManager?
     private var settings: AppSettings?
     private var llmRouter: LLMRouter?
+    private let securityManager: SecurityManager
 
     private let copilotBridge: CopilotBridge
     private let layeredManager: LayeredResponseManager
@@ -43,11 +44,13 @@ final class ChatViewModel: ObservableObject {
         copilotBridge: CopilotBridge = .shared,
         layeredManager: LayeredResponseManager? = nil,
         layeredMessageStore: LayeredMessageStore? = nil,
-        yolo: YoloMode? = nil
+        yolo: YoloMode? = nil,
+        securityManager: SecurityManager? = nil
     ) {
         self.copilotBridge = copilotBridge
         self.layeredManager = layeredManager ?? LayeredResponseManager()
         self.layeredMessageStore = layeredMessageStore ?? LayeredMessageStore()
+        self.securityManager = securityManager ?? .shared
         self.yolo = yolo ?? YoloMode.shared
     }
 
@@ -79,7 +82,10 @@ final class ChatViewModel: ObservableObject {
             active: copilotBridge.isSessionActive,
             status: copilotBridge.isSessionActive ? "Copilot chat live" : "Copilot offline"
         )
-        setYoloEnabled(llmRouter.yoloMode)
+        if !securityManager.canUseYolo(), llmRouter.yoloMode {
+            llmRouter.yoloMode = false
+        }
+        setYoloEnabled(llmRouter.yoloMode, announceBlocked: false)
         isMicLive = speechManager.isListening
         liveTranscript = speechManager.currentTranscript
         isProcessing = store.isProcessing
@@ -202,7 +208,19 @@ final class ChatViewModel: ObservableObject {
         speakIfEnabled(response)
     }
 
-    func setYoloEnabled(_ enabled: Bool) {
+    @discardableResult
+    func setYoloEnabled(_ enabled: Bool, announceBlocked: Bool = true) -> Bool {
+        if enabled, !securityManager.canUseYolo() {
+            if llmRouter?.yoloMode == true {
+                llmRouter?.yoloMode = false
+            }
+            currentMode = .chat
+            if announceBlocked {
+                presentSecurityMessage(securityManager.yoloAccessDeniedMessage())
+            }
+            return false
+        }
+
         if enabled {
             if !yolo.isActive {
                 yolo.activate()
@@ -215,6 +233,7 @@ final class ChatViewModel: ObservableObject {
             llmRouter?.yoloMode = enabled
         }
         currentMode = enabled ? .yolo : .chat
+        return true
     }
 
     // MARK: - Private
@@ -251,15 +270,21 @@ final class ChatViewModel: ObservableObject {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         if trimmed == "/yolo" {
-            setYoloEnabled(!yolo.isActive)
-            store?.addMessage(role: .system, content: "YOLO mode \(yolo.isActive ? "ON" : "OFF")")
+            let enabling = !yolo.isActive
+            if setYoloEnabled(enabling) {
+                store?.addMessage(role: .system, content: "YOLO mode \(yolo.isActive ? "ON" : "OFF")")
+            }
             return true
         }
 
         if yolo.handleVoiceCommand(text) {
-            setYoloEnabled(yolo.isActive)
+            _ = setYoloEnabled(yolo.isActive, announceBlocked: false)
             if let lastFeedItem = yolo.actionsFeed.last {
                 store?.addMessage(role: .system, content: lastFeedItem.text)
+                if lastFeedItem.type == .error {
+                    error = lastFeedItem.text
+                    announce(lastFeedItem.text)
+                }
             }
             return true
         }
@@ -274,6 +299,10 @@ final class ChatViewModel: ObservableObject {
 
     private func sendToYolo(_ text: String) async {
         guard let store, let llmRouter else { return }
+        guard securityManager.canUseYolo() else {
+            presentSecurityMessage(securityManager.yoloAccessDeniedMessage())
+            return
+        }
 
         let assistantMessageID = store.beginStreamingAssistantMessage()
         store.replaceMessageContent(id: assistantMessageID, content: "Dispatching to YOLO agents…")
@@ -604,6 +633,23 @@ final class ChatViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        securityManager.$currentRole
+            .sink { [weak self] role in
+                guard let self else { return }
+                Task { @MainActor in
+                    guard !self.securityManager.canUseYolo() else { return }
+                    let wasActive = self.yolo.isActive || self.llmRouter?.yoloMode == true
+                    _ = self.setYoloEnabled(false, announceBlocked: false)
+                    guard wasActive else { return }
+                    let message = "Security mode switched to \(role.accessibilityName). YOLO mode has been turned off."
+                    self.store?.addMessage(role: .system, content: message)
+                    self.error = message
+                    self.speakIfEnabled(message)
+                    self.announce(message)
+                }
+            }
+            .store(in: &cancellables)
+
         llmRouter.$yoloMode
             .sink { [weak self] enabled in
                 guard let self else { return }
@@ -668,6 +714,13 @@ final class ChatViewModel: ObservableObject {
     private func speakIfEnabled(_ text: String) {
         guard settings?.autoSpeak == true else { return }
         voiceManager?.speak(text)
+    }
+
+    private func presentSecurityMessage(_ message: String) {
+        error = message
+        store?.addMessage(role: .system, content: message)
+        speakIfEnabled(message)
+        announce(message)
     }
 
     private func normalizeCopilotCommand(_ text: String) -> String {

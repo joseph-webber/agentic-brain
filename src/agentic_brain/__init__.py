@@ -58,7 +58,7 @@ Example:
     >>> response = agent.chat("Hello!")
 """
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 __author__ = "Agentic Brain Contributors"
 __email__ = "agentic-brain@proton.me"
 __license__ = "Apache-2.0"
@@ -96,6 +96,12 @@ __all__ = [
     "Neo4jMemory",
     "DataScope",
     "LLMRouter",
+    "BehaviorProfile",
+    "ComplianceMode",
+    "ContextType",
+    "EnvironmentType",
+    "PolymorphicBrain",
+    "UserType",
     # Commerce
     "CashOnDeliveryGateway",
     "WooCommerceAgent",
@@ -208,6 +214,12 @@ _LAZY_EXPORTS = {
     "Neo4jMemory": ("agentic_brain.memory", "Neo4jMemory"),
     "DataScope": ("agentic_brain.memory", "DataScope"),
     "LLMRouter": ("agentic_brain.router", "LLMRouter"),
+    "BehaviorProfile": ("agentic_brain.core.polymorphic", "BehaviorProfile"),
+    "ComplianceMode": ("agentic_brain.core.polymorphic", "ComplianceMode"),
+    "ContextType": ("agentic_brain.core.polymorphic", "ContextType"),
+    "EnvironmentType": ("agentic_brain.core.polymorphic", "EnvironmentType"),
+    "PolymorphicBrain": ("agentic_brain.core.polymorphic", "PolymorphicBrain"),
+    "UserType": ("agentic_brain.core.polymorphic", "UserType"),
     # Commerce
     "FraudRejectedError": ("agentic_brain.commerce", "FraudRejectedError"),
     "CashOnDeliveryGateway": ("agentic_brain.commerce", "CashOnDeliveryGateway"),

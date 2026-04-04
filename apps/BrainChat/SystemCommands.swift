@@ -44,6 +44,17 @@ final class SystemCommands: @unchecked Sendable {
     private let defaultTimeout: TimeInterval = 15
     private let maxTimeout: TimeInterval = 60
 
+    /// When registered, speak() routes through VoiceManager instead of macOS say.
+    private var speechDelegate: (@Sendable (String) -> Void)?
+
+    func registerSpeechDelegate(_ handler: @escaping @Sendable (String) -> Void) {
+        speechDelegate = handler
+    }
+
+    func unregisterSpeechDelegate() {
+        speechDelegate = nil
+    }
+
     // Directories the app is allowed to read/write
     private let allowedRoots: [String] = [
         NSHomeDirectory(),
@@ -231,8 +242,13 @@ final class SystemCommands: @unchecked Sendable {
         )
     }
 
-    /// Speak text using macOS say command (Karen voice).
+    /// Speak text using the selected TTS engine via VoiceManager when registered,
+    /// falling back to macOS say command when no delegate is available.
     func speak(_ text: String, voice: String = "Karen (Premium)", rate: Int = 160) {
+        if let delegate = speechDelegate {
+            delegate(text)
+            return
+        }
         let sanitized = text
             .replacingOccurrences(of: "'", with: "")
             .replacingOccurrences(of: "\"", with: "")

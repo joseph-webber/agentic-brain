@@ -30,6 +30,7 @@ from agentic_brain.exceptions import (
 )
 from agentic_brain.model_aliases import MODEL_ALIASES, resolve_alias
 from agentic_brain.router.config import Message, Provider, Response, RouterConfig
+from agentic_brain.security.llm_guard import LLMSecurityGuard, SecurityRole
 
 logger = logging.getLogger(__name__)
 
@@ -282,13 +283,24 @@ class LLMRouterCore:
         provider: Provider | None = None,
         model: str | None = None,
         models: Sequence[str] | None = None,
+        security_guard: LLMSecurityGuard | None = None,
     ) -> list[ModelRoute]:
         """Return ordered routes for the request, skipping unconfigured fallbacks."""
         if models:
             resolved_routes = self._resolve_routes(models)
             available_routes = self._configured_routes(resolved_routes)
+            if security_guard is not None:
+                available_routes = [
+                    route
+                    for route in available_routes
+                    if security_guard.can_use_provider(route.provider.value)
+                ]
             if available_routes:
                 return available_routes
+            if security_guard is not None and resolved_routes:
+                raise PermissionError(
+                    f"Role '{security_guard.role.value}' cannot use the requested providers."
+                )
             if resolved_routes:
                 raise self._configuration_error_for_provider(
                     resolved_routes[0].provider
@@ -301,6 +313,16 @@ class LLMRouterCore:
             if route and route not in ordered:
                 ordered.append(route)
         available_routes = [route for route in ordered if route is not None]
+        if security_guard is not None:
+            available_routes = [
+                route
+                for route in available_routes
+                if security_guard.can_use_provider(route.provider.value)
+            ]
+            if not available_routes:
+                raise PermissionError(
+                    f"Role '{security_guard.role.value}' cannot use the requested providers."
+                )
         if primary and not self._is_provider_configured(primary.provider):
             return available_routes
         return self._configured_routes(available_routes)
@@ -490,9 +512,15 @@ class LLMRouterCore:
         models: Sequence[str] | None = None,
         temperature: float = 0.7,
         max_tokens: int | None = None,
+        security_guard: LLMSecurityGuard | None = None,
     ) -> Response:
         """Send normalized messages using the first route that succeeds."""
-        routes = self._routes_for_request(provider=provider, model=model, models=models)
+        routes = self._routes_for_request(
+            provider=provider,
+            model=model,
+            models=models,
+            security_guard=security_guard,
+        )
         last_error: Exception | None = None
         for route in routes:
             try:
@@ -527,10 +555,32 @@ class LLMRouterCore:
         models: Sequence[str] | None = None,
         temperature: float = 0.7,
         max_tokens: int | None = None,
+        role: SecurityRole | str | None = None,
+        user_id: str | None = None,
+        security_guard: LLMSecurityGuard | None = None,
     ) -> Response:
         """Normalize inputs and execute a chat request."""
-        normalized = self.normalize_messages(
-            message=message, system=system, messages=messages
+        guard = security_guard or LLMSecurityGuard(role)
+        rate_limit_user = user_id or guard.default_user_id()
+        if not guard.check_rate_limit(rate_limit_user):
+            raise RateLimitError(
+                limit=guard.permissions.requests_per_minute or 0,
+                window="1 minute",
+                retry_after=max(1, guard.last_retry_after_seconds),
+            )
+
+        if provider is not None or model is not None:
+            resolved_route = self.resolve_model(model, provider)
+            provider, model = resolved_route.provider, resolved_route.model
+            if not guard.can_use_provider(provider.value):
+                raise PermissionError(
+                    f"Role '{guard.role.value}' cannot use provider '{provider.value}'."
+                )
+
+        normalized = guard.filter_messages(
+            self.normalize_messages(
+                message=message, system=system, messages=messages
+            )
         )
         return await self._chat_messages(
             normalized,
@@ -539,6 +589,7 @@ class LLMRouterCore:
             models=models,
             temperature=temperature,
             max_tokens=max_tokens,
+            security_guard=guard,
         )
 
     def chat_sync(self, **kwargs: Any) -> Response:

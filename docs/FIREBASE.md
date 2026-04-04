@@ -384,8 +384,8 @@ To minimize costs:
 ## Next Steps
 
 - [Transport Architecture](architecture.md)
-- [WebSocket Transport](websocket.md)
-- [Multi-Tenant Setup](../DEPLOYMENT.md)
+- [WebSocket Transport](WEBSOCKET_API.md)
+- [Multi-Tenant Setup](./DEPLOYMENT.md)
 
 ---
 

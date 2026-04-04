@@ -104,26 +104,26 @@ class TestSecurityRole:
     def test_role_ordering(self):
         """Test that roles are properly ordered."""
         assert SecurityRole.GUEST < SecurityRole.USER
-        assert SecurityRole.USER < SecurityRole.DEVELOPER
-        assert SecurityRole.DEVELOPER < SecurityRole.ADMIN
-        assert SecurityRole.GUEST < SecurityRole.ADMIN
+        assert SecurityRole.USER < SecurityRole.SAFE_ADMIN
+        assert SecurityRole.SAFE_ADMIN < SecurityRole.FULL_ADMIN
+        assert SecurityRole.GUEST < SecurityRole.FULL_ADMIN
     
     def test_role_comparison_operators(self):
         """Test all comparison operators."""
         assert SecurityRole.GUEST <= SecurityRole.GUEST
         assert SecurityRole.GUEST <= SecurityRole.USER
         assert SecurityRole.USER >= SecurityRole.GUEST
-        assert SecurityRole.DEVELOPER >= SecurityRole.USER
-        assert SecurityRole.ADMIN >= SecurityRole.ADMIN
-        assert not SecurityRole.ADMIN < SecurityRole.USER
-        assert not SecurityRole.USER > SecurityRole.ADMIN
-        assert SecurityRole.DEVELOPER > SecurityRole.USER
-        assert SecurityRole.DEVELOPER < SecurityRole.ADMIN
+        assert SecurityRole.SAFE_ADMIN >= SecurityRole.USER
+        assert SecurityRole.FULL_ADMIN >= SecurityRole.FULL_ADMIN
+        assert not SecurityRole.FULL_ADMIN < SecurityRole.USER
+        assert not SecurityRole.USER > SecurityRole.FULL_ADMIN
+        assert SecurityRole.SAFE_ADMIN > SecurityRole.USER
+        assert SecurityRole.SAFE_ADMIN < SecurityRole.FULL_ADMIN
     
     def test_role_values(self):
         """Test role string values."""
-        assert SecurityRole.ADMIN.value == "admin"
-        assert SecurityRole.DEVELOPER.value == "developer"
+        assert SecurityRole.FULL_ADMIN.value == "full_admin"
+        assert SecurityRole.SAFE_ADMIN.value == "safe_admin"
         assert SecurityRole.USER.value == "user"
         assert SecurityRole.GUEST.value == "guest"
 
@@ -133,7 +133,7 @@ class TestRolePermissions:
     
     def test_admin_has_full_permissions(self):
         """Admin should have no restrictions."""
-        perms = get_permissions(SecurityRole.ADMIN)
+        perms = get_permissions(SecurityRole.FULL_ADMIN)
         
         assert perms.can_yolo is True
         assert len(perms.yolo_restrictions) == 0
@@ -141,7 +141,7 @@ class TestRolePermissions:
         assert "*" in perms.allowed_write_paths
         assert perms.can_read_all_files is True
         assert perms.can_execute_code is True
-        assert perms.can_execute_arbitrary_shell is True
+        assert perms.can_execute_shell is True
         assert perms.can_modify_config is True
         assert perms.can_access_secrets is True
         assert perms.llm_access_level == "full"
@@ -149,37 +149,62 @@ class TestRolePermissions:
         assert perms.can_manage_users is True
     
     def test_user_has_limited_permissions(self):
-        """User should have restrictions on dangerous operations."""
+        """User should have NO machine access - API-only."""
         perms = get_permissions(SecurityRole.USER)
         
-        assert perms.can_yolo is True
-        assert len(perms.yolo_restrictions) > 0  # Has blocked patterns
-        assert perms.can_write_files is True
-        assert "*" not in perms.allowed_write_paths
-        assert perms.can_read_all_files is True
-        assert perms.can_execute_code is True
+        # NO machine access for USER role
+        assert perms.can_yolo is False  # No YOLO at all
+        assert perms.can_write_files is False
+        assert perms.can_access_filesystem is False
+        assert len(perms.allowed_write_paths) == 0
+        assert perms.can_read_all_files is False  # No file access
+        assert perms.can_execute_code is False  # No code execution
+        assert perms.can_execute_shell is False  # No shell access
         assert perms.can_modify_config is False
         assert perms.can_access_secrets is False
-        assert perms.llm_access_level == "standard"
+        
+        # API access only
+        assert perms.can_access_apis is True
+        assert "read" in perms.allowed_api_scopes
+        assert "write" in perms.allowed_api_scopes
+        assert "admin" not in perms.allowed_api_scopes
+        
+        # Content access
+        assert perms.can_read_faq is True
+        assert perms.can_read_docs is True
+        assert perms.can_read_manuals is True
+        
+        assert perms.llm_access_level == "chat_only"
+        assert perms.rate_limit_per_minute == 60
         assert perms.can_access_admin_api is False
     
     def test_developer_has_broad_permissions(self):
-        """Developer should have broad development permissions with guardrails."""
-        perms = get_permissions(SecurityRole.DEVELOPER)
+        """Safe Admin (formerly Developer) should have broad development permissions with guardrails."""
+        perms = get_permissions(SecurityRole.SAFE_ADMIN)
         
         assert perms.can_yolo is True
+        assert perms.yolo_requires_confirmation is True  # Requires confirmations
         assert len(perms.yolo_restrictions) > 0  # Still has guardrails
         assert perms.can_write_files is True
+        assert perms.can_access_filesystem is True
         assert "*" not in perms.allowed_write_paths  # Not unlimited
-        assert len(perms.allowed_write_paths) > len(get_permissions(SecurityRole.USER).allowed_write_paths)
+        assert len(perms.allowed_write_paths) > 0  # Has allowed paths
         assert perms.can_read_all_files is True
         assert perms.can_execute_code is True
-        assert perms.can_execute_arbitrary_shell is True
+        assert perms.can_execute_shell is True
         assert perms.can_modify_config is True  # Project config
         assert perms.can_access_secrets is False  # Still no secrets
         assert perms.llm_access_level == "full"
+        assert perms.rate_limit_per_minute == 1000
         assert perms.can_access_admin_api is False
         assert perms.can_manage_users is False
+        
+        # API access
+        assert perms.can_access_apis is True
+        assert "read" in perms.allowed_api_scopes
+        assert "write" in perms.allowed_api_scopes
+        assert "delete" in perms.allowed_api_scopes
+        assert "admin" not in perms.allowed_api_scopes
     
     def test_guest_has_minimal_permissions(self):
         """Guest should have highly restricted permissions."""
@@ -190,7 +215,7 @@ class TestRolePermissions:
         assert len(perms.allowed_write_paths) == 0
         assert perms.can_read_all_files is False
         assert perms.can_execute_code is False
-        assert perms.can_execute_arbitrary_shell is False
+        assert perms.can_execute_shell is False
         assert perms.can_modify_config is False
         assert perms.can_access_secrets is False
         assert perms.llm_access_level == "chat_only"
@@ -277,7 +302,7 @@ class TestSecurityGuard:
     
     def test_admin_guard_allows_all_commands(self):
         """Admin guard should allow all commands."""
-        guard = SecurityGuard(SecurityRole.ADMIN)
+        guard = SecurityGuard(SecurityRole.FULL_ADMIN)
         
         dangerous_commands = [
             "rm -rf /",
@@ -321,7 +346,7 @@ class TestSecurityGuard:
     
     def test_developer_guard_blocks_dangerous_commands(self):
         """Developer guard should block dangerous commands but allow development work."""
-        guard = SecurityGuard(SecurityRole.DEVELOPER)
+        guard = SecurityGuard(SecurityRole.SAFE_ADMIN)
         
         # Dangerous commands should be blocked
         dangerous_commands = [
@@ -338,7 +363,7 @@ class TestSecurityGuard:
     
     def test_developer_guard_allows_development_commands(self):
         """Developer guard should allow all development commands."""
-        guard = SecurityGuard(SecurityRole.DEVELOPER)
+        guard = SecurityGuard(SecurityRole.SAFE_ADMIN)
         
         dev_commands = [
             "ls -la",
@@ -368,7 +393,7 @@ class TestSecurityGuard:
     
     def test_file_write_permission_admin(self):
         """Admin can write anywhere."""
-        guard = SecurityGuard(SecurityRole.ADMIN)
+        guard = SecurityGuard(SecurityRole.FULL_ADMIN)
         
         paths = ["/etc/passwd", "/home/user/file", "~/brain/file"]
         
@@ -402,7 +427,7 @@ class TestSecurityGuard:
     
     def test_file_write_permission_developer(self):
         """Developer can write to development areas but not system files."""
-        guard = SecurityGuard(SecurityRole.DEVELOPER)
+        guard = SecurityGuard(SecurityRole.SAFE_ADMIN)
         
         # Should be allowed (development areas)
         dev_paths = [
@@ -455,7 +480,7 @@ class TestSecurityGuard:
     
     def test_admin_high_rate_limit(self):
         """Admin has very high rate limit."""
-        guard = SecurityGuard(SecurityRole.ADMIN)
+        guard = SecurityGuard(SecurityRole.FULL_ADMIN)
         
         # Should handle many requests
         for i in range(100):
@@ -491,7 +516,7 @@ class TestSecurityGuard:
     
     def test_require_user_or_above(self):
         """Test require_user_or_above."""
-        admin_guard = SecurityGuard(SecurityRole.ADMIN)
+        admin_guard = SecurityGuard(SecurityRole.FULL_ADMIN)
         user_guard = SecurityGuard(SecurityRole.USER)
         guest_guard = SecurityGuard(SecurityRole.GUEST)
         
@@ -544,7 +569,7 @@ class TestDecorators:
             return "admin_success"
         
         # With ADMIN role
-        token = set_security_guard(SecurityGuard(SecurityRole.ADMIN))
+        token = set_security_guard(SecurityGuard(SecurityRole.FULL_ADMIN))
         try:
             result = admin_only()
             assert result == "admin_success"
@@ -566,7 +591,7 @@ class TestDecorators:
             return "user_success"
         
         # With ADMIN - should work
-        token = set_security_guard(SecurityGuard(SecurityRole.ADMIN))
+        token = set_security_guard(SecurityGuard(SecurityRole.FULL_ADMIN))
         try:
             assert user_func() == "user_success"
         finally:
@@ -602,8 +627,8 @@ class TestAuthentication:
         
         # Authenticate with the key
         role, user = authenticate_api_key(test_key)
-        assert role == SecurityRole.ADMIN
-        assert user == "admin"
+        assert role == SecurityRole.FULL_ADMIN
+        assert user == "full_admin"
     
     def test_authenticate_api_key_user(self):
         """Test regular API key authentication."""
@@ -619,7 +644,7 @@ class TestAuthentication:
     def test_authenticate_request_admin_user(self):
         """Test that Joseph gets admin access."""
         guard = authenticate_request(user_id="joseph")
-        assert guard.role == SecurityRole.ADMIN
+        assert guard.role == SecurityRole.FULL_ADMIN
     
     def test_authenticate_request_guest_default(self):
         """Test that no credentials defaults to guest."""
@@ -628,7 +653,7 @@ class TestAuthentication:
     
     def test_is_admin_check(self):
         """Test is_admin function."""
-        token = set_security_guard(SecurityGuard(SecurityRole.ADMIN))
+        token = set_security_guard(SecurityGuard(SecurityRole.FULL_ADMIN))
         try:
             assert is_admin() is True
             assert is_user() is True  # Admin is also "user or above"
@@ -702,7 +727,7 @@ class TestSessionManager:
         """Test admin session creation for Joseph."""
         session = create_admin_session("joseph")
         
-        assert session.role == SecurityRole.ADMIN
+        assert session.role == SecurityRole.FULL_ADMIN
         assert session.user_id == "joseph"
         assert session.is_admin is True
     
@@ -722,7 +747,7 @@ class TestEnvironmentSetup:
         with patch.dict(os.environ, {"AGENTIC_BRAIN_ADMIN_MODE": "true"}):
             guard = setup_admin_from_env()
             assert guard is not None
-            assert guard.role == SecurityRole.ADMIN
+            assert guard.role == SecurityRole.FULL_ADMIN
     
     def test_setup_admin_from_user(self):
         """Test admin mode from current user being joseph."""
@@ -730,7 +755,7 @@ class TestEnvironmentSetup:
         with patch.object(getpass_module, "getuser", return_value="joseph"):
             guard = setup_admin_from_env()
             assert guard is not None
-            assert guard.role == SecurityRole.ADMIN
+            assert guard.role == SecurityRole.FULL_ADMIN
 
 
 class TestSecurityBypassPrevention:
@@ -796,7 +821,7 @@ class TestSecurityBypassPrevention:
         
         # Even if someone tries to set role, permissions should stay same
         # (This tests that the design is secure - permissions are tied to role)
-        guard_admin = SecurityGuard(SecurityRole.ADMIN)
+        guard_admin = SecurityGuard(SecurityRole.FULL_ADMIN)
         assert guard_admin.permissions.can_yolo is True
         
         # The original guard still has GUEST permissions
@@ -811,13 +836,13 @@ class TestYOLOIntegration:
         """Test that admin can run any YOLO command."""
         from agentic_brain.yolo import SecureYOLOExecutor, SecureExecutionResult
         
-        token = set_security_guard(SecurityGuard(SecurityRole.ADMIN))
+        token = set_security_guard(SecurityGuard(SecurityRole.FULL_ADMIN))
         try:
             executor = SecureYOLOExecutor()
             result = await executor.check_status("status")
             
             assert result.security_checks_passed is True
-            assert result.role == SecurityRole.ADMIN
+            assert result.role == SecurityRole.FULL_ADMIN
         finally:
             reset_security_guard(token)
     
@@ -858,7 +883,7 @@ class TestHelperFunctions:
     
     def test_check_file_access_write(self):
         """Test check_file_access for write operations."""
-        token = set_security_guard(SecurityGuard(SecurityRole.ADMIN))
+        token = set_security_guard(SecurityGuard(SecurityRole.FULL_ADMIN))
         try:
             allowed, reason = check_file_access("/any/path", write=True)
             assert allowed
@@ -874,7 +899,7 @@ class TestHelperFunctions:
     
     def test_check_command_allowed(self):
         """Test check_command_allowed helper."""
-        token = set_security_guard(SecurityGuard(SecurityRole.ADMIN))
+        token = set_security_guard(SecurityGuard(SecurityRole.FULL_ADMIN))
         try:
             allowed, reason = check_command_allowed("rm -rf /")
             assert allowed  # Admin can do anything

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Service Identifier -->
+    <key>Label</key>
+    <string>com.agentic-brain.services</string>
+    
+    <!-- Program to run: Start services helper script -->
+    <!-- Will be updated by the installer with the correct path -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>exec /usr/local/bin/start-agentic-brain-services.sh</string>
+    </array>
+    
+    <!-- Run at login -->
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <!-- Keep alive - restart if exits unexpectedly -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+    
+    <!-- Standard output logging -->
+    <key>StandardOutPath</key>
+    <string>/var/log/agentic-brain-services.log</string>
+    
+    <!-- Standard error logging -->
+    <key>StandardErrorPath</key>
+    <string>/var/log/agentic-brain-services.log</string>
+    
+    <!-- Wait 10 seconds before restarting if it crashes -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+    
+    <!-- Run with lower priority (nice value) -->
+    <key>Nice</key>
+    <integer>10</integer>
+    
+    <!-- Set environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+</dict>
+</plist>

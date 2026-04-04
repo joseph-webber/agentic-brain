@@ -1,76 +1,20 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "agentic-brain"
+name = "agentic-brain-sdk"
 version = "0.1.0"
-description = "Universal AI orchestration SDK — multi-LLM layered responses, voice I/O, and autonomous agents."
-readme = "../../docs/SDK_ARCHITECTURE.md"
-license = "MIT"
+description = "Python SDK for Agentic Brain orchestration"
 requires-python = ">=3.10"
-authors = [
-    { name = "Joseph Webber", email = "joseph.webber@gmail.com" },
+dependencies = [
+    "httpx>=0.25.0,<1.0.0",
 ]
-keywords = ["ai", "llm", "orchestration", "agents", "voice", "sdk"]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Framework :: AsyncIO",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Typing :: Typed",
-]
-
-dependencies = []
 
 [project.optional-dependencies]
-ollama = ["ollama>=0.4"]
-openai = ["openai>=1.0"]
-anthropic = ["anthropic>=0.40"]
-groq = ["groq>=0.12"]
-voice = ["sounddevice>=0.5", "numpy>=1.26"]
-all = [
-    "ollama>=0.4",
-    "openai>=1.0",
-    "anthropic>=0.40",
-    "groq>=0.12",
-    "sounddevice>=0.5",
-    "numpy>=1.26",
-]
-dev = [
-    "pytest>=8.0",
-    "pytest-asyncio>=0.24",
-    "ruff>=0.8",
-    "mypy>=1.13",
+chat = [
+    "rich>=13.0.0,<15.0.0",
 ]
 
-[project.urls]
-Homepage = "https://github.com/ecomlounge/brain"
-Documentation = "https://github.com/ecomlounge/brain/tree/main/agentic-brain/docs"
-Repository = "https://github.com/ecomlounge/brain"
-
-[tool.hatch.build.targets.wheel]
-packages = ["agentic_brain"]
-
-[tool.ruff]
-target-version = "py310"
-line-length = 100
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "N", "UP", "B", "SIM", "TCH"]
-
-[tool.mypy]
-python_version = "3.10"
-strict = true
-warn_return_any = true
-warn_unused_configs = true
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
+[tool.setuptools.packages.find]
+include = ["agentic_brain*"]

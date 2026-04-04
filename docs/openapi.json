@@ -3,7 +3,7 @@
   "info": {
     "title": "Agentic Brain API",
     "description": "Multi-LLM orchestration platform with GraphRAG, Unified Brain, and real-time chat",
-    "version": "1.0.0"
+    "version": "3.1.0"
   },
   "paths": {
     "/health": {
@@ -20,9 +20,57 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Health Check Health Get"
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -50,7 +98,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Message processed successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -59,15 +107,23 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid request - empty message or missing required fields"
+          },
+          "401": {
+            "description": "Unauthorized - authentication required"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
+          },
+          "429": {
+            "description": "Rate limit exceeded - max 60 requests per minute"
+          },
           "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
+            "description": "Unprocessable entity - validation error"
+          },
+          "500": {
+            "description": "Internal server error - chat processing failed"
           }
         },
         "security": [
@@ -193,12 +249,27 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Server-Sent Events stream of response tokens",
             "content": {
               "application/json": {
                 "schema": {}
               }
             }
+          },
+          "400": {
+            "description": "Invalid request - empty message or missing parameters"
+          },
+          "401": {
+            "description": "Unauthorized - authentication required"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Internal server error or LLM provider error"
           },
           "422": {
             "description": "Validation Error",
@@ -245,7 +316,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Session information retrieved successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -253,6 +324,18 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized - authentication required"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
+          },
+          "404": {
+            "description": "Session not found"
+          },
+          "500": {
+            "description": "Internal server error"
           },
           "422": {
             "description": "Validation Error",
@@ -296,8 +379,65 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Successful Response"
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -362,12 +502,57 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": true
-                  },
-                  "title": "Response Get Session Messages Session  Session Id  Messages Get"
+                  "$ref": "#/components/schemas/MessageListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -394,8 +579,65 @@
         "description": "Clear all sessions and messages (use with caution)",
         "operationId": "clear_all_sessions_sessions_delete",
         "responses": {
-          "204": {
-            "description": "Successful Response"
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -425,9 +667,57 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Setup Status Setup Get"
+                  "$ref": "#/components/schemas/SetupStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -460,9 +750,57 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Setup Help Setup Help  Provider  Get"
+                  "$ref": "#/components/schemas/SetupHelpResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -490,7 +828,7 @@
         "operationId": "saml_login_auth_saml_login_post",
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "SAML AuthnRequest generated successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -500,6 +838,9 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error generating SAML request"
           }
         }
       }
@@ -526,7 +867,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "SAML Response validated successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -536,6 +877,15 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid SAML Response or missing saml_response"
+          },
+          "401": {
+            "description": "SAML signature validation failed"
+          },
+          "500": {
+            "description": "Error processing SAML Response"
           },
           "422": {
             "description": "Validation Error",
@@ -560,12 +910,15 @@
         "operationId": "saml_metadata_auth_saml_metadata_get",
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "SAML SP metadata in XML format",
             "content": {
               "application/json": {
                 "schema": {}
               }
             }
+          },
+          "500": {
+            "description": "Error generating metadata"
           }
         }
       }
@@ -591,7 +944,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Authorization URL generated successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -601,6 +954,12 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Unknown SSO provider"
+          },
+          "503": {
+            "description": "SSO provider not configured"
           },
           "422": {
             "description": "Validation Error",
@@ -661,7 +1020,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Tokens and user info retrieved successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -671,6 +1030,15 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid authorization code or state mismatch"
+          },
+          "404": {
+            "description": "Unknown SSO provider"
+          },
+          "503": {
+            "description": "SSO provider not configured"
           },
           "422": {
             "description": "Validation Error",
@@ -906,7 +1274,21 @@
           "message"
         ],
         "title": "ChatRequest",
-        "description": "Request model for chat endpoint.\n\nAttributes:\n    message: The user's message/query\n    session_id: Optional session identifier for conversation tracking\n    user_id: Optional user identifier for multi-user support\n    metadata: Optional metadata dictionary for extended request information"
+        "description": "Request model for chat endpoint.\n\nAttributes:\n    message: The user's message/query\n    session_id: Optional session identifier for conversation tracking\n    user_id: Optional user identifier for multi-user support\n    metadata: Optional metadata dictionary for extended request information",
+        "examples": [
+          {
+            "message": "What is the weather today?",
+            "metadata": {
+              "source": "web_ui"
+            },
+            "session_id": "sess_abc123",
+            "user_id": "user_xyz789"
+          },
+          {
+            "message": "Explain machine learning",
+            "session_id": "sess_def456"
+          }
+        ]
       },
       "ChatResponse": {
         "properties": {
@@ -939,7 +1321,21 @@
           "message_id"
         ],
         "title": "ChatResponse",
-        "description": "Response model for chat endpoint.\n\nAttributes:\n    response: The chatbot's response message\n    session_id: The session ID for this conversation\n    timestamp: When the response was generated\n    message_id: Unique identifier for this message exchange"
+        "description": "Response model for chat endpoint.\n\nAttributes:\n    response: The chatbot's response message\n    session_id: The session ID for this conversation\n    timestamp: When the response was generated\n    message_id: Unique identifier for this message exchange",
+        "examples": [
+          {
+            "message_id": "msg_def456",
+            "response": "The weather looks sunny today!",
+            "session_id": "sess_abc123",
+            "timestamp": "2026-01-01T12:00:00Z"
+          },
+          {
+            "message_id": "msg_def457",
+            "response": "Machine learning is a subset of artificial intelligence that enables systems to learn from data.",
+            "session_id": "sess_abc123",
+            "timestamp": "2026-01-01T12:05:00Z"
+          }
+        ]
       },
       "ConfigUpdate": {
         "properties": {
@@ -959,6 +1355,95 @@
         "title": "ConfigUpdate",
         "description": "Configuration update model."
       },
+      "DeleteResponse": {
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "title": "Deleted",
+            "description": "Whether deletion was successful",
+            "default": true
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Deletion confirmation message",
+            "default": "Resource deleted successfully"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Id",
+            "description": "Optional identifier of the deleted resource"
+          }
+        },
+        "type": "object",
+        "title": "DeleteResponse",
+        "description": "Delete response model.\n\nAttributes:\n    deleted: Whether the resource was successfully deleted\n    message: Confirmation message about the deletion\n    resource_id: Optional identifier of the deleted resource",
+        "examples": [
+          {
+            "deleted": true,
+            "message": "Resource deleted successfully",
+            "resource_id": "sess_abc123"
+          },
+          {
+            "deleted": true,
+            "message": "Session terminated and deleted",
+            "resource_id": "user_xyz789"
+          }
+        ]
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "description": "Error message"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail",
+            "description": "Detailed error info"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "description": "HTTP status code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "status_code"
+        ],
+        "title": "ErrorResponse",
+        "description": "Error response model.\n\nAttributes:\n    error: Error message\n    detail: Detailed error information\n    status_code: HTTP status code",
+        "examples": [
+          {
+            "detail": "Session ID sess_invalid does not exist",
+            "error": "Session not found",
+            "status_code": 404
+          },
+          {
+            "detail": "Message cannot be empty",
+            "error": "Invalid request",
+            "status_code": 400
+          }
+        ]
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -971,6 +1456,84 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Overall API status",
+            "default": "healthy"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Running API version",
+            "default": "3.1.0"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Health check timestamp"
+          },
+          "sessions_active": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Sessions Active",
+            "description": "Number of active chat sessions",
+            "default": 0
+          },
+          "redis": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Redis",
+            "description": "Redis health and availability information"
+          },
+          "llm": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Llm",
+            "description": "Configured LLM provider information"
+          },
+          "neo4j": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Neo4J",
+            "description": "Neo4j configuration information"
+          },
+          "uptime": {
+            "type": "string",
+            "title": "Uptime",
+            "description": "Human-readable uptime",
+            "default": "unknown"
+          }
+        },
+        "type": "object",
+        "title": "HealthResponse",
+        "description": "Public health endpoint response.",
+        "examples": [
+          {
+            "llm": {
+              "provider": "ollama",
+              "status": "ok"
+            },
+            "neo4j": {
+              "message": "Optional - chat works without it",
+              "status": "configured"
+            },
+            "redis": {
+              "available": true,
+              "message": "Redis is healthy",
+              "status": "ok"
+            },
+            "sessions_active": 3,
+            "status": "healthy",
+            "timestamp": "2026-01-01T12:00:00Z",
+            "uptime": "0h 2m 10s",
+            "version": "3.1.0"
+          }
+        ]
       },
       "HealthStatus": {
         "properties": {
@@ -1005,6 +1568,148 @@
         ],
         "title": "HealthStatus",
         "description": "Health status model."
+      },
+      "MessageListResponse": {
+        "items": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "type": "array",
+        "title": "MessageListResponse",
+        "description": "Response model for message list endpoint.\n\nAttributes:\n    root: List of messages from a session",
+        "examples": [
+          [
+            {
+              "content": "Hello, how are you?",
+              "id": "msg_001",
+              "role": "user",
+              "timestamp": "2026-01-01T10:00:00Z"
+            },
+            {
+              "content": "I'm doing well, thank you for asking!",
+              "id": "msg_002",
+              "role": "assistant",
+              "timestamp": "2026-01-01T10:00:01Z"
+            }
+          ]
+        ]
+      },
+      "ProviderInfo": {
+        "properties": {
+          "available": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderStatus"
+            },
+            "type": "array",
+            "title": "Available",
+            "description": "Available providers"
+          },
+          "unavailable": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderStatus"
+            },
+            "type": "array",
+            "title": "Unavailable",
+            "description": "Unavailable providers"
+          }
+        },
+        "type": "object",
+        "title": "ProviderInfo",
+        "description": "Provider availability information.\n\nAttributes:\n    available: List of available providers\n    unavailable: List of unavailable providers",
+        "examples": [
+          {
+            "available": [
+              {
+                "name": "groq",
+                "reason": "GROQ_API_KEY is configured"
+              }
+            ],
+            "unavailable": [
+              {
+                "name": "openai",
+                "reason": "OPENAI_API_KEY not configured"
+              }
+            ]
+          }
+        ]
+      },
+      "ProviderSetupStep": {
+        "properties": {
+          "step": {
+            "type": "integer",
+            "title": "Step",
+            "description": "Step number"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Step title"
+          },
+          "instruction": {
+            "type": "string",
+            "title": "Instruction",
+            "description": "Step instruction"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code",
+            "description": "Optional code/command"
+          }
+        },
+        "type": "object",
+        "required": [
+          "step",
+          "title",
+          "instruction"
+        ],
+        "title": "ProviderSetupStep",
+        "description": "A step in provider setup instructions.\n\nAttributes:\n    step: Step number or order\n    title: Step title\n    instruction: Detailed instruction\n    code: Optional code snippet or command",
+        "examples": [
+          {
+            "code": "# No code needed for this step",
+            "instruction": "Visit Groq console and create an account",
+            "step": 1,
+            "title": "Create Account"
+          }
+        ]
+      },
+      "ProviderStatus": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Provider name"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Status reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "reason"
+        ],
+        "title": "ProviderStatus",
+        "description": "Status of a single LLM provider.\n\nAttributes:\n    name: Provider name (e.g., \"groq\", \"openai\")\n    reason: Status reason/explanation",
+        "examples": [
+          {
+            "name": "groq",
+            "reason": "GROQ_API_KEY is configured"
+          },
+          {
+            "name": "openai",
+            "reason": "OPENAI_API_KEY not configured"
+          }
+        ]
       },
       "SessionInfo": {
         "properties": {
@@ -1054,7 +1759,207 @@
           "last_accessed"
         ],
         "title": "SessionInfo",
-        "description": "Session information model.\n\nAttributes:\n    id: The session identifier\n    message_count: Number of messages in this session\n    created_at: When the session was created\n    last_accessed: When the session was last accessed\n    user_id: Optional user ID associated with session"
+        "description": "Session information model.\n\nAttributes:\n    id: The session identifier\n    message_count: Number of messages in this session\n    created_at: When the session was created\n    last_accessed: When the session was last accessed\n    user_id: Optional user ID associated with session",
+        "examples": [
+          {
+            "created_at": "2026-01-01T10:00:00Z",
+            "id": "sess_abc123",
+            "last_accessed": "2026-01-01T12:30:00Z",
+            "message_count": 5,
+            "user_id": "user_xyz789"
+          },
+          {
+            "created_at": "2026-01-01T08:00:00Z",
+            "id": "sess_def456",
+            "last_accessed": "2026-01-01T13:15:00Z",
+            "message_count": 12
+          }
+        ]
+      },
+      "SetupHelpResponse": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "description": "Provider name (e.g., 'groq')"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Setup title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Provider description"
+          },
+          "documentation_url": {
+            "type": "string",
+            "title": "Documentation Url",
+            "description": "Link to documentation"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderSetupStep"
+            },
+            "type": "array",
+            "title": "Steps",
+            "description": "Setup steps"
+          },
+          "pricing_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricing Info",
+            "description": "Pricing info"
+          },
+          "troubleshooting": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Troubleshooting",
+            "description": "Troubleshooting tips"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider",
+          "title",
+          "description",
+          "documentation_url"
+        ],
+        "title": "SetupHelpResponse",
+        "description": "Detailed setup help for a specific provider.\n\nAttributes:\n    provider: Provider name\n    title: Setup title\n    description: Provider description\n    documentation_url: Link to provider documentation\n    steps: List of setup steps\n    pricing_info: Pricing information\n    troubleshooting: Troubleshooting tips",
+        "examples": [
+          {
+            "description": "Groq provides fast, free LLM inference via API",
+            "documentation_url": "https://console.groq.com",
+            "pricing_info": "FREE tier: Unlimited requests (rate limited)",
+            "provider": "groq",
+            "steps": [
+              {
+                "instruction": "Visit Groq console and create an account",
+                "step": 1,
+                "title": "Create Account"
+              }
+            ],
+            "title": "Setup Groq (FREE, Recommended)",
+            "troubleshooting": {
+              "rate_limit": "See https://console.groq.com/docs/rate-limits"
+            }
+          }
+        ]
+      },
+      "SetupStatusResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Setup status: configured, needs_setup, or error"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable status message"
+          },
+          "providers": {
+            "$ref": "#/components/schemas/ProviderInfo",
+            "description": "Provider availability info"
+          },
+          "setup_guide": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Setup Guide",
+            "description": "Detailed setup instructions"
+          },
+          "quick_start": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quick Start",
+            "description": "Quick start guide"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message",
+          "providers"
+        ],
+        "title": "SetupStatusResponse",
+        "description": "Setup status and diagnostics response.\n\nAttributes:\n    status: Overall setup status (\"configured\", \"needs_setup\", or \"error\")\n    message: Human-readable status message\n    providers: Information about available/unavailable providers\n    setup_guide: Optional setup instructions\n    quick_start: Optional quick start guide",
+        "examples": [
+          {
+            "message": "\u2713 1 provider(s) ready",
+            "providers": {
+              "available": [
+                {
+                  "name": "groq",
+                  "reason": "GROQ_API_KEY is configured"
+                }
+              ],
+              "unavailable": [
+                {
+                  "name": "openai",
+                  "reason": "OPENAI_API_KEY not configured"
+                }
+              ]
+            },
+            "setup_guide": "Your system is ready to use Groq...",
+            "status": "configured"
+          },
+          {
+            "message": "\u274c No LLM providers configured",
+            "providers": {
+              "available": [],
+              "unavailable": [
+                {
+                  "name": "groq",
+                  "reason": "GROQ_API_KEY not configured"
+                },
+                {
+                  "name": "openai",
+                  "reason": "OPENAI_API_KEY not configured"
+                }
+              ]
+            },
+            "quick_start": {
+              "option_1": "GROQ (FREE, recommended)",
+              "steps": [
+                "1. Visit: https://console.groq.com",
+                "2. Sign up and get API key",
+                "3. Add to .env: GROQ_API_KEY=gsk_...",
+                "4. Restart the server"
+              ]
+            },
+            "status": "needs_setup"
+          }
+        ]
       },
       "SystemStats": {
         "properties": {

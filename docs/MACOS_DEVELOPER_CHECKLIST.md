@@ -343,10 +343,10 @@ top
 
 ## Resources
 
-- **Main README:** [README.md](README.md)
-- **Full Developer Guide:** [docs/MACOS_DEVELOPMENT.md](docs/MACOS_DEVELOPMENT.md)
-- **Quick Start:** [QUICK_START_MACOS.md](QUICK_START_MACOS.md)
-- **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Main README:** [./INDEX.md](./INDEX.md)
+- **Full Developer Guide:** [./MACOS_DEVELOPMENT.md](./MACOS_DEVELOPMENT.md)
+- **Quick Start:** [../QUICK_START_MACOS.md](../QUICK_START_MACOS.md)
+- **Contributing:** [../CONTRIBUTING.md](../CONTRIBUTING.md)
 - **API Docs:** http://localhost:8000/docs
 
 ---

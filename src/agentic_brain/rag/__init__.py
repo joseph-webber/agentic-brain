@@ -171,6 +171,11 @@ from .contextual_compression import (
     CompressionStrategy,
     ContextualCompressor,
 )
+from .community import (
+    CommunityGraphRAG,
+    CommunityLevel,
+    CommunityQueryResult,
+)
 
 # Evaluation
 from .evaluation import (
@@ -541,6 +546,10 @@ __all__ = [
     "CompressedChunk",
     "CompressionResult",
     "CompressionStrategy",
+    # Community GraphRAG
+    "CommunityGraphRAG",
+    "CommunityLevel",
+    "CommunityQueryResult",
     # Graph Traversal
     "GraphTraversalRetriever",
     "EntityCentricRetriever",

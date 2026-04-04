@@ -174,6 +174,70 @@ final class YoloExecutor: ObservableObject {
         session: YoloSession,
         confirmationHandler: ((String) async -> Bool)? = nil
     ) async -> YoloResult {
+        // Security check: Can this role use YOLO?
+        do {
+            try SecurityGuard.checkYoloPermission()
+        } catch {
+            let msg = error.localizedDescription
+            speak("YOLO permission denied. \(msg)")
+            return YoloResult(success: false, output: msg, actionID: UUID(), category: command.category)
+        }
+        
+        // Security check: Is this command safe for the current role?
+        if SecurityManager.shared.requiresSafetyChecksInYolo() {
+            do {
+                try SecurityGuard.checkCommandSafety(command.command)
+            } catch {
+                let msg = error.localizedDescription
+                speak("Command blocked by security policy. \(msg)")
+                safety.logAction(
+                    category: command.category,
+                    command: command.command,
+                    verdict: .blocked(reason: msg),
+                    outcome: "security_blocked",
+                    sessionID: session.sessionID
+                )
+                return YoloResult(success: false, output: msg, actionID: UUID(), category: command.category)
+            }
+        }
+        
+        // Safe Admin mode: Require confirmation for dangerous operations
+        if SecurityManager.shared.requiresYoloConfirmation() && isDangerousOperation(command) {
+            speak("Safe Admin mode: This operation requires confirmation.")
+            if let handler = confirmationHandler {
+                let confirmed = await handler("Safe Admin: \(command.description)")
+                if !confirmed {
+                    safety.logAction(
+                        category: command.category,
+                        command: command.command,
+                        verdict: .requiresConfirmation(reason: "Safe Admin mode"),
+                        outcome: "denied_by_safe_admin",
+                        sessionID: session.sessionID
+                    )
+                    return YoloResult(
+                        success: false,
+                        output: "Operation cancelled by Safe Admin confirmation",
+                        actionID: UUID(),
+                        category: command.category
+                    )
+                }
+            } else {
+                safety.logAction(
+                    category: command.category,
+                    command: command.command,
+                    verdict: .requiresConfirmation(reason: "Safe Admin mode"),
+                    outcome: "skipped_no_handler",
+                    sessionID: session.sessionID
+                )
+                return YoloResult(
+                    success: false,
+                    output: "Skipped (Safe Admin requires confirmation)",
+                    actionID: UUID(),
+                    category: command.category
+                )
+            }
+        }
+        
         guard session.canExecute else {
             let msg = "Session limit reached (\(session.maxActions) actions). Deactivate and restart YOLO."
             speak("Session limit reached. Cannot execute more actions.")
@@ -635,5 +699,38 @@ final class YoloExecutor: ObservableObject {
             return "git branch -d \(branch)"
         }
         return nil
+    }
+
+    /// Check if a command is dangerous and requires confirmation in Safe Admin mode
+    private func isDangerousOperation(_ command: YoloCommand) -> Bool {
+        switch command.category {
+        case .fileDelete, .gitOperation:
+            return true
+        case .shellCommand:
+            let lower = command.command.lowercased()
+            return lower.contains("rm ") || 
+                   lower.contains("delete") ||
+                   lower.contains("sudo") ||
+                   lower.contains("chmod") ||
+                   lower.contains("chown") ||
+                   lower.contains("git push") ||
+                   lower.contains("git reset --hard")
+        case .fileEdit:
+            // Editing system files or configuration is dangerous
+            if let path = command.filePath {
+                let lower = path.lowercased()
+                return lower.contains("/etc/") ||
+                       lower.contains("/system/") ||
+                       lower.contains("/library/") ||
+                       lower.contains(".plist") ||
+                       lower.contains("package.json") ||
+                       lower.contains("requirements.txt")
+            }
+            return false
+        case .network, .system:
+            return true
+        case .fileCreate, .codeGenerate, .appLaunch:
+            return false
+        }
     }
 }

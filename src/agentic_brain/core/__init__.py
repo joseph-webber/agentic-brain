@@ -35,13 +35,27 @@ from .neo4j_pool import (
 from .neo4j_pool import (
     write as neo4j_write,
 )
+from .polymorphic import (
+    BehaviorProfile,
+    ComplianceMode,
+    ContextType,
+    EnvironmentType,
+    PolymorphicBrain,
+    UserType,
+)
 from .redis_pool import RedisConfig, RedisCoordination, RedisPoolManager, get_redis_pool
 
 __all__ = [
     "CacheManager",
+    "BehaviorProfile",
+    "ComplianceMode",
+    "ContextType",
+    "EnvironmentType",
+    "PolymorphicBrain",
     "RedisConfig",
     "RedisCoordination",
     "RedisPoolManager",
+    "UserType",
     "get_redis_pool",
     "Neo4jPoolConfig",
     "configure_neo4j_pool",

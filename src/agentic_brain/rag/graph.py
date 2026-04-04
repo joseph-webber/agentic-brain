@@ -33,6 +33,7 @@ from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+from .community import CommunityGraphRAG
 from agentic_brain.core.neo4j_schema import (
     VECTOR_INDEX_NAME,
     ensure_indexes_sync,
@@ -189,6 +190,7 @@ class EnhancedGraphRAG:
         )
         self._initialized = False
         self._community_hierarchy = None
+        self._community_graph_rag = CommunityGraphRAG(self)
 
     def _get_session(self):
         """Get Neo4j session using lazy pool."""
@@ -218,6 +220,11 @@ class EnhancedGraphRAG:
     ) -> List[Dict[str, Any]]:
         """Run a Neo4j query with retry handling."""
         return resilient_query_sync(session, query, params)
+
+    async def execute_query(self, query: str, **params: Any) -> List[Dict[str, Any]]:
+        """Async adapter for community-aware helpers."""
+        with self._get_session() as session:
+            return self._run_query(session, query, **params)
 
     async def initialize(self) -> None:
         """
@@ -781,172 +788,34 @@ class EnhancedGraphRAG:
         return ranked_results[:top_k]
 
     async def _community_retrieve(self, query: str, top_k: int) -> List[Dict[str, Any]]:
-        """
-        Retrieve using hierarchical community detection for broader context.
-
-        Microsoft GraphRAG-style community retrieval:
-        1. Detect multi-level community hierarchy (Leiden → Louvain → components)
-        2. Match query against community entities and summaries
-        3. Walk hierarchy for broader context when needed
-        4. Return chunks from matching communities ranked by relevance
-
-        Args:
-            query: Query text
-            top_k: Number of results
-
-        Returns:
-            List of results from relevant communities
-        """
-        from .community_detection import (
-            Community,
-            CommunityHierarchy,
-            detect_communities_hierarchical,
-            summarize_all_communities,
-        )
-
-        query_terms = {term.lower() for term in query.split() if term.strip()}
-        if not query_terms:
-            logger.info(
-                "Community retrieval has no query terms - falling back to hybrid"
-            )
+        """Retrieve using Microsoft GraphRAG-style community routing."""
+        try:
+            routed = await self._community_graph_rag.query(query, top_k=top_k)
+        except Exception as exc:
+            logger.warning("Community retrieval failed: %s", exc)
             return await self._hybrid_retrieve(query, top_k)
 
-        with self._get_session() as session:
-            # Run hierarchical community detection (cached across calls)
-            if self._community_hierarchy is None:
-                try:
-                    self._community_hierarchy = detect_communities_hierarchical(session)
-                    # Generate summaries for leaf-level communities
-                    summarize_all_communities(
-                        session, self._community_hierarchy, level=0,
-                    )
-                except Exception as exc:
-                    logger.warning(f"Community detection failed: {exc}")
-                    return await self._hybrid_retrieve(query, top_k)
+        if routed.results:
+            return routed.results[:top_k]
 
-            hierarchy = self._community_hierarchy
-            if not hierarchy.communities:
-                logger.info("No communities detected - falling back to hybrid")
-                return await self._hybrid_retrieve(query, top_k)
+        logger.info("Community retrieval returned no results - falling back to hybrid")
+        return await self._hybrid_retrieve(query, top_k)
 
-            # Score communities: match query terms against entities AND summaries
-            scored_communities: list[tuple[int, float]] = []
-            for cid, community in hierarchy.communities.items():
-                score = 0.0
-                # Entity name matching
-                for entity in community.entities:
-                    entity_lower = entity.lower()
-                    for term in query_terms:
-                        if term in entity_lower:
-                            score += 2.0
-                # Summary matching
-                if community.summary:
-                    summary_lower = community.summary.lower()
-                    for term in query_terms:
-                        if term in summary_lower:
-                            score += 1.0
-                # Boost leaf-level communities (most specific)
-                if community.level == 0:
-                    score *= 1.2
+    async def detect_communities(self) -> dict[int, list[str]]:
+        """Detect graph communities and persist community nodes."""
+        return await self._community_graph_rag.detect_communities()
 
-                if score > 0:
-                    scored_communities.append((cid, score))
+    async def summarize_communities(self, llm: Any | None = None) -> dict[str, str]:
+        """Summarize detected communities for global reasoning."""
+        return await self._community_graph_rag.summarize_communities(llm=llm)
 
-            if not scored_communities:
-                # Walk up hierarchy for coarser matches
-                for cid, community in hierarchy.communities.items():
-                    if community.level > 0:
-                        for entity in community.entities:
-                            for term in query_terms:
-                                if term in entity.lower():
-                                    scored_communities.append((cid, 0.5))
-                                    break
+    async def build_community_hierarchy(self) -> dict[int, list[dict[str, Any]]]:
+        """Build multi-scale community hierarchy."""
+        return await self._community_graph_rag.build_hierarchy()
 
-            if not scored_communities:
-                logger.info(
-                    "Community retrieval found no matches - falling back to hybrid"
-                )
-                return await self._hybrid_retrieve(query, top_k)
-
-            # Sort by score, collect entity names from top communities
-            scored_communities.sort(key=lambda x: x[1], reverse=True)
-            matched_entities: list[str] = []
-            matched_community_ids: list[int] = []
-            community_summaries: dict[int, str] = {}
-
-            for cid, _ in scored_communities[:10]:
-                community = hierarchy.communities[cid]
-                matched_entities.extend(community.entities)
-                matched_community_ids.append(cid)
-                if community.summary:
-                    community_summaries[cid] = community.summary
-
-            matched_entities = sorted(set(matched_entities))
-            if not matched_entities:
-                return await self._hybrid_retrieve(query, top_k)
-
-            results = self._run_query(
-                session,
-                """
-                MATCH (e:Entity)
-                WHERE e.name IN $entities
-                MATCH (e)<-[:MENTIONS]-(c:Chunk)<-[:CONTAINS]-(d:Document)
-                WITH c, d, collect(DISTINCT e.name) AS entities,
-                     count(DISTINCT e) AS community_score
-                RETURN c.id AS chunk_id,
-                       coalesce(c.content, c.text) AS content,
-                       c.position AS position,
-                       d.id AS doc_id,
-                       d.metadata AS metadata,
-                       community_score,
-                       entities
-                ORDER BY community_score DESC, c.position ASC
-                LIMIT $top_k
-                """,
-                entities=matched_entities,
-                top_k=top_k,
-            )
-
-        formatted = []
-        for record in results:
-            entities = record.get("entities") or []
-            community_ids = sorted(
-                {
-                    hierarchy.entity_to_community.get(entity)
-                    for entity in entities
-                    if entity in hierarchy.entity_to_community
-                }
-                - {None}
-            )
-            # Attach community summaries as context
-            context_summaries = [
-                community_summaries[cid]
-                for cid in community_ids
-                if cid in community_summaries
-            ]
-            formatted.append(
-                {
-                    "chunk_id": record.get("chunk_id"),
-                    "content": record.get("content"),
-                    "position": record.get("position"),
-                    "doc_id": record.get("doc_id"),
-                    "metadata": record.get("metadata"),
-                    "score": float(record.get("community_score", 0.0)),
-                    "entities": entities,
-                    "community_ids": community_ids,
-                    "community_summaries": context_summaries,
-                    "hierarchy_method": hierarchy.detection_method,
-                    "strategy": "community",
-                }
-            )
-
-        if not formatted:
-            logger.info(
-                "Community retrieval returned no results - falling back to hybrid"
-            )
-            return await self._hybrid_retrieve(query, top_k)
-
-        return formatted[:top_k]
+    async def route_query(self, query: str) -> str:
+        """Route a query to the correct retrieval scale."""
+        return await self._community_graph_rag.route_query(query)
 
     async def _fallback_text_search(
         self, query: str, top_k: int

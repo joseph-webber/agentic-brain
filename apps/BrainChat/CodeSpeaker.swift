@@ -90,6 +90,9 @@ final class CodeSpeaker: @unchecked Sendable {
 
         // Pronounce common operators and symbols
         let replacements: [(String, String)] = [
+            ("!==", " not identical to "),
+            ("===", " identical to "),
+            ("??", " nil coalescing "),
             ("!=", " not equal to "),
             ("==", " equals equals "),
             (">=", " greater than or equal to "),
@@ -111,9 +114,6 @@ final class CodeSpeaker: @unchecked Sendable {
             result = result.replacingOccurrences(of: symbol, with: spoken)
         }
 
-        // Pronounce braces and brackets only when standalone
-        result = pronounceBraces(result)
-
         // Pronounce common keywords more clearly
         let keywordReplacements: [(String, String)] = [
             ("def ", "define function "),
@@ -129,7 +129,7 @@ final class CodeSpeaker: @unchecked Sendable {
             }
         }
 
-        return result
+        return pronounceStandaloneSymbols(in: result)
     }
 
     // MARK: - Language Detection
@@ -190,23 +190,61 @@ final class CodeSpeaker: @unchecked Sendable {
         return segments
     }
 
-    private func pronounceBraces(_ code: String) -> String {
-        var result = code
-        // Only pronounce braces at the start/end of a line (structural)
-        let trimmed = result.trimmingCharacters(in: .whitespaces)
-        if trimmed == "{" { return "open brace" }
-        if trimmed == "}" { return "close brace" }
-        if trimmed == "(" { return "open paren" }
-        if trimmed == ")" { return "close paren" }
-        if trimmed == "[" { return "open bracket" }
-        if trimmed == "]" { return "close bracket" }
+    private func pronounceStandaloneSymbols(in code: String) -> String {
+        let symbols: [Character: String] = [
+            "{": "open brace",
+            "}": "close brace",
+            "(": "open paren",
+            ")": "close paren",
+            "[": "open bracket",
+            "]": "close bracket",
+            "=": "equals",
+            "+": "plus",
+            "-": "minus",
+            "*": "times",
+            "/": "slash",
+            "%": "modulo",
+            "<": "less than",
+            ">": "greater than",
+            "!": "bang",
+            "?": "question mark",
+            ":": "colon",
+            ";": "semicolon",
+            ",": "comma",
+            ".": "dot",
+            "#": "hash",
+            "@": "at sign",
+            "$": "dollar sign",
+            "&": "ampersand",
+            "|": "pipe",
+            "\\": "backslash"
+        ]
 
-        // Trailing brace on function definitions
-        if result.hasSuffix(" {") {
-            result = String(result.dropLast(2)) + ", open brace"
+        var parts: [String] = []
+        var currentText = ""
+
+        func flushCurrentText() {
+            let trimmed = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                parts.append(trimmed)
+            }
+            currentText = ""
         }
 
-        return result
+        for character in code {
+            if let spoken = symbols[character] {
+                flushCurrentText()
+                parts.append(spoken)
+            } else {
+                currentText.append(character)
+            }
+        }
+
+        flushCurrentText()
+        return parts
+            .joined(separator: " ")
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private static let extensionToLanguage: [String: String] = [

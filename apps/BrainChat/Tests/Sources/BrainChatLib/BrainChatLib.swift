@@ -426,6 +426,8 @@ public enum VoiceOutputEngine: String, CaseIterable, Identifiable {
 
 // MARK: - Layered Response System
 
+public typealias LayerTier = LLMResponseLayer
+
 public enum LLMResponseLayer: Int, Comparable, Sendable, CustomStringConvertible {
     case instant = 1
     case fastLocal = 2

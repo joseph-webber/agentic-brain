@@ -87,7 +87,7 @@ struct WhisperResponse: Decodable {
     let text: String
 }
 
-enum WhisperError: LocalizedError {
+enum WhisperError: LocalizedError, Equatable {
     case missingAPIKey
     case invalidResponse
     case apiError(Int, String)

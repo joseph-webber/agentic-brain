@@ -1169,6 +1169,10 @@ def _register_session_routes(app) -> None:
         )
 
         logger.info(f"Deleted session: {session_id}")
+        return DeleteResponse(
+            message="Session deleted successfully",
+            resource_id=session_id,
+        )
 
     @app.delete(
         "/sessions",
@@ -1233,6 +1237,10 @@ def _register_session_routes(app) -> None:
         )
 
         logger.warning(f"Cleared all {count} sessions")
+        return DeleteResponse(
+            message=f"Cleared {count} sessions",
+            resource_id="*",
+        )
 
 
 def _register_setup_routes(app) -> None:
