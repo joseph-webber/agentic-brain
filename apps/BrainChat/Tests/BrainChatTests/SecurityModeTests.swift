@@ -53,6 +53,23 @@ final class SecurityModeTests: XCTestCase {
         XCTAssertFalse(securityManager.canExecuteCode())
     }
 
+    func testGuestCannotWebSearch() {
+        let securityManager = SecurityManager.shared
+
+        securityManager.setRole(.guest)
+
+        XCTAssertFalse(securityManager.canPerformOperation("web_search"))
+    }
+
+    func testGuestCanAccessHelpOnly() {
+        let securityManager = SecurityManager.shared
+
+        securityManager.setRole(.guest)
+
+        XCTAssertTrue(securityManager.canPerformOperation("help"))
+        XCTAssertFalse(securityManager.canPerformOperation("product_browse"))
+    }
+
     func testYoloPromptIsBlockedForNonAdminUsers() async {
         let securityManager = SecurityManager.shared
         let yolo = YoloMode(securityManager: securityManager)

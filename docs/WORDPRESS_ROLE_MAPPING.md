@@ -2,48 +2,60 @@
 
 ## Overview
 
-BrainChat respects WordPress and WooCommerce role-based access control. The chatbot can only perform actions that the authenticated WordPress user role allows, and it does so through WordPress REST API and WooCommerce REST API calls rather than direct server or database access.
+BrainChat respects WordPress and WooCommerce role-based access control. The chatbot can only perform actions that the current platform state allows, and it does so through WordPress REST API or WooCommerce APIs rather than direct server or database access.
+
+For guest sessions, the rule is context-aware: **GUEST mirrors what an unauthenticated visitor can do on the connected platform.** On WooCommerce that includes storefront and cart flows. On plain WordPress that means public content and other public interactions the site owner allows.
 
 ## How It Works
 
-1. User logs into WordPress or WooCommerce.
-2. WordPress authenticates the session and returns the user's role.
-3. BrainChat maps the WordPress role to a chatbot mode and API capability set.
-4. BrainChat calls WordPress REST API or WooCommerce REST API with the user's token.
-5. WordPress performs the final permission check on every request.
+1. BrainChat checks whether the request is anonymous, guest-session based, or authenticated.
+2. If the request is anonymous, BrainChat resolves it to `GUEST` and limits actions to public or guest-scoped APIs.
+3. If the user is authenticated, WordPress returns the user's role.
+4. BrainChat maps the WordPress role to a chatbot mode and API capability set.
+5. BrainChat calls WordPress REST API or WooCommerce API with the appropriate token or guest session context.
+6. WordPress or WooCommerce performs the final permission check on every request.
 
 ## BrainChat Mode Mapping
 
-| WordPress role | BrainChat mode | Brain runtime role | Access pattern |
+| WordPress or platform state | BrainChat mode | Brain runtime role | Access pattern |
 | --- | --- | --- | --- |
-| Subscriber | GUEST | `guest` | Public content only |
+| Unauthenticated visitor or WooCommerce guest session | GUEST | `guest` | Public WordPress content plus guest-scoped WooCommerce Store API actions |
+| Subscriber | GUEST | `guest` | Conservative public-content assistance with no machine access |
 | Customer | USER | `user` | Self-service commerce APIs |
 | Contributor | USER | `user` | Draft content APIs |
 | Author | USER | `user` | Own-content publishing APIs |
 | Editor | POWER USER | `user` | Editorial APIs across site content |
 | Shop Manager | POWER USER | `user` | WooCommerce management APIs |
-| Administrator | ADMIN (optional) | `safe_admin` or downgraded `user` | Full admin APIs if owner allows |
+| Administrator | SAFE_ADMIN by default; FULL_ADMIN only for owner-controlled sessions | `safe_admin` by default, `full_admin` for owner sessions, or downgraded `user` for API-only deployments | Full admin APIs if the owner explicitly allows them |
 
 `POWER USER` is still API-only. It means broader WordPress or WooCommerce permissions, not shell or machine access.
 
 ## Security Principles
 
-1. **No direct machine access**: customer and staff chatbots do not touch the server directly.
-2. **API-only communication**: all operations go through WordPress REST API or WooCommerce REST API.
-3. **Token-based auth**: JWT, OAuth, nonce, or application-password flows carry the user's identity.
-4. **WordPress enforces permissions**: the chatbot proposes actions; WordPress decides.
-5. **Rate limiting applies twice**: chatbot rate limits and WordPress/WooCommerce rate limits both protect the system.
+1. **No direct machine access**: customer, staff, and guest chatbots do not touch the server directly.
+2. **API-first communication**: all operations go through WordPress REST API, WooCommerce REST API, or WooCommerce Store API.
+3. **Token or session-based auth**: JWT, OAuth, nonce, application-password, cart token, or storefront session data carries identity and scope.
+4. **WordPress and WooCommerce enforce permissions**: the chatbot proposes actions; the platform decides.
+5. **Rate limiting applies twice**: chatbot rate limits and platform rate limits both protect the system.
 6. **No direct DB writes**: even administrator flows should use supported APIs.
 
 ## Role Capabilities Matrix
 
-### Subscriber → GUEST Mode
+### Unauthenticated Visitor or Guest Shopper → GUEST Mode
 
 - ✅ Ask questions about public site content
-- ✅ Get help navigating the site
-- ✅ Browse products and public documentation
-- ❌ Cannot create or edit content
-- ❌ Cannot access orders or purchases
+- ✅ Read public posts, pages, categories, and tags
+- ✅ Search products and public content
+- ✅ Browse WooCommerce products
+- ✅ Add items to a session cart
+- ✅ View the current cart
+- ✅ Select a shipping option for the current cart
+- ✅ Apply coupons to the current cart
+- ✅ Complete guest checkout if the store allows it
+- ✅ Submit comments if the site allows anonymous comments
+- ❌ Cannot access account-only or order-history data
+- ❌ Cannot create or edit protected content
+- ❌ Cannot access admin, staff, or machine-level capabilities
 
 ### Customer → USER Mode
 
@@ -89,9 +101,11 @@ BrainChat respects WordPress and WooCommerce role-based access control. The chat
 - ❌ Cannot manage users
 - ❌ Cannot change site-wide WordPress settings
 
-### Administrator → ADMIN Mode (Optional)
+### Administrator → SAFE_ADMIN / FULL_ADMIN (Optional)
 
 - ✅ Full WordPress admin API capabilities
+- ✅ Maps to `safe_admin` by default
+- ✅ May elevate to `full_admin` only for explicit owner-controlled sessions
 - ✅ May enable YOLO-style automation if the site owner explicitly allows it
 - ✅ Plugin, theme, user, and settings management through APIs
 - ⚠️ Should still use supported APIs, not direct database access
@@ -100,9 +114,9 @@ BrainChat respects WordPress and WooCommerce role-based access control. The chat
 
 These are examples of the API families the chatbot should use.
 
-| Role | Example API families |
+| Role or state | Example API families |
 | --- | --- |
-| Subscriber | `GET /wp-json/wp/v2/posts`, `GET /wp-json/wp/v2/pages`, `GET /wp-json/wc/store/v1/products` |
+| Guest session / Subscriber | `GET /wp-json/wp/v2/posts`, `GET /wp-json/wp/v2/pages`, `GET /wp-json/wp/v2/search`, `GET /wp-json/wc/store/v1/products`, `GET /wp-json/wc/store/v1/cart`, `POST /wp-json/wc/store/v1/cart/add-item`, `POST /wp-json/wc/store/v1/cart/apply-coupon`, `POST /wp-json/wc/store/v1/checkout` |
 | Customer | `GET /wp-json/wc/v3/orders?customer=<self>`, `POST /wp-json/wp/v2/users/me` |
 | Contributor | `POST /wp-json/wp/v2/posts` with `status=draft` |
 | Author | `POST /wp-json/wp/v2/posts/<id>`, `POST /wp-json/wp/v2/media` |
@@ -112,7 +126,57 @@ These are examples of the API families the chatbot should use.
 
 ## Real-World Chat Examples
 
-### Example 1: Customer asks “Where is my order?”
+### Example 1: Guest asks “Show me laptops under $1000”
+
+**Platform state:** anonymous WooCommerce visitor
+
+**Chatbot flow:**
+
+1. Resolve the session to `GUEST`.
+2. Call WooCommerce Store API product endpoints with public filters.
+3. Return matching products and optional add-to-cart actions.
+
+**Example API call**
+
+```http
+GET /wp-json/wc/store/v1/products?search=laptop&max_price=100000
+```
+
+**Allowed result**
+
+- “Here are laptops under $1000 that are in stock right now.”
+
+**Blocked result**
+
+- The chatbot must not reveal private inventory notes, draft products, or another customer's cart.
+
+### Example 2: Guest asks “Add this to my cart and use code SAVE10”
+
+**Platform state:** anonymous WooCommerce visitor with a storefront session
+
+**Chatbot flow:**
+
+1. Resolve the session to `GUEST`.
+2. Add the selected item to the current guest cart.
+3. Apply the coupon to that same guest cart.
+4. Return the updated cart summary.
+
+**Example API calls**
+
+```http
+POST /wp-json/wc/store/v1/cart/add-item
+POST /wp-json/wc/store/v1/cart/apply-coupon
+```
+
+**Allowed result**
+
+- “Done — the item is in your cart and SAVE10 has been applied to this session.”
+
+**Blocked result**
+
+- The chatbot must not access saved payment methods, customer-only coupons, or another shopper's cart.
+
+### Example 3: Customer asks “Where is my order?”
 
 **User role:** `customer`
 
@@ -137,7 +201,7 @@ Authorization: Bearer <customer-token>
 
 - The chatbot must not fetch or reveal another customer's order.
 
-### Example 2: Shop manager asks “Show me today’s sales”
+### Example 4: Shop manager asks “Show me today’s sales”
 
 **User role:** `shop_manager`
 
@@ -162,7 +226,7 @@ Authorization: Bearer <shop-manager-token>
 
 - The chatbot should not call plugin, theme, or user-management endpoints for a shop manager.
 
-### Example 3: How BrainChat should call WordPress and WooCommerce APIs
+### Example 5: How BrainChat should call WordPress and WooCommerce APIs
 
 BrainChat should act as a thin, role-aware client:
 
@@ -190,7 +254,7 @@ Key rules:
 
 - use `/wp-json/wp/v2/...` for WordPress content and admin resources
 - use `/wp-json/wc/v3/...` for authenticated WooCommerce management
-- use `/wp-json/wc/store/v1/...` for public storefront browsing when no login is required
+- use `/wp-json/wc/store/v1/...` for guest storefront browsing, cart, coupon, shipping, and checkout flows
 - never bypass WordPress permission checks with direct database or shell access
 
 ## Implementation Notes
@@ -202,3 +266,4 @@ Key rules:
   - allowed capabilities
   - representative API families
 - Administrators can be downgraded to non-admin chatbot handling when the site owner wants API-only guardrails without full automation.
+- Anonymous storefront traffic should be resolved to `GUEST` even when there is no authenticated WordPress role attached.

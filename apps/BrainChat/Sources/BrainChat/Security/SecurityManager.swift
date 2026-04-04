@@ -5,6 +5,16 @@ import SwiftUI
 @MainActor
 final class SecurityManager: ObservableObject {
     static let shared = SecurityManager()
+    static let guestBlockedOperations: Set<String> = [
+        "web_search",
+        "execute_code",
+        "file_access",
+        "shell_command",
+    ]
+    static let guestAllowedOperations: Set<String> = [
+        "help",
+        "faq",
+    ]
 
     @Published private(set) var currentRole: SecurityRole
     @Published private(set) var modeSwitchingEnabled: Bool
@@ -35,6 +45,10 @@ final class SecurityManager: ObservableObject {
         storedRole = newRole.rawValue
         defaults.set(newRole.rawValue, forKey: "securityRole")
         print("🔐 Security role changed to: \(newRole.rawValue)")
+    }
+
+    func setRole(_ newRole: SecurityRole) {
+        switchRole(to: newRole)
     }
 
     func resetToDefault() {
@@ -84,6 +98,17 @@ final class SecurityManager: ObservableObject {
 
     func requiresRestrictionConfirmation(for role: SecurityRole) -> Bool {
         role.restrictionRank < currentRole.restrictionRank
+    }
+
+    func canPerformOperation(_ operation: String) -> Bool {
+        switch currentRole {
+        case .fullAdmin, .safeAdmin:
+            return true
+        case .user:
+            return !Self.guestBlockedOperations.contains(operation)
+        case .guest:
+            return Self.guestAllowedOperations.contains(operation)
+        }
     }
 
     func yoloAccessDeniedMessage() -> String {

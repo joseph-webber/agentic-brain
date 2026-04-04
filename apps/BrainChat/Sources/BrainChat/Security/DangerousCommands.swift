@@ -2,26 +2,30 @@ import Foundation
 
 /// Database of dangerous command patterns and system paths
 struct DangerousCommands {
-    
+
+    private struct BlockedPattern {
+        let pattern: String
+        let isRegex: Bool
+    }
+
     // MARK: - Blocked Command Patterns
-    
-    static let blocked: Set<String> = [
-        "rm -rf",
-        "sudo",
-        "chmod 777",
-        "chown",
-        "dd if=",
-        "mkfs",
-        "format",
-        "> /dev/",
-        ":(){ :|:& };:",  // fork bomb
-        "shutdown",
-        "reboot",
-        "halt",
-        "init 0",
-        "init 6",
-        "|.*bash",  // piping to shell
-        "|.*sh",
+
+    private static let blockedPatterns: [BlockedPattern] = [
+        .init(pattern: "rm -rf", isRegex: false),
+        .init(pattern: "sudo", isRegex: false),
+        .init(pattern: "chmod 777", isRegex: false),
+        .init(pattern: "chown", isRegex: false),
+        .init(pattern: "dd if=", isRegex: false),
+        .init(pattern: "mkfs", isRegex: false),
+        .init(pattern: "format", isRegex: false),
+        .init(pattern: "> /dev/", isRegex: false),
+        .init(pattern: ":(){ :|:& };:", isRegex: false),
+        .init(pattern: "shutdown", isRegex: false),
+        .init(pattern: "reboot", isRegex: false),
+        .init(pattern: "halt", isRegex: false),
+        .init(pattern: "init 0", isRegex: false),
+        .init(pattern: "init 6", isRegex: false),
+        .init(pattern: #"\|\s*(?:bash|sh)\b"#, isRegex: true),
     ]
     
     // MARK: - Protected System Paths
@@ -55,27 +59,13 @@ struct DangerousCommands {
     /// Check if a command contains dangerous patterns using proper regex
     static func isCommandDangerous(_ command: String) -> Bool {
         let trimmed = command.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Check blocked patterns with proper word boundaries
-        for pattern in blocked {
-            // Escape special regex characters in the pattern
-            let escaped = NSRegularExpression.escapedPattern(for: pattern)
-            
-            // Use word boundary for patterns that should be whole words
-            let regexPattern: String
-            if pattern.contains(" ") || pattern.contains("(") || pattern.contains("|") {
-                // For multi-word patterns or special patterns, match anywhere
-                regexPattern = escaped
-            } else {
-                // For single words, use word boundaries
-                regexPattern = "\\b\(escaped)"
-            }
-            
-            if trimmed.range(of: regexPattern, options: .regularExpression) != nil {
+
+        for blockedPattern in blockedPatterns {
+            if matches(trimmed, pattern: blockedPattern) {
                 return true
             }
         }
-        
+
         // Check if accessing sensitive files
         for file in sensitiveFiles {
             let expanded = (file as NSString).expandingTildeInPath
@@ -146,5 +136,18 @@ struct DangerousCommands {
         }
         
         return nil
+    }
+
+    private static func matches(_ command: String, pattern: BlockedPattern) -> Bool {
+        let regexPattern: String
+        if pattern.isRegex {
+            regexPattern = pattern.pattern
+        } else {
+            let escaped = NSRegularExpression.escapedPattern(for: pattern.pattern)
+            let useWordBoundaries = pattern.pattern.rangeOfCharacter(from: .whitespacesAndNewlines) == nil
+            regexPattern = useWordBoundaries ? "\\b\(escaped)\\b" : escaped
+        }
+
+        return command.range(of: regexPattern, options: .regularExpression) != nil
     }
 }

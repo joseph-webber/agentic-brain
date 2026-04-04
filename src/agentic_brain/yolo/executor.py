@@ -75,18 +75,18 @@ class SecureYOLOExecutor:
         """
         Execute test command with security checks.
         
-        Requires at least USER role.
+        Requires SAFE_ADMIN or FULL_ADMIN.
         """
         guard = self._get_guard()
         
         # Check basic permission
-        if guard.role < SecurityRole.USER:
+        if guard.role < SecurityRole.SAFE_ADMIN:
             return SecureExecutionResult(
                 result=CommandExecutionResult(
                     success=False,
                     capability="run_tests",
                     command=command_text,
-                    error="Insufficient permissions: USER role or above required",
+                    error="Insufficient permissions: SAFE_ADMIN role or above required",
                     exit_code=403,
                 ),
                 role=guard.role,
@@ -123,19 +123,18 @@ class SecureYOLOExecutor:
         """
         Execute deploy command with security checks.
         
-        Requires ADMIN role for unrestricted deploy,
-        USER role can deploy to safe targets only.
+        Requires SAFE_ADMIN or FULL_ADMIN.
         """
         guard = self._get_guard()
         
         # Check basic permission - USER or above
-        if guard.role < SecurityRole.USER:
+        if guard.role < SecurityRole.SAFE_ADMIN:
             return SecureExecutionResult(
                 result=CommandExecutionResult(
                     success=False,
                     capability="deploy",
                     command=command_text,
-                    error="Insufficient permissions: USER role or above required",
+                    error="Insufficient permissions: SAFE_ADMIN role or above required",
                     exit_code=403,
                 ),
                 role=guard.role,
@@ -144,7 +143,7 @@ class SecureYOLOExecutor:
             )
         
         # For non-admin, check if command contains dangerous patterns
-        if guard.role != SecurityRole.ADMIN:
+        if guard.role != SecurityRole.FULL_ADMIN:
             # Extract actual command that would be run
             arguments = self.handlers._extract_arguments(command_text, "deploy")
             if arguments:
@@ -191,11 +190,24 @@ class SecureYOLOExecutor:
         """
         Execute status check with security checks.
         
-        Available to all roles (including GUEST).
+        Requires SAFE_ADMIN or FULL_ADMIN.
         """
         guard = self._get_guard()
         
-        # Check rate limit even for status
+        if guard.role < SecurityRole.SAFE_ADMIN:
+            return SecureExecutionResult(
+                result=CommandExecutionResult(
+                    success=False,
+                    capability="check_status",
+                    command=command_text,
+                    error="Insufficient permissions: SAFE_ADMIN role or above required",
+                    exit_code=403,
+                ),
+                role=guard.role,
+                security_checks_passed=False,
+                blocked_reason="Insufficient role",
+            )
+        
         allowed, reason = guard.check_rate_limit()
         if not allowed:
             return SecureExecutionResult(
@@ -223,18 +235,18 @@ class SecureYOLOExecutor:
         """
         Execute search command with security checks.
         
-        Requires at least USER role.
+        Requires SAFE_ADMIN or FULL_ADMIN.
         """
         guard = self._get_guard()
         
         # Check basic permission
-        if guard.role < SecurityRole.USER:
+        if guard.role < SecurityRole.SAFE_ADMIN:
             return SecureExecutionResult(
                 result=CommandExecutionResult(
                     success=False,
                     capability="search",
                     command=command_text,
-                    error="Insufficient permissions: USER role or above required",
+                    error="Insufficient permissions: SAFE_ADMIN role or above required",
                     exit_code=403,
                 ),
                 role=guard.role,
@@ -272,9 +284,9 @@ class SecureYOLOExecutor:
         
         This is the most dangerous capability - heavily restricted for non-admin.
         
-        - ADMIN: Can run anything
-        - USER: Can run only safe commands
-        - GUEST: Cannot run at all
+        - FULL_ADMIN: Can run anything
+        - SAFE_ADMIN: Can run safe commands; dangerous commands require confirmation
+        - USER/GUEST: Cannot run shell commands
         """
         guard = self._get_guard()
         

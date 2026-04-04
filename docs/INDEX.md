@@ -16,6 +16,13 @@
 - [Security Quick Start](./SECURITY_QUICKSTART.md)
 - [Security Implementation](./SECURITY_IMPLEMENTATION.md)
 
+## BrainChat
+
+- [BrainChat README](../apps/BrainChat/README.md)
+- [BrainChat Deployment Guide](../apps/BrainChat/DEPLOYMENT.md)
+- [BrainChat Voice Coding Guide](../apps/BrainChat/docs/VOICE_CODING_GUIDE.md)
+- [BrainChat Integration Review](./BRAINCHAT_INTEGRATION.md)
+
 ## Tutorials
 
 - [Tutorial index](./tutorials/README.md)

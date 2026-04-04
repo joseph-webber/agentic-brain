@@ -229,6 +229,10 @@ class AdminAuthenticator:
         Uses constant-time comparison to prevent timing attacks.
         """
         if self._admin_key is None:
+            env_key = os.getenv(ADMIN_KEY_ENV)
+            if env_key:
+                self._admin_key = env_key
+        if self._admin_key is None:
             return False
         
         return hmac.compare_digest(api_key, self._admin_key)

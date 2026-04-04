@@ -21,7 +21,14 @@ from .guards import (
     reset_security_guard,
     set_security_guard,
 )
-from .llm_guard import LLMSecurityGuard, LLMRolePermissions
+from .llm_guard import LLMRolePermissions, LLMSecurityGuard
+from .platform_security import (
+    STANDALONE_PROFILE,
+    WOOCOMMERCE_PROFILE,
+    AccessLevel,
+    PlatformSecurityProfile,
+    normalize_endpoint,
+)
 from .prompt_filter import PromptFilter, PromptFilterError
 from .roles import (
     DANGEROUS_COMMAND_PATTERNS,
@@ -31,6 +38,15 @@ from .roles import (
     get_permissions,
     is_dangerous_command,
 )
+from .tool_guard import (
+    EXPENSIVE_TOOLS,
+    block_expensive_for_guest,
+    can_use_tool,
+    check_tool_access,
+    check_web_search_allowed,
+    get_allowed_tools,
+    is_tool_expensive,
+)
 
 __all__ = [
     "BackgroundWorker",
@@ -39,7 +55,9 @@ __all__ = [
     "EventProcessor",
     "ExploreAgent",
     "LLMRolePermissions",
+    "AccessLevel",
     "LLMSecurityGuard",
+    "PlatformSecurityProfile",
     "PromptFilter",
     "PromptFilterError",
     "ROLE_PERMISSIONS",
@@ -50,10 +68,20 @@ __all__ = [
     "TaskAgent",
     "check_command_allowed",
     "check_file_access",
+    "check_tool_access",
+    "check_web_search_allowed",
     "get_or_create_guard",
+    "get_allowed_tools",
     "get_permissions",
     "get_security_guard",
     "is_dangerous_command",
+    "is_tool_expensive",
+    "STANDALONE_PROFILE",
+    "WOOCOMMERCE_PROFILE",
+    "normalize_endpoint",
+    "EXPENSIVE_TOOLS",
+    "block_expensive_for_guest",
+    "can_use_tool",
     "require_admin",
     "require_role",
     "require_user_or_above",

@@ -192,7 +192,35 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/ScriptingSupport.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SettingsView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/DangerousCommands.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/PermissionChecker.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityModeView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift"
         },
         {
           "kind" : "file",
@@ -304,7 +332,14 @@
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/ResponseWeavingView.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SSEStreamParser.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SafetyGuard.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/ScriptingSupport.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SettingsView.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/DangerousCommands.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/PermissionChecker.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityGuard.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityManager.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityModeView.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityRole.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SpatialAudio.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SpeechEngineSelector.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SpeechManager.swift.o",
@@ -535,7 +570,35 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/ScriptingSupport.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SettingsView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/DangerousCommands.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/PermissionChecker.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityGuard.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityModeView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityRole.swift.o"
         },
         {
           "kind" : "file",
@@ -641,7 +704,14 @@
         "/Users/joe/brain/agentic-brain/apps/BrainChat/ResponseWeavingView.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/SSEStreamParser.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/SafetyGuard.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/ScriptingSupport.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/SettingsView.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/DangerousCommands.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/PermissionChecker.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityModeView.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/SpatialAudio.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechEngineSelector.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift",
@@ -765,7 +835,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppleScriptTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatCLITests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatTests/SecurityFilterCompatibilityTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatTests/SecurityModeTests.swift"
         },
         {
           "kind" : "file",
@@ -821,6 +903,18 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/PermissionTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/SecurityRoleTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/YoloSecurityTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ServiceIntegrationTests.swift"
         },
         {
@@ -849,7 +943,10 @@
       "moduleOutputPath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/Modules/BrainChatTests.swiftmodule",
       "objects" : [
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/AgenticBrainIntegrationTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/AppleScriptTests.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/BrainChatCLITests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/SecurityFilterCompatibilityTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/SecurityModeTests.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/ClaudeTests.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/CopilotTests.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/FullFlowE2ETests.swift.o",
@@ -863,6 +960,9 @@
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/OllamaTests.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/PolymorphicUnitTests.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/RedpandaIntegrationTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/PermissionTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/SecurityRoleTests.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/YoloSecurityTests.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/ServiceIntegrationTests.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/SpeechVoiceEngineRuntimeTests.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/VoiceCodingTests.swift.o"
@@ -924,7 +1024,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/AppleScriptTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/BrainChatCLITests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/SecurityFilterCompatibilityTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/SecurityModeTests.swift.o"
         },
         {
           "kind" : "file",
@@ -980,6 +1092,18 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/PermissionTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/SecurityRoleTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/YoloSecurityTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/ServiceIntegrationTests.swift.o"
         },
         {
@@ -998,7 +1122,10 @@
       "prepareForIndexing" : false,
       "sources" : [
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AgenticBrainIntegrationTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppleScriptTests.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatCLITests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatTests/SecurityFilterCompatibilityTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatTests/SecurityModeTests.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ClaudeTests.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/CopilotTests.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/FullFlowE2ETests.swift",
@@ -1012,6 +1139,9 @@
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/OllamaTests.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/PolymorphicUnitTests.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/RedpandaIntegrationTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/PermissionTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/SecurityRoleTests.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/YoloSecurityTests.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ServiceIntegrationTests.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/SpeechVoiceEngineRuntimeTests.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/VoiceCodingTests.swift"
@@ -1072,7 +1202,14 @@
       "/Users/joe/brain/agentic-brain/apps/BrainChat/ResponseWeavingView.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/SSEStreamParser.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/SafetyGuard.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/ScriptingSupport.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/SettingsView.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/DangerousCommands.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/PermissionChecker.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityModeView.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/SpatialAudio.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechEngineSelector.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift",
@@ -1204,7 +1341,10 @@
       "brainchat",
       "-c",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AgenticBrainIntegrationTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppleScriptTests.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatCLITests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatTests/SecurityFilterCompatibilityTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatTests/SecurityModeTests.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ClaudeTests.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/CopilotTests.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/FullFlowE2ETests.swift",
@@ -1218,6 +1358,9 @@
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/OllamaTests.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/PolymorphicUnitTests.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/RedpandaIntegrationTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/PermissionTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/SecurityRoleTests.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/YoloSecurityTests.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/ServiceIntegrationTests.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/SpeechVoiceEngineRuntimeTests.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/VoiceCodingTests.swift",
@@ -1405,6 +1548,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/DangerousCommands.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/EventTypes.swift.o"
         },
         {
@@ -1457,6 +1604,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/PermissionChecker.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/RedpandaBridge.swift.o"
         },
         {
@@ -1478,6 +1629,26 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SafetyGuard.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/ScriptingSupport.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityGuard.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityModeView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityRole.swift.o"
         },
         {
           "kind" : "file",
@@ -1715,7 +1886,35 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/ScriptingSupport.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/SettingsView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/DangerousCommands.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/PermissionChecker.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityModeView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift"
         },
         {
           "kind" : "file",
@@ -1887,6 +2086,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/DangerousCommands.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/EventTypes.swift.o"
         },
         {
@@ -1939,6 +2142,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/PermissionChecker.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/RedpandaBridge.swift.o"
         },
         {
@@ -1960,6 +2167,26 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SafetyGuard.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/ScriptingSupport.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityGuard.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityModeView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/SecurityRole.swift.o"
         },
         {
           "kind" : "file",
@@ -2031,6 +2258,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/AppleScriptTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/BrainChatCLITests.swift.o"
         },
         {
@@ -2079,11 +2310,27 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/PermissionTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/PolymorphicUnitTests.swift.o"
         },
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/RedpandaIntegrationTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/SecurityFilterCompatibilityTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/SecurityModeTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/SecurityRoleTests.swift.o"
         },
         {
           "kind" : "file",
@@ -2096,6 +2343,10 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/VoiceCodingTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatTests.build/YoloSecurityTests.swift.o"
         }
       ],
       "outputFilePath" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatPackageTests.product/Objects.LinkFileList"
@@ -2113,7 +2364,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/AppleScriptTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatCLITests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatTests/SecurityFilterCompatibilityTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/BrainChatTests/SecurityModeTests.swift"
         },
         {
           "kind" : "file",
@@ -2166,6 +2429,18 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/RedpandaIntegrationTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/PermissionTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/SecurityRoleTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/Tests/Security/YoloSecurityTests.swift"
         },
         {
           "kind" : "file",

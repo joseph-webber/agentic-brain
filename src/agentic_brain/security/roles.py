@@ -6,9 +6,13 @@ Security roles and permissions definitions.
 
 Four-tier security model:
 - FULL_ADMIN: Complete unrestricted access (Joseph only)
-- SAFE_ADMIN: Full access with safety guardrails (Developers/Trusted admins)
+- SAFE_ADMIN: Full access with safety guardrails (developers/trusted admins)
 - USER: API-only access for customers/employees (no machine access)
-- GUEST: Very restricted, FAQ/help documentation only (anonymous visitors)
+- GUEST: Public or guest-scoped platform access plus FAQ/help content (anonymous visitors)
+
+Legacy role names remain as enum aliases for backward compatibility:
+- ADMIN -> FULL_ADMIN
+- DEVELOPER -> SAFE_ADMIN
 """
 
 from __future__ import annotations
@@ -143,6 +147,38 @@ PUBLIC_READ_PATHS: FrozenSet[str] = frozenset({
     "~/brain/agentic-brain/CHANGELOG.md",
 })
 
+# Tool whitelists by role - prevents system thrashing from expensive operations
+GUEST_ALLOWED_TOOLS: FrozenSet[str] = frozenset({
+    "help",
+    "faq",
+    "documentation",
+    "product_search",
+    "product_view",
+    "cart_view",
+    "cart_add",
+    "cart_remove",
+    "checkout",
+    "customer_support",
+    # Backwards-compatible aliases for older tool names.
+    "view_product",
+    "browse_products",
+    "view_cart",
+    "add_to_cart",
+})
+
+USER_ALLOWED_TOOLS: FrozenSet[str] = frozenset({
+    # All GUEST tools
+    *GUEST_ALLOWED_TOOLS,
+    # Plus authenticated operations
+    "view_orders",
+    "create_order",
+    "update_profile",
+    "view_account",
+    "track_shipment",
+    "submit_review",
+    "manage_wishlist",
+})
+
 
 @dataclass(frozen=True, slots=True)
 class RolePermissions:
@@ -173,8 +209,11 @@ class RolePermissions:
     # Rate limiting
     rate_limit_per_minute: int | float
     
-    # API access (WordPress REST, WooCommerce REST, etc.)
-    can_access_apis: bool
+    # API access - granular control based on authentication level
+    can_access_apis: bool  # General API access flag
+    can_access_guest_apis: bool  # Public/unauthenticated endpoints
+    can_access_authenticated_apis: bool  # User-level authenticated endpoints
+    can_access_admin_apis: bool  # Admin-level endpoints
     allowed_api_scopes: FrozenSet[str]  # "read", "write", "delete", "admin"
     
     # Content access (for GUEST role)
@@ -183,8 +222,14 @@ class RolePermissions:
     can_read_manuals: bool
     
     # Admin capabilities
-    can_access_admin_api: bool
+    can_access_admin_api: bool  # Deprecated - use can_access_admin_apis
     can_manage_users: bool
+    
+    # Tool access restrictions (NEW - prevent system thrashing)
+    can_heavy_llm: bool = False
+    can_web_search: bool = False  # Expensive operation that thrashes system
+    can_use_tools: bool = False  # General tool access gate
+    allowed_tools: FrozenSet[str] | None = None  # None = all tools, frozenset = whitelist
     
     # Compatibility / metadata helpers
     allowed_apis: FrozenSet[str] = field(default_factory=frozenset)
@@ -306,12 +351,16 @@ ROLE_PERMISSIONS: dict[SecurityRole, RolePermissions] = {
         
         # Full LLM access
         llm_access_level="full",
+        can_heavy_llm=True,
         
         # No rate limiting
         rate_limit_per_minute=float('inf'),
         
-        # Full API access
+        # Full API access at all levels
         can_access_apis=True,
+        can_access_guest_apis=True,
+        can_access_authenticated_apis=True,
+        can_access_admin_apis=True,
         allowed_api_scopes=frozenset({"read", "write", "delete", "admin"}),
         
         # Full content access
@@ -325,6 +374,11 @@ ROLE_PERMISSIONS: dict[SecurityRole, RolePermissions] = {
         allowed_apis=frozenset({"*"}),
         can_access_database=True,
         can_configure_system=True,
+        
+        # Full tool access - no restrictions
+        can_web_search=True,
+        can_use_tools=True,
+        allowed_tools=None,  # None = all tools allowed
     ),
     
     SecurityRole.SAFE_ADMIN: RolePermissions(
@@ -350,12 +404,16 @@ ROLE_PERMISSIONS: dict[SecurityRole, RolePermissions] = {
         
         # Full LLM access for development
         llm_access_level="full",
+        can_heavy_llm=True,
         
         # High rate limit for active development
         rate_limit_per_minute=1000,
         
-        # Full API access except admin scope
+        # Full API access at guest and authenticated levels, no admin
         can_access_apis=True,
+        can_access_guest_apis=True,
+        can_access_authenticated_apis=True,
+        can_access_admin_apis=False,
         allowed_api_scopes=frozenset({"read", "write", "delete"}),
         
         # Full content access
@@ -369,6 +427,11 @@ ROLE_PERMISSIONS: dict[SecurityRole, RolePermissions] = {
         allowed_apis=frozenset({"*"}),
         can_access_database=True,
         can_configure_system=True,
+        
+        # Full tool access for development
+        can_web_search=True,
+        can_use_tools=True,
+        allowed_tools=None,  # All tools allowed
     ),
     
     SecurityRole.USER: RolePermissions(
@@ -394,13 +457,17 @@ ROLE_PERMISSIONS: dict[SecurityRole, RolePermissions] = {
         
         # Chat-level LLM access
         llm_access_level="chat_only",
+        can_heavy_llm=False,
         
         # Moderate rate limit
         rate_limit_per_minute=60,
         
-        # API access only (WordPress REST, WooCommerce REST, etc.)
+        # Authenticated API access - can access user-level endpoints
         # Permissions controlled by external API's role system
         can_access_apis=True,
+        can_access_guest_apis=True,  # Can also access public endpoints
+        can_access_authenticated_apis=True,  # User-level authenticated endpoints
+        can_access_admin_apis=False,  # No admin endpoints
         allowed_api_scopes=frozenset({"read", "write"}),
         
         # Full content access
@@ -414,11 +481,18 @@ ROLE_PERMISSIONS: dict[SecurityRole, RolePermissions] = {
         allowed_apis=frozenset({"wordpress", "woocommerce"}),
         can_access_database=False,
         can_configure_system=False,
+        
+        # Limited tool access - NO web search (blocks expensive ops)
+        can_web_search=False,
+        can_use_tools=True,
+        allowed_tools=USER_ALLOWED_TOOLS,
     ),
     
     SecurityRole.GUEST: RolePermissions(
-        # Tier 4: GUEST (Very restricted)
-        # NO machine access, NO API write access
+        # Tier 4: GUEST (Context-aware public access)
+        # Mirrors platform's guest/unauthenticated capabilities
+        # NO machine access, NO authenticated API access
+        # BLOCKED from expensive operations to prevent system thrashing
         can_yolo=False,
         yolo_requires_confirmation=False,
         yolo_restrictions=frozenset(DANGEROUS_COMMAND_PATTERNS),
@@ -439,13 +513,23 @@ ROLE_PERMISSIONS: dict[SecurityRole, RolePermissions] = {
         
         # Chat only
         llm_access_level="chat_only",
+        can_heavy_llm=False,
         
         # Strict rate limit
         rate_limit_per_minute=10,
         
-        # NO API access (public content only through specific endpoints)
-        can_access_apis=False,
-        allowed_api_scopes=frozenset(),
+        # Context-aware guest API access
+        # GUEST can access public/unauthenticated endpoints (e.g., WooCommerce Store API)
+        # - Browse products, view product details
+        # - Add to cart (session-based, no account needed)
+        # - Checkout as guest
+        # - View shipping options
+        # NO access to authenticated or admin endpoints
+        can_access_apis=True,  # Changed from False - guests CAN access APIs
+        can_access_guest_apis=True,  # YES - public/guest endpoints
+        can_access_authenticated_apis=False,  # NO - no user-level endpoints
+        can_access_admin_apis=False,  # NO - no admin endpoints
+        allowed_api_scopes=frozenset({"read"}),  # Read-only for safety
         
         # Read-only content access
         can_read_faq=True,
@@ -455,9 +539,14 @@ ROLE_PERMISSIONS: dict[SecurityRole, RolePermissions] = {
         # No admin capabilities
         can_access_admin_api=False,
         can_manage_users=False,
-        allowed_apis=frozenset(),
+        allowed_apis=frozenset({"woocommerce_store", "wordpress_public"}),
         can_access_database=False,
         can_configure_system=False,
+        
+        # STRICT tool restrictions - BLOCKS system thrashing
+        can_web_search=False,  # BLOCKED - expensive, thrashes system, costs money
+        can_use_tools=True,  # Can use tools BUT only whitelisted ones
+        allowed_tools=GUEST_ALLOWED_TOOLS,  # Very limited whitelist
     ),
 }
 

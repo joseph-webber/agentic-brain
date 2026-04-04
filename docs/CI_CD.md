@@ -1010,3 +1010,32 @@ gh run rerun <run-id> --failed
 ---
 
 **Last Updated**: 2026-03-22
+
+---
+
+## BrainChat Swift CI
+
+The BrainChat Swift pipeline lives in `.github/workflows/brainchat.yml`.
+
+### Triggers
+
+- Pushes that change `apps/BrainChat/**`
+- Pushes that change `.github/workflows/brainchat.yml`
+- Pull requests that change `apps/BrainChat/**`
+
+### Job flow
+
+The `build-and-test` job runs on `macos-latest` and:
+
+1. Checks out the repository
+2. Installs Swift 5.9
+3. Builds BrainChat in release mode
+4. Runs the Swift test suite in parallel
+5. Performs a lightweight security audit for obvious hardcoded secrets
+6. On `main`, builds a macOS app bundle and uploads it as a GitHub Actions artifact
+
+### Artifact
+
+When the workflow runs on `main`, it uploads:
+
+- `BrainChat-macOS` from `apps/BrainChat/BrainChat.app`

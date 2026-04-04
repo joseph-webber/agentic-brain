@@ -44,7 +44,7 @@ enum SecurityRole: String, CaseIterable, Codable, Sendable {
         case .fullAdmin: return "Complete unrestricted access - all YOLO commands execute immediately"
         case .safeAdmin: return "Full access with confirmation dialogs for dangerous operations"
         case .user: return "API-only access - can use LLM providers, no code execution or filesystem access"
-        case .guest: return "FAQ and help only - cannot use external APIs or execute code"
+        case .guest: return "help-only access with no external APIs, code execution, or filesystem access"
         }
     }
 

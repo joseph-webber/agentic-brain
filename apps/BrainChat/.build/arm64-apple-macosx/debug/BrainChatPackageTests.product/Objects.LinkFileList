@@ -76,9 +76,13 @@
 /Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/LLMTestSupport.swift.o
 /Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/LayeredResponseTests.swift.o
 /Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/OllamaTests.swift.o
+/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/PermissionTests.swift.o
 /Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/PolymorphicUnitTests.swift.o
 /Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/RedpandaIntegrationTests.swift.o
+/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/SecurityFilterCompatibilityTests.swift.o
 /Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/SecurityModeTests.swift.o
+/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/SecurityRoleTests.swift.o
 /Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/ServiceIntegrationTests.swift.o
 /Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/SpeechVoiceEngineRuntimeTests.swift.o
 /Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/VoiceCodingTests.swift.o
+/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/debug/BrainChatTests.build/YoloSecurityTests.swift.o

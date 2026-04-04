@@ -183,11 +183,12 @@ final class AudioPlayer: ObservableObject, @unchecked Sendable {
             mScope: kAudioObjectPropertyScopeGlobal,
             mElement: kAudioObjectPropertyElementMain
         )
-        var name: CFString = "" as CFString
-        var size = UInt32(MemoryLayout<CFString>.size)
-
-        let status = AudioObjectGetPropertyData(id, &address, 0, nil, &size, &name)
-        guard status == noErr else { return nil }
+        var name: CFString?
+        var size = UInt32(MemoryLayout<CFString?>.size)
+        let status = withUnsafeMutableBytes(of: &name) { nameBytes in
+            AudioObjectGetPropertyData(id, &address, 0, nil, &size, nameBytes.baseAddress!)
+        }
+        guard status == noErr, let name else { return nil }
         return name as String
     }
 }

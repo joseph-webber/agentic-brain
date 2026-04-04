@@ -133,11 +133,13 @@ final class AppleSpeechRecognitionController: SpeechRecognitionControlling {
                     mElement: kAudioObjectPropertyElementMain
                 )
                 
-                var name: CFString = "" as CFString
-                var nameSize = UInt32(MemoryLayout<CFString>.size)
-                AudioObjectGetPropertyData(deviceID, &nameAddress, 0, nil, &nameSize, &name)
-                
-                let deviceName = name as String
+                var name: CFString?
+                var nameSize = UInt32(MemoryLayout<CFString?>.size)
+                _ = withUnsafeMutableBytes(of: &name) { nameBytes in
+                    AudioObjectGetPropertyData(deviceID, &nameAddress, 0, nil, &nameSize, nameBytes.baseAddress!)
+                }
+
+                let deviceName = (name as String?) ?? "Unknown Input Device"
                 let isAirPodsMax = deviceName.lowercased().contains("airpods max")
                 
                 devices.append(AudioDevice(id: String(deviceID), name: deviceName, isAirPodsMax: isAirPodsMax))
@@ -584,15 +586,14 @@ final class SpeechManager: ObservableObject {
             
             // Update audio level periodically
             Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
-                guard let self = self, self.isListening else {
-                    timer.invalidate()
-                    return
-                }
-                self.audioRecorder?.updateMeters()
-                let level = self.audioRecorder?.averagePower(forChannel: 0) ?? -160
-                // Convert dB to 0-1 range
-                let normalized = max(0, min(1, (level + 50) / 50))
                 Task { @MainActor in
+                    guard let self = self, self.isListening else {
+                        timer.invalidate()
+                        return
+                    }
+                    self.audioRecorder?.updateMeters()
+                    let level = self.audioRecorder?.averagePower(forChannel: 0) ?? -160
+                    let normalized = max(0, min(1, (level + 50) / 50))
                     self.audioLevel = Float(normalized)
                 }
             }

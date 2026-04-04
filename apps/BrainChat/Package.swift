@@ -15,6 +15,7 @@ let package = Package(
             path: ".",
             exclude: [
                 ".build",
+                ".swiftpm",
                 "build",
                 "Tests",
                 "Info.plist",
@@ -44,9 +45,24 @@ let package = Package(
                 "Scripts",
                 "BrainChat.entitlements",
                 "Brain Chat.app",
+                "BrainChat.app",
+                "README.md",
+                "DEPLOYMENT.md",
+                "SECURITY-QUICK-REFERENCE.md",
+                "REVIEW_SUMMARY_2026-04-04.md",
                 "docs",
                 "session-artifacts",
-                "Scripts"
+                "Scripts",
+                "4-TIER-SECURITY-SUMMARY.md",
+                "SECURITY_INTEGRATION_SUMMARY.md",
+                "verify-4-tier.sh",
+                "Security",
+                "Sources/Terminal",
+                "Sources/BrainChat/BrainChat.sdef",
+                "Sources/BrainChat/BrainChatLib.swift",
+                "Sources/BrainChat/EventTypes.swift",
+                "Sources/BrainChat/PandaproxyClient.swift",
+                "Sources/BrainChat/RedpandaBridge.swift"
             ],
             sources: [
                 "AIManager.swift",
@@ -144,7 +160,6 @@ let package = Package(
                 "SpeechEngineTests.swift",
                 "AccessibilityTests.swift",
                 "Package.swift",
-                "Security",
                 "BrainChatTests/Security",
                 "Sources",
                 "Tests"
@@ -178,7 +193,11 @@ let package = Package(
                 // E2E tests — full conversation flows, multi-provider, accessibility
                 "FullFlowE2ETests.swift",
                 "AppleScriptTests.swift",
-                "BrainChatTests/SecurityModeTests.swift"
+                "BrainChatTests/SecurityModeTests.swift",
+                "BrainChatTests/SecurityFilterCompatibilityTests.swift",
+                "Security/PermissionTests.swift",
+                "Security/SecurityRoleTests.swift",
+                "Security/YoloSecurityTests.swift"
             ]
         )
     ]

@@ -51,6 +51,13 @@ from .temporal import (
 )
 from .wordpress import WordPressAPI, WordPressRole, create_wordpress_client
 from .woocommerce import WooCommerceAPI, WooCommerceRole, create_woocommerce_client
+from .woocommerce_guest import (
+    WooCommerceGuestAPI,
+    GuestCartItem,
+    GuestCheckoutInfo,
+    create_guest_api_client,
+    WOOCOMMERCE_GUEST_ENDPOINTS,
+)
 
 __all__ = [
     # Retool
@@ -79,4 +86,10 @@ __all__ = [
     "WooCommerceAPI",
     "WooCommerceRole",
     "create_woocommerce_client",
+    # WooCommerce Guest
+    "WooCommerceGuestAPI",
+    "GuestCartItem",
+    "GuestCheckoutInfo",
+    "create_guest_api_client",
+    "WOOCOMMERCE_GUEST_ENDPOINTS",
 ]

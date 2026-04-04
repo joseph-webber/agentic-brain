@@ -65,7 +65,12 @@ struct PermissionChecker {
 
         switch role {
         case .fullAdmin, .safeAdmin:
-            return SafetyGuard.shared.evaluatePath(standardized, operation: operation.toActionCategory()) == .allowed
+            switch SafetyGuard.shared.evaluatePath(standardized, operation: operation.toActionCategory()) {
+            case .allowed, .requiresConfirmation:
+                return true
+            case .blocked:
+                return false
+            }
         case .user, .guest:
             return false
         }

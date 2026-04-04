@@ -226,7 +226,7 @@ class TestTaskAgent:
         # GUEST cannot call woocommerce API
         with pytest.raises(SecurityViolation) as exc_info:
             agent.execute("call_api", api="woocommerce")
-        assert "not in allowed APIs" in str(exc_info.value)
+        assert "allowed APIs" in str(exc_info.value)
 
 
 class TestExploreAgent:

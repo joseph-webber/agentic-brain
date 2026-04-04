@@ -41,7 +41,7 @@ class BaseSecureAgent(ABC):
         >>> agent = MyTaskAgent(security_role=SecurityRole.USER)
         >>> agent.execute("process_data", data="...")
     """
-    
+
     def __init__(
         self,
         security_role: SecurityRole = SecurityRole.USER,
@@ -60,15 +60,15 @@ class BaseSecureAgent(ABC):
         self.security_role = security_role
         self.agent_id = agent_id or f"{self.__class__.__name__}-{id(self)}"
         self.guard = SecurityGuard(security_role, audit_log=audit_log)
-        
+
         # Set the guard as the current context guard
         set_security_guard(self.guard)
-        
+
         logger.info(
             f"Initialized {self.__class__.__name__} with role {security_role.value} "
             f"(agent_id={self.agent_id})"
         )
-    
+
     def execute(self, action: str, **kwargs: Any) -> Any:
         """
         Execute an action with security enforcement.
@@ -88,7 +88,7 @@ class BaseSecureAgent(ABC):
         """
         # Pre-execution security checks based on action type
         self._check_action_allowed(action, **kwargs)
-        
+
         # Execute the implementation
         try:
             result = self._execute_impl(action, **kwargs)
@@ -103,7 +103,7 @@ class BaseSecureAgent(ABC):
                 exc_info=True
             )
             raise
-    
+
     @abstractmethod
     def _execute_impl(self, action: str, **kwargs: Any) -> Any:
         """
@@ -120,7 +120,7 @@ class BaseSecureAgent(ABC):
             Implementation-specific result
         """
         pass
-    
+
     def _check_action_allowed(self, action: str, **kwargs: Any) -> None:
         """
         Check if an action is allowed based on role and action type.
@@ -143,7 +143,7 @@ class BaseSecureAgent(ABC):
                     action,
                     command[:100]
                 )
-        
+
         # File write check
         elif action in ("write_file", "create_file", "delete_file", "modify_file"):
             path = kwargs.get("path", "")
@@ -155,7 +155,7 @@ class BaseSecureAgent(ABC):
                     action,
                     str(path)
                 )
-        
+
         # File read check (for restricted roles)
         elif action in ("read_file", "list_directory") and self.security_role < SecurityRole.USER:
             path = kwargs.get("path", "")
@@ -167,7 +167,7 @@ class BaseSecureAgent(ABC):
                     action,
                     str(path)
                 )
-        
+
         # Code execution check
         elif action in ("execute_code", "eval", "exec"):
             allowed, reason = self.guard.check_code_execution()
@@ -177,7 +177,7 @@ class BaseSecureAgent(ABC):
                     self.security_role,
                     action,
                 )
-        
+
         # Config modification check
         elif action in ("modify_config", "update_settings", "change_config"):
             allowed, reason = self.guard.check_config_modification()
@@ -187,7 +187,7 @@ class BaseSecureAgent(ABC):
                     self.security_role,
                     action,
                 )
-        
+
         # Admin API check
         elif action in ("admin_api", "manage_users", "system_control"):
             allowed, reason = self.guard.check_admin_api_access()
@@ -197,7 +197,7 @@ class BaseSecureAgent(ABC):
                     self.security_role,
                     action,
                 )
-        
+
         # Secrets access check
         elif action in ("read_secret", "access_credentials", "get_api_key"):
             allowed, reason = self.guard.check_secrets_access()
@@ -207,7 +207,7 @@ class BaseSecureAgent(ABC):
                     self.security_role,
                     action,
                 )
-        
+
         # Rate limit check (for all actions)
         allowed, reason = self.guard.check_rate_limit()
         if not allowed:
@@ -216,7 +216,7 @@ class BaseSecureAgent(ABC):
                 self.security_role,
                 action,
             )
-    
+
     def get_permissions_summary(self) -> Dict[str, Any]:
         """
         Get a summary of this agent's permissions.
@@ -234,6 +234,8 @@ class BaseSecureAgent(ABC):
             "can_execute_code": perms.can_execute_code,
             "can_modify_config": perms.can_modify_config,
             "can_access_secrets": perms.can_access_secrets,
+            "can_access_admin_api": perms.can_access_admin_api,
+            "can_manage_users": perms.can_manage_users,
             "can_access_apis": perms.can_access_apis,
             "llm_access_level": perms.llm_access_level,
             "rate_limit_per_minute": perms.rate_limit_per_minute,
@@ -241,7 +243,7 @@ class BaseSecureAgent(ABC):
             "allowed_apis": list(perms.allowed_apis),
             "allowed_api_scopes": list(perms.allowed_api_scopes) if perms.allowed_api_scopes else [],
         }
-    
+
     def get_audit_log(self) -> list[Dict[str, Any]]:
         """
         Get the security audit log for this agent.
@@ -250,7 +252,7 @@ class BaseSecureAgent(ABC):
             List of audit log entries
         """
         return self.guard.get_audit_log()
-    
+
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}("
@@ -265,16 +267,17 @@ class TaskAgent(BaseSecureAgent):
     
     This demonstrates how to implement a concrete agent type.
     """
-    
+
     def _execute_impl(self, action: str, **kwargs: Any) -> Any:
         """Execute a task-specific action."""
         if action == "process_task":
             task_data = kwargs.get("task_data", {})
             # Process the task...
             return {"status": "completed", "result": task_data}
-        
+
         elif action == "call_api":
             api_name = kwargs.get("api", "")
+            endpoint = kwargs.get("endpoint")
             # Check if API access is allowed
             if not self.guard.permissions.can_access_apis:
                 raise SecurityViolation(
@@ -283,7 +286,16 @@ class TaskAgent(BaseSecureAgent):
                     action,
                     api_name
                 )
-            if (
+            if endpoint:
+                allowed, reason = self.guard.check_platform_endpoint(endpoint)
+                if not allowed:
+                    raise SecurityViolation(
+                        reason or "Platform endpoint not allowed",
+                        self.security_role,
+                        action,
+                        endpoint,
+                    )
+            elif (
                 self.guard.permissions.allowed_apis
                 and "*" not in self.guard.permissions.allowed_apis
                 and api_name not in self.guard.permissions.allowed_apis
@@ -295,8 +307,8 @@ class TaskAgent(BaseSecureAgent):
                     api_name,
                 )
             # Call the API...
-            return {"api": api_name, "result": "success"}
-        
+            return {"api": api_name, "endpoint": endpoint, "result": "success"}
+
         else:
             raise ValueError(f"Unknown action: {action}")
 
@@ -308,19 +320,19 @@ class ExploreAgent(BaseSecureAgent):
     Used for exploring codebases, researching information, etc.
     Typically runs at USER or SAFE_ADMIN level.
     """
-    
+
     def _execute_impl(self, action: str, **kwargs: Any) -> Any:
         """Execute an exploration action."""
         if action == "explore_codebase":
             path = kwargs.get("path", "")
             # Exploration logic...
             return {"explored": path, "findings": []}
-        
+
         elif action == "research_topic":
             topic = kwargs.get("topic", "")
             # Research logic...
             return {"topic": topic, "results": []}
-        
+
         else:
             raise ValueError(f"Unknown action: {action}")
 
@@ -331,14 +343,14 @@ class BackgroundWorker(BaseSecureAgent):
     
     Processes background jobs, queued tasks, etc.
     """
-    
+
     def _execute_impl(self, action: str, **kwargs: Any) -> Any:
         """Execute a background worker action."""
         if action == "process_job":
             job_data = kwargs.get("job", {})
             # Process the job...
             return {"job_id": job_data.get("id"), "status": "completed"}
-        
+
         else:
             raise ValueError(f"Unknown action: {action}")
 
@@ -349,7 +361,7 @@ class EventProcessor(BaseSecureAgent):
     
     Handles events from event bus, webhooks, etc.
     """
-    
+
     def _execute_impl(self, action: str, **kwargs: Any) -> Any:
         """Execute event processing."""
         if action == "process_event":
@@ -357,6 +369,6 @@ class EventProcessor(BaseSecureAgent):
             event_type = event_data.get("type", "")
             # Process the event...
             return {"event_type": event_type, "processed": True}
-        
+
         else:
             raise ValueError(f"Unknown action: {action}")

@@ -1,0 +1,55 @@
+name: BrainChat Swift CI
+
+on:
+  push:
+    paths:
+      - 'apps/BrainChat/**'
+      - '.github/workflows/brainchat.yml'
+  pull_request:
+    paths:
+      - 'apps/BrainChat/**'
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: '5.9'
+
+      - name: Build
+        working-directory: apps/BrainChat
+        run: swift build -c release
+
+      - name: Test
+        working-directory: apps/BrainChat
+        run: swift test --parallel
+
+      - name: Security Audit
+        working-directory: apps/BrainChat
+        run: |
+          # Check for hardcoded secrets
+          ! grep -RInE "password[[:space:]]*=" Sources/ || echo "Review passwords"
+          ! grep -RInE "api_key[[:space:]]*=" Sources/ || echo "Review API keys"
+
+      - name: Build App Bundle (macOS)
+        if: github.ref == 'refs/heads/main'
+        working-directory: apps/BrainChat
+        run: |
+          swift build -c release
+          # Create app bundle structure
+          mkdir -p BrainChat.app/Contents/MacOS
+          BIN_PATH="$(find .build -type f -name BrainChat | grep '/release/' | head -1)"
+          test -n "$BIN_PATH"
+          cp "$BIN_PATH" BrainChat.app/Contents/MacOS/
+
+      - name: Upload Artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: BrainChat-macOS
+          path: apps/BrainChat/BrainChat.app

@@ -4,7 +4,7 @@ import Combine
 import Foundation
 
 @MainActor
-final class VoiceManager: ObservableObject {
+final class VoiceManager: NSObject, ObservableObject {
     @Published var isSpeaking = false
     @Published var availableVoices: [VoiceInfo] = []
     @Published var selectedVoiceName: String = "Karen (Premium)"
@@ -13,15 +13,14 @@ final class VoiceManager: ObservableObject {
     @Published var currentEngine: VoiceOutputEngine = .macOS
     @Published var engineStatus: String = "Ready"
 
-    private let synthesizer = NSSpeechSynthesizer()
+    private let synthesizer = AVSpeechSynthesizer()
     private let cartesiaVoice: CartesiaVoice
     private let piperVoice: PiperVoiceEngine
     private let elevenLabsVoice: ElevenLabsVoiceEngine
+    private let speechDelegate = SpeechDelegate()
 
-    private var delegate: SpeechDelegate?
     private var speechQueue: [String] = []
     private var isProcessingQueue = false
-    private var currentUtteranceID: UUID?
     private var cancellables = Set<AnyCancellable>()
 
     private var voiceOverActive: Bool {
@@ -35,7 +34,7 @@ final class VoiceManager: ObservableObject {
         let isPremium: Bool
     }
 
-    convenience init() {
+    override convenience init() {
         self.init(cartesiaVoice: CartesiaVoice(), piperVoice: PiperVoiceEngine(), elevenLabsVoice: ElevenLabsVoiceEngine())
     }
 
@@ -47,8 +46,9 @@ final class VoiceManager: ObservableObject {
         self.cartesiaVoice = cartesiaVoice
         self.piperVoice = piperVoice
         self.elevenLabsVoice = elevenLabsVoice
-        delegate = SpeechDelegate(manager: self)
-        synthesizer.delegate = delegate
+        super.init()
+        speechDelegate.manager = self
+        synthesizer.delegate = speechDelegate
         bindExternalEngines()
         loadVoices()
         selectVoice(named: selectedVoiceName)
@@ -56,15 +56,13 @@ final class VoiceManager: ObservableObject {
     }
 
     func loadVoices() {
-        let voices = NSSpeechSynthesizer.availableVoices.compactMap { voiceID -> VoiceInfo? in
-            guard
-                let attributes = NSSpeechSynthesizer.attributes(forVoice: voiceID) as? [String: Any],
-                let name = attributes[NSSpeechSynthesizer.VoiceAttributeKey.name.rawValue] as? String,
-                let language = attributes[NSSpeechSynthesizer.VoiceAttributeKey.localeIdentifier.rawValue] as? String
-            else {
-                return nil
-            }
-            return VoiceInfo(id: voiceID.rawValue, name: name, language: language, isPremium: name.contains("Premium") || name.contains("Enhanced"))
+        let voices = AVSpeechSynthesisVoice.speechVoices().map { voice in
+            VoiceInfo(
+                id: voice.identifier,
+                name: voice.name,
+                language: voice.language,
+                isPremium: voice.name.contains("Premium") || voice.name.contains("Enhanced")
+            )
         }
 
         availableVoices = voices.sorted { left, right in
@@ -81,7 +79,6 @@ final class VoiceManager: ObservableObject {
     }
 
     func selectVoice(named name: String) {
-        selectedVoiceName = name
         if let voice = availableVoices.first(where: {
             $0.name.localizedCaseInsensitiveContains(name)
                 || $0.name.localizedCaseInsensitiveContains(name.replacingOccurrences(of: " (Premium)", with: ""))
@@ -91,13 +88,13 @@ final class VoiceManager: ObservableObject {
             selectVoice(byID: karenVoice.id)
         }
 
-        cartesiaVoice.selectVoice(matching: selectedVoiceName)
-        elevenLabsVoice.selectVoice(matching: selectedVoiceName)
+        selectedVoiceName = name
+        cartesiaVoice.selectVoice(matching: name)
+        elevenLabsVoice.selectVoice(matching: name)
     }
 
     func selectVoice(byID id: String) {
         guard let voice = availableVoices.first(where: { $0.id == id }) else { return }
-        synthesizer.setVoice(NSSpeechSynthesizer.VoiceName(rawValue: voice.id))
         selectedVoiceID = voice.id
         selectedVoiceName = voice.name
     }
@@ -112,12 +109,11 @@ final class VoiceManager: ObservableObject {
     }
 
     func speak(_ text: String) {
-        if announceWithVoiceOverIfNeeded(text) {
-            return
-        }
-
         switch currentEngine {
         case .macOS:
+            if announceWithVoiceOverIfNeeded(text) {
+                return
+            }
             speechQueue.append(text)
             processQueue()
         case .cartesia:
@@ -131,14 +127,12 @@ final class VoiceManager: ObservableObject {
 
     func speakImmediately(_ text: String) {
         stop()
-        if announceWithVoiceOverIfNeeded(text) {
-            return
-        }
-
         switch currentEngine {
         case .macOS:
+            if announceWithVoiceOverIfNeeded(text) {
+                return
+            }
             speechQueue.removeAll()
-            synthesizer.rate = speechRate
             isProcessingQueue = true
             let started = startSpeaking(text)
             if !started {
@@ -158,8 +152,7 @@ final class VoiceManager: ObservableObject {
     }
 
     func stop() {
-        currentUtteranceID = nil
-        synthesizer.stopSpeaking()
+        synthesizer.stopSpeaking(at: .immediate)
         speechQueue.removeAll()
         isProcessingQueue = false
         cartesiaVoice.cancelCurrentSpeech(clearQueue: true)
@@ -250,7 +243,6 @@ final class VoiceManager: ObservableObject {
 
         isProcessingQueue = true
         let text = speechQueue.removeFirst()
-        synthesizer.rate = speechRate
         let started = startSpeaking(text)
         if !started {
             isSpeaking = false
@@ -263,17 +255,12 @@ final class VoiceManager: ObservableObject {
 
     @discardableResult
     private func startSpeaking(_ text: String) -> Bool {
-        let utteranceID = UUID()
-        currentUtteranceID = utteranceID
-        let started = synthesizer.startSpeaking(text)
-        if !started, currentUtteranceID == utteranceID {
-            currentUtteranceID = nil
-        }
-        return started
-    }
-
-    fileprivate func currentSpeechUtteranceID() -> UUID? {
-        currentUtteranceID
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.rate = mappedSpeechRate
+        utterance.voice = selectedVoiceID.flatMap { AVSpeechSynthesisVoice(identifier: $0) }
+            ?? AVSpeechSynthesisVoice(language: "en-AU")
+        synthesizer.speak(utterance)
+        return true
     }
 
     private func announceWithVoiceOverIfNeeded(_ text: String) -> Bool {
@@ -289,10 +276,8 @@ final class VoiceManager: ObservableObject {
         return true
     }
 
-    fileprivate func didFinishSpeaking(for utteranceID: UUID?) {
-        guard let utteranceID, utteranceID == currentUtteranceID else { return }
-
-        currentUtteranceID = nil
+    fileprivate func didFinishSpeaking() {
+        guard currentEngine == .macOS else { return }
         isProcessingQueue = false
         if speechQueue.isEmpty {
             isSpeaking = false
@@ -300,19 +285,28 @@ final class VoiceManager: ObservableObject {
             processQueue()
         }
     }
-}
 
-private final class SpeechDelegate: NSObject, NSSpeechSynthesizerDelegate {
-    weak var manager: VoiceManager?
-
-    init(manager: VoiceManager) {
-        self.manager = manager
+    private var mappedSpeechRate: Float {
+        let clampedWPM = min(max(speechRate, 100.0), 250.0)
+        let normalized = (clampedWPM - 100.0) / 150.0
+        return AVSpeechUtteranceMinimumSpeechRate
+            + normalized * (AVSpeechUtteranceMaximumSpeechRate - AVSpeechUtteranceMinimumSpeechRate)
     }
 
-    func speechSynthesizer(_ sender: NSSpeechSynthesizer, didFinishSpeaking finishedSpeaking: Bool) {
-        let utteranceID = manager?.currentSpeechUtteranceID()
-        Task { @MainActor in
-            manager?.didFinishSpeaking(for: utteranceID)
+}
+
+private final class SpeechDelegate: NSObject, AVSpeechSynthesizerDelegate {
+    weak var manager: VoiceManager?
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        Task { @MainActor [weak manager] in
+            manager?.didFinishSpeaking()
+        }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        Task { @MainActor [weak manager] in
+            manager?.didFinishSpeaking()
         }
     }
 }

@@ -26,10 +26,10 @@ pip install agentic-brain
 [![PyPI version](https://img.shields.io/pypi/v/agentic-brain?color=blue&logo=pypi&logoColor=white)](https://pypi.org/project/agentic-brain/)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue?logo=python&logoColor=white)](https://pypi.org/project/agentic-brain/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue?logo=apache)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-4700%2B-brightgreen?logo=pytest)](./tests)
+[![Tests](https://img.shields.io/badge/tests-7100%2B-brightgreen?logo=pytest)](./tests)
 [![Battle Tested](https://img.shields.io/badge/battle%20tested-production%20ready-blue)](./docs/TESTING.md)
 
-<p><strong>4,700+ tests</strong> across unit, integration &amp; E2E • <strong>95%+ coverage</strong> • <strong>48</strong> WooCommerce-specific tests.</p>
+<p><strong>7,100+ tests</strong> across unit, integration &amp; E2E • <strong>95%+ coverage</strong> • <strong>48</strong> WooCommerce-specific tests.</p>
 
 <!-- COMPLIANCE & SECURITY -->
 [![SOC 2 Ready](https://img.shields.io/badge/SOC_2-Ready-FF6B35?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAxTDMgNXY2YzAgNS41NSAzLjg0IDEwLjc0IDkgMTIgNS4xNi0xLjI2IDktNi40NSA5LTEyVjVsLTktNHoiLz48L3N2Zz4=)](./docs/COMPLIANCE.md)
@@ -323,7 +323,7 @@ and keeps the stack constrained to a single VM for demos.
 <td align="center"><h2>42</h2><sub>Deployment Modes</sub></td>
 <td align="center"><h2>180+</h2><sub>Voice Options*</sub></td>
 <td align="center"><h2>27</h2><sub>Durability Modules</sub></td>
-<td align="center"><h2>4700+</h2><sub>CI Tests Passing</sub></td>
+<td align="center"><h2>7100+</h2><sub>CI Tests Passing</sub></td>
 </tr>
 </table>
 <p><sub>* Voice Options: 145+ macOS voices + 35+ cloud TTS voices (varies by OS and provider).</sub></p>
@@ -1998,7 +1998,7 @@ git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 pip install -e ".[dev]"
 
-pytest tests/ -v           # 4,700+ tests
+pytest tests/ -v           # 7,100+ tests
 pre-commit run --all-files # Linting
 mypy src/                  # Type checking
 ```

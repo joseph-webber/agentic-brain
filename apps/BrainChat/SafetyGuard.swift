@@ -59,84 +59,89 @@ struct AuditEntry: Identifiable, Codable, Sendable {
 final class SafetyGuard: @unchecked Sendable {
     static let shared = SafetyGuard()
 
+    private struct SafetyRule {
+        let pattern: String
+        let reason: String
+        let isRegex: Bool
+    }
+
     // MARK: - Blocked Patterns (NEVER allowed, even in YOLO)
 
-    private let blockedPatterns: [(pattern: String, reason: String)] = [
+    private let blockedPatterns: [SafetyRule] = [
         // Destructive filesystem operations
-        ("rm -rf /", "Recursive delete of root filesystem"),
-        ("rm -rf ~", "Recursive delete of home directory"),
-        ("rm -rf /*", "Wildcard delete of root"),
-        ("rm -rf $HOME", "Delete home via variable"),
-        ("rm -rf .", "Recursive delete of current directory"),
-        (":(){:|:&};:", "Fork bomb"),
-        ("mkfs", "Format filesystem"),
-        ("dd if=/dev/zero", "Overwrite disk with zeros"),
-        ("dd if=/dev/random", "Overwrite disk with random data"),
-        ("> /dev/sda", "Direct disk write"),
+        .init(pattern: "rm -rf /", reason: "Recursive delete of root filesystem", isRegex: false),
+        .init(pattern: "rm -rf ~", reason: "Recursive delete of home directory", isRegex: false),
+        .init(pattern: "rm -rf /*", reason: "Wildcard delete of root", isRegex: false),
+        .init(pattern: "rm -rf $HOME", reason: "Delete home via variable", isRegex: false),
+        .init(pattern: "rm -rf .", reason: "Recursive delete of current directory", isRegex: false),
+        .init(pattern: ":(){:|:&};:", reason: "Fork bomb", isRegex: false),
+        .init(pattern: "mkfs", reason: "Format filesystem", isRegex: false),
+        .init(pattern: "dd if=/dev/zero", reason: "Overwrite disk with zeros", isRegex: false),
+        .init(pattern: "dd if=/dev/random", reason: "Overwrite disk with random data", isRegex: false),
+        .init(pattern: "> /dev/sda", reason: "Direct disk write", isRegex: false),
 
         // System control
-        ("shutdown", "System shutdown"),
-        ("reboot", "System reboot"),
-        ("halt", "System halt"),
-        ("init 0", "System halt via init"),
-        ("init 6", "System reboot via init"),
+        .init(pattern: "shutdown", reason: "System shutdown", isRegex: false),
+        .init(pattern: "reboot", reason: "System reboot", isRegex: false),
+        .init(pattern: "halt", reason: "System halt", isRegex: false),
+        .init(pattern: "init 0", reason: "System halt via init", isRegex: false),
+        .init(pattern: "init 6", reason: "System reboot via init", isRegex: false),
 
         // Privilege escalation
-        ("sudo rm", "Privileged deletion"),
-        ("sudo dd", "Privileged disk write"),
-        ("chmod -R 777 /", "Remove all file permissions on root"),
-        ("chmod 000 /", "Lock out root filesystem"),
-        ("chown -R", "Recursive ownership change"),
+        .init(pattern: "sudo rm", reason: "Privileged deletion", isRegex: false),
+        .init(pattern: "sudo dd", reason: "Privileged disk write", isRegex: false),
+        .init(pattern: "chmod -R 777 /", reason: "Remove all file permissions on root", isRegex: false),
+        .init(pattern: "chmod 000 /", reason: "Lock out root filesystem", isRegex: false),
+        .init(pattern: "chown -R", reason: "Recursive ownership change", isRegex: false),
 
         // Credential theft
-        ("curl.*|.*bash", "Piping remote script to shell"),
-        ("wget.*|.*sh", "Piping remote script to shell"),
-        ("/etc/passwd", "Accessing system password file"),
-        ("/etc/shadow", "Accessing system shadow file"),
-        ("ssh-keygen -R", "Removing SSH known hosts"),
+        .init(pattern: #"\b(?:curl|wget)\b.*\|\s*(?:bash|sh)\b"#, reason: "Piping remote script to shell", isRegex: true),
+        .init(pattern: "/etc/passwd", reason: "Accessing system password file", isRegex: false),
+        .init(pattern: "/etc/shadow", reason: "Accessing system shadow file", isRegex: false),
+        .init(pattern: "ssh-keygen -R", reason: "Removing SSH known hosts", isRegex: false),
 
         // macOS-specific dangers
-        ("csrutil disable", "Disabling System Integrity Protection"),
-        ("nvram", "Modifying firmware settings"),
-        ("diskutil eraseDisk", "Erasing entire disk"),
-        ("launchctl unload.*com.apple", "Unloading Apple system services"),
+        .init(pattern: "csrutil disable", reason: "Disabling System Integrity Protection", isRegex: false),
+        .init(pattern: "nvram", reason: "Modifying firmware settings", isRegex: false),
+        .init(pattern: "diskutil eraseDisk", reason: "Erasing entire disk", isRegex: false),
+        .init(pattern: #"launchctl unload.*com\.apple"#, reason: "Unloading Apple system services", isRegex: true),
     ]
 
     // MARK: - Confirmation Required Patterns
 
-    private let confirmationPatterns: [(pattern: String, reason: String)] = [
+    private let confirmationPatterns: [SafetyRule] = [
         // File deletion (any form)
-        ("rm ", "Deleting files"),
-        ("trash ", "Moving files to trash"),
-        ("unlink ", "Removing file links"),
+        .init(pattern: "rm ", reason: "Deleting files", isRegex: false),
+        .init(pattern: "trash ", reason: "Moving files to trash", isRegex: false),
+        .init(pattern: "unlink ", reason: "Removing file links", isRegex: false),
 
         // Git operations affecting remote
-        ("git push.*main", "Pushing to main branch"),
-        ("git push.*master", "Pushing to master branch"),
-        ("git push --force", "Force pushing (rewrites history)"),
-        ("git push -f", "Force pushing (rewrites history)"),
-        ("git reset --hard", "Hard reset (discards changes)"),
-        ("git clean -fd", "Cleaning untracked files"),
-        ("git checkout -- .", "Discarding all local changes"),
-        ("git branch -D", "Force deleting a branch"),
-        ("git rebase.*main", "Rebasing onto main"),
+        .init(pattern: #"git push.*main"#, reason: "Pushing to main branch", isRegex: true),
+        .init(pattern: #"git push.*master"#, reason: "Pushing to master branch", isRegex: true),
+        .init(pattern: "git push --force", reason: "Force pushing (rewrites history)", isRegex: false),
+        .init(pattern: "git push -f", reason: "Force pushing (rewrites history)", isRegex: false),
+        .init(pattern: "git reset --hard", reason: "Hard reset (discards changes)", isRegex: false),
+        .init(pattern: "git clean -fd", reason: "Cleaning untracked files", isRegex: false),
+        .init(pattern: "git checkout -- .", reason: "Discarding all local changes", isRegex: false),
+        .init(pattern: "git branch -D", reason: "Force deleting a branch", isRegex: false),
+        .init(pattern: #"git rebase.*main"#, reason: "Rebasing onto main", isRegex: true),
 
         // Package management
-        ("pip install", "Installing Python packages"),
-        ("npm install", "Installing Node packages"),
-        ("brew install", "Installing Homebrew packages"),
-        ("brew uninstall", "Removing Homebrew packages"),
+        .init(pattern: "pip install", reason: "Installing Python packages", isRegex: false),
+        .init(pattern: "npm install", reason: "Installing Node packages", isRegex: false),
+        .init(pattern: "brew install", reason: "Installing Homebrew packages", isRegex: false),
+        .init(pattern: "brew uninstall", reason: "Removing Homebrew packages", isRegex: false),
 
         // System modifications
-        ("defaults write", "Modifying macOS preferences"),
-        ("launchctl", "Managing system services"),
-        ("killall", "Killing processes by name"),
-        ("pkill", "Killing processes by pattern"),
+        .init(pattern: "defaults write", reason: "Modifying macOS preferences", isRegex: false),
+        .init(pattern: "launchctl", reason: "Managing system services", isRegex: false),
+        .init(pattern: "killall", reason: "Killing processes by name", isRegex: false),
+        .init(pattern: "pkill", reason: "Killing processes by pattern", isRegex: false),
 
         // Network
-        ("curl -X POST", "Making POST requests"),
-        ("curl -X DELETE", "Making DELETE requests"),
-        ("curl -X PUT", "Making PUT requests"),
+        .init(pattern: "curl -X POST", reason: "Making POST requests", isRegex: false),
+        .init(pattern: "curl -X DELETE", reason: "Making DELETE requests", isRegex: false),
+        .init(pattern: "curl -X PUT", reason: "Making PUT requests", isRegex: false),
     ]
 
     // MARK: - Safe Directories (YOLO can write here freely)
@@ -168,24 +173,8 @@ final class SafetyGuard: @unchecked Sendable {
     func evaluate(command: String, category: ActionCategory) -> SafetyVerdict {
         let lower = command.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Check blocklist first (highest priority) - use proper regex matching
-        for entry in blockedPatterns {
-            let pattern = entry.pattern.lowercased()
-            let escaped = NSRegularExpression.escapedPattern(for: pattern)
-            
-            // Use regex with word boundaries for better matching
-            let regexPattern: String
-            if pattern.contains(" ") || pattern.contains("*") || pattern.contains(".") {
-                // For patterns with spaces or wildcards, match anywhere
-                regexPattern = escaped.replacingOccurrences(of: "\\*", with: ".*")
-            } else {
-                // For single words, use word boundaries
-                regexPattern = "\\b\(escaped)"
-            }
-            
-            if lower.range(of: regexPattern, options: .regularExpression) != nil {
+        for entry in blockedPatterns where matches(lower, rule: entry) {
                 return .blocked(reason: entry.reason)
-            }
         }
 
         // Always-safe commands pass through
@@ -214,26 +203,16 @@ final class SafetyGuard: @unchecked Sendable {
             return .allowed
 
         case .gitOperation:
-            // Check confirmation patterns for dangerous git ops - use regex
             for entry in confirmationPatterns where entry.pattern.hasPrefix("git") {
-                let pattern = entry.pattern.lowercased()
-                let escaped = NSRegularExpression.escapedPattern(for: pattern)
-                let regexPattern = pattern.contains(" ") ? escaped : "\\b\(escaped)"
-                
-                if lower.range(of: regexPattern, options: .regularExpression) != nil {
+                if matches(lower, rule: entry) {
                     return .requiresConfirmation(reason: entry.reason)
                 }
             }
             return .allowed
 
         case .shellCommand:
-            // Check all confirmation patterns - use regex
             for entry in confirmationPatterns {
-                let pattern = entry.pattern.lowercased()
-                let escaped = NSRegularExpression.escapedPattern(for: pattern)
-                let regexPattern = pattern.contains(" ") ? escaped : "\\b\(escaped)"
-                
-                if lower.range(of: regexPattern, options: .regularExpression) != nil {
+                if matches(lower, rule: entry) {
                     return .requiresConfirmation(reason: entry.reason)
                 }
             }
@@ -244,11 +223,7 @@ final class SafetyGuard: @unchecked Sendable {
 
         case .network:
             for entry in confirmationPatterns where entry.pattern.hasPrefix("curl") {
-                let pattern = entry.pattern.lowercased()
-                let escaped = NSRegularExpression.escapedPattern(for: pattern)
-                let regexPattern = pattern.contains(" ") ? escaped : "\\b\(escaped)"
-                
-                if lower.range(of: regexPattern, options: .regularExpression) != nil {
+                if matches(lower, rule: entry) {
                     return .requiresConfirmation(reason: entry.reason)
                 }
             }
@@ -296,6 +271,19 @@ final class SafetyGuard: @unchecked Sendable {
         }
 
         return .allowed
+    }
+
+    private func matches(_ command: String, rule: SafetyRule) -> Bool {
+        let regexPattern: String
+        if rule.isRegex {
+            regexPattern = rule.pattern.lowercased()
+        } else {
+            let escaped = NSRegularExpression.escapedPattern(for: rule.pattern.lowercased())
+            let useWordBoundaries = rule.pattern.rangeOfCharacter(from: .whitespacesAndNewlines) == nil
+            regexPattern = useWordBoundaries ? "\\b\(escaped)\\b" : escaped
+        }
+
+        return command.range(of: regexPattern, options: .regularExpression) != nil
     }
 
     // MARK: - Audit Logging

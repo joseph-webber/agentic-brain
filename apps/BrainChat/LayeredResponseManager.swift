@@ -475,7 +475,7 @@ final class LayeredResponseManager: ObservableObject {
         let consensusResults = ManagedCriticalState<[LayerResult]>([])
 
         await withTaskGroup(of: LayerResult.self) { group in
-            for (provider, name) in activePairs {
+            for (provider, _) in activePairs {
                 group.addTask {
                     await self.runDeepLayer(
                         provider: provider, messages: messages,

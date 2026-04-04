@@ -39,7 +39,14 @@
 /Users/joe/brain/agentic-brain/apps/BrainChat/ResponseWeavingView.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/SSEStreamParser.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/SafetyGuard.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/ScriptingSupport.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/SettingsView.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/DangerousCommands.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/PermissionChecker.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityGuard.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityManager.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityModeView.swift
+/Users/joe/brain/agentic-brain/apps/BrainChat/Sources/BrainChat/Security/SecurityRole.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/SpatialAudio.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/SpeechEngineSelector.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/SpeechManager.swift

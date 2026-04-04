@@ -2,11 +2,11 @@
 
 <div align="center">
 
-[![Tests](https://img.shields.io/badge/tests-2800%2B-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](https://github.com/agentic-brain-project/agentic-brain/actions)
-[![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen?style=for-the-badge&logo=codecov&logoColor=white)](https://github.com/agentic-brain-project/agentic-brain/actions)
+[![Tests](https://img.shields.io/badge/tests-pytest%20suite-brightgreen?style=for-the-badge&logo=pytest&logoColor=white)](https://github.com/agentic-brain-project/agentic-brain/actions)
+[![Coverage](https://img.shields.io/badge/coverage-track%20in%20CI-brightgreen?style=for-the-badge&logo=codecov&logoColor=white)](https://github.com/agentic-brain-project/agentic-brain/actions)
 [![E2E](https://img.shields.io/badge/E2E-Playwright-45BA4B?style=for-the-badge&logo=playwright&logoColor=white)](./tests/e2e/)
 
-**Enterprise-grade testing with 2800+ tests across unit, integration, and E2E.**
+**Enterprise-grade testing with a large pytest suite across unit, integration, and E2E coverage.**
 
 </div>
 
@@ -16,13 +16,13 @@
 
 | Metric | Value |
 |--------|-------|
-| **Total Tests** | 2,800+ |
-| **Unit Tests** | 2,100+ |
-| **Integration Tests** | 500+ |
-| **E2E Tests** | 200+ |
-| **Coverage** | 95%+ |
-| **Test Files** | 64 |
-| **CI Runtime** | ~5 min |
+| **Total Tests** | Large suite; collect with `pytest --collect-only -q` in your environment |
+| **Unit Tests** | Distributed across `tests/test_*.py` and module subdirectories |
+| **Integration Tests** | Located in `tests/integration/`, `tests/e2e/`, and feature-specific suites |
+| **E2E Tests** | Playwright + pytest scenarios |
+| **Coverage** | Tracked in CI |
+| **Test Files** | 400+ (437 `test*.py` files in `tests/` at time of writing) |
+| **CI Runtime** | Varies by dependency profile and enabled integrations |
 
 ---
 
@@ -50,7 +50,7 @@ Agentic Brain uses **pytest** for testing with comprehensive coverage across all
 # Install test dependencies
 pip install -e ".[test]"
 
-# Run all tests (2800+)
+# Run all tests
 pytest
 
 # Run with verbose output
@@ -93,7 +93,7 @@ pytest -m "integration"
 
 ## Test Categories
 
-### Unit Tests (64 test files)
+### Unit Tests
 
 | Module | Test File | Coverage Target |
 |--------|-----------|-----------------|
