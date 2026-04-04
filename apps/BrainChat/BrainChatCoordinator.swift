@@ -6,12 +6,14 @@ struct AIServiceConfig {
     var systemPrompt: String
     var claudeAPIKey: String
     var openAIAPIKey: String
+    var groqAPIKey: String
     var grokAPIKey: String
     var geminiAPIKey: String
     var ollamaEndpoint: String
     var ollamaModel: String
     var claudeModel: String
     var openAIModel: String
+    var groqModel: String
     var grokModel: String
     var geminiModel: String
     var provider: LLMProvider
@@ -22,12 +24,14 @@ struct AIServiceConfig {
         systemPrompt: String = "You are Karen, an Australian AI assistant helping Joseph code",
         claudeAPIKey: String = "",
         openAIAPIKey: String = "",
+        groqAPIKey: String = "",
         grokAPIKey: String = "",
         geminiAPIKey: String = "",
         ollamaEndpoint: String = "http://localhost:11434/api/chat",
         ollamaModel: String = "llama3.2:3b",
         claudeModel: String = "claude-sonnet-4-20250514",
         openAIModel: String = "gpt-4o",
+        groqModel: String = "llama-3.1-8b-instant",
         grokModel: String = "grok-3-latest",
         geminiModel: String = "gemini-2.5-flash",
         provider: LLMProvider = .ollama,
@@ -37,12 +41,14 @@ struct AIServiceConfig {
         self.systemPrompt = systemPrompt
         self.claudeAPIKey = claudeAPIKey
         self.openAIAPIKey = openAIAPIKey
+        self.groqAPIKey = groqAPIKey
         self.grokAPIKey = grokAPIKey
         self.geminiAPIKey = geminiAPIKey
         self.ollamaEndpoint = ollamaEndpoint
         self.ollamaModel = ollamaModel
         self.claudeModel = claudeModel
         self.openAIModel = openAIModel
+        self.groqModel = groqModel
         self.grokModel = grokModel
         self.geminiModel = geminiModel
         self.provider = provider
@@ -58,12 +64,14 @@ struct AIServiceConfig {
             bridgeWebSocketURL: bridgeWebSocketURL,
             claudeAPIKey: claudeAPIKey,
             openAIAPIKey: openAIAPIKey,
+            groqAPIKey: groqAPIKey,
             grokAPIKey: grokAPIKey,
             geminiAPIKey: geminiAPIKey,
             ollamaEndpoint: ollamaEndpoint,
             ollamaModel: ollamaModel,
             claudeModel: claudeModel,
             openAIModel: openAIModel,
+            groqModel: groqModel,
             grokModel: grokModel,
             geminiModel: geminiModel
         )

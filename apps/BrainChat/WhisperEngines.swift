@@ -24,25 +24,28 @@ final class WhisperAPIEngine: @unchecked Sendable {
         var body = Data()
         
         // Add file field
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"audio.m4a\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: audio/m4a\r\n\r\n".data(using: .utf8)!)
+        body.append(Data("--\(boundary)\r\n".utf8))
+        body.append(Data("Content-Disposition: form-data; name=\"file\"; filename=\"audio.m4a\"\r\n".utf8))
+        body.append(Data("Content-Type: audio/m4a\r\n\r\n".utf8))
         body.append(audioData)
-        body.append("\r\n".data(using: .utf8)!)
+        body.append(Data("\r\n".utf8))
         
         // Add model field
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
-        body.append("whisper-1\r\n".data(using: .utf8)!)
+        body.append(Data("--\(boundary)\r\n".utf8))
+        body.append(Data("Content-Disposition: form-data; name=\"model\"\r\n\r\n".utf8))
+        body.append(Data("whisper-1\r\n".utf8))
         
         // Add language field
-        body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"language\"\r\n\r\n".data(using: .utf8)!)
-        body.append("\(language)\r\n".data(using: .utf8)!)
+        body.append(Data("--\(boundary)\r\n".utf8))
+        body.append(Data("Content-Disposition: form-data; name=\"language\"\r\n\r\n".utf8))
+        body.append(Data("\(language)\r\n".utf8))
         
-        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        body.append(Data("--\(boundary)--\r\n".utf8))
         
-        var request = URLRequest(url: URL(string: endpoint)!)
+        guard let url = URL(string: endpoint) else {
+            throw WhisperError.invalidEndpoint(endpoint)
+        }
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
@@ -90,6 +93,7 @@ enum WhisperError: LocalizedError {
     case apiError(Int, String)
     case recordingFailed
     case noAudioData
+    case invalidEndpoint(String)
     
     var errorDescription: String? {
         switch self {
@@ -98,6 +102,7 @@ enum WhisperError: LocalizedError {
         case .apiError(let code, let message): return "Whisper API error \(code): \(message)"
         case .recordingFailed: return "Failed to record audio"
         case .noAudioData: return "No audio data captured"
+        case .invalidEndpoint(let url): return "Invalid Whisper API endpoint URL: \(url)"
         }
     }
 }

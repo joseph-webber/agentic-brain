@@ -122,7 +122,12 @@ final class CartesiaVoice: NSObject, ObservableObject {
     }
 
     private enum Constants {
-        static let endpoint = URL(string: "https://api.cartesia.ai/tts/bytes")!
+        static let endpoint: URL = {
+            guard let url = URL(string: "https://api.cartesia.ai/tts/bytes") else {
+                fatalError("Invalid hardcoded URL - this is a programming error")
+            }
+            return url
+        }()
         static let apiVersion = "2026-03-01"
         static let sampleRate = 24_000
         static let channels = 1

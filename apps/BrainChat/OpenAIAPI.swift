@@ -8,7 +8,14 @@ struct OpenAIAPI: OpenAIStreaming, Sendable {
     let session: URLSession
     let endpoint: URL
 
-    init(session: URLSession = .shared, endpoint: URL = URL(string: "https://api.openai.com/v1/chat/completions")!) {
+    private static let defaultEndpoint: URL = {
+        guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
+            fatalError("Invalid hardcoded URL - this is a programming error")
+        }
+        return url
+    }()
+
+    init(session: URLSession = .shared, endpoint: URL = OpenAIAPI.defaultEndpoint) {
         self.session = session
         self.endpoint = endpoint
     }
@@ -23,12 +30,13 @@ struct OpenAIAPI: OpenAIStreaming, Sendable {
         var full = ""
         for try await rawLine in bytes.lines {
             let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard line.hasPrefix("data:") else { continue }
-            let payload = line.dropFirst(5).trimmingCharacters(in: .whitespacesAndNewlines)
-            if payload == "[DONE]" { break }
-            guard let data = payload.data(using: .utf8), let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let choices = object["choices"] as? [[String: Any]] else { continue }
-            for choice in choices {
-                if let delta = choice["delta"] as? [String: Any], let text = delta["content"] as? String, !text.isEmpty { full += text; onDelta(text) }
+            guard let payload = SSEStreamParser.parseDataLine(line) else { continue }
+            
+            if SSEStreamParser.isComplete(payload) { break }
+            
+            if let delta = SSEStreamParser.extractDelta(payload) {
+                full += delta
+                onDelta(delta)
             }
         }
         let text = full.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -48,19 +56,7 @@ struct OpenAIAPI: OpenAIStreaming, Sendable {
     }
 
     private static func readHTTPError(from bytes: URLSession.AsyncBytes, statusCode: Int) async -> AIServiceError {
-        var body = ""
-        do {
-            for try await line in bytes.lines {
-                body += line
-                if body.count > 4000 { break }
-            }
-        } catch {
-            return .httpStatus(statusCode, "OpenAI request failed.")
-        }
-        if let data = body.data(using: .utf8), let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            if let error = json["error"] as? [String: Any], let message = error["message"] as? String { return .httpStatus(statusCode, message) }
-            if let message = json["message"] as? String { return .httpStatus(statusCode, message) }
-        }
-        return .httpStatus(statusCode, body.trimmingCharacters(in: .whitespacesAndNewlines))
+        let body = await SSEStreamParser.readHTTPErrorBody(from: bytes)
+        return .httpStatus(statusCode, body.isEmpty ? "OpenAI request failed." : body)
     }
 }

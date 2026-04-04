@@ -49,7 +49,7 @@ struct SpeechEngineSelector: View {
     
     private func shortName(_ engine: SpeechEngine) -> String {
         switch engine {
-        case .apple: return "Apple"
+        case .appleDictation: return "Apple"
         case .whisperKit: return "faster-whisper"
         case .whisperAPI: return "Whisper API"
         case .whisperCpp: return "whisper.cpp"

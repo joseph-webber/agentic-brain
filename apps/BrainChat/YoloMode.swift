@@ -70,6 +70,40 @@ final class YoloMode: ObservableObject {
         if isActive { deactivate() } else { activate() }
     }
 
+    // MARK: - Submit Prompt (for ContentView)
+
+    /// Submit a user prompt in YOLO mode: send it through the LLM with YOLO system prompt,
+    /// then process the response for executable action blocks.
+    func submitPrompt(_ prompt: String, targetLLM: String) async -> String {
+        guard isActive else { return "YOLO mode is not active." }
+
+        let yoloSystemMsg = Self.yoloPrompt(for: targetLLM)
+        let messages: [AIChatMessage] = [
+            AIChatMessage(role: .system, content: yoloSystemMsg),
+            AIChatMessage(role: .user, content: prompt)
+        ]
+
+        // Use Ollama as a quick local fallback for YOLO dispatch
+        let ollamaAPI = OllamaAPI()
+        var fullResponse = ""
+        do {
+            fullResponse = try await ollamaAPI.streamResponse(
+                endpoint: "http://localhost:11434/api/chat",
+                model: "llama3.2:3b",
+                messages: messages,
+                onDelta: { _ in }
+            )
+        } catch {
+            return "YOLO dispatch failed: \(error.localizedDescription)"
+        }
+
+        guard !fullResponse.isEmpty else {
+            return "YOLO: LLM returned empty response."
+        }
+
+        return await processAIResponse(fullResponse)
+    }
+
     // MARK: - Process AI Response
 
     /// Process an AI response for YOLO commands. Parses and executes action blocks.
@@ -600,5 +634,33 @@ struct YoloActionFeed: View {
         case .undo:   return .orange
         case .error:  return .red
         }
+    }
+}
+
+/// Selector toggle for YOLO mode in the toolbar.
+struct YoloModeSelector: View {
+    @ObservedObject var yolo: YoloMode
+    var onToggle: (Bool) -> Void
+
+    var body: some View {
+        Button(action: {
+            let newState = !yolo.isActive
+            onToggle(newState)
+        }) {
+            HStack(spacing: 4) {
+                Image(systemName: yolo.isActive ? "bolt.fill" : "bolt.slash")
+                    .foregroundColor(yolo.isActive ? .yellow : .secondary)
+                Text("YOLO")
+                    .font(.caption)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(yolo.isActive ? Color.yellow.opacity(0.15) : Color.secondary.opacity(0.1))
+            .cornerRadius(6)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(yolo.isActive ? "YOLO mode active" : "YOLO mode inactive")
+        .accessibilityHint("Double tap to toggle autonomous coding mode")
     }
 }

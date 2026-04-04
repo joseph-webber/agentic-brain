@@ -42,6 +42,14 @@ actor RedpandaBridge {
         try await client.publish(topic: inputTopic, event: event)
     }
 
+    func publishFastRequest(_ prompt: String) async throws {
+        try await client.publishFastRequest(prompt)
+    }
+
+    func subscribeToLLMResponses() async -> AsyncStream<LLMResponse> {
+        await client.subscribeToResponses()
+    }
+
     func requestResponse(
         text: String,
         targetLLM: String,

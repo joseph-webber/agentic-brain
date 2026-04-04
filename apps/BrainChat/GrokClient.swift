@@ -10,12 +10,19 @@ protocol GrokStreaming: Sendable {
 }
 
 struct GrokClient: GrokStreaming, Sendable {
+    static let defaultEndpoint: URL = {
+        guard let url = URL(string: "https://api.x.ai/v1/chat/completions") else {
+            fatalError("Invalid hardcoded URL - this is a programming error")
+        }
+        return url
+    }()
+
     let session: URLSession
     let endpoint: URL
 
     init(
         session: URLSession = .shared,
-        endpoint: URL = URL(string: "https://api.x.ai/v1/chat/completions")!
+        endpoint: URL = GrokClient.defaultEndpoint
     ) {
         self.session = session
         self.endpoint = endpoint
@@ -48,24 +55,13 @@ struct GrokClient: GrokStreaming, Sendable {
         var fullText = ""
         for try await rawLine in bytes.lines {
             let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard line.hasPrefix("data:") else { continue }
-
-            let payload = line.dropFirst(5).trimmingCharacters(in: .whitespacesAndNewlines)
-            if payload == "[DONE]" { break }
-            guard let data = payload.data(using: .utf8),
-                  let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let choices = object["choices"] as? [[String: Any]] else {
-                continue
-            }
-
-            for choice in choices {
-                guard let delta = choice["delta"] as? [String: Any],
-                      let text = delta["content"] as? String,
-                      !text.isEmpty else {
-                    continue
-                }
-                fullText += text
-                onDelta(text)
+            guard let payload = SSEStreamParser.parseDataLine(line) else { continue }
+            
+            if SSEStreamParser.isComplete(payload) { break }
+            
+            if let delta = SSEStreamParser.extractDelta(payload) {
+                fullText += delta
+                onDelta(delta)
             }
         }
 
@@ -97,28 +93,7 @@ struct GrokClient: GrokStreaming, Sendable {
     }
 
     private static func readHTTPError(from bytes: URLSession.AsyncBytes, statusCode: Int) async -> AIServiceError {
-        var body = ""
-        do {
-            for try await line in bytes.lines {
-                body += line
-                if body.count > 4000 { break }
-            }
-        } catch {
-            return .httpStatus(statusCode, "xAI Grok request failed.")
-        }
-
-        if let data = body.data(using: .utf8),
-           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            if let error = json["error"] as? [String: Any],
-               let message = error["message"] as? String {
-                return .httpStatus(statusCode, message)
-            }
-            if let message = json["message"] as? String {
-                return .httpStatus(statusCode, message)
-            }
-        }
-
-        let cleaned = body.trimmingCharacters(in: .whitespacesAndNewlines)
-        return .httpStatus(statusCode, cleaned.isEmpty ? "xAI Grok request failed." : cleaned)
+        let body = await SSEStreamParser.readHTTPErrorBody(from: bytes)
+        return .httpStatus(statusCode, body.isEmpty ? "xAI Grok request failed." : body)
     }
 }

@@ -15,6 +15,9 @@ import Foundation
 
 // MARK: - Data Types
 
+/// Public alias so tests and event-bus code can use the descriptive name.
+typealias LLMResponseLayer = LayerTier
+
 enum LayerTier: Int, Comparable, Sendable, CustomStringConvertible {
     case instant = 1     // Groq — ultra-fast cloud inference
     case fastLocal = 2   // Ollama — on-device, no network
@@ -76,6 +79,15 @@ struct LayerResult: Sendable {
     let latencyMs: Int
     let succeeded: Bool
     let error: String?
+
+    init(layer: LayerTier, source: String, fullText: String, latencyMs: Int, succeeded: Bool, error: String? = nil) {
+        self.layer = layer
+        self.source = source
+        self.fullText = fullText
+        self.latencyMs = latencyMs
+        self.succeeded = succeeded
+        self.error = error
+    }
 }
 
 enum LayeredResponseEvent: Sendable {

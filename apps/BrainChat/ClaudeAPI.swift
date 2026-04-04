@@ -8,7 +8,14 @@ struct ClaudeAPI: ClaudeStreaming, Sendable {
     let session: URLSession
     let endpoint: URL
 
-    init(session: URLSession = .shared, endpoint: URL = URL(string: "https://api.anthropic.com/v1/messages")!) {
+    private static let defaultEndpoint: URL = {
+        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
+            fatalError("Invalid hardcoded URL - this is a programming error")
+        }
+        return url
+    }()
+
+    init(session: URLSession = .shared, endpoint: URL = ClaudeAPI.defaultEndpoint) {
         self.session = session
         self.endpoint = endpoint
     }

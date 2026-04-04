@@ -241,7 +241,7 @@ final class SpeechManager: ObservableObject {
     @Published var inputDevices: [AudioDevice] = []
     @Published var selectedDevice: AudioDevice?
     @Published var audioLevel: Float = 0.0
-    @Published var currentEngine: SpeechEngine = .apple
+    @Published var currentEngine: SpeechEngine = .appleDictation
     @Published var engineStatus: String = ""
 
     var onTranscriptFinalized: ((String) -> Void)?
@@ -286,7 +286,7 @@ final class SpeechManager: ObservableObject {
     
     private func updateEngineStatus() {
         switch currentEngine {
-        case .apple:
+        case .appleDictation:
             engineStatus = appleController.isRecognizerAvailable ? "Ready" : "Not available"
         case .whisperKit:
             engineStatus = fasterWhisperBridge.isAvailable ? "Ready (Python faster-whisper)" : "Install faster-whisper for /usr/bin/python3"
@@ -389,7 +389,7 @@ final class SpeechManager: ObservableObject {
         inputDevices = resolved
         if let airPods = resolved.first(where: { $0.isAirPodsMax }) {
             selectedDevice = airPods
-        } else if selectedDevice == nil || !resolved.contains(selectedDevice!) {
+        } else if let device = selectedDevice, !resolved.contains(device) {
             selectedDevice = resolved.first
         }
     }
@@ -416,7 +416,7 @@ final class SpeechManager: ObservableObject {
         logMic("Set isListening = true, about to start engine")
         
         switch currentEngine {
-        case .apple:
+        case .appleDictation:
             logMic("Starting Apple recognition engine")
             startAppleRecognition()
         case .whisperAPI, .whisperCpp, .whisperKit:
@@ -589,7 +589,7 @@ final class SpeechManager: ObservableObject {
         }
         
         switch currentEngine {
-        case .apple:
+        case .appleDictation:
             logMic("Stopping Apple recognition")
             appleController.stopRecognition()
             isListening = false
