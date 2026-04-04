@@ -783,6 +783,76 @@ final class TerminalMode {
     }
 }
 
+// MARK: - YOLO Commands
+
+struct YOLOCommand: Codable {
+    let id: String
+    let command: String
+    let timestamp: String
+    let context: String
+}
+
+/// Publishes YOLO commands to the `brain.yolo.commands` Redpanda topic
+/// via the Pandaproxy REST API running on localhost:8082.
+final class YOLOCommandPublisher {
+    private let pandaproxyURL = URL(string: "http://localhost:8082/topics/brain.yolo.commands")!
+    private let iso8601 = ISO8601DateFormatter()
+
+    /// Returns the trimmed command string if `input` starts with "yolo:" (case-insensitive),
+    /// or nil if the input is not a YOLO command.
+    static func parse(_ input: String) -> String? {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        let prefix = "yolo:"
+        guard trimmed.lowercased().hasPrefix(prefix) else { return nil }
+        let command = trimmed.dropFirst(prefix.count)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return command.isEmpty ? nil : command
+    }
+
+    /// Publishes a YOLO command to `brain.yolo.commands` via Pandaproxy HTTP POST.
+    func publish(command: String, context: String, completion: @escaping (Bool, String?) -> Void) {
+        let yolo = YOLOCommand(
+            id: UUID().uuidString,
+            command: command,
+            timestamp: iso8601.string(from: Date()),
+            context: context
+        )
+
+        guard let payload = buildPayload(yolo) else {
+            completion(false, "Failed to encode YOLO command as JSON")
+            return
+        }
+
+        var request = URLRequest(url: pandaproxyURL)
+        request.httpMethod = "POST"
+        request.setValue("application/vnd.kafka.json.v2+json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = payload
+        request.timeoutInterval = 5
+
+        URLSession.shared.dataTask(with: request) { _, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    completion(false, error.localizedDescription)
+                    return
+                }
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+                if (200...299).contains(statusCode) {
+                    completion(true, nil)
+                } else {
+                    completion(false, "Pandaproxy returned HTTP \(statusCode)")
+                }
+            }
+        }.resume()
+    }
+
+    private func buildPayload(_ yolo: YOLOCommand) -> Data? {
+        guard let valueData = try? JSONEncoder().encode(yolo),
+              let valueJSON = try? JSONSerialization.jsonObject(with: valueData) else { return nil }
+        let envelope: [String: Any] = ["records": [["value": valueJSON]]]
+        return try? JSONSerialization.data(withJSONObject: envelope)
+    }
+}
+
 final class TerminalChatController {
     private struct QueuedChunk {
         let requestID: String?
@@ -798,6 +868,7 @@ final class TerminalChatController {
     private let bridge = RedpandaBridge()
     private let fallbackResponder = LocalFallbackResponder()
     private let speaker = SpeechVoice()
+    private let yoloPublisher = YOLOCommandPublisher()
     private let terminalMode = TerminalMode()
     private let uiQueue = DispatchQueue(label: "brainchat.terminal.ui")
     private let stdoutHandle = FileHandle.standardOutput
@@ -949,6 +1020,12 @@ final class TerminalChatController {
     }
 
     private func processInput(_ text: String) {
+        // YOLO commands are published directly to brain.yolo.commands and bypass the LLM path.
+        if let yoloCommand = YOLOCommandPublisher.parse(text) {
+            handleYOLOCommand(yoloCommand)
+            return
+        }
+
         // Cancel any in-progress stream before starting a new request.
         streamingClient?.cancel()
         streamingClient = nil
@@ -997,6 +1074,29 @@ final class TerminalChatController {
                 }
             }
         )
+    }
+
+    private func handleYOLOCommand(_ command: String) {
+        writeTranscriptLine(prefix: "YOLO", text: command, color: TerminalANSI.yellow)
+        writeStatus("Publishing YOLO command to brain.yolo.commands…")
+        yoloPublisher.publish(command: command, context: "terminal") { [weak self] success, reason in
+            self?.uiQueue.async {
+                guard let self else { return }
+                if success {
+                    let msg = "YOLO command published: \(command)"
+                    self.writeTranscriptLine(prefix: "Brain", text: msg, color: TerminalANSI.green)
+                    self.writeStatus("Ready.")
+                    DispatchQueue.main.async { self.speaker.speak(msg) }
+                } else {
+                    let fallback = reason ?? "unknown error"
+                    let msg = "Failed to publish YOLO command: \(fallback)"
+                    self.writeTranscriptLine(prefix: "Brain", text: msg, color: TerminalANSI.yellow)
+                    self.writeStatus("YOLO publish failed.")
+                    DispatchQueue.main.async { self.speaker.speak(msg) }
+                }
+                self.renderPrompt()
+            }
+        }
     }
 
     private func useRedpandaPath(text: String, requestID: String) {
@@ -1193,6 +1293,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let speaker = SpeechVoice()
     private let fallbackResponder = LocalFallbackResponder()
     private let bridge = RedpandaBridge()
+    private let yoloPublisher = YOLOCommandPublisher()
     private var bridgeAvailability: RedpandaBridge.Availability = .unavailable("Connecting…")
     private var pendingFallbacks: [String: DispatchWorkItem] = [:]
     private var pendingRequestOrder: [String] = []
@@ -1455,6 +1556,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func processInput(_ text: String) {
+        // YOLO commands are published directly to brain.yolo.commands and bypass the LLM path.
+        if let yoloCommand = YOLOCommandPublisher.parse(text) {
+            handleYOLOCommand(yoloCommand)
+            return
+        }
+
         // Cancel any previous stream before starting a fresh one.
         streamingClient?.cancel()
         streamingClient = nil
@@ -1581,6 +1688,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             } else {
                 self.updateStatus("Redpanda publish failed. Using local fallback.")
                 self.respondLocally(to: text, requestID: requestID, reason: reason ?? "publish failed")
+            }
+        }
+    }
+
+    private func handleYOLOCommand(_ command: String) {
+        appendTranscript(speaker: "You", text: "yolo: \(command)")
+        updateStatus("Publishing YOLO command to brain.yolo.commands…")
+        yoloPublisher.publish(command: command, context: "gui") { [weak self] success, reason in
+            guard let self else { return }
+            if success {
+                let msg = "YOLO command published: \(command)"
+                self.speakAndLog(msg, speaker: "Brain")
+                self.updateStatus("Ready. Press Enter to talk.")
+            } else {
+                let fallback = reason ?? "unknown error"
+                let msg = "Failed to publish YOLO command: \(fallback)"
+                self.speakAndLog(msg, speaker: "Brain")
+                self.updateStatus("YOLO publish failed.")
             }
         }
     }
