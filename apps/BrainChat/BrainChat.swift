@@ -16,46 +16,92 @@ private enum BrainChatRuntimeMarker {
 
 struct BrainChatApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var conversationStore = ConversationStore()
-    @StateObject private var speechManager = SpeechManager()
-    @StateObject private var voiceManager = VoiceManager()
-    @StateObject private var settings = AppSettings()
-    @StateObject private var llmRouter = LLMRouter()
+    
+    // Use a single shared coordinator to manage all state
+    @StateObject private var appState = BrainChatAppState()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(conversationStore)
-                .environmentObject(speechManager)
-                .environmentObject(voiceManager)
-                .environmentObject(settings)
-                .environmentObject(llmRouter)
-                .frame(minWidth: 600, minHeight: 500)
-                .onAppear {
-                    let bridge = ScriptingBridge.shared
-                    bridge.conversationStore = conversationStore
-                    bridge.speechManager = speechManager
-                    bridge.voiceManager = voiceManager
-                    bridge.settings = settings
-                    bridge.llmRouter = llmRouter
-                }
+            BrainChatRootView()
+                .environmentObject(appState)
         }
         .commands {
             CommandGroup(replacing: .newItem) {}
         }
         Settings {
-            SettingsView()
-                .environmentObject(settings)
-                .environmentObject(voiceManager)
-                .environmentObject(llmRouter)
-                .frame(minWidth: 500, minHeight: 420)
+            if let settings = appState.settings, let voiceManager = appState.voiceManager, let llmRouter = appState.llmRouter {
+                SettingsView()
+                    .environmentObject(settings)
+                    .environmentObject(voiceManager)
+                    .environmentObject(llmRouter)
+                    .frame(minWidth: 500, minHeight: 420)
+            }
         }
+    }
+}
+
+/// Root view that initializes all components on the main actor safely
+struct BrainChatRootView: View {
+    @EnvironmentObject var appState: BrainChatAppState
+    
+    var body: some View {
+        Group {
+            if let store = appState.conversationStore,
+               let speechManager = appState.speechManager,
+               let voiceManager = appState.voiceManager,
+               let settings = appState.settings,
+               let llmRouter = appState.llmRouter {
+                ContentView()
+                    .environmentObject(store)
+                    .environmentObject(speechManager)
+                    .environmentObject(voiceManager)
+                    .environmentObject(settings)
+                    .environmentObject(llmRouter)
+                    .frame(minWidth: 600, minHeight: 500)
+                    .onAppear {
+                        let bridge = ScriptingBridge.shared
+                        bridge.conversationStore = store
+                        bridge.speechManager = speechManager
+                        bridge.voiceManager = voiceManager
+                        bridge.settings = settings
+                        bridge.llmRouter = llmRouter
+                    }
+            } else {
+                ProgressView("Loading Brain Chat...")
+                    .onAppear {
+                        Task { @MainActor in
+                            appState.initialize()
+                        }
+                    }
+            }
+        }
+    }
+}
+
+/// App state holder that initializes lazily on the main actor
+@MainActor
+final class BrainChatAppState: ObservableObject {
+    @Published var conversationStore: ConversationStore?
+    @Published var speechManager: SpeechManager?
+    @Published var voiceManager: VoiceManager?
+    @Published var settings: AppSettings?
+    @Published var llmRouter: LLMRouter?
+    @Published var isInitialized = false
+    
+    func initialize() {
+        guard !isInitialized else { return }
+        isInitialized = true
+        
+        conversationStore = ConversationStore()
+        speechManager = SpeechManager()
+        voiceManager = VoiceManager()
+        settings = AppSettings()
+        llmRouter = LLMRouter()
     }
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        BridgeDaemon.shared.startIfNeeded()
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
 
@@ -67,6 +113,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
             if let window = NSApp.windows.first {
                 window.title = "Brain Chat"
                 window.makeKeyAndOrderFront(nil)
+            }
+        }
+
+        // Delay bridge daemon start to after UI is ready
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            Task { @MainActor in
+                BridgeDaemon.shared.startIfNeeded()
             }
         }
 

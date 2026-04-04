@@ -18,7 +18,9 @@ final class SecurityManager: ObservableObject {
 
     @Published private(set) var currentRole: SecurityRole
     @Published private(set) var modeSwitchingEnabled: Bool
-    @AppStorage("securityRole") private var storedRole: String = SecurityRole.fullAdmin.rawValue
+    
+    // Note: Using UserDefaults directly instead of @AppStorage to avoid
+    // initialization ordering issues with SwiftUI when the app starts
 
     private let defaults: UserDefaults
     private let defaultRoleForJoseph: SecurityRole = .fullAdmin
@@ -30,7 +32,6 @@ final class SecurityManager: ObservableObject {
         self.currentRole = restoredRole
         self.modeSwitchingEnabled = defaults.object(forKey: "modeSwitchingEnabled") as? Bool ?? true
 
-        storedRole = restoredRole.rawValue
         defaults.set(restoredRole.rawValue, forKey: "securityRole")
         defaults.set(modeSwitchingEnabled, forKey: "modeSwitchingEnabled")
     }
@@ -42,7 +43,6 @@ final class SecurityManager: ObservableObject {
         }
 
         currentRole = newRole
-        storedRole = newRole.rawValue
         defaults.set(newRole.rawValue, forKey: "securityRole")
         print("🔐 Security role changed to: \(newRole.rawValue)")
     }
