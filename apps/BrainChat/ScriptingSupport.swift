@@ -1,0 +1,212 @@
+import AppKit
+import Foundation
+
+// MARK: - Shared scripting bridge
+
+/// Container that the App layer populates on launch so that
+/// NSScriptCommand handlers can reach the live objects they need.
+/// Properties are only written from MainActor (on launch) and read
+/// from NSScriptCommand handlers via main-thread dispatch.
+final class ScriptingBridge: @unchecked Sendable {
+    static let shared = ScriptingBridge()
+
+    nonisolated(unsafe) var conversationStore: ConversationStore?
+    nonisolated(unsafe) var speechManager: SpeechManager?
+    nonisolated(unsafe) var voiceManager: VoiceManager?
+    nonisolated(unsafe) var settings: AppSettings?
+    nonisolated(unsafe) var llmRouter: LLMRouter?
+
+    private init() {}
+}
+
+// MARK: - Send Message
+
+final class SendMessageCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let message = directParameter as? String,
+              !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No message text provided."
+            return nil
+        }
+
+        let bridge = ScriptingBridge.shared
+
+        // Check bridge readiness on main thread
+        let ready: Bool = onMain {
+            MainActor.assumeIsolated {
+                bridge.conversationStore != nil && bridge.settings != nil && bridge.llmRouter != nil
+            }
+        }
+
+        guard ready else {
+            return "error: BrainChat scripting bridge not ready"
+        }
+
+        // Add user message on main thread
+        onMain {
+            MainActor.assumeIsolated {
+                bridge.conversationStore?.addMessage(role: .user, content: message)
+            }
+        }
+
+        // Cannot await async LLM call from the main thread (deadlock).
+        // Real AppleScript invocations come from a background thread.
+        guard !Thread.isMainThread else {
+            return "error: cannot await LLM on main thread (use osascript)"
+        }
+
+        // Fire the async LLM call and wait for it
+        let semaphore = DispatchSemaphore(value: 0)
+        var response = ""
+
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                let store = bridge.conversationStore!
+                let settings = bridge.settings!
+                let router = bridge.llmRouter!
+
+                let history = store.recentConversation
+                let configuration = settings.routerConfiguration(
+                    provider: router.selectedProvider,
+                    yoloMode: router.yoloMode
+                )
+
+                Task {
+                    let reply = await router.streamReply(
+                        history: history,
+                        configuration: configuration
+                    ) { _ in }
+
+                    await MainActor.run {
+                        store.addMessage(role: .assistant, content: reply)
+                        if let voiceManager = bridge.voiceManager, settings.autoSpeak {
+                            voiceManager.speak(reply)
+                        }
+                    }
+                    response = reply
+                    semaphore.signal()
+                }
+            }
+        }
+
+        let timeout = semaphore.wait(timeout: .now() + 120)
+        if timeout == .timedOut {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "LLM response timed out after 120 seconds."
+            return nil
+        }
+        return response
+    }
+}
+
+// MARK: - Start Listening
+
+final class StartListeningCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        let bridge = ScriptingBridge.shared
+        onMain { MainActor.assumeIsolated { bridge.speechManager?.startListening() } }
+        return nil
+    }
+}
+
+// MARK: - Stop Listening
+
+final class StopListeningCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        let bridge = ScriptingBridge.shared
+        onMain { MainActor.assumeIsolated { bridge.speechManager?.stopListening() } }
+        return nil
+    }
+}
+
+// MARK: - Speak
+
+final class SpeakTextCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let text = directParameter as? String,
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No text provided to speak."
+            return nil
+        }
+
+        let bridge = ScriptingBridge.shared
+        onMain { MainActor.assumeIsolated { bridge.voiceManager?.speak(text) } }
+        return nil
+    }
+}
+
+// MARK: - Get Conversation
+
+final class GetConversationCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        let bridge = ScriptingBridge.shared
+        return onMain {
+            MainActor.assumeIsolated {
+                guard let store = bridge.conversationStore else { return "" }
+
+                let lines = store.messages.map { msg -> String in
+                    let prefix: String
+                    switch msg.role {
+                    case .user:      prefix = "You"
+                    case .assistant: prefix = "Karen"
+                    case .copilot:   prefix = "Copilot"
+                    case .system:    prefix = "System"
+                    }
+                    return "[\(prefix)] \(msg.content)"
+                }
+                return lines.joined(separator: "\n")
+            }
+        }
+    }
+}
+
+// MARK: - Set Provider
+
+final class SetProviderCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let name = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No provider name provided."
+            return nil
+        }
+
+        let lowered = name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let provider: LLMProvider? = {
+            switch lowered {
+            case "ollama":  return .ollama
+            case "groq":    return .groq
+            case "claude":  return .claude
+            case "gpt":     return .gpt
+            case "grok":    return .grok
+            case "gemini":  return .gemini
+            case "copilot": return .copilot
+            default:        return LLMProvider.allCases.first { $0.rawValue.lowercased().contains(lowered) }
+            }
+        }()
+
+        guard let resolved = provider else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "Unknown provider: \(name). Use: ollama, groq, claude, gpt, grok, gemini, copilot."
+            return nil
+        }
+
+        let bridge = ScriptingBridge.shared
+        onMain { MainActor.assumeIsolated { bridge.llmRouter?.selectedProvider = resolved } }
+        return nil
+    }
+}
+
+// MARK: - Helpers
+
+/// Execute a block on the main thread, returning its result.
+/// Uses DispatchQueue.main.sync when off-main, direct call when on-main.
+@discardableResult
+private func onMain<T>(_ block: @escaping () -> T) -> T {
+    if Thread.isMainThread {
+        return block()
+    } else {
+        return DispatchQueue.main.sync { block() }
+    }
+}

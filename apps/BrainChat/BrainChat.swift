@@ -14,7 +14,6 @@ private enum BrainChatRuntimeMarker {
     }
 }
 
-@main
 struct BrainChatApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var conversationStore = ConversationStore()
@@ -32,6 +31,14 @@ struct BrainChatApp: App {
                 .environmentObject(settings)
                 .environmentObject(llmRouter)
                 .frame(minWidth: 600, minHeight: 500)
+                .onAppear {
+                    let bridge = ScriptingBridge.shared
+                    bridge.conversationStore = conversationStore
+                    bridge.speechManager = speechManager
+                    bridge.voiceManager = voiceManager
+                    bridge.settings = settings
+                    bridge.llmRouter = llmRouter
+                }
         }
         .commands {
             CommandGroup(replacing: .newItem) {}

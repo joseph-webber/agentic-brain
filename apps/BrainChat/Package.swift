@@ -42,7 +42,12 @@ let package = Package(
                 "test_mic_permission.sh",
                 "run-mic-test.sh",
                 "apply_fix.sh",
-                "BrainChat.entitlements"
+                "Scripts",
+                "BrainChat.entitlements",
+                "Brain Chat.app",
+                "docs",
+                "session-artifacts",
+                "Scripts"
             ],
             sources: [
                 "AIManager.swift",
@@ -52,7 +57,9 @@ let package = Package(
                 "AppTypes.swift",
                 "AudioPlayer.swift",
                 "AudioSession.swift",
+                "BrainChatMain.swift",
                 "BrainChat.swift",
+                "CLIHandler.swift",
                 "BrainChatCoordinator.swift",
                 "BridgeDaemon.swift",
                 "CartesiaVoice.swift",
@@ -94,10 +101,12 @@ let package = Package(
                 "VoiceManager.swift",
                 "VoiceOutputSelector.swift",
                 "VoiceSelector.swift",
+                "VoiceOutputEngines.swift",
                 "WhisperEngines.swift",
                 "YoloExecutor.swift",
                 "YoloMode.swift",
-                "YoloSession.swift"
+                "YoloSession.swift",
+                "ScriptingSupport.swift"
             ]
         ),
         .testTarget(
@@ -107,9 +116,6 @@ let package = Package(
             exclude: [
                 "AppTests",
                 "Comprehensive",
-                "E2ETests",
-                "IntegrationTests",
-                "UnitTests",
                 "AudioDeviceTests.swift",
                 "AIManagerTests.swift",
                 "CopilotBridgeTests.swift",
@@ -139,6 +145,7 @@ let package = Package(
             sources: [
                 // LLM client tests (use real app types via @testable import BrainChatLib)
                 "ClaudeTests.swift",
+                "BrainChatCLITests.swift",
                 "AgenticBrainIntegrationTests.swift",
                 "CopilotTests.swift",
                 "GeminiTests.swift",
@@ -158,10 +165,12 @@ let package = Package(
                 "VoiceCodingTests.swift",
                 // Unit tests — polymorphic dispatch, enum coverage, SSE parsing
                 "PolymorphicUnitTests.swift",
+                "SpeechVoiceEngineRuntimeTests.swift",
                 // Integration tests — fallback chains, conversation store, weaving
                 "ServiceIntegrationTests.swift",
                 // E2E tests — full conversation flows, multi-provider, accessibility
-                "FullFlowE2ETests.swift"
+                "FullFlowE2ETests.swift",
+                "AppleScriptTests.swift"
             ]
         )
     ]

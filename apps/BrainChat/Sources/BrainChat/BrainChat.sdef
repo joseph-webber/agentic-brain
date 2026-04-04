@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary title="BrainChat Terminology">
+    <suite name="BrainChat Suite" code="BCht" description="BrainChat scripting commands for automated testing and voice integration">
+
+        <command name="send message" code="BChtsend" description="Send a chat message and receive the LLM response">
+            <cocoa class="BrainChatLib.SendMessageCommand"/>
+            <direct-parameter type="text" description="The message to send"/>
+            <result type="text" description="The LLM response text"/>
+        </command>
+
+        <command name="start listening" code="BChtlstn" description="Start speech recognition (microphone input)">
+            <cocoa class="BrainChatLib.StartListeningCommand"/>
+        </command>
+
+        <command name="stop listening" code="BChtstop" description="Stop speech recognition">
+            <cocoa class="BrainChatLib.StopListeningCommand"/>
+        </command>
+
+        <command name="speak" code="BChtspek" description="Speak text aloud using the configured voice engine">
+            <cocoa class="BrainChatLib.SpeakTextCommand"/>
+            <direct-parameter type="text" description="Text to speak"/>
+        </command>
+
+        <command name="get conversation" code="BChtconv" description="Get conversation history as plain text">
+            <cocoa class="BrainChatLib.GetConversationCommand"/>
+            <result type="text" description="Conversation formatted as text"/>
+        </command>
+
+        <command name="set provider" code="BChtprov" description="Set the active LLM provider">
+            <cocoa class="BrainChatLib.SetProviderCommand"/>
+            <direct-parameter type="text" description="Provider name: ollama, groq, claude, gpt, grok, gemini, copilot"/>
+        </command>
+
+    </suite>
+</dictionary>
