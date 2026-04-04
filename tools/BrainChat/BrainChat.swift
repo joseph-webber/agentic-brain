@@ -712,6 +712,464 @@ enum LLMProvider: String, CaseIterable, Codable {
     }
 }
 
+// MARK: - RAG (Retrieval Augmented Generation) Service
+
+/// Persisted settings for RAG. Stored in UserDefaults.
+struct RAGSettings {
+    private static let enabledKey = "brainchat.rag_enabled"
+    private static let storeConversationsKey = "brainchat.rag_store_conversations"
+    private static let neo4jHostKey = "brainchat.rag_neo4j_host"
+    private static let neo4jPortKey = "brainchat.rag_neo4j_port"
+    private static let neo4jCredentialsKey = "brainchat.rag_neo4j_credentials"
+    
+    static var isEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
+    }
+    
+    static var storeConversations: Bool {
+        get { UserDefaults.standard.object(forKey: storeConversationsKey) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: storeConversationsKey) }
+    }
+    
+    static var neo4jHost: String {
+        get { UserDefaults.standard.string(forKey: neo4jHostKey) ?? "localhost" }
+        set { UserDefaults.standard.set(newValue, forKey: neo4jHostKey) }
+    }
+    
+    static var neo4jPort: Int {
+        get { UserDefaults.standard.integer(forKey: neo4jPortKey) != 0 
+              ? UserDefaults.standard.integer(forKey: neo4jPortKey) : 7687 }
+        set { UserDefaults.standard.set(newValue, forKey: neo4jPortKey) }
+    }
+    
+    /// Neo4j credentials in format "user:password"
+    static var neo4jCredentials: String {
+        get {
+            // Priority: UserDefaults > ENV > default
+            if let saved = UserDefaults.standard.string(forKey: neo4jCredentialsKey), !saved.isEmpty {
+                return saved
+            }
+            if let envAuth = ProcessInfo.processInfo.environment["NEO4J_AUTH"] {
+                return envAuth.replacingOccurrences(of: "/", with: ":")
+            }
+            return "neo4j:Brain2026"  // Default for brain docker-compose
+        }
+        set { UserDefaults.standard.set(newValue, forKey: neo4jCredentialsKey) }
+    }
+}
+
+/// RAG Service for knowledge graph retrieval and storage using Neo4j.
+/// Enriches prompts with relevant context and stores conversations for future retrieval.
+final class RAGService {
+    static let shared = RAGService()
+    
+    private let queue = DispatchQueue(label: "brainchat.rag", qos: .userInitiated)
+    private var isNeo4jAvailable = false
+    private var lastHealthCheck: Date?
+    private let healthCheckInterval: TimeInterval = 60 // Re-check every minute
+    
+    // Neo4j connection info
+    private var neo4jHost: String { RAGSettings.neo4jHost }
+    private var neo4jPort: Int { RAGSettings.neo4jPort }
+    private var neo4jBoltURL: String { "bolt://\(neo4jHost):\(neo4jPort)" }
+    private var neo4jHTTPURL: String { "http://\(neo4jHost):7474" }
+    
+    // Brain MCP tool endpoint (if available)
+    private let brainMCPEndpoint = "http://localhost:8765"
+    
+    var onStatusUpdate: ((String) -> Void)?
+    
+    private init() {
+        // Check Neo4j availability on init
+        checkNeo4jHealth()
+    }
+    
+    // MARK: - Health Check
+    
+    func checkNeo4jHealth(completion: ((Bool) -> Void)? = nil) {
+        queue.async { [weak self] in
+            guard let self else { return }
+            
+            // Use HTTP API for health check (simpler than Bolt protocol)
+            let healthURL = URL(string: "\(self.neo4jHTTPURL)/db/neo4j/tx")!
+            var request = URLRequest(url: healthURL)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("Basic \(self.basicAuthHeader)", forHTTPHeaderField: "Authorization")
+            request.timeoutInterval = 3
+            
+            // Simple query to test connection
+            let body: [String: Any] = [
+                "statements": [["statement": "RETURN 1 as test"]]
+            ]
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+            
+            let task = URLSession.shared.dataTask(with: request) { [weak self] _, response, error in
+                let available = (response as? HTTPURLResponse)?.statusCode == 200
+                self?.isNeo4jAvailable = available
+                self?.lastHealthCheck = Date()
+                DispatchQueue.main.async { completion?(available) }
+            }
+            task.resume()
+        }
+    }
+    
+    private var basicAuthHeader: String {
+        let credentials = RAGSettings.neo4jCredentials
+        return Data(credentials.utf8).base64EncodedString()
+    }
+    
+    var isAvailable: Bool {
+        // Re-check if stale
+        if let lastCheck = lastHealthCheck,
+           Date().timeIntervalSince(lastCheck) > healthCheckInterval {
+            checkNeo4jHealth()
+        }
+        return isNeo4jAvailable && RAGSettings.isEnabled
+    }
+    
+    // MARK: - Query RAG for Context
+    
+    /// Query Neo4j for relevant context based on the user's prompt.
+    func queryRAG(topic: String, completion: @escaping ([String]) -> Void) {
+        guard isAvailable else {
+            completion([])
+            return
+        }
+        
+        queue.async { [weak self] in
+            guard let self else { completion([]); return }
+            
+            // Extract keywords from the topic
+            let keywords = self.extractKeywords(from: topic)
+            guard !keywords.isEmpty else { completion([]); return }
+            
+            // Build Cypher query to find related knowledge
+            // Uses multiple separate queries combined for robustness
+            let cypher = """
+            // Search emails for relevant context
+            MATCH (e:Email)
+            WHERE toLower(e.subject) CONTAINS toLower($keyword)
+               OR toLower(coalesce(e.body, '')) CONTAINS toLower($keyword)
+            WITH 'Email from ' + coalesce(e.sender, 'unknown') + ': ' + e.subject AS context
+            RETURN DISTINCT context
+            LIMIT 4
+            
+            UNION
+            
+            // Search Teams messages
+            MATCH (t:TeamsMessage)
+            WHERE toLower(coalesce(t.content, '')) CONTAINS toLower($keyword)
+            WITH 'Teams: ' + substring(coalesce(t.content, ''), 0, 150) AS context
+            RETURN DISTINCT context
+            LIMIT 3
+            
+            UNION
+            
+            // Search stored conversations
+            MATCH (c:Conversation)
+            WHERE toLower(c.user_message) CONTAINS toLower($keyword)
+               OR toLower(c.ai_response) CONTAINS toLower($keyword)
+            WITH 'Previous chat: ' + c.user_message AS context
+            RETURN DISTINCT context
+            LIMIT 2
+            """
+            
+            self.executeCypherQuery(cypher, params: ["keyword": keywords.first ?? topic]) { results in
+                let contexts = results.compactMap { $0["context"] as? String }
+                    .filter { !$0.isEmpty }
+                DispatchQueue.main.async { completion(contexts) }
+            }
+        }
+    }
+    
+    /// Async wrapper for queryRAG
+    func queryRAG(topic: String) async -> [String] {
+        await withCheckedContinuation { continuation in
+            queryRAG(topic: topic) { contexts in
+                continuation.resume(returning: contexts)
+            }
+        }
+    }
+    
+    // MARK: - Enrich Prompt with RAG Context
+    
+    /// Enriches a user prompt with relevant context from the knowledge graph.
+    func enrichPromptWithRAG(_ prompt: String, completion: @escaping (String) -> Void) {
+        guard RAGSettings.isEnabled else {
+            completion(prompt)
+            return
+        }
+        
+        updateStatus("Searching knowledge graph…")
+        
+        queryRAG(topic: prompt) { [weak self] contexts in
+            if contexts.isEmpty {
+                self?.updateStatus("No RAG context found, using prompt as-is")
+                completion(prompt)
+                return
+            }
+            
+            self?.updateStatus("Found \(contexts.count) relevant contexts")
+            
+            let enrichedPrompt = """
+            Context from knowledge graph (use if relevant):
+            \(contexts.enumerated().map { "[\($0.offset + 1)] \($0.element)" }.joined(separator: "\n"))
+            
+            User question: \(prompt)
+            
+            Instructions: Use the context above if it helps answer the question. If the context isn't relevant, ignore it and answer based on your knowledge. Don't mention the context explicitly unless asked.
+            """
+            
+            completion(enrichedPrompt)
+        }
+    }
+    
+    /// Async wrapper for enrichPromptWithRAG
+    func enrichPromptWithRAG(_ prompt: String) async -> String {
+        await withCheckedContinuation { continuation in
+            enrichPromptWithRAG(prompt) { enrichedPrompt in
+                continuation.resume(returning: enrichedPrompt)
+            }
+        }
+    }
+    
+    // MARK: - Store Conversations in RAG
+    
+    /// Stores a conversation in Neo4j for future retrieval.
+    func storeConversation(userMessage: String, aiResponse: String, mode: String = "chat") {
+        guard RAGSettings.isEnabled && RAGSettings.storeConversations else { return }
+        guard isNeo4jAvailable else { return }
+        
+        queue.async { [weak self] in
+            guard let self else { return }
+            
+            let timestamp = ISO8601DateFormatter().string(from: Date())
+            let conversationID = UUID().uuidString
+            
+            // Store conversation node and link to topics
+            let cypher = """
+            // Create conversation node
+            CREATE (c:Conversation {
+                id: $id,
+                user_message: $userMessage,
+                ai_response: $aiResponse,
+                mode: $mode,
+                timestamp: datetime($timestamp),
+                source: 'BrainChat'
+            })
+            
+            // Extract and link topics (simplified keyword extraction)
+            WITH c
+            UNWIND $keywords AS keyword
+            MERGE (t:Topic {name: toLower(keyword)})
+            ON CREATE SET t.created = datetime()
+            MERGE (c)-[:ABOUT]->(t)
+            
+            RETURN c.id AS id
+            """
+            
+            let keywords = self.extractKeywords(from: userMessage + " " + aiResponse)
+            
+            self.executeCypherQuery(cypher, params: [
+                "id": conversationID,
+                "userMessage": userMessage,
+                "aiResponse": String(aiResponse.prefix(2000)), // Limit response size
+                "mode": mode,
+                "timestamp": timestamp,
+                "keywords": keywords
+            ]) { _ in
+                // Silently stored
+            }
+        }
+    }
+    
+    // MARK: - Semantic Search (via Brain MCP)
+    
+    /// Performs semantic search using brain MCP tools if available.
+    func semanticSearch(_ query: String, completion: @escaping ([String]) -> Void) {
+        // Try brain-search MCP tool first
+        let mcpURL = URL(string: "\(brainMCPEndpoint)/search")!
+        var request = URLRequest(url: mcpURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 5
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["term": query])
+        
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let results = json["results"] as? [[String: Any]] else {
+                // Fallback to direct Neo4j query
+                self?.queryRAG(topic: query, completion: completion)
+                return
+            }
+            
+            let contexts = results.compactMap { $0["content"] as? String ?? $0["summary"] as? String }
+            DispatchQueue.main.async { completion(contexts) }
+        }
+        task.resume()
+    }
+    
+    // MARK: - Private Helpers
+    
+    private func extractKeywords(from text: String) -> [String] {
+        // Simple keyword extraction - remove common words and keep meaningful terms
+        let stopWords = Set(["the", "a", "an", "is", "are", "was", "were", "be", "been",
+                            "being", "have", "has", "had", "do", "does", "did", "will",
+                            "would", "could", "should", "may", "might", "can", "to", "of",
+                            "in", "for", "on", "with", "at", "by", "from", "as", "into",
+                            "through", "during", "before", "after", "above", "below",
+                            "between", "under", "again", "further", "then", "once", "here",
+                            "there", "when", "where", "why", "how", "all", "each", "few",
+                            "more", "most", "other", "some", "such", "no", "nor", "not",
+                            "only", "own", "same", "so", "than", "too", "very", "just",
+                            "and", "but", "if", "or", "because", "until", "while", "about",
+                            "what", "which", "who", "whom", "this", "that", "these", "those",
+                            "am", "i", "me", "my", "myself", "we", "our", "ours", "you",
+                            "your", "yours", "he", "him", "his", "she", "her", "hers", "it",
+                            "its", "they", "them", "their", "theirs"])
+        
+        let words = text.lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { $0.count > 2 && !stopWords.contains($0) }
+        
+        // Return unique keywords, prioritizing longer words
+        var seen = Set<String>()
+        return words.sorted { $0.count > $1.count }
+            .filter { seen.insert($0).inserted }
+            .prefix(5)
+            .map { String($0) }
+    }
+    
+    private func executeCypherQuery(_ cypher: String, params: [String: Any], completion: @escaping ([[String: Any]]) -> Void) {
+        let url = URL(string: "\(neo4jHTTPURL)/db/neo4j/tx/commit")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Basic \(basicAuthHeader)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 10
+        
+        let body: [String: Any] = [
+            "statements": [[
+                "statement": cypher,
+                "parameters": params
+            ]]
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let results = json["results"] as? [[String: Any]],
+                  let firstResult = results.first,
+                  let dataRows = firstResult["data"] as? [[String: Any]] else {
+                completion([])
+                return
+            }
+            
+            // Extract column values
+            let columns = firstResult["columns"] as? [String] ?? []
+            let rows: [[String: Any]] = dataRows.compactMap { row in
+                guard let rowData = row["row"] as? [Any] else { return nil }
+                var dict: [String: Any] = [:]
+                for (i, col) in columns.enumerated() where i < rowData.count {
+                    dict[col] = rowData[i]
+                }
+                return dict
+            }
+            
+            completion(rows)
+        }
+        task.resume()
+    }
+    
+    private func updateStatus(_ message: String) {
+        DispatchQueue.main.async { [weak self] in
+            self?.onStatusUpdate?(message)
+        }
+    }
+}
+
+/// UI commands for RAG settings
+final class RAGSelectorUI {
+    func handleCommand(_ input: String) -> Bool {
+        let cmd = input.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if cmd == "/rag" || cmd == "/rag status" {
+            printStatus()
+            return true
+        }
+        
+        if cmd == "/rag on" || cmd == "/rag enable" {
+            RAGSettings.isEnabled = true
+            print("✅ RAG enabled - prompts will be enriched with knowledge graph context")
+            return true
+        }
+        
+        if cmd == "/rag off" || cmd == "/rag disable" {
+            RAGSettings.isEnabled = false
+            print("❌ RAG disabled - prompts will be sent without enrichment")
+            return true
+        }
+        
+        if cmd == "/rag store on" {
+            RAGSettings.storeConversations = true
+            print("✅ Conversation storage enabled - chats will be saved to Neo4j")
+            return true
+        }
+        
+        if cmd == "/rag store off" {
+            RAGSettings.storeConversations = false
+            print("❌ Conversation storage disabled")
+            return true
+        }
+        
+        if cmd == "/rag health" || cmd == "/rag check" {
+            RAGService.shared.checkNeo4jHealth { available in
+                if available {
+                    print("✅ Neo4j is available at \(RAGSettings.neo4jHost):\(RAGSettings.neo4jPort)")
+                } else {
+                    print("❌ Neo4j is not available - RAG will be bypassed")
+                }
+            }
+            return true
+        }
+        
+        if cmd.hasPrefix("/rag help") {
+            printHelp()
+            return true
+        }
+        
+        return false
+    }
+    
+    private func printStatus() {
+        let rag = RAGService.shared
+        print("""
+        RAG Status:
+          Enabled: \(RAGSettings.isEnabled ? "Yes" : "No")
+          Store Conversations: \(RAGSettings.storeConversations ? "Yes" : "No")
+          Neo4j: \(rag.isAvailable ? "Connected" : "Unavailable")
+          Host: \(RAGSettings.neo4jHost):\(RAGSettings.neo4jPort)
+        """)
+    }
+    
+    private func printHelp() {
+        print("""
+        RAG Commands:
+          /rag              - Show RAG status
+          /rag on           - Enable RAG enrichment
+          /rag off          - Disable RAG enrichment
+          /rag store on     - Enable conversation storage
+          /rag store off    - Disable conversation storage
+          /rag health       - Check Neo4j connection
+          /rag help         - Show this help
+        """)
+    }
+}
+
 /// Persisted settings for LLM orchestration. Stored in UserDefaults (not in repo).
 struct LLMOrchestratorSettings {
     private static let modeKey = "brainchat.llm_mode"
@@ -1699,17 +2157,24 @@ final class TerminalChatController {
 
     private func renderWelcome() {
         let orchestrator = LLMOrchestrator.shared
+        let rag = RAGService.shared
         writeLine(colorize("Brain Chat — terminal mode. Ctrl+C exits.", color: TerminalANSI.bold + TerminalANSI.magenta))
         writeLine("Mode: " + colorize(currentMode.displayName, color: currentMode.promptANSIColor + TerminalANSI.bold)
                   + "  " + currentMode.modeDescription)
         writeLine("LLM:  " + colorize(orchestrator.mode.displayName, color: TerminalANSI.cyan + TerminalANSI.bold)
                   + " → Primary: \(orchestrator.primaryLLM.shortName)"
                   + (orchestrator.secondaryLLMs.isEmpty ? "" : ", Secondary: \(orchestrator.secondaryLLMs.map(\.shortName).joined(separator: ", "))"))
+        let ragStatus = RAGSettings.isEnabled
+            ? (rag.isAvailable ? colorize("ON (Neo4j connected)", color: TerminalANSI.green) : colorize("ON (Neo4j unavailable)", color: TerminalANSI.yellow))
+            : colorize("OFF", color: TerminalANSI.dim)
+        writeLine("RAG:  " + ragStatus + " → Knowledge graph enrichment")
         writeLine("Switch: /chat  /code  /terminal  /yolo  /voice  /work   (/modes for list)")
         writeLine("LLM:    /llm status  /llm mode <mode>  /llm primary <provider>  (/llm help)")
+        writeLine("RAG:    /rag  /rag on  /rag off  /rag health  (/rag help)")
         writeLine("Tip: set BRAINCHAT_ACCESSIBLE_TERMINAL=1 to disable ANSI colours.")
         DispatchQueue.main.async {
-            self.speaker.speak("Brain Chat ready in \(self.currentMode.displayName) mode. Using \(orchestrator.primaryLLM.shortName) as primary L L M. Type a message and press Return.")
+            let ragMsg = RAGSettings.isEnabled ? " RAG is \(rag.isAvailable ? "enabled with knowledge graph" : "enabled but Neo4j unavailable")." : ""
+            self.speaker.speak("Brain Chat ready in \(self.currentMode.displayName) mode. Using \(orchestrator.primaryLLM.shortName) as primary L L M.\(ragMsg) Type a message and press Return.")
         }
     }
 
@@ -1728,7 +2193,26 @@ final class TerminalChatController {
         let requestID = UUID().uuidString
         currentStreamID = requestID
         streamPrefixShown = false
+        
+        // Store original text for RAG storage
+        let originalUserText = text
 
+        // RAG enrichment: enhance prompt with knowledge graph context
+        let rag = RAGService.shared
+        rag.onStatusUpdate = { [weak self] status in
+            self?.uiQueue.async { self?.writeStatus(status) }
+        }
+        
+        rag.enrichPromptWithRAG(text) { [weak self] enrichedText in
+            self?.uiQueue.async {
+                guard let self, self.currentStreamID == requestID else { return }
+                self.processWithLLM(enrichedText, originalText: originalUserText, requestID: requestID)
+            }
+        }
+    }
+    
+    /// Processes text with LLM after RAG enrichment
+    private func processWithLLM(_ text: String, originalText: String, requestID: String) {
         let orchestrator = LLMOrchestrator.shared
         let llmMode = orchestrator.mode
 
@@ -1743,7 +2227,7 @@ final class TerminalChatController {
                     guard let self, self.currentStreamID == requestID else { return }
                     if response.isEmpty {
                         self.writeStatus("LLM orchestrator failed. Trying fallback…")
-                        self.useRedpandaPath(text: text, requestID: requestID)
+                        self.useRedpandaPath(text: originalText, requestID: requestID)
                     } else {
                         // Show the response
                         if self.promptVisible {
@@ -1753,6 +2237,12 @@ final class TerminalChatController {
                         self.writeRaw(self.colorize("Brain> ", color: TerminalANSI.green + TerminalANSI.bold))
                         self.writeRaw(ANSIText.strip(response))
                         self.writeRaw("\r\n")
+                        // Store conversation in RAG
+                        RAGService.shared.storeConversation(
+                            userMessage: originalText,
+                            aiResponse: response,
+                            mode: self.currentMode.rawValue
+                        )
                         self.writeStatus("Ready. \(self.currentMode.displayName) mode (\(llmMode.displayName)).")
                         if self.currentMode.speaksResponses {
                             DispatchQueue.main.async { self.speaker.speak(response) }
@@ -1804,9 +2294,15 @@ final class TerminalChatController {
                     if fullText.isEmpty {
                         // Stream produced nothing — fall back to Redpanda then local.
                         self.writeStatus("Primary LLM unavailable. Trying Redpanda…")
-                        self.useRedpandaPath(text: text, requestID: requestID)
+                        self.useRedpandaPath(text: originalText, requestID: requestID)
                     } else {
                         self.writeRaw("\r\n")
+                        // Store conversation in RAG
+                        RAGService.shared.storeConversation(
+                            userMessage: originalText,
+                            aiResponse: fullText,
+                            mode: self.currentMode.rawValue
+                        )
                         self.writeStatus("Ready. \(self.currentMode.displayName) mode.")
                         if self.currentMode.speaksResponses {
                             DispatchQueue.main.async { self.speaker.speak(fullText) }
@@ -1979,6 +2475,7 @@ final class TerminalChatController {
     // MARK: - Mode Commands
 
     private let llmSelector = LLMSelectorUI()
+    private let ragSelector = RAGSelectorUI()
 
     private func handleModeCommand(_ input: String) {
         let cmd = input.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1986,6 +2483,13 @@ final class TerminalChatController {
         // Handle /llm commands
         if cmd.hasPrefix("/llm") {
             _ = llmSelector.handleCommand(input)
+            renderPrompt()
+            return
+        }
+        
+        // Handle /rag commands
+        if cmd.hasPrefix("/rag") {
+            _ = ragSelector.handleCommand(input)
             renderPrompt()
             return
         }
@@ -2001,6 +2505,10 @@ final class TerminalChatController {
             writeLine(colorize("LLM Orchestration:", color: TerminalANSI.bold))
             writeLine("  /llm status    - Show LLM configuration")
             writeLine("  /llm help      - Show LLM commands")
+            writeLine("")
+            writeLine(colorize("RAG (Knowledge Graph):", color: TerminalANSI.bold))
+            writeLine("  /rag           - Show RAG status")
+            writeLine("  /rag help      - Show RAG commands")
             renderPrompt(); return
         }
         if let mode = ChatMode.allCases.first(where: { cmd == $0.switchCommand }) {
@@ -2740,7 +3248,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let requestID = UUID().uuidString
         currentStreamID = requestID
         streamHeaderShown = false
+        
+        // Store the original text for RAG storage later
+        let originalUserText = text
 
+        // RAG enrichment: enhance prompt with knowledge graph context
+        let rag = RAGService.shared
+        rag.onStatusUpdate = { [weak self] status in
+            DispatchQueue.main.async { self?.updateStatus(status) }
+        }
+        
+        rag.enrichPromptWithRAG(text) { [weak self] enrichedText in
+            guard let self, self.currentStreamID == requestID else { return }
+            self.processWithLLM(enrichedText, originalText: originalUserText, requestID: requestID)
+        }
+    }
+    
+    /// Processes text with LLM after RAG enrichment
+    private func processWithLLM(_ text: String, originalText: String, requestID: String) {
         let orchestrator = LLMOrchestrator.shared
         let llmMode = orchestrator.mode
 
@@ -2755,9 +3280,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     guard let self, self.currentStreamID == requestID else { return }
                     if response.isEmpty {
                         self.updateStatus("LLM orchestrator failed. Trying fallback…")
-                        self.useRedpandaPath(text: text, requestID: requestID)
+                        self.useRedpandaPath(text: originalText, requestID: requestID)
                     } else {
                         self.appendTranscript(speaker: "Brain", text: response)
+                        // Store conversation in RAG
+                        RAGService.shared.storeConversation(
+                            userMessage: originalText,
+                            aiResponse: response,
+                            mode: self.currentMode.rawValue
+                        )
                         if self.currentMode.speaksResponses { self.speaker.speak(response) }
                         self.updateStatus("Ready. \(self.currentMode.displayName) mode (\(llmMode.displayName)). Press Enter to talk.")
                     }
@@ -2790,8 +3321,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             },
             onComplete: { [weak self] fullText, error in
                 guard let self, self.currentStreamID == requestID else { return }
+                // Store conversation in RAG after streaming completes
+                if !fullText.isEmpty {
+                    RAGService.shared.storeConversation(
+                        userMessage: originalText,
+                        aiResponse: fullText,
+                        mode: self.currentMode.rawValue
+                    )
+                }
                 self.handleStreamCompletion(fullText: fullText, error: error,
-                                            originalText: text, requestID: requestID)
+                                            originalText: originalText, requestID: requestID)
             }
         )
     }
@@ -2936,6 +3475,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Mode Management
 
     private let appLLMSelector = LLMSelectorUI()
+    private let appRAGSelector = RAGSelectorUI()
 
     private func handleAppModeCommand(_ input: String) {
         let cmd = input.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
@@ -2950,6 +3490,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return
         }
+        
+        // Handle /rag commands
+        if cmd.hasPrefix("/rag") {
+            let handled = appRAGSelector.handleCommand(input)
+            if handled {
+                let status = RAGSettings.isEnabled ? "enabled" : "disabled"
+                speakAndLog("RAG \(status). Neo4j \(RAGService.shared.isAvailable ? "connected" : "unavailable").", speaker: "Brain")
+            }
+            return
+        }
 
         if cmd == "/modes" || cmd == "/help" {
             var lines = ["Available modes:"]
@@ -2961,6 +3511,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             lines.append("LLM Commands:")
             lines.append("  /llm status - Show LLM configuration")
             lines.append("  /llm help - Show all LLM commands")
+            lines.append("")
+            lines.append("RAG Commands:")
+            lines.append("  /rag - Show RAG status")
+            lines.append("  /rag help - Show RAG commands")
             speakAndLog(lines.joined(separator: "\n"), speaker: "Brain")
             return
         }
@@ -3404,6 +3958,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         health.append("Mode: \(currentMode.displayName)")
         health.append("LLM: \(ScriptingState.shared.customLLMModel ?? currentMode.llmModel)")
         health.append("Bridge: \(bridgeStatusFromScript())")
+        health.append("RAG: \(RAGSettings.isEnabled ? "Enabled" : "Disabled") - Neo4j: \(RAGService.shared.isAvailable ? "Connected" : "Unavailable")")
         health.append("Listening: \(isListening ? "Yes" : "No")")
         health.append("Speech Permission: \(speechPermissionGranted ? "Granted" : "Not Granted")")
         health.append("Microphone Permission: \(microphonePermissionGranted ? "Granted" : "Not Granted")")
