@@ -229,7 +229,7 @@ public struct PathValidator {
 
     public init(allowedRoots: [String] = []) {
         self.allowedRoots = allowedRoots.isEmpty
-            ? [NSHomeDirectory(), "/Users/joe/brain", NSHomeDirectory() + "/Desktop",
+            ? [NSHomeDirectory(), NSHomeDirectory() + "/brain", NSHomeDirectory() + "/Desktop",
                NSHomeDirectory() + "/Documents", NSHomeDirectory() + "/Downloads"]
             : allowedRoots
     }

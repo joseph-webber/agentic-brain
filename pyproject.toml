@@ -1,7 +1,7 @@
 [project]
 name = "agentic-brain"
-version = "3.1.0"
-description = "Enterprise-grade AI Agent Platform. Production-ready orchestration with GraphRAG, Multi-LLM support, and 155+ RAG loaders. Python, GPU-accelerated, Secure."
+version = "3.1.1"
+description = "Enterprise-grade AI Agent Platform. Production-ready orchestration with GraphRAG, Multi-LLM support, and 100+ RAG loaders. Python, GPU-accelerated, Secure."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -74,6 +74,7 @@ dependencies = [
     "firebase-admin>=6.0.0,<7.0.0",  # Firebase auth, Firestore, RTDB, and Storage
     "temporalio>=1.4.0,<2.0.0",  # Durable workflow execution
     "kafka-python>=2.0.2,<3.0.0",  # Redpanda/Kafka voice coordination
+    "redis>=5.0.0,<6.0.0",  # Redis client for caching and message queuing
     "fastapi>=0.104.0,<1.0.0",  # Modern async web framework
     "uvicorn[standard]>=0.27.0",  # ASGI server for FastAPI (with standard extras)
     "httpx>=0.25.0,<1.0.0",  # Async HTTP client for API calls

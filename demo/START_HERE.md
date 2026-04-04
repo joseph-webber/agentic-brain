@@ -3,7 +3,7 @@
 ## Quick Start (3 Minutes)
 
 ```bash
-cd /Users/joe/brain/agentic-brain/demo
+cd $HOME/brain/agentic-brain/demo
 ./setup-demo.sh
 ```
 

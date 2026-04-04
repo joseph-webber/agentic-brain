@@ -8,7 +8,7 @@ Get up and running in 15 minutes with the recommended stack.
 |------|-----|------|
 | **GitHub Account** | Code hosting, authentication | Free |
 | **GitHub Copilot Pro+** | AI pair programming, agents | $39/month (recommended) |
-| **Python 3.10+** | Runtime | Free |
+| **Python 3.11+** | Runtime | Free |
 | **Neo4j** | Knowledge graph memory (optional) | Free (Community) |
 
 ---

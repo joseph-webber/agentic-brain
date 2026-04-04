@@ -6,7 +6,7 @@ import os.log
 import Speech
 
 // MARK: - Microphone Debug Logger
-private let micLogger = Logger(subsystem: "com.josephwebber.brainchat", category: "Microphone")
+private let micLogger = Logger(subsystem: "com.brainchat.app", category: "Microphone")
 
 /// Write debug logs to file for verification (Console.app + file)
 private func logMic(_ message: String, level: OSLogType = .debug) {

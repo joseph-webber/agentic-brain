@@ -29,7 +29,8 @@ struct ProcessCopilotCommandRunner: CopilotCommandRunning {
         process.standardError = stderrPipe
 
         var env = ProcessInfo.processInfo.environment
-        let extraPaths = ["/opt/homebrew/bin", "/usr/local/bin", "/Users/joe/.local/bin"]
+        let localBinPath = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".local/bin").path
+        let extraPaths = ["/opt/homebrew/bin", "/usr/local/bin", localBinPath]
         let currentPath = env["PATH"] ?? "/usr/bin:/bin"
         env["PATH"] = (extraPaths + [currentPath]).joined(separator: ":")
         process.environment = env
@@ -81,7 +82,9 @@ struct CopilotClient: CopilotStreaming, Sendable {
     private let runner: any CopilotCommandRunning
 
     init(
-        cliPath: String = "/Users/joe/.local/bin/copilot",
+        cliPath: String = {
+            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".local/bin/copilot").path
+        }(),
         timeout: TimeInterval = 30,
         runner: any CopilotCommandRunning = ProcessCopilotCommandRunner()
     ) {

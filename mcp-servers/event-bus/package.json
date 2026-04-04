@@ -1,0 +1,51 @@
+{
+  "name": "brain-event-bus",
+  "version": "1.0.0",
+  "description": "Brain Event Bus MCP Server - Direct access to Redpanda/Kafka event bus",
+  "main": "server.py",
+  "scripts": {
+    "start": "source ../../venv/bin/activate && python server.py"
+  },
+  "mcp": {
+    "name": "brain-event-bus",
+    "description": "MCP server for brain event bus. Provides direct access to the message broker (Redpanda/Kafka) through abstraction layer. All brain components are peers on the bus.",
+    "tools": [
+      {
+        "name": "emit",
+        "description": "Publish event to topic"
+      },
+      {
+        "name": "health",
+        "description": "Check event bus status"
+      },
+      {
+        "name": "topics",
+        "description": "List all brain topics"
+      },
+      {
+        "name": "switch_provider",
+        "description": "Switch between Redpanda and Kafka"
+      },
+      {
+        "name": "send_llm_request",
+        "description": "Send request to LLM fallback chain"
+      },
+      {
+        "name": "broadcast_alert",
+        "description": "Broadcast alert to all components"
+      },
+      {
+        "name": "query_state",
+        "description": "Query component states"
+      }
+    ],
+    "architecture": {
+      "description": "MCP talks directly to event bus abstraction. JHipster, Python Core, and LLM are all peers on the bus.",
+      "flow": "Claude → MCP → EventBus Abstraction → Redpanda/Kafka ← All Services (peers)"
+    }
+  },
+  "dependencies": {
+    "mcp": ">=1.0.0",
+    "kafka-python": ">=2.0.0"
+  }
+}

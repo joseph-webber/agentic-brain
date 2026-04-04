@@ -7,6 +7,7 @@ End-to-end tests that drive Brain Chat through macOS System Events, validating t
 | Script | What it tests |
 |--------|---------------|
 | `test_basic_chat.applescript` | Send a message, verify response appears |
+| `test_brainchat.applescript` | AppleScript scripting API (send message, get response, etc.) |
 | `test_voice_toggle.applescript` | Cmd+L toggles microphone Live/Muted |
 | `test_keyboard_shortcuts.applescript` | Cmd+L, Cmd+., Cmd+,, Cmd+Return |
 | `test_accessibility.applescript` | AX labels, tab navigation, scroll areas |
@@ -16,7 +17,7 @@ End-to-end tests that drive Brain Chat through macOS System Events, validating t
 ## Quick Start
 
 ```bash
-cd ~/brain/agentic-brain/apps/BrainChat/Scripts/AppleScript
+cd /Users/joe/brain/agentic-brain/apps/BrainChat/Scripts/AppleScript
 ./run_all_tests.sh           # run all
 ./run_all_tests.sh --verbose # with detailed output
 osascript test_accessibility.applescript  # run one test
@@ -24,7 +25,7 @@ osascript test_accessibility.applescript  # run one test
 
 ## Prerequisites
 
-1. **Brain Chat built** — `Brain Chat.app` exists in the BrainChat directory
+1. **Brain Chat built** — `Brain Chat.app` exists in the parent directory (`../Brain Chat.app`)
 2. **Accessibility permission** — Terminal (or the calling app) must be in  
    System Settings → Privacy & Security → Accessibility
 3. **System Events access** — granted automatically on first run (click Allow)

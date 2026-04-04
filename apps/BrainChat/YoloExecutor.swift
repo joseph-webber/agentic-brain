@@ -533,7 +533,7 @@ final class YoloExecutor: ObservableObject {
             let result = try system.run(
                 command.command,
                 timeout: 30,
-                workingDirectory: "/Users/joe/brain"
+                workingDirectory: NSHomeDirectory() + "/brain"
             )
 
             if result.succeeded {
@@ -582,7 +582,7 @@ final class YoloExecutor: ObservableObject {
             let result = try system.run(
                 gitCmd,
                 timeout: 30,
-                workingDirectory: "/Users/joe/brain"
+                workingDirectory: NSHomeDirectory() + "/brain"
             )
 
             if result.succeeded {

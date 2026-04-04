@@ -20,7 +20,7 @@ concurrency:
 jobs:
   unit-tests:
     name: Unit & Integration Tests
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 20
 
     steps:
@@ -79,7 +79,7 @@ jobs:
 
   accessibility-audit:
     name: Accessibility Audit
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 15
 
     steps:
@@ -165,7 +165,7 @@ jobs:
 
   compile-check:
     name: Compile All Sources
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 15
 
     steps:

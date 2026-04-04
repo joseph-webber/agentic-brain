@@ -99,7 +99,7 @@ Plus: Shelley (British), Flo (French accent)
 
 ### 💼 WORK MODE
 - **Voice**: Karen only
-- **Use**: Professional, CITB work, client calls
+- **Use**: Professional work and client calls
 - **Command**: `ab voice mode work`
 
 ### 💜 LIFE MODE (Default)

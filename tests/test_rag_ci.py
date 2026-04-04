@@ -477,7 +477,7 @@ class TestNeo4jRAG:
         )
 
         # Test entity extraction from text
-        text = "Joseph works at CITB in Adelaide."
+        text = "Joseph works in Adelaide."
 
         try:
             entities = rag.extract_entities(text)

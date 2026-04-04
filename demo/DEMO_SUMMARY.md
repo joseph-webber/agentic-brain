@@ -41,7 +41,7 @@ The demo environment provides a **complete, fully-functional** test setup:
 ## 🚀 Quick Start
 
 ```bash
-cd /Users/joe/brain/agentic-brain/demo
+cd $HOME/brain/agentic-brain/demo
 ./setup-demo.sh
 ```
 

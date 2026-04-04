@@ -250,5 +250,5 @@ Tests verify:
 
 ## Contact
 
-- **Joseph Webber** — joseph.webber@gmail.com
+- **Joseph Webber** — user@example.com
 - **Repository** — [github.com/ecomlounge/brain](https://github.com/ecomlounge/brain)

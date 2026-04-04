@@ -665,7 +665,7 @@ class ConversationMemory:
         for match in tech_patterns.finditer(text):
             entities.append((match.group(), "TECHNOLOGY"))
 
-        # Multi-word proper nouns (e.g., "Steve Taylor", "Joseph Webber")
+        # Multi-word proper nouns (e.g., "User Two", "Joseph Webber")
         for match in re.finditer(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b", text):
             name = match.group()
             # Skip common phrases

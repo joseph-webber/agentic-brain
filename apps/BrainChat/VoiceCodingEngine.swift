@@ -550,7 +550,7 @@ final class VoiceCodingEngine: @unchecked Sendable {
     }
 
     private func runTests(directory: String?) async -> String {
-        let dir = directory ?? "/Users/joe/brain"
+        let dir = directory ?? NSHomeDirectory() + "/brain"
         do {
             let result = try system.runTests(in: dir)
             return result.succeeded ? "All tests passed.\n\(result.stdout)" : "Tests failed.\n\(result.output)"
@@ -560,10 +560,11 @@ final class VoiceCodingEngine: @unchecked Sendable {
     }
 
     private func commitChanges(message: String) async -> String {
+        let workDir = NSHomeDirectory() + "/brain"
         do {
             let result = try system.run(
-                "cd /Users/joe/brain && git add -A && git commit -m '\(message.replacingOccurrences(of: "'", with: "'\\''"))'",
-                timeout: 30, workingDirectory: "/Users/joe/brain")
+                "cd '\(workDir)' && git add -A && git commit -m '\(message.replacingOccurrences(of: "'", with: "'\\''"))'",
+                timeout: 30, workingDirectory: workDir)
             return result.succeeded ? "Committed: \(message)" : "Commit failed: \(result.output)"
         } catch {
             return "Commit error: \(error.localizedDescription)"
@@ -585,10 +586,11 @@ final class VoiceCodingEngine: @unchecked Sendable {
     }
 
     private func searchCode(query: String) async -> String {
+        let workDir = NSHomeDirectory() + "/brain"
         do {
             let result = try system.run(
-                "cd /Users/joe/brain && grep -rn '\(query.replacingOccurrences(of: "'", with: "'\\''"))' --include='*.py' --include='*.swift' --include='*.ts' --include='*.js' -l | head -10",
-                timeout: 15, workingDirectory: "/Users/joe/brain")
+                "cd '\(workDir)' && grep -rn '\(query.replacingOccurrences(of: "'", with: "'\\''"))' --include='*.py' --include='*.swift' --include='*.ts' --include='*.js' -l | head -10",
+                timeout: 15, workingDirectory: workDir)
             if result.stdout.isEmpty {
                 return "No matches found for '\(query)'."
             }
@@ -645,8 +647,9 @@ final class VoiceCodingEngine: @unchecked Sendable {
     }
 
     private func gitStatus() async -> String {
+        let workDir = NSHomeDirectory() + "/brain"
         do {
-            let result = try system.gitStatus(in: "/Users/joe/brain")
+            let result = try system.gitStatus(in: workDir)
             return result.stdout.isEmpty ? "Working tree is clean." : "Changes:\n\(result.stdout)"
         } catch {
             return "Git status error: \(error.localizedDescription)"
@@ -654,8 +657,9 @@ final class VoiceCodingEngine: @unchecked Sendable {
     }
 
     private func gitDiff() async -> String {
+        let workDir = NSHomeDirectory() + "/brain"
         do {
-            let result = try system.run("cd /Users/joe/brain && git --no-pager diff --stat", timeout: 15, workingDirectory: "/Users/joe/brain")
+            let result = try system.run("cd '\(workDir)' && git --no-pager diff --stat", timeout: 15, workingDirectory: workDir)
             return result.stdout.isEmpty ? "No changes." : result.stdout
         } catch {
             return "Git diff error: \(error.localizedDescription)"
@@ -720,7 +724,8 @@ final class VoiceCodingEngine: @unchecked Sendable {
         if path.hasPrefix("/") || path.hasPrefix("~") {
             return (path as NSString).expandingTildeInPath
         }
-        return "/Users/joe/brain/\(path)"
+        let projectRoot = NSHomeDirectory() + "/brain"
+        return projectRoot + "/\(path)"
     }
 
     private func detectLanguageFromContext(_ text: String) -> String? {

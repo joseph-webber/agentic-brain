@@ -8,7 +8,7 @@ A production-ready Python WebSocket server that bridges WebSocket clients to pse
 
 ## 📁 Deliverables
 
-**Location:** `/Users/joe/brain/agentic-brain/tools/web_terminal/`
+**Location:** `$HOME/brain/agentic-brain/tools/web_terminal/`
 
 ### Core Files
 
@@ -121,7 +121,7 @@ python3 server.py --port 9000  # Custom port
 
 ```bash
 # Navigate to project directory
-cd /Users/joe/brain/agentic-brain/tools/web_terminal
+cd $HOME/brain/agentic-brain/tools/web_terminal
 
 # Install dependencies
 pip install -r requirements.txt
@@ -149,13 +149,13 @@ python3 server.py --log-level DEBUG
 ### Connect Client
 
 1. **Direct File (Simplest):**
-   - Open in browser: `file:///Users/joe/brain/agentic-brain/tools/web_terminal/client.html`
+   - Open in browser: `file://$HOME/brain/agentic-brain/tools/web_terminal/client.html`
    - WebSocket will connect to `ws://localhost:8765`
 
 2. **Via HTTP Server:**
    ```bash
    # Start HTTP server
-   cd /Users/joe/brain/agentic-brain/tools/web_terminal
+   cd $HOME/brain/agentic-brain/tools/web_terminal
    python3 -m http.server 8000
    
    # Open browser
@@ -525,4 +525,4 @@ For issues:
 
 **Status:** ✅ Ready for Use  
 **Created:** April 1, 2025  
-**Location:** `/Users/joe/brain/agentic-brain/tools/web_terminal/`
+**Location:** `$HOME/brain/agentic-brain/tools/web_terminal/`

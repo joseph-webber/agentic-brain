@@ -25,7 +25,7 @@ enum KeychainError: LocalizedError {
 
 struct APIKeyManager: Sendable {
     static let shared = APIKeyManager()
-    private let serviceName = "com.josephwebber.brainchat"
+    private let serviceName = "com.brainchat.app"
 
     func save(_ value: String, for kind: APIKeyKind) throws {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -150,7 +150,7 @@ extension APIKeyManager: APIKeyManaging {
     private func providerQuery(_ provider: String) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: "com.josephwebber.brainchat.providers",
+            kSecAttrService as String: "com.brainchat.app.providers",
             kSecAttrAccount as String: provider,
         ]
     }

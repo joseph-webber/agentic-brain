@@ -1,0 +1,17 @@
+{
+  "name": "brain-browser-automation",
+  "version": "1.0.0",
+  "description": "Browser Automation MCP Server - Playwright + Neo4j learning",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "playwright": "^1.58.2",
+    "neo4j-driver": "^5.17.0"
+  },
+  "author": "Joseph Webber / Brain",
+  "license": "MIT"
+}

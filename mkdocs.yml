@@ -1,7 +1,7 @@
 site_name: Agentic Brain
 site_description: Universal AI Brain - Modular, Accessible, Powerful
 site_url: https://joseph-webber.github.io/agentic-brain/
-repo_url: https://github.com/joseph-webber/agentic-brain
+repo_url: https://github.com/yourorg/agentic-brain
 repo_name: joseph-webber/agentic-brain
 
 theme:

@@ -3,8 +3,12 @@ import Foundation
 actor CopilotVoiceRouter {
     static let shared = CopilotVoiceRouter()
 
-    private let copilotCLIPath = "/Users/joe/.local/bin/copilot"
-    private let copilotWorkingDirectory = URL(fileURLWithPath: "/Users/joe/brain")
+    private let copilotCLIPath = {
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".local/bin/copilot").path
+    }()
+    private let copilotWorkingDirectory = {
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("brain")
+    }()
     private let anthropicEndpoint = URL(string: "https://api.anthropic.com/v1/messages")!
     private let openAIEndpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
 
@@ -176,7 +180,8 @@ actor CopilotVoiceRouter {
         process.arguments = arguments
 
         var environment = ProcessInfo.processInfo.environment
-        let extraPaths = ["/opt/homebrew/bin", "/usr/local/bin", "/Users/joe/.local/bin"]
+        let localBinPath = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".local/bin").path
+        let extraPaths = ["/opt/homebrew/bin", "/usr/local/bin", localBinPath]
         let currentPath = environment["PATH"] ?? "/usr/bin:/bin"
         environment["PATH"] = (extraPaths + [currentPath]).joined(separator: ":")
         process.environment = environment

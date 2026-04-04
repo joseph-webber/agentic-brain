@@ -554,149 +554,113 @@ struct ModePreferences {
 
 // MARK: - LLM Streaming
 
-protocol LLMRequestHandle: AnyObject {
-    var isStreaming: Bool { get }
-    func cancel()
-}
-
-enum LLMAPIStyle {
-    case openAICompatible
-    case ollamaChat
-    case anthropic
-}
-
-enum LLMProvider: String, CaseIterable {
-    case groq
-    case ollamaFast
-    case ollamaQuality
-    case claude
-    case githubCopilot
-
-    var displayName: String {
-        switch self {
-        case .groq: return "Groq"
-        case .ollamaFast: return "Ollama 3B"
-        case .ollamaQuality: return "Ollama 8B"
-        case .claude: return "Claude"
-        case .githubCopilot: return "GitHub Copilot"
-        }
-    }
-}
-
-enum LLMConversationType: String {
-    case simple
-    case code
-    case reasoning
-    case general
-}
-
-struct LLMProviderHealth {
-    var isAvailable: Bool
-    var latency: TimeInterval?
-    var error: String?
-    var checkedAt: Date?
-
-    static let unknown = LLMProviderHealth(isAvailable: false, latency: nil, error: "Not checked yet", checkedAt: nil)
-}
-
-struct LLMRoutingDecision {
-    let normalizedText: String
-    let conversationType: LLMConversationType
-    let manualOverride: LLMProvider?
-    let offlineOnly: Bool
-    let providers: [LLMProvider]
-    let shouldRace: Bool
-}
-
+/// Configuration for a streaming LLM endpoint (OpenAI-compatible or native Ollama).
 struct LLMConfig {
-    let provider: LLMProvider
     let url: URL
     let model: String
     let systemPrompt: String
-    let apiStyle: LLMAPIStyle
     var apiKey: String?
     var temperature: Double
     var maxTokens: Int
 
-    init(provider: LLMProvider, url: URL, model: String, systemPrompt: String, apiStyle: LLMAPIStyle,
+    init(url: URL, model: String, systemPrompt: String,
          apiKey: String? = nil, temperature: Double = 0.7, maxTokens: Int = 1024) {
-        self.provider = provider
         self.url = url
         self.model = model
         self.systemPrompt = systemPrompt
-        self.apiStyle = apiStyle
         self.apiKey = apiKey
         self.temperature = temperature
         self.maxTokens = maxTokens
     }
 
+    /// Default: local Ollama with the llama3.2:3b fast model.
     static let `default` = LLMConfig(
-        provider: .ollamaFast,
-        url: URL(string: "http://localhost:11434/api/chat")!,
+        url: URL(string: "http://localhost:11434/v1/chat/completions")!,
         model: "llama3.2:3b",
-        systemPrompt: "You are Iris Lumina, an AI assistant for Joseph, who is blind and uses VoiceOver on macOS. Keep responses concise and clear. No filler phrases.",
-        apiStyle: .ollamaChat
+        systemPrompt: "You are Iris Lumina, an AI assistant for Joseph, who is blind and uses VoiceOver on macOS. Keep responses concise and clear. No filler phrases."
     )
 
     static func mode(_ chatMode: ChatMode) -> LLMConfig {
-        let provider: LLMProvider = chatMode.llmModel == "llama3.1:8b" ? .ollamaQuality : .ollamaFast
-        return LLMConfig(
-            provider: provider,
-            url: URL(string: "http://localhost:11434/api/chat")!,
+        LLMConfig(
+            url: URL(string: "http://localhost:11434/v1/chat/completions")!,
             model: chatMode.llmModel,
-            systemPrompt: chatMode.systemPrompt,
-            apiStyle: .ollamaChat
+            systemPrompt: chatMode.systemPrompt
         )
     }
 }
 
-final class LLMStreamingClient: NSObject, URLSessionDataDelegate, LLMRequestHandle {
+/// Streams LLM responses token-by-token via URLSession delegate callbacks.
+///
+/// Supported wire formats (auto-detected per line):
+///   - OpenAI chat-completion SSE: `data: {"choices":[{"delta":{"content":"…"}}]}`
+///   - Ollama `/api/chat` NDJSON:  `{"message":{"content":"…"},"done":false}`
+///   - Ollama `/api/generate` NDJSON: `{"response":"…","done":false}`
+///
+/// **UTF-8 buffer management**: incoming bytes are merged into a tail buffer; only the
+/// longest valid UTF-8 prefix is decoded per chunk, leaving any partial multi-byte
+/// sequence in the tail for the next data callback.
+///
+/// **Retry policy**: connection-level errors (refused, timeout, lost) trigger
+/// exponential-backoff retries (0.5 s → 1 s → 2 s) *only* when no content has been
+/// accumulated yet.  HTTP errors and mid-stream disconnects are not retried.
+final class LLMStreamingClient: NSObject, URLSessionDataDelegate {
+
     enum StreamError: LocalizedError {
         case httpError(Int)
         case connectionFailed(Error)
-        case invalidConfiguration(String)
 
         var errorDescription: String? {
             switch self {
-            case .httpError(let code): return "HTTP \(code)"
-            case .connectionFailed(let error): return error.localizedDescription
-            case .invalidConfiguration(let message): return message
+            case .httpError(let code):       return "HTTP \(code)"
+            case .connectionFailed(let err): return err.localizedDescription
             }
         }
     }
 
+    /// `true` while a stream request is in-flight (including retry back-off waits).
     private(set) var isStreaming = false
+
+    // Callbacks — always invoked on the main thread.
     var onToken: ((String) -> Void)?
     var onComplete: ((String, Error?) -> Void)?
 
     private lazy var session: URLSession = {
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 10
-        config.timeoutIntervalForResource = 120
-        config.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        let cfg = URLSessionConfiguration.default
+        cfg.timeoutIntervalForRequest  = 10    // fast failure for localhost
+        cfg.timeoutIntervalForResource = 120   // allow long completions
+        cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: cfg, delegate: self, delegateQueue: nil)
     }()
 
     private var currentTask: URLSessionDataTask?
-    private var utf8Tail = Data()
-    private var lineBuffer = ""
-    private var accumulated = ""
-    private var pendingConfig: LLMConfig?
-    private var pendingMessages: [[String: String]] = []
-    private var retries = 0
+
+    // Per-stream state
+    private var utf8Tail    = Data()   // incomplete UTF-8 tail bytes from the last chunk
+    private var lineBuf     = ""       // text assembled since the last newline
+    private var accumulated = ""       // full content received so far
+
+    // Retry state
+    private var pendingConfig:   LLMConfig?
+    private var pendingMessages: [[String: Any]] = []
+    private var retries    = 0
     private let maxRetries = 3
 
+    // MARK: Public API
+
     func stream(config: LLMConfig, userText: String,
-                onToken: @escaping (String) -> Void,
+                onToken:    @escaping (String) -> Void,
                 onComplete: @escaping (String, Error?) -> Void) {
-        pendingConfig = config
-        pendingMessages = [["role": "user", "content": userText]]
-        self.onToken = onToken
+        self.pendingConfig   = config
+        self.pendingMessages = [
+            ["role": "system", "content": config.systemPrompt],
+            ["role": "user",   "content": userText],
+        ]
+        self.onToken    = onToken
         self.onComplete = onComplete
-        retries = 0
+        retries     = 0
         accumulated = ""
-        utf8Tail = Data()
-        lineBuffer = ""
+        utf8Tail    = Data()
+        lineBuf     = ""
         isStreaming = true
         sendRequest()
     }
@@ -705,77 +669,47 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate, LLMRequestHand
         isStreaming = false
         currentTask?.cancel()
         currentTask = nil
-        session.invalidateAndCancel()
+        session.invalidateAndCancel()   // break URLSession → delegate retain cycle
     }
+
+    // MARK: Private: request
 
     private func sendRequest() {
         guard let config = pendingConfig else { return }
 
-        var request = URLRequest(url: config.url)
-        request.httpMethod = "POST"
-        request.timeoutInterval = 45
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("text/event-stream, application/json", forHTTPHeaderField: "Accept")
-
-        switch config.apiStyle {
-        case .openAICompatible:
-            if let key = config.apiKey {
-                request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
-            }
-        case .anthropic:
-            if let key = config.apiKey {
-                request.setValue(key, forHTTPHeaderField: "x-api-key")
-            }
-            request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        case .ollamaChat:
-            break
+        var req = URLRequest(url: config.url)
+        req.httpMethod = "POST"
+        req.setValue("application/json",                     forHTTPHeaderField: "Content-Type")
+        req.setValue("text/event-stream, application/json",  forHTTPHeaderField: "Accept")
+        if let key = config.apiKey {
+            req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         }
 
-        let body: [String: Any]
-        switch config.apiStyle {
-        case .openAICompatible:
-            let messages = [["role": "system", "content": config.systemPrompt]] + pendingMessages
-            body = [
-                "model": config.model,
-                "messages": messages,
-                "stream": true,
-                "temperature": config.temperature,
-                "max_tokens": config.maxTokens,
-            ]
-        case .ollamaChat:
-            let messages = [["role": "system", "content": config.systemPrompt]] + pendingMessages
-            body = [
-                "model": config.model,
-                "messages": messages,
-                "stream": true,
-                "options": [
-                    "temperature": config.temperature,
-                    "num_predict": config.maxTokens,
-                ],
-            ]
-        case .anthropic:
-            body = [
-                "model": config.model,
-                "system": config.systemPrompt,
-                "messages": pendingMessages,
-                "stream": true,
-                "temperature": config.temperature,
-                "max_tokens": config.maxTokens,
-            ]
-        }
-
+        let body: [String: Any] = [
+            "model":       config.model,
+            "messages":    pendingMessages,
+            "stream":      true,
+            "temperature": config.temperature,
+            "max_tokens":  config.maxTokens,
+        ]
         guard let bodyData = try? JSONSerialization.data(withJSONObject: body) else {
-            finish(error: StreamError.invalidConfiguration("Request serialization failed"))
+            finish(error: StreamError.connectionFailed(
+                NSError(domain: "LLM", code: -1,
+                        userInfo: [NSLocalizedDescriptionKey: "Request serialization failed"])))
             return
         }
-        request.httpBody = bodyData
-        utf8Tail = Data()
-        lineBuffer = ""
+        req.httpBody = bodyData
 
-        let task = session.dataTask(with: request)
+        // Reset per-attempt buffers; accumulated persists across retries.
+        utf8Tail = Data()
+        lineBuf  = ""
+
+        let task = session.dataTask(with: req)
         currentTask = task
         task.resume()
     }
+
+    // MARK: URLSessionDataDelegate
 
     func urlSession(_ session: URLSession,
                     dataTask: URLSessionDataTask,
@@ -797,19 +731,26 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate, LLMRequestHand
     func urlSession(_ session: URLSession,
                     dataTask: URLSessionDataTask,
                     didReceive data: Data) {
+        // Merge new bytes with any leftover partial UTF-8 sequence from the last chunk.
         utf8Tail.append(data)
-        var validLength = utf8Tail.count
-        while validLength > 0, String(data: utf8Tail.prefix(validLength), encoding: .utf8) == nil {
-            validLength -= 1
-        }
-        guard validLength > 0,
-              let decoded = String(data: utf8Tail.prefix(validLength), encoding: .utf8) else { return }
 
-        utf8Tail = validLength < utf8Tail.count ? Data(utf8Tail.suffix(utf8Tail.count - validLength)) : Data()
-        lineBuffer += decoded
-        while let range = lineBuffer.range(of: "\n") {
-            let line = String(lineBuffer[lineBuffer.startIndex..<range.lowerBound])
-            lineBuffer = String(lineBuffer[range.upperBound...])
+        // Find the longest decodable UTF-8 prefix, leaving incomplete bytes in the tail.
+        var validLen = utf8Tail.count
+        while validLen > 0, String(data: utf8Tail.prefix(validLen), encoding: .utf8) == nil {
+            validLen -= 1
+        }
+        guard validLen > 0,
+              let decoded = String(data: utf8Tail.prefix(validLen), encoding: .utf8) else { return }
+
+        utf8Tail = validLen < utf8Tail.count
+            ? Data(utf8Tail.suffix(utf8Tail.count - validLen))
+            : Data()
+
+        // Split on newlines; keep the unterminated trailing fragment in lineBuf.
+        lineBuf += decoded
+        while let nlIdx = lineBuf.range(of: "\n") {
+            let line = String(lineBuf[lineBuf.startIndex ..< nlIdx.lowerBound])
+            lineBuf  = String(lineBuf[nlIdx.upperBound...])
             processLine(line)
         }
     }
@@ -817,69 +758,74 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate, LLMRequestHand
     func urlSession(_ session: URLSession,
                     task: URLSessionTask,
                     didCompleteWithError error: Error?) {
-        if !lineBuffer.isEmpty {
-            processLine(lineBuffer)
-            lineBuffer = ""
+        // Flush any partial last line that arrived without a trailing newline.
+        if !lineBuf.isEmpty {
+            processLine(lineBuf)
+            lineBuf = ""
         }
-        if let nsError = error as NSError?, nsError.code != NSURLErrorCancelled {
-            let retriable = [NSURLErrorCannotConnectToHost, NSURLErrorNotConnectedToInternet, NSURLErrorTimedOut, NSURLErrorNetworkConnectionLost]
-            if retriable.contains(nsError.code), accumulated.isEmpty, retries < maxRetries {
+
+        if let nsErr = error as NSError?, nsErr.code != NSURLErrorCancelled {
+            let retriableCodes: Set<Int> = [
+                NSURLErrorCannotConnectToHost,
+                NSURLErrorNotConnectedToInternet,
+                NSURLErrorTimedOut,
+                NSURLErrorNetworkConnectionLost,
+            ]
+            // Retry connection-level errors when we have no content yet.
+            if retriableCodes.contains(nsErr.code), accumulated.isEmpty, retries < maxRetries {
                 retries += 1
-                let delay = pow(2.0, Double(retries - 1)) * 0.5
+                let delay = pow(2.0, Double(retries - 1)) * 0.5   // 0.5 / 1.0 / 2.0 s
                 DispatchQueue.global().asyncAfter(deadline: .now() + delay) { [weak self] in
                     guard let self, self.isStreaming else { return }
                     self.sendRequest()
                 }
                 return
             }
-            finish(error: accumulated.isEmpty ? StreamError.connectionFailed(nsError) : nil)
+            finish(error: accumulated.isEmpty ? StreamError.connectionFailed(nsErr) : nil)
         } else {
             finish(error: nil)
         }
     }
 
-    func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {}
+    func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
+        // Session was intentionally invalidated after completion or cancellation.
+    }
 
-    private func processLine(_ rawLine: String) {
-        let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+    // MARK: Line parsing
+
+    private func processLine(_ raw: String) {
+        let line = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !line.isEmpty else { return }
-        if line.hasPrefix("event: ") { return }
-        let jsonText: String
+
+        // Strip SSE "data: " prefix when present.
+        let jsonStr: String
         if line.hasPrefix("data: ") {
             let payload = String(line.dropFirst("data: ".count))
             if payload == "[DONE]" { return }
-            jsonText = payload
+            jsonStr = payload
         } else {
-            jsonText = line
+            jsonStr = line
         }
-        guard let data = jsonText.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+
+        guard let jsonData = jsonStr.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return }
+
+        // OpenAI chat-completion chunk: choices[0].delta.content
         if let choices = json["choices"] as? [[String: Any]],
-           let delta = choices.first?["delta"] as? [String: Any],
-           let content = delta["content"] as? String,
-           !content.isEmpty {
-            emit(content)
-            return
+           let delta   = choices.first?["delta"] as? [String: Any],
+           let content = delta["content"] as? String, !content.isEmpty {
+            emit(content); return
         }
-        if let message = json["message"] as? [String: Any],
-           let content = message["content"] as? String,
-           !content.isEmpty {
-            emit(content)
-            return
+
+        // Ollama /api/chat: {"message":{"content":"…"},"done":false}
+        if let msg     = json["message"] as? [String: Any],
+           let content = msg["content"] as? String, !content.isEmpty {
+            emit(content); return
         }
+
+        // Ollama /api/generate: {"response":"…","done":false}
         if let response = json["response"] as? String, !response.isEmpty {
             emit(response)
-            return
-        }
-        if let delta = json["delta"] as? [String: Any],
-           let text = delta["text"] as? String,
-           !text.isEmpty {
-            emit(text)
-            return
-        }
-        if let content = json["content"] as? [[String: Any]] {
-            let text = content.compactMap { $0["text"] as? String }.joined()
-            if !text.isEmpty { emit(text) }
         }
     }
 
@@ -890,462 +836,9 @@ final class LLMStreamingClient: NSObject, URLSessionDataDelegate, LLMRequestHand
 
     private func finish(error: Error?) {
         isStreaming = false
-        session.finishTasksAndInvalidate()
+        session.finishTasksAndInvalidate()   // break URLSession → delegate retain cycle
         let text = accumulated
         DispatchQueue.main.async { [weak self] in self?.onComplete?(text, error) }
-    }
-}
-
-final class GitHubCopilotRequest: LLMRequestHandle {
-    private(set) var isStreaming = false
-    private var process: Process?
-    private let onComplete: (String, Error?) -> Void
-
-    init(prompt: String, onComplete: @escaping (String, Error?) -> Void) {
-        self.onComplete = onComplete
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["gh", "copilot", "-p", prompt]
-        let stdout = Pipe()
-        let stderr = Pipe()
-        process.standardOutput = stdout
-        process.standardError = stderr
-        self.process = process
-        isStreaming = true
-
-        process.terminationHandler = { [weak self] process in
-            let output = String(data: stdout.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-            let errorText = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-            let trimmedOutput = output.trimmingCharacters(in: .whitespacesAndNewlines)
-            let trimmedError = errorText.trimmingCharacters(in: .whitespacesAndNewlines)
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.isStreaming = false
-                self.process = nil
-                if process.terminationStatus == 0, !trimmedOutput.isEmpty {
-                    self.onComplete(trimmedOutput, nil)
-                } else {
-                    let message = trimmedError.isEmpty ? "gh copilot did not return a response" : trimmedError
-                    self.onComplete("", NSError(domain: "BrainChat.Copilot", code: Int(process.terminationStatus), userInfo: [NSLocalizedDescriptionKey: message]))
-                }
-            }
-        }
-
-        do {
-            try process.run()
-        } catch {
-            isStreaming = false
-            self.process = nil
-            DispatchQueue.main.async { onComplete("", error) }
-        }
-    }
-
-    func cancel() {
-        isStreaming = false
-        process?.terminate()
-        process = nil
-    }
-}
-
-final class LLMRouter {
-    private let systemPrompt = "You are Iris Lumina, an AI assistant for Joseph, who is blind and uses VoiceOver on macOS. Keep responses concise and clear. Prefer short paragraphs and explicit wording."
-    private let defaults = UserDefaults.standard
-    private let healthQueue = DispatchQueue(label: "brainchat.llmrouter.health", attributes: .concurrent)
-    private let session: URLSession
-    private var health: [LLMProvider: LLMProviderHealth] = Dictionary(uniqueKeysWithValues: LLMProvider.allCases.map { ($0, .unknown) })
-
-    init() {
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 4
-        config.timeoutIntervalForResource = 6
-        config.requestCachePolicy = .reloadIgnoringLocalCacheData
-        session = URLSession(configuration: config)
-    }
-
-    func startHealthChecks(_ onStatus: @escaping (String) -> Void) {
-        for provider in LLMProvider.allCases {
-            ping(provider) { [weak self] in
-                guard let self else { return }
-                DispatchQueue.main.async { onStatus(self.healthSummary()) }
-            }
-        }
-    }
-
-    func streamResponse(for text: String,
-                        onStatus: @escaping (String) -> Void,
-                        onToken: @escaping (String) -> Void,
-                        onComplete: @escaping (String, Error?, LLMProvider?) -> Void) -> LLMRequestHandle {
-        let decision = route(text)
-        if let manual = decision.manualOverride {
-            rememberPreference(manual, for: decision.conversationType)
-            onStatus("Manual override: \(manual.displayName) for \(decision.conversationType.rawValue) requests")
-        } else if decision.offlineOnly {
-            onStatus("Offline mode enabled. Using local Ollama only.")
-        }
-        let request = LLMRouterRequest(router: self, decision: decision, onStatus: onStatus, onToken: onToken, onComplete: onComplete)
-        request.start()
-        return request
-    }
-
-    func createRequest(for provider: LLMProvider,
-                       text: String,
-                       onToken: @escaping (String) -> Void,
-                       onComplete: @escaping (String, Error?) -> Void) -> LLMRequestHandle? {
-        switch provider {
-        case .githubCopilot:
-            return GitHubCopilotRequest(prompt: text, onComplete: onComplete)
-        default:
-            guard let config = config(for: provider) else { return nil }
-            let client = LLMStreamingClient()
-            client.stream(config: config, userText: text, onToken: onToken, onComplete: onComplete)
-            return client
-        }
-    }
-
-    func recordSuccess(provider: LLMProvider, latency: TimeInterval) {
-        updateHealth(provider: provider, available: true, latency: latency, error: nil)
-    }
-
-    func recordFailure(provider: LLMProvider, error: String) {
-        updateHealth(provider: provider, available: false, latency: nil, error: error)
-    }
-
-    func healthSnapshot(for provider: LLMProvider) -> LLMProviderHealth {
-        var snapshot = LLMProviderHealth.unknown
-        healthQueue.sync {
-            snapshot = health[provider] ?? .unknown
-        }
-        return snapshot
-    }
-
-    private func config(for provider: LLMProvider) -> LLMConfig? {
-        let env = ProcessInfo.processInfo.environment
-        switch provider {
-        case .groq:
-            guard let key = env["GROQ_API_KEY"], !key.isEmpty else { return nil }
-            return LLMConfig(provider: provider, url: URL(string: "https://api.groq.com/openai/v1/chat/completions")!, model: "llama-3.1-8b-instant", systemPrompt: systemPrompt, apiStyle: .openAICompatible, apiKey: key, temperature: 0.4, maxTokens: 900)
-        case .ollamaFast:
-            return LLMConfig(provider: provider, url: URL(string: "http://localhost:11434/api/chat")!, model: "llama3.2:3b", systemPrompt: systemPrompt, apiStyle: .ollamaChat, temperature: 0.4, maxTokens: 900)
-        case .ollamaQuality:
-            return LLMConfig(provider: provider, url: URL(string: "http://localhost:11434/api/chat")!, model: "llama3.1:8b", systemPrompt: systemPrompt, apiStyle: .ollamaChat, temperature: 0.35, maxTokens: 1200)
-        case .claude:
-            guard let key = env["ANTHROPIC_API_KEY"], !key.isEmpty else { return nil }
-            return LLMConfig(provider: provider, url: URL(string: "https://api.anthropic.com/v1/messages")!, model: "claude-3-7-sonnet-latest", systemPrompt: systemPrompt, apiStyle: .anthropic, apiKey: key, temperature: 0.3, maxTokens: 1400)
-        case .githubCopilot:
-            return nil
-        }
-    }
-
-    private func route(_ input: String) -> LLMRoutingDecision {
-        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-        let lowered = trimmed.lowercased()
-        let offlineOnly = lowered.hasPrefix("offline:") || lowered.hasPrefix("offline mode") || lowered.hasPrefix("use offline") || ProcessInfo.processInfo.environment["BRAINCHAT_OFFLINE"] == "1"
-        let conversationType = classify(trimmed)
-        var normalizedText = trimmed
-        var manualOverride: LLMProvider?
-        let overrides: [(String, LLMProvider)] = [
-            ("use groq", .groq),
-            ("use claude", .claude),
-            ("use copilot", .githubCopilot),
-            ("use local 8b", .ollamaQuality),
-            ("use local", .ollamaFast),
-            ("use ollama 8b", .ollamaQuality),
-            ("use ollama", .ollamaFast),
-        ]
-        for (prefix, provider) in overrides where lowered.hasPrefix(prefix) {
-            manualOverride = provider
-            normalizedText = trimmed.dropFirst(prefix.count).trimmingCharacters(in: CharacterSet(charactersIn: " :,-\n\t"))
-            break
-        }
-        if normalizedText.isEmpty { normalizedText = trimmed }
-
-        var providers = baseProviders(for: conversationType, offlineOnly: offlineOnly)
-        if let preferred = storedPreference(for: conversationType), providers.contains(preferred) {
-            providers.removeAll { $0 == preferred }
-            providers.insert(preferred, at: 0)
-        }
-        if let manualOverride {
-            providers.removeAll { $0 == manualOverride }
-            providers.insert(manualOverride, at: 0)
-        }
-        providers = reorderByHealth(providers)
-        let shouldRace = !offlineOnly && manualOverride == nil && conversationType == .simple && providers.prefix(2).contains(.groq) && providers.prefix(2).contains(.ollamaFast)
-        return LLMRoutingDecision(normalizedText: normalizedText, conversationType: conversationType, manualOverride: manualOverride, offlineOnly: offlineOnly, providers: providers, shouldRace: shouldRace)
-    }
-
-    private func classify(_ text: String) -> LLMConversationType {
-        let lowered = text.lowercased()
-        let wordCount = lowered.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
-        let codeHints = ["swift", "python", "javascript", "typescript", "regex", "compile", "build", "debug", "function", "class", "struct", "array", "json", "bash", "shell", "code", "stack trace", "terminal", "xcode"]
-        if codeHints.contains(where: lowered.contains) || lowered.contains("func ") || lowered.contains("def ") || lowered.contains("```") {
-            return .code
-        }
-        let reasoningHints = ["compare", "tradeoff", "analyse", "analyze", "reason", "architecture", "design", "why", "step by step", "plan", "strategy"]
-        if reasoningHints.contains(where: lowered.contains) || wordCount > 28 {
-            return .reasoning
-        }
-        let simpleHints = ["hello", "hi", "hey", "thanks", "thank you", "time", "date", "status", "ping", "who are you"]
-        if wordCount <= 10 || simpleHints.contains(where: lowered.contains) {
-            return .simple
-        }
-        return .general
-    }
-
-    private func baseProviders(for type: LLMConversationType, offlineOnly: Bool) -> [LLMProvider] {
-        if offlineOnly { return [.ollamaFast, .ollamaQuality] }
-        switch type {
-        case .simple, .general: return [.groq, .ollamaFast, .ollamaQuality, .claude, .githubCopilot]
-        case .code: return [.claude, .githubCopilot, .groq, .ollamaQuality, .ollamaFast]
-        case .reasoning: return [.claude, .groq, .ollamaQuality, .ollamaFast, .githubCopilot]
-        }
-    }
-
-    private func reorderByHealth(_ providers: [LLMProvider]) -> [LLMProvider] {
-        let indices = Dictionary(uniqueKeysWithValues: providers.enumerated().map { ($1, $0) })
-        return providers.sorted { lhs, rhs in
-            let lh = healthSnapshot(for: lhs)
-            let rh = healthSnapshot(for: rhs)
-            if lh.isAvailable != rh.isAvailable { return lh.isAvailable && !rh.isAvailable }
-            let ll = lh.latency ?? 999
-            let rl = rh.latency ?? 999
-            if ll != rl { return ll < rl }
-            return (indices[lhs] ?? 0) < (indices[rhs] ?? 0)
-        }
-    }
-
-    private func storedPreference(for type: LLMConversationType) -> LLMProvider? {
-        guard let raw = defaults.string(forKey: preferenceKey(for: type)) else { return nil }
-        return LLMProvider(rawValue: raw)
-    }
-
-    private func rememberPreference(_ provider: LLMProvider, for type: LLMConversationType) {
-        defaults.set(provider.rawValue, forKey: preferenceKey(for: type))
-    }
-
-    private func preferenceKey(for type: LLMConversationType) -> String {
-        return "brainchat.llm.preference.\(type.rawValue)"
-    }
-
-    private func ping(_ provider: LLMProvider, completion: @escaping () -> Void) {
-        switch provider {
-        case .githubCopilot:
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            process.arguments = ["gh", "copilot", "--help"]
-            let stdout = Pipe()
-            let stderr = Pipe()
-            process.standardOutput = stdout
-            process.standardError = stderr
-            let started = Date()
-            process.terminationHandler = { [weak self] process in
-                let output = String(data: stdout.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                let errorText = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                let reachable = process.terminationStatus == 0 && (!output.isEmpty || !errorText.isEmpty)
-                self?.updateHealth(provider: provider, available: reachable, latency: Date().timeIntervalSince(started), error: reachable ? nil : "gh copilot unavailable")
-                completion()
-            }
-            do {
-                try process.run()
-            } catch {
-                updateHealth(provider: provider, available: false, latency: nil, error: error.localizedDescription)
-                completion()
-            }
-        case .ollamaFast, .ollamaQuality:
-            simplePing(provider: provider, url: URL(string: "http://localhost:11434/api/tags")!, headers: [:], completion: completion)
-        case .groq:
-            guard let key = ProcessInfo.processInfo.environment["GROQ_API_KEY"], !key.isEmpty else {
-                updateHealth(provider: provider, available: false, latency: nil, error: "Missing GROQ_API_KEY")
-                completion()
-                return
-            }
-            simplePing(provider: provider, url: URL(string: "https://api.groq.com/openai/v1/models")!, headers: ["Authorization": "Bearer \(key)"], completion: completion)
-        case .claude:
-            guard let key = ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"], !key.isEmpty else {
-                updateHealth(provider: provider, available: false, latency: nil, error: "Missing ANTHROPIC_API_KEY")
-                completion()
-                return
-            }
-            simplePing(provider: provider, url: URL(string: "https://api.anthropic.com/v1/messages")!, headers: ["x-api-key": key, "anthropic-version": "2023-06-01"], completion: completion)
-        }
-    }
-
-    private func simplePing(provider: LLMProvider, url: URL, headers: [String: String], completion: @escaping () -> Void) {
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.timeoutInterval = 4
-        headers.forEach { request.setValue($1, forHTTPHeaderField: $0) }
-        let started = Date()
-        session.dataTask(with: request) { [weak self] _, response, error in
-            defer { completion() }
-            guard let self else { return }
-            if let error = error {
-                self.updateHealth(provider: provider, available: false, latency: nil, error: error.localizedDescription)
-                return
-            }
-            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-            let reachable = (200..<500).contains(status)
-            self.updateHealth(provider: provider, available: reachable, latency: Date().timeIntervalSince(started), error: reachable ? nil : "HTTP \(status)")
-        }.resume()
-    }
-
-    private func updateHealth(provider: LLMProvider, available: Bool, latency: TimeInterval?, error: String?) {
-        let snapshot = LLMProviderHealth(isAvailable: available, latency: latency, error: error, checkedAt: Date())
-        healthQueue.async(flags: .barrier) {
-            self.health[provider] = snapshot
-        }
-    }
-
-    private func healthSummary() -> String {
-        let parts = LLMProvider.allCases.map { provider -> String in
-            let snapshot = healthSnapshot(for: provider)
-            if snapshot.isAvailable {
-                if let latency = snapshot.latency {
-                    return "\(provider.displayName) \(Int(latency * 1000))ms"
-                }
-                return "\(provider.displayName) ready"
-            }
-            return "\(provider.displayName) \(snapshot.error ?? "down")"
-        }
-        return "LLM health: " + parts.joined(separator: " · ")
-    }
-}
-
-final class LLMRouterRequest: LLMRequestHandle {
-    private final class Execution {
-        let provider: LLMProvider
-        let startedAt: Date
-        let handle: LLMRequestHandle
-
-        init(provider: LLMProvider, handle: LLMRequestHandle) {
-            self.provider = provider
-            self.startedAt = Date()
-            self.handle = handle
-        }
-
-        func cancel() {
-            handle.cancel()
-        }
-    }
-
-    private let router: LLMRouter
-    private let decision: LLMRoutingDecision
-    private let onStatus: (String) -> Void
-    private let onToken: (String) -> Void
-    private let onComplete: (String, Error?, LLMProvider?) -> Void
-
-    private var remainingProviders: [LLMProvider]
-    private var executions: [LLMProvider: Execution] = [:]
-    private var winner: LLMProvider?
-    private var lastError: Error?
-    private var didFinish = false
-    private(set) var isStreaming = false
-
-    init(router: LLMRouter,
-         decision: LLMRoutingDecision,
-         onStatus: @escaping (String) -> Void,
-         onToken: @escaping (String) -> Void,
-         onComplete: @escaping (String, Error?, LLMProvider?) -> Void) {
-        self.router = router
-        self.decision = decision
-        self.onStatus = onStatus
-        self.onToken = onToken
-        self.onComplete = onComplete
-        self.remainingProviders = decision.providers
-    }
-
-    func start() {
-        isStreaming = true
-        launchNextBatch()
-    }
-
-    func cancel() {
-        isStreaming = false
-        executions.values.forEach { $0.cancel() }
-        executions.removeAll()
-    }
-
-    private func launchNextBatch() {
-        guard !didFinish else { return }
-        if remainingProviders.isEmpty {
-            finish(text: "", error: lastError ?? NSError(domain: "BrainChat.Router", code: -1, userInfo: [NSLocalizedDescriptionKey: "No LLM providers were available"]), provider: nil)
-            return
-        }
-        let batch: [LLMProvider]
-        if decision.shouldRace, winner == nil, remainingProviders.count >= 2 {
-            batch = Array(remainingProviders.prefix(2))
-            remainingProviders.removeFirst(min(2, remainingProviders.count))
-            onStatus("Racing \(batch[0].displayName) and \(batch[1].displayName)…")
-        } else {
-            let next = remainingProviders.removeFirst()
-            batch = [next]
-            onStatus("Routing \(decision.conversationType.rawValue) request to \(next.displayName)…")
-        }
-        for provider in batch { start(provider: provider) }
-    }
-
-    private func start(provider: LLMProvider) {
-        guard let handle = router.createRequest(for: provider, text: decision.normalizedText, onToken: { [weak self] token in
-            self?.receiveToken(token, from: provider)
-        }, onComplete: { [weak self] text, error in
-            self?.complete(provider: provider, text: text, error: error)
-        }) else {
-            router.recordFailure(provider: provider, error: "Provider is not configured")
-            if executions.isEmpty { launchNextBatch() }
-            return
-        }
-        executions[provider] = Execution(provider: provider, handle: handle)
-    }
-
-    private func receiveToken(_ token: String, from provider: LLMProvider) {
-        guard !didFinish, let execution = executions[provider] else { return }
-        if winner == nil {
-            winner = provider
-            router.recordSuccess(provider: provider, latency: Date().timeIntervalSince(execution.startedAt))
-            onStatus("Using \(provider.displayName)")
-            cancelAllExcept(provider)
-        }
-        guard winner == provider else { return }
-        onToken(token)
-    }
-
-    private func complete(provider: LLMProvider, text: String, error: Error?) {
-        guard !didFinish else { return }
-        let execution = executions.removeValue(forKey: provider)
-        let latency = execution.map { Date().timeIntervalSince($0.startedAt) } ?? 0
-        if let error {
-            lastError = error
-            router.recordFailure(provider: provider, error: error.localizedDescription)
-        }
-        if winner == provider {
-            if !text.isEmpty { router.recordSuccess(provider: provider, latency: latency) }
-            finish(text: text, error: error, provider: provider)
-            return
-        }
-        if winner == nil, !text.isEmpty {
-            winner = provider
-            router.recordSuccess(provider: provider, latency: latency)
-            onStatus("Using \(provider.displayName)")
-            cancelAllExcept(provider)
-            onToken(text)
-            finish(text: text, error: error, provider: provider)
-            return
-        }
-        if executions.isEmpty && winner == nil { launchNextBatch() }
-    }
-
-    private func cancelAllExcept(_ provider: LLMProvider?) {
-        for (candidate, execution) in executions where candidate != provider {
-            execution.cancel()
-            executions.removeValue(forKey: candidate)
-        }
-    }
-
-    private func finish(text: String, error: Error?, provider: LLMProvider?) {
-        guard !didFinish else { return }
-        didFinish = true
-        isStreaming = false
-        cancelAllExcept(provider)
-        onComplete(text, error, provider)
     }
 }
 
@@ -1399,7 +892,6 @@ final class TerminalChatController {
     private let bridge = RedpandaBridge()
     private let fallbackResponder = LocalFallbackResponder()
     private let speaker = SpeechVoice()
-    private let llmRouter = LLMRouter()
     private let terminalMode = TerminalMode()
     private var currentMode: ChatMode = ModePreferences.load()
     private let uiQueue = DispatchQueue(label: "brainchat.terminal.ui")
@@ -1438,7 +930,7 @@ final class TerminalChatController {
 
 
     // LLM streaming state
-    private var streamingClient: LLMRequestHandle?
+    private var streamingClient: LLMStreamingClient?
     private var currentStreamID: String?
     private var streamPrefixShown = false   // true once "Brain> " has been written
 
@@ -1469,11 +961,6 @@ final class TerminalChatController {
         }
 
         configureBridge()
-        llmRouter.startHealthChecks { [weak self] summary in
-            self?.uiQueue.async {
-                self?.writeStatus(summary)
-            }
-        }
         setupInputSource()
         renderWelcome()
         bridge.start()
@@ -1579,26 +1066,34 @@ final class TerminalChatController {
     }
 
     private func processInput(_ text: String) {
+        if text.hasPrefix("/") { handleModeCommand(text); return }
+        if currentMode == .yolo { handleYOLOCommand(text); return }
+        if currentMode == .terminal, text.hasPrefix("!") {
+            let cmd = String(text.dropFirst()).trimmingCharacters(in: .whitespacesAndNewlines)
+            if !cmd.isEmpty { executeShellCommand(cmd); return }
+        }
+        // Cancel any in-progress stream before starting a new request.
         streamingClient?.cancel()
         streamingClient = nil
 
-        writeTranscriptLine(prefix: "You", text: text, color: TerminalANSI.cyan)
+        writeTranscriptLine(prefix: "You", text: text, color: currentMode.promptANSIColor)
         let requestID = UUID().uuidString
         currentStreamID = requestID
         streamPrefixShown = false
+        writeStatus("Connecting to local AI…")
 
-        streamingClient = llmRouter.streamResponse(
-            for: text,
-            onStatus: { [weak self] status in
-                self?.uiQueue.async {
-                    self?.writeStatus(status)
-                }
-            },
+        let client = LLMStreamingClient()
+        streamingClient = client
+
+        client.stream(
+            config: .mode(currentMode),
+            userText: text,
             onToken: { [weak self] token in
                 self?.uiQueue.async {
                     guard let self, self.currentStreamID == requestID else { return }
                     if !self.streamPrefixShown {
                         self.streamPrefixShown = true
+                        // Clear the prompt line before printing the Brain prefix.
                         if self.promptVisible {
                             self.writeRaw("\r" + (self.richTTYEnabled ? TerminalANSI.clearLine : ""))
                             self.promptVisible = false
@@ -1608,22 +1103,20 @@ final class TerminalChatController {
                     self.writeRaw(ANSIText.strip(token))
                 }
             },
-            onComplete: { [weak self] fullText, error, provider in
+            onComplete: { [weak self] fullText, error in
                 self?.uiQueue.async {
                     guard let self, self.currentStreamID == requestID else { return }
                     self.streamingClient = nil
                     if fullText.isEmpty {
-                        self.writeStatus("Smart routing unavailable. Trying Redpanda…")
+                        // Stream produced nothing — fall back to Redpanda then local.
+                        self.writeStatus("Local AI unavailable. Trying Redpanda…")
                         self.useRedpandaPath(text: text, requestID: requestID)
                     } else {
                         self.writeRaw("\r\n")
-                        let providerName = provider?.displayName ?? "AI"
-                        if let error {
-                            self.writeStatus("Ready. Answered by \(providerName). \(error.localizedDescription)")
-                        } else {
-                            self.writeStatus("Ready. Answered by \(providerName).")
+                        self.writeStatus("Ready. \(self.currentMode.displayName) mode.")
+                        if self.currentMode.speaksResponses {
+                            DispatchQueue.main.async { self.speaker.speak(fullText) }
                         }
-                        DispatchQueue.main.async { self.speaker.speak(fullText) }
                         self.renderPrompt()
                     }
                 }
@@ -1897,7 +1390,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var microphonePermissionGranted = false
 
     private let speaker = SpeechVoice()
-    private let llmRouter = LLMRouter()
     private let fallbackResponder = LocalFallbackResponder()
     private let bridge = RedpandaBridge()
     private var currentMode: ChatMode = ModePreferences.load()
@@ -1907,7 +1399,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pendingRequestOrder: [String] = []
 
     // LLM streaming state
-    private var streamingClient: LLMRequestHandle?
+    private var streamingClient: LLMStreamingClient?
     private var currentStreamID: String?           // ID of the in-flight stream request
     private var streamHeaderShown = false          // true once "Brain: " has been appended
     private var pendingTokens = ""                 // tokens buffered for the next 30-fps flush
@@ -1917,9 +1409,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupWindow()
         configureBridge()
         requestPermissions()
-        llmRouter.startHealthChecks { [weak self] summary in
-            self?.updateStatus(summary)
-        }
         bridge.start()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
@@ -2174,6 +1663,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func processInput(_ text: String) {
+        if text.hasPrefix("/") { handleAppModeCommand(text); return }
+        if currentMode == .yolo { handleAppYOLOCommand(text); return }
         // Cancel any previous stream before starting a fresh one.
         streamingClient?.cancel()
         streamingClient = nil
@@ -2185,21 +1676,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let requestID = UUID().uuidString
         currentStreamID = requestID
         streamHeaderShown = false
+        updateStatus("Connecting to local AI…")
 
-        streamingClient = llmRouter.streamResponse(
-            for: text,
-            onStatus: { [weak self] status in
-                self?.updateStatus(status)
-            },
+        let client = LLMStreamingClient()
+        streamingClient = client
+
+        client.stream(
+            config: .mode(currentMode),
+            userText: text,
             onToken: { [weak self] token in
                 guard let self, self.currentStreamID == requestID else { return }
                 self.handleIncomingToken(token)
             },
-            onComplete: { [weak self] fullText, error, provider in
+            onComplete: { [weak self] fullText, error in
                 guard let self, self.currentStreamID == requestID else { return }
                 self.handleStreamCompletion(fullText: fullText, error: error,
-                                            originalText: text, requestID: requestID,
-                                            provider: provider)
+                                            originalText: text, requestID: requestID)
             }
         )
     }
@@ -2267,8 +1759,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func handleStreamCompletion(fullText: String, error: Error?,
-                                         originalText: String, requestID: String,
-                                         provider: LLMProvider?) {
+                                         originalText: String, requestID: String) {
         // Flush any tokens still held in the coalescing buffer.
         tokenFlushTimer?.invalidate()
         tokenFlushTimer = nil
@@ -2276,18 +1767,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         streamingClient = nil
 
         if fullText.isEmpty {
-            updateStatus("Smart routing unavailable. Trying Redpanda…")
+            // Stream produced no content — fall through to Redpanda then local fallback.
+            updateStatus("Local AI unavailable. Trying Redpanda…")
             useRedpandaPath(text: originalText, requestID: requestID)
         } else {
+            // Finalize the streamed entry with a blank separator line and speak it.
             appendRaw("\n\n")
             transcriptView.scrollToEndOfDocument(nil)
-            speaker.speak(fullText)
-            let providerName = provider?.displayName ?? "AI"
-            if let error {
-                updateStatus("Ready. Answered by \(providerName). \(error.localizedDescription)")
-            } else {
-                updateStatus("Ready. Answered by \(providerName).")
-            }
+            if currentMode.speaksResponses { speaker.speak(fullText) }
+            updateStatus("Ready. \(currentMode.displayName) mode. Press Enter to talk.")
         }
     }
 

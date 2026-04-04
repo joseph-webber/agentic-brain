@@ -1,1 +1,1 @@
-help
+speak("Test successful")

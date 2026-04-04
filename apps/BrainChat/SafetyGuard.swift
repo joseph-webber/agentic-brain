@@ -147,10 +147,10 @@ final class SafetyGuard: @unchecked Sendable {
     // MARK: - Safe Directories (YOLO can write here freely)
 
     private let safeDirectories: [String] = [
-        "/Users/joe/brain",
-        "/Users/joe/Desktop",
-        "/Users/joe/Documents",
-        "/Users/joe/Downloads",
+        NSHomeDirectory() + "/brain",
+        NSHomeDirectory() + "/Desktop",
+        NSHomeDirectory() + "/Documents",
+        NSHomeDirectory() + "/Downloads",
     ]
 
     // MARK: - Safe Commands (always allowed in YOLO without confirmation)

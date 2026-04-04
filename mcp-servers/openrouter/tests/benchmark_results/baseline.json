@@ -1,0 +1,162 @@
+{
+    "machine_info": {
+        "node": "Josephs-MacBook-Air.local",
+        "processor": "arm",
+        "machine": "arm64",
+        "python_compiler": "Clang 16.0.0 (clang-1600.0.26.6)",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.14.3",
+        "python_version": "3.14.3",
+        "python_build": [
+            "main",
+            "Feb  3 2026 15:32:20"
+        ],
+        "release": "23.4.0",
+        "system": "Darwin",
+        "cpu": {
+            "python_version": "3.14.3.final.0 (64 bit)",
+            "cpuinfo_version": [
+                9,
+                0,
+                0
+            ],
+            "cpuinfo_version_string": "9.0.0",
+            "arch": "ARM_8",
+            "bits": 64,
+            "count": 8,
+            "arch_string_raw": "arm64",
+            "brand_raw": "Apple M2"
+        }
+    },
+    "commit_info": {
+        "id": "e4febdee564eee6d339a1421917354ef93bac643",
+        "time": "2026-03-21T18:15:35+10:30",
+        "author_time": "2026-03-21T18:15:35+10:30",
+        "dirty": true,
+        "project": "brain",
+        "branch": "main"
+    },
+    "benchmarks": [
+        {
+            "group": "latency",
+            "name": "test_quick_model_latency",
+            "fullname": "mcp-servers/openrouter/tests/test_fallback_profiling.py::TestResponseLatency::test_quick_model_latency",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.5829542080173269,
+                "max": 0.745815584086813,
+                "mean": 0.6751009306948011,
+                "stddev": 0.08351920227830419,
+                "rounds": 3,
+                "median": 0.6965329999802634,
+                "iqr": 0.1221460320521146,
+                "q1": 0.611348906008061,
+                "q3": 0.7334949380601756,
+                "iqr_outliers": 0,
+                "stddev_outliers": 1,
+                "outliers": "1;0",
+                "ld15iqr": 0.5829542080173269,
+                "hd15iqr": 0.745815584086813,
+                "ops": 1.4812599931847508,
+                "total": 2.0253027920844033,
+                "data": [
+                    0.6965329999802634,
+                    0.5829542080173269,
+                    0.745815584086813
+                ],
+                "iterations": 1
+            }
+        },
+        {
+            "group": "latency",
+            "name": "test_full_model_latency",
+            "fullname": "mcp-servers/openrouter/tests/test_fallback_profiling.py::TestResponseLatency::test_full_model_latency",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 1.1107298749266192,
+                "max": 1.1711000829236582,
+                "mean": 1.1365690692715968,
+                "stddev": 0.031109504906887925,
+                "rounds": 3,
+                "median": 1.1278772499645129,
+                "iqr": 0.04527765599777922,
+                "q1": 1.1150167186860926,
+                "q3": 1.1602943746838719,
+                "iqr_outliers": 0,
+                "stddev_outliers": 1,
+                "outliers": "1;0",
+                "ld15iqr": 1.1107298749266192,
+                "hd15iqr": 1.1711000829236582,
+                "ops": 0.8798409415108217,
+                "total": 3.4097072078147903,
+                "data": [
+                    1.1107298749266192,
+                    1.1278772499645129,
+                    1.1711000829236582
+                ],
+                "iterations": 1
+            }
+        },
+        {
+            "group": "latency",
+            "name": "test_claude_emulator_latency",
+            "fullname": "mcp-servers/openrouter/tests/test_fallback_profiling.py::TestResponseLatency::test_claude_emulator_latency",
+            "params": null,
+            "param": null,
+            "extra_info": {},
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "warmup": false
+            },
+            "stats": {
+                "min": 2.2492903330130503,
+                "max": 8.524509334005415,
+                "mean": 5.386899833509233,
+                "stddev": 4.437249909032373,
+                "rounds": 2,
+                "median": 5.386899833509233,
+                "iqr": 6.275219000992365,
+                "q1": 2.2492903330130503,
+                "q3": 8.524509334005415,
+                "iqr_outliers": 0,
+                "stddev_outliers": 0,
+                "outliers": "0;0",
+                "ld15iqr": 2.2492903330130503,
+                "hd15iqr": 8.524509334005415,
+                "ops": 0.18563552895108534,
+                "total": 10.773799667018466,
+                "data": [
+                    8.524509334005415,
+                    2.2492903330130503
+                ],
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2026-03-21T09:39:23.087557+00:00",
+    "version": "5.2.3"
+}

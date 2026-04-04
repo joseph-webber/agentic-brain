@@ -1,0 +1,21 @@
+[project]
+name = "neo4j-backup-mcp"
+version = "1.0.0"
+description = "MCP server for Neo4j iCloud backup operations"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "neo4j>=5.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+neo4j-backup-mcp = "server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]

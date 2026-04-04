@@ -20,7 +20,7 @@ actor PandaproxyClient {
     private var consumers: [String: ConsumerInstance] = [:]
     private var defaultConsumerGroupID: String?
 
-    init(baseURL: URL = URL(string: "http://localhost:8082")!, session: URLSession = .shared) {
+    init(baseURL: URL = URL(string: ProcessInfo.processInfo.environment["PANDAPROXY_URL"] ?? "http://localhost:8082")!, session: URLSession = .shared) {
         self.proxyBaseURL = baseURL
         self.session = session
     }

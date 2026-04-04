@@ -89,7 +89,7 @@ await ltm.store_fact(
 await ltm.store_relationship(
     entity1="Alice",
     relation="works_at",
-    entity2="CITB",
+    entity2="Enterprise",
     properties={"role": "Developer", "since": "2020"}
 )
 

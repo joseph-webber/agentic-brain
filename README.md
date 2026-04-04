@@ -29,7 +29,7 @@ pip install agentic-brain
 [![Tests](https://img.shields.io/badge/tests-7100%2B-brightgreen?logo=pytest)](./tests)
 [![Battle Tested](https://img.shields.io/badge/battle%20tested-production%20ready-blue)](./docs/TESTING.md)
 
-<p><strong>7,100+ tests</strong> across unit, integration &amp; E2E • <strong>95%+ coverage</strong> • <strong>48</strong> WooCommerce-specific tests.</p>
+<p><strong>5,300+ tests</strong> across unit, integration &amp; E2E • <strong>95%+ coverage</strong> • <strong>48</strong> WooCommerce-specific tests.</p>
 
 <!-- COMPLIANCE & SECURITY -->
 [![SOC 2 Ready](https://img.shields.io/badge/SOC_2-Ready-FF6B35?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAxTDMgNXY2YzAgNS41NSAzLjg0IDEwLjc0IDkgMTIgNS4xNi0xLjI2IDktNi40NSA5LTEyVjVsLTktNHoiLz48L3N2Zz4=)](./docs/COMPLIANCE.md)
@@ -318,12 +318,12 @@ and keeps the stack constrained to a single VM for demos.
 
 <table>
 <tr>
-<td align="center"><h2>110+</h2><sub>RAG Loaders</sub></td>
+<td align="center"><h2>100+</h2><sub>RAG Loaders</sub></td>
 <td align="center"><h2>7+</h2><sub>LLM Providers</sub></td>
 <td align="center"><h2>42</h2><sub>Deployment Modes</sub></td>
 <td align="center"><h2>180+</h2><sub>Voice Options*</sub></td>
 <td align="center"><h2>27</h2><sub>Durability Modules</sub></td>
-<td align="center"><h2>7100+</h2><sub>CI Tests Passing</sub></td>
+<td align="center"><h2>5300+</h2><sub>CI Tests Passing</sub></td>
 </tr>
 </table>
 <p><sub>* Voice Options: 145+ macOS voices + 35+ cloud TTS voices (varies by OS and provider).</sub></p>
@@ -334,7 +334,7 @@ and keeps the stack constrained to a single VM for demos.
 
 </div>
 
-### 🔌 110+ RAG Integrations
+### 🔌 100+ RAG Integrations
 
 <div align="center">
 
@@ -556,7 +556,7 @@ See [CI_FIX_SUMMARY.md](CI_FIX_SUMMARY.md) for detailed CI configuration.
 
 | | | |
 |:---:|:---:|:---:|
-| <h3>🧭 Smart LLM Router</h3>**Modes: Turbo · Cascade · Consensus**<br/>Auto-selects optimal models (Groq, Claude, Gemini) based on latency, cost, and complexity benchmarks. | <h3>🧬 Polymorphic Personas</h3>Industry-specific AI operators (Defense, Healthcare, Legal, Finance) with pre-tuned guardrails, lexicons, and workflows. | <h3>📚 155+ RAG Loaders</h3>Expanded library covering documents, DevOps, commerce, enterprise systems, and event streams. |
+| <h3>🧭 Smart LLM Router</h3>**Modes: Turbo · Cascade · Consensus**<br/>Auto-selects optimal models (Groq, Claude, Gemini) based on latency, cost, and complexity benchmarks. | <h3>🧬 Polymorphic Personas</h3>Industry-specific AI operators (Defense, Healthcare, Legal, Finance) with pre-tuned guardrails, lexicons, and workflows. | <h3>📚 100+ RAG Loaders</h3>Expanded library covering documents, DevOps, commerce, enterprise systems, and event streams. |
 | <h3>🕸️ GraphRAG Architecture</h3>Hybrid retrieval combining vector search, graph traversal, safe Text2Cypher, and community-aware expansion for higher-precision answers. | <h3>⚡ Hardware Acceleration</h3>**Metal (MLX) · CUDA · ROCm**<br/>First-class acceleration for Apple Silicon, NVIDIA, and AMD. Switch targets per agent or per workload. | <h3>🛡️ Ethics & Safety</h3>Built-in AI safety layer with policy packs, automated content filtering, and human-in-the-loop review pipeline. |
 | <h3>📡 Event Streaming</h3>**Redpanda & Kafka**<br/>Real-time event bus for inter-agent communication, telemetry, and distributed state management. | <h3>🔌 Real-Time connectivity</h3>**WebSocket & Redis**<br/>Full-duplex WebSocket streaming for UI updates and Redis-backed pub/sub for instant bot-to-bot sync. | <h3>🔐 Enterprise Security</h3>**Firebase Auth, SSO (OAuth2/OIDC) & SAML**<br/>Production-ready authentication, role-based access control, and audit logging out of the box. |
 | <h3>🛍️ WooCommerce + WordPress</h3>Full REST coverage for products, orders, customers, coupons, webhooks, and CMS sync. | <h3>📦 Product & Inventory Sync</h3>Real-time catalog updates, stock management, variations, and fulfillment-ready workflows. | <h3>🤖 Commerce Chatbots & Analytics</h3>Natural language storefront assistant with sales analytics and reporting dashboards. |
@@ -935,7 +935,7 @@ flowchart TB
     end
 
     subgraph Processing
-        Loaders[155+ RAG Loaders]
+        Loaders[100+ RAG Loaders]
         Chunking[Chunking + Embeddings]
         Extract[Entity + Relationship Extraction]
     end
@@ -1024,7 +1024,7 @@ The diagram shows the release's GraphRAG improvements as a pipeline of cooperati
 
 ### 📦 Supported Data Sources
 
-![Loaders](https://img.shields.io/badge/Data_Sources-110+-blue?style=for-the-badge&logo=database&logoColor=white)
+![Loaders](https://img.shields.io/badge/Data_Sources-100+-blue?style=for-the-badge&logo=database&logoColor=white)
 
 <details>
 <summary><strong>🏢 Enterprise (Confluence, Teams, Salesforce...)</strong></summary>
@@ -1448,7 +1448,7 @@ answer = await rag.query("What are our Q3 targets?")
 
 ```
 ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐
-│  110+    │───▶│ Chunking │───▶│ Embedding│───▶│  Neo4j   │
+│  100+    │───▶│ Chunking │───▶│ Embedding│───▶│  Neo4j   │
 │ Loaders  │    │ + NER    │    │ (MLX/GPU)│    │  Graph   │
 └──────────┘    └──────────┘    └──────────┘    └──────────┘
                                                       │
@@ -1827,7 +1827,7 @@ print(f"Used: {response.provider}")  # Shows which succeeded
 
 ---
 
-## 🔌 110+ RAG Loaders
+## 🔌 100+ RAG Loaders
 
 > **[📖 Full Data Loaders Reference →](./docs/DATA_LOADERS.md)**
 
@@ -1998,7 +1998,7 @@ git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 pip install -e ".[dev]"
 
-pytest tests/ -v           # 7,100+ tests
+pytest tests/ -v           # 5,300+ tests
 pre-commit run --all-files # Linting
 mypy src/                  # Type checking
 ```

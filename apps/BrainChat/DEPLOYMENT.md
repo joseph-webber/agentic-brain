@@ -1,5 +1,9 @@
 # BrainChat Deployment Guide
 
+## App Bundle
+
+BrainChat is built as `Brain Chat.app` (note the space in the name for UI display purposes). This is the canonical app bundle for distribution.
+
 ## Quick Start
 
 ### Build Release
@@ -10,12 +14,15 @@ swift build -c release
 
 ### Install CLI
 ```bash
+# The executable is built to .build/release/BrainChat
 cp .build/release/BrainChat /usr/local/bin/brainchat
 ```
 
 ### Run
 ```bash
 brainchat
+# Or launch the app bundle:
+open "Brain Chat.app"
 ```
 
 ## Security Modes

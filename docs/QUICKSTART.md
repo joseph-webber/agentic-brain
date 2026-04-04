@@ -11,8 +11,7 @@ Get your Agentic Brain up and running in 5 minutes.
 
 ## 📋 Prerequisites
 
-- **Python 3.10+**
-- **Node.js 18+** (for dashboard)
+- **Python 3.11+**
 - **Neo4j 5.x** (for memory graph)
 - **Docker** (optional, for containerized run)
 
@@ -28,7 +27,7 @@ cd brain/agentic-brain
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install agentic-brain
 ```
 
 ### 3. Set up Environment Variables
@@ -41,21 +40,14 @@ cp .env.example .env
 
 ### Start the Brain Core
 ```bash
-python3 -m agentic_brain.main
-```
-
-### Start the Dashboard (Optional)
-```bash
-cd dashboard
-npm install
-npm start
+python -m agentic_brain
 ```
 
 ## ⚠️ Common Issues
 
 | Issue | Solution |
 |-------|----------|
-| `ModuleNotFoundError` | Ensure `venv` is activated and `pip install -r requirements.txt` ran successfully. |
+| `ModuleNotFoundError` | Ensure `venv` is activated and `pip install agentic-brain` ran successfully. |
 | Neo4j Connection Failed | Check `NEO4J_URI` and credentials in `.env`. Ensure Neo4j is running. |
 | API Key Errors | Verify your `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` in `.env`. |
 

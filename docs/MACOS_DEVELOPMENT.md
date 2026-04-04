@@ -821,13 +821,13 @@ Create `.vscode/launch.json`:
 
 ```bash
 # Test with curl
-curl -X POST http://localhost:8000/api/v1/chat \
+curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Hello!", "session_id": "test-123"}'
 
 # Test with HTTPie (prettier)
 brew install httpie
-http POST localhost:8000/api/v1/chat message="Hello!" session_id="test-123"
+http POST localhost:8000/chat message="Hello!" session_id="test-123"
 
 # Interactive API docs
 open http://localhost:8000/docs

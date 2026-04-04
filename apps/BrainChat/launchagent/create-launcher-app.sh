@@ -3,7 +3,7 @@
 # CREATE BRAIN CHAT LAUNCHER AUTOMATOR APP
 # ================================================================
 # 
-# This creates a simple .app that Joseph can double-click to launch
+# This creates a simple .app that can be used to launch
 # Brain Chat with clean process ancestry (no SSH taint).
 #
 # Why this works:
@@ -38,7 +38,7 @@ cat > "$APP_PATH/Contents/Info.plist" << 'PLIST'
     <key>CFBundleDisplayName</key>
     <string>Launch Brain Chat</string>
     <key>CFBundleIdentifier</key>
-    <string>com.josephwebber.launchbrainchat</string>
+    <string>com.brainchat.launcher</string>
     <key>CFBundleVersion</key>
     <string>1.0.0</string>
     <key>CFBundleShortVersionString</key>

@@ -1,0 +1,28 @@
+{
+  "test": "model_comparison_simple",
+  "timestamp": "2026-03-21T20:02:13.383203",
+  "prompt": "Reply with just: OK",
+  "results": {
+    "llama3.2:3b": {
+      "latency": 1.8151118755340576,
+      "success": true,
+      "response_length": 2,
+      "threshold": 15,
+      "within_threshold": true
+    },
+    "llama3.1:8b": {
+      "latency": 2.7716050148010254,
+      "success": true,
+      "response_length": 2,
+      "threshold": 45,
+      "within_threshold": true
+    },
+    "claude-emulator": {
+      "latency": 3.845097780227661,
+      "success": true,
+      "response_length": 2,
+      "threshold": 120,
+      "within_threshold": true
+    }
+  }
+}

@@ -58,10 +58,10 @@ final class SystemCommands: @unchecked Sendable {
     // Directories the app is allowed to read/write
     private let allowedRoots: [String] = [
         NSHomeDirectory(),
-        "/Users/joe/brain",
-        "/Users/joe/Desktop",
-        "/Users/joe/Documents",
-        "/Users/joe/Downloads"
+        NSHomeDirectory() + "/brain",
+        NSHomeDirectory() + "/Desktop",
+        NSHomeDirectory() + "/Documents",
+        NSHomeDirectory() + "/Downloads"
     ]
 
     // Commands that are never allowed
@@ -107,7 +107,8 @@ final class SystemCommands: @unchecked Sendable {
 
         // Inherit environment with safe PATH
         var env = ProcessInfo.processInfo.environment
-        let extraPaths = ["/opt/homebrew/bin", "/usr/local/bin", "/Users/joe/.local/bin"]
+        let homeBin = NSHomeDirectory() + "/.local/bin"
+        let extraPaths = ["/opt/homebrew/bin", "/usr/local/bin", homeBin]
         let currentPath = env["PATH"] ?? "/usr/bin:/bin"
         env["PATH"] = (extraPaths + [currentPath]).joined(separator: ":")
         process.environment = env
@@ -277,10 +278,11 @@ final class SystemCommands: @unchecked Sendable {
     // MARK: - Convenience Runners
 
     /// Run pytest in a directory.
-    func runTests(in directory: String = "/Users/joe/brain") throws -> CommandResult {
-        try run("cd '\(directory)' && python3 -m pytest --tb=short -q 2>&1 | head -50",
+    func runTests(in directory: String? = nil) throws -> CommandResult {
+        let targetDir = directory ?? NSHomeDirectory() + "/brain"
+        return try run("cd '\(targetDir)' && python3 -m pytest --tb=short -q 2>&1 | head -50",
                 timeout: 60,
-                workingDirectory: directory)
+                workingDirectory: targetDir)
     }
 
     /// Run a Python script.
@@ -290,8 +292,9 @@ final class SystemCommands: @unchecked Sendable {
     }
 
     /// Get git status for a repo.
-    func gitStatus(in directory: String = "/Users/joe/brain") throws -> CommandResult {
-        try run("cd '\(directory)' && git --no-pager status --short",
-                workingDirectory: directory)
+    func gitStatus(in directory: String? = nil) throws -> CommandResult {
+        let targetDir = directory ?? NSHomeDirectory() + "/brain"
+        return try run("cd '\(targetDir)' && git --no-pager status --short",
+                workingDirectory: targetDir)
     }
 }

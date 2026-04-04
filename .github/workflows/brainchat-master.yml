@@ -47,7 +47,7 @@ jobs:
   # ==========================================================================
   build:
     name: "1. Build Swift App"
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 30
 
     outputs:
@@ -141,7 +141,7 @@ jobs:
   # ==========================================================================
   unit-tests:
     name: "2. Unit Tests (90%+ coverage)"
-    runs-on: macos-latest
+    runs-on: macos-14
     needs: build
     timeout-minutes: 20
 
@@ -280,7 +280,7 @@ jobs:
   # ==========================================================================
   voice-tests:
     name: "3. Voice System Tests"
-    runs-on: macos-latest
+    runs-on: macos-14
     needs: build
     timeout-minutes: 15
 
@@ -394,7 +394,7 @@ jobs:
   # ==========================================================================
   llm-tests:
     name: "4. LLM Integration Tests"
-    runs-on: macos-latest
+    runs-on: macos-14
     needs: build
     timeout-minutes: 15
 
@@ -515,7 +515,7 @@ jobs:
   # ==========================================================================
   accessibility-tests:
     name: "5. Accessibility Audit (ZERO violations)"
-    runs-on: macos-latest
+    runs-on: macos-14
     needs: build
     timeout-minutes: 15
 
@@ -685,7 +685,7 @@ jobs:
   # ==========================================================================
   e2e-tests:
     name: "6. End-to-End Tests"
-    runs-on: macos-latest
+    runs-on: macos-14
     needs: [unit-tests, voice-tests, llm-tests]
     timeout-minutes: 30
 
@@ -795,7 +795,7 @@ jobs:
   # ==========================================================================
   package:
     name: "7. Package & Sign"
-    runs-on: macos-latest
+    runs-on: macos-14
     needs: [accessibility-tests, e2e-tests]
     timeout-minutes: 30
 
@@ -954,7 +954,7 @@ jobs:
   # ==========================================================================
   gate:
     name: "All Checks Passed"
-    runs-on: macos-latest
+    runs-on: macos-14
     if: always()
     needs: [build, unit-tests, voice-tests, llm-tests, accessibility-tests, e2e-tests, package]
     timeout-minutes: 5

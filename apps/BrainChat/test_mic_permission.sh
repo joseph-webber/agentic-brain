@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Test Mic Permission Setup for BrainChat
-# This script verifies that mic permissions work BEFORE asking Joseph to test
+# This script verifies that mic permissions work
 
 APP_BUNDLE="/Applications/Brain Chat.app"
-BUNDLE_ID="com.josephwebber.brainchat"
+BUNDLE_ID="com.brainchat.app"
 RUNTIME_DIR="$HOME/brain/agentic-brain/apps/BrainChat/runtime"
 
 echo "=================================================="
@@ -166,7 +166,7 @@ echo "   - Speak something"
 echo "   - Transcript should appear"
 echo ""
 echo "6. If mic button still does nothing:"
-echo "   - Check Console.app for logs from 'com.josephwebber.brainchat'"
+echo "   - Check Console.app for logs from '$BUNDLE_ID'"
 echo "   - Check $RUNTIME_DIR/mic-debug.log"
 echo "   - Run: tccutil reset Microphone '$BUNDLE_ID'"
 echo "   - Rebuild: cd ~/brain/agentic-brain/apps/BrainChat && ./build.sh --clean --install"

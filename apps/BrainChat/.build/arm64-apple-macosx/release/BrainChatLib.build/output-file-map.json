@@ -136,12 +136,6 @@
     "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/CopilotVoiceRouter.swiftdeps",
     "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/CopilotVoiceRouter.dia"
   },
-  "/Users/joe/brain/agentic-brain/apps/BrainChat/EventTypes.swift": {
-    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/EventTypes.swift.o",
-    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/EventTypes~partial.swiftmodule",
-    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/EventTypes.swiftdeps",
-    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/EventTypes.dia"
-  },
   "/Users/joe/brain/agentic-brain/apps/BrainChat/FasterWhisperBridge.swift": {
     "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/FasterWhisperBridge.swift.o",
     "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/FasterWhisperBridge~partial.swiftmodule",
@@ -207,18 +201,6 @@
     "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/OpenAIAPI~partial.swiftmodule",
     "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/OpenAIAPI.swiftdeps",
     "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/OpenAIAPI.dia"
-  },
-  "/Users/joe/brain/agentic-brain/apps/BrainChat/PandaproxyClient.swift": {
-    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/PandaproxyClient.swift.o",
-    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/PandaproxyClient~partial.swiftmodule",
-    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/PandaproxyClient.swiftdeps",
-    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/PandaproxyClient.dia"
-  },
-  "/Users/joe/brain/agentic-brain/apps/BrainChat/RedpandaBridge.swift": {
-    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/RedpandaBridge.swift.o",
-    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/RedpandaBridge~partial.swiftmodule",
-    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/RedpandaBridge.swiftdeps",
-    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/RedpandaBridge.dia"
   },
   "/Users/joe/brain/agentic-brain/apps/BrainChat/ResponseWeavingCoordinator.swift": {
     "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/ResponseWeavingCoordinator.swift.o",

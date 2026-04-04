@@ -1,0 +1,9 @@
+[project]
+name = "cli-tools-mcp"
+version = "1.0.0"
+description = "MCP server for powerful CLI tools: ripgrep, fd, bat, eza, tldr, sox"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,16 @@
+[project]
+name = "brain-data-mcp"
+version = "1.0.0"
+description = "MCP server for Brain Neo4j and Core Data"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "neo4j>=5.0.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+brain-data-mcp = "server:main"

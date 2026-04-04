@@ -1,0 +1,49 @@
+{
+  "name": "claude-emulator",
+  "version": "1.0.0",
+  "description": "Delegate tasks to local Claude emulator for continuous/real-time work",
+  "author": "Joseph Webber",
+  "tools": [
+    {
+      "name": "emulator_delegate",
+      "description": "Delegate a task to run autonomously (one-shot, continuous, scheduled)"
+    },
+    {
+      "name": "emulator_status",
+      "description": "Check status of emulator tasks"
+    },
+    {
+      "name": "emulator_query",
+      "description": "Quick one-shot query to emulator"
+    },
+    {
+      "name": "emulator_continuous",
+      "description": "Start continuous monitoring job (runs 24/7)"
+    },
+    {
+      "name": "emulator_stop",
+      "description": "Stop a running job"
+    },
+    {
+      "name": "emulator_results",
+      "description": "Get results from completed/running tasks"
+    },
+    {
+      "name": "emulator_load",
+      "description": "Check emulator load, get overload warnings"
+    },
+    {
+      "name": "emulator_capabilities",
+      "description": "List what emulator can do that Claude cannot"
+    }
+  ],
+  "use_cases": [
+    "Real-time audio monitoring and analysis",
+    "Continuous event stream processing",
+    "24/7 background monitoring jobs",
+    "Periodic scheduled tasks",
+    "Long-running autonomous work",
+    "Alert generation and anomaly detection"
+  ],
+  "why_needed": "Claude creates static scripts but cannot run continuous AI loops. The local emulator fills this gap."
+}

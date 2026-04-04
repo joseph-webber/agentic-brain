@@ -103,12 +103,12 @@ def show_connection_info():
 📱 To connect to the server:
 
 Option 1 - Direct File (Easiest)
-  • Open in your browser: file:///Users/joe/brain/agentic-brain/tools/web_terminal/client.html
+  • Open in your browser: file://$HOME/brain/agentic-brain/tools/web_terminal/client.html
   • The WebSocket will connect to localhost:8765
 
 Option 2 - Via HTTP Server
   • Start an HTTP server in the directory:
-    cd /Users/joe/brain/agentic-brain/tools/web_terminal
+    cd $HOME/brain/agentic-brain/tools/web_terminal
     python3 -m http.server 8000
   • Open: http://localhost:8000/client.html
   • Connect to: ws://localhost:8765

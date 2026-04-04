@@ -10,10 +10,10 @@
 		<dict>
 			<key>cdhash</key>
 			<data>
-			aQFUpKcxCo7tIWwn+WdkjCo5eM0=
+			opgt17kH7/R5M86ErCh3qBBfvZA=
 			</data>
 			<key>requirement</key>
-			<string>identifier BrainChat and anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] /* exists */ and certificate leaf[field.1.2.840.113635.100.6.1.13] /* exists */ and certificate leaf[subject.OU] = H6RKDG4RWN</string>
+			<string>cdhash H"a2982dd7b907eff47933ce84ac2877a8105fbd90"</string>
 		</dict>
 	</dict>
 	<key>rules</key>

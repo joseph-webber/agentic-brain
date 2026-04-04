@@ -20,7 +20,6 @@
 /Users/joe/brain/agentic-brain/apps/BrainChat/CopilotBridge.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/CopilotClient.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/CopilotVoiceRouter.swift
-/Users/joe/brain/agentic-brain/apps/BrainChat/EventTypes.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/FasterWhisperBridge.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/GeminiClient.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/GrokClient.swift
@@ -32,8 +31,6 @@
 /Users/joe/brain/agentic-brain/apps/BrainChat/Models.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/OllamaAPI.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/OpenAIAPI.swift
-/Users/joe/brain/agentic-brain/apps/BrainChat/PandaproxyClient.swift
-/Users/joe/brain/agentic-brain/apps/BrainChat/RedpandaBridge.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/ResponseWeavingCoordinator.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/ResponseWeavingTypes.swift
 /Users/joe/brain/agentic-brain/apps/BrainChat/ResponseWeavingView.swift

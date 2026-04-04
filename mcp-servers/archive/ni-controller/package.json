@@ -1,0 +1,16 @@
+{
+  "name": "ni-controller",
+  "version": "1.0.0",
+  "description": "Native Instruments VST/AU Plugin Controller for Claude",
+  "main": "server.py",
+  "scripts": {
+    "start": "python server.py"
+  },
+  "dependencies": [
+    "pedalboard",
+    "sounddevice", 
+    "soundfile",
+    "numpy",
+    "mcp"
+  ]
+}

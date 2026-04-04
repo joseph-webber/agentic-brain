@@ -12,7 +12,7 @@ def ask_copilot(prompt):
     """Ask Copilot CLI directly"""
     try:
         result = subprocess.run(
-            ['/Users/joe/.local/bin/copilot', '-p', prompt, '--output-format', 'text'],
+            ['/usr/local/bin/copilot', '-p', prompt, '--output-format', 'text'],
             capture_output=True, text=True, timeout=60,
             stdin=subprocess.DEVNULL
         )

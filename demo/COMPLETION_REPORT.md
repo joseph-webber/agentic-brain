@@ -164,7 +164,7 @@ A complete Docker Compose demo environment has been created for testing the agen
 
 ### Start Demo
 ```bash
-cd /Users/joe/brain/agentic-brain/demo
+cd $HOME/brain/agentic-brain/demo
 ./setup-demo.sh
 ```
 

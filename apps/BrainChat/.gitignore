@@ -1,0 +1,61 @@
+# BrainChat local configuration (NOT for version control)
+local-config.json
+
+# Build artifacts
+.build/
+build/
+.swiftpm/
+*.swiftmodule
+*.swiftdoc
+*.swiftsourceinfo
+*.swiftinterface
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+.DS_Store
+
+# Runtime
+*.app/
+*.dSYM/
+*.o
+*.d
+*.dia
+
+# Test artifacts
+.test-artifacts/
+test-results/
+*.log
+
+# Environment
+.env
+.env.local
+.env.dev
+.env.test
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# macOS
+.DS_Store
+*.app
+*.ipa
+
+# Launchd
+launchagent/
+
+# Temporary
+*.tmp
+*.temp
+runtime/
+session-artifacts/

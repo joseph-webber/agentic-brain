@@ -312,11 +312,11 @@ class TestUnifiedSummarizer:
 
     def test_extract_capitalized_entities(self, summarizer_no_llm):
         """Test capitalized entity extraction."""
-        text = "Steve Taylor met with Joseph Webber at CITB to discuss the project."
+        text = "Steve Taylor met with User One to discuss the project."
         entities = summarizer_no_llm._extract_capitalized_entities(text)
 
         assert isinstance(entities, list)
-        # Should find Steve Taylor and Joseph Webber
+        # Should find Steve Taylor and User One
         names = [e["name"] for e in entities]
         assert "Steve Taylor" in names or "Steve" in names
 

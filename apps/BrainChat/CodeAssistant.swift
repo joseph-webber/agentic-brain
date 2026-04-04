@@ -144,12 +144,12 @@ extension CopilotBridge: CopilotExecuting {}
 
 protocol SystemCommandProviding {
     func speak(_ text: String, voice: String, rate: Int)
-    func runTests(in directory: String) throws -> CommandResult
+    func runTests(in directory: String?) throws -> CommandResult
     func readClipboard() -> String
     func writeClipboard(_ text: String)
     func openApp(_ appName: String) throws
     func openURL(_ urlString: String) throws
-    func gitStatus(in directory: String) throws -> CommandResult
+    func gitStatus(in directory: String?) throws -> CommandResult
     func frontmostApp() -> String
     func run(_ command: String, timeout: TimeInterval?, workingDirectory: String?) throws -> CommandResult
 }
@@ -280,7 +280,8 @@ final class CodeAssistant: @unchecked Sendable {
         do {
             switch action {
             case .runTests:
-                let result = try system.runTests(in: "/Users/joe/brain")
+                let brainDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("brain").path
+                let result = try system.runTests(in: brainDir)
                 resultText = result.succeeded ? "Tests passed.\n\(result.stdout)" : "Tests failed.\n\(result.output)"
             case .readClipboard:
                 let content = system.readClipboard()
@@ -296,7 +297,8 @@ final class CodeAssistant: @unchecked Sendable {
                 try system.openURL(url)
                 resultText = "Opened URL."
             case .gitStatus:
-                let result = try system.gitStatus(in: "/Users/joe/brain")
+                let brainDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("brain").path
+                let result = try system.gitStatus(in: brainDir)
                 resultText = result.stdout.isEmpty ? "Working tree clean." : result.stdout
             case .frontmostApp:
                 resultText = "The frontmost app is \(system.frontmostApp())."

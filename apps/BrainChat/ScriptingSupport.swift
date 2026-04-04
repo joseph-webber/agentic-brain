@@ -100,6 +100,148 @@ final class SendMessageCommand: NSScriptCommand {
     }
 }
 
+// MARK: - Get Last Response
+
+final class GetLastResponseCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        let bridge = ScriptingBridge.shared
+        return onMain {
+            MainActor.assumeIsolated {
+                guard let store = bridge.conversationStore else { return "" }
+                
+                // Find the last assistant response
+                for message in store.messages.reversed() {
+                    if message.role == .assistant {
+                        return message.content
+                    }
+                }
+                return ""
+            }
+        }
+    }
+}
+
+// MARK: - Get Selected LLM
+
+final class GetSelectedLLMCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        let bridge = ScriptingBridge.shared
+        return onMain {
+            MainActor.assumeIsolated {
+                guard let router = bridge.llmRouter else { return "" }
+                return router.selectedProvider.rawValue
+            }
+        }
+    }
+}
+
+// MARK: - Set Selected LLM
+
+final class SetSelectedLLMCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let name = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No provider name provided."
+            return nil
+        }
+
+        let lowered = name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let provider: LLMProvider? = {
+            switch lowered {
+            case "ollama":  return .ollama
+            case "groq":    return .groq
+            case "claude":  return .claude
+            case "gpt":     return .gpt
+            case "grok":    return .grok
+            case "gemini":  return .gemini
+            case "copilot": return .copilot
+            default:        return LLMProvider.allCases.first { $0.rawValue.lowercased().contains(lowered) }
+            }
+        }()
+
+        guard let resolved = provider else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "Unknown provider: \(name). Use: ollama, groq, claude, gpt, grok, gemini, copilot."
+            return nil
+        }
+
+        let bridge = ScriptingBridge.shared
+        onMain { MainActor.assumeIsolated { bridge.llmRouter?.selectedProvider = resolved } }
+        return nil
+    }
+}
+
+// MARK: - Set Provider (Deprecated, kept for backward compatibility)
+
+final class SetProviderCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let name = directParameter as? String else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "No provider name provided."
+            return nil
+        }
+
+        let lowered = name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let provider: LLMProvider? = {
+            switch lowered {
+            case "ollama":  return .ollama
+            case "groq":    return .groq
+            case "claude":  return .claude
+            case "gpt":     return .gpt
+            case "grok":    return .grok
+            case "gemini":  return .gemini
+            case "copilot": return .copilot
+            default:        return LLMProvider.allCases.first { $0.rawValue.lowercased().contains(lowered) }
+            }
+        }()
+
+        guard let resolved = provider else {
+            scriptErrorNumber = errOSAGeneralError
+            scriptErrorString = "Unknown provider: \(name). Use: ollama, groq, claude, gpt, grok, gemini, copilot."
+            return nil
+        }
+
+        let bridge = ScriptingBridge.shared
+        onMain { MainActor.assumeIsolated { bridge.llmRouter?.selectedProvider = resolved } }
+        return nil
+    }
+}
+
+// MARK: - Get Mic Status
+
+final class GetMicStatusCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        let bridge = ScriptingBridge.shared
+        return onMain {
+            MainActor.assumeIsolated {
+                guard let speechManager = bridge.speechManager else { return "" }
+                // Check if listening is active
+                return speechManager.isListening ? "live" : "muted"
+            }
+        }
+    }
+}
+
+// MARK: - Toggle Mic
+
+final class ToggleMicCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        let bridge = ScriptingBridge.shared
+        return onMain {
+            MainActor.assumeIsolated {
+                guard let speechManager = bridge.speechManager else { return "" }
+                if speechManager.isListening {
+                    speechManager.stopListening()
+                    return "muted"
+                } else {
+                    speechManager.startListening()
+                    return "live"
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Start Listening
 
 final class StartListeningCommand: NSScriptCommand {
@@ -162,39 +304,97 @@ final class GetConversationCommand: NSScriptCommand {
     }
 }
 
-// MARK: - Set Provider
+// MARK: - Get Whisper Engine
 
-final class SetProviderCommand: NSScriptCommand {
+final class GetWhisperEngineCommand: NSScriptCommand {
     override func performDefaultImplementation() -> Any? {
-        guard let name = directParameter as? String else {
+        let bridge = ScriptingBridge.shared
+        return onMain {
+            MainActor.assumeIsolated {
+                guard let speechManager = bridge.speechManager else { return "unknown" }
+                return speechManager.currentEngine.rawValue
+            }
+        }
+    }
+}
+
+// MARK: - Set Whisper Engine
+
+final class SetWhisperEngineCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        guard let engineName = directParameter as? String else {
             scriptErrorNumber = errOSAGeneralError
-            scriptErrorString = "No provider name provided."
+            scriptErrorString = "No engine name provided."
             return nil
         }
 
-        let lowered = name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        let provider: LLMProvider? = {
+        let lowered = engineName.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Map user-friendly names to SpeechEngine cases
+        let engine: SpeechEngine? = {
             switch lowered {
-            case "ollama":  return .ollama
-            case "groq":    return .groq
-            case "claude":  return .claude
-            case "gpt":     return .gpt
-            case "grok":    return .grok
-            case "gemini":  return .gemini
-            case "copilot": return .copilot
-            default:        return LLMProvider.allCases.first { $0.rawValue.lowercased().contains(lowered) }
+            case "whisperkit", "faster-whisper", "local":
+                return .whisperKit
+            case "whisperapi", "openai", "remote":
+                return .whisperAPI
+            case "whispercpp", "cpp":
+                return .whisperCpp
+            case "appledictation", "apple", "builtin":
+                return .appleDictation
+            default:
+                // Try raw value match
+                return SpeechEngine.allCases.first { $0.rawValue.lowercased() == lowered }
             }
         }()
 
-        guard let resolved = provider else {
+        guard let resolved = engine else {
             scriptErrorNumber = errOSAGeneralError
-            scriptErrorString = "Unknown provider: \(name). Use: ollama, groq, claude, gpt, grok, gemini, copilot."
+            scriptErrorString = "Unknown engine: \(engineName). Use: whisperKit, whisperAPI, whisperCpp, or appleDictation."
             return nil
         }
 
         let bridge = ScriptingBridge.shared
-        onMain { MainActor.assumeIsolated { bridge.llmRouter?.selectedProvider = resolved } }
+        onMain {
+            MainActor.assumeIsolated {
+                bridge.speechManager?.setEngine(resolved)
+            }
+        }
         return nil
+    }
+}
+
+// MARK: - Get Copilot Status
+
+final class GetCopilotStatusCommand: NSScriptCommand {
+    override func performDefaultImplementation() -> Any? {
+        let bridge = ScriptingBridge.shared
+        return onMain {
+            MainActor.assumeIsolated {
+                var status: [String: String] = [:]
+                
+                if let router = bridge.llmRouter {
+                    status["provider"] = router.selectedProvider.rawValue
+                    status["activeProvider"] = router.activeProviderName
+                    status["status"] = router.statusMessage
+                    if let error = router.lastErrorMessage {
+                        status["error"] = error
+                    }
+                }
+                
+                if let speechManager = bridge.speechManager {
+                    status["micStatus"] = speechManager.isListening ? "live" : "muted"
+                }
+                
+                if let store = bridge.conversationStore {
+                    status["messageCount"] = String(store.messages.count)
+                    status["isProcessing"] = store.isProcessing ? "true" : "false"
+                }
+                
+                // Format as key=value pairs for AppleScript readability
+                let pairs = status.map { "\($0.key): \($0.value)" }
+                return pairs.joined(separator: ", ")
+            }
+        }
     }
 }
 

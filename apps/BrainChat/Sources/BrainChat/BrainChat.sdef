@@ -3,12 +3,52 @@
 <dictionary title="BrainChat Terminology">
     <suite name="BrainChat Suite" code="BCht" description="BrainChat scripting commands for automated testing and voice integration">
 
+        <!-- Message and LLM Commands -->
         <command name="send message" code="BChtsend" description="Send a chat message and receive the LLM response">
             <cocoa class="BrainChatLib.SendMessageCommand"/>
             <direct-parameter type="text" description="The message to send"/>
             <result type="text" description="The LLM response text"/>
         </command>
 
+        <command name="get last response" code="BChtrsp" description="Get the last LLM response from the conversation">
+            <cocoa class="BrainChatLib.GetLastResponseCommand"/>
+            <result type="text" description="The last response text"/>
+        </command>
+
+        <command name="get conversation" code="BChtconv" description="Get conversation history as plain text">
+            <cocoa class="BrainChatLib.GetConversationCommand"/>
+            <result type="text" description="Conversation formatted as text"/>
+        </command>
+
+        <!-- LLM Provider Commands -->
+        <command name="get selected llm" code="BChtgllm" description="Get the currently selected LLM provider">
+            <cocoa class="BrainChatLib.GetSelectedLLMCommand"/>
+            <result type="text" description="Provider name: ollama, groq, claude, gpt, grok, gemini, copilot"/>
+        </command>
+
+        <command name="set selected llm" code="BChtsllm" description="Set the active LLM provider">
+            <cocoa class="BrainChatLib.SetSelectedLLMCommand"/>
+            <direct-parameter type="text" description="Provider name: ollama, groq, claude, gpt, grok, gemini, copilot"/>
+        </command>
+
+        <!-- Deprecated alias for backward compatibility -->
+        <command name="set provider" code="BChtprov" description="Set the active LLM provider (deprecated, use set selected llm)">
+            <cocoa class="BrainChatLib.SetProviderCommand"/>
+            <direct-parameter type="text" description="Provider name: ollama, groq, claude, gpt, grok, gemini, copilot"/>
+        </command>
+
+        <!-- Microphone Commands -->
+        <command name="get mic status" code="BChtmic" description="Get microphone status">
+            <cocoa class="BrainChatLib.GetMicStatusCommand"/>
+            <result type="text" description="Status: 'muted' or 'live'"/>
+        </command>
+
+        <command name="toggle mic" code="BChttmic" description="Toggle microphone between muted and live">
+            <cocoa class="BrainChatLib.ToggleMicCommand"/>
+            <result type="text" description="New status: 'muted' or 'live'"/>
+        </command>
+
+        <!-- Speech Recognition Commands -->
         <command name="start listening" code="BChtlstn" description="Start speech recognition (microphone input)">
             <cocoa class="BrainChatLib.StartListeningCommand"/>
         </command>
@@ -17,19 +57,27 @@
             <cocoa class="BrainChatLib.StopListeningCommand"/>
         </command>
 
+        <!-- Voice Output Commands -->
         <command name="speak" code="BChtspek" description="Speak text aloud using the configured voice engine">
             <cocoa class="BrainChatLib.SpeakTextCommand"/>
             <direct-parameter type="text" description="Text to speak"/>
         </command>
 
-        <command name="get conversation" code="BChtconv" description="Get conversation history as plain text">
-            <cocoa class="BrainChatLib.GetConversationCommand"/>
-            <result type="text" description="Conversation formatted as text"/>
+        <!-- Whisper Engine Commands -->
+        <command name="get whisper engine" code="BChtgwsp" description="Get the currently configured Whisper speech-to-text engine">
+            <cocoa class="BrainChatLib.GetWhisperEngineCommand"/>
+            <result type="text" description="Engine name: builtin or remote"/>
         </command>
 
-        <command name="set provider" code="BChtprov" description="Set the active LLM provider">
-            <cocoa class="BrainChatLib.SetProviderCommand"/>
-            <direct-parameter type="text" description="Provider name: ollama, groq, claude, gpt, grok, gemini, copilot"/>
+        <command name="set whisper engine" code="BChtsws" description="Set the Whisper speech-to-text engine">
+            <cocoa class="BrainChatLib.SetWhisperEngineCommand"/>
+            <direct-parameter type="text" description="Engine: builtin or remote"/>
+        </command>
+
+        <!-- System Status Commands -->
+        <command name="get copilot status" code="BChtcop" description="Get the current status of the Copilot system">
+            <cocoa class="BrainChatLib.GetCopilotStatusCommand"/>
+            <result type="text" description="Status information (JSON or plain text)"/>
         </command>
 
     </suite>

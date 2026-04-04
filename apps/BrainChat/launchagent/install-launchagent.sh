@@ -24,9 +24,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PLIST_SRC="${SCRIPT_DIR}/com.josephwebber.brainchat.launcher.plist"
-PLIST_DEST="${HOME}/Library/LaunchAgents/com.josephwebber.brainchat.launcher.plist"
-LABEL="com.josephwebber.brainchat.launcher"
+PLIST_SRC="${SCRIPT_DIR}/com.brainchat.app.launcher.plist"
+PLIST_DEST="${HOME}/Library/LaunchAgents/com.brainchat.app.launcher.plist"
+LABEL="com.brainchat.app.launcher"
 
 echo "🧠 Brain Chat - Microphone Permission Fix"
 echo "=========================================="
@@ -87,7 +87,7 @@ mkdir -p "${HOME}/bin"
 cat > "$WRAPPER" << 'EOF'
 #!/bin/bash
 # Launch Brain Chat with clean process ancestry (for TCC permissions)
-launchctl start com.josephwebber.brainchat.launcher
+launchctl start com.brainchat.app.launcher
 echo "✅ Brain Chat launching from launchd (clean ancestry)"
 echo "   Microphone permission dialog should appear on first use."
 EOF

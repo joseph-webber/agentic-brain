@@ -112,7 +112,7 @@ ls -la ../plugins/wordpress/agentic-brain/
 # etc.
 
 # If missing, check your working directory:
-pwd  # Should be in /Users/joe/brain/agentic-brain/demo
+pwd  # Should be in $HOME/brain/agentic-brain/demo
 
 # Re-run setup
 ./setup-demo.sh
