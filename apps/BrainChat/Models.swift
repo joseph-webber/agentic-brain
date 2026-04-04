@@ -200,8 +200,30 @@ final class AppSettings: ObservableObject {
     @Published var openAIKey: String = ""
     @Published var grokAPIKey: String = ""
     @Published var geminiAPIKey: String = ""
+    @Published var groqAPIKey: String = ""
     @Published var keychainStatusMessage: String = ""
     @Published var showSettings = false
+
+    // Layered response settings
+    @AppStorage("layeredModeEnabled") var layeredModeEnabled: Bool = true
+    @AppStorage("layeredStrategyRaw") private var layeredStrategyRaw: Int = 0
+    var layeredStrategy: LayeredStrategy {
+        get {
+            switch layeredStrategyRaw {
+            case 1: return .qualityFirst
+            case 2: return .consensusOnly
+            default: return .speedFirst
+            }
+        }
+        set {
+            switch newValue {
+            case .speedFirst: layeredStrategyRaw = 0
+            case .qualityFirst: layeredStrategyRaw = 1
+            case .consensusOnly: layeredStrategyRaw = 2
+            case .singleLayer: layeredStrategyRaw = 0
+            }
+        }
+    }
 
     init() {
         loadAPIKeys()
@@ -219,6 +241,7 @@ final class AppSettings: ObservableObject {
             openAIKey = try APIKeyManager.shared.load(.openAI)
             grokAPIKey = try APIKeyManager.shared.load(.grok)
             geminiAPIKey = try APIKeyManager.shared.load(.gemini)
+            groqAPIKey = try APIKeyManager.shared.loadGroqAPIKey()
             keychainStatusMessage = ""
         } catch {
             keychainStatusMessage = error.localizedDescription
@@ -231,6 +254,7 @@ final class AppSettings: ObservableObject {
             try APIKeyManager.shared.save(openAIKey, for: .openAI)
             try APIKeyManager.shared.save(grokAPIKey, for: .grok)
             try APIKeyManager.shared.save(geminiAPIKey, for: .gemini)
+            try APIKeyManager.shared.save(groqAPIKey, for: .groq)
             keychainStatusMessage = "API keys saved securely in Keychain."
         } catch {
             keychainStatusMessage = error.localizedDescription
@@ -243,10 +267,12 @@ final class AppSettings: ObservableObject {
             try APIKeyManager.shared.delete(.openAI)
             try APIKeyManager.shared.delete(.grok)
             try APIKeyManager.shared.delete(.gemini)
+            try APIKeyManager.shared.delete(.groq)
             claudeAPIKey = ""
             openAIKey = ""
             grokAPIKey = ""
             geminiAPIKey = ""
+            groqAPIKey = ""
             keychainStatusMessage = "API keys removed from Keychain."
         } catch {
             keychainStatusMessage = error.localizedDescription
@@ -261,14 +287,25 @@ final class AppSettings: ObservableObject {
             bridgeWebSocketURL: bridgeWebSocketURL.trimmingCharacters(in: .whitespacesAndNewlines),
             claudeAPIKey: claudeAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             openAIAPIKey: openAIKey.trimmingCharacters(in: .whitespacesAndNewlines),
+            groqAPIKey: groqAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             grokAPIKey: grokAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             geminiAPIKey: geminiAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
             ollamaEndpoint: apiEndpoint.trimmingCharacters(in: .whitespacesAndNewlines),
             ollamaModel: modelName.trimmingCharacters(in: .whitespacesAndNewlines),
             claudeModel: "claude-sonnet-4-20250514",
             openAIModel: "gpt-4o",
+            groqModel: "llama-3.1-8b-instant",
             grokModel: "grok-3-latest",
             geminiModel: "gemini-2.5-flash"
+        )
+    }
+
+    func layeredConfiguration(provider: LLMProvider, yoloMode: Bool) -> LayeredResponseConfiguration {
+        let routerConfig = routerConfiguration(provider: provider, yoloMode: yoloMode)
+        return LayeredResponseConfiguration.from(
+            settings: routerConfig,
+            groqAPIKey: groqAPIKey.trimmingCharacters(in: .whitespacesAndNewlines),
+            strategy: layeredStrategy
         )
     }
 }

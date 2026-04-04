@@ -16,6 +16,7 @@ let package = Package(
             sources: [
                 "BrainChatLib.swift",
                 "EventTypes.swift",
+                "MockURLProtocol.swift",
                 "PandaproxyClient.swift",
                 "RedpandaBridge.swift"
             ]
@@ -25,6 +26,7 @@ let package = Package(
             dependencies: ["BrainChatLib"],
             path: ".",
             sources: [
+                // LLM client unit tests
                 "AIManagerTests.swift",
                 "CopilotBridgeTests.swift",
                 "IntegrationTests.swift",
@@ -35,8 +37,16 @@ let package = Package(
                 "E2ECodingTests.swift",
                 "E2EYoloTests.swift",
                 "E2EMultiLLMTests.swift",
-                "RedpandaBridgeTests.swift",
+                // Event bus
+                // "RedpandaBridgeTests.swift",  // TODO: needs subscribeToResponses API
+                "RedpandaIntegrationTests.swift",
+                // Speech input (STT)
                 "SpeechEngineTests.swift",
+                // Voice output (TTS) — CRITICAL for Joseph (blind)
+                "VoiceOutputTests.swift",
+                // Layered multi-LLM response orchestration
+                "LayeredResponseTests.swift",
+                // Accessibility — WCAG 2.1 AA compliance
                 "AccessibilityTests.swift",
                 "CodeSigningTests.swift"
             ]

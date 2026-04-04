@@ -29,7 +29,7 @@ struct ConversationView: View {
                     if store.isProcessing {
                         HStack(spacing: 8) {
                             ProgressView().scaleEffect(0.75)
-                            Text("Thinking\u2026")
+                            Text("Thinking…")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -75,10 +75,10 @@ struct ConversationView: View {
     }
 
     private func postVoiceOverAnnouncement(_ message: String) {
-        NSAccessibilityPostNotificationWithUserInfo(
-            NSApp as Any,
-            NSAccessibility.Notification.announcement,
-            [NSAccessibilityNotificationUserInfoKey.announcement: message as NSString]
+        NSAccessibility.post(
+            element: NSApp as Any,
+            notification: .announcementRequested,
+            userInfo: [.announcement: message as NSString]
         )
     }
 }
@@ -94,7 +94,7 @@ struct MessageBubble: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .accessibilityHidden(true)
-            Text(message.content.isEmpty ? "\u2026" : message.content)
+            Text(message.content.isEmpty ? "…" : message.content)
                 .textSelection(.enabled)
                 .dynamicTypeSize(.small ... .accessibility3)
         }

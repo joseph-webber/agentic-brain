@@ -1,7 +1,7 @@
 import Foundation
 
 actor PandaproxyClient {
-    struct ConsumerRecord<Value: Decodable & Sendable>: Sendable {
+    struct ConsumerRecord<Value: Decodable & Sendable>: Sendable where Value: Sendable {
         let topic: String
         let partition: Int
         let offset: Int
@@ -12,11 +12,13 @@ actor PandaproxyClient {
     private struct ConsumerInstance: Sendable {
         let groupID: String
         let baseURI: URL
+        var topics: Set<String>
     }
 
     private let session: URLSession
     private var proxyBaseURL: URL
-    private var consumer: ConsumerInstance?
+    private var consumers: [String: ConsumerInstance] = [:]
+    private var defaultConsumerGroupID: String?
 
     init(baseURL: URL = URL(string: "http://localhost:8082")!, session: URLSession = .shared) {
         self.proxyBaseURL = baseURL
@@ -25,7 +27,8 @@ actor PandaproxyClient {
 
     func updateBaseURL(_ url: URL) {
         proxyBaseURL = url
-        consumer = nil
+        consumers.removeAll()
+        defaultConsumerGroupID = nil
     }
 
     func publish<Event: Encodable>(topic: String, event: Event) async throws {
@@ -42,8 +45,19 @@ actor PandaproxyClient {
         _ = try await perform(request)
     }
 
+    func publish<Message: Encodable>(topic: String, message: Message) async throws {
+        try await publish(topic: topic, event: message)
+    }
+
     func ensureConsumer(groupID: String, topic: String) async throws {
-        if let consumer, consumer.groupID == groupID {
+        defaultConsumerGroupID = defaultConsumerGroupID ?? groupID
+
+        if var consumer = consumers[groupID] {
+            if !consumer.topics.contains(topic) {
+                try await subscribe(to: topic, consumer: consumer)
+                consumer.topics.insert(topic)
+                consumers[groupID] = consumer
+            }
             return
         }
 
@@ -67,8 +81,9 @@ actor PandaproxyClient {
             throw RedpandaBridgeError.unavailable("Pandaproxy did not return a consumer base URI.")
         }
 
-        consumer = ConsumerInstance(groupID: groupID, baseURI: baseURI)
-        try await subscribe(to: topic)
+        let consumer = ConsumerInstance(groupID: groupID, baseURI: baseURI, topics: [topic])
+        consumers[groupID] = consumer
+        try await subscribe(to: topic, consumer: consumer)
     }
 
     func poll<Value: Decodable & Sendable>(
@@ -76,7 +91,24 @@ actor PandaproxyClient {
         timeoutMs: Int = 1_500,
         maxBytes: Int = 65_536
     ) async throws -> [ConsumerRecord<Value>] {
-        guard let consumer else {
+        guard let defaultConsumerGroupID else {
+            throw RedpandaBridgeError.consumerNotReady
+        }
+        return try await poll(
+            groupID: defaultConsumerGroupID,
+            as: type,
+            timeoutMs: timeoutMs,
+            maxBytes: maxBytes
+        )
+    }
+
+    func poll<Value: Decodable & Sendable>(
+        groupID: String,
+        as type: Value.Type,
+        timeoutMs: Int = 1_500,
+        maxBytes: Int = 65_536
+    ) async throws -> [ConsumerRecord<Value>] {
+        guard let consumer = consumers[groupID] else {
             throw RedpandaBridgeError.consumerNotReady
         }
 
@@ -99,21 +131,36 @@ actor PandaproxyClient {
     }
 
     func closeConsumer() async {
-        guard let consumer else { return }
+        if let defaultConsumerGroupID {
+            await closeConsumer(groupID: defaultConsumerGroupID)
+        } else {
+            await closeAllConsumers()
+        }
+    }
+
+    func closeConsumer(groupID: String) async {
+        guard let consumer = consumers[groupID] else { return }
 
         var request = URLRequest(url: consumer.baseURI)
         request.httpMethod = "DELETE"
         request.setValue("application/vnd.kafka.v2+json", forHTTPHeaderField: "Accept")
 
         _ = try? await perform(request, acceptedStatusCodes: [204, 404])
-        self.consumer = nil
+        consumers[groupID] = nil
+        if defaultConsumerGroupID == groupID {
+            defaultConsumerGroupID = consumers.keys.first
+        }
     }
 
-    private func subscribe(to topic: String) async throws {
-        guard let consumer else {
-            throw RedpandaBridgeError.consumerNotReady
+    func closeAllConsumers() async {
+        let groupIDs = Array(consumers.keys)
+        for groupID in groupIDs {
+            await closeConsumer(groupID: groupID)
         }
+        defaultConsumerGroupID = nil
+    }
 
+    private func subscribe(to topic: String, consumer: ConsumerInstance) async throws {
         var request = URLRequest(url: consumer.baseURI.appending(path: "subscription"))
         request.httpMethod = "POST"
         request.setValue("application/vnd.kafka.v2+json", forHTTPHeaderField: "Accept")
@@ -184,6 +231,62 @@ actor PandaproxyClient {
                 key: record["key"] as? String,
                 value: try decoder.decode(Value.self, from: valueData)
             )
+        }
+    }
+}
+
+extension PandaproxyClient {
+    private var llmResponseTopics: [String] {
+        [
+            BrainTopic.llmResponseFast.rawValue,
+            BrainTopic.llmResponseDeep.rawValue,
+            BrainTopic.llmResponseConsensus.rawValue
+        ]
+    }
+
+    func publishFastRequest(_ prompt: String) async throws {
+        let request = LLMRequest(
+            prompt: prompt,
+            priority: .instant,
+            layers: [.fast, .deep]
+        )
+        try await publish(topic: BrainTopic.llmRequest.rawValue, message: request)
+    }
+
+    func subscribeToResponses(
+        groupID: String = "brainchat-llm-\(UUID().uuidString.lowercased())"
+    ) -> AsyncStream<LLMResponse> {
+        let topics = llmResponseTopics
+
+        return AsyncStream { continuation in
+            let task = Task {
+                do {
+                    for topic in topics {
+                        try await ensureConsumer(groupID: groupID, topic: topic)
+                    }
+
+                    while !Task.isCancelled {
+                        let records = try await poll(groupID: groupID, as: LLMResponse.self)
+                        if records.isEmpty {
+                            continue
+                        }
+
+                        for record in records {
+                            var response = record.value
+                            response.apply(topic: record.topic)
+                            continuation.yield(response)
+                        }
+                    }
+                } catch {
+                    continuation.finish()
+                }
+
+                await closeConsumer(groupID: groupID)
+            }
+
+            continuation.onTermination = { _ in
+                task.cancel()
+            }
         }
     }
 }

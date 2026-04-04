@@ -339,6 +339,7 @@ public enum WhisperError: LocalizedError {
 /// App settings for testing
 public struct AppSettings {
     public var speechEngine: SpeechEngine
+    public var voiceOutputEngine: VoiceOutputEngine
     public var openAIKey: String
     public var ollamaModel: String
     public var claudeModel: String
@@ -348,6 +349,7 @@ public struct AppSettings {
     
     public init(
         speechEngine: SpeechEngine = .appleDictation,
+        voiceOutputEngine: VoiceOutputEngine = .macOS,
         openAIKey: String = "",
         ollamaModel: String = "llama3.2:3b",
         claudeModel: String = "claude-sonnet-4-20250514",
@@ -356,6 +358,7 @@ public struct AppSettings {
         geminiModel: String = "gemini-2.5-flash"
     ) {
         self.speechEngine = speechEngine
+        self.voiceOutputEngine = voiceOutputEngine
         self.openAIKey = openAIKey
         self.ollamaModel = ollamaModel
         self.claudeModel = claudeModel
@@ -369,7 +372,151 @@ public struct AppSettings {
     }
 }
 
-/// Mock speech recognition controller for testing
+// MARK: - Voice Output Engine (TTS)
+
+public enum VoiceOutputEngine: String, CaseIterable, Identifiable {
+    case macOS = "macOS Native"
+    case cartesia = "Cartesia"
+    case piper = "Piper TTS"
+    case elevenLabs = "ElevenLabs"
+
+    public var id: String { rawValue }
+
+    public var icon: String {
+        switch self {
+        case .macOS: return "apple.logo"
+        case .cartesia: return "bolt.fill"
+        case .piper: return "cpu"
+        case .elevenLabs: return "star.fill"
+        }
+    }
+
+    public var description: String {
+        switch self {
+        case .macOS: return "AVSpeechSynthesizer - Karen voice, works offline"
+        case .cartesia: return "Cloud TTS - high quality, low latency"
+        case .piper: return "Local neural TTS - cross-platform, offline, open source"
+        case .elevenLabs: return "Cloud TTS - premium quality voices"
+        }
+    }
+
+    public var requiresAPIKey: Bool {
+        switch self {
+        case .macOS, .piper: return false
+        case .cartesia, .elevenLabs: return true
+        }
+    }
+
+    public var isOffline: Bool {
+        switch self {
+        case .macOS, .piper: return true
+        case .cartesia, .elevenLabs: return false
+        }
+    }
+
+    public var crossPlatform: Bool {
+        switch self {
+        case .macOS: return false
+        case .cartesia, .piper, .elevenLabs: return true
+        }
+    }
+
+    public static var platformDefault: VoiceOutputEngine { .macOS }
+}
+
+// MARK: - Layered Response System
+
+public enum LLMResponseLayer: Int, Comparable, Sendable, CustomStringConvertible {
+    case instant = 1
+    case fastLocal = 2
+    case deep = 3
+    case consensus = 4
+
+    public static func < (lhs: LLMResponseLayer, rhs: LLMResponseLayer) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+
+    public var description: String {
+        switch self {
+        case .instant:   return "Instant"
+        case .fastLocal: return "Local"
+        case .deep:      return "Deep"
+        case .consensus: return "Consensus"
+        }
+    }
+
+    public var icon: String {
+        switch self {
+        case .instant:   return "bolt.fill"
+        case .fastLocal: return "desktopcomputer"
+        case .deep:      return "brain.head.profile"
+        case .consensus: return "checkmark.shield.fill"
+        }
+    }
+
+    public var timeoutSeconds: TimeInterval {
+        switch self {
+        case .instant:   return 5
+        case .fastLocal: return 10
+        case .deep:      return 30
+        case .consensus: return 45
+        }
+    }
+}
+
+public struct LayeredChunk: Sendable {
+    public let layer: LLMResponseLayer
+    public let source: String
+    public let content: String
+    public let isFinal: Bool
+    public let timestamp: Date
+
+    public init(layer: LLMResponseLayer, source: String, content: String, isFinal: Bool = false) {
+        self.layer = layer
+        self.source = source
+        self.content = content
+        self.isFinal = isFinal
+        self.timestamp = Date()
+    }
+}
+
+public struct LayerResult: Sendable {
+    public let layer: LLMResponseLayer
+    public let source: String
+    public let fullText: String
+    public let latencyMs: Int
+    public let succeeded: Bool
+    public let error: String?
+
+    public init(layer: LLMResponseLayer, source: String, fullText: String,
+                latencyMs: Int, succeeded: Bool, error: String? = nil) {
+        self.layer = layer
+        self.source = source
+        self.fullText = fullText
+        self.latencyMs = latencyMs
+        self.succeeded = succeeded
+        self.error = error
+    }
+}
+
+public enum LayeredResponseEvent: Sendable {
+    case layerStarted(LLMResponseLayer, String)
+    case layerDelta(LayeredChunk)
+    case layerCompleted(LayerResult)
+    case deepThinkingStarted
+    case enhancedResponseReady(String)
+    case consensusResult(agreed: Bool, sources: [String])
+    case allLayersComplete([LayerResult])
+}
+
+public enum LayeredStrategy: Sendable {
+    case speedFirst
+    case qualityFirst
+    case consensusOnly
+    case singleLayer(LLMResponseLayer)
+}
+
+// MARK: - Mock speech recognition controller for testing
 public class MockSpeechRecognitionController {
     public var isRecognising: Bool = false
     public var startCallCount: Int = 0

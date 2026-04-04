@@ -120,7 +120,7 @@ final class AccessibilityTests: XCTestCase {
     
     func testTextFieldHasHint() {
         let hint = "Type your message and press Return to send"
-        XCTAssertTrue(hint.contains("type"), "Hint should explain input method")
+        XCTAssertTrue(hint.lowercased().contains("type"), "Hint should explain input method")
         XCTAssertTrue(hint.contains("Return"), "Hint should explain submit method")
     }
     

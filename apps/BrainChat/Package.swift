@@ -7,11 +7,11 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "BrainChat", targets: ["BrainChat"])
+        .executable(name: "BrainChat", targets: ["BrainChatLib"])
     ],
     targets: [
         .executableTarget(
-            name: "BrainChat",
+            name: "BrainChatLib",
             path: ".",
             exclude: [
                 ".build",
@@ -29,53 +29,60 @@ let package = Package(
                 "build-output.log"
             ],
             sources: [
-                "BrainChat.swift",
-                "BrainChatCoordinator.swift",
+                "AIManager.swift",
+                "APIKeyManager.swift",
                 "AirPodsManager.swift",
+                "AppTypes.swift",
                 "AudioPlayer.swift",
                 "AudioSession.swift",
+                "BrainChat.swift",
+                "BrainChatCoordinator.swift",
                 "BridgeDaemon.swift",
                 "CartesiaVoice.swift",
+                "ClaudeAPI.swift",
                 "CodeAssistant.swift",
                 "ContentView.swift",
                 "ConversationView.swift",
+                "CopilotBridge.swift",
+                "CopilotClient.swift",
                 "CopilotVoiceRouter.swift",
+                "EventTypes.swift",
                 "FasterWhisperBridge.swift",
+                "GeminiClient.swift",
+                "GroqClient.swift",
+                "GrokClient.swift",
+                "LayeredResponseManager.swift",
+                "LayeredResponseView.swift",
+                "LLMRouter.swift",
+                "LLMSelector.swift",
+                "Models.swift",
+                "OllamaAPI.swift",
+                "OpenAIAPI.swift",
                 "PandaproxyClient.swift",
                 "RedpandaBridge.swift",
+                "ResponseWeavingCoordinator.swift",
+                "ResponseWeavingTypes.swift",
+                "ResponseWeavingView.swift",
+                "SSEStreamParser.swift",
                 "SafetyGuard.swift",
                 "SettingsView.swift",
                 "SpatialAudio.swift",
-                "SpeechManager.swift",
                 "SpeechEngineSelector.swift",
+                "SpeechManager.swift",
                 "SystemCommands.swift",
                 "VoiceBridge.swift",
                 "VoiceManager.swift",
-                "VoiceSelector.swift",
                 "VoiceOutputSelector.swift",
+                "VoiceSelector.swift",
+                "WhisperEngines.swift",
                 "YoloExecutor.swift",
                 "YoloMode.swift",
-                "YoloSession.swift",
-                "WhisperEngines.swift",
-                "AppTypes.swift",
-                "EventTypes.swift",
-                "LLMSelector.swift",
-                "AIManager.swift",
-                "APIKeyManager.swift",
-                "ClaudeAPI.swift",
-                "CopilotBridge.swift",
-                "CopilotClient.swift",
-                "GeminiClient.swift",
-                "GrokClient.swift",
-                "LLMRouter.swift",
-                "Models.swift",
-                "OllamaAPI.swift",
-                "OpenAIAPI.swift"
+                "YoloSession.swift"
             ]
         ),
         .testTarget(
             name: "BrainChatTests",
-            dependencies: ["BrainChat"],
+            dependencies: ["BrainChatLib"],
             path: "Tests",
             exclude: [
                 "AppTests",
@@ -95,19 +102,29 @@ let package = Package(
                 "VoiceIntegrationTests.swift",
                 "VoiceManagerTests.swift",
                 "VoiceMocks.swift",
+                // Use stub AppSettings.defaults — only valid in E2E sub-package
+                "VoiceOutputTests.swift",
+                "SpeechEngineTests.swift",
+                "AccessibilityTests.swift",
                 "Package.swift",
                 "Sources",
                 "Tests"
             ],
             sources: [
+                // LLM client tests (use real app types via @testable import BrainChatLib)
+                "ClaudeTests.swift",
+                "CopilotTests.swift",
+                "GeminiTests.swift",
+                "GPTTests.swift",
+                "GroqTests.swift",
+                "GrokTests.swift",
+                "LLMRouterTests.swift",
                 "LLMTestSupport.swift",
                 "OllamaTests.swift",
-                "ClaudeTests.swift",
-                "GPTTests.swift",
-                "CopilotTests.swift",
-                "GrokTests.swift",
-                "GeminiTests.swift",
-                "LLMRouterTests.swift"
+                // Layered multi-LLM orchestration (uses real LayeredResponseManager types)
+                "LayeredResponseTests.swift",
+                // Redpanda / Pandaproxy event bus (uses real PandaproxyClient types)
+                "RedpandaIntegrationTests.swift"
             ]
         )
     ]

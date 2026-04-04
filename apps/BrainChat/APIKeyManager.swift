@@ -4,6 +4,7 @@ import Security
 enum APIKeyKind: String, Sendable {
     case claude = "claude-api-key"
     case openAI = "openai-api-key"
+    case groq = "groq-api-key"
     case grok = "grok-api-key"
     case gemini = "gemini-api-key"
 }
@@ -56,6 +57,23 @@ struct APIKeyManager: Sendable {
         return value
     }
 
+    func loadGroqAPIKey() throws -> String {
+        if let environmentValue = environmentValue(named: "GROQ_API_KEY"), !environmentValue.isEmpty {
+            return environmentValue
+        }
+
+        if let providerValue = key(for: "groq")?.trimmingCharacters(in: .whitespacesAndNewlines), !providerValue.isEmpty {
+            return providerValue
+        }
+
+        let dedicatedValue = try load(.groq).trimmingCharacters(in: .whitespacesAndNewlines)
+        if !dedicatedValue.isEmpty {
+            return dedicatedValue
+        }
+
+        return try load(.grok).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     func delete(_ kind: APIKeyKind) throws {
         let status = SecItemDelete(baseQuery(for: kind) as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
@@ -69,6 +87,55 @@ struct APIKeyManager: Sendable {
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: kind.rawValue,
         ]
+    }
+
+    private func environmentValue(named name: String) -> String? {
+        if let processValue = ProcessInfo.processInfo.environment[name]?.trimmingCharacters(in: .whitespacesAndNewlines), !processValue.isEmpty {
+            return processValue
+        }
+
+        for url in candidateDotEnvURLs() {
+            guard let contents = try? String(contentsOf: url, encoding: .utf8) else { continue }
+            for line in contents.split(whereSeparator: \.isNewline) {
+                let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty, !trimmed.hasPrefix("#") else { continue }
+                let parts = trimmed.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+                guard parts.count == 2 else { continue }
+                let key = String(parts[0]).trimmingCharacters(in: .whitespacesAndNewlines)
+                guard key == name else { continue }
+
+                var value = String(parts[1]).trimmingCharacters(in: .whitespacesAndNewlines)
+                if value.hasPrefix("\""), value.hasSuffix("\""), value.count >= 2 {
+                    value.removeFirst()
+                    value.removeLast()
+                } else if value.hasPrefix("'"), value.hasSuffix("'"), value.count >= 2 {
+                    value.removeFirst()
+                    value.removeLast()
+                }
+
+                if !value.isEmpty {
+                    return value
+                }
+            }
+        }
+
+        return nil
+    }
+
+    private func candidateDotEnvURLs() -> [URL] {
+        let fileManager = FileManager.default
+        var urls: [URL] = [fileManager.homeDirectoryForCurrentUser.appending(path: "brain/.env")]
+        var currentURL = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true)
+
+        while true {
+            urls.append(currentURL.appending(path: ".env"))
+            let parentURL = currentURL.deletingLastPathComponent()
+            if parentURL.path == currentURL.path { break }
+            currentURL = parentURL
+        }
+
+        var seen = Set<String>()
+        return urls.filter { seen.insert($0.path).inserted }
     }
 }
 
