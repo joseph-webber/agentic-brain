@@ -118,9 +118,13 @@ extension SystemCommands: SystemCommandProviding {}
 final class CodeAssistant: @unchecked Sendable {
     static let shared = CodeAssistant()
 
+    private struct GeneralAIHandlerBox {
+        let run: (String, @escaping (String) -> Void) -> Void
+    }
+
     private let copilot: CopilotExecuting
     private let system: SystemCommandProviding
-    private var generalAIHandler: ((String, (String) -> Void) -> Void)?
+    private var generalAIHandlerBox: GeneralAIHandlerBox?
 
     init(copilot: CopilotExecuting = CopilotBridge.shared, system: SystemCommandProviding = SystemCommands.shared) {
         self.copilot = copilot
@@ -128,7 +132,7 @@ final class CodeAssistant: @unchecked Sendable {
     }
 
     func setGeneralAIHandler(_ handler: @escaping (String, @escaping (String) -> Void) -> Void) {
-        generalAIHandler = handler
+        generalAIHandlerBox = GeneralAIHandlerBox(run: handler)
     }
 
     func detectRoute(for message: String) -> AssistantRoute {
@@ -235,13 +239,13 @@ final class CodeAssistant: @unchecked Sendable {
     }
 
     private func handleGeneral(_ message: String, started: Date, completion: @escaping (AssistantResponse) -> Void) {
-        guard let handler = generalAIHandler else {
+        guard let handler = generalAIHandlerBox else {
             handleCopilot(message, started: started, completion: completion)
             return
         }
 
         system.speak("Thinking", voice: "Karen (Premium)", rate: 155)
-        handler(message) { [weak self] responseText in
+        handler.run(message) { [weak self] responseText in
             self?.system.speak(String(responseText.prefix(300)), voice: "Karen (Premium)", rate: 155)
             completion(AssistantResponse(text: responseText, route: .general, duration: Date().timeIntervalSince(started), codeBlocks: []))
         }

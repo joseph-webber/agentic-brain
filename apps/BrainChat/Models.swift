@@ -52,6 +52,10 @@ struct ChatMessage: Identifiable, Equatable {
     let role: Role
     var content: String
     let timestamp: Date
+    /// Response layers for woven multi-LLM messages. Empty for standard messages.
+    var layers: [ResponseLayer]
+    /// Current weaving lifecycle phase. `.idle` for standard messages.
+    var weavingPhase: WeavingPhase
 
     enum Role: String {
         case user = "You"
@@ -68,17 +72,30 @@ struct ChatMessage: Identifiable, Equatable {
         }
     }
 
-    init(id: UUID = UUID(), role: Role, content: String, timestamp: Date = Date()) {
+    init(
+        id: UUID = UUID(),
+        role: Role,
+        content: String,
+        timestamp: Date = Date(),
+        layers: [ResponseLayer] = [],
+        weavingPhase: WeavingPhase = .idle
+    ) {
         self.id = id
         self.role = role
         self.content = content
         self.timestamp = timestamp
+        self.layers = layers
+        self.weavingPhase = weavingPhase
     }
 
     var accessibilityDescription: String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
-        return "\(role.rawValue) said at \(formatter.string(from: timestamp)): \(content)"
+        let base = "\(role.rawValue) said at \(formatter.string(from: timestamp)): \(content)"
+        if let statusNote = weavingPhase.accessibilityAnnouncement {
+            return "\(base). \(statusNote)"
+        }
+        return base
     }
 }
 
@@ -123,6 +140,30 @@ final class ConversationStore: ObservableObject {
         }
     }
 
+    // MARK: - Response Weaving
+
+    func setWeavingPhase(id: UUID, phase: WeavingPhase) {
+        guard let index = messages.firstIndex(where: { $0.id == id }) else { return }
+        messages[index].weavingPhase = phase
+    }
+
+    func addLayer(messageID: UUID, layer: ResponseLayer) {
+        guard let index = messages.firstIndex(where: { $0.id == messageID }) else { return }
+        messages[index].layers.append(layer)
+    }
+
+    func appendToLayer(messageID: UUID, layerID: UUID, delta: String) {
+        guard let msgIndex = messages.firstIndex(where: { $0.id == messageID }),
+              let layerIndex = messages[msgIndex].layers.firstIndex(where: { $0.id == layerID }) else { return }
+        messages[msgIndex].layers[layerIndex].content += delta
+    }
+
+    func setLayerContent(messageID: UUID, layerID: UUID, content: String) {
+        guard let msgIndex = messages.firstIndex(where: { $0.id == messageID }),
+              let layerIndex = messages[msgIndex].layers.firstIndex(where: { $0.id == layerID }) else { return }
+        messages[msgIndex].layers[layerIndex].content = content
+    }
+
     func clear() {
         messages.removeAll()
         messages.append(ChatMessage(role: .system, content: "Conversation cleared. Ready for new chat."))
@@ -144,15 +185,15 @@ final class AppSettings: ObservableObject {
     @AppStorage("autoSpeak") var autoSpeak: Bool = true
     @AppStorage("speechEngineRaw") private var speechEngineRaw: String = SpeechEngine.appleDictation.rawValue
     @AppStorage("voiceOutputEngineRaw") private var voiceOutputEngineRaw: String = VoiceOutputEngine.macOS.rawValue
-    @Published var speechEngine: SpeechEngine {
+    @Published var speechEngine: SpeechEngine = .appleDictation {
         didSet {
             speechEngineRaw = speechEngine.rawValue
         }
     }
-
-    var voiceOutputEngine: VoiceOutputEngine {
-        get { VoiceOutputEngine(rawValue: voiceOutputEngineRaw) ?? .macOS }
-        set { voiceOutputEngineRaw = newValue.rawValue }
+    @Published var voiceOutputEngine: VoiceOutputEngine = .macOS {
+        didSet {
+            voiceOutputEngineRaw = voiceOutputEngine.rawValue
+        }
     }
 
     @Published var claudeAPIKey: String = ""
@@ -163,10 +204,13 @@ final class AppSettings: ObservableObject {
     @Published var showSettings = false
 
     init() {
-        let persistedSpeechEngine = SpeechEngine(storedValue: speechEngineRaw) ?? .appleDictation
-        _speechEngine = Published(initialValue: persistedSpeechEngine)
-        speechEngineRaw = persistedSpeechEngine.rawValue
         loadAPIKeys()
+        if let persisted = SpeechEngine(storedValue: speechEngineRaw) {
+            speechEngine = persisted
+        }
+        if let persisted = VoiceOutputEngine(rawValue: voiceOutputEngineRaw) {
+            voiceOutputEngine = persisted
+        }
     }
 
     func loadAPIKeys() {

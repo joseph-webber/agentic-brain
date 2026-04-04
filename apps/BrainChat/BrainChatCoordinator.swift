@@ -1,11 +1,81 @@
 import Foundation
 
+/// Legacy configuration used by BrainChatCoordinator.
+/// Maps onto LLMRouterConfiguration for the active LLMRouter.
+struct AIServiceConfig {
+    var systemPrompt: String
+    var claudeAPIKey: String
+    var openAIAPIKey: String
+    var grokAPIKey: String
+    var geminiAPIKey: String
+    var ollamaEndpoint: String
+    var ollamaModel: String
+    var claudeModel: String
+    var openAIModel: String
+    var grokModel: String
+    var geminiModel: String
+    var provider: LLMProvider
+    var yoloMode: Bool
+    var bridgeWebSocketURL: String
+
+    init(
+        systemPrompt: String = "You are Karen, an Australian AI assistant helping Joseph code",
+        claudeAPIKey: String = "",
+        openAIAPIKey: String = "",
+        grokAPIKey: String = "",
+        geminiAPIKey: String = "",
+        ollamaEndpoint: String = "http://localhost:11434/api/chat",
+        ollamaModel: String = "llama3.2:3b",
+        claudeModel: String = "claude-sonnet-4-20250514",
+        openAIModel: String = "gpt-4o",
+        grokModel: String = "grok-3-latest",
+        geminiModel: String = "gemini-2.5-flash",
+        provider: LLMProvider = .ollama,
+        yoloMode: Bool = false,
+        bridgeWebSocketURL: String = "ws://localhost:8765"
+    ) {
+        self.systemPrompt = systemPrompt
+        self.claudeAPIKey = claudeAPIKey
+        self.openAIAPIKey = openAIAPIKey
+        self.grokAPIKey = grokAPIKey
+        self.geminiAPIKey = geminiAPIKey
+        self.ollamaEndpoint = ollamaEndpoint
+        self.ollamaModel = ollamaModel
+        self.claudeModel = claudeModel
+        self.openAIModel = openAIModel
+        self.grokModel = grokModel
+        self.geminiModel = geminiModel
+        self.provider = provider
+        self.yoloMode = yoloMode
+        self.bridgeWebSocketURL = bridgeWebSocketURL
+    }
+
+    var routerConfiguration: LLMRouterConfiguration {
+        LLMRouterConfiguration(
+            provider: provider,
+            systemPrompt: systemPrompt,
+            yoloMode: yoloMode,
+            bridgeWebSocketURL: bridgeWebSocketURL,
+            claudeAPIKey: claudeAPIKey,
+            openAIAPIKey: openAIAPIKey,
+            grokAPIKey: grokAPIKey,
+            geminiAPIKey: geminiAPIKey,
+            ollamaEndpoint: ollamaEndpoint,
+            ollamaModel: ollamaModel,
+            claudeModel: claudeModel,
+            openAIModel: openAIModel,
+            grokModel: grokModel,
+            geminiModel: geminiModel
+        )
+    }
+}
+
 @MainActor
 final class BrainChatCoordinator {
     let store: ConversationStore
     let voiceManager: VoiceManager
     let speechManager: SpeechManager
-    let aiManager: AIManager
+    let llmRouter: LLMRouter
     let codeAssistant: CodeAssistant
 
     var configuration: AIServiceConfig
@@ -16,14 +86,14 @@ final class BrainChatCoordinator {
         store: ConversationStore,
         voiceManager: VoiceManager,
         speechManager: SpeechManager,
-        aiManager: AIManager,
+        llmRouter: LLMRouter,
         codeAssistant: CodeAssistant,
         configuration: AIServiceConfig = AIServiceConfig()
     ) {
         self.store = store
         self.voiceManager = voiceManager
         self.speechManager = speechManager
-        self.aiManager = aiManager
+        self.llmRouter = llmRouter
         self.codeAssistant = codeAssistant
         self.configuration = configuration
 
@@ -37,7 +107,7 @@ final class BrainChatCoordinator {
             store: ConversationStore(),
             voiceManager: VoiceManager(),
             speechManager: SpeechManager(),
-            aiManager: AIManager(),
+            llmRouter: LLMRouter(),
             codeAssistant: CodeAssistant(),
             configuration: configuration
         )
@@ -46,20 +116,20 @@ final class BrainChatCoordinator {
     func sendUserMessage(_ text: String, completion: ((String) -> Void)? = nil) {
         store.addMessage(role: .user, content: text)
         store.isProcessing = true
+        let history = store.recentConversation
+        let routerConfig = configuration.routerConfiguration
 
-        aiManager.send(message: text, history: store.messages, config: configuration) { [weak self] response in
-            guard let self else { return }
-            DispatchQueue.main.async {
-                self.store.isProcessing = false
-                self.store.addMessage(role: .assistant, content: response.text)
-                if self.autoSpeak {
-                    self.voiceManager.speak(response.text)
-                }
-                if self.continuousListening {
-                    self.speechManager.startListening()
-                }
-                completion?(response.text)
+        Task {
+            let response = await llmRouter.streamReply(history: history, configuration: routerConfig) { _ in }
+            store.isProcessing = false
+            store.addMessage(role: .assistant, content: response)
+            if autoSpeak {
+                voiceManager.speak(response)
             }
+            if continuousListening {
+                speechManager.startListening()
+            }
+            completion?(response)
         }
     }
 

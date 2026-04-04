@@ -33,7 +33,11 @@ final class FasterWhisperBridge: @unchecked Sendable {
     }
 
     func transcribe(audioURL: URL) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
+        guard FileManager.default.fileExists(atPath: scriptPath) else {
+            throw WhisperError.apiError(1, "faster-whisper bridge script is missing at \(scriptPath)")
+        }
+
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
             process.arguments = [scriptPath, "--model", whisperModel, audioURL.path]
@@ -48,6 +52,10 @@ final class FasterWhisperBridge: @unchecked Sendable {
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
                 if proc.terminationStatus == 0 {
+                    guard !output.isEmpty else {
+                        continuation.resume(throwing: WhisperError.noAudioData)
+                        return
+                    }
                     continuation.resume(returning: output)
                 } else {
                     continuation.resume(throwing: WhisperError.apiError(Int(proc.terminationStatus), output))
