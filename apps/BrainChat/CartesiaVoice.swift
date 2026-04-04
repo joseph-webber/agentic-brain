@@ -119,6 +119,7 @@ final class CartesiaVoice: NSObject, ObservableObject {
         let id = UUID()
         let text: String
         let voice: CartesiaVoiceOption
+        let timestamp = Date()  // Track when utterance was queued
     }
 
     private enum Constants {
@@ -132,6 +133,8 @@ final class CartesiaVoice: NSObject, ObservableObject {
         static let sampleRate = 24_000
         static let channels = 1
         static let provider = "cartesia"
+        // OPTIMIZATION: Streaming TTS - start speaking after first 50ms of audio
+        static let minimumAudioBufferForPlayback = 1200  // ~50ms at 24kHz
     }
 
     private let sessionFactory: (URLSessionDataDelegate) -> URLSession
@@ -146,6 +149,9 @@ final class CartesiaVoice: NSObject, ObservableObject {
     private var activeStatusCode: Int?
     private var activeErrorBuffer = Data()
     private var activeAudioBytes = 0
+    // OPTIMIZATION: Track when to start playback during streaming
+    private var playbackStarted = false
+    private var utteranceStartTime: Date?
 
     init(
         audioPlayer: AudioPlayer = AudioPlayer(),
@@ -258,6 +264,8 @@ final class CartesiaVoice: NSObject, ObservableObject {
             activeStatusCode = nil
             activeErrorBuffer = Data()
             activeAudioBytes = 0
+            playbackStarted = false  // OPTIMIZATION: Reset for new utterance
+            utteranceStartTime = Date()  // OPTIMIZATION: Track start time
             isSpeaking = true
             statusMessage = "Speaking with Cartesia: \(next.voice.name)"
             task.resume()
@@ -305,8 +313,9 @@ final class CartesiaVoice: NSObject, ObservableObject {
 
         do {
             isSpeaking = true
+            // OPTIMIZATION: Use faster fallback rate (185 wpm) for quick response
             statusMessage = "Using macOS fallback voice because Cartesia failed: \(reason)"
-            try fallbackSpeaker.speak(text: utterance.text, voice: utterance.voice.fallbackVoiceName, rate: 170) { [weak self] exitCode in
+            try fallbackSpeaker.speak(text: utterance.text, voice: utterance.voice.fallbackVoiceName, rate: 185) { [weak self] exitCode in
                 guard let self else { return }
                 self.statusMessage = exitCode == 0 ? "Finished via fallback voice" : "Fallback speech failed with exit code \(exitCode)"
                 self.completeUtterance(id: utterance.id)
@@ -365,6 +374,13 @@ extension CartesiaVoice: URLSessionDataDelegate {
             do {
                 activeAudioBytes += data.count
                 try audioOutput.appendPCMChunk(data, for: utterance.id)
+                
+                // OPTIMIZATION: Start playback after collecting enough audio (50ms buffer)
+                if !playbackStarted && activeAudioBytes >= Constants.minimumAudioBufferForPlayback {
+                    playbackStarted = true
+                    let elapsed = Date().timeIntervalSince(utteranceStartTime ?? Date())
+                    statusMessage = "Cartesia: Started speaking after \(Int(elapsed * 1000))ms"
+                }
             } catch {
                 handleNetworkFailure(error.localizedDescription)
             }

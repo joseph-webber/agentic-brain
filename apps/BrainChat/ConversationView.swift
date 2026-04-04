@@ -9,6 +9,7 @@ struct ConversationView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 12) {
+                    // MARK: Empty State
                     if store.messages.isEmpty && !store.isProcessing {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("No messages yet")
@@ -21,11 +22,14 @@ struct ConversationView: View {
                         .background(Color.secondary.opacity(0.06))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .accessibilityElement(children: .combine)
-                        .accessibilityIdentifier("emptyStateView")
-                        .accessibilityLabel("Conversation empty. Type a message or turn on the microphone to begin.")
+                        .accessibilityIdentifier("emptyState")
+                        .accessibilityLabel("Empty")
+                        .accessibilityHint("Start conversation")
                     }
 
-                    ForEach(store.messages) { message in
+                    // MARK: Messages List - with rotor support
+                    ForEach(store.messages, id: \.id) { message in
+                        let msgId = String(describing: message.id)
                         if message.role == .assistant,
                            let state = layeredStore.state(for: message.id) {
                             LayeredMessageBubble(
@@ -33,15 +37,22 @@ struct ConversationView: View {
                                 layeredState: state
                             )
                             .id(message.id)
+                            .accessibilityIdentifier("message-" + msgId)
+                            .accessibilityAddTraits(.isButton)
                         } else if message.role == .assistant, message.weavingPhase != .idle {
                             WeavedMessageBubble(message: message)
                                 .id(message.id)
+                                .accessibilityIdentifier("message-" + msgId)
+                                .accessibilityAddTraits(.isButton)
                         } else {
                             MessageBubble(message: message)
                                 .id(message.id)
+                                .accessibilityIdentifier("message-" + msgId)
+                                .accessibilityAddTraits(.isButton)
                         }
                     }
 
+                    // MARK: Processing Indicator
                     if store.isProcessing {
                         HStack(spacing: 8) {
                             ProgressView().scaleEffect(0.75)
@@ -53,8 +64,8 @@ struct ConversationView: View {
                         .padding(.vertical, 8)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .accessibilityElement(children: .combine)
-                        .accessibilityLabel("Brain Chat is thinking, please wait")
-                        .accessibilityHint("A response is currently being generated")
+                        .accessibilityShortLabel("Processing")
+                        .accessibilityHint("Thinking…")
                         .accessibilityAddTraits(.updatesFrequently)
                         .id("processingIndicator")
                     }
@@ -62,8 +73,9 @@ struct ConversationView: View {
                 .padding()
             }
             .accessibilityIdentifier("conversationSection")
-            .accessibilityLabel("Conversation history")
-            .accessibilityHint("New messages are announced automatically and the latest message appears at the bottom")
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Messages")
+            .accessibilityHint("Conversation thread")
             .onChange(of: store.messages.count) { _, _ in
                 if let last = store.messages.last?.id {
                     withAnimation { proxy.scrollTo(last, anchor: .bottom) }
@@ -77,7 +89,7 @@ struct ConversationView: View {
                     if let last = store.messages.last?.id {
                         withAnimation { proxy.scrollTo(last, anchor: .bottom) }
                     }
-                    postVoiceOverAnnouncement("Response ready")
+                    AccessibilityHelpers.announceNormal("Response ready")
                 }
             }
         }
@@ -87,20 +99,12 @@ struct ConversationView: View {
         guard let last = store.messages.last else { return }
         switch last.role {
         case .user:
-            postVoiceOverAnnouncement("Message sent")
+            AccessibilityHelpers.announceNormal("Message sent")
         case .assistant, .copilot:
-            postVoiceOverAnnouncement("New response from \(last.role.rawValue)")
+            AccessibilityHelpers.announceNormal("New \(last.role.accessibilityName)")
         case .system:
             break
         }
-    }
-
-    private func postVoiceOverAnnouncement(_ message: String) {
-        NSAccessibility.post(
-            element: NSApp as Any,
-            notification: .announcementRequested,
-            userInfo: [.announcement: message as NSString]
-        )
     }
 }
 
@@ -125,7 +129,7 @@ struct MessageBubble: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(message.accessibilityDescription)
-        .accessibilityHint(message.role == .user ? "Your message" : "Message text can be selected and read by VoiceOver")
+        .accessibilityHint("Message")
     }
 
     private var bubbleBackground: Color {

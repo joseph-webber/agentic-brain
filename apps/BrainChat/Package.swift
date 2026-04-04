@@ -15,49 +15,67 @@ let package = Package(
             path: ".",
             exclude: [
                 ".build",
-                ".swiftpm",
                 "build",
                 "Tests",
                 "Info.plist",
+                // Shell scripts
                 "build.sh",
                 "install.sh",
-                "voice_bridge_daemon.py",
-                "VoiceTests",
-                "__pycache__",
-                "runtime",
-                "bridge-daemon.log",
-                "build-output.log",
-                "launchagent",
                 "verify-mic.sh",
                 "verify-code-signing.sh",
+                "test_mic_permission.sh",
+                "run-mic-test.sh",
+                "apply_fix.sh",
+                "verify-4-tier.sh",
+                // Python scripts
+                "voice_bridge_daemon.py",
+                // Markdown files (all)
+                "*.md",
                 "MICROPHONE-TEST-SUITE-README.md",
                 "QUICK_TEST.md",
                 "FIX_SUMMARY.md",
                 "CHECKLIST.md",
                 "MIC_PERMISSION_FIX.md",
                 "SSE_REFACTORING_SUMMARY.md",
-                "session-artifacts-build.log",
-                "test-mic-cli.swift",
-                "test-mic-automation.scpt",
-                "test_mic_permission.sh",
-                "run-mic-test.sh",
-                "apply_fix.sh",
-                "Scripts",
-                "BrainChat.entitlements",
-                "Brain Chat.app",
-                "BrainChat.app",
                 "README.md",
                 "DEPLOYMENT.md",
                 "SECURITY-QUICK-REFERENCE.md",
                 "REVIEW_SUMMARY_2026-04-04.md",
-                "docs",
-                "session-artifacts",
-                "Scripts",
                 "4-TIER-SECURITY-SUMMARY.md",
                 "SECURITY_INTEGRATION_SUMMARY.md",
-                "verify-4-tier.sh",
+                // Config files
+                "*.json",
+                // Text files
+                "*.txt",
+                // Backup files
+                "*.backup",
+                // Log files
+                "bridge-daemon.log",
+                "build-output.log",
+                "session-artifacts-build.log",
+                // Test files
+                "test-mic-cli.swift",
+                "test-mic-automation.scpt",
+                // Directories
+                "VoiceTests",
+                "runtime",
+                "launchagent",
+                "Scripts",
+                "docs",
+                "session-artifacts",
                 "Security",
                 "Sources/Terminal",
+                "benchmarks",
+                "Formula",
+                // Benchmark .swift files (root level)
+                "FastAcknowledgments.swift",
+                "PerformanceProfiler.swift",
+                "VoiceEngineBenchmark.swift",
+                "BrainChat-Optimized.swift",
+                "BenchmarkResults.swift",
+                "PerformanceOptimizations.swift",
+                "STTBenchmark.swift",
+                // Source-specific excludes
                 "Sources/BrainChat/BrainChat.sdef",
                 "Sources/BrainChat/BrainChatLib.swift",
                 "Sources/BrainChat/EventTypes.swift",
@@ -66,9 +84,14 @@ let package = Package(
                 // Root-level duplicates excluded (use Sources/ versions)
                 "EventTypes.swift",
                 "PandaproxyClient.swift",
-                "RedpandaBridge.swift"
+                "RedpandaBridge.swift",
+                // App bundles
+                "BrainChat.entitlements",
+                "Brain Chat.app",
+                "BrainChat.app"
             ],
             sources: [
+                "AccessibilityHelpers.swift",
                 "AIManager.swift",
                 "AgenticBrainIntegration.swift",
                 "APIKeyManager.swift",
@@ -166,7 +189,12 @@ let package = Package(
                 "Package.swift",
                 "BrainChatTests/Security",
                 "Sources",
-                "Tests"
+                "Tests",
+                // Benchmark and documentation files
+                "*.md",
+                "*.json",
+                "Sources/BrainChat/Benchmarks/*.md",
+                "Sources/BrainChat/Benchmarks/*.json"
             ],
             sources: [
                 // LLM client tests (use real app types via @testable import BrainChatLib)

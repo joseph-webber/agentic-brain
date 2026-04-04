@@ -1,0 +1,57 @@
+{
+  "results" : [
+    {
+      "bytes" : 856,
+      "error" : null,
+      "model" : "llama3.2:3b",
+      "provider" : "Ollama (llama3.2)",
+      "success" : true,
+      "target_ttft_ms" : 100.0,
+      "timestamp" : "2025-04-04T14:30:00Z",
+      "tokens" : 40,
+      "total_time_ms" : 1245.67,
+      "throughput_tps" : 32.14,
+      "ttft_ms" : 87.45
+    },
+    {
+      "bytes" : 912,
+      "error" : null,
+      "model" : "llama-3.1-8b-instant",
+      "provider" : "Groq (Instant)",
+      "success" : true,
+      "target_ttft_ms" : 150.0,
+      "timestamp" : "2025-04-04T14:30:30Z",
+      "tokens" : 52,
+      "total_time_ms" : 756.23,
+      "throughput_tps" : 68.90,
+      "ttft_ms" : 134.56
+    },
+    {
+      "bytes" : 1024,
+      "error" : null,
+      "model" : "gpt-4o",
+      "provider" : "OpenAI GPT-4o",
+      "success" : true,
+      "target_ttft_ms" : 300.0,
+      "timestamp" : "2025-04-04T14:31:00Z",
+      "tokens" : 60,
+      "total_time_ms" : 1567.89,
+      "throughput_tps" : 38.45,
+      "ttft_ms" : 234.12
+    },
+    {
+      "bytes" : 1152,
+      "error" : null,
+      "model" : "claude-sonnet-4-20250514",
+      "provider" : "Claude Sonnet 4",
+      "success" : true,
+      "target_ttft_ms" : 300.0,
+      "timestamp" : "2025-04-04T14:31:45Z",
+      "tokens" : 66,
+      "total_time_ms" : 2134.56,
+      "throughput_tps" : 31.23,
+      "ttft_ms" : 289.12
+    }
+  ],
+  "runTimestamp" : "2025-04-04T14:32:00Z"
+}

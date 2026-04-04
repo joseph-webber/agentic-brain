@@ -36,6 +36,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AccessibilityHelpers.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AgenticBrainIntegration.swift"
         },
         {
@@ -281,6 +285,7 @@
       "objects" : [
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AIManager.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/APIKeyManager.swift.o",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AccessibilityHelpers.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AgenticBrainIntegration.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AirPodsManager.swift.o",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AppTypes.swift.o",
@@ -358,6 +363,7 @@
         "-entry-point-function-name",
         "-Xfrontend",
         "BrainChatLib_main",
+        "-color-diagnostics",
         "-swift-version",
         "5",
         "-plugin-path",
@@ -395,6 +401,10 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/APIKeyManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AccessibilityHelpers.swift.o"
         },
         {
           "kind" : "file",
@@ -637,6 +647,7 @@
       "sources" : [
         "/Users/joe/brain/agentic-brain/apps/BrainChat/AIManager.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/APIKeyManager.swift",
+        "/Users/joe/brain/agentic-brain/apps/BrainChat/AccessibilityHelpers.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/AgenticBrainIntegration.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/AirPodsManager.swift",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/AppTypes.swift",
@@ -748,6 +759,7 @@
         "-emit-objc-header",
         "-emit-objc-header-path",
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatPackageTests.build/include/BrainChatPackageTests-Swift.h",
+        "-color-diagnostics",
         "-plugin-path",
         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
         "-sdk",
@@ -955,6 +967,7 @@
         "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/ModuleCache",
         "-parseable-output",
         "-parse-as-library",
+        "-color-diagnostics",
         "-swift-version",
         "5",
         "-plugin-path",
@@ -1130,6 +1143,7 @@
       "-c",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/AIManager.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/APIKeyManager.swift",
+      "/Users/joe/brain/agentic-brain/apps/BrainChat/AccessibilityHelpers.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/AgenticBrainIntegration.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/AirPodsManager.swift",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/AppTypes.swift",
@@ -1207,6 +1221,7 @@
       "-entry-point-function-name",
       "-Xfrontend",
       "BrainChatLib_main",
+      "-color-diagnostics",
       "-swift-version",
       "5",
       "-plugin-path",
@@ -1267,6 +1282,7 @@
       "-emit-objc-header",
       "-emit-objc-header-path",
       "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatPackageTests.build/include/BrainChatPackageTests-Swift.h",
+      "-color-diagnostics",
       "-plugin-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
       "-sdk",
@@ -1347,6 +1363,7 @@
       "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/ModuleCache",
       "-parseable-output",
       "-parse-as-library",
+      "-color-diagnostics",
       "-swift-version",
       "5",
       "-plugin-path",
@@ -1426,6 +1443,10 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/APIKeyManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AccessibilityHelpers.swift.o"
         },
         {
           "kind" : "file",
@@ -1676,6 +1697,10 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/APIKeyManager.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/AccessibilityHelpers.swift"
         },
         {
           "kind" : "file",
@@ -1940,6 +1965,10 @@
         {
           "kind" : "file",
           "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/APIKeyManager.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AccessibilityHelpers.swift.o"
         },
         {
           "kind" : "file",

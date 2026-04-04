@@ -95,6 +95,12 @@ final class ChatViewModel: ObservableObject {
         guard let store else { return }
 
         applyCurrentSettings()
+        
+        // Check Copilot CLI status on startup
+        Task {
+            await checkCopilotStatus()
+        }
+        
         if store.messages.isEmpty {
             store.addMessage(
                 role: .system,
@@ -103,6 +109,36 @@ final class ChatViewModel: ObservableObject {
             voiceManager?.speak(
                 "Brain Chat ready for voice coding. Click the mic button to go live. You can say things like, read line 10, go to function main, explain this code, or fix this error."
             )
+        }
+    }
+    
+    /// Check if GitHub Copilot CLI is installed and working
+    private func checkCopilotStatus() async {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["gh", "copilot", "--version"]
+        
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            
+            if process.terminationStatus == 0 {
+                await MainActor.run {
+                    updateCopilotSessionState(active: true, status: "Copilot ready")
+                }
+            } else {
+                await MainActor.run {
+                    updateCopilotSessionState(active: false, status: "Copilot not installed")
+                }
+            }
+        } catch {
+            await MainActor.run {
+                updateCopilotSessionState(active: false, status: "Copilot offline")
+            }
         }
     }
 
@@ -353,6 +389,13 @@ final class ChatViewModel: ObservableObject {
                         }
                         layeredState.appendInstant(chunk.content)
                         store.replaceMessageContent(id: assistantMessageID, content: layeredState.instantText)
+                        
+                        // OPTIMIZATION: Start voice on FIRST chunk immediately (< 100ms)
+                        if settings.autoSpeak, !spokenInstant, !layeredState.instantText.isEmpty, 
+                           layeredState.instantText.count > 20 {  // Wait for meaningful content
+                            spokenInstant = true
+                            self.voiceManager?.speak(layeredState.instantText)
+                        }
                     case .fastLocal:
                         layeredState.appendLocal(chunk.content)
                     case .deep, .consensus:

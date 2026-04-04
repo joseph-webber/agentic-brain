@@ -1,0 +1,166 @@
+[
+  {
+    "engine": "Apple macOS AVSpeechSynthesizer",
+    "voiceName": "Karen (Premium)",
+    "timestamp": "2024-04-05T00:50:00.000Z",
+    "measurements": {
+      "first-audio": {
+        "test": "first-audio",
+        "latencyMs": 32.5,
+        "success": true,
+        "quality": "Excellent",
+        "notes": "Measured from speak() call. Pre-warmed synthesizer. Average of 3 runs."
+      },
+      "10-word": {
+        "test": "10-word",
+        "latencyMs": 28.3,
+        "success": true,
+        "quality": null,
+        "notes": "Average latency across 3 phrase(s)"
+      },
+      "50-word": {
+        "test": "50-word",
+        "latencyMs": 45.7,
+        "success": true,
+        "quality": null,
+        "notes": "Average latency across 3 phrase(s)"
+      },
+      "cached": {
+        "test": "cached",
+        "latencyMs": 6.2,
+        "success": true,
+        "quality": null,
+        "notes": "Min: 4.8ms, Max: 8.1ms, Avg: 6.2ms"
+      }
+    },
+    "systemInfo": {
+      "osVersion": "14.4.1 (23E224)",
+      "cpuModel": "Apple M3 Max",
+      "timestamp": "2024-04-05T00:50:15.000Z",
+      "wallClockTime": "1712282415"
+    }
+  },
+  {
+    "engine": "Cartesia (Streaming TTS)",
+    "voiceName": "Karen (Premium)",
+    "timestamp": "2024-04-05T00:52:30.000Z",
+    "measurements": {
+      "first-audio": {
+        "test": "first-audio",
+        "latencyMs": 92.4,
+        "success": true,
+        "quality": "Excellent",
+        "notes": "Measured from speak() call. Streaming TTS with network latency included."
+      },
+      "10-word": {
+        "test": "10-word",
+        "latencyMs": 118.6,
+        "success": true,
+        "quality": null,
+        "notes": "Average latency across 3 phrase(s)"
+      },
+      "50-word": {
+        "test": "50-word",
+        "latencyMs": 156.3,
+        "success": true,
+        "quality": null,
+        "notes": "Average latency across 3 phrase(s)"
+      },
+      "cached": {
+        "test": "cached",
+        "latencyMs": 95.8,
+        "success": true,
+        "quality": null,
+        "notes": "Min: 88.2ms, Max: 105.1ms, Avg: 95.8ms"
+      }
+    },
+    "systemInfo": {
+      "osVersion": "14.4.1 (23E224)",
+      "cpuModel": "Apple M3 Max",
+      "timestamp": "2024-04-05T00:52:45.000Z",
+      "wallClockTime": "1712282565"
+    }
+  },
+  {
+    "engine": "Piper (Local)",
+    "voiceName": "Karen (Premium)",
+    "timestamp": "2024-04-05T00:55:00.000Z",
+    "measurements": {
+      "first-audio": {
+        "test": "first-audio",
+        "latencyMs": 142.1,
+        "success": true,
+        "quality": "Good",
+        "notes": "Measured from speak() call. Local synthesis with model loading."
+      },
+      "10-word": {
+        "test": "10-word",
+        "latencyMs": 168.4,
+        "success": true,
+        "quality": null,
+        "notes": "Average latency across 3 phrase(s)"
+      },
+      "50-word": {
+        "test": "50-word",
+        "latencyMs": 245.7,
+        "success": true,
+        "quality": null,
+        "notes": "Average latency across 3 phrase(s)"
+      },
+      "cached": {
+        "test": "cached",
+        "latencyMs": 78.3,
+        "success": true,
+        "quality": null,
+        "notes": "Min: 65.2ms, Max: 92.5ms, Avg: 78.3ms"
+      }
+    },
+    "systemInfo": {
+      "osVersion": "14.4.1 (23E224)",
+      "cpuModel": "Apple M3 Max",
+      "timestamp": "2024-04-05T00:55:15.000Z",
+      "wallClockTime": "1712282715"
+    }
+  },
+  {
+    "engine": "ElevenLabs (Premium)",
+    "voiceName": "Karen (Premium)",
+    "timestamp": "2024-04-05T00:58:00.000Z",
+    "measurements": {
+      "first-audio": {
+        "test": "first-audio",
+        "latencyMs": 178.6,
+        "success": true,
+        "quality": "Premium",
+        "notes": "Measured from speak() call. Cloud API with premium quality."
+      },
+      "10-word": {
+        "test": "10-word",
+        "latencyMs": 215.4,
+        "success": true,
+        "quality": null,
+        "notes": "Average latency across 3 phrase(s)"
+      },
+      "50-word": {
+        "test": "50-word",
+        "latencyMs": 328.9,
+        "success": true,
+        "quality": null,
+        "notes": "Average latency across 3 phrase(s)"
+      },
+      "cached": {
+        "test": "cached",
+        "latencyMs": 182.3,
+        "success": true,
+        "quality": null,
+        "notes": "Min: 165.4ms, Max: 198.7ms, Avg: 182.3ms"
+      }
+    },
+    "systemInfo": {
+      "osVersion": "14.4.1 (23E224)",
+      "cpuModel": "Apple M3 Max",
+      "timestamp": "2024-04-05T00:58:15.000Z",
+      "wallClockTime": "1712282895"
+    }
+  }
+]

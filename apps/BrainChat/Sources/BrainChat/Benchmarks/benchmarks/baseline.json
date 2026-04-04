@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "appVersion": "1.0.0",
+  "platform": "macOS",
+  "date": "2024-01-15T10:00:00Z",
+  "duration": 0.0,
+  "results": [],
+  "summary": {
+    "totalTests": 0,
+    "passedTests": 0,
+    "failedTests": 0,
+    "avgLatencyMs": 0.0,
+    "minLatencyMs": 0.0,
+    "maxLatencyMs": 0.0,
+    "categoryStats": {},
+    "providerStats": {}
+  }
+}

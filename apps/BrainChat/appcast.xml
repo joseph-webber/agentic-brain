@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>BrainChat</title>
+    <link>https://github.com/getagentic/brain</link>
+    <description>🧠 macOS AI Chat Application with Multi-LLM Support and Voice</description>
+    <language>en-us</language>
+    <lastBuildDate>{{ last_build_date }}</lastBuildDate>
+    <image>
+      <url>https://raw.githubusercontent.com/getagentic/brain/main/apps/BrainChat/icon.png</url>
+      <title>BrainChat</title>
+      <link>https://github.com/getagentic/brain</link>
+    </image>
+
+    <!-- RELEASES WILL BE GENERATED HERE -->
+    <!-- Example entry:
+    <item>
+      <title>BrainChat 1.2.0</title>
+      <description>
+        <![CDATA[
+          <h2>New Features</h2>
+          <ul>
+            <li>🧠 Multi-LLM support (Claude, Groq, OpenAI, Grok, Gemini, Ollama)</li>
+            <li>🎤 Advanced speech recognition with Whisper engines</li>
+            <li>🔐 4-tier security model for controlled API access</li>
+            <li>📝 Full AppleScript support for automation</li>
+            <li>⚡ Optimized for Apple Silicon (M1/M2/M3)</li>
+            <li>🔗 Redpanda event bus integration</li>
+          </ul>
+          
+          <h2>Fixes</h2>
+          <ul>
+            <li>Fixed microphone button responsiveness</li>
+            <li>Improved voice input stability</li>
+            <li>Enhanced error handling for LLM providers</li>
+          </ul>
+          
+          <h2>Requirements</h2>
+          <ul>
+            <li>macOS 14.0 or later</li>
+            <li>Apple Silicon (ARM64) processor</li>
+            <li>2GB RAM minimum, 4GB recommended</li>
+          </ul>
+        ]]>
+      </description>
+      <pubDate>Mon, 16 Jan 2025 12:00:00 GMT</pubDate>
+      <sparkle:version>1.2.0</sparkle:version>
+      <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
+      <enclosure url="https://github.com/getagentic/brain/releases/download/v1.2.0/BrainChat-1.2.0.dmg"
+                 sparkle:version="1.2.0"
+                 sparkle:shortVersionString="1.2.0"
+                 type="application/x-dmg"
+                 length="125000000" />
+    </item>
+    -->
+
+  </channel>
+</rss>

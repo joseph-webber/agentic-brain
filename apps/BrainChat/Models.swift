@@ -70,6 +70,19 @@ struct ChatMessage: Identifiable, Equatable {
             case .system: return .system
             }
         }
+
+        var accessibilityName: String {
+            switch self {
+            case .user:
+                return "You said"
+            case .assistant:
+                return "Brain Chat said"
+            case .copilot:
+                return "Copilot said"
+            case .system:
+                return "System"
+            }
+        }
     }
 
     init(

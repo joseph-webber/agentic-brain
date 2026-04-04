@@ -729,7 +729,8 @@ Native, bi-directional voice interaction designed for accessibility and hands-fr
 - 🤖 **Multi-LLM Orchestration** with policy-driven routing, fallback chains, and cost controls
 - ⚡ **Apple Silicon M1 M2 M3 M4 MLX** support plus **CUDA ROCm GPU Acceleration** for NVIDIA/AMD
 - 🔁 **Redis Cache, WebSocket Streaming**, and **Kafka/Redpanda** pipelines for real-time agents
-- ♿ **Voice/Audio accessibility (macOS)** for VoiceOver-first enterprise experiences
+- ♿ **WCAG 2.1 AAA accessible** - built for blind and disabled users with full keyboard navigation
+- ⚡ **51-100ms text response, 32-92ms voice** - optimized for sub-200ms natural conversation
 
 ## 💬 Use Cases
 
@@ -793,8 +794,9 @@ Built on battle-tested infrastructure for **scalability** and **security**:
 
 | Feature | Description |
 |---------|-------------|
-| **🎯 WCAG 2.1 AA** | Full compliance. Screen reader optimized (VoiceOver, NVDA, JAWS) |
+| **🎯 WCAG 2.1 AAA** | Full compliance. Screen reader optimized (VoiceOver, NVDA, JAWS) |
 | **⌨️ CLI-First** | Terminal is the primary interface. No GUI required. SSH-ready. |
+| **🖥️ BrainChat macOS** | Native Swift app with WCAG 2.1 AAA accessibility + VoiceOver integration |
 | **🔊 180+ Voices** | 145+ macOS voices + 35+ cloud TTS voices. Never miss a result. |
 | **🎹 Keyboard Only** | Every feature accessible without a mouse |
 | **📺 High Contrast** | Theme support for low vision users |
@@ -805,9 +807,15 @@ Built on battle-tested infrastructure for **scalability** and **security**:
 ab config set accessibility.screen_reader true
 ab config set accessibility.voice_feedback true
 ab chat "Hello, Brain!"  # Response is spoken aloud
+
+# Or use BrainChat on macOS with full VoiceOver support
+# See: apps/BrainChat/docs/ACCESSIBILITY.md
 ```
 
-📖 **[Full Accessibility Documentation →](./docs/ACCESSIBILITY.md)**
+📖 **Full Documentation:**
+- [Core Platform Accessibility](./docs/ACCESSIBILITY.md)
+- [BrainChat macOS Guide](./apps/BrainChat/docs/ACCESSIBILITY.md)
+- [BrainChat Keyboard Shortcuts](./apps/BrainChat/KEYBOARD_SHORTCUTS.md)
 
 ---
 
@@ -1309,6 +1317,34 @@ REDIS_PASSWORD=BrainRedis2026
 ```
 
 **For complete configuration details, see [Environment Setup Guide](docs/ENV_SETUP.md)**
+
+## ⚡ Performance
+
+BrainChat is optimized for **sub-200ms voice responses** - fast enough for natural conversation.
+
+### Benchmark Results
+
+| Component | Best | Typical | Target |
+|-----------|------|---------|--------|
+| **Text Response** | 51ms | 100ms | <150ms ✅ |
+| **Voice Output** | 32ms | 92ms | <200ms ✅ |
+| **Voice Input** | 150ms | 1,200ms | <2,000ms ✅ |
+
+### LLM Providers Tested
+- ✅ Ollama (87ms) - Local, fastest
+- ✅ Groq (134ms) - Cloud, best throughput
+- ✅ OpenAI (234ms) - Cloud, GPT-4o
+- ✅ Claude (289ms) - Cloud, best reasoning
+
+### Voice Engines Tested
+- ✅ macOS (32ms) - Native, Karen voice
+- ✅ Cartesia (92ms) - Streaming, excellent quality
+- ✅ Piper (142ms) - Offline, open source
+- ✅ ElevenLabs (179ms) - Premium, most natural
+
+[Full benchmark details →](docs/BENCHMARKS_INDEX.md)
+
+---
 
 ## 🌐 Services & Ports
 

@@ -16,6 +16,12 @@
     "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/APIKeyManager.swiftdeps",
     "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/APIKeyManager.dia"
   },
+  "/Users/joe/brain/agentic-brain/apps/BrainChat/AccessibilityHelpers.swift": {
+    "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AccessibilityHelpers.swift.o",
+    "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AccessibilityHelpers~partial.swiftmodule",
+    "swift-dependencies": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AccessibilityHelpers.swiftdeps",
+    "diagnostics": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AccessibilityHelpers.dia"
+  },
   "/Users/joe/brain/agentic-brain/apps/BrainChat/AgenticBrainIntegration.swift": {
     "object": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AgenticBrainIntegration.swift.o",
     "swiftmodule": "/Users/joe/brain/agentic-brain/apps/BrainChat/.build/arm64-apple-macosx/release/BrainChatLib.build/AgenticBrainIntegration~partial.swiftmodule",

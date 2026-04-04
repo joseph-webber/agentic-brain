@@ -812,3 +812,23 @@ etermined
 [2026-04-04T13:19:26Z] [DEBUG] Initial speech auth status: 0
 [2026-04-04T13:19:26Z] [DEBUG] Requesting speech authorization on init
 [2026-04-04T13:19:26Z] [DEBUG] SpeechManager init complete
+[2026-04-04T13:55:34Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T13:55:34Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T13:55:34Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T13:55:34Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T13:55:35Z] [DEBUG] SpeechManager init complete
+[2026-04-04T13:56:08Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T13:56:08Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T13:56:09Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T13:56:09Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T13:56:21Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T13:56:21Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T13:56:24Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T13:56:24Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T13:56:24Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T13:56:24Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T14:06:56Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T14:06:56Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T14:06:56Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T14:06:56Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T14:06:56Z] [DEBUG] SpeechManager init complete

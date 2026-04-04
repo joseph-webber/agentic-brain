@@ -374,3 +374,100 @@ jobs:
         run: |
           echo "DigitalOcean App Platform deployment uses app.yaml and GitHub integration."
           echo "Configure App Platform to watch main and deploy from this repo."
+
+  # ============================================================================
+  # BrainChat macOS Continuous Deployment
+  # Automatically deploy BrainChat when tagged release versions are created
+  # ============================================================================
+  deploy-brainchat:
+    name: Deploy BrainChat Continuous Updates
+    runs-on: macos-14
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if tag exists
+        id: check-tag
+        run: |
+          LATEST_TAG=$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No release tags found yet"
+            echo "tag=" >> $GITHUB_OUTPUT
+          else
+            echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract BrainChat version
+        id: brainchat-version
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" apps/BrainChat/Info.plist)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🎯 BrainChat Version: $VERSION"
+
+      - name: Build BrainChat
+        working-directory: apps/BrainChat
+        run: |
+          echo "🔨 Building BrainChat for continuous deployment..."
+          bash build.sh
+          echo "✅ Build complete"
+
+      - name: Create DMG for Homebrew
+        working-directory: apps/BrainChat
+        run: |
+          echo "📦 Creating DMG installer..."
+          bash scripts/create-dmg.sh
+          echo "✅ DMG created"
+
+      - name: Generate Sparkle appcast
+        working-directory: apps/BrainChat
+        run: |
+          echo "📡 Generating Sparkle auto-update manifest..."
+          bash scripts/generate-appcast.sh getagentic brain appcast.xml
+          echo "✅ Appcast generated"
+
+      - name: Update Homebrew tap (optional)
+        if: secrets.HOMEBREW_TAP_TOKEN != ''
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          BRAINCHAT_VERSION: ${{ steps.brainchat-version.outputs.version }}
+        run: |
+          echo "🍺 Would update Homebrew tap for version $BRAINCHAT_VERSION"
+          # This would clone the homebrew-brainchat tap and update the formula
+          # git clone https://github.com/getagentic/homebrew-brainchat.git tap
+          # cd tap
+          # Update formula with new version and SHA256
+          # git add .
+          # git commit -m "Update BrainChat to $BRAINCHAT_VERSION"
+          # git push
+
+      - name: Update GitHub Pages appcast
+        run: |
+          echo "📝 Appcast available at:"
+          echo "   https://raw.githubusercontent.com/${{ github.repository }}/main/apps/BrainChat/appcast.xml"
+          echo ""
+          echo "To enable Sparkle auto-updates in BrainChat, add to Info.plist:"
+          echo "   <key>SUFeedURL</key>"
+          echo "   <string>https://raw.githubusercontent.com/${{ github.repository }}/main/apps/BrainChat/appcast.xml</string>"
+
+      - name: Log deployment info
+        run: |
+          echo "## 🚀 BrainChat Deployment Info" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.brainchat-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Installation Methods:**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Homebrew (recommended):**" >> $GITHUB_STEP_SUMMARY
+          echo "   \`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "   brew install --cask brainchat" >> $GITHUB_STEP_SUMMARY
+          echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Direct download:**" >> $GITHUB_STEP_SUMMARY
+          echo "   - GitHub Releases: https://github.com/${{ github.repository }}/releases" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Auto-Updates:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Sparkle appcast: https://raw.githubusercontent.com/${{ github.repository }}/main/apps/BrainChat/appcast.xml" >> $GITHUB_STEP_SUMMARY

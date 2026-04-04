@@ -13,6 +13,21 @@ struct ContentView: View {
     @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
+        contentWithModifiers
+    }
+    
+    private var contentWithModifiers: some View {
+        mainContent
+            .overlay { overlayIfNeeded }
+            .onAppear { handleOnAppear() }
+            .onDisappear { viewModel.handleDisappear() }
+            .onChange(of: viewModel.error) { _, error in
+                guard let error else { return }
+                postAccessibilityAnnouncement(error, priority: NSAccessibilityPriorityLevel.high.rawValue)
+            }
+    }
+    
+    private var mainContent: some View {
         VStack(spacing: 0) {
             toolbar
                 .accessibilityIdentifier("statusSection")
@@ -31,34 +46,35 @@ struct ContentView: View {
 
             inputBar
         }
-        .overlay {
-            if viewModel.yolo.pendingConfirmation != nil {
-                ZStack {
-                    Color.black.opacity(0.15)
-                        .ignoresSafeArea()
-                    YoloConfirmationDialog(yolo: viewModel.yolo)
-                        .frame(maxWidth: 360)
-                }
-            }
+    }
+    
+    @ViewBuilder
+    private var overlayIfNeeded: some View {
+        if viewModel.yolo.pendingConfirmation != nil {
+            overlayContent
         }
-        .onAppear {
-            viewModel.configure(
-                store: store,
-                speechManager: speechManager,
-                voiceManager: voiceManager,
-                settings: settings,
-                llmRouter: llmRouter
-            )
-            viewModel.handleAppear()
-            isTextFieldFocused = true
+    }
+    
+    private var overlayContent: some View {
+        ZStack {
+            let overlayColor = Color.black.opacity(0.15)
+            overlayColor
+                .ignoresSafeArea()
+            YoloConfirmationDialog(yolo: viewModel.yolo)
+                .frame(maxWidth: 360)
         }
-        .onDisappear {
-            viewModel.handleDisappear()
-        }
-        .onChange(of: viewModel.error) { _, error in
-            guard let error else { return }
-            postAccessibilityAnnouncement(error, priority: NSAccessibilityPriorityLevel.high.rawValue)
-        }
+    }
+    
+    private func handleOnAppear() {
+        viewModel.configure(
+            store: store,
+            speechManager: speechManager,
+            voiceManager: voiceManager,
+            settings: settings,
+            llmRouter: llmRouter
+        )
+        viewModel.handleAppear()
+        isTextFieldFocused = true
     }
 
     private var toolbar: some View {

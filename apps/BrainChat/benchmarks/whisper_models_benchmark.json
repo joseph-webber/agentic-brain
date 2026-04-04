@@ -1,0 +1,69 @@
+{
+  "timestamp": "2026-04-05T01:03:30.826597",
+  "device": "cpu",
+  "total_tests": 6,
+  "successful": 6,
+  "failed": 0,
+  "results": [
+    {
+      "model": "tiny.en",
+      "size": "tiny",
+      "audio_duration_ms": 5000,
+      "load_time_ms": 541,
+      "transcription_time_ms": 3634,
+      "text_length": 559,
+      "success": true,
+      "error": null
+    },
+    {
+      "model": "tiny.en",
+      "size": "tiny",
+      "audio_duration_ms": 30000,
+      "load_time_ms": 381,
+      "transcription_time_ms": 1168,
+      "text_length": 0,
+      "success": true,
+      "error": null
+    },
+    {
+      "model": "base.en",
+      "size": "base",
+      "audio_duration_ms": 5000,
+      "load_time_ms": 850,
+      "transcription_time_ms": 2327,
+      "text_length": 0,
+      "success": true,
+      "error": null
+    },
+    {
+      "model": "base.en",
+      "size": "base",
+      "audio_duration_ms": 30000,
+      "load_time_ms": 597,
+      "transcription_time_ms": 4842,
+      "text_length": 151,
+      "success": true,
+      "error": null
+    },
+    {
+      "model": "small.en",
+      "size": "small",
+      "audio_duration_ms": 5000,
+      "load_time_ms": 981,
+      "transcription_time_ms": 2652,
+      "text_length": 0,
+      "success": true,
+      "error": null
+    },
+    {
+      "model": "small.en",
+      "size": "small",
+      "audio_duration_ms": 30000,
+      "load_time_ms": 955,
+      "transcription_time_ms": 3183,
+      "text_length": 5,
+      "success": true,
+      "error": null
+    }
+  ]
+}

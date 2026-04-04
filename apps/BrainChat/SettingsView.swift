@@ -16,43 +16,54 @@ struct SettingsView: View {
         TabView {
             // MARK: General tab
             Form {
-                Section("Behavior Profile") {
+                // MARK: Behavior Profile Group
+                Section("Behavior & Connectivity") {
                     Picker("Profile", selection: $settings.behaviorProfile) {
                         ForEach(BrainChatBehaviorProfile.allCases) { profile in
                             Text(profile.displayName).tag(profile)
                         }
                     }
-                    .accessibilityLabel("Brain Chat behavior profile")
-                    .accessibilityHint("Switch between beginner, developer, and enterprise behaviors")
+                    .accessibilityLabel("Behavior profile")
+                    .accessibilityHint("Choose beginner, developer, or enterprise behavior")
 
                     Picker("Connectivity Mode", selection: $settings.agenticBrainMode) {
                         ForEach(AgenticBrainConnectionMode.allCases) { mode in
                             Text(mode.accessibilityLabel).tag(mode)
                         }
                     }
-                    .accessibilityLabel("Agentic Brain connectivity mode")
-                    .accessibilityHint("Choose airlocked, hybrid, or cloud mode")
+                    .accessibilityLabel("Connectivity mode")
+                    .accessibilityHint("Select airlocked, hybrid, or cloud mode")
                 }
 
-                Toggle("Continuous Listening Mode", isOn: $settings.continuousListening)
-                    .accessibilityHint("When enabled, the microphone stays on and transcribes continuously")
+                // MARK: Feature Toggles Group
+                Section("Features") {
+                    Toggle("Continuous Listening", isOn: $settings.continuousListening)
+                        .accessibilityLabel("Continuous listening")
+                        .accessibilityHint("Keep microphone on for continuous transcription")
 
-                Toggle("Auto-Speak Responses", isOn: $settings.autoSpeak)
-                    .accessibilityHint("When enabled, Brain Chat reads every response aloud automatically")
+                    Toggle("Auto-Speak Responses", isOn: $settings.autoSpeak)
+                        .accessibilityLabel("Auto-speak responses")
+                        .accessibilityHint("Read responses aloud automatically")
 
-                Toggle("YOLO Mode", isOn: $llmRouter.yoloMode)
-                    .accessibilityHint(
-                        securityManager.canUseYolo()
-                            ? "Autonomous mode: Brain Chat takes actions without asking for confirmation"
-                            : "Unavailable outside Admin testing mode"
-                    )
-                    .disabled(!securityManager.canUseYolo())
+                    Toggle("YOLO Mode", isOn: $llmRouter.yoloMode)
+                        .accessibilityLabel("YOLO autonomous mode")
+                        .accessibilityHint(
+                            securityManager.canUseYolo()
+                                ? "Allow autonomous actions without confirmation"
+                                : "Unavailable outside admin testing mode"
+                        )
+                        .disabled(!securityManager.canUseYolo())
+                }
 
-                Section("Security Mode (Testing)") {
+                // MARK: Security Group
+                Section("Security") {
                     SecurityModeView(securityManager: securityManager)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityLabel("Security mode settings")
                 }
 
-                Section("Layered Responses") {
+                // MARK: Layered Responses Group
+                Section("Response Strategy") {
                     LayerStrategyPicker(
                         strategy: Binding(
                             get: { settings.layeredStrategy },
@@ -60,6 +71,8 @@ struct SettingsView: View {
                         ),
                         layeredModeEnabled: $settings.layeredModeEnabled
                     )
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Response layer strategy")
                 }
             }
             .formStyle(.grouped)
@@ -67,7 +80,8 @@ struct SettingsView: View {
 
             // MARK: Voice tab
             Form {
-                Section("Voice Output Engine") {
+                // MARK: TTS Engine Selection
+                Section("Voice Output") {
                     HStack {
                         Text("TTS Engine")
                         Spacer()
@@ -75,17 +89,19 @@ struct SettingsView: View {
                             .environmentObject(settings)
                     }
                     .accessibilityElement(children: .contain)
-                    .accessibilityLabel("Text-to-speech engine selector")
+                    .accessibilityLabel("Text-to-speech engine")
+                    .accessibilityHint("Select voice engine: macOS, Cartesia, or ElevenLabs")
                 }
 
+                // MARK: Voice Customization
                 Section("Voice Settings") {
                     Picker("Voice", selection: $settings.voiceName) {
                         ForEach(voiceManager.availableVoices) { voice in
                             Text(voice.name).tag(voice.name)
                         }
                     }
-                    .accessibilityLabel("Voice selection")
-                    .accessibilityHint("Choose the voice used for spoken responses")
+                    .accessibilityLabel("Voice")
+                    .accessibilityHint("Choose voice for spoken responses")
                     .onChange(of: settings.voiceName) { _, newValue in
                         voiceManager.selectVoice(named: newValue)
                     }
@@ -102,16 +118,16 @@ struct SettingsView: View {
                         Slider(value: $settings.speechRate, in: 100...250, step: 5)
                             .accessibilityLabel("Speech rate")
                             .accessibilityValue("\(Int(settings.speechRate)) words per minute")
-                            .accessibilityHint("Adjust how fast the voice speaks. Swipe right to increase speed.")
+                            .accessibilityHint("Adjust voice speed. Drag right to increase.")
                             .onChange(of: settings.speechRate) { _, newValue in
                                 voiceManager.speechRate = Float(newValue)
                             }
                     }
 
                     Button("Test Voice") {
-                        voiceManager.speakImmediately("Brain Chat voice bridge is ready. Speech rate is \(Int(settings.speechRate)) words per minute.")
+                        voiceManager.speakImmediately("Brain Chat voice bridge ready. Speech rate is \(Int(settings.speechRate)) words per minute.")
                     }
-                    .accessibilityHint("Plays a sample sentence at the current speech rate and voice")
+                    .accessibilityHint("Hear sample at current rate and voice")
                 }
             }
             .formStyle(.grouped)
@@ -119,45 +135,50 @@ struct SettingsView: View {
 
             // MARK: API tab
             Form {
+                // MARK: Voice Bridge
                 Section("Voice Bridge") {
                     TextField("WebSocket URL", text: $settings.bridgeWebSocketURL)
                         .textFieldStyle(.roundedBorder)
                         .accessibilityLabel("Voice Bridge WebSocket URL")
-                        .accessibilityHint("Address of the local voice bridge server, e.g. ws://localhost:8765")
+                        .accessibilityHint("Local bridge server address, e.g. ws://localhost:8765")
                 }
 
+                // MARK: Agentic Brain Backend
                 Section("Agentic Brain Backend") {
-                    Toggle("Enable Agentic Brain Backend", isOn: $settings.agenticBrainEnabled)
-                        .accessibilityHint("When enabled, Brain Chat routes through the agentic-brain API before direct provider fallbacks")
+                    Toggle("Enable Agentic Brain", isOn: $settings.agenticBrainEnabled)
+                        .accessibilityLabel("Enable Agentic Brain")
+                        .accessibilityHint("Route through agentic-brain API before direct providers")
 
                     TextField("REST Base URL", text: $settings.agenticBrainAPIBaseURL)
                         .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Agentic Brain REST base URL")
-                        .accessibilityHint("For example http://localhost:8000")
+                        .accessibilityLabel("Agentic Brain REST URL")
+                        .accessibilityHint("Example: http://localhost:8000")
 
                     TextField("WebSocket URL", text: $settings.agenticBrainWebSocketURL)
                         .textFieldStyle(.roundedBorder)
                         .accessibilityLabel("Agentic Brain WebSocket URL")
-                        .accessibilityHint("Optional. Leave blank to derive ws slash ws chat from the REST base URL")
+                        .accessibilityHint("Optional, derived from REST URL if blank")
 
                     TextField("Session ID", text: $settings.agenticBrainSessionID)
                         .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Agentic Brain session identifier")
+                        .accessibilityLabel("Agentic Brain session ID")
 
                     TextField("User ID", text: $settings.agenticBrainUserID)
                         .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Agentic Brain user identifier")
+                        .accessibilityLabel("Agentic Brain user ID")
 
-                    Toggle("Enable Graph RAG Metadata", isOn: $settings.graphRAGEnabled)
-                        .accessibilityHint("Adds graph retrieval hints to backend chat requests")
+                    Toggle("Enable Graph RAG", isOn: $settings.graphRAGEnabled)
+                        .accessibilityLabel("Graph RAG metadata")
+                        .accessibilityHint("Add graph retrieval hints to requests")
 
                     TextField("Graph RAG Scope", text: $settings.graphRAGScope)
                         .textFieldStyle(.roundedBorder)
                         .accessibilityLabel("Graph RAG scope")
-                        .accessibilityHint("For example session, workspace, or enterprise")
+                        .accessibilityHint("Example: session, workspace, or enterprise")
                 }
 
-                Section("Groq (Instant Layer)") {
+                // MARK: LLM API Keys
+                Section("LLM Providers") {
                     APIKeyField(
                         label: "Groq API Key",
                         placeholder: "Groq API key (groq.com)",
@@ -165,31 +186,37 @@ struct SettingsView: View {
                         isVisible: $showingGroqKey
                     )
                     .accessibilityElement(children: .contain)
-                    .accessibilityLabel("Groq API key field for instant layer responses")
-                }
+                    .accessibilityLabel("Groq API key (instant layer)")
 
-                Section("Claude & OpenAI") {
                     APIKeyField(
                         label: "Claude API Key",
                         placeholder: "Anthropic API key",
                         text: $settings.claudeAPIKey,
                         isVisible: $showingClaudeKey
                     )
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Claude API key")
+
                     APIKeyField(
                         label: "OpenAI API Key",
                         placeholder: "OpenAI API key",
                         text: $settings.openAIKey,
                         isVisible: $showingOpenAIKey
                     )
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("OpenAI API key")
                 }
 
-                Section("Agentic Brain Authentication") {
+                // MARK: Backend Authentication
+                Section("Backend Auth") {
                     APIKeyField(
                         label: "Agentic Brain API Key",
                         placeholder: "X-API-Key for the backend",
                         text: $settings.agenticBrainAPIKey,
                         isVisible: $showingBackendAPIKey
                     )
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Agentic Brain API key")
 
                     APIKeyField(
                         label: "Agentic Brain Bearer Token",
@@ -197,31 +224,35 @@ struct SettingsView: View {
                         text: $settings.agenticBrainBearerToken,
                         isVisible: $showingBackendBearerToken
                     )
+                    .accessibilityElement(children: .contain)
+                    .accessibilityLabel("Agentic Brain bearer token")
                 }
 
+                // MARK: ADL Configuration
                 Section("ADL Configuration") {
                     TextField("ADL File Path", text: $settings.adlConfigPath)
                         .textFieldStyle(.roundedBorder)
                         .accessibilityLabel("ADL file path")
-                        .accessibilityHint("Absolute path to an ADL configuration file")
+                        .accessibilityHint("Absolute path to ADL configuration file")
 
                     Button("Load ADL Configuration") {
                         settings.loadADLConfiguration()
                     }
-                    .accessibilityHint("Parses the ADL file and applies Brain Chat profile, mode, routing, and Graph RAG settings")
+                    .accessibilityHint("Parse ADL file and apply settings")
                 }
 
-                Section {
+                // MARK: Key Management
+                Section("Keychain Management") {
                     Button("Save Keys") { settings.saveAPIKeys() }
-                        .accessibilityHint("Saves all API keys securely to the system Keychain")
+                        .accessibilityHint("Save all API keys to system Keychain")
 
                     Button("Reload Keys") { settings.loadAPIKeys() }
-                        .accessibilityHint("Loads API keys from the system Keychain")
+                        .accessibilityHint("Load API keys from system Keychain")
 
                     Button("Clear All Keys", role: .destructive) {
                         showClearKeysConfirmation = true
                     }
-                    .accessibilityHint("Removes all API keys from the Keychain. A confirmation will appear.")
+                    .accessibilityHint("Delete all API keys from Keychain")
                     .confirmationDialog(
                         "Clear all API keys?",
                         isPresented: $showClearKeysConfirmation,
@@ -232,11 +263,8 @@ struct SettingsView: View {
                     } message: {
                         Text("This will remove all API keys from the Keychain. You will need to re-enter them.")
                     }
-                }
 
-                // Keychain status feedback (errors or success confirmations)
-                if !settings.keychainStatusMessage.isEmpty {
-                    Section {
+                    if !settings.keychainStatusMessage.isEmpty {
                         HStack(spacing: 8) {
                             Image(systemName: settings.keychainStatusMessage.contains("saved") || settings.keychainStatusMessage.contains("removed") ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
                                 .foregroundColor(settings.keychainStatusMessage.contains("saved") || settings.keychainStatusMessage.contains("removed") ? .green : .orange)
@@ -245,21 +273,23 @@ struct SettingsView: View {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Keychain status")
+                        .accessibilityValue(settings.keychainStatusMessage)
                     }
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("Keychain status: \(settings.keychainStatusMessage)")
                 }
 
-                Section("Local Models") {
+                // MARK: Local Models
+                Section("Local Models (Ollama)") {
                     TextField("Ollama Endpoint", text: $settings.apiEndpoint)
                         .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Ollama endpoint URL")
-                        .accessibilityHint("The HTTP address of your local Ollama server, e.g. http://localhost:11434/api/chat")
+                        .accessibilityLabel("Ollama endpoint")
+                        .accessibilityHint("HTTP address: http://localhost:11434/api/chat")
 
                     TextField("Ollama Model", text: $settings.modelName)
                         .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Ollama model name")
-                        .accessibilityHint("The model to use, e.g. llama3.2:3b")
+                        .accessibilityLabel("Ollama model")
+                        .accessibilityHint("Example: llama3.2:3b")
                 }
             }
             .formStyle(.grouped)
@@ -274,7 +304,7 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Reusable API Key Field
+// MARK: - Reusable API Key Field (WCAG AAA: Accessible form input)
 
 /// A labelled field that can toggle between secure and visible entry.
 /// All states are fully accessible via VoiceOver.
@@ -305,8 +335,8 @@ private struct APIKeyField: View {
                     Image(systemName: isVisible ? "eye.slash" : "eye")
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(isVisible ? "Hide \(label)" : "Show \(label)")
-                .accessibilityHint(isVisible ? "Masks the key so it is not visible on screen" : "Reveals the key so you can read or edit it")
+                .accessibilityLabel(isVisible ? "Hide" : "Show")
+                .accessibilityHint(isVisible ? "Mask the key" : "Reveal the key")
             }
         }
     }

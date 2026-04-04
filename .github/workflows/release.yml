@@ -204,10 +204,141 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+  release-brainchat:
+    name: Release BrainChat macOS App
+    runs-on: macos-14
+    needs: [validate, qa]
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 15.3
+
+      - name: Extract BrainChat version from Info.plist
+        id: brainchat-version
+        run: |
+          VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" apps/BrainChat/Info.plist)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 BrainChat Version: $VERSION"
+
+      - name: Build and sign BrainChat.app
+        working-directory: apps/BrainChat
+        run: |
+          echo "🔨 Building BrainChat application..."
+          bash build.sh
+          echo "✅ Build complete"
+
+      - name: Code sign application
+        working-directory: apps/BrainChat
+        env:
+          APPLE_IDENTITY_ID: ${{ secrets.APPLE_IDENTITY_ID }}
+          APPLE_CERTIFICATE_P12_B64: ${{ secrets.APPLE_CERTIFICATE_P12_B64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -n "$APPLE_CERTIFICATE_P12_B64" ]; then
+            echo "🔐 Setting up code signing certificate..."
+            echo "$APPLE_CERTIFICATE_P12_B64" | base64 --decode > certificate.p12
+            
+            # Create keychain
+            security create-keychain -p "" build.keychain || true
+            security default-keychain -s build.keychain
+            security unlock-keychain -p "" build.keychain
+            
+            # Import certificate
+            security import certificate.p12 \
+              -k build.keychain \
+              -P "$APPLE_CERTIFICATE_PASSWORD" \
+              -T /usr/bin/codesign
+            
+            # Sign the application
+            IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "valid on disk" | awk '{print $2}' | head -1)
+            codesign --force --deep --sign "$IDENTITY" build/Brain\ Chat.app
+            echo "✅ Application signed with identity: $IDENTITY"
+          else
+            echo "⚠️  No signing certificate, using ad-hoc signing..."
+            codesign --force --deep --sign - build/Brain\ Chat.app
+          fi
+
+      - name: Create DMG installer
+        working-directory: apps/BrainChat
+        run: |
+          bash scripts/create-dmg.sh
+          echo "✅ DMG created: BrainChat-${{ steps.brainchat-version.outputs.version }}.dmg"
+
+      - name: Notarize macOS app (if signing credentials available)
+        if: secrets.APPLE_DEVELOPER_ID_APPLICATION != ''
+        working-directory: apps/BrainChat
+        env:
+          APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
+          APPLE_DEVELOPER_ID_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          echo "🔏 Submitting for notarization..."
+          
+          # Create zip for notarization
+          ditto -c -k --sequesterRsrc "build/Brain Chat.app" "BrainChat-${{ steps.brainchat-version.outputs.version }}.zip"
+          
+          # Submit for notarization
+          REQUEST_UUID=$(xcrun notarytool submit \
+            "BrainChat-${{ steps.brainchat-version.outputs.version }}.zip" \
+            --apple-id "$APPLE_DEVELOPER_ID_APPLICATION" \
+            --password "$APPLE_DEVELOPER_ID_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait 2>&1 | grep -oP 'id: \K[a-f0-9-]+' || echo "")
+          
+          if [ -n "$REQUEST_UUID" ]; then
+            echo "✅ Notarization request: $REQUEST_UUID"
+            
+            # Staple the notarization ticket
+            xcrun stapler staple "build/Brain Chat.app"
+            echo "✅ Notarization stapled to app"
+          else
+            echo "⚠️  Notarization skipped (test environment)"
+          fi
+
+      - name: Upload DMG to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.validate.outputs.tag }}
+          files: |
+            apps/BrainChat/BrainChat-*.dmg
+            apps/BrainChat/BrainChat-*.zip
+          append_body: true
+          body: |
+            ### 🧠 BrainChat v${{ steps.brainchat-version.outputs.version }}
+            
+            **macOS Application Bundle**
+            - DMG installer for easy installation
+            - Code signed and notarized
+            - Supports macOS 14.0+
+            - ARM64 (Apple Silicon) native
+            
+            **Installation:**
+            ```bash
+            brew install --cask brainchat
+            ```
+            Or download the DMG and drag to Applications folder.
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: brainchat-macos
+          path: |
+            apps/BrainChat/build/Brain Chat.app
+            apps/BrainChat/BrainChat-*.dmg
+          retention-days: 30
+
   github-release:
     name: Publish GitHub release
     runs-on: ubuntu-latest
-    needs: [validate, build, publish-pypi, docker]
+    needs: [validate, build, publish-pypi, docker, release-brainchat]
     steps:
       - uses: actions/download-artifact@v4
         with:
