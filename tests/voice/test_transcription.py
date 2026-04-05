@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Tests for speech-to-text transcription."""
 
 from unittest.mock import MagicMock, Mock, patch

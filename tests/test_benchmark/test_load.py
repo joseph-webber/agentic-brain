@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import http.server
 import socketserver
 import threading

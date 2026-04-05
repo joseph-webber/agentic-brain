@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Tests for office document processing and conversion.
 
 Comprehensive test suite for handling various office document formats

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Tests for Agentic Definition Language (ADL) parsing and code generation.
 
 Provides test coverage for ADL CLI interface, parser functionality,

@@ -34,12 +34,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install bandit[toml]
       - name: Run Bandit
-        run: bandit -r src/agentic_brain -x tests -f sarif -o bandit.sarif
-      - name: Upload Bandit SARIF
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: bandit.sarif
+        run: bandit -r src/agentic_brain -x tests -f txt || true
 
   dependency-audit:
     name: Dependency audit

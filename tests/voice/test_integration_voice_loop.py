@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Integration tests for full voice loop."""
 
 from unittest.mock import MagicMock, Mock, patch

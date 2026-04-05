@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Integration tests for PyPI package distribution.
 Tests the complete packaging workflow including version consistency.

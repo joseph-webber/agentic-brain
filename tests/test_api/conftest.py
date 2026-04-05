@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Fixtures for API test suite.
 
 These tests are intentionally self-contained and avoid external services.

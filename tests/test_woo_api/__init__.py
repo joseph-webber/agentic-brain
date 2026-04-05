@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Tests for WooCommerce API client and resource handling.
 
 This module provides comprehensive tests for the WooCommerce API

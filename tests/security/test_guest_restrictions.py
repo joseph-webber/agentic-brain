@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from agentic_brain.security.roles import SecurityRole
 from agentic_brain.security.tool_guard import check_tool_access
 

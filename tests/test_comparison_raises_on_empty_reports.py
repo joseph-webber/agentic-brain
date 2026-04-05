@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import pytest
 
 from agentic_brain.evaluation.comparison import compare_reports

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Performance-oriented tests for the Neo4j client pool integration."""
 
 from __future__ import annotations

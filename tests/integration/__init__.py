@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Integration tests for cross-system functionality and end-to-end workflows.
 
 Tests for integration points including WebSocket/Firebase communication,

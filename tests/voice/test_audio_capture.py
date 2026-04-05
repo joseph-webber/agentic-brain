@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Tests for audio capture functionality."""
 
 from unittest.mock import Mock, patch
