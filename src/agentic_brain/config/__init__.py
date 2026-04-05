@@ -1,69 +1,68 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Copyright 2024-2026 Agentic Brain Contributors
 
-"""
-JHipster-style Configuration Management
+"""Agentic Brain configuration package."""
 
-Provides environment-based configuration profiles similar to Spring Boot's
-application-{profile}.yml pattern. Supports dev, staging, and prod environments.
-
-Usage:
-    from agentic_brain.config import settings
-
-    print(settings.environment)  # "dev", "staging", or "prod"
-    print(settings.neo4j.uri)    # Database URI for current environment
-"""
-
+from .profiles import (
+    BUILTIN_PROFILES,
+    ConfigProfile,
+    CustomProfile,
+    DevelopmentProfile,
+    ProfileName,
+    ProductionProfile,
+    StagingProfile,
+    TestingProfile,
+    available_profiles,
+    get_profile,
+)
 from .settings import (
+    CacheBackend,
     CacheSettings,
     Environment,
+    FeatureSettings,
     LLMSettings,
+    LogFormat,
+    LogLevel,
     Neo4jSettings,
     ObservabilitySettings,
+    ProviderName,
     SecuritySettings,
+    ServerSettings,
     Settings,
+    VoiceProvider,
+    VoiceSettings,
+    deep_merge,
     get_settings,
     settings,
-)
-from .unified_config import (
-    APISection,
-    ConfigLoader,
-    FeatureSection,
-    Neo4jSection,
-    SecuritySection,
-    UnifiedConfig,
-    UnifiedLLMSection,
-    VoiceSection,
 )
 
 __all__ = [
     "Settings",
-    "get_settings",
-    "settings",
     "Environment",
+    "ProviderName",
+    "LogLevel",
+    "LogFormat",
+    "CacheBackend",
+    "VoiceProvider",
     "Neo4jSettings",
     "LLMSettings",
+    "VoiceSettings",
     "SecuritySettings",
     "ObservabilitySettings",
     "CacheSettings",
-    "UnifiedConfig",
-    "ConfigLoader",
-    "UnifiedLLMSection",
-    "VoiceSection",
-    "Neo4jSection",
-    "APISection",
-    "SecuritySection",
-    "FeatureSection",
+    "ServerSettings",
+    "FeatureSettings",
+    "get_settings",
+    "settings",
+    "deep_merge",
+    "ConfigProfile",
+    "DevelopmentProfile",
+    "ProductionProfile",
+    "TestingProfile",
+    "StagingProfile",
+    "CustomProfile",
+    "ProfileName",
+    "BUILTIN_PROFILES",
+    "available_profiles",
+    "get_profile",
 ]

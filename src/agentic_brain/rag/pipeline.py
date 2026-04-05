@@ -37,9 +37,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 from agentic_brain.acceleration import get_best_backend
+from agentic_brain.core.exceptions import LLMError, ValidationError
 
 from .embeddings import EmbeddingProvider, get_embeddings
-from agentic_brain.core.exceptions import LLMError, ValidationError
+from .exceptions import LoaderError
 from .graph_traversal import (
     GraphContext,
     GraphNode,
@@ -47,7 +48,6 @@ from .graph_traversal import (
     TraversalStrategy,
 )
 from .retriever import RetrievedChunk, Retriever
-from .exceptions import LoaderError
 
 if TYPE_CHECKING:
     from .loaders.base import BaseLoader
@@ -313,19 +313,28 @@ Question: {prompt}
 
 Answer:"""
 
-        response = requests.post(
-            f"{self.llm_base_url}/api/generate",
-            json={
-                "model": self.llm_model,
-                "prompt": full_prompt,
-                "system": system,
-                "stream": False,
-                "options": {"temperature": 0.3},
-            },
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        return response.json()["response"]
+        try:
+            response = requests.post(
+                f"{self.llm_base_url}/api/generate",
+                json={
+                    "model": self.llm_model,
+                    "prompt": full_prompt,
+                    "system": system,
+                    "stream": False,
+                    "options": {"temperature": 0.3},
+                },
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            return response.json()["response"]
+        except Exception as exc:
+            raise LLMError(
+                "Failed to generate response with Ollama",
+                provider="ollama",
+                model=self.llm_model,
+                operation="generate",
+                original_error=exc,
+            ) from exc
 
     def _generate_openai(self, prompt: str, context: str) -> str:
         """Generate response using OpenAI."""
@@ -340,30 +349,39 @@ Answer:"""
                 reason="OpenAI provider requires credentials",
             )
 
-        response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": self.llm_model,
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "Answer based on the provided context. Be concise and accurate.",
-                    },
-                    {
-                        "role": "user",
-                        "content": f"Context:\n{context}\n\nQuestion: {prompt}",
-                    },
-                ],
-                "temperature": 0.3,
-            },
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
+        try:
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": self.llm_model,
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "Answer based on the provided context. Be concise and accurate.",
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Context:\n{context}\n\nQuestion: {prompt}",
+                        },
+                    ],
+                    "temperature": 0.3,
+                },
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"]
+        except Exception as exc:
+            raise LLMError(
+                "Failed to generate response with OpenAI",
+                provider="openai",
+                model=self.llm_model,
+                operation="generate",
+                original_error=exc,
+            ) from exc
 
     def _generate(self, prompt: str, context: str) -> str:
         """Generate response using configured LLM."""
@@ -532,7 +550,7 @@ Answer:"""
         tokens to the async caller via an asyncio.Queue.
         """
         loop = asyncio.get_event_loop()
-        q: "asyncio.Queue[object]" = asyncio.Queue()
+        q: asyncio.Queue[object] = asyncio.Queue()
 
         def _producer() -> None:
             try:

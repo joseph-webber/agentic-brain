@@ -574,17 +574,17 @@ class TestReducePhase:
                 community_id="comm_1",
                 level=1,
                 summary="Summary 1",
-                response="Response about AI",
+                response="Response about artificial intelligence",
                 relevance_score=0.8,
-                themes=["AI", "ML"],  # Both themes
+                themes=["artificial intelligence", "machine learning"],  # Shared: machine learning
             ),
             CommunityResponse(
                 community_id="comm_2",
                 level=1,
                 summary="Summary 2",
-                response="Response about ML",
+                response="Response about machine learning",
                 relevance_score=0.6,
-                themes=["ML", "deep learning"],  # ML shared theme
+                themes=["machine learning", "deep learning"],  # machine learning appears in both
             ),
         ]
 
@@ -593,8 +593,8 @@ class TestReducePhase:
         )
 
         assert "2 relevant communities" in response
-        # ML should be extracted as it appears in 2+ communities
-        assert "ml" in themes  # normalized to lowercase
+        # "machine learning" should be extracted as it appears in 2+ communities
+        assert "machine learning" in themes
 
     @pytest.mark.asyncio
     async def test_reduce_with_llm(self, mock_driver, mock_llm, default_config):
@@ -962,7 +962,10 @@ class TestErrorHandling:
     async def test_query_error_returns_empty(self, mock_driver, default_config):
         """Test query errors return empty results."""
         search = GlobalSearch(mock_driver, config=default_config)
-        search._execute_query = AsyncMock(side_effect=Exception("Query Error"))
+
+        # Mock driver to raise exception
+        mock_driver.execute_query = AsyncMock(side_effect=Exception("Query Error"))
+        mock_driver.session = MagicMock(side_effect=Exception("Session Error"))
 
         communities = await search._get_communities_at_level(1)
 

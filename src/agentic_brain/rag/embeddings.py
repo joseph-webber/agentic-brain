@@ -1323,7 +1323,12 @@ def get_embeddings(
         logger.debug(f"Hardware info: {hardware_info}")
 
         # Priority: MLX > CUDA > MPS > Ollama > OpenAI
-        if backend is not None and getattr(backend, "backend_name", "cpu") == "mlx":
+        if (
+            backend is not None
+            and getattr(backend, "backend_name", "cpu") == "mlx"
+            and best_device == "mlx"
+            and hardware_info.get("mlx")
+        ):
             logger.info("Using MLX backend embeddings")
             base = backend
         elif best_device == "mlx" and hardware_info.get("mlx"):

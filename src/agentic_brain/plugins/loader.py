@@ -5,7 +5,7 @@ import logging
 import pkgutil
 from typing import Dict, List, Tuple
 
-from .base import PluginBase, discover_plugins_in_module
+from .base import Plugin
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +35,19 @@ def load_plugins_from_directory(directory: str) -> Dict[str, type]:
         try:
             module_path = f"{directory}/{name}.py"
             mod = _import_module_from_path(module_path, name=f"plugins.{name}")
-            for pcls in discover_plugins_in_module(mod):
-                plugins[pcls.name] = pcls
+            # find Plugin subclasses in module
+            for _nm, obj in inspect.getmembers(mod, inspect.isclass):
+                if obj is Plugin:
+                    continue
+                try:
+                    if issubclass(obj, Plugin):
+                        key = getattr(obj, 'name', obj.__name__)
+                        # class may define a @property 'name' on instances; prefer class __name__ then
+                        if isinstance(key, property):
+                            key = obj.__name__
+                        plugins[key] = obj
+                except Exception:
+                    continue
         except FileNotFoundError:
             logger.debug("File not found for module %s", name)
         except Exception:
@@ -72,8 +83,11 @@ def load_plugins_from_entry_points(group: str = "agentic_brain.plugins") -> Dict
         for ep in entries:
             try:
                 obj = ep.load()
-                if inspect.isclass(obj) and issubclass(obj, PluginBase):
-                    plugins[obj.name] = obj
+                if inspect.isclass(obj) and issubclass(obj, Plugin):
+                    key = getattr(obj, 'name', obj.__name__)
+                    if isinstance(key, property):
+                        key = obj.__name__
+                    plugins[key] = obj
             except Exception:
                 logger.exception("Error loading entry point %s", ep)
     except Exception:

@@ -19,7 +19,7 @@ import platform
 import re
 from dataclasses import dataclass, field
 from functools import lru_cache
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +155,7 @@ class MLXBackend:
         return f"{prefix}/{self.embedding_model}"
 
     @property
-    def embeddings_provider(self) -> "MLXBackend":
+    def embeddings_provider(self) -> MLXBackend:
         return self
 
     def _ensure_mx(self) -> Any | None:
@@ -234,17 +234,13 @@ class MLXBackend:
         corpus: list[list[float]] | list[str],
         top_k: int = 5,
     ) -> list[tuple[int, float]]:
-        if isinstance(query, str):
-            query_vec = self.embed(query)
-        else:
-            query_vec = query
+        query_vec = self.embed(query) if isinstance(query, str) else query
 
         if not corpus:
             return []
-        if isinstance(corpus[0], str):
-            corpus_vecs = self.embed_batch(corpus)  # type: ignore[arg-type]
-        else:
-            corpus_vecs = corpus  # type: ignore[assignment]
+        corpus_vecs = (
+            self.embed_batch(corpus) if isinstance(corpus[0], str) else corpus
+        )  # type: ignore[arg-type,assignment]
 
         if self.available and self._ensure_mx() is not None:
             mx = self._ensure_mx()
@@ -289,10 +285,8 @@ class MLXBackend:
         mlx_lm = self._load_mlx_lm()
         if self.available and mlx_lm is not None and self.generation_model:
             try:
-                load = getattr(mlx_lm, "load")
-                generate = getattr(mlx_lm, "generate")
-                model, tokenizer = load(self.generation_model)
-                output = generate(
+                model, tokenizer = mlx_lm.load(self.generation_model)
+                output = mlx_lm.generate(
                     model,
                     tokenizer,
                     prompt=prompt,

@@ -144,14 +144,19 @@ class RateLimitError(AgenticBrainError):
 
     def __init__(
         self,
-        limit: int,
-        window: str,
+        limit: int = 0,
+        window: str = "minute",
         retry_after: int | None = None,
         *,
         provider: str | None = None,
         original_error: Exception | None = None,
     ) -> None:
         retry_after = 60 if retry_after is None else retry_after
+        self.limit = limit
+        self.window = window
+        self.retry_after = retry_after
+        self.provider = provider
+        self.original_error = original_error
         context = {
             "limit": limit,
             "window": window,
@@ -198,4 +203,3 @@ __all__ = [
     "RateLimitError",
     "ValidationError",
 ]
-

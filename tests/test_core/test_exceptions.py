@@ -152,7 +152,10 @@ def test_retry_with_backoff_stops_on_validation_error(monkeypatch):
 @pytest.mark.asyncio
 async def test_retry_with_backoff_async(monkeypatch):
     calls = {"count": 0}
-    monkeypatch.setattr(retry_module.asyncio, "sleep", lambda *_: asyncio.sleep(0))
+    original_sleep = asyncio.sleep
+    monkeypatch.setattr(
+        retry_module.asyncio, "sleep", lambda *_: original_sleep(0)
+    )
 
     @retry_with_backoff(attempts=3, initial_delay=0.0, backoff_factor=1.0)
     async def flaky_async():
@@ -266,4 +269,3 @@ def test_graph_connection_error_messages(backend, uri):
     error = GraphConnectionError(backend, uri)
     assert backend in str(error)
     assert uri in str(error)
-

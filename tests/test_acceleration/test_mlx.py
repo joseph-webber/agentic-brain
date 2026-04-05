@@ -321,7 +321,11 @@ def test_infer_mlx_falls_back_when_generate_fails(monkeypatch):
     monkeypatch.setattr(mlx_backend, "_try_import_mlx_lm", lambda: FailingMLXLM())
     monkeypatch.setattr(mlx_backend, "_is_apple_silicon", lambda: True)
     backend = mlx_backend.MLXBackend()
-    monkeypatch.setattr(backend, "_cpu_infer", lambda prompt, max_tokens=128: "cpu-fallback")
+    monkeypatch.setattr(
+        mlx_backend.MLXBackend,
+        "_cpu_infer",
+        lambda self, prompt, max_tokens=128: "cpu-fallback",
+    )
     assert backend.infer("Generate this") == "cpu-fallback"
 
 

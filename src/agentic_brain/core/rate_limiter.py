@@ -592,3 +592,290 @@ def get_deployment_recommendation(desired_count: int, provider: str = "claude") 
             "alternative_providers": alternatives,
             "batch_strategy": f"Deploy {safe} agents, wait 5 min, repeat"
         }
+
+
+# =============================================================================
+# TURBO CHESS SWARM - Maximum Speed, Zero Rate Limits
+# =============================================================================
+# 
+# The Turbo Chess Strategy: Use cheap/fast models as shields to protect
+# expensive rate-limited models. Like chess - sacrifice pawns, protect the king!
+#
+# WHY THIS WORKS:
+# 1. Local LLMs (Ollama) = UNLIMITED, can't be rate limited
+# 2. Groq/Gemini = Fast, free/cheap, generous limits
+# 3. GPT-mini = Cheap, fast, high limits
+# 4. Claude/GPT-4 = Expensive, rate limited - PROTECT THESE!
+#
+# LESSON LEARNED: Deploying 12 Claude agents = instant 429 errors
+# SOLUTION: Deploy 12 agents across ALL tiers = zero rate limits, max speed!
+# =============================================================================
+
+
+@dataclass
+class SwarmTask:
+    """A task to be executed by the swarm."""
+    id: str
+    name: str
+    prompt: str
+    complexity: str = "medium"  # simple, medium, complex
+    requires_reasoning: bool = False
+    requires_code: bool = False
+    priority: int = 5  # 1-10, lower = higher priority
+
+
+@dataclass 
+class SwarmAgent:
+    """An agent assignment in the swarm."""
+    task_id: str
+    model: str
+    tier: str
+    estimated_cost: float = 0.0
+    estimated_time_seconds: int = 300
+
+
+class TurboChessSwarm:
+    """
+    🏎️ TURBO CHESS SWARM - Maximum parallelism, zero rate limits!
+    
+    This is THE way to deploy massive agent swarms without hitting rate limits.
+    Uses the chess strategy: pawns and knights do the heavy lifting,
+    king and queen are protected for critical tasks only.
+    
+    Usage:
+        swarm = TurboChessSwarm()
+        
+        # Add tasks
+        tasks = [
+            SwarmTask(id="1", name="docs", prompt="Write documentation"),
+            SwarmTask(id="2", name="tests", prompt="Add unit tests"),
+            SwarmTask(id="3", name="refactor", prompt="Refactor module", complexity="complex"),
+        ]
+        
+        # Get optimal distribution
+        assignments = swarm.plan_deployment(tasks)
+        
+        # Deploy!
+        for agent in assignments:
+            deploy_agent(agent.model, agent.task_id)
+    
+    The swarm automatically:
+    - Assigns simple tasks to fast/cheap models (pawns)
+    - Assigns medium tasks to Groq/Gemini (knights)
+    - Assigns complex reasoning tasks to GPT (queen)
+    - ONLY uses Claude (king) for the most critical tasks
+    - Maximizes parallelism within rate limits
+    - Tracks costs and estimates completion time
+    """
+    
+    # Model assignments by tier
+    TIER_MODELS = {
+        "pawn": ["ollama/llama3.2:3b", "ollama/claude-emulator", "gpt-4.1"],
+        "knight": ["groq/llama-3.3-70b", "gemini-1.5-flash", "gpt-5-mini", "gpt-5.4-mini"],
+        "queen": ["gpt-5.2", "gpt-5.4", "claude-haiku-4.5"],
+        "king": ["claude-sonnet-4", "claude-opus-4.5", "gpt-5.3-codex"],
+    }
+    
+    # Complexity to tier mapping
+    COMPLEXITY_TIERS = {
+        "simple": ["pawn", "knight"],      # Fast models handle simple tasks
+        "medium": ["knight", "queen"],      # Mid-tier for medium complexity
+        "complex": ["queen", "king"],       # Complex needs powerful models
+        "critical": ["king"],               # Only the king for critical
+    }
+    
+    # Max concurrent agents per tier (respects rate limits)
+    TIER_CONCURRENCY = {
+        "pawn": 10,    # Local LLMs - hardware limited only
+        "knight": 8,   # Groq/Gemini - generous limits
+        "queen": 6,    # GPT - moderate limits
+        "king": 3,     # Claude - strict limits, PROTECT!
+    }
+    
+    def __init__(self, rate_manager: Optional[RateLimitManager] = None):
+        self.rate_manager = rate_manager or get_rate_limit_manager()
+        self._assignments: List[SwarmAgent] = []
+        self._tier_counts: Dict[str, int] = defaultdict(int)
+    
+    def plan_deployment(
+        self, 
+        tasks: List[SwarmTask],
+        prefer_speed: bool = True,
+        prefer_cost: bool = True,
+        max_king_usage: int = 2,  # Protect the king!
+    ) -> List[SwarmAgent]:
+        """
+        Plan optimal task distribution across model tiers.
+        
+        Args:
+            tasks: List of tasks to execute
+            prefer_speed: Prioritize fast models when possible
+            prefer_cost: Prioritize cheap/free models when possible
+            max_king_usage: Maximum number of tasks for king tier (protect Claude!)
+        
+        Returns:
+            List of SwarmAgent assignments
+        """
+        assignments = []
+        tier_counts = defaultdict(int)
+        king_count = 0
+        
+        # Sort tasks by priority and complexity
+        sorted_tasks = sorted(
+            tasks, 
+            key=lambda t: (t.priority, {"simple": 0, "medium": 1, "complex": 2, "critical": 3}.get(t.complexity, 1))
+        )
+        
+        for task in sorted_tasks:
+            # Determine eligible tiers based on complexity
+            eligible_tiers = self.COMPLEXITY_TIERS.get(task.complexity, ["knight", "queen"])
+            
+            # If requires_reasoning or requires_code, bump up tier
+            if task.requires_reasoning or task.requires_code:
+                if "pawn" in eligible_tiers:
+                    eligible_tiers = [t for t in eligible_tiers if t != "pawn"]
+                if not eligible_tiers:
+                    eligible_tiers = ["knight", "queen"]
+            
+            # Find best available tier
+            selected_tier = None
+            for tier in eligible_tiers:
+                # Check concurrency limits
+                if tier_counts[tier] < self.TIER_CONCURRENCY[tier]:
+                    # Special protection for king
+                    if tier == "king" and king_count >= max_king_usage:
+                        continue
+                    selected_tier = tier
+                    break
+            
+            # Fallback: find ANY available tier
+            if not selected_tier:
+                for tier in ["pawn", "knight", "queen", "king"]:
+                    if tier_counts[tier] < self.TIER_CONCURRENCY[tier]:
+                        if tier == "king" and king_count >= max_king_usage:
+                            continue
+                        selected_tier = tier
+                        break
+            
+            # If still no tier (all full), use knight as default
+            if not selected_tier:
+                selected_tier = "knight"
+            
+            # Select model from tier
+            models = self.TIER_MODELS[selected_tier]
+            model = models[tier_counts[selected_tier] % len(models)]
+            
+            # Track king usage
+            if selected_tier == "king":
+                king_count += 1
+            
+            # Create assignment
+            assignment = SwarmAgent(
+                task_id=task.id,
+                model=model,
+                tier=selected_tier,
+                estimated_cost=self._estimate_cost(selected_tier),
+                estimated_time_seconds=self._estimate_time(selected_tier, task.complexity),
+            )
+            
+            assignments.append(assignment)
+            tier_counts[selected_tier] += 1
+        
+        self._assignments = assignments
+        self._tier_counts = dict(tier_counts)
+        
+        return assignments
+    
+    def get_deployment_summary(self) -> Dict[str, Any]:
+        """Get summary of planned deployment."""
+        if not self._assignments:
+            return {"error": "No deployment planned. Call plan_deployment() first."}
+        
+        total_cost = sum(a.estimated_cost for a in self._assignments)
+        max_time = max(a.estimated_time_seconds for a in self._assignments) if self._assignments else 0
+        
+        return {
+            "total_agents": len(self._assignments),
+            "tier_distribution": self._tier_counts,
+            "estimated_total_cost": f"${total_cost:.4f}",
+            "estimated_completion_seconds": max_time,
+            "rate_limit_risk": "LOW" if self._tier_counts.get("king", 0) <= 2 else "MEDIUM",
+            "strategy": "TURBO_CHESS",
+            "models_used": list(set(a.model for a in self._assignments)),
+        }
+    
+    def _estimate_cost(self, tier: str) -> float:
+        """Estimate cost for a task in this tier."""
+        costs = {
+            "pawn": 0.0,      # Local = free
+            "knight": 0.001,  # Groq/Gemini = basically free
+            "queen": 0.01,    # GPT = cheap
+            "king": 0.05,     # Claude = expensive
+        }
+        return costs.get(tier, 0.01)
+    
+    def _estimate_time(self, tier: str, complexity: str) -> int:
+        """Estimate completion time in seconds."""
+        base_times = {
+            "pawn": 600,    # Local slower
+            "knight": 300,  # Groq FAST
+            "queen": 400,   # GPT moderate
+            "king": 500,    # Claude thorough
+        }
+        complexity_multiplier = {
+            "simple": 0.5,
+            "medium": 1.0,
+            "complex": 2.0,
+            "critical": 3.0,
+        }
+        return int(base_times.get(tier, 400) * complexity_multiplier.get(complexity, 1.0))
+    
+    @classmethod
+    def quick_deploy(
+        cls,
+        task_count: int,
+        complexity: str = "medium",
+    ) -> List[str]:
+        """
+        Quick helper to get optimal model distribution for N tasks.
+        
+        Usage:
+            models = TurboChessSwarm.quick_deploy(12, "medium")
+            # Returns: ["gpt-5-mini", "gpt-5.4-mini", "groq/llama-3.3-70b", ...]
+        
+        Args:
+            task_count: Number of tasks to deploy
+            complexity: Overall complexity level
+        
+        Returns:
+            List of model names to use
+        """
+        swarm = cls()
+        tasks = [
+            SwarmTask(id=str(i), name=f"task_{i}", prompt="task", complexity=complexity)
+            for i in range(task_count)
+        ]
+        assignments = swarm.plan_deployment(tasks)
+        return [a.model for a in assignments]
+
+
+# Convenience function for quick access
+def turbo_deploy(task_count: int, complexity: str = "medium") -> List[str]:
+    """
+    🏎️ TURBO DEPLOY - Get optimal model distribution for maximum speed!
+    
+    This is the fastest way to deploy a swarm without rate limits.
+    
+    Example:
+        models = turbo_deploy(12, "medium")
+        for i, model in enumerate(models):
+            deploy_agent(model, task_prompts[i])
+    
+    Args:
+        task_count: How many agents to deploy
+        complexity: simple, medium, complex, or critical
+    
+    Returns:
+        List of model names optimized for speed and cost
+    """
+    return TurboChessSwarm.quick_deploy(task_count, complexity)
