@@ -16,8 +16,8 @@
 A comprehensive voice event system for the Brain that enables:
 
 - **Mood Management**: Track emotional state (calm, working, party)
-- **Multi-Lady Conversations**: Coordinate complex voice interactions
-- **Real-Time Notifications**: Lady speaking/finished events
+- **Multi-Voice Conversations**: Coordinate complex voice interactions
+- **Real-Time Notifications**: Voice speaking/finished events
 - **Queue Management**: Track voice processing queue
 - **Fleet Announcements**: Broadcast system-wide voice updates
 - **Event Validation**: JSON schema validation for all events
@@ -32,8 +32,8 @@ Event Bus MCP Server (voice_topics.py integration)
     ↓
 Redpanda/Kafka Event Bus
     ├─ brain.voice.mood
-    ├─ brain.voice.lady.speaking
-    ├─ brain.voice.lady.finished
+    ├─ brain.voice.voice.speaking
+    ├─ brain.voice.voice.finished
     ├─ brain.voice.queue.status
     ├─ brain.voice.conversation
     └─ brain.voice.fleet.status
@@ -52,7 +52,7 @@ Components:
 - `VoiceTopics`: Topic registry and descriptions
 - `VoiceEventPublisher`: Publishing voice events
 - `VoiceEventSubscriber`: Subscribing to voice events
-- Event dataclasses: `MoodChangeEvent`, `LadySpeakingEvent`, `ConversationEvent`, `FleetStatusEvent`, etc.
+- Event dataclasses: `MoodChangeEvent`, `VoiceSpeakingEvent`, `ConversationEvent`, `FleetStatusEvent`, etc.
 - JSON schemas for validation
 - Event replay support
 
@@ -84,7 +84,7 @@ Includes:
 - MCP tool descriptions
 - Usage examples and patterns
 - Event schemas
-- Voice ladies roster
+- Voice voices roster
 - Integration points
 - Performance considerations
 
@@ -94,7 +94,7 @@ Includes:
 Contents:
 - Topics at a glance
 - Quick start code
-- Available ladies
+- Available voices
 - Event schemas
 - Common patterns
 - File structure
@@ -113,8 +113,8 @@ Changes:
 - Updated `topics()` function with new voice topics documentation
 - Added 6 new MCP tools:
   - `voice_mood_change()`
-  - `voice_lady_speaking()`
-  - `voice_lady_finished()`
+  - `voice_voice_speaking()`
+  - `voice_voice_finished()`
   - `voice_queue_status()`
   - `voice_conversation()`
   - `voice_fleet_announcement()`
@@ -139,10 +139,10 @@ desc = VoiceTopics.get_description(VoiceTopics.MOOD)
 
 **Available Topics:**
 - `brain.voice.mood` - Mood changes
-- `brain.voice.lady.speaking` - Lady speaking events
-- `brain.voice.lady.finished` - Lady finished events
+- `brain.voice.voice.speaking` - Voice speaking events
+- `brain.voice.voice.finished` - Voice finished events
 - `brain.voice.queue.status` - Queue updates
-- `brain.voice.conversation` - Multi-lady chats
+- `brain.voice.conversation` - Multi-voice chats
 - `brain.voice.fleet.status` - Fleet announcements
 
 ### 2. VoiceEventPublisher
@@ -161,13 +161,13 @@ pub = VoiceEventPublisher(bus)
 result = pub.publish_mood_change("working", reason="Meeting time")
 # Returns: {"success": True, "mood": "working", "event_id": "...", ...}
 
-# Publish lady speaking
-result = pub.publish_lady_speaking("karen", "Hello!", "Karen", "Australia")
-# Returns: {"success": True, "lady": "karen", "text_length": 6, ...}
+# Publish voice speaking
+result = pub.publish_voice_speaking("karen", "Hello!", "Karen", "Australia")
+# Returns: {"success": True, "voice": "karen", "text_length": 6, ...}
 
-# Publish multi-lady conversation
+# Publish multi-voice conversation
 result = pub.publish_conversation_event(
-    ladies=["karen", "moira"],
+    voices=["karen", "moira"],
     topic="standup"
 )
 # Returns: {"success": True, "conversation_id": "...", "participants": 2, ...}
@@ -175,10 +175,10 @@ result = pub.publish_conversation_event(
 
 **All Methods:**
 - `publish_mood_change(mood, reason, previous_mood)` → Dict
-- `publish_lady_speaking(lady, text, voice_name, region)` → Dict
-- `publish_lady_finished(lady, duration_ms, success, error_message)` → Dict
-- `publish_queue_update(queue_length, pending_ladies, current_lady, processing)` → Dict
-- `publish_conversation_event(ladies, topic, speaker_order, context)` → Dict
+- `publish_voice_speaking(voice, text, voice_name, region)` → Dict
+- `publish_voice_finished(voice, duration_ms, success, error_message)` → Dict
+- `publish_queue_update(queue_length, pending_voices, current_voice, processing)` → Dict
+- `publish_conversation_event(voices, topic, speaker_order, context)` → Dict
 - `publish_fleet_announcement(message, announcement_type, agent_name)` → Dict
 - `get_stats()` → Dict
 
@@ -196,7 +196,7 @@ def on_mood(event):
     print(f"Mood: {event['mood']}")
 
 sub.on_mood_change(on_mood)
-sub.on_lady_speaking(lambda e: print(f"{e['lady']}: {e['text']}"))
+sub.on_voice_speaking(lambda e: print(f"{e['voice']}: {e['text']}"))
 sub.on_any_voice_event(lambda e: print(f"Event: {e}"))
 
 # Subscribe to all topics
@@ -209,8 +209,8 @@ stats = sub.get_stats()
 
 **All Methods:**
 - `on_mood_change(callback)` → None
-- `on_lady_speaking(callback)` → None
-- `on_lady_finished(callback)` → None
+- `on_voice_speaking(callback)` → None
+- `on_voice_finished(callback)` → None
 - `on_queue_status(callback)` → None
 - `on_conversation(callback)` → None
 - `on_fleet_status(callback)` → None
@@ -223,7 +223,7 @@ stats = sub.get_stats()
 Type-safe event definitions with validation:
 
 ```python
-from voice_topics import MoodChangeEvent, LadySpeakingEvent
+from voice_topics import MoodChangeEvent, VoiceSpeakingEvent
 
 # Create and validate
 mood_event = MoodChangeEvent(mood="working", reason="Meeting")
@@ -284,12 +284,12 @@ pub = VoiceEventPublisher(bus)
 
 # 4. Publish events
 pub.publish_mood_change("working")
-pub.publish_lady_speaking("karen", "Good morning!")
-pub.publish_lady_finished("karen")
+pub.publish_voice_speaking("karen", "Good morning!")
+pub.publish_voice_finished("karen")
 
 # 5. Create subscriber (optional)
 sub = VoiceEventSubscriber(bus)
-sub.on_lady_speaking(lambda e: print(f"{e['lady']}: {e['text']}"))
+sub.on_voice_speaking(lambda e: print(f"{e['voice']}: {e['text']}"))
 sub.subscribe_all()
 ```
 
@@ -298,8 +298,8 @@ sub.subscribe_all()
 ```bash
 # From Claude or MCP CLI
 voice_mood_change working "Meeting time"
-voice_lady_speaking karen "Hello everyone!"
-voice_lady_finished karen
+voice_voice_speaking karen "Hello everyone!"
+voice_voice_finished karen
 voice_conversation ["karen", "moira"] "standup"
 voice_fleet_announcement "All agents online" info
 voice_topics_list
@@ -334,10 +334,10 @@ All methods return `Dict[str, Any]` with:
 }
 ```
 
-#### `publish_lady_speaking(lady, text, voice_name="", region="")`
+#### `publish_voice_speaking(voice, text, voice_name="", region="")`
 
 **Parameters:**
-- `lady` (str): Lady ID (karen, moira, etc.)
+- `voice` (str): Voice ID (karen, moira, etc.)
 - `text` (str): Text being spoken
 - `voice_name` (str, optional): Full voice name
 - `region` (str, optional): Voice region
@@ -346,18 +346,18 @@ All methods return `Dict[str, Any]` with:
 ```python
 {
     "success": True,
-    "lady": "karen",
+    "voice": "karen",
     "text_length": 18,
     "event_id": "uuid",
-    "topic": "brain.voice.lady.speaking",
+    "topic": "brain.voice.voice.speaking",
     "timestamp": "2024-01-15T..."
 }
 ```
 
-#### `publish_conversation_event(ladies, topic, speaker_order=None, context=None, conversation_id=None)`
+#### `publish_conversation_event(voices, topic, speaker_order=None, context=None, conversation_id=None)`
 
 **Parameters:**
-- `ladies` (list): List of lady IDs
+- `voices` (list): List of voice IDs
 - `topic` (str): Conversation topic
 - `speaker_order` (list, optional): Order of speakers
 - `context` (dict, optional): Conversation context
@@ -367,7 +367,7 @@ All methods return `Dict[str, Any]` with:
 ```python
 {
     "success": True,
-    "ladies": ["karen", "moira"],
+    "voices": ["karen", "moira"],
     "topic": "standup",
     "participants": 2,
     "conversation_id": "uuid",
@@ -382,19 +382,19 @@ All methods return `Dict[str, Any]` with:
 ### With Voice Rendering Service
 
 ```python
-# Voice rendering daemon subscribes to lady.speaking
+# Voice rendering daemon subscribes to voice.speaking
 sub = VoiceEventSubscriber(bus)
 
 def render_voice(event):
-    lady = event['lady']
+    voice = event['voice']
     text = event['text']
     # Use macOS say command or other TTS
-    subprocess.run(['say', '-v', lady, text])
+    subprocess.run(['say', '-v', voice, text])
     
     # Publish finished event
-    pub.publish_lady_finished(lady, success=True)
+    pub.publish_voice_finished(voice, success=True)
 
-sub.on_lady_speaking(render_voice)
+sub.on_voice_speaking(render_voice)
 sub.subscribe_all()
 ```
 
@@ -423,11 +423,11 @@ def process_queue(items):
     for i, item in enumerate(items):
         pub.publish_queue_update(
             queue_length=len(items) - i,
-            current_lady="karen",
+            current_voice="karen",
             processing=True
         )
         # Process item...
-        pub.publish_lady_finished("karen")
+        pub.publish_voice_finished("karen")
 ```
 
 ## Testing
@@ -458,14 +458,14 @@ python3 test_voice_topics.py
 
 === Testing Event Dataclasses ===
 ✓ MoodChangeEvent created...
-✓ LadySpeakingEvent created...
+✓ VoiceSpeakingEvent created...
 ✓ ConversationEvent created...
 ✓ FleetStatusEvent created...
 
 === Testing VoiceEventPublisher ===
 ✓ Mood change published...
-✓ Lady speaking event published...
-✓ Lady finished event published
+✓ Voice speaking event published...
+✓ Voice finished event published
 ✓ Queue status published...
 ✓ Conversation event published...
 ✓ Fleet announcement published
@@ -474,7 +474,7 @@ python3 test_voice_topics.py
 
 === Testing VoiceEventSubscriber ===
 ✓ Mood callback fired...
-✓ Lady callback fired...
+✓ Voice callback fired...
 ✓ Subscribed to 9 topics
 ✓ Subscriber stats...
 
@@ -563,16 +563,16 @@ if mood not in VALID_MOODS:
 pub.publish_mood_change(mood)
 ```
 
-**Problem:** "Lady and text are required"
+**Problem:** "Voice and text are required"
 
 **Solution:**
 ```python
-# Ensure both lady and text are provided
-if not lady or not text:
-    print("Error: lady and text required")
+# Ensure both voice and text are provided
+if not voice or not text:
+    print("Error: voice and text required")
     return
 
-pub.publish_lady_speaking(lady, text)
+pub.publish_voice_speaking(voice, text)
 ```
 
 ### Performance Issues
@@ -617,12 +617,12 @@ if not result["success"]:
 2. **Test with MCP**
    ```bash
    voice_mood_change working
-   voice_lady_speaking karen "Testing voice system"
+   voice_voice_speaking karen "Testing voice system"
    voice_topics_list
    ```
 
 3. **Integrate Services**
-   - Voice rendering: subscribe to `lady.speaking`
+   - Voice rendering: subscribe to `voice.speaking`
    - LLM: subscribe to `mood` for tone context
    - Queue manager: publish `queue.status`
    - Fleet monitor: publish/subscribe `fleet.status`

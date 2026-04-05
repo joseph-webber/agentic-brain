@@ -14,7 +14,7 @@ final class EndToEndVoiceTests: XCTestCase {
         let voice = MockVoiceSynthesizer()
         let store = MockConversationStore()
 
-        ai.responses["What time is it in Adelaide"] = "It's 3:30 PM in Adelaide, Joseph."
+        ai.responses["What time is it in Adelaide"] = "It's 3:30 PM in Adelaide."
 
         // 1: User speaks (spacebar → recognition starts)
         XCTAssertNoThrow(try speech.startRecognition())
@@ -50,10 +50,10 @@ final class EndToEndVoiceTests: XCTestCase {
         XCTAssertEqual(store.messageCount, 2)
         XCTAssertEqual(store.userMessages.count, 1)
         XCTAssertEqual(store.assistantMessages.count, 1)
-        XCTAssertEqual(store.assistantMessages[0].content, "It's 3:30 PM in Adelaide, Joseph.",
+        XCTAssertEqual(store.assistantMessages[0].content, "It's 3:30 PM in Adelaide.",
                        "AI response must be generated correctly")
         XCTAssertTrue(voice.isSpeaking, "Karen must speak the response")
-        XCTAssertEqual(voice.spokenTexts[0], "It's 3:30 PM in Adelaide, Joseph.",
+        XCTAssertEqual(voice.spokenTexts[0], "It's 3:30 PM in Adelaide.",
                        "Karen must speak the AI response")
         XCTAssertFalse(store.isProcessing)
     }
@@ -67,7 +67,7 @@ final class EndToEndVoiceTests: XCTestCase {
         let speech = MockSpeechRecognitionController()
 
         let exchanges: [(query: String, response: String)] = [
-            ("Hello Brain", "G'day Joseph! How can I help?"),
+            ("Hello Brain", "G'day! How can I help?"),
             ("What's the weather", "It's 24 degrees and sunny in Adelaide."),
             ("Read my JIRA tickets", "You have 3 open tickets: SD-1330, SD-1331, SD-1332."),
             ("Deploy to production", "Deploying now. All tests passed, pushing to main."),
@@ -99,7 +99,7 @@ final class EndToEndVoiceTests: XCTestCase {
         XCTAssertEqual(store.messageCount, 8, "4 user + 4 assistant messages")
         XCTAssertEqual(voice.spokenTexts.count, 4, "Karen should speak all 4 responses")
         XCTAssertEqual(store.messages[0].content, "Hello Brain")
-        XCTAssertEqual(store.messages[1].content, "G'day Joseph! How can I help?")
+        XCTAssertEqual(store.messages[1].content, "G'day! How can I help?")
         XCTAssertEqual(store.messages[7].content,
                        "Deploying now. All tests passed, pushing to main.")
     }
@@ -162,7 +162,7 @@ final class EndToEndVoiceTests: XCTestCase {
     func testConversationHistoryUpdatesCorrectly() {
         let store = MockConversationStore()
         let id1 = store.addMessage(role: .user, content: "Hello")
-        let id2 = store.addMessage(role: .assistant, content: "Hi Joseph!")
+        let id2 = store.addMessage(role: .assistant, content: "Hi there!")
         let id3 = store.addMessage(role: .user, content: "How are you?")
 
         XCTAssertEqual(store.messageCount, 3,
@@ -276,12 +276,12 @@ final class EndToEndVoiceTests: XCTestCase {
 
     func testStreamingResponseAppearsIncrementally() {
         let store = MockConversationStore()
-        let deltas = ["G'day ", "Joseph! ", "How can ", "I help ", "you today?"]
+        let deltas = ["G'day! ", "How can ", "I help ", "you today?"]
         store.addMessage(role: .user, content: "Hello")
         store.addMessage(role: .assistant, content: "")
         for delta in deltas { store.appendToLastAssistant(delta) }
         let finalContent = store.assistantMessages.last?.content ?? ""
-        XCTAssertEqual(finalContent, "G'day Joseph! How can I help you today?")
+        XCTAssertEqual(finalContent, "G'day! How can I help you today?")
     }
 
     // MARK: - Accessibility
@@ -289,7 +289,7 @@ final class EndToEndVoiceTests: XCTestCase {
     func testAllMessagesHaveAccessibilityDescriptions() {
         let messages = [
             TestChatMessage(role: .user, content: "Hello"),
-            TestChatMessage(role: .assistant, content: "Hi Joseph!"),
+            TestChatMessage(role: .assistant, content: "Hi there!"),
             TestChatMessage(role: .system, content: "Connected"),
         ]
         for msg in messages {

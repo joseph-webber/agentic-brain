@@ -1,6 +1,6 @@
 # Spatial Audio
 
-Spatial audio gives each lady a consistent place around the listener.
+Spatial audio gives each voice persona a consistent place around the listener.
 That matters for accessibility: when voices come from stable directions, it is easier
 to tell **who** is speaking even before the sentence finishes.
 
@@ -20,9 +20,9 @@ Azimuth uses this model:
 - `180°` = directly behind
 - `270°` = left side
 
-## Lady positions
+## Voice positions
 
-| Lady | Azimuth | Arc |
+| Voice | Azimuth | Arc |
 | --- | ---: | --- |
 | Karen | 0° | front center |
 | Kyoko | 30° | front-right |
@@ -132,7 +132,7 @@ Useful fields include:
 - whether AirPods are connected
 - whether the native bridge is available
 - scratch directory path
-- full lady position map
+- full voice position map
 
 ## Stereo panning details
 
@@ -162,7 +162,7 @@ This is simpler than the 0-360° spatial ring and works with ordinary stereo out
 ```python
 from agentic_brain.audio.spatial_audio import speak_spatial
 
-speak_spatial("Tingting is reviewing the pull request.", lady="Tingting", rate=155)
+speak_spatial("Tingting is reviewing the pull request.", voice="Tingting", rate=155)
 ```
 
 ## Troubleshooting

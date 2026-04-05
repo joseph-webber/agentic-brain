@@ -226,7 +226,7 @@ voice_turn_granted "kyoko"
 voice_fallback_local "429 rate limit"
 
 # Voice queue
-voice_queue_added "tingting" "Hello Joseph!"
+voice_queue_added "tingting" "Hello there!"
 ```
 """
 
@@ -479,7 +479,7 @@ if VoiceTopicsV2 is not None:
         """Introduce a new lady to the team. Publishes to brain.voice.ladies.introduced
         
         Example:
-            voice_lady_introduced "iris" "Iris" "San Francisco" "Hello Joseph!"
+            voice_lady_introduced "iris" "Iris" "San Francisco" "Hello there!"
         """
         publisher = get_voice_publisher_v2()
         result = publisher.publish_lady_introduced(
@@ -771,7 +771,7 @@ if VoiceTopicsV2 is not None:
         """Add item to voice queue. Publishes to brain.voice.queue.added
         
         Example:
-            voice_queue_added "tingting" "Hello Joseph!" "" "China" 0 1
+            voice_queue_added "tingting" "Hello there!" "" "China" 0 1
         """
         publisher = get_voice_publisher_v2()
         result = publisher.publish_queue_added(
@@ -810,7 +810,7 @@ if VoiceTopicsV2 is not None:
         """Lady is now speaking from queue. Publishes to brain.voice.queue.speaking
         
         Example:
-            voice_queue_speaking "tingting" "Hello Joseph!" "" "China" 0
+            voice_queue_speaking "tingting" "Hello there!" "" "China" 0
         """
         publisher = get_voice_publisher_v2()
         result = publisher.publish_queue_speaking(
@@ -974,7 +974,7 @@ if VoiceTopicsV2 is not None:
    ```json
    {
      "lady": "tingting",
-     "text": "Hello Joseph!",
+     "text": "Hello there!",
      "queue_position": 0,
      "queue_length_after": 1,
      "timestamp": "2024-01-15T10:30:25Z"

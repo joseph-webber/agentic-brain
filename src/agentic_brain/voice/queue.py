@@ -82,7 +82,7 @@ WESTERN_VOICE_CONFIG = {
         "type": VoiceType.WESTERN,
         "native_lang": "en-AU",
         "default_rate": 155,
-        "description": "Australian - Joseph's favorite!",
+        "description": "Australian - primary voice",
     },
     "Moira": {
         "type": VoiceType.WESTERN,
@@ -159,7 +159,7 @@ class VoiceQueue:
         self._error_callbacks: List[Callable[[str, Exception], None]] = []
         self._speech_callbacks: List[Callable[[VoiceMessage], None]] = []
         self._semaphore = threading.Semaphore(1)
-        logger.info("VoiceQueue initialized - SAFE MODE for Joseph")
+        logger.info("VoiceQueue initialized - SAFE MODE for accessibility")
 
     @classmethod
     def get_instance(cls) -> "VoiceQueue":

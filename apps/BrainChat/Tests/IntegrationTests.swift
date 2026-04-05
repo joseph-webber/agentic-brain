@@ -227,7 +227,7 @@ final class IntegrationTests: XCTestCase {
     func testFullChatFlow() {
         let store = TestConversationStore()
         let ai = MockAIClient()
-        ai.responses["Hello Brain"] = "Hello Joseph! How can I help?"
+        ai.responses["Hello Brain"] = "Hello user! How can I help?"
 
         // User sends message
         store.addMessage(role: .user, content: "Hello Brain")
@@ -252,7 +252,7 @@ final class IntegrationTests: XCTestCase {
         XCTAssertEqual(store.messages.count, 2)
         XCTAssertEqual(store.messages[0].role, .user)
         XCTAssertEqual(store.messages[1].role, .assistant)
-        XCTAssertEqual(store.messages[1].content, "Hello Joseph! How can I help?")
+        XCTAssertEqual(store.messages[1].content, "Hello user! How can I help?")
         XCTAssertFalse(store.isProcessing)
     }
 

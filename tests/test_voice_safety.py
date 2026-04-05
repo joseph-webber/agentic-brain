@@ -4,7 +4,7 @@
 """
 Tests for SAFE Voice Queue System.
 
-CRITICAL for accessibility - Joseph is blind and relies on voice output!
+CRITICAL for accessibility - Users rely on voice output!
 These tests verify:
 - ✅ Only one voice speaks at a time (no overlapping)
 - ✅ Messages queued in order
@@ -350,7 +350,7 @@ class TestAsianVoiceConfig:
             assert 140 < config["default_rate"] < 160
 
     def test_karen_is_favorite(self):
-        """Verify Karen is Joseph's favorite Australian voice."""
+        """Verify Karen is the recommended Australian voice."""
         assert "Karen" in WESTERN_VOICE_CONFIG
         config = WESTERN_VOICE_CONFIG["Karen"]
         assert config["native_lang"] == "en-AU"
@@ -409,11 +409,11 @@ class TestConvenienceFunctions:
 
 
 class TestAccessibilityCompliance:
-    """Test accessibility features for Joseph."""
+    """Test accessibility features."""
 
     @patch("subprocess.Popen")
     def test_default_voice_is_karen(self, mock_popen):
-        """Test Karen is used as default (Joseph's favorite)."""
+        """Test Karen is used as default (the recommended)."""
         mock_process = MagicMock()
         mock_process.wait.return_value = None
         mock_popen.return_value = mock_process

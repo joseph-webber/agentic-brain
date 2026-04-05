@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - WCAG 3.0 AAA Accessibility Utilities
 // =============================================================================
-// Joseph is blind. This code is his eyes. Every function here matters.
+// The user may be blind. This code is their eyes. Every function here matters.
 // WCAG 3.0 AAA is the HIGHEST accessibility standard - we exceed it.
 // =============================================================================
 

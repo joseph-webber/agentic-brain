@@ -4,7 +4,7 @@
 """
 Tests for ML-based wake word detection.
 
-CRITICAL for accessibility - Joseph needs fast wake word detection!
+CRITICAL for accessibility - Users need fast wake word detection!
 Target: 50-100ms latency (vs 3-7s with transcription).
 """
 

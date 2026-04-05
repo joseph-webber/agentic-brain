@@ -132,7 +132,7 @@ Ratings: Excellent → Good → Fair → Poor
 
 ## 📋 Voice Quality Comparison (Karen - Australian)
 
-### Joseph's Preferred Voice Across Engines
+### user's Preferred Voice Across Engines
 
 | Engine | Voice Name | Quality | Match | Best Use |
 |--------|-----------|---------|-------|----------|

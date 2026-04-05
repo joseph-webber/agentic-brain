@@ -510,7 +510,7 @@ class VoiceCache:
                 "is_speaking": "true" if state.is_speaking else "false",
                 "current_text": state.current_text,
                 "current_voice": state.current_voice,
-                "current_lady": state.current_voice,
+                "current_persona": state.current_voice,
                 "queue_depth": str(state.queue_depth),
                 "message_id": state.message_id,
                 "updated_at": str(updated_at),

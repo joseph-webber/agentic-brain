@@ -1,17 +1,17 @@
 # 4-Tier Security Model Implementation Summary
 
 ## Overview
-BrainChat now uses a comprehensive 4-tier security model that provides granular access control while maintaining Joseph's unrestricted access and adding guardrails for developers.
+BrainChat now uses a comprehensive 4-tier security model that provides granular access control while maintaining user's unrestricted access and adding guardrails for developers.
 
 ## Security Tiers
 
-### 1. FULL_ADMIN (Joseph's Default)
+### 1. FULL_ADMIN (user's Default)
 - **Icon**: 🔓 Red (Unrestricted)
 - **Access**: Complete unrestricted access
 - **YOLO Mode**: Yes, no confirmations required
 - **Filesystem**: Full access
 - **APIs**: All providers, no rate limits
-- **Use Case**: Joseph's normal operating mode
+- **Use Case**: user's normal operating mode
 
 ### 2. SAFE_ADMIN (Developers)
 - **Icon**: ��️ Green (With Guardrails)
@@ -86,4 +86,4 @@ Existing users will automatically be upgraded:
 - Old "user" → USER (API-only)
 - Old "guest" → GUEST (help-only)
 
-Joseph's default remains FULL_ADMIN for unrestricted access.
+user's default remains FULL_ADMIN for unrestricted access.

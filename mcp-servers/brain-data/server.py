@@ -1426,7 +1426,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
                 speech = get_brain_speech()
                 speech.greet()
             else:
-                subprocess.run(['say', '-v', 'Samantha', 'Hello Joseph!'])
+                subprocess.run(['say', '-v', 'Samantha', 'Hello there!'])
             result = {"greeted": True}
         
         elif name == "audio_sound":

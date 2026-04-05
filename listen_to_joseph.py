@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple Voice-to-Text Listener for Joseph
+Simple Voice-to-Text Listener
 Uses AirPods Max microphone and Apple's speech recognition (FREE!)
 """
 import speech_recognition as sr
@@ -28,7 +28,7 @@ def main():
     
     mic = sr.Microphone(device_index=airpods_idx)
     
-    speak("I'm listening! Say something Joseph.", rate=170)
+    speak("I'm listening! Say something.", rate=170)
     print("\n🎤 Listening... (Ctrl+C to stop)\n")
     
     with mic as source:
@@ -44,7 +44,7 @@ def main():
                 # Use Apple's speech recognition (FREE, on-device)
                 try:
                     text = r.recognize_google(audio)  # or recognize_sphinx for offline
-                    print(f"\n💬 Joseph said: {text}\n")
+                    print(f"\n💬 User said: {text}\n")
                     
                     # Acknowledge
                     if text:
@@ -58,7 +58,7 @@ def main():
             except sr.WaitTimeoutError:
                 print("⏳ No speech detected, still listening...")
             except KeyboardInterrupt:
-                speak("Goodbye Joseph!")
+                speak("Goodbye!")
                 print("\n👋 Stopped listening")
                 break
 

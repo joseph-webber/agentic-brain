@@ -236,7 +236,7 @@ def topics() -> str:
 emit brain.tasks task_created {"action": "process_ticket", "id": 123}
 emit brain.voice.mood mood_changed {"mood": "working"}
 voice_mood_change working
-voice_lady_speaking karen "Hello Joseph!"
+voice_lady_speaking karen "Hello there!"
 ```
 """
 
@@ -690,7 +690,7 @@ def voice_topics_list() -> str:
      "source": "voice-system",
      "event_id": "uuid",
      "lady": "karen",
-     "text": "Good morning Joseph",
+     "text": "Good morning",
      "voice_name": "Karen",
      "region": "Australia",
      "duration_ms": 2500

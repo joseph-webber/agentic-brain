@@ -80,10 +80,10 @@
 
 ```bash
 # macOS/Linux
-curl -fsSL https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/install.sh | bash
 
 # Windows PowerShell
-irm https://raw.githubusercontent.com/joseph-webber/agentic-brain/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/install.ps1 | iex
 ```
 
 ✅ **All services start automatically:**

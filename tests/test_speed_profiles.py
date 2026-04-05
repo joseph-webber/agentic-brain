@@ -3,7 +3,7 @@
 # Tests for Adaptive Speech Rate Profiles, Content Classifier,
 # User Preferences, and Content-Aware Speed Resolution.
 #
-# Joseph should be able to gradually increase listening speed as he
+# Users should be able to gradually increase listening speed as he
 # gains proficiency.  These tests verify the profile manager, voice
 # command matching, tier navigation, persistence, adaptive tracker,
 # content classification, user preferences, and speed resolution.

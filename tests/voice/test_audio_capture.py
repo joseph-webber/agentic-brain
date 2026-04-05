@@ -48,11 +48,11 @@ class TestDeviceSelection:
         """Test finding AirPods in device list."""
         mock_query.return_value = [
             {'name': 'MacBook Air Microphone', 'max_input_channels': 1},
-            {'name': "Joseph's AirPods Max", 'max_input_channels': 1},
+            {'name': "User's AirPods Max", 'max_input_channels': 1},
         ]
         
         devices = mock_query()
         airpods = [d for d in devices if 'AirPods' in d['name']]
         
         assert len(airpods) == 1
-        assert 'Joseph' in airpods[0]['name']
+        assert 'User' in airpods[0]['name']

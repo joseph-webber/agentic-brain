@@ -3,7 +3,7 @@ import SwiftUI
 @testable import BrainChatLib
 
 // MARK: - Accessibility Tests
-// Joseph is blind. Every UI element MUST have proper accessibility.
+// The user may be blind. Every UI element MUST have proper accessibility.
 // If any test here fails, the build fails. No exceptions.
 
 final class AccessibilityTests: XCTestCase {
@@ -17,7 +17,7 @@ final class AccessibilityTests: XCTestCase {
         XCTAssertNotNil(mic, "Microphone button must exist")
         XCTAssertFalse(
             mic?.label?.isEmpty ?? true,
-            "Microphone button MUST have an accessibilityLabel - Joseph cannot see the icon"
+            "Microphone button MUST have an accessibilityLabel - the user cannot see the icon"
         )
     }
 
@@ -74,7 +74,7 @@ final class AccessibilityTests: XCTestCase {
         XCTAssertNotNil(input, "Message input field must exist")
         XCTAssertFalse(
             input?.hint?.isEmpty ?? true,
-            "Message input MUST have an accessibilityHint telling Joseph what to type"
+            "Message input MUST have an accessibilityHint telling the user what to type"
         )
     }
 
@@ -85,7 +85,7 @@ final class AccessibilityTests: XCTestCase {
         XCTAssertNotNil(status, "Status indicator must exist")
         XCTAssertFalse(
             status?.label?.isEmpty ?? true,
-            "Status indicator MUST have a label - Joseph cannot see the color"
+            "Status indicator MUST have a label - the user cannot see the color"
         )
     }
 
@@ -118,7 +118,7 @@ final class AccessibilityTests: XCTestCase {
             XCTAssertNotNil(toggle, "Toggle '\(id)' must exist")
             XCTAssertFalse(
                 toggle?.label?.isEmpty ?? true,
-                "Toggle '\(id)' MUST have an accessibilityLabel - Joseph needs to know what it controls"
+                "Toggle '\(id)' MUST have an accessibilityLabel - The user needs to know what it controls"
             )
         }
     }
@@ -173,7 +173,7 @@ final class AccessibilityTests: XCTestCase {
             XCTAssertNotNil(field, "SecureField '\(id)' must exist")
             XCTAssertFalse(
                 field?.label?.isEmpty ?? true,
-                "SecureField '\(id)' MUST have a label - Joseph needs to know which key to enter"
+                "SecureField '\(id)' MUST have a label - The user needs to know which key to enter"
             )
         }
     }
@@ -183,7 +183,7 @@ final class AccessibilityTests: XCTestCase {
     func testMessageBubblesHaveAccessibleContent() throws {
         let messages = [
             ChatMessage(role: "user", content: "Hello brain"),
-            ChatMessage(role: "assistant", content: "Hello Joseph")
+            ChatMessage(role: "assistant", content: "Hello there")
         ]
         let store = ConversationStore()
         store.messages = messages
@@ -208,7 +208,7 @@ final class AccessibilityTests: XCTestCase {
         XCTAssertNotNil(emptyState, "Empty state must exist when no messages")
         XCTAssertFalse(
             emptyState?.label?.isEmpty ?? true,
-            "Empty state MUST tell Joseph there are no messages yet"
+            "Empty state MUST tell the user there are no messages yet"
         )
     }
 
@@ -233,7 +233,7 @@ final class AccessibilityTests: XCTestCase {
         if let badge = badge {
             XCTAssertFalse(
                 badge.label?.isEmpty ?? true,
-                "YOLO badge MUST have a label - Joseph cannot see the orange icon"
+                "YOLO badge MUST have a label - the user cannot see the orange icon"
             )
         }
     }

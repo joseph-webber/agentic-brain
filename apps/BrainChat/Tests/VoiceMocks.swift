@@ -22,7 +22,7 @@ final class MockSpeechRecognitionController {
     func availableInputDevices() -> [TestAudioDevice] {
         [
             TestAudioDevice(id: "built-in", name: "Built-in Microphone"),
-            TestAudioDevice(id: "airpods", name: "Joseph's AirPods Max", isAirPodsMax: true),
+            TestAudioDevice(id: "airpods", name: "User's AirPods Max", isAirPodsMax: true),
         ]
     }
 
@@ -128,7 +128,7 @@ enum MockAudioError: LocalizedError {
 /// Simulates AirPods Max connection and routing for CI
 final class MockAirPods {
     var isConnected: Bool = false
-    var deviceName: String = "Joseph's AirPods Max"
+    var deviceName: String = "User's AirPods Max"
     var batteryPercent: Int? = 85
     var noiseControlMode: String = "noise-cancellation"
 

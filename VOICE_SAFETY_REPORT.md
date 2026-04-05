@@ -481,7 +481,7 @@ queue.speak("System message")  # Will speak, errors handled
 │  Thread Safety: VERIFIED                       │
 │  Coverage: 100%                                │
 │                                                 │
-│  🔊 JOSEPH'S VOICES ARE SAFE! 💜              │
+│  🔊 VOICES ARE SAFE! 💜              │
 └─────────────────────────────────────────────────┘
 ```
 

@@ -299,7 +299,7 @@ guard = LLMSecurityGuard(SecurityRole.GUEST)
 ```python
 from agentic_brain.security.auth import authenticate_request
 
-guard = authenticate_request(user_id="joseph")  # admin by default
+guard = authenticate_request(user_id="admin")  # admin by default
 ```
 
 ### Via environment
@@ -329,7 +329,7 @@ Admin access can be established through:
 
 - environment variable: `AGENTIC_BRAIN_ADMIN_KEY`
 - config file: `~/.brain/admin.key`
-- known admin user IDs such as `joseph`
+- configured admin user IDs
 - extra admin users from `AGENTIC_BRAIN_ADMIN_USER`
 - explicit local override: `AGENTIC_BRAIN_ADMIN_MODE=true`
 
@@ -339,7 +339,7 @@ Admin access can be established through:
 - valid admin key returns **ADMIN**
 - a non-admin API key with sufficient length currently maps to **USER**
 - developers can explicitly request **DEVELOPER** role
-- `authenticate_request(user_id="joseph")` returns **ADMIN**
+- `authenticate_request(user_id="admin")` returns **ADMIN**
 - `LLMSecurityGuard` falls back to `AGENTIC_BRAIN_DEFAULT_LLM_ROLE` when available
 - if no LLM auth context exists and no default env is set, `LLMSecurityGuard` currently falls back to **ADMIN**
 

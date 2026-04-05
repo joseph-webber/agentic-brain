@@ -30,11 +30,11 @@ Using macOS `say` command with Karen (Premium) voice.
 
 | Voice    | Duration (same text) | Quality Notes |
 |----------|---------------------|---------------|
-| Karen    | 3.01s               | Australian - Joseph's preference |
+| Karen    | 3.01s               | Australian - recommended default |
 | Samantha | 3.43s               | US English |
 | Daniel   | 3.34s               | British English |
 
-**Conclusion**: Karen is fastest AND Joseph's preferred voice.
+**Conclusion**: Karen is fastest AND the recommended voice.
 
 ## Performance Analysis
 
@@ -45,7 +45,7 @@ Using macOS `say` command with Karen (Premium) voice.
 ### Recommended Settings for BrainChat
 ```swift
 VoiceSettings.currentEngine = .systemSay  // Most reliable
-VoiceSettings.currentVoice = .karen       // Joseph's preference + fastest
+VoiceSettings.currentVoice = .karen       // Recommended default + fastest
 VoiceSettings.speechRate = 175            // Balanced
 VoiceSettings.isEnabled = true            // Always on for accessibility
 ```

@@ -3,13 +3,13 @@ import XCTest
 
 final class BrainChatCLITests: XCTestCase {
     func testSendCommandParsesJoinedArguments() {
-        let command = BrainChatCLICommand(arguments: ["BrainChat", "--send", "Hello", "Joseph"])
-        XCTAssertEqual(command, .send("Hello Joseph"))
+        let command = BrainChatCLICommand(arguments: ["BrainChat", "--send", "Hello", "user"])
+        XCTAssertEqual(command, .send("Hello user"))
     }
 
     func testSpeakCommandParsesJoinedArguments() {
-        let command = BrainChatCLICommand(arguments: ["BrainChat", "--speak", "G'day", "Joseph"])
-        XCTAssertEqual(command, .speak("G'day Joseph"))
+        let command = BrainChatCLICommand(arguments: ["BrainChat", "--speak", "G'day", "user"])
+        XCTAssertEqual(command, .speak("G'day user"))
     }
 
     func testListenCommandParsesWithoutPayload() {

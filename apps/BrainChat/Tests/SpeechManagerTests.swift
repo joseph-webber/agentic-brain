@@ -151,7 +151,7 @@ final class SpeechManagerTests: XCTestCase {
     func testAustralianEnglishLocale() {
         let mock = MockSpeechRecognizer()
         XCTAssertTrue(mock.availableLocales.contains("en-AU"),
-                      "Australian English must be available for Joseph")
+                      "Australian English must be available for user")
     }
 
     func testLocaleIdentifierFormat() {
@@ -210,19 +210,19 @@ final class SpeechManagerTests: XCTestCase {
     func testAirPodsMaxAutoSelection() {
         let devices = [
             TestAudioDevice(id: "1", name: "Built-in Microphone"),
-            TestAudioDevice(id: "2", name: "Joseph's AirPods Max", isAirPodsMax: true),
+            TestAudioDevice(id: "2", name: "user's AirPods Max", isAirPodsMax: true),
             TestAudioDevice(id: "3", name: "External Mic")
         ]
 
         let selected = devices.first(where: { $0.isAirPodsMax }) ?? devices.first!
-        XCTAssertEqual(selected.name, "Joseph's AirPods Max")
+        XCTAssertEqual(selected.name, "user's AirPods Max")
         XCTAssertTrue(selected.isAirPodsMax)
     }
 
     func testAirPodsMaxNameDetection() {
         let names = [
             "AirPods Max": true,
-            "Joseph's AirPods Max": true,
+            "user's AirPods Max": true,
             "AirPods Pro": false,
             "AirPods": false,
             "Built-in Microphone": false

@@ -14,35 +14,35 @@ struct CartesiaVoiceOption: Identifiable, Hashable, Codable {
     static let curated: [CartesiaVoiceOption] = [
         CartesiaVoiceOption(
             voiceID: "8985388c-1332-4ce7-8d55-789628aa3df4",
-            name: "Australian Narrator Lady",
-            accentDescription: "Warm Australian female voice, closest to Karen",
+            name: "Australian Narrator",
+            accentDescription: "Warm Australian voice, closest to Karen",
             fallbackVoiceName: "Karen",
             isDefault: true
         ),
         CartesiaVoiceOption(
             voiceID: "043cfc81-d69f-4bee-ae1e-7862cb358650",
-            name: "Australian Woman",
-            accentDescription: "Bright Australian female voice",
+            name: "Australian Bright",
+            accentDescription: "Bright Australian voice",
             fallbackVoiceName: "Karen",
             isDefault: false
         ),
         CartesiaVoiceOption(
             voiceID: "4d2fd738-3b3d-4368-957a-bb4805275bd9",
-            name: "British Narration Lady",
-            accentDescription: "Smooth British female voice",
+            name: "British Narrator",
+            accentDescription: "Smooth British voice",
             fallbackVoiceName: "Samantha",
             isDefault: false
         ),
         CartesiaVoiceOption(
             voiceID: "71a7ad14-091c-4e8e-a314-022ece01c121",
-            name: "British Reading Lady",
+            name: "British Reader",
             accentDescription: "Clear British reading voice",
             fallbackVoiceName: "Samantha",
             isDefault: false
         ),
         CartesiaVoiceOption(
             voiceID: "a01c369f-6d2d-4185-bc20-b32c225eab70",
-            name: "British Customer Support Lady",
+            name: "British Support",
             accentDescription: "Friendly British support voice",
             fallbackVoiceName: "Moira",
             isDefault: false
@@ -241,7 +241,7 @@ final class CartesiaVoice: NSObject, ObservableObject {
         statusMessage = clearQueue ? "Speech cancelled and queue cleared" : "Speech cancelled"
     }
 
-    func previewCurrentVoice(with text: String = "G'day Joseph, Cartesia is online and ready to speak.") {
+    func previewCurrentVoice(with text: String = "G'day, Cartesia is online and ready to speak.") {
         enqueue(text, voiceID: selectedVoiceID)
     }
 

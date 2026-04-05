@@ -2,10 +2,10 @@
 # Copyright 2024-2026 Agentic Brain Contributors
 
 """
-Spatial Audio Router — positions each lady in 3D space around Joseph.
+Spatial Audio Router — positions each voice persona in 3D space.
 
-Joseph wears AirPods Pro Max with spatial audio + head tracking.  By
-routing each lady's speech to a fixed azimuth he can identify WHO is
+Designed for AirPods Pro Max with spatial audio + head tracking.  By
+routing each persona's speech to a fixed azimuth the user can identify WHO is
 speaking by WHERE the sound comes from — even without hearing the voice
 clearly.
 
@@ -13,7 +13,7 @@ Architecture
 ============
 1. **Stereo panning** (Sox) — works on any headphones, zero deps beyond
    ``sox``.  Converts mono ``say`` output to stereo with the correct
-   left/right balance derived from the lady's azimuth.
+   left/right balance derived from the persona's azimuth.
 2. **Native spatial** (AVAudioEngine) — used when AirPods Pro Max are
    connected and the Swift bridge is available.  Provides true 3D
    positioning with head-tracking via the existing
@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass(slots=True)
 class SpatialPosition:
-    """3D position of a lady relative to the listener.
+    """3D position of a voice persona relative to the listener.
 
     Parameters
     ----------
@@ -65,10 +65,10 @@ class SpatialPosition:
     distance: float = 1.0
 
 
-# ── The 14 ladies — fixed positions around Joseph's head ─────────────
+# ── The 14 voice personas — fixed positions around the listener ──────
 
 LADY_POSITIONS: Dict[str, SpatialPosition] = {
-    # Front arc — the main voices Joseph hears most often
+    # Front arc — the main voices heard most often
     "Karen": SpatialPosition(azimuth=0),  # Center front — main host
     "Kyoko": SpatialPosition(azimuth=30),  # Front-right — Japan
     "Tingting": SpatialPosition(azimuth=55),  # Right-front — China
@@ -87,7 +87,7 @@ LADY_POSITIONS: Dict[str, SpatialPosition] = {
     "Shelley": SpatialPosition(azimuth=345),  # Front-left — UK
 }
 
-# Lady name → macOS ``say -v`` voice name
+# Persona name → macOS ``say -v`` voice name
 LADY_VOICE_MAP: Dict[str, str] = {
     "Karen": "Karen (Premium)",
     "Kyoko": "Kyoko",
@@ -151,7 +151,7 @@ def _azimuth_to_cartesian(
 
 
 class SpatialAudioRouter:
-    """Route speech to spatial positions so Joseph can locate each lady.
+    """Route speech to spatial positions so the user can locate each voice persona.
 
     The router checks for AirPods and Sox at construction time and
     automatically selects the best rendering path:

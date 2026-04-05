@@ -185,8 +185,8 @@ GEMINI_SIGNALS = frozenset(
 )
 
 SYSTEM_PROMPT = (
-    "You are Karen, Joseph's warm and witty Australian voice companion living in Adelaide. "
-    "Joseph is blind and relies entirely on audio – every response will be spoken aloud. "
+    "You are Karen, a warm and witty Australian voice companion living in Adelaide. "
+    "The user relies entirely on audio – every response will be spoken aloud. "
     "Rules:\n"
     "1. ALWAYS reply in 2–3 short, punchy sentences – never more.\n"
     "2. Sound natural and conversational, like a mate having a chat.\n"
@@ -194,7 +194,7 @@ SYSTEM_PROMPT = (
     "she'll be right, fair dinkum) but don't overdo it.\n"
     "4. If you don't know something, say so briefly and offer a practical suggestion.\n"
     "5. Never use bullet points, markdown, or lists – plain spoken sentences only.\n"
-    "6. Be warm and caring; Joseph's independence and confidence matter to you."
+    "6. Be warm and caring; the user's independence and confidence matter to you."
 )
 
 
@@ -799,7 +799,7 @@ class KarenVoiceChat:
         try:
             self._speak_cartesia(text)
         except Exception as exc:
-            # Emergency fallback: macOS say command (NEVER leaves Joseph in silence)
+            # Emergency fallback: macOS say command (NEVER leaves user in silence)
             print(f"[tts] Cartesia failed ({exc}), using macOS say fallback", flush=True)
             try:
                 import subprocess
@@ -1324,7 +1324,7 @@ class KarenVoiceChat:
     def run(self) -> None:
         self.check_services()
         self.speak(
-            "Hey Joseph, Karen here. I'm ready now. Just start talking, and say stop any time to finish."
+            "Hey, Karen here. I'm ready now. Just start talking, and say stop any time to finish."
         )
         print("✅ Karen is live. Say 'stop' to end.", flush=True)
 
@@ -1337,7 +1337,7 @@ class KarenVoiceChat:
 
             print(f"\nYou: {transcript}", flush=True)
             if transcript.lower().strip() in EXIT_WORDS:
-                goodbye = "No worries, Joseph. I'll be here when you want another chat."
+                goodbye = "No worries. I'll be here when you want another chat."
                 print(f"Karen: {goodbye}", flush=True)
                 self.speak(goodbye)
                 break
@@ -1368,7 +1368,7 @@ class KarenVoiceChat:
         )
 
         print("Testing Cartesia TTS...")
-        self.speak("Hello Joseph, Karen is online and ready for a chat.")
+        self.speak("Hello, Karen is online and ready for a chat.")
 
         print("Testing faster-whisper with synthetic audio...")
         response = self.cartesia.tts.generate(
@@ -1396,7 +1396,7 @@ class KarenVoiceChat:
             {
                 "request_id": request_id,
                 "session_id": self.session_id,
-                "text": "Hello Joseph, Redpanda is wired up and ready.",
+                "text": "Hello, Redpanda is wired up and ready.",
                 "source": "talk_to_karen.self_test",
                 "timestamp": time.time(),
             },

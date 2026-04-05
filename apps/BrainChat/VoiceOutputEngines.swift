@@ -155,11 +155,11 @@ final class ShellPiperCommandRunner: PiperCommandRunning {
 
         let preferredTokens: [String]
         if preferredVoiceName.localizedCaseInsensitiveContains("karen") || preferredVoiceName.localizedCaseInsensitiveContains("australia") {
-            preferredTokens = ["en_AU", "en-AU", "australia", "female", "en_GB", "en-US", "en_US"]
+            preferredTokens = ["en_AU", "en-AU", "australia", "en_GB", "en-US", "en_US"]
         } else if preferredVoiceName.localizedCaseInsensitiveContains("moira") || preferredVoiceName.localizedCaseInsensitiveContains("ireland") {
-            preferredTokens = ["en_IE", "en-IE", "irish", "female", "en_GB", "en_AU"]
+            preferredTokens = ["en_IE", "en-IE", "irish", "en_GB", "en_AU"]
         } else {
-            preferredTokens = ["en_AU", "en-GB", "en_GB", "en-US", "en_US", "female"]
+            preferredTokens = ["en_AU", "en-GB", "en_GB", "en-US", "en_US"]
         }
 
         return modelPaths.sorted { lhs, rhs in
@@ -367,21 +367,21 @@ struct ElevenLabsVoiceOption: Identifiable, Hashable, Codable {
         ElevenLabsVoiceOption(
             voiceID: "21m00Tcm4TlvDq8ikWAM",
             name: "Rachel",
-            accentDescription: "Clear premium English female voice",
+            accentDescription: "Clear premium English voice",
             fallbackVoiceName: "Karen",
             isDefault: true
         ),
         ElevenLabsVoiceOption(
             voiceID: "EXAVITQu4vr4xnSDxMaL",
             name: "Bella",
-            accentDescription: "Warm premium female narrator",
+            accentDescription: "Warm premium narrator voice",
             fallbackVoiceName: "Karen",
             isDefault: false
         ),
         ElevenLabsVoiceOption(
             voiceID: "MF3mGyEYCl7XYWbV9V6O",
             name: "Elli",
-            accentDescription: "Bright premium female assistant voice",
+            accentDescription: "Bright premium assistant voice",
             fallbackVoiceName: "Samantha",
             isDefault: false
         ),

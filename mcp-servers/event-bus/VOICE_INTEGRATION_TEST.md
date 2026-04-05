@@ -5,17 +5,17 @@
 ### Code Quality
 - [x] Python syntax validated (`py_compile`)
 - [x] All imports available
-- [x] 14 voice ladies loaded correctly
+- [x] 14 voice voices loaded correctly
 - [x] Functions are callable
 
 ### New Functions
-- [x] `send_voice_request(prompt, lady="karen", priority="normal")`
+- [x] `send_voice_request(prompt, voice="karen", priority="normal")`
   - Creates voice LLM request event
-  - Validates lady name
+  - Validates voice name
   - Emits to `brain.voice.llm` topic
   - Returns request_id for tracking
 
-- [x] `broadcast_voice(message, lady="karen")`
+- [x] `broadcast_voice(message, voice="karen")`
   - Creates voice response event
   - Emits to `brain.voice.response` topic
   - Speaks locally via `say` command
@@ -28,7 +28,7 @@
 - [x] `brain.voice.llm` - Used by send_voice_request()
 
 ### Integration with Voice System
-- [x] Voice ladies roster matches `/core/voice/ladies.py`
+- [x] Voice voices roster matches `/core/voice/voices.py`
 - [x] Events compatible with voice daemons
 - [x] Redpanda/Kafka emission working
 - [x] Fallback chain included in voice LLM requests
@@ -43,7 +43,7 @@ from server import get_bus, send_voice_request
 
 result = send_voice_request(
     prompt="Hello from the event bus",
-    lady="karen"
+    voice="karen"
 )
 print("✅ Voice request result:")
 print(result)
@@ -54,7 +54,7 @@ PYTHON
 ```json
 {
     "request_id": "...",
-    "lady": "karen",
+    "voice": "karen",
     "voice_name": "Karen",
     "region": "Australia",
     "prompt_preview": "Hello from the event bus",
@@ -70,7 +70,7 @@ from server import broadcast_voice
 
 result = broadcast_voice(
     message="Hello from the MCP server!",
-    lady="moira"
+    voice="moira"
 )
 print("✅ Voice broadcast result:")
 print(result)
@@ -80,7 +80,7 @@ PYTHON
 **Expected Output:**
 ```json
 {
-    "lady": "moira",
+    "voice": "moira",
     "voice_name": "Moira",
     "region": "Ireland",
     "message": "Hello from the MCP server!",
@@ -92,39 +92,39 @@ PYTHON
 **Expected Action:**
 - Mac should speak "Hello from the MCP server!" in Moira voice
 
-### Test 3: Lady Name Validation
+### Test 3: Voice Name Validation
 ```bash
 python3 << 'PYTHON'
 from server import broadcast_voice
 
-# Invalid lady name should fallback to karen
+# Invalid voice name should fallback to karen
 result = broadcast_voice(
     message="Testing fallback",
-    lady="invalid_name"
+    voice="invalid_name"
 )
-print(f"✅ Lady used: {result['lady']} (should be 'karen')")
+print(f"✅ Voice used: {result['voice']} (should be 'karen')")
 PYTHON
 ```
 
 **Expected Output:**
 ```
-✅ Lady used: karen (should be 'karen')
+✅ Voice used: karen (should be 'karen')
 ```
 
-### Test 4: All Ladies Available
+### Test 4: All Voices Available
 ```bash
 python3 << 'PYTHON'
 from server import VOICE_LADIES
 
-print(f"✅ All {len(VOICE_LADIES)} ladies available:")
-for lady_key, (voice_name, rate, region) in VOICE_LADIES.items():
-    print(f"   {lady_key:12} → {voice_name:12} ({rate} wpm, {region})")
+print(f"✅ All {len(VOICE_LADIES)} voices available:")
+for voice_key, (voice_name, rate, region) in VOICE_LADIES.items():
+    print(f"   {voice_key:12} → {voice_name:12} ({rate} wpm, {region})")
 PYTHON
 ```
 
 **Expected Output:**
 ```
-✅ All 14 ladies available:
+✅ All 14 voices available:
    karen        → Karen       (165 wpm, Australia)
    kyoko        → Kyoko       (155 wpm, Japan)
    ...
@@ -144,7 +144,7 @@ from server import send_voice_request
 print("Sending voice request...")
 result = send_voice_request(
     prompt="Test event emission",
-    lady="yuna"
+    voice="yuna"
 )
 
 request_id = result['request_id']
@@ -167,8 +167,8 @@ python3 -m py_compile server.py && echo "   ✅ Passed"
 echo "2. Import check..."
 python3 -c "from server import send_voice_request, broadcast_voice; print('   ✅ Passed')"
 
-echo "3. Ladies roster..."
-python3 -c "from server import VOICE_LADIES; print(f'   ✅ {len(VOICE_LADIES)} ladies loaded')"
+echo "3. Voices roster..."
+python3 -c "from server import VOICE_LADIES; print(f'   ✅ {len(VOICE_LADIES)} voices loaded')"
 
 echo "4. Function signatures..."
 python3 << 'PYTHON'
@@ -187,9 +187,9 @@ echo "✅ All checks passed!"
 ## Compatibility Verification
 
 ### With Voice System
-- [x] Ladies names match `/core/voice/ladies.py`
+- [x] Voices names match `/core/voice/voices.py`
 - [x] Voice rates match official roster
-- [x] Regions match lady origins
+- [x] Regions match voice origins
 - [x] Events compatible with voice daemons
 
 ### With Event Bus
@@ -213,7 +213,7 @@ echo "✅ All checks passed!"
 
 ## Edge Cases Handled
 
-- [x] Invalid lady name → Falls back to karen
+- [x] Invalid voice name → Falls back to karen
 - [x] Local speech unavailable → Falls back to event-based delivery
 - [x] Redpanda offline → Exceptions caught, graceful degradation
 - [x] Long messages → Truncated in preview, full sent in event

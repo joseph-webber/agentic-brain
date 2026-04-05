@@ -59,7 +59,7 @@ if __name__ == "__main__":
             if not user:
                 continue
             if user.lower() in ['quit', 'exit', 'bye']:
-                speak("Goodbye Joseph!")
+                speak("Goodbye!")
                 break
             print(f"🧠 Processing...")
             response = chat(user)

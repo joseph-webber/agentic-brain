@@ -2,7 +2,7 @@ import Cocoa
 import AVFoundation
 import Speech
 
-// MARK: - Karen Live Voice Chat App for Joseph
+// MARK: - Karen Live Voice Chat App
 // A menu bar app that listens, transcribes, calls Claude, and speaks responses
 
 @main
@@ -227,7 +227,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         
         let systemPrompt = """
-        You are Karen, Joseph's helpful AI assistant. Joseph is blind and uses VoiceOver.
+        You are Karen, a helpful AI assistant. The user relies on VoiceOver for accessibility.
         Keep responses concise and conversational - they will be spoken aloud.
         Be warm, helpful, and get straight to the point. Maximum 2-3 sentences unless more detail is needed.
         """

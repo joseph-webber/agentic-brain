@@ -28,7 +28,7 @@ final class VoiceCapture: NSObject {
 
     init(timeout: TimeInterval) {
         self.timeout    = timeout
-        // Prefer Australian English (for Joseph); fall back to US English
+        // Prefer Australian English; fall back to US English
         self.recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-AU"))
                        ?? SFSpeechRecognizer(locale: Locale(identifier: "en-US"))!
         super.init()

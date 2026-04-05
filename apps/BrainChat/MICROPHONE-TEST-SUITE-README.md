@@ -44,7 +44,7 @@ Standalone Swift CLI tool that:
 📍 SYSTEM INFORMATION
 🔐 CURRENT PERMISSION STATUS
 🎛️  AVAILABLE AUDIO DEVICES
-  1. Joseph's AirPods Max ✅
+  1. user's AirPods Max ✅
   2. MacBook Air Microphone ✅
 🔄 PERMISSION REQUEST TEST
 🔊 AUDIO CAPTURE TEST
@@ -127,11 +127,11 @@ Potential additions:
 
 ✅ **ACHIEVED**: 
 - Catches mic permission issues before user testing
-- Works with Joseph's AirPods Max and MacBook Air microphone
+- Works with user's AirPods Max and MacBook Air microphone
 - Provides clear, actionable error messages
 - Compiles and runs on macOS 26.4 with Xcode 16
 - Follows macOS best practices for audio capture
 
-This test suite will prevent the frustrating mic permission issues that previously required Joseph to repeatedly test broken configurations. Now developers can verify everything works BEFORE asking for user testing.
+This test suite will prevent the frustrating mic permission issues that previously required user to repeatedly test broken configurations. Now developers can verify everything works BEFORE asking for user testing.
 
 **Status**: Ready for production use ✅

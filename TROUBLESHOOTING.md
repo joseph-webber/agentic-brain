@@ -606,7 +606,7 @@ OLLAMA_HOST=http://ollama:11434
 1. Check relevant section in this guide
 2. Run diagnostic commands to gather logs
 3. Collect: `docker compose ps` + `docker compose logs --tail 200`
-4. Open issue: https://github.com/joseph-webber/agentic-brain/issues
+4. Open issue: https://github.com/agentic-brain-project/agentic-brain/issues
 5. Include: error message, logs, steps to reproduce, environment (Windows/macOS/Linux)
 
 ---

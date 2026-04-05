@@ -90,7 +90,7 @@ jira_search("assignee = steve.taylor AND status = 'In Progress'")
 jira_add_comment("SD-1330", "Investigation complete")
 
 # BitBucket
-bitbucket_list_prs(state="OPEN", author="joseph")
+bitbucket_list_prs(state="OPEN", author="user")
 
 # Health check
 brain_health()

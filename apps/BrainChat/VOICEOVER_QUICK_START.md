@@ -1,6 +1,6 @@
 # BrainChat Accessibility - Quick Reference for VoiceOver Users
 
-**For Joseph:** All keyboard shortcuts work with VoiceOver. You don't need to see the screen anymore!
+**For user:** All keyboard shortcuts work with VoiceOver. You don't need to see the screen anymore!
 
 ## ⚡ Quick Navigation (Master These First)
 

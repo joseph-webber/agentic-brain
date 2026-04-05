@@ -69,7 +69,7 @@ class UnifiedVoiceSystem:
         *,
         pause_after: Optional[float] = None,
         wait: bool = True,
-        lady: Optional[str] = None,
+        persona: Optional[str] = None,
     ) -> bool:
         """Speak text through the voice serializer (never overlaps).
 
@@ -83,7 +83,7 @@ class UnifiedVoiceSystem:
                 rate=rate,
                 pause_after=pause_after,
                 wait=wait,
-                lady=lady,
+                lady=persona,
             )
             with self._lock:
                 self._speak_count += 1

@@ -7,7 +7,7 @@ Voice System Demo and Test Script
 
 Demonstrates all features of the world-class voice system:
 - 145+ macOS voices
-- Joseph's primary voice assistants
+- Primary voice assistants
 - Conversational multi-voice
 - VoiceOver integration
 - Work/Life/Quiet modes
@@ -192,7 +192,7 @@ def main():
     """Run all demos."""
     print("\n" + "=" * 70)
     print("  🎙️  AGENTIC BRAIN - WORLD CLASS VOICE SYSTEM")
-    print("  Built for Joseph's Accessibility")
+    print("  Built for Accessibility")
     print("=" * 70)
 
     try:

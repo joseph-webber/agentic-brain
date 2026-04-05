@@ -18,28 +18,28 @@ publisher = VoiceEventPublisherV2(bus)
 ## 📋 All Tools (Alphabetical)
 
 ### Conversation
-- `voice_conversation_started(ladies, topic)` - Start conversation
-- `voice_conversation_turn(lady, text)` - Lady speaks
-- `voice_conversation_ended(ladies, total_turns, duration, reason)` - End conversation
+- `voice_conversation_started(voices, topic)` - Start conversation
+- `voice_conversation_turn(voice, text)` - Voice speaks
+- `voice_conversation_ended(voices, total_turns, duration, reason)` - End conversation
 
-### Ladies
-- `voice_lady_introduced(lady, voice_name, region, greeting)` - New lady joins
-- `voice_lady_reaction(from_lady, to_lady, text, emotion)` - Lady reacts
+### Voices
+- `voice_voice_introduced(voice, voice_name, region, greeting)` - New voice joins
+- `voice_voice_reaction(from_voice, to_voice, text, emotion)` - Voice reacts
 
 ### Mood
-- `voice_mood_changed(mood, reason, ladies)` - Sync mood for all ladies
+- `voice_mood_changed(mood, reason, voices)` - Sync mood for all voices
 
 ### Turn-Taking
-- `voice_turn_requested(lady, priority, reason)` - Request to speak
-- `voice_turn_granted(lady, request_id, granted_by, duration)` - Grant turn
-- `voice_turn_released(lady, request_id, reason, duration_held)` - Release turn
+- `voice_turn_requested(voice, priority, reason)` - Request to speak
+- `voice_turn_granted(voice, request_id, granted_by, duration)` - Grant turn
+- `voice_turn_released(voice, request_id, reason, duration_held)` - Release turn
 
 ### Fallback
-- `voice_fallback_local(reason, lady, error_code, retry_after)` - Rate limit fallback
+- `voice_fallback_local(reason, voice, error_code, retry_after)` - Rate limit fallback
 
 ### Queue
-- `voice_queue_added(lady, text, position, length)` - Add to queue
-- `voice_queue_speaking(lady, text, remaining)` - Now speaking
+- `voice_queue_added(voice, text, position, length)` - Add to queue
+- `voice_queue_speaking(voice, text, remaining)` - Now speaking
 - `voice_queue_empty(total_processed, total_duration)` - Queue done
 
 ---
@@ -67,14 +67,14 @@ voice_turn_released("moira")
 voice_conversation_ended(["karen", "moira", "kyoko"], 2, 45.0)
 ```
 
-### Pattern: Multi-Lady Discussion
+### Pattern: Multi-Voice Discussion
 ```python
 # Start
 voice_conversation_started(["karen", "moira"], "planning")
 
 # Turns
 voice_conversation_turn("karen", "My idea is...")
-voice_lady_reaction("moira", "karen", "My idea is...", "I like it!", "agreement")
+voice_voice_reaction("moira", "karen", "My idea is...", "I like it!", "agreement")
 voice_conversation_turn("moira", "We could also...")
 
 # End
@@ -124,10 +124,10 @@ voice_mood_changed("bali_spa", "break_time")
 
 ---
 
-## 🎤 Ladies Reference
+## 🎤 Voices Reference
 
 ```
-🇦🇺 karen     (Australia) - Default lady
+🇦🇺 karen     (Australia) - Default voice
 🇯🇵 kyoko     (Japan)
 🇨🇳 tingting   (China)
 🇭🇰 sinji      (Hong Kong)
@@ -146,11 +146,11 @@ voice_mood_changed("bali_spa", "break_time")
 
 | Emotion | Usage |
 |---------|-------|
-| `agreement` | Lady agrees with another |
-| `disagreement` | Lady disagrees |
-| `question` | Lady asks a question |
-| `excitement` | Lady is excited |
-| `support` | Lady supports another |
+| `agreement` | Voice agrees with another |
+| `disagreement` | Voice disagrees |
+| `question` | Voice asks a question |
+| `excitement` | Voice is excited |
+| `support` | Voice supports another |
 
 ---
 
@@ -181,7 +181,7 @@ voice_mood_changed("bali_spa", "break_time")
 
 | Reason | Meaning |
 |--------|---------|
-| `finished` | Lady completed speaking |
+| `finished` | Voice completed speaking |
 | `interrupted` | Higher priority interrupted |
 | `timeout` | Duration exceeded |
 
@@ -202,15 +202,15 @@ voice_mood_changed("bali_spa", "break_time")
 ```
 brain.voice.conversation.*
   ├─ started   ← Conversation begins
-  ├─ turn      ← Lady takes turn
+  ├─ turn      ← Voice takes turn
   └─ ended     ← Conversation ends
 
-brain.voice.ladies.*
-  ├─ introduced ← New lady joins
-  └─ reaction   ← Lady reacts to another
+brain.voice.voices.*
+  ├─ introduced ← New voice joins
+  └─ reaction   ← Voice reacts to another
 
 brain.voice.mood.*
-  └─ changed   ← All ladies sync mood
+  └─ changed   ← All voices sync mood
 
 brain.voice.turn.*
   ├─ requested ← Request to speak
@@ -237,7 +237,7 @@ python3 test_voice_v2.py
 
 Results:
 - ✅ Conversation lifecycle (3 tests)
-- ✅ Cross-lady communication (2 tests)
+- ✅ Cross-voice communication (2 tests)
 - ✅ Mood synchronization (2 tests)
 - ✅ Turn-taking (4 tests)
 - ✅ Error fallback (1 test)
@@ -281,7 +281,7 @@ App → Publisher → Event Bus → Subscribers
 - Check Redpanda is running
 
 **Rate limit fallback not triggering?**
-- Ensure lady name is valid
+- Ensure voice name is valid
 - Check `VOICE_LOCAL_FALLBACK=true`
 - Verify local LLM available
 
@@ -294,7 +294,7 @@ App → Publisher → Event Bus → Subscribers
 
 ## 💡 Best Practices
 
-1. **Always validate ladies list** before starting conversation
+1. **Always validate voices list** before starting conversation
 2. **Use consistent request_id** for turn-taking sequence
 3. **Set reasonable duration** for granted turns (30s typical)
 4. **Monitor queue length** to prevent buildup

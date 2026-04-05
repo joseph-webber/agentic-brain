@@ -34,7 +34,7 @@ final class VoiceManagerTests: XCTestCase {
     func testDefaultVoiceIsKaren() {
         let mock = MockVoiceSynthesizer()
         XCTAssertEqual(mock.selectedVoice, "Karen (Premium)",
-                       "Default voice must be Karen for Joseph")
+                       "Default voice must be Karen for accessibility users")
     }
 
     func testDefaultSpeechRate() {
@@ -47,11 +47,11 @@ final class VoiceManagerTests: XCTestCase {
 
     func testSpeakAddsToQueue() {
         let mock = MockVoiceSynthesizer()
-        mock.speak("Hello Joseph")
+        mock.speak("Hello there")
         mock.speak("How are you?")
 
         XCTAssertEqual(mock.spokenTexts.count, 2)
-        XCTAssertEqual(mock.spokenTexts[0], "Hello Joseph")
+        XCTAssertEqual(mock.spokenTexts[0], "Hello there")
         XCTAssertEqual(mock.spokenTexts[1], "How are you?")
     }
 

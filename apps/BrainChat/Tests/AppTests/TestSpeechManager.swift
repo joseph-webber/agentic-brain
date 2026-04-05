@@ -34,9 +34,9 @@ final class TestSpeechManager: XCTestCase {
         mock.emit(.partial("Hello"))
         await flushMainQueue()
         XCTAssertEqual(manager.currentTranscript, "Hello")
-        mock.emit(.final("Hello Joseph"))
+        mock.emit(.final("Hello there"))
         await flushMainQueue()
-        XCTAssertEqual(finalized, "Hello Joseph")
+        XCTAssertEqual(finalized, "Hello there")
         XCTAssertFalse(manager.isListening)
     }
 

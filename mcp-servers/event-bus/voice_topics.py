@@ -24,7 +24,7 @@ Example:
   publisher.publish_mood_change("working")
   
   # Lady speaking
-  publisher.publish_lady_speaking("karen", "Hello Joseph!")
+  publisher.publish_lady_speaking("karen", "Hello there!")
   
   # Multi-lady conversation
   publisher.publish_conversation_event({

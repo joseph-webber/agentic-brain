@@ -160,7 +160,7 @@ class TestLadyCommunication(unittest.TestCase):
             lady="iris",
             voice_name="Iris",
             region="San Francisco",
-            greeting="Hello Joseph!"
+            greeting="Hello there!"
         )
         
         self.assertTrue(result['success'])
@@ -173,7 +173,7 @@ class TestLadyCommunication(unittest.TestCase):
         
         event_data = events[0]['event']
         self.assertEqual(event_data['lady'], "iris")
-        self.assertEqual(event_data['greeting'], "Hello Joseph!")
+        self.assertEqual(event_data['greeting'], "Hello there!")
     
     def test_lady_reaction(self):
         """Test lady reaction event"""
@@ -385,7 +385,7 @@ class TestVoiceQueue(unittest.TestCase):
         """Test queue added event"""
         result = self.publisher.publish_queue_added(
             lady="tingting",
-            text="Hello Joseph!",
+            text="Hello there!",
             voice_name="Tingting",
             region="China",
             queue_position=0,
@@ -404,7 +404,7 @@ class TestVoiceQueue(unittest.TestCase):
         """Test queue speaking event"""
         result = self.publisher.publish_queue_speaking(
             lady="tingting",
-            text="Hello Joseph!",
+            text="Hello there!",
             voice_name="Tingting",
             region="China",
             queue_remaining=0

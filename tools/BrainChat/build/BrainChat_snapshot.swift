@@ -3520,6 +3520,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         sendButton.target = self
         sendButton.action = #selector(sendTextMessage)
         sendButton.setAccessibilityLabel("Send message")
+        sendButton.setAccessibilityHelp("Double tap to send the typed message to Brain Chat")
+        sendButton.setAccessibilityRole(NSAccessibility.Role.button)
         contentView.addSubview(sendButton)
 
         statusLabel.frame = NSRect(x: 40, y: 362, width: 820, height: 24)

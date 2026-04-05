@@ -654,9 +654,9 @@ class TestMCPPrompt:
         """Test rendering a prompt with arguments."""
         prompt = MCPPrompt(name="greet", template="Hello, {name}! Welcome to {place}.")
 
-        rendered = prompt.render({"name": "Joseph", "place": "Adelaide"})
+        rendered = prompt.render({"name": "User", "place": "Adelaide"})
 
-        assert rendered == "Hello, Joseph! Welcome to Adelaide."
+        assert rendered == "Hello, User! Welcome to Adelaide."
 
 
 class TestMCPCapabilities:
@@ -881,11 +881,11 @@ class TestMCPServerPrompts:
                 "jsonrpc": "2.0",
                 "id": 1,
                 "method": "prompts/get",
-                "params": {"name": "greet", "arguments": {"name": "Joseph"}},
+                "params": {"name": "greet", "arguments": {"name": "User"}},
             }
         )
 
-        assert "Hello Joseph" in response["result"]["messages"][0]["content"]["text"]
+        assert "Hello User" in response["result"]["messages"][0]["content"]["text"]
 
 
 # =============================================================================

@@ -131,7 +131,7 @@ final class VoiceEngineBenchmarkTests: XCTestCase {
         voiceManager.setOutputEngine(.macOS)
         
         let testPhrases = [
-            "Hello Joseph this is Karen speaking from Australia today"
+            "Hello user this is Karen speaking from Australia today"
         ]
         
         let result = await benchmark.benchmarkPhraseLatency(
@@ -156,7 +156,7 @@ final class VoiceEngineBenchmarkTests: XCTestCase {
         voiceManager.setOutputEngine(.macOS)
         
         let testPhrases = [
-            "Hello Joseph welcome back to BrainChat. I'm Karen your Australian voice assistant speaking at optimal speed for clarity and comprehension. I can help you with coding tasks research information and much more."
+            "Hello user welcome back to BrainChat. I'm Karen your Australian voice assistant speaking at optimal speed for clarity and comprehension. I can help you with coding tasks research information and much more."
         ]
         
         let result = await benchmark.benchmarkPhraseLatency(

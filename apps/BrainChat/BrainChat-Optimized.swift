@@ -96,10 +96,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, @unchecked Sendable {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             Task.detached { [weak self] in
                 self?.profiler.markInitStart("Greeting.audio")
-                BrainChatRuntimeMarker.write("last-greeting.txt", value: "G'day Joseph")
+                BrainChatRuntimeMarker.write("last-greeting.txt", value: "G'day")
                 let task = Process()
                 task.executableURL = URL(fileURLWithPath: "/usr/bin/say")
-                task.arguments = ["-v", "Karen", "-r", "160", "G'day Joseph"]
+                task.arguments = ["-v", "Karen", "-r", "160", "G'day"]
                 try? task.run()
                 self?.profiler.markInitEnd("Greeting.audio")
                 

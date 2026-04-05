@@ -2,7 +2,7 @@
 
 ## ✅ Completed Implementation
 
-BrainChat has been upgraded to **WCAG 2.1 Level AAA** compliance with special focus on **fast navigation** for Joseph's VoiceOver access.
+BrainChat has been upgraded to **WCAG 2.1 Level AAA** compliance with special focus on **fast navigation** for user's VoiceOver access.
 
 ## 📋 What Was Changed
 
@@ -249,7 +249,7 @@ VoiceOver should announce: "Microphone now live" or "Microphone now muted"
 
 ## 🎉 Result
 
-BrainChat is now **WCAG 2.1 Level AAA compliant** with **8-10x faster navigation** for VoiceOver users. Joseph can now navigate the entire application using keyboard shortcuts and rotor navigation without any eye movement or visual navigation.
+BrainChat is now **WCAG 2.1 Level AAA compliant** with **8-10x faster navigation** for VoiceOver users. user can now navigate the entire application using keyboard shortcuts and rotor navigation without any eye movement or visual navigation.
 
 ---
 

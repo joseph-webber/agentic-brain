@@ -75,7 +75,7 @@ class FakeSession:
                 "content": [
                     {
                         "type": "text",
-                        "text": "Hello Joseph, the standalone voice agent is working.",
+                        "text": "Hello, the standalone voice agent is working.",
                     }
                 ]
             }

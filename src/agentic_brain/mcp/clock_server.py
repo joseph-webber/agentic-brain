@@ -21,7 +21,7 @@ Uses the thread-safe Clock singleton to prevent stale date issues.
 
 Tools provided:
 - clock_now: Get current datetime in various formats
-- clock_adelaide: Get Adelaide time (Joseph's timezone)
+- clock_adelaide: Get Adelaide time (primary timezone)
 - clock_utc: Get UTC time
 - clock_year: Get current year (NEVER stale!)
 - clock_date: Get current date in ISO format
@@ -92,7 +92,7 @@ def clock_now(format_type: str = "iso") -> str:
 
 def clock_adelaide() -> str:
     """
-    Get current Adelaide time (Joseph's timezone).
+    Get current Adelaide time (primary timezone).
 
     Adelaide is UTC+10:30 (ACDT) or UTC+9:30 (ACST).
 
@@ -365,7 +365,7 @@ CLOCK_TOOLS = {
     },
     "clock_adelaide": {
         "function": clock_adelaide,
-        "description": "Get comprehensive Adelaide time information (Joseph's timezone)",
+        "description": "Get comprehensive Adelaide time information (primary timezone)",
     },
     "clock_utc": {
         "function": clock_utc,

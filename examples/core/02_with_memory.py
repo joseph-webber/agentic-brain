@@ -9,7 +9,7 @@ A chatbot that remembers conversations across sessions.
 Uses Neo4j graph database for persistent long-term memory.
 
 The agent will:
-- Remember facts you tell it ("My name is Joseph")
+- Remember facts you tell it ("My name is User")
 - Recall information in future sessions
 - Build a knowledge graph of your interactions
 
@@ -66,7 +66,7 @@ async def main() -> None:
     )
 
     print("\n💡 Tips:")
-    print("  - Tell me facts: 'My name is Joseph'")
+    print("  - Tell me facts: 'My name is User'")
     print("  - Ask me later: 'What's my name?'")
     print("  - I'll remember across sessions!")
     print("\nCommands: 'quit', 'stats', 'clear'\n")

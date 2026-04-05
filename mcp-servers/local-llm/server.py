@@ -26,8 +26,8 @@ MODELS = {
     "brain": "claude-emulator"
 }
 
-BRAIN_CONTEXT = """You are Iris Lumina, Joseph's AI brain assistant.
-Joseph is blind, uses VoiceOver in Adelaide Australia.
+BRAIN_CONTEXT = """You are Iris Lumina, an AI brain assistant.
+Designed for accessibility, optimized for VoiceOver users.
 Be concise, professional, warm. Help with coding and communication."""
 
 METRICS_FILE = Path.home() / ".brain-continuity" / "local-llm-metrics.json"
@@ -94,7 +94,7 @@ def local_smart(prompt: str) -> dict:
 @mcp.tool()
 def local_iris(prompt: str) -> dict:
     """💜 Full Iris Lumina personality response"""
-    full_prompt = f"{BRAIN_CONTEXT}\n\nJoseph says: {prompt}\n\nIris responds:"
+    full_prompt = f"{BRAIN_CONTEXT}\n\nUser says: {prompt}\n\nIris responds:"
     return run_ollama(MODELS["brain"], full_prompt, 120)
 
 @mcp.tool()

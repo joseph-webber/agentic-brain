@@ -18,10 +18,10 @@ def test_cache_audio_round_trip_with_binary_payload():
     cache = VoiceCache(client=client)
 
     audio_bytes = b"\x00\xffvoice-audio\x10"
-    key = cache.cache_audio("Hello Joseph", "Karen", audio_bytes, ttl=60)
+    key = cache.cache_audio("Hello there", "Karen", audio_bytes, ttl=60)
 
     assert key.startswith("voice:audio:")
-    assert cache.get_cached_audio("Hello Joseph", "Karen") == audio_bytes
+    assert cache.get_cached_audio("Hello there", "Karen") == audio_bytes
 
 
 def test_queue_orders_by_priority_and_preserves_duplicates():

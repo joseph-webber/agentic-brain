@@ -226,7 +226,7 @@ func applicationDidFinishLaunching(_ notification: Notification) {
 1. **Clean slate**: 
    ```bash
    # Reset permissions (requires Full Disk Access)
-   tccutil reset Microphone com.josephwebber.brainchat
+   tccutil reset Microphone com.userwebber.brainchat
    
    # Delete app
    rm -rf /Applications/Brain\ Chat.app

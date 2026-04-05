@@ -2,22 +2,22 @@
 
 ## 🎤 New Tools
 
-### `send_voice_request(prompt, lady="karen", priority="normal")`
-Generate a spoken response from LLM via voice lady.
+### `send_voice_request(prompt, voice="karen", priority="normal")`
+Generate a spoken response from LLM via voice persona.
 
 ```
-send_voice_request("What's the weather?", lady="kyoko")
+send_voice_request("What's the weather?", voice="kyoko")
 → Request sent to brain.voice.llm topic
-→ LLM processes + lady speaks response
+→ LLM processes + voice speaks response
 ```
 
-**Ladies:** karen, kyoko, tingting, yuna, moira, zosia, flo, shelley, etc.
+**Voices:** karen, kyoko, tingting, yuna, moira, zosia, flo, shelley, etc.
 
-### `broadcast_voice(message, lady="karen")`
-Speak a message immediately with lady voice.
+### `broadcast_voice(message, voice="karen")`
+Speak a message immediately with the specified voice.
 
 ```
-broadcast_voice("Good morning Joseph!", lady="flo")
+broadcast_voice("Good morning!", voice="flo")
 → Emits to brain.voice.response topic
 → Speaks locally + broadcasts for other systems
 ```
@@ -31,10 +31,10 @@ broadcast_voice("Good morning Joseph!", lady="flo")
 | `brain.voice.conversation` | Conversation state tracking |
 | `brain.voice.llm` | LLM voice requests from send_voice_request() |
 
-## 👩 Voice Ladies
+## 🎙️ Voice Personas
 
-| Lady | Country | Voice | Speed |
-|------|---------|-------|-------|
+| Voice | Region | Name | Speed |
+|-------|--------|------|-------|
 | karen | Australia | Karen | 165 wpm |
 | kyoko | Japan | Kyoko | 155 wpm |
 | tingting | China | Tingting | 155 wpm |
@@ -64,7 +64,7 @@ Redpanda/Kafka Event Bus
     └─ brain.voice.llm
     ↓
 Voice System (/core/voice/)
-    ├─ Voice Daemons (ladies_daemon.py, iris_voice_daemon.py)
+    ├─ Voice Daemons (voice_daemon.py)
     ├─ Voice Engine (voice_engine.py)
     └─ Voice Events (voice_events.py)
     ↓
@@ -77,7 +77,7 @@ Mac TTS (say command) + Other Services
 ```
 send_voice_request(
     prompt="Summarize the top 3 PR reviews today",
-    lady="moira",
+    voice="moira",
     priority="normal"
 )
 ```
@@ -86,16 +86,16 @@ send_voice_request(
 ```
 broadcast_voice(
     message="You have a new Jira ticket to review",
-    lady="karen"
+    voice="karen"
 )
 ```
 
 ### Regional Voice Selection
 ```
-# Use lady from specific region
+# Use voice from specific region
 send_voice_request(
     prompt="Tell me about the import regulations",
-    lady="linh"  # Vietnam
+    voice="linh"  # Vietnam
 )
 ```
 
@@ -104,11 +104,11 @@ send_voice_request(
 ### send_voice_request() Flow
 ```
 send_voice_request("Hello kyoko")
-→ Validates lady='kyoko' exists
+→ Validates voice='kyoko' exists
 → Creates event with:
    - type: 'voice_llm_request'
    - prompt: "Hello kyoko"
-   - lady: 'kyoko'
+   - voice: 'kyoko'
    - voice_name: 'Kyoko'
    - region: 'Japan'
    - fallback_chain: ['claude', 'openrouter', 'emulator']
@@ -121,12 +121,12 @@ send_voice_request("Hello kyoko")
 
 ### broadcast_voice() Flow
 ```
-broadcast_voice("Good morning!", lady="flo")
-→ Validates lady='flo' exists
+broadcast_voice("Good morning!", voice="flo")
+→ Validates voice='flo' exists
 → Creates event:
    - type: 'voice_response'
    - message: 'Good morning!'
-   - lady: 'flo'
+   - voice: 'flo'
    - voice_name: 'Flo'
    - region: 'England'
 → Emits to brain.voice.response topic
@@ -139,10 +139,10 @@ broadcast_voice("Good morning!", lady="flo")
 
 - ✅ 4 new voice topics documented
 - ✅ 2 new MCP tools (send_voice_request, broadcast_voice)
-- ✅ 14-lady roster integrated
+- ✅ 14-voice roster integrated
 - ✅ Redpanda event emission for all voice actions
 - ✅ Graceful fallback if local speech unavailable
-- ✅ Automatic validation of lady names
+- ✅ Automatic validation of voice names
 - ✅ Minimal, focused changes (no breaking changes)
 
 ## 📝 Files

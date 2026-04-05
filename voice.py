@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-voice.py — Joseph's unified voice launcher.
+voice.py — Unified voice launcher.
 
 Usage:
     python voice.py              → standalone mode (Claude API)
@@ -323,7 +323,7 @@ def transcribe(wav_path: Path, model_name: str = "tiny.en") -> str:
 _CLAUDE_HISTORY: list[dict] = []   # module-level so it persists across turns
 
 _CLAUDE_SYSTEM = (
-    "You are Karen, a warm, concise voice assistant for Joseph, who is blind. "
+    "You are Karen, a warm, concise voice assistant for a user with visual impairments. "
     "Respond in plain spoken English, normally one to four short sentences. "
     "No markdown, no bullet points, no emoji. Be direct and helpful."
 )
@@ -489,7 +489,7 @@ class VoiceLauncher:
             if self._is_stop(heard):
                 self.announce("stopping", f"Stop phrase: '{heard}'")
                 _play_sound("bye")
-                self.say("Goodbye Joseph. Talk soon.")
+                self.say("Goodbye. Talk soon.")
                 return False
 
             reply = self._think(heard)
@@ -563,7 +563,7 @@ class VoiceLauncher:
             return 1
 
         _play_sound("bye")
-        self.say("Voice launcher closed. Goodbye Joseph.")
+        self.say("Voice launcher closed. Goodbye.")
         return 0
 
 
@@ -573,7 +573,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="voice.py",
         description=(
-            "Joseph's unified voice launcher.\n"
+            "Unified voice launcher.\n"
             "  python voice.py           → standalone (Claude)\n"
             "  python voice.py --copilot → GitHub Copilot mode"
         ),

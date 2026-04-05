@@ -269,7 +269,7 @@ async def route_request(request_dict: dict[str, Any]) -> dict[str, Any]:
         "success": False,
         "route": "ollama",
         "provider": provider_name("ollama", request),
-        "reply": f"Sorry Joseph, the voice bridge could not get a response. {last_error or 'No backend was available.'}",
+        "reply": f"Sorry, the voice bridge could not get a response. {last_error or 'No backend was available.'}",
         "mode": "yolo" if request.yolo else "standard",
         "duration": time.time() - started_at,
         "error": last_error,

@@ -31,7 +31,7 @@ func showBanner() {
 
     ╔═══════════════════════════════════════════════════════════╗
     ║  🎙️  KAREN VOICE CHAT  🎙️                                 ║
-    ║  Swift Bridge to AI - Built for Joseph                   ║
+    ║  Swift Bridge to AI - Accessible Voice Assistant         ║
     ╠═══════════════════════════════════════════════════════════╣
     ║  • Native macOS microphone access                        ║
     ║  • Whisper speech-to-text                                ║
@@ -126,7 +126,7 @@ func launchVoiceChat() {
     task.standardError  = FileHandle.standardError
 
     signal(SIGINT) { _ in
-        Terminal.print("\n\n👋 Goodbye Joseph! Chat soon!", color: Terminal.cyan)
+        Terminal.print("\n\n👋 Goodbye! Chat soon!", color: Terminal.cyan)
         exit(0)
     }
 

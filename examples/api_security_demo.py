@@ -5,7 +5,7 @@
 """
 Example: API-Based Security Architecture
 
-This demonstrates Joseph's key insight: customer chatbots should ONLY
+This demonstrates The key insight: customer chatbots should ONLY
 access external APIs, not have direct machine access.
 """
 
@@ -252,7 +252,7 @@ async def main():
     
     print("\n" + "="*60)
     print("API-BASED SECURITY ARCHITECTURE EXAMPLES")
-    print("Joseph's Key Insight: Customer chatbots = API-only access")
+    print("Key Insight: Customer chatbots = API-only access")
     print("="*60)
     
     # Note: These examples use mock credentials

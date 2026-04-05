@@ -29,7 +29,7 @@ def test_voice_actually_works():
     queue.reset()
 
     message = queue.speak(
-        "Integration voice test for Joseph.",
+        "Integration voice test.",
         voice="Karen",
         rate=150,
         pause_after=0.05,

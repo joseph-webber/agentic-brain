@@ -257,13 +257,13 @@ migrations = [
     CypherMigration(
         version="0001",
         description="Create user indexes",
-        author="joseph",
+        author="admin",
         up_cypher=["CREATE INDEX user_email IF NOT EXISTS FOR (u:User) ON (u.email)"]
     ),
     CypherMigration(
         version="0002",
         description="Add uniqueness constraint",
-        author="joseph",
+        author="admin",
         up_cypher=["CREATE CONSTRAINT user_id_unique IF NOT EXISTS FOR (u:User) REQUIRE u.id IS UNIQUE"]
     )
 ]

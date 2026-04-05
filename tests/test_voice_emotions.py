@@ -232,7 +232,7 @@ class TestSerializerEmotionSupport:
 
     def test_voice_message_renders_pitch_and_volume_for_say(self):
         message = VoiceMessage(
-            text="Hello Joseph",
+            text="Hello there",
             voice="Karen",
             rate=155,
             pitch=1.2,
@@ -242,7 +242,7 @@ class TestSerializerEmotionSupport:
         rendered = message.render_for_say()
         assert rendered.startswith("[[pbas")
         assert "[[volm 90]]" in rendered
-        assert rendered.endswith("Hello Joseph")
+        assert rendered.endswith("Hello there")
 
     @patch("agentic_brain.voice.expression.ExpressionEngine.is_work_mode", return_value=False)
     @patch("agentic_brain.voice.serializer.shutil.which", return_value="/usr/bin/say")

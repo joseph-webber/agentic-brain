@@ -820,7 +820,7 @@ def voice_live_start(
 ) -> str:
     """Start a live voice conversation session.
 
-    Joseph speaks, the brain listens, transcribes, thinks, and responds
+    The user speaks, the brain listens, transcribes, thinks, and responds
     — all with voice.  Uses whisper.cpp for local offline transcription.
 
     Args:

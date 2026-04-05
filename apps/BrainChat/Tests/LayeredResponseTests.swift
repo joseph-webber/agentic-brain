@@ -88,11 +88,11 @@ final class LayeredChunkTests: XCTestCase {
         let chunk = LayeredChunk(
             layer: .instant,
             source: "groq",
-            content: "G'day Joseph!"
+            content: "G'day!"
         )
         XCTAssertEqual(chunk.layer,   .instant)
         XCTAssertEqual(chunk.source,  "groq")
-        XCTAssertEqual(chunk.content, "G'day Joseph!")
+        XCTAssertEqual(chunk.content, "G'day!")
         XCTAssertFalse(chunk.isFinal)
     }
 
@@ -256,7 +256,7 @@ final class LayeredStrategyTests: XCTestCase {
     }
 
     func testDefaultStrategyForNormalChatIsSpeedFirst() {
-        // Joseph uses voice chat – fastest response matters most
+        // The user uses voice chat – fastest response matters most
         let expected = LayeredStrategy.speedFirst
         if case .speedFirst = expected { } else { XCTFail("Speed-first must be default for voice") }
     }

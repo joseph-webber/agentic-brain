@@ -213,7 +213,7 @@ FALLBACK_CHAIN = [
     
     # RELIABILITY TIER (Local - always available)
     "llama3.2:3b",               # Local fast - instant startup
-    "claude-emulator",           # Local trained - knows Joseph's context
+    "claude-emulator",           # Local trained - knows user's context
     "llama3.1:8b",               # Local quality
     
     # CLOUD BACKUP TIER (if Groq down)
@@ -2407,11 +2407,11 @@ LADIES = {
     },
 }
 
-# Joseph's context (from user input)
-JOSEPH_CONTEXT = {
-    "name": "Joseph",
+# User context (from user input)
+USER_CONTEXT = {
+    "name": "User",
     "location": "Adelaide, Australia",
-    "accessibility": "Blind - uses VoiceOver",
+    "accessibility": "VoiceOver user",
     "interests": ["drum and bass", "music production"],
     "music_since": 1995,
     "current_year": 2025,
@@ -2520,7 +2520,7 @@ def openrouter_lady_chat(
     Args:
         message: What you want to say to the lady
         lady: Which lady to talk to (default: karen)
-        context_about_joseph: Include info about Joseph in the prompt (default: True)
+        context_about_joseph: Include info about the user in the prompt (default: True)
         model: Model to use (default llama3.2:3b for speed)
     """
     if not model:
@@ -2548,10 +2548,10 @@ Guidelines:
         context += f"""
 
 Note about the person you're talking to:
-- Name: {JOSEPH_CONTEXT['name']}
-- Location: {JOSEPH_CONTEXT['location']}
+- Name: {USER_CONTEXT['name']}
+- Location: {USER_CONTEXT['location']}
 - Blind user (using VoiceOver) - keep audio responses SHORT
-- Music producer since {JOSEPH_CONTEXT['music_since']} ({JOSEPH_CONTEXT['years_experience']} years!)
+- Music producer since {USER_CONTEXT['music_since']} ({USER_CONTEXT['years_experience']} years!)
 - Loves drum and bass music"""
     
     # Full prompt
@@ -2665,9 +2665,9 @@ Started: {state['started_at']}
 Your personality: {lady_info['personality']}
 
 Conversation history:
-{chr(10).join(f"  {JOSEPH_CONTEXT['name']}: {m.get('message', '')} " for m in state['messages'][:-1])}
+{chr(10).join(f"  {USER_CONTEXT['name']}: {m.get('message', '')} " for m in state['messages'][:-1])}
 
-{JOSEPH_CONTEXT['name']}: {message}
+{USER_CONTEXT['name']}: {message}
 
 Respond as {lady_info['name']} in 1-2 sentences. Stay natural and conversational."""
         

@@ -262,7 +262,7 @@ def jira_insights_steve() -> dict:
 @mcp.tool()
 def jira_insights_work() -> dict:
     """
-    Get prioritized work recommendations for Joseph.
+    Get prioritized work recommendations for the user.
     Returns priority_1 (today), priority_2 (this week), priority_3 (can take on).
     """
     from tools.jira_insights import JiraInsights
@@ -440,7 +440,7 @@ def rovo_weekly_report(weeks_ago: int = 0) -> dict:
     """
     📊 Generate weekly report using Rovo AI.
     Gathers completed work, in-progress, blockers, PRs, sprint status.
-    Perfect for Joseph's weekly status updates.
+    Perfect for the user's weekly status updates.
     """
     from tools.rovo_reporting import RovoReporter
     reporter = RovoReporter()
@@ -484,7 +484,7 @@ def rovo_backlog() -> dict:
 def rovo_steve_tracker() -> dict:
     """
     👨‍💼 Track Steve Taylor's work via Rovo.
-    Current work, PRs, what's blocked, what he might need from Joseph.
+    Current work, PRs, what's blocked, what he might need from the user.
     """
     from tools.rovo_reporting import RovoReporter
     reporter = RovoReporter()
@@ -693,7 +693,7 @@ def cache_clear(pattern: str = None) -> dict:
 
 
 # === SPEECH INPUT TOOLS ===
-# Whisper-powered speech-to-text for Joseph (accessibility)
+# Whisper-powered speech-to-text for the user (accessibility)
 
 @mcp.tool()
 def speech_listen(seconds: float = 5.0) -> dict:

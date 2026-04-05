@@ -18,7 +18,7 @@ def _env_flag(name: str, default: str) -> bool:
 
 
 def stereo_pan_enabled() -> bool:
-    """Return whether stereo panning is enabled for lady voices."""
+    """Return whether stereo panning is enabled for voice personas."""
     return _env_flag("AGENTIC_BRAIN_STEREO_PAN_ENABLED", "true")
 
 

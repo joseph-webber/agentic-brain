@@ -53,7 +53,7 @@
 | **Memory Usage** | 6-10GB | 16GB | Peak during inference |
 | **Throughput** | 2-4 req/min | 1 req/min | Sequential queries |
 
-**Use Case**: Brain context-aware responses, Joseph's assistant mode
+**Use Case**: Brain context-aware responses, user assistant mode
 
 ---
 

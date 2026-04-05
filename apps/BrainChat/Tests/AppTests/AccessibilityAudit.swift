@@ -5,7 +5,7 @@ import SwiftUI
 // MARK: - Accessibility Audit
 // ZERO TOLERANCE for accessibility violations.
 // This audit scans ALL views and FAILS the build if any violations are found.
-// Joseph depends on every element being properly labelled and navigable.
+// The user depends on every element being properly labelled and navigable.
 
 final class AccessibilityAudit: XCTestCase {
 
@@ -52,7 +52,7 @@ final class AccessibilityAudit: XCTestCase {
         let store = ConversationStore()
         store.messages = [
             ChatMessage(role: "user", content: "Hello"),
-            ChatMessage(role: "assistant", content: "Hi Joseph"),
+            ChatMessage(role: "assistant", content: "Hi there"),
             ChatMessage(role: "system", content: "Connected to Claude")
         ]
         auditView(ConversationView(store: store), name: "ConversationView")
@@ -392,7 +392,7 @@ final class AccessibilityAudit: XCTestCase {
             ♿️ ACCESSIBILITY AUDIT FAILED
             
             \(violations.count) violation(s) found!
-            Joseph is BLIND. Every violation means he cannot use this app.
+            The user may be BLIND. Every violation means he cannot use this app.
             
             \(violations.map { "  • \($0)" }.joined(separator: "\n"))
             
@@ -501,7 +501,7 @@ final class AccessibilityAudit: XCTestCase {
             
             \(report)
             
-            Joseph is blind. Fix these NOW.
+            The user may be blind. Fix these NOW.
             """)
         }
     }

@@ -4,7 +4,7 @@
 """
 Tests for agentic-brain voice module.
 
-CRITICAL for accessibility - Joseph is blind and relies on voice output!
+CRITICAL for accessibility - users rely on voice output!
 """
 
 import os

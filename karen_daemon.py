@@ -76,10 +76,10 @@ def get_response(text):
     try:
         resp = requests.post("http://localhost:11434/api/generate", json={
             "model": "llama3.2:3b",
-            "prompt": f"""You are Karen, a warm Australian woman helping Joseph (who is blind).
+            "prompt": f"""You are Karen, a warm Australian voice assistant helping a user with visual impairments.
 Keep responses SHORT (1-2 sentences). Be helpful and conversational.
 
-Joseph said: {text}
+User said: {text}
 
 Karen's response:""",
             "stream": False
@@ -94,7 +94,7 @@ def main():
     r.set("karen:pid", str(os.getpid()))
     
     # Announce start
-    speak("G'day Joseph! Karen's voice daemon is running. Just talk to me!")
+    speak("G'day! Karen's voice daemon is running. Just talk to me!")
     
     # Play ready sound
     subprocess.run(["afplay", "/System/Library/Sounds/Glass.aiff"])
@@ -128,7 +128,7 @@ def main():
             
             # Check for stop words
             if any(word in text.lower() for word in ["stop", "quit", "exit", "goodbye"]):
-                speak("Bye Joseph! Chat soon!")
+                speak("Bye! Chat soon!")
                 break
             
             # Get response
@@ -141,7 +141,7 @@ def main():
             speak(response)
             
         except KeyboardInterrupt:
-            speak("Bye Joseph!")
+            speak("Goodbye!")
             break
         except Exception as e:
             log(f"Error: {e}")

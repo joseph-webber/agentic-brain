@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Voice-to-Text Test Suite for Joseph
+Voice-to-Text Test Suite
 Tests: Google (free), Whisper Local, Groq API, Offline (Vosk)
 
 Usage:
@@ -163,7 +163,7 @@ def main():
     backend = sys.argv[1] if len(sys.argv) > 1 else "all"
     
     print("=" * 60)
-    print("🎤 JOSEPH'S VOICE TEST SUITE")
+    print("🎤 VOICE TEST SUITE")
     print("=" * 60)
     
     # Record once, test all

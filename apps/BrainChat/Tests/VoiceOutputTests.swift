@@ -2,7 +2,7 @@ import XCTest
 @testable import BrainChatLib
 
 // MARK: - Voice Output (TTS) Engine Tests
-// Joseph is blind and relies on TTS for ALL output.
+// user is blind and relies on TTS for ALL output.
 // These tests ensure every engine is correctly modelled and
 // that accessibility-critical properties are never accidentally changed.
 
@@ -90,7 +90,7 @@ final class VoiceOutputPlatformDefaultTests: XCTestCase {
 
     func testMacOSPlatformDefaultIsNativeEngine() {
         // On macOS, always fall back to the system voice (Karen)
-        // This ensures Joseph always has speech even if cloud is down
+        // This ensures user always has speech even if cloud is down
         XCTAssertEqual(VoiceOutputEngine.platformDefault, .macOS)
     }
 
@@ -124,9 +124,9 @@ final class VoiceOutputDescriptionTests: XCTestCase {
     }
 
     func testMacOSDescriptionMentionsKaren() {
-        // Karen is Joseph's preferred voice
+        // Karen is user's preferred voice
         XCTAssertTrue(VoiceOutputEngine.macOS.description.contains("Karen"),
-                      "macOS description must mention Karen voice (Joseph's choice)")
+                      "macOS description must mention Karen voice (user's choice)")
     }
 
     func testCartesiaDescriptionMentionsLatency() {
@@ -171,7 +171,7 @@ final class VoiceOutputFallbackChainTests: XCTestCase {
     }
 
     func testFallbackChainPreservesAccessibility() {
-        // If all cloud engines fail, we can still speak to Joseph
+        // If all cloud engines fail, we can still speak to user
         let availableWithoutNetwork = VoiceOutputEngine.allCases.filter { $0.isOffline }
         XCTAssertGreaterThanOrEqual(availableWithoutNetwork.count, 1,
                                     "At least one engine must work offline")
@@ -190,7 +190,7 @@ final class VoiceOutputFallbackChainTests: XCTestCase {
     }
 
     func testKarenVoiceAccessibleViaMacOSEngine() {
-        // Joseph's preferred voice (Karen) is only available on macOS engine
+        // user's preferred voice (Karen) is only available on macOS engine
         XCTAssertTrue(VoiceOutputEngine.macOS.description.contains("Karen"))
         XCTAssertTrue(VoiceOutputEngine.macOS.isOffline)
     }

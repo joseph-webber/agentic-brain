@@ -186,7 +186,7 @@ final class SpeechEngineTests: XCTestCase {
     
     func testAirPodsMaxDetection() {
         let deviceNames = [
-            ("Joseph's AirPods Max", true),
+            ("User's AirPods Max", true),
             ("AirPods Max", true),
             ("AirPods Pro", false),
             ("AirPods", false),
@@ -202,9 +202,9 @@ final class SpeechEngineTests: XCTestCase {
     
     func testAirPodsMaxAutoSelection() {
         // AirPods Max should be auto-selected when connected
-        let devices = ["Built-in Microphone", "Joseph's AirPods Max"]
+        let devices = ["Built-in Microphone", "User's AirPods Max"]
         let selected = devices.first { $0.lowercased().contains("airpods max") } ?? devices.first!
-        XCTAssertEqual(selected, "Joseph's AirPods Max")
+        XCTAssertEqual(selected, "User's AirPods Max")
     }
 }
 

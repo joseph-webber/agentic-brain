@@ -5,7 +5,7 @@
 Security roles and permissions definitions.
 
 Four-tier security model:
-- FULL_ADMIN: Complete unrestricted access (Joseph only)
+- FULL_ADMIN: Complete unrestricted access (owner/root user only)
 - SAFE_ADMIN: Full access with safety guardrails (developers/trusted admins)
 - USER: API-only access for customers/employees (no machine access)
 - GUEST: Public or guest-scoped platform access plus FAQ/help content (anonymous visitors)
@@ -30,7 +30,7 @@ class SecurityRole(Enum):
     GUEST = "guest"              # Most restricted - FAQ/help only (anonymous visitors)
     USER = "user"                # API-only access (customers/employees)
     SAFE_ADMIN = "safe_admin"    # Full access with guardrails (developers/trusted admins)
-    FULL_ADMIN = "full_admin"    # Complete unrestricted access (Joseph only)
+    FULL_ADMIN = "full_admin"    # Complete unrestricted access (owner/root user only)
     ADMIN = "full_admin"         # Backwards-compatible alias
     DEVELOPER = "safe_admin"     # Backwards-compatible alias
     

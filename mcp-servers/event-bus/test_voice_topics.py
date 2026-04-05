@@ -134,7 +134,7 @@ def test_event_dataclasses():
     # Test LadySpeakingEvent
     lady_event = LadySpeakingEvent(
         lady="karen",
-        text="Hello Joseph!",
+        text="Hello there!",
         voice_name="Karen",
         region="Australia"
     )
@@ -178,7 +178,7 @@ def test_voice_publisher():
     print(f"✓ Mood change published: {bus.events[0]['topic']}")
     
     # Test publish_lady_speaking
-    result = publisher.publish_lady_speaking("karen", "Hello Joseph!", "Karen", "Australia")
+    result = publisher.publish_lady_speaking("karen", "Hello there!", "Karen", "Australia")
     assert result["success"]
     assert result["lady"] == "karen"
     assert len(bus.events) == 2

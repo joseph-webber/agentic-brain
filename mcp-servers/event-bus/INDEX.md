@@ -1,7 +1,7 @@
 # 🎤 Voice MCP Enhancement - Documentation Index
 
 ## Overview
-Complete voice conversation support added to the Redpanda/Kafka Event Bus MCP server. Integrates with 14 regional voice ladies and enables spoken LLM responses.
+Complete voice conversation support added to the Redpanda/Kafka Event Bus MCP server. Integrates with 14 regional voice personas and enables spoken LLM responses.
 
 **Status:** ✅ Production Ready | **Date:** 2024 | **Version:** 1.0
 
@@ -19,7 +19,7 @@ Complete voice conversation support added to the Redpanda/Kafka Event Bus MCP se
 ### Quick Reference
 2. **[VOICE_QUICK_REF.md](./VOICE_QUICK_REF.md)** 🚀 FOR DEVELOPERS
    - New tools reference (send_voice_request, broadcast_voice)
-   - Voice ladies roster (14 ladies)
+   - Voice personas roster (14 voices)
    - Voice topics documentation
    - Usage patterns and examples
    - 5-minute read
@@ -109,8 +109,8 @@ README_VOICE.md (support info)
 ### "How do I use the voice feature?"
 → Read **[VOICE_QUICK_REF.md](./VOICE_QUICK_REF.md)** (Examples section)
 
-### "Which voice ladies are available?"
-→ See **[VOICE_QUICK_REF.md](./VOICE_QUICK_REF.md)** (Voice Ladies table)
+### "Which voice personas are available?"
+→ See **[VOICE_QUICK_REF.md](./VOICE_QUICK_REF.md)** (Voice Personas table)
 
 ### "What events are used for voice?"
 → Check **[VOICE_ENHANCEMENT.md](./VOICE_ENHANCEMENT.md)** (Topics section)
@@ -136,7 +136,7 @@ event-bus/
 ├── server.py                          [MODIFIED +150 lines]
 │   ├── send_voice_request()           [NEW function]
 │   ├── broadcast_voice()              [NEW function]
-│   └── VOICE_LADIES roster            [NEW constant]
+│   └── VOICE_PERSONAS roster          [NEW constant]
 │
 ├── Documentation
 ├── README_VOICE.md                     [Quick start]
@@ -157,20 +157,20 @@ event-bus/
 from server import send_voice_request, broadcast_voice
 
 # 2. Broadcast a simple message
-broadcast_voice("Hello Joseph!", lady="karen")
+broadcast_voice("Hello!", voice="karen")
 
 # 3. Request a voice LLM response
 send_voice_request(
     prompt="What's the weather like?",
-    lady="kyoko",
+    voice="kyoko",
     priority="normal"
 )
 
 # 4. Check available voices
-from server import VOICE_LADIES
-print(f"Available ladies: {len(VOICE_LADIES)}")
-for lady_key, (voice, rate, region) in VOICE_LADIES.items():
-    print(f"  {lady_key:10} → {voice:12} ({region})")
+from server import VOICE_PERSONAS
+print(f"Available voices: {len(VOICE_PERSONAS)}")
+for voice_key, (voice, rate, region) in VOICE_PERSONAS.items():
+    print(f"  {voice_key:10} → {voice:12} ({region})")
 ```
 
 ---
@@ -181,7 +181,7 @@ for lady_key, (voice, rate, region) in VOICE_LADIES.items():
 |---------|---------|
 | **Functions** | 2 new MCP tools |
 | **Topics** | 4 voice-related event topics |
-| **Ladies** | 14 voice personalities (regional) |
+| **Voices** | 14 voice personas (regional) |
 | **Integration** | Redpanda/Kafka event bus |
 | **Output** | Local TTS + event distribution |
 | **LLM Support** | Full fallback chain (claude → openrouter → emulator) |
@@ -207,9 +207,9 @@ for lady_key, (voice, rate, region) in VOICE_LADIES.items():
 
 ## 🔗 Integration Points
 
-- **Voice System:** `/Users/joe/brain/core/voice/`
-- **Event Bus:** `/Users/joe/brain/core/kafka_bus.py`
-- **MCP Server:** `/Users/joe/brain/mcp-servers/event-bus/server.py`
+- **Voice System:** `/core/voice/`
+- **Event Bus:** `/core/kafka_bus.py`
+- **MCP Server:** `/mcp-servers/event-bus/server.py`
 
 ---
 
@@ -217,7 +217,7 @@ for lady_key, (voice, rate, region) in VOICE_LADIES.items():
 
 - [x] Code reviewed and tested
 - [x] Syntax validation passed
-- [x] 14 voice ladies loaded
+- [x] 14 voice personas loaded
 - [x] Event emission verified
 - [x] Error handling in place
 - [x] Documentation complete
@@ -284,7 +284,7 @@ for lady_key, (voice, rate, region) in VOICE_LADIES.items():
 python3 -m py_compile server.py
 
 # Test imports
-python3 -c "from server import send_voice_request, broadcast_voice, VOICE_LADIES; print(f'✅ {len(VOICE_LADIES)} ladies ready')"
+python3 -c "from server import send_voice_request, broadcast_voice, VOICE_PERSONAS; print(f'✅ {len(VOICE_PERSONAS)} voices ready')"
 
 # Run verification suite
 # (see VOICE_INTEGRATION_TEST.md for complete suite)

@@ -4,7 +4,7 @@ import Carbon.HIToolbox
 @testable import BrainChatLib
 
 // MARK: - Keyboard Navigation Tests
-// Joseph navigates entirely by keyboard + VoiceOver.
+// The user navigates entirely by keyboard + VoiceOver.
 // Every element must be reachable and operable without a mouse.
 // WCAG 2.1.1: All functionality must be available from keyboard.
 

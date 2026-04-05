@@ -51,7 +51,7 @@ actor CopilotVoiceRouter {
             success: false,
             route: .ollama,
             provider: providerName(for: .ollama, request: request),
-            reply: "Sorry Joseph, the voice bridge could not get a response. \(lastError ?? "No backend was available.")",
+            reply: "Sorry, the voice bridge could not get a response. \(lastError ?? "No backend was available.")",
             mode: request.yolo ? "yolo" : "standard",
             duration: duration,
             error: lastError

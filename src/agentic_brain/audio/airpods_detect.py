@@ -5,7 +5,7 @@
 AirPods Pro Max detection and audio routing helpers.
 
 This module provides a lightweight compatibility layer for quickly checking
-whether Joseph's AirPods are connected, switching audio output, and issuing
+whether the user's AirPods are connected, switching audio output, and issuing
 low-battery voice warnings. It intentionally reuses the richer AirPods manager
 already present in :mod:`agentic_brain.audio.airpods`.
 """

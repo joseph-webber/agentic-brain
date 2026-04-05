@@ -68,9 +68,9 @@ class TestUtterance:
     """Test the Utterance dataclass."""
 
     def test_create_utterance(self):
-        utt = Utterance(lady="karen", text="Hello Joseph")
+        utt = Utterance(lady="karen", text="Hello there")
         assert utt.lady == "karen"
-        assert utt.text == "Hello Joseph"
+        assert utt.text == "Hello there"
         assert utt.timestamp > 0
 
     def test_utterance_to_dict(self):
@@ -186,7 +186,7 @@ class TestConversationMemorySearch:
         assert len(results) == 2
 
     def test_search_case_insensitive(self, mem: ConversationMemory):
-        mem.record("karen", "Hello Joseph")
+        mem.record("karen", "Hello there")
         results = mem.search("hello")
         assert len(results) == 1
         results = mem.search("HELLO")
@@ -335,8 +335,8 @@ class TestRepeatDetectorBasic:
         assert result.similarity == 0.0
 
     def test_exact_repeat(self, detector: RepeatDetector):
-        detector.record("Good morning Joseph")
-        result = detector.check("Good morning Joseph")
+        detector.record("Good morning")
+        result = detector.check("Good morning")
         assert result.is_repeat
         assert result.similarity == 1.0
 
@@ -357,8 +357,8 @@ class TestRepeatDetectorBasic:
         assert result.is_repeat
 
     def test_punctuation_insensitive(self, detector: RepeatDetector):
-        detector.record("Hello, Joseph!")
-        result = detector.check("Hello Joseph")
+        detector.record("Hello there!")
+        result = detector.check("Hello there")
         assert result.is_repeat
 
     def test_is_repeat_convenience(self, detector: RepeatDetector):

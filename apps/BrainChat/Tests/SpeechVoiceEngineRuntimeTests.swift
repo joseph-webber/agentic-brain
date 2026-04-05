@@ -25,10 +25,10 @@ final class SpeechEngineRuntimeTests: XCTestCase {
         manager.isListening = true
         manager.onTranscriptFinalized = { finalized = $0 }
 
-        manager.handle(.final("Hello Joseph"))
+        manager.handle(.final("Hello user"))
 
-        XCTAssertEqual(manager.currentTranscript, "Hello Joseph")
-        XCTAssertEqual(finalized, "Hello Joseph")
+        XCTAssertEqual(manager.currentTranscript, "Hello user")
+        XCTAssertEqual(finalized, "Hello user")
         XCTAssertFalse(manager.isListening)
         XCTAssertEqual(manager.audioLevel, 0)
     }

@@ -16,7 +16,7 @@
 """
 Voice Quality Analyzer — Accessibility-first audio diagnostics.
 
-Ensures all voice output is clear and intelligible before Joseph hears it.
+Ensures all voice output is clear and intelligible before being played.
 Detects clipping, distortion, silence, and volume issues.
 
 Usage:

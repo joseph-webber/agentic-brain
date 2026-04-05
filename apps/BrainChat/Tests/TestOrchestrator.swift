@@ -37,7 +37,7 @@ final class E2EScenarioRecorder {
     }
 
     func hearUser(_ text: String) {
-        transcriptLines.append("Joseph: \(text)")
+        transcriptLines.append("User: \(text)")
         logs.append("USER: \(text)")
     }
 
@@ -180,7 +180,7 @@ final class SimulatedBrainChatApp {
     func launch() {
         recorder.step("App launches")
         launched = true
-        speak("G'day Joseph")
+        speak("G'day")
     }
 
     func pressSpaceAndSpeak(_ text: String) {
@@ -188,7 +188,7 @@ final class SimulatedBrainChatApp {
         displayedTranscript = text
         recorder.hearUser(text)
         recorder.step("Transcription appears")
-        history.append(E2EHistoryEntry(speaker: "Joseph", text: text))
+        history.append(E2EHistoryEntry(speaker: "user", text: text))
     }
 
     func showThinking() {

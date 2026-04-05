@@ -754,7 +754,7 @@ final class ChatViewModel: ObservableObject {
     }
 
     private func speakIfEnabled(_ text: String) {
-        // CRITICAL: Joseph is BLIND - always speak responses unless explicitly disabled
+        // CRITICAL: User may be BLIND - always speak responses unless explicitly disabled
         // Log for debugging
         let autoSpeakEnabled = settings?.autoSpeak ?? true
         let hasVoiceManager = voiceManager != nil

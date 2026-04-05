@@ -91,7 +91,7 @@ def main():
             
             # Check for stop commands
             if text.lower() in {"stop", "quit", "exit", "goodbye", "stop listening"}:
-                speak("Goodbye Joseph!")
+                speak("Goodbye!")
                 play_sound("Funk")
                 break
             

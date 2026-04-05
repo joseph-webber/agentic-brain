@@ -18,7 +18,7 @@ import json
 
 
 def example_greeting():
-    """Example: Get appropriate greeting for Joseph"""
+    """Example: Get appropriate greeting for the user"""
     print("=" * 70)
     print("EXAMPLE 1: Smart Greeting")
     print("=" * 70)
@@ -28,7 +28,7 @@ def example_greeting():
     greeting = greeting_data["greeting"]
     time = greeting_data["time"]
 
-    print(f"\n{greeting}, Joseph!")
+    print(f"\n{greeting} !")
     print(f"The time in Adelaide is {time}")
     print()
 
@@ -74,7 +74,7 @@ def example_business_hours():
 def example_adelaide_info():
     """Example: Get comprehensive Adelaide time info"""
     print("=" * 70)
-    print("EXAMPLE 4: Adelaide Time (Joseph's Timezone)")
+    print("EXAMPLE 4: Adelaide Time (Adelaide Timezone)")
     print("=" * 70)
 
     adelaide_data = json.loads(clock_adelaide())

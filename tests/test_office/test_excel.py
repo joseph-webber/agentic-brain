@@ -259,7 +259,7 @@ def test_excel_processor_extracts_structured_sheet_data(
     sheet.freeze_panes = "A2"
 
     workbook.properties.title = "Quarterly workbook"
-    workbook.properties.creator = "Joseph"
+    workbook.properties.creator = "TestUser"
 
     workbook.defined_names.add(
         DefinedName("RevenueRange", attr_text="'Summary'!$B$2:$B$3")
@@ -298,7 +298,7 @@ def test_excel_processor_extracts_structured_sheet_data(
 
     metadata = processor.get_metadata()
     assert metadata.title == "Quarterly workbook"
-    assert metadata.author == "Joseph"
+    assert metadata.author == "TestUser"
 
     structured = processor.extract_data("Summary")
     assert structured["merged_cells"] == ["A6:B6"]

@@ -4,7 +4,7 @@
 """
 Tests for the global speech lock - ensures NO voice overlap.
 
-CRITICAL for accessibility - Joseph is blind and overlapping voices
+CRITICAL for accessibility - Overlapping voices are an accessibility issue for voices
 make it impossible for him to understand what's being said.
 
 Tests verify:

@@ -47,7 +47,7 @@ How agents SHOULD coordinate
    - ``acquire_git_lock`` will wait (with backoff) until the lock becomes free
      or until ``wait_timeout`` is exceeded.
    - While waiting it publishes ``lock_waiting`` events so other tools can
-     surface the blockage to Joseph.
+     surface the blockage to the user.
 
 All events are JSON and safe for other agents to subscribe to:
 
@@ -160,7 +160,7 @@ def _update_status(
 ) -> None:
     """Write a compact status document for quick inspection.
 
-    Stored at ``llm:agents:status`` so Joseph can inspect via redis-cli:
+    Stored at ``llm:agents:status`` so users can inspect via redis-cli:
 
         redis-cli -a brain_secure_2024 GET llm:agents:status
     """

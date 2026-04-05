@@ -61,7 +61,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func quit() {
-        voiceEngine.speak("Goodbye Joseph")
+        voiceEngine.speak("Goodbye")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             NSApplication.shared.terminate(nil)
         }

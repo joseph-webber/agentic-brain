@@ -138,6 +138,6 @@ This stays in brain-core. agentic-brain gets a simpler, stable version.
 
 ---
 
-**Author**: Joseph Webber + Iris Lumina  
+**Author**: user Webber + Iris Lumina  
 **Created**: 2026-03-21  
 **Philosophy**: "On-premise reliability - cloud optional"

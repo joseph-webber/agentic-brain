@@ -57,7 +57,7 @@ class TestVoiceRegistry:
         assert stats["novelty"] >= 10  # Fun voices
 
     def test_primary_voices(self):
-        """Test Joseph's primary voice assistants are all registered."""
+        """Test primary voice assistants are all registered."""
         primary = get_primary_voices()
         primary_names = [v.name for v in primary]
 

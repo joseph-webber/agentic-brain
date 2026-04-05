@@ -25,7 +25,7 @@ def ask_ollama(prompt):
         return f"Ollama error: {e}"
 
 if __name__ == "__main__":
-    speak("G'day Joseph! I'm Karen. Press F N twice to dictate, then Enter to send. Or just type.", 155)
+    speak("G'day! I'm Karen. Press F N twice to dictate, then Enter to send. Or just type.", 155)
 
     while True:
         try:

@@ -225,7 +225,7 @@ class TestKokoroVoice:
         voice._backend = "kokoro-onnx"
         voice._initialized = True
 
-        result = voice.synthesize("Hello Joseph", "Karen")
+        result = voice.synthesize("Hello there", "Karen")
         assert result[:4] == b"RIFF"
         assert b"WAVE" in result[:12]
         fake_onnx.create.assert_called_once()

@@ -23,12 +23,12 @@ final class SecurityManager: ObservableObject {
     // initialization ordering issues with SwiftUI when the app starts
 
     private let defaults: UserDefaults
-    private let defaultRoleForJoseph: SecurityRole = .fullAdmin
+    private let defaultRole: SecurityRole = .fullAdmin
 
     private init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
 
-        let restoredRole = SecurityRole(storedValue: defaults.string(forKey: "securityRole") ?? SecurityRole.fullAdmin.rawValue) ?? defaultRoleForJoseph
+        let restoredRole = SecurityRole(storedValue: defaults.string(forKey: "securityRole") ?? SecurityRole.fullAdmin.rawValue) ?? defaultRole
         self.currentRole = restoredRole
         self.modeSwitchingEnabled = defaults.object(forKey: "modeSwitchingEnabled") as? Bool ?? true
 
@@ -52,7 +52,7 @@ final class SecurityManager: ObservableObject {
     }
 
     func resetToDefault() {
-        switchRole(to: defaultRoleForJoseph)
+        switchRole(to: defaultRole)
     }
 
     func setModeSwitching(enabled: Bool) {

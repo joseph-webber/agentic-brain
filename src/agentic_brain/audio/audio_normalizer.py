@@ -17,7 +17,7 @@
 Audio Normalizer — Ensure consistent, accessible voice output.
 
 Uses sox for audio processing: volume normalization, silence removal,
-and edge trimming so every utterance Joseph hears is clean and clear.
+and edge trimming so every utterance the user hears is clean and clear.
 
 Usage:
     >>> from agentic_brain.audio.audio_normalizer import AudioNormalizer

@@ -157,8 +157,13 @@ class VoiceMessage:
     volume: float = 0.8
     emotion: VoiceEmotion = VoiceEmotion.NEUTRAL
     pause_after: Optional[float] = None
-    lady: Optional[str] = None  # When set, route through spatial audio
+    persona: Optional[str] = None  # When set, route through spatial audio
     sequence: int = 0
+
+    # Backwards compatibility: alias lady -> persona
+    @property
+    def lady(self) -> Optional[str]:
+        return self.persona
 
     def __post_init__(self) -> None:
         self.text = self.text.strip()
@@ -463,7 +468,7 @@ class VoiceSerializer:
         emotion: VoiceEmotion | str | None = None,
         pause_after: Optional[float] = None,
         wait: bool = True,
-        lady: Optional[str] = None,
+        persona: Optional[str] = None,
     ) -> bool:
         """Queue text for speech through the centralized serializer.
 
@@ -471,7 +476,7 @@ class VoiceSerializer:
         The message is placed on the worker-thread queue and executed
         sequentially, guaranteeing zero overlap.
 
-        When *lady* is provided and stereo panning is enabled, the
+        When *persona* is provided and stereo panning is enabled, the
         serializer will pan the generated speech using Sox before
         playback.
 
@@ -503,7 +508,7 @@ class VoiceSerializer:
         return speak_serialized(
             text,
             voice=voice,
-            lady=lady,
+            persona=persona,
             rate=rate,
             emotion=emotion,
             pause_after=pause_after,
@@ -518,7 +523,7 @@ class VoiceSerializer:
         emotion: VoiceEmotion | str | None = None,
         pause_after: Optional[float] = None,
         wait: bool = True,
-        lady: Optional[str] = None,
+        persona: Optional[str] = None,
     ) -> bool:
         """Async wrapper for serialized speech."""
         if use_redpanda_voice():
@@ -527,7 +532,7 @@ class VoiceSerializer:
 
             return await publish_voice_request(
                 text,
-                lady=lady or voice,
+                persona=persona or voice,
                 priority=VoicePriorityLane.NORMAL,
                 source="agentic_brain.voice.serializer",
                 fallback=lambda: self.speak(
@@ -537,7 +542,7 @@ class VoiceSerializer:
                     emotion=emotion,
                     pause_after=pause_after,
                     wait=wait,
-                    lady=lady,
+                    persona=persona,
                 ),
             )
 
@@ -551,7 +556,7 @@ class VoiceSerializer:
                 emotion=emotion,
                 pause_after=pause_after,
                 wait=wait,
-                lady=lady,
+                persona=persona,
             ),
         )
 
@@ -834,7 +839,7 @@ class VoiceSerializer:
             router = get_spatial_router()
             return router.speak_spatial(
                 message.text,
-                lady=lady,
+                persona=persona,
                 rate=message.rate,
                 wait=True,
             )
@@ -930,7 +935,7 @@ def get_voice_serializer() -> VoiceSerializer:
 def speak_serialized(
     text: str,
     voice: str = "Samantha",
-    lady: Optional[str] = None,
+    persona: Optional[str] = None,
     rate: int = 155,
     emotion: VoiceEmotion | str | None = None,
     pause_after: Optional[float] = None,
@@ -989,12 +994,12 @@ def speak_serialized(
         _, styled_config = expression_engine.style_config(
             base_config,
             text,
-            lady=lady or voice,
+            persona=persona or voice,
             emotion=resolved_emotion,
         )
     else:
         expression_engine = ExpressionEngine()
-        auto_emotion = expression_engine.detect_emotion(text, lady=lady or voice)
+        auto_emotion = expression_engine.detect_emotion(text, persona=persona or voice)
         if auto_emotion in {
             VoiceEmotion.EXCITED,
             VoiceEmotion.CALM,
@@ -1005,7 +1010,7 @@ def speak_serialized(
             _, styled_config = expression_engine.style_config(
                 base_config,
                 text,
-                lady=lady or voice,
+                persona=persona or voice,
                 emotion=resolved_emotion,
             )
     message = VoiceMessage(
@@ -1016,7 +1021,7 @@ def speak_serialized(
         volume=styled_config.volume,
         emotion=resolved_emotion,
         pause_after=pause_after,
-        lady=lady,
+        persona=persona,
     )
     return _serializer.run_serialized(message, wait=wait)
 

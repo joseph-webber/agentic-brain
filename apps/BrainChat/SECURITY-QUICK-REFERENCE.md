@@ -15,12 +15,12 @@
 
 ## 🎯 Use Cases
 
-### FULL_ADMIN (Joseph)
+### FULL_ADMIN (user)
 ```swift
-// Default for Joseph - unrestricted access
+// Default for user - unrestricted access
 SecurityManager.shared.switchRole(to: .fullAdmin)
 ```
-**When to use:** Joseph's daily work, full automation needed
+**When to use:** user's daily work, full automation needed
 
 ### SAFE_ADMIN (Developers)
 ```swift
@@ -141,7 +141,7 @@ The SecurityModeView automatically displays all 4 modes with:
 
 ## 🚀 Quick Start
 
-1. **For Joseph (Default):**
+1. **For user (Default):**
    - Automatically set to FULL_ADMIN
    - No confirmations needed
    - Full unrestricted access

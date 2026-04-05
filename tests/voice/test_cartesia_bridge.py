@@ -121,11 +121,11 @@ class TestCartesiaLiveMode:
 
         mode.start()
         mode.feed("Hello ")
-        mode.feed("Joseph")
+        mode.feed("friend")
 
         # Check buffer accumulated
         live_mode = mode._get_live_mode()
-        assert "Hello" in live_mode._buffer or "Joseph" in live_mode._buffer
+        assert "Hello" in live_mode._buffer or "friend" in live_mode._buffer
 
         mode.stop()
 
@@ -138,7 +138,7 @@ class TestCartesiaLiveMode:
         mode._speak_cartesia = speak_mock
 
         mode.start()
-        mode.feed("Hello Joseph.")  # Complete sentence
+        mode.feed("Hello there.")  # Complete sentence
 
         # Sentence should have been spoken
         assert speak_mock.call_count >= 1
@@ -256,7 +256,7 @@ class TestIntegration:
 
         # Simulate LLM token stream
         mode.start()
-        tokens = ["Hello ", "Joseph, ", "how ", "are ", "you ", "today?"]
+        tokens = ["Hello ", "friend, ", "how ", "are ", "you ", "today?"]
         for token in tokens:
             mode.feed(token)
 

@@ -420,9 +420,9 @@ public struct AIServiceConfig: Equatable {
     public var ollamaEndpoint: String = "http://localhost:11434/api/chat"
     public var ollamaModel: String = "llama3.2:3b"
     public var useOpenAI: Bool = false
-    public var accessibilitySystemPrompt: String = "You are Brain, Joseph's AI assistant. Be helpful, concise, and warm. Joseph is blind and uses VoiceOver, so keep responses clear and well-structured."
+    public var accessibilitySystemPrompt: String = "You are Brain, a helpful AI assistant. Be helpful, concise, and warm. The user may be blind and use VoiceOver, so keep responses clear and well-structured."
 
-    public init(claudeAPIKey: String = "", openAIKey: String = "", ollamaEndpoint: String = "http://localhost:11434/api/chat", ollamaModel: String = "llama3.2:3b", useOpenAI: Bool = false, accessibilitySystemPrompt: String = "You are Brain, Joseph's AI assistant. Be helpful, concise, and warm. Joseph is blind and uses VoiceOver, so keep responses clear and well-structured.") {
+    public init(claudeAPIKey: String = "", openAIKey: String = "", ollamaEndpoint: String = "http://localhost:11434/api/chat", ollamaModel: String = "llama3.2:3b", useOpenAI: Bool = false, accessibilitySystemPrompt: String = "You are Brain, a helpful AI assistant. Be helpful, concise, and warm. The user may be blind and use VoiceOver, so keep responses clear and well-structured.") {
         self.claudeAPIKey = claudeAPIKey
         self.openAIKey = openAIKey
         self.ollamaEndpoint = ollamaEndpoint
@@ -1041,7 +1041,7 @@ public struct CartesiaVoiceOption: Identifiable, Hashable, Codable {
     }
 
     public static let curated: [CartesiaVoiceOption] = [
-        .init(voiceID: "voice-1", name: "Australian Narrator Lady", accentDescription: "Warm Australian female voice", fallbackVoiceName: "Karen", isDefault: true)
+        .init(voiceID: "voice-1", name: "Australian Narrator", accentDescription: "Warm Australian voice", fallbackVoiceName: "Karen", isDefault: true)
     ]
     public static let defaultOption = curated[0]
 }

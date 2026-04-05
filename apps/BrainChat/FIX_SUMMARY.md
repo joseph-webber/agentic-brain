@@ -90,8 +90,8 @@ open /Applications/Brain\ Chat.app
 ### Option 3: Clean Slate Test
 ```bash
 # Reset all permissions (requires Full Disk Access)
-tccutil reset Microphone com.josephwebber.brainchat
-tccutil reset SpeechRecognition com.josephwebber.brainchat
+tccutil reset Microphone com.userwebber.brainchat
+tccutil reset SpeechRecognition com.userwebber.brainchat
 
 # Delete and rebuild
 rm -rf /Applications/Brain\ Chat.app
@@ -115,7 +115,7 @@ cd ~/brain/agentic-brain/apps/BrainChat
    ```
 
 2. **Check Console.app**:
-   - Filter: `com.josephwebber.brainchat`
+   - Filter: `com.userwebber.brainchat`
    - Look for "Permission" or "AVCaptureDevice"
 
 3. **Verify entitlements**:
@@ -138,7 +138,7 @@ cd ~/brain/agentic-brain/apps/BrainChat
    rm -rf ~/brain/agentic-brain/apps/BrainChat/runtime
    
    # 2. Reset TCC (requires Full Disk Access)
-   tccutil reset All com.josephwebber.brainchat
+   tccutil reset All com.userwebber.brainchat
    
    # 3. Rebuild from scratch
    cd ~/brain/agentic-brain/apps/BrainChat
@@ -183,10 +183,10 @@ cd ~/brain/agentic-brain/apps/BrainChat
 
 ## 🚀 READY TO TEST
 
-The fix is complete and ready for Joseph to test. The mic button should now:
+The fix is complete and ready for user to test. The mic button should now:
 1. Show permission dialog when clicked (if not granted)
 2. Turn green and go live immediately after permission granted
-3. Display transcripts as Joseph speaks
+3. Display transcripts as user speaks
 4. Work consistently every time
 
-**Good luck Joseph! Click that mic button and speak to your brain! 🎙️💜**
+**Good luck user! Click that mic button and speak to your brain! 🎙️💜**

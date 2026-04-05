@@ -325,7 +325,7 @@ Users with VoiceOver on Australian English systems. Recommended voice configurat
   - Fastest response (leverages system acceleration)
   - Best for real-time interaction
   
-- **Australian Narrator Lady** (Cartesia)
+- **Australian Narrator** (Cartesia)
   - Best quality for longer messages
   - Premium experience
   

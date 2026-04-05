@@ -136,7 +136,7 @@ This queue also exposes:
 
 - `current_text`
 - `current_voice`
-- `current_lady`
+- `current_voice`
 - `queue_depth`
 - `priority_depth`
 - `normal_depth`

@@ -438,7 +438,7 @@ final class CopilotVoiceController: NSObject, NSApplicationDelegate, NSSpeechSyn
         let normalized = prompt.lowercased()
         if normalized == "stop" || normalized == "quit" {
             SoundPlayer.play("Glass")
-            speak("Stopping Copilot Voice. Goodbye Joseph.", nextAction: .exit)
+            speak("Stopping Copilot Voice. Goodbye.", nextAction: .exit)
             return
         }
 
@@ -453,7 +453,7 @@ final class CopilotVoiceController: NSObject, NSApplicationDelegate, NSSpeechSyn
 
                 switch result {
                 case .success(let response):
-                    fputs("Joseph said: \(prompt)\n", stderr)
+                    fputs("User said: \(prompt)\n", stderr)
                     print(response)
                     SoundPlayer.play("Glass")
                     self.speak(response, nextAction: .listen)

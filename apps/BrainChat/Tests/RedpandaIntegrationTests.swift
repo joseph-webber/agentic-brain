@@ -69,11 +69,11 @@ final class VoiceEventCodingTests: XCTestCase {
 
     func testVoiceResponseEventDecodesFromJSON() throws {
         let json = """
-        {"text":"G'day Joseph","provider":"claude","latencyMs":412,"success":true}
+        {"text":"G'day","provider":"claude","latencyMs":412,"success":true}
         """.data(using: .utf8)!
 
         let response = try PandaproxyClient.makeDecoder().decode(VoiceResponseEvent.self, from: json)
-        XCTAssertEqual(response.text,      "G'day Joseph")
+        XCTAssertEqual(response.text,      "G'day")
         XCTAssertEqual(response.provider,  "claude")
         XCTAssertEqual(response.latencyMs, 412)
         XCTAssertTrue(response.success)

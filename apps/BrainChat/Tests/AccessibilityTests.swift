@@ -2,7 +2,7 @@ import XCTest
 @testable import BrainChatLib
 
 // MARK: - Accessibility Tests for Brain Chat
-// Joseph is blind - these tests are CRITICAL
+// The user may be blind - these tests are CRITICAL
 
 final class AccessibilityTests: XCTestCase {
     
@@ -169,14 +169,14 @@ final class AccessibilityTests: XCTestCase {
         }
         
         let userMessage = Message(role: "You", content: "Hello Brain")
-        let assistantMessage = Message(role: "Brain", content: "Hello Joseph!")
+        let assistantMessage = Message(role: "Brain", content: "Hello there!")
         
         XCTAssertEqual(userMessage.accessibilityDescription, "You: Hello Brain")
-        XCTAssertEqual(assistantMessage.accessibilityDescription, "Brain: Hello Joseph!")
+        XCTAssertEqual(assistantMessage.accessibilityDescription, "Brain: Hello there!")
     }
     
     func testNewMessageMovesVoiceOverFocus() {
-        // When new message appears, focus should move for Joseph to hear it
+        // When new message appears, focus should move for the user to hear it
         var focusedMessageIndex: Int? = nil
         let messages = ["First", "Second", "Third"]
         
@@ -223,7 +223,7 @@ final class AccessibilityTests: XCTestCase {
     
     func testKarenIsDefaultVoice() {
         let defaultVoice = "Karen (Premium)"
-        XCTAssertTrue(defaultVoice.contains("Karen"), "Default voice must be Karen for Joseph")
+        XCTAssertTrue(defaultVoice.contains("Karen"), "Default voice must be Karen for accessibility users")
     }
     
     func testKarenSortedFirstInVoiceList() {

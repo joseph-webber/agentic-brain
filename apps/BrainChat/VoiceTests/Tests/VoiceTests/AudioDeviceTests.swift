@@ -53,7 +53,7 @@ final class AudioDeviceTests: XCTestCase {
     func testAirPodsMaxDetectedByName() {
         let cases: [(String, Bool)] = [
             ("AirPods Max", true),
-            ("Joseph's AirPods Max", true),
+            ("User's AirPods Max", true),
             ("AIRPODS MAX", true),
             ("AirPods Pro", false),
             ("AirPods", false),
@@ -68,12 +68,12 @@ final class AudioDeviceTests: XCTestCase {
     func testAirPodsMaxAutoSelected() {
         let devices = [
             TestAudioDevice(id: "1", name: "Built-in Microphone"),
-            TestAudioDevice(id: "2", name: "Joseph's AirPods Max", isAirPodsMax: true),
+            TestAudioDevice(id: "2", name: "User's AirPods Max", isAirPodsMax: true),
             TestAudioDevice(id: "3", name: "External Mic"),
         ]
         let selected = devices.first(where: { $0.isAirPodsMax }) ?? devices[0]
         XCTAssertTrue(selected.isAirPodsMax)
-        XCTAssertEqual(selected.name, "Joseph's AirPods Max")
+        XCTAssertEqual(selected.name, "User's AirPods Max")
     }
 
     func testFallbackWhenNoAirPods() {
@@ -91,7 +91,7 @@ final class AudioDeviceTests: XCTestCase {
         airpods.simulateConnect()
         let state = airpods.currentState()
         XCTAssertTrue(state.connected)
-        XCTAssertEqual(state.deviceName, "Joseph's AirPods Max")
+        XCTAssertEqual(state.deviceName, "User's AirPods Max")
         XCTAssertEqual(state.battery, 85)
     }
 
@@ -221,7 +221,7 @@ final class AudioDeviceTests: XCTestCase {
     // MARK: - Output Route Detection
 
     func testOutputRouteAirPodsDetection() {
-        for route in ["AirPods Max", "Joseph's AirPods Max", "AirPods Pro", "AirPods"] {
+        for route in ["AirPods Max", "User's AirPods Max", "AirPods Pro", "AirPods"] {
             XCTAssertTrue(route.localizedCaseInsensitiveContains("AirPods"))
         }
     }
@@ -238,7 +238,7 @@ final class AudioDeviceTests: XCTestCase {
         let devices = [
             TestAudioDevice(id: "1", name: "Built-in Microphone"),
             TestAudioDevice(id: "2", name: "USB Microphone"),
-            TestAudioDevice(id: "3", name: "Joseph's AirPods Max", isAirPodsMax: true),
+            TestAudioDevice(id: "3", name: "User's AirPods Max", isAirPodsMax: true),
             TestAudioDevice(id: "4", name: "Bluetooth Speaker"),
         ]
         let selected = devices.first(where: { $0.isAirPodsMax }) ?? devices[0]

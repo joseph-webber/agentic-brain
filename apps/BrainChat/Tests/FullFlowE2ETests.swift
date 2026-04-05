@@ -25,7 +25,7 @@ final class ConversationFlowE2ETests: XCTestCase {
     func testChatQuestionFlowClaudeToConversation() async {
         let store = ConversationStore()
         let router = LLMRouter(
-            claudeAPI: MockClaudeStreamer { _, _, _, _ in "G'day Joseph! Here's a fun fact." },
+            claudeAPI: MockClaudeStreamer { _, _, _, _ in "G'day user! Here's a fun fact." },
             openAIAPI: MockOpenAIStreamer { _, _, _ in "gpt" },
             ollamaAPI: MockOllamaStreamer { _, _, _ in "ollama" },
             grokClient: MockGrokStreamer { _, _, _ in "grok" },
@@ -54,7 +54,7 @@ final class ConversationFlowE2ETests: XCTestCase {
         XCTAssertEqual(store.messages.count, 2)
         XCTAssertEqual(store.messages[0].role, .user)
         XCTAssertEqual(store.messages[1].role, .assistant)
-        XCTAssertTrue(store.messages[1].content.contains("G'day Joseph"))
+        XCTAssertTrue(store.messages[1].content.contains("G'day user"))
     }
 
     /// Simulates: Coding request → auto-routes to Copilot via polymorphic dispatch
@@ -380,7 +380,7 @@ final class EventCodecE2ETests: XCTestCase {
 
     func testVoiceResponseRoundTrip() throws {
         let original = VoiceResponseEvent(
-            text: "Hello Joseph", provider: "ollama", latencyMs: 500, success: true)
+            text: "Hello user", provider: "ollama", latencyMs: 500, success: true)
         let data = try PandaproxyClient.makeEncoder().encode(original)
         let decoded = try PandaproxyClient.makeDecoder().decode(VoiceResponseEvent.self, from: data)
         XCTAssertEqual(decoded.text, original.text)

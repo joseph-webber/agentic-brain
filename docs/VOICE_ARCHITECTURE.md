@@ -49,7 +49,7 @@ optimises for **spoken audio output** — not text, not visual UI, not logs.
 
 ```
   ┌─────────────────────────────────────────────────────────────────────────┐
-  │                        JOSEPH'S VOICE PIPELINE                          │
+  │                        ACCESSIBLE VOICE PIPELINE                         │
   │                                                                         │
   │  🎤 AirPods Max ──► Whisper STT ──► Complexity Classifier              │
   │                                           │                             │

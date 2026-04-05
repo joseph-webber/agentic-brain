@@ -14,7 +14,7 @@ Nodes:
     - VoiceConversation: Container for a conversation session
 
 Relationships:
-    - SPOKEN_BY: VoiceUtterance → speaker (Person or Lady)
+    - SPOKEN_BY: VoiceUtterance → speaker (Person or Voice Persona)
     - PART_OF: VoiceUtterance → VoiceConversation
     - DISCUSSES: VoiceConversation → Topic
     - FOLLOWS: VoiceUtterance → VoiceUtterance (temporal ordering)
@@ -81,7 +81,7 @@ class VoiceUtterance:
     Attributes:
         text: The transcribed or generated text.
         timestamp: When the utterance occurred (UTC).
-        speaker: Speaker identifier ("user", "assistant", or lady name).
+        speaker: Speaker identifier ("user", "assistant", or voice persona name).
         embedding: Optional 384-dim vector from sentence-transformers.
         emotion: Optional detected emotion label.
         id: Unique identifier (auto-generated if not provided).

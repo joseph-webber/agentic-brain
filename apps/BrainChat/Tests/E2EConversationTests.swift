@@ -9,14 +9,14 @@ final class E2EConversationTests: E2EOrchestratedTestCase {
         app.launch()
 
         XCTAssertTrue(app.launched)
-        XCTAssertEqual(recorder.spokenLines.first, "G'day Joseph")
+        XCTAssertEqual(recorder.spokenLines.first, "G'day")
 
         let exchanges = [
-            ("Hello Karen", "G'day Joseph, lovely to hear from you."),
+            ("Hello Karen", "G'day, lovely to hear from you."),
             ("How are you today?", "I’m feeling sharp and ready to help."),
             ("What can you do?", "I can chat, code, and drive tasks step by step."),
             ("Tell me a quick joke", "Why do programmers mix up Halloween and Christmas? Because OCT 31 equals DEC 25."),
-            ("Thanks Karen", "Always a pleasure, Joseph."),
+            ("Thanks Karen", "Always a pleasure.."),
         ]
 
         for (index, exchange) in exchanges.enumerated() {

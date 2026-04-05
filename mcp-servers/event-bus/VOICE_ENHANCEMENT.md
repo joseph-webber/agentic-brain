@@ -1,7 +1,7 @@
 # Voice Enhancement - Event Bus MCP Server
 
 ## Summary
-Enhanced the Redpanda MCP server to add voice conversation topics and handlers. The enhancement integrates with the voice ladies system for spoken responses.
+Enhanced the Redpanda MCP server to add voice conversation topics and handlers. The enhancement integrates with the voice voices system for spoken responses.
 
 ## Changes Made
 
@@ -11,40 +11,40 @@ Added four voice-related topics to the event bus:
 | Topic | Purpose |
 |-------|---------|
 | `brain.voice.input` | User voice input events |
-| `brain.voice.response` | Lady voice responses (text to speech) |
+| `brain.voice.response` | Voice voice responses (text to speech) |
 | `brain.voice.conversation` | Conversation state changes |
 | `brain.voice.llm` | LLM requests for voice responses |
 
 ### 2. New Helper Functions
 
-#### `send_voice_request(prompt, lady="karen", priority="normal")`
+#### `send_voice_request(prompt, voice="karen", priority="normal")`
 Sends a voice LLM request that will generate a spoken response.
 
 **Parameters:**
 - `prompt` (str) - The prompt to send to LLM
-- `lady` (str) - Voice lady name (default: "karen")
+- `voice` (str) - Voice voice name (default: "karen")
 - `priority` (str) - Request priority: "normal", "high", "low"
 
 **Flow:**
-1. Validates lady name (14 ladies available)
+1. Validates voice name (14 voices available)
 2. Creates event with LLM prompt + voice metadata
 3. Emits to `brain.voice.llm` topic
 4. Returns request ID for tracking
 
-**Available Ladies:**
+**Available Voices:**
 - **Australia**: karen (165 wpm)
 - **Asia**: kyoko, tingting, sinji, linh, kanya, yuna, dewi, sari, wayan
 - **Europe**: moira, zosia, flo, shelley
 
-#### `broadcast_voice(message, lady="karen")`
-Broadcasts a spoken message immediately with lady voice.
+#### `broadcast_voice(message, voice="karen")`
+Broadcasts a spoken message immediately with voice voice.
 
 **Parameters:**
 - `message` (str) - Message to speak
-- `lady` (str) - Voice lady name (default: "karen")
+- `voice` (str) - Voice voice name (default: "karen")
 
 **Flow:**
-1. Validates lady name
+1. Validates voice name
 2. Creates `voice_response` event
 3. Emits to `brain.voice.response` topic
 4. Speaks locally via macOS `say` command
@@ -54,8 +54,8 @@ Broadcasts a spoken message immediately with lady voice.
 - Spoken audio (immediate on local Mac)
 - Event broadcast for distributed voice systems
 
-### 3. Voice Ladies Roster
-Embedded the complete 14-lady roster as module constant:
+### 3. Voice Voices Roster
+Embedded the complete 14-voice roster as module constant:
 
 ```python
 VOICE_LADIES = {
@@ -90,7 +90,7 @@ BrainEventBus (Redpanda/Kafka)
     └─ brain.voice.llm       ← send_voice_request emits here
     ↓
 Voice System (/core/voice/)
-    ├─ ladies_daemon.py
+    ├─ voices_daemon.py
     ├─ autonomous_voice_agent.py
     ├─ iris_voice_daemon.py
     └─ voice_events.py
@@ -102,7 +102,7 @@ Voice System (/core/voice/)
 ```python
 send_voice_request(
     prompt="Tell me about the weather today",
-    lady="kyoko",
+    voice="kyoko",
     priority="normal"
 )
 ```
@@ -113,7 +113,7 @@ Event sent to `brain.voice.llm`:
     "type": "voice_llm_request",
     "request_id": "abc123...",
     "prompt": "Tell me about the weather today",
-    "lady": "kyoko",
+    "voice": "kyoko",
     "voice_name": "Kyoko",
     "region": "Japan",
     "priority": "normal",
@@ -124,8 +124,8 @@ Event sent to `brain.voice.llm`:
 ### Broadcast Spoken Message
 ```python
 broadcast_voice(
-    message="Good morning Joseph! Time to start the day.",
-    lady="flo"
+    message="Good morning! Time to start the day.",
+    voice="flo"
 )
 ```
 
@@ -133,8 +133,8 @@ Event sent to `brain.voice.response`:
 ```json
 {
     "type": "voice_response",
-    "message": "Good morning Joseph! Time to start the day.",
-    "lady": "flo",
+    "message": "Good morning! Time to start the day.",
+    "voice": "flo",
     "voice_name": "Flo",
     "region": "England"
 }
@@ -145,13 +145,13 @@ Event sent to `brain.voice.response`:
 1. **Minimal & Focused**: Only voice-related additions, no changes to existing functionality
 2. **Event-Driven**: All voice actions emit events for distributed processing
 3. **Fault-Tolerant**: Graceful degradation if local speech unavailable
-4. **Lady Validation**: Automatically falls back to Karen if invalid lady specified
+4. **Voice Validation**: Automatically falls back to Karen if invalid voice specified
 5. **Consistent API**: Follows same patterns as existing MCP tools (send_llm_request, broadcast_alert)
 
 ## Integration Points
 
-### With Voice Ladies System
-- Uses ladies roster from `/core/voice/ladies.py`
+### With Voice Voices System
+- Uses voices roster from `/core/voice/voices.py`
 - Compatible with voice personalities from `/core/voice/voice_engine.py`
 - Events consumed by voice daemons for distributed audio
 
@@ -183,5 +183,5 @@ python3 -m py_compile server.py
 1. Voice input recognition handlers
 2. Conversation state machine in `brain.voice.conversation` topic
 3. Voice mood/emotion detection
-4. Multi-lady conversation support
+4. Multi-voice conversation support
 5. Voice persistence across sessions via brain.voice.input topic

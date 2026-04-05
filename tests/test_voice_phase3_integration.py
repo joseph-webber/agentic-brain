@@ -88,7 +88,7 @@ class TestSpeakRouting:
         phase3._components["neural_router"] = router
         phase3._components["speed_manager"] = _fake_speed_manager()
 
-        assert phase3.speak("Hello Joseph", lady="Moira") is True
+        assert phase3.speak("Hello there", lady="Moira") is True
         router.speak.assert_called_once()
 
     @patch("agentic_brain.voice.serializer.get_voice_serializer")

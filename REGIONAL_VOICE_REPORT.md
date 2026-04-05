@@ -229,7 +229,7 @@ speak("Standard English", regionalize=False)
 Use LLM to research new regional expressions from the web
 
 ### 2. Voice-Specific Regions
-Each lady speaks with her regional accent:
+Each voice speaks with her regional accent:
 - Karen → Adelaide
 - Moira → Irish
 - Kyoko → Japanese-English

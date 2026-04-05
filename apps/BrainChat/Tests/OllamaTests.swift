@@ -25,11 +25,11 @@ final class OllamaTests: XCTestCase {
         let messages = try XCTUnwrap(body["messages"] as? [[String: String]])
         XCTAssertEqual(messages.last?["content"], "Hello")
         MockURLProtocol.requestHandler = { _ in
-            let data = Data("{\"message\":{\"content\":\"Hi Joseph\"},\"done\":true}\n".utf8)
+            let data = Data("{\"message\":{\"content\":\"Hi there\"},\"done\":true}\n".utf8)
             return (httpResponse(url: url), data)
         }
         let response = try await api.streamResponse(endpoint: url.absoluteString, model: "llama3.2:3b", messages: [AIChatMessage(role: .user, content: "Hello")], onDelta: { _ in })
-        XCTAssertEqual(response, "Hi Joseph")
+        XCTAssertEqual(response, "Hi there")
     }
 
     func testStreamingResponses() async throws {

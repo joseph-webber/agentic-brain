@@ -9,7 +9,7 @@ class TestWhisperTranscription:
     def test_whisper_api_call(self, mock_post):
         """Test OpenAI Whisper API integration."""
         mock_post.return_value.json.return_value = {
-            "text": "Hello Joseph how are you"
+            "text": "Hello user how are you"
         }
         
         # Simulate API call
@@ -20,7 +20,7 @@ class TestWhisperTranscription:
             data={"model": "whisper-1"}
         )
         
-        assert resp.json()["text"] == "Hello Joseph how are you"
+        assert resp.json()["text"] == "Hello user how are you"
     
     def test_empty_audio_handling(self):
         """Test handling of silent/empty audio."""

@@ -3,9 +3,9 @@ import Foundation
 
 enum TestFixtures {
     static let history: [ChatMessage] = [
-        ChatMessage(role: .system, content: "Welcome Joseph"),
+        ChatMessage(role: .system, content: "Welcome"),
         ChatMessage(role: .user, content: "Hello"),
-        ChatMessage(role: .assistant, content: "Hi Joseph"),
+        ChatMessage(role: .assistant, content: "Hi there"),
     ]
 
     static let ollamaConfig = AIServiceConfig(

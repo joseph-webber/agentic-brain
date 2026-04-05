@@ -119,10 +119,10 @@ final class VoiceIntegrationTests: XCTestCase {
 
     func testVoiceOutputPlays() {
         let voice = MockVoiceSynthesizer()
-        voice.speak("G'day Joseph!")
+        voice.speak("G'day! How can I help?")
         XCTAssertTrue(voice.isSpeaking)
         XCTAssertEqual(voice.spokenTexts.count, 1)
-        XCTAssertEqual(voice.spokenTexts[0], "G'day Joseph!")
+        XCTAssertEqual(voice.spokenTexts[0], "G'day! How can I help?")
     }
 
     func testVoiceOutputStops() {
@@ -193,7 +193,7 @@ final class VoiceIntegrationTests: XCTestCase {
         airpods.simulateConnect()
         let state = airpods.currentState()
         XCTAssertTrue(state.connected, "AirPods must be detected when connected")
-        XCTAssertEqual(state.deviceName, "Joseph's AirPods Max")
+        XCTAssertEqual(state.deviceName, "User's AirPods Max")
         XCTAssertEqual(state.battery, 85)
     }
 
@@ -281,7 +281,7 @@ final class VoiceIntegrationTests: XCTestCase {
     func testKarenIsDefaultVoice() {
         let voice = MockVoiceSynthesizer()
         XCTAssertEqual(voice.selectedVoice, "Karen (Premium)",
-                       "Default voice MUST be Karen for Joseph")
+                       "Default voice MUST be Karen for accessibility")
     }
 
     func testKarenVoiceDetectionVariants() {

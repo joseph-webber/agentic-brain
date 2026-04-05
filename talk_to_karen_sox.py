@@ -180,12 +180,12 @@ def transcribe_audio(audio_path: Path, model_name: str = DEFAULT_WHISPER_MODEL) 
 
 
 def get_llm_response(text: str, model: str = DEFAULT_MODEL) -> str:
-    response = requests.post(
+        response = requests.post(
         OLLAMA_URL,
         json={
             "model": model,
             "prompt": (
-                "You are Karen, an Australian assistant speaking to Joseph, who is blind. "
+                "You are Karen, an Australian assistant helping a user with visual impairments. "
                 "Reply conversationally in no more than three short sentences.\n"
                 f"User said: {text}"
             ),
@@ -264,7 +264,7 @@ def run_chat(args: argparse.Namespace) -> int:
     report_status(redis_client, "session_started", backend_preference=args.backend)
 
     if not args.skip_tts:
-        speak("Hello Joseph! I'm ready to chat. Go ahead and speak!", voice=args.voice, rate=args.rate)
+        speak("Hello! I'm ready to chat. Go ahead and speak!", voice=args.voice, rate=args.rate)
 
     try:
         while True:
@@ -294,7 +294,7 @@ def run_chat(args: argparse.Namespace) -> int:
                     continue
 
                 if text.strip().lower() in EXIT_WORDS:
-                    goodbye = "No worries, Joseph. Talk soon."
+                    goodbye = "No worries. Talk soon."
                     print(f"Karen: {goodbye}")
                     report_status(redis_client, "session_finished", transcript=text, response=goodbye)
                     if not args.skip_tts:

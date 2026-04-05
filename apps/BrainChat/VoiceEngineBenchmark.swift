@@ -40,16 +40,16 @@ final class VoiceEngineBenchmark: NSObject {
     struct BenchmarkConfig {
         let phrases: [String: [String]] = [
             "10-word": [
-                "Hello Joseph this is Karen speaking from Australia today",
+                "Hello there this is Karen speaking from Australia today",
                 "The quick brown fox jumps over the lazy dog here",
                 "Processing your request one moment please stand by",
                 "That's interesting let me think about this more",
                 "I found some good information for you about that"
             ],
             "50-word": [
-                "Hello Joseph welcome back to BrainChat. I'm Karen your Australian voice assistant speaking at optimal speed for clarity and comprehension. I can help you with coding tasks research information and much more. Today we're running performance benchmarks to measure latency across all our TTS engines to ensure you get the fastest most responsive audio experience possible every single time you interact with me.",
+                "Hello and welcome back to BrainChat. I'm Karen your Australian voice assistant speaking at optimal speed for clarity and comprehension. I can help you with coding tasks research information and much more. Today we're running performance benchmarks to measure latency across all our TTS engines to ensure you get the fastest most responsive audio experience possible every single time you interact with me.",
                 "This is a comprehensive test of the Cartesia streaming TTS engine which provides ultra-low latency streaming audio synthesis. The Cartesia API allows us to stream audio in real-time with minimal delay between the request and the first audio output. This makes it perfect for interactive voice applications like BrainChat where responsiveness is critical to user experience.",
-                "The Apple macOS AVSpeechSynthesizer engine provides excellent voice quality with multiple voice options including the Australian Karen voice that Joseph prefers. While it has slightly higher latency than streaming engines like Cartesia it provides excellent audio quality and is fully offline without requiring internet connectivity.",
+                "The Apple macOS AVSpeechSynthesizer engine provides excellent voice quality with multiple voice options including the Australian Karen voice for accessibility users. While it has slightly higher latency than streaming engines like Cartesia it provides excellent audio quality and is fully offline without requiring internet connectivity.",
                 "Piper is a lightweight open-source text-to-speech system that runs locally on your machine. It provides reasonable quality synthesis with minimal latency when the models are cached. Piper is great for offline use cases and privacy-conscious applications where you don't want to send audio to external services.",
                 "ElevenLabs provides premium text-to-speech synthesis with exceptional voice quality and natural sounding speech. The API is cloud-based so it requires internet connectivity but provides some of the best sounding voices available including professional grade quality suitable for production applications and high-end user experiences."
             ],

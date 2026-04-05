@@ -113,7 +113,7 @@ class RecordingProducer:
 
 
 def test_voice_speech_requested_defaults() -> None:
-    event = VoiceSpeechRequested(text="Hello Joseph")
+    event = VoiceSpeechRequested(text="Hello there")
 
     assert event.lady == "Karen"
     assert event.priority == VoicePriorityLane.NORMAL

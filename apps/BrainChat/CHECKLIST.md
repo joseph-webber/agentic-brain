@@ -1,4 +1,4 @@
-# ✅ MIC PERMISSION FIX - JOSEPH'S CHECKLIST
+# ✅ MIC PERMISSION FIX - DEVELOPER CHECKLIST
 
 ## 🎯 THE PROBLEM (FOUND!)
 
@@ -99,7 +99,7 @@ cd ~/brain/agentic-brain/apps/BrainChat
 
 ### Try 2: Reset permissions
 ```bash
-tccutil reset Microphone com.josephwebber.brainchat
+tccutil reset Microphone com.userwebber.brainchat
 rm -rf /Applications/Brain\ Chat.app
 ./build.sh --install --run
 ```
@@ -110,7 +110,7 @@ rm -rf /Applications/Brain\ Chat.app
 cat ~/brain/agentic-brain/apps/BrainChat/runtime/mic-debug.log
 
 # Console.app
-# Filter: com.josephwebber.brainchat
+# Filter: com.userwebber.brainchat
 # Look for: "Permission" or "AVCaptureDevice"
 ```
 

@@ -22,7 +22,7 @@ emotion prosody parameters, and `apply_emotion()` for adjusting a `VoiceConfig`.
 
 - keyword-based emotion detection
 - work mode bias toward `professional`
-- per-lady styling such as Kanya staying calm and Yuna sounding more excited
+- per-voice styling such as Kanya staying calm and Yuna sounding more excited
 
 ## Serializer support
 

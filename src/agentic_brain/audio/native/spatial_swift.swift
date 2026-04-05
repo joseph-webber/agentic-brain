@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024-2026 Joseph Webber <joseph.webber@me.com>
 //
-// Spatial Audio Swift Bridge — positions ladies in 3D around Joseph.
+// Spatial Audio Swift Bridge — positions voices in 3D around the listener.
 //
 // This companion binary works alongside airpods_bridge.swift to provide
 // per-utterance 3D positioning via AVAudioEngine.  It:
@@ -18,7 +18,7 @@
 //
 // Usage:
 //   ./spatial_play play '{"file":"/path/to/speech.aiff","azimuth":30,"elevation":0,"distance":1.0}'
-//   ./spatial_play positions   # dumps all lady positions as JSON
+//   ./spatial_play positions   # dumps all voice positions as JSON
 //   ./spatial_play test        # plays a test tone from 90° right
 
 import Foundation
@@ -29,7 +29,7 @@ import CoreMotion
 
 // MARK: - Data models
 
-struct LadyPosition: Codable {
+struct VoicePosition: Codable {
     let name: String
     let azimuth: Float
     let elevation: Float
@@ -44,22 +44,22 @@ struct PlayRequest: Codable {
     let gain: Float?
 }
 
-// All 14 ladies — must match spatial_audio.py LADY_POSITIONS
-let ladyPositions: [LadyPosition] = [
-    LadyPosition(name: "Karen",    azimuth: 0,   elevation: 0, distance: 1.0),
-    LadyPosition(name: "Kyoko",    azimuth: 30,  elevation: 0, distance: 1.0),
-    LadyPosition(name: "Tingting", azimuth: 55,  elevation: 0, distance: 1.0),
-    LadyPosition(name: "Yuna",     azimuth: 80,  elevation: 0, distance: 1.0),
-    LadyPosition(name: "Linh",     azimuth: 110, elevation: 0, distance: 1.0),
-    LadyPosition(name: "Kanya",    azimuth: 140, elevation: 0, distance: 1.0),
-    LadyPosition(name: "Dewi",     azimuth: 165, elevation: 0, distance: 1.0),
-    LadyPosition(name: "Sari",     azimuth: 180, elevation: 0, distance: 1.0),
-    LadyPosition(name: "Wayan",    azimuth: 195, elevation: 0, distance: 1.0),
-    LadyPosition(name: "Moira",    azimuth: 225, elevation: 0, distance: 1.0),
-    LadyPosition(name: "Alice",    azimuth: 255, elevation: 0, distance: 1.0),
-    LadyPosition(name: "Zosia",    azimuth: 285, elevation: 0, distance: 1.0),
-    LadyPosition(name: "Flo",      azimuth: 315, elevation: 0, distance: 1.0),
-    LadyPosition(name: "Shelley",  azimuth: 345, elevation: 0, distance: 1.0),
+// All 14 voices — must match spatial_audio.py VOICE_POSITIONS
+let voicePositions: [VoicePosition] = [
+    VoicePosition(name: "Karen",    azimuth: 0,   elevation: 0, distance: 1.0),
+    VoicePosition(name: "Kyoko",    azimuth: 30,  elevation: 0, distance: 1.0),
+    VoicePosition(name: "Tingting", azimuth: 55,  elevation: 0, distance: 1.0),
+    VoicePosition(name: "Yuna",     azimuth: 80,  elevation: 0, distance: 1.0),
+    VoicePosition(name: "Linh",     azimuth: 110, elevation: 0, distance: 1.0),
+    VoicePosition(name: "Kanya",    azimuth: 140, elevation: 0, distance: 1.0),
+    VoicePosition(name: "Dewi",     azimuth: 165, elevation: 0, distance: 1.0),
+    VoicePosition(name: "Sari",     azimuth: 180, elevation: 0, distance: 1.0),
+    VoicePosition(name: "Wayan",    azimuth: 195, elevation: 0, distance: 1.0),
+    VoicePosition(name: "Moira",    azimuth: 225, elevation: 0, distance: 1.0),
+    VoicePosition(name: "Alice",    azimuth: 255, elevation: 0, distance: 1.0),
+    VoicePosition(name: "Zosia",    azimuth: 285, elevation: 0, distance: 1.0),
+    VoicePosition(name: "Flo",      azimuth: 315, elevation: 0, distance: 1.0),
+    VoicePosition(name: "Shelley",  azimuth: 345, elevation: 0, distance: 1.0),
 ]
 
 // MARK: - Coordinate conversion
@@ -272,25 +272,26 @@ case "test":
     exit(ok ? 0 : 1)
 
 case "positions":
-    writeEncodable(ladyPositions)
+    writeEncodable(voicePositions)
     exit(0)
 
 case "cartesian":
-    // Convert all lady positions to cartesian for debugging
+    // Convert all voice positions to cartesian for debugging
     var results: [[String: Any]] = []
-    for lady in ladyPositions {
+    for voice in voicePositions {
         let point = toCartesian(
-            azimuthDeg: lady.azimuth,
-            elevationDeg: lady.elevation,
-            distance: lady.distance
+            azimuthDeg: voice.azimuth,
+            elevationDeg: voice.elevation,
+            distance: voice.distance
         )
         results.append([
-            "name": lady.name,
-            "azimuth": lady.azimuth,
+            "name": voice.name,
+            "azimuth": voice.azimuth,
             "x": point.x,
             "y": point.y,
             "z": point.z,
         ])
+    }
     }
     writeJSON(results)
     exit(0)

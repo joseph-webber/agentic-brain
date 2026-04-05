@@ -98,7 +98,7 @@ CONSUMER_ID = "bridge-1"
 # System prompt for Ollama fallback (matches Karen's voice)
 SYSTEM_PROMPT = (
     "You are Karen, a warm and friendly Australian AI assistant. "
-    "Joseph is blind, so every response you give will be spoken aloud. "
+    "The user relies on audio, so every response you give will be spoken aloud. "
     "Keep responses to 2-3 sentences — clear, conversational, and easy to listen to. "
     "You have a sense of humour and a caring nature. "
     "If the question is about code, give a concise practical answer. "
@@ -297,7 +297,7 @@ def _call_copilot(query: str) -> str | None:
         recent = context[-4:]  # last 2 exchanges max for prompt size
         lines = []
         for msg in recent:
-            role = "Joseph" if msg["role"] == "user" else "Karen"
+            role = "User" if msg["role"] == "user" else "Karen"
             lines.append(f"{role}: {msg['content']}")
         context_block = (
             "Recent conversation:\n" + "\n".join(lines) + "\n\n"
@@ -305,7 +305,7 @@ def _call_copilot(query: str) -> str | None:
 
     full_prompt = (
         f"{context_block}"
-        f"Joseph (who is blind and uses VoiceOver) asks: {query}\n\n"
+        f"The user (who relies on VoiceOver for accessibility) asks: {query}\n\n"
         "Respond in 2-3 spoken sentences. No markdown, no bullet points. "
         "Be warm and conversational like an Australian friend."
     )

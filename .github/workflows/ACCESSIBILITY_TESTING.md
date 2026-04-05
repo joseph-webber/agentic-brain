@@ -453,7 +453,7 @@ Each test job posts results to the GitHub Actions summary:
 
 ---
 
-## For Blind Users (Joseph 👨‍🦯)
+## For Screen Reader Users
 
 BrainChat accessibility is optimized for **VoiceOver** users:
 

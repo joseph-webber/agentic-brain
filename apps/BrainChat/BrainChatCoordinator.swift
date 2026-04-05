@@ -21,7 +21,7 @@ struct AIServiceConfig {
     var bridgeWebSocketURL: String
 
     init(
-        systemPrompt: String = "You are Karen, an Australian AI assistant helping Joseph code",
+        systemPrompt: String = "You are Karen, an Australian AI assistant helping users code",
         claudeAPIKey: String = "",
         openAIAPIKey: String = "",
         groqAPIKey: String = "",

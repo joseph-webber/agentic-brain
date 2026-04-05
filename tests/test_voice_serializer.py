@@ -2,7 +2,7 @@
 #
 # Comprehensive concurrency tests for voice serialization.
 #
-# Joseph is blind.  Overlapping speech is an accessibility catastrophe.
+# Overlapping speech is an accessibility catastrophe.
 # These tests PROVE that the serializer guarantees exactly ONE voice
 # at a time under every conceivable concurrency scenario.
 

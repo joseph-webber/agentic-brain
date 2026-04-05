@@ -5,7 +5,7 @@ struct VoiceSelector: View {
     @ObservedObject var audioPlayer: AudioPlayer
 
     @State private var apiKeyDraft = ""
-    @State private var previewText = "G'day Joseph, Brain Chat is speaking with Cartesia now."
+    @State private var previewText = "G'day, Brain Chat is speaking with Cartesia now."
 
     var body: some View {
         Form {

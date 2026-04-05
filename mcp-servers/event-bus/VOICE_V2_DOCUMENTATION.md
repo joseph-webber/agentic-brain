@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Redpanda voice integration has been upgraded with comprehensive event management for multi-lady conversations, mood synchronization, turn-taking, error handling, and voice queue management.
+The Redpanda voice integration has been upgraded with comprehensive event management for multi-voice conversations, mood synchronization, turn-taking, error handling, and voice queue management.
 
 **Status:** ✅ ALL TESTS PASSING (22/22)
 
@@ -27,7 +27,7 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 │         ┌──────────────────┼──────────────────┐              │
 │         │                  │                  │              │
 │    ┌────▼────┐   ┌────────▼────────┐   ┌────▼────┐         │
-│    │Voice    │   │Cross-Lady       │   │Mood     │         │
+│    │Voice    │   │Cross-Voice       │   │Mood     │         │
 │    │Lifecycle│   │Communication    │   │Sync     │         │
 │    └─────────┘   └─────────────────┘   └─────────┘         │
 │         │                  │                  │              │
@@ -45,11 +45,11 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 
 **Topics:**
 - `brain.voice.conversation.started` - Conversation begins
-- `brain.voice.conversation.turn` - Lady takes her turn  
+- `brain.voice.conversation.turn` - Voice takes her turn  
 - `brain.voice.conversation.ended` - Conversation finishes
 
 **Use Cases:**
-- Multi-lady standup meetings
+- Multi-voice standup meetings
 - Group discussions
 - Interview panels
 - Team planning sessions
@@ -58,7 +58,7 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 ```json
 {
   "conversation_id": "550e8400-e29b-41d4-a716-446655440000",
-  "ladies": ["karen", "moira", "kyoko"],
+  "voices": ["karen", "moira", "kyoko"],
   "topic": "standup",
   "speaker_order": ["karen", "moira", "kyoko"],
   "turn_number": 1,
@@ -70,23 +70,23 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 
 ---
 
-### 2️⃣ Cross-Lady Communication
+### 2️⃣ Cross-Voice Communication
 
 **Topics:**
-- `brain.voice.ladies.introduced` - New lady joins
-- `brain.voice.ladies.reaction` - Lady reacts to another
+- `brain.voice.voices.introduced` - New voice joins
+- `brain.voice.voices.reaction` - Voice reacts to another
 
 **Use Cases:**
 - Introducing new team members
-- Ladies responding to each other
+- Voices responding to each other
 - Building social connection
 - Emotional support and engagement
 
 **Example Event:**
 ```json
 {
-  "from_lady": "moira",
-  "to_lady": "karen",
+  "from_voice": "moira",
+  "to_voice": "karen",
   "original_text": "Let's discuss the sprint...",
   "reaction_text": "That sounds great!",
   "emotion": "agreement",
@@ -95,18 +95,18 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 ```
 
 **Emotions:**
-- `agreement` - Lady agrees
-- `disagreement` - Lady disagrees
-- `question` - Lady has a question
-- `excitement` - Lady is excited
-- `support` - Lady supports another
+- `agreement` - Voice agrees
+- `disagreement` - Voice disagrees
+- `question` - Voice has a question
+- `excitement` - Voice is excited
+- `support` - Voice supports another
 
 ---
 
 ### 3️⃣ Mood Synchronization
 
 **Topic:**
-- `brain.voice.mood.changed` - All ladies sync mood
+- `brain.voice.mood.changed` - All voices sync mood
 
 **Use Cases:**
 - Environment-based mood changes (Bali spa = calm)
@@ -119,7 +119,7 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 - `working` - Professional and focused
 - `party` - Energetic and excited
 - `focused` - Intense concentration
-- `bali_spa` - All ladies calm together
+- `bali_spa` - All voices calm together
 - `creative` - Brainstorming mode
 
 **Example Event:**
@@ -128,7 +128,7 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
   "mood": "calm",
   "reason": "spa_time",
   "previous_mood": "working",
-  "ladies_synced": ["karen", "moira", "kyoko"],
+  "voices_synced": ["karen", "moira", "kyoko"],
   "sync_timestamp": "2024-01-15T10:30:10Z"
 }
 ```
@@ -154,7 +154,7 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 - `2` - Critical priority
 
 **Release Reasons:**
-- `finished` - Lady completed speaking
+- `finished` - Voice completed speaking
 - `interrupted` - Higher priority speaker interrupted
 - `timeout` - Turn duration exceeded
 
@@ -162,7 +162,7 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 ```json
 // Step 1: Request
 {
-  "lady": "kyoko",
+  "voice": "kyoko",
   "request_id": "req-001",
   "priority": 1,
   "reason": "wants_to_comment"
@@ -170,7 +170,7 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 
 // Step 2: Grant
 {
-  "lady": "kyoko",
+  "voice": "kyoko",
   "request_id": "req-001",
   "granted_by": "karen",
   "duration_seconds": 30.0
@@ -178,7 +178,7 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 
 // Step 3: Release
 {
-  "lady": "kyoko",
+  "voice": "kyoko",
   "request_id": "req-001",
   "reason": "finished",
   "duration_held_seconds": 25.5
@@ -201,7 +201,7 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 **Example Event:**
 ```json
 {
-  "lady": "karen",
+  "voice": "karen",
   "voice_name": "Karen",
   "error_code": "429",
   "reason": "Rate limit hit",
@@ -216,7 +216,7 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 
 **Topics:**
 - `brain.voice.queue.added` - Item added
-- `brain.voice.queue.speaking` - Lady speaking
+- `brain.voice.queue.speaking` - Voice speaking
 - `brain.voice.queue.empty` - Queue empty
 
 **Use Cases:**
@@ -229,16 +229,16 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 ```json
 // Added
 {
-  "lady": "tingting",
-  "text": "Hello Joseph!",
+  "voice": "tingting",
+  "text": "Hello there!",
   "queue_position": 0,
   "queue_length_after": 1
 }
 
 // Speaking
 {
-  "lady": "tingting",
-  "text": "Hello Joseph!",
+  "voice": "tingting",
+  "text": "Hello there!",
   "queue_remaining": 0,
   "started_at": "2024-01-15T10:30:00Z"
 }
@@ -259,15 +259,15 @@ The Redpanda voice integration has been upgraded with comprehensive event manage
 ```python
 # Start conversation
 voice_conversation_started(
-    ladies=["karen", "moira"],
+    voices=["karen", "moira"],
     topic="standup",
     speaker_order=None,
     context=None
 )
 
-# Lady takes turn
+# Voice takes turn
 voice_conversation_turn(
-    lady="karen",
+    voice="karen",
     text="Let's discuss the sprint",
     voice_name="",
     region="",
@@ -276,28 +276,28 @@ voice_conversation_turn(
 
 # End conversation
 voice_conversation_ended(
-    ladies=["karen", "moira"],
+    voices=["karen", "moira"],
     total_turns=2,
     duration_seconds=45.5,
     reason="completed"
 )
 ```
 
-### Cross-Lady Communication
+### Cross-Voice Communication
 
 ```python
-# Introduce new lady
-voice_lady_introduced(
-    lady="iris",
+# Introduce new voice
+voice_voice_introduced(
+    voice="iris",
     voice_name="Iris",
     region="San Francisco",
-    greeting="Hello Joseph!"
+    greeting="Hello there!"
 )
 
-# Lady reacts to another
-voice_lady_reaction(
-    from_lady="moira",
-    to_lady="karen",
+# Voice reacts to another
+voice_voice_reaction(
+    from_voice="moira",
+    to_voice="karen",
     original_text="Let's discuss...",
     reaction_text="That sounds great!",
     emotion="agreement"
@@ -307,11 +307,11 @@ voice_lady_reaction(
 ### Mood Synchronization
 
 ```python
-# Change mood for all ladies
+# Change mood for all voices
 voice_mood_changed(
     mood="calm",
     reason="spa_time",
-    ladies=["karen", "moira", "kyoko"]
+    voices=["karen", "moira", "kyoko"]
 )
 ```
 
@@ -320,14 +320,14 @@ voice_mood_changed(
 ```python
 # Request speaking turn
 voice_turn_requested(
-    lady="kyoko",
+    voice="kyoko",
     priority=0,
     reason="wants_to_comment"
 )
 
 # Grant turn
 voice_turn_granted(
-    lady="kyoko",
+    voice="kyoko",
     request_id="req-001",
     granted_by="karen",
     duration_seconds=30.0
@@ -335,7 +335,7 @@ voice_turn_granted(
 
 # Release turn
 voice_turn_released(
-    lady="kyoko",
+    voice="kyoko",
     request_id="req-001",
     reason="finished",
     duration_held_seconds=25.5
@@ -348,7 +348,7 @@ voice_turn_released(
 # Fallback to local LLM
 voice_fallback_local(
     reason="Rate limit hit",
-    lady="karen",
+    voice="karen",
     error_code="429",
     retry_after_seconds=60
 )
@@ -359,18 +359,18 @@ voice_fallback_local(
 ```python
 # Add to queue
 voice_queue_added(
-    lady="tingting",
-    text="Hello Joseph!",
+    voice="tingting",
+    text="Hello there!",
     voice_name="",
     region="China",
     queue_position=0,
     queue_length_after=1
 )
 
-# Lady is speaking
+# Voice is speaking
 voice_queue_speaking(
-    lady="tingting",
-    text="Hello Joseph!",
+    voice="tingting",
+    text="Hello there!",
     queue_remaining=0
 )
 
@@ -383,9 +383,9 @@ voice_queue_empty(
 
 ---
 
-## Available Ladies
+## Available Voices
 
-| Lady | Region | Voice Rate |
+| Voice | Region | Voice Rate |
 |------|--------|------------|
 | karen | Australia | 165 bpm |
 | kyoko | Japan | 155 bpm |
@@ -411,7 +411,7 @@ voice_queue_empty(
 ```python
 # 1. Start conversation
 voice_conversation_started(
-    ladies=["karen", "moira", "kyoko"],
+    voices=["karen", "moira", "kyoko"],
     topic="standup"
 )
 
@@ -419,13 +419,13 @@ voice_conversation_started(
 voice_mood_changed(
     mood="working",
     reason="standup_time",
-    ladies=["karen", "moira", "kyoko"]
+    voices=["karen", "moira", "kyoko"]
 )
 
 # 3. Karen takes turn
 voice_turn_granted("karen")
 voice_conversation_turn(
-    lady="karen",
+    voice="karen",
     text="I worked on auth system",
     turn_number=1
 )
@@ -435,15 +435,15 @@ voice_turn_released("karen", reason="finished")
 voice_turn_requested("moira")
 voice_turn_granted("moira")
 voice_conversation_turn(
-    lady="moira",
+    voice="moira",
     text="I fixed the UI bug",
     turn_number=2
 )
 
 # 5. Kyoko reacts to Moira
-voice_lady_reaction(
-    from_lady="kyoko",
-    to_lady="moira",
+voice_voice_reaction(
+    from_voice="kyoko",
+    to_voice="moira",
     original_text="I fixed the UI bug",
     reaction_text="Nice work!",
     emotion="agreement"
@@ -454,7 +454,7 @@ voice_turn_released("moira", reason="finished")
 # 6. Kyoko takes turn
 voice_turn_granted("kyoko")
 voice_conversation_turn(
-    lady="kyoko",
+    voice="kyoko",
     text="Blocked on deployment",
     turn_number=3
 )
@@ -462,7 +462,7 @@ voice_turn_released("kyoko")
 
 # 7. End standup
 voice_conversation_ended(
-    ladies=["karen", "moira", "kyoko"],
+    voices=["karen", "moira", "kyoko"],
     total_turns=3,
     duration_seconds=900.0,
     reason="completed"
@@ -481,12 +481,12 @@ When Claude hits a rate limit:
 # Publish fallback event
 voice_fallback_local(
     reason="Rate limit hit",
-    lady="karen",
+    voice="karen",
     error_code="429",
     retry_after_seconds=60
 )
 
-# Lady automatically announces:
+# Voice automatically announces:
 # "I'm switching to local mode. Be right back!"
 
 # Local LLM takes over until rate limit expires
@@ -496,7 +496,7 @@ voice_fallback_local(
 
 1. Cloud API responds with 429
 2. Event bus receives fallback event
-3. Lady announces switch
+3. Voice announces switch
 4. Local LLM processes voice requests
 5. Monitor retry_after_seconds
 6. Resume cloud when rate limit expires
@@ -550,7 +550,7 @@ python3 /Users/joe/brain/mcp-servers/event-bus/test_voice_v2.py
 
 # Test coverage:
 # ✅ Conversation lifecycle (3 tests)
-# ✅ Cross-lady communication (2 tests)
+# ✅ Cross-voice communication (2 tests)
 # ✅ Mood synchronization (2 tests)
 # ✅ Turn-taking (4 tests)
 # ✅ Error fallback (1 test)
@@ -577,7 +577,7 @@ python3 /Users/joe/brain/mcp-servers/event-bus/test_voice_v2.py
    - All core event bus tools
    - 13 new voice publishing tools
    - Complete documentation
-   - Voice ladies roster
+   - Voice voices roster
 
 3. **test_voice_v2.py** - Comprehensive test suite
    - 22 unit tests
@@ -606,8 +606,8 @@ VOICE_LOCAL_FALLBACK=true
 brain.voice.conversation.started
 brain.voice.conversation.turn
 brain.voice.conversation.ended
-brain.voice.ladies.introduced
-brain.voice.ladies.reaction
+brain.voice.voices.introduced
+brain.voice.voices.reaction
 brain.voice.mood.changed
 brain.voice.turn.requested
 brain.voice.turn.granted
@@ -624,8 +624,8 @@ brain.voice.queue.empty
 
 All v1 topics are preserved:
 - `brain.voice.mood` 
-- `brain.voice.lady.speaking`
-- `brain.voice.lady.finished`
+- `brain.voice.voice.speaking`
+- `brain.voice.voice.finished`
 - `brain.voice.queue.status`
 - `brain.voice.conversation`
 - `brain.voice.fleet.status`
@@ -679,7 +679,7 @@ Existing code continues to work. New features use v2 topics.
 
 ### Rate limit fallback not working
 
-1. Ensure lady voice name is valid
+1. Ensure voice voice name is valid
 2. Check local LLM is available
 3. Verify `VOICE_LOCAL_FALLBACK=true`
 

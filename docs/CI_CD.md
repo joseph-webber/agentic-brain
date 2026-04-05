@@ -560,8 +560,6 @@ jobs:
           tags: |
             ghcr.io/agentic-brain-project/agentic-brain:${{ steps.version.outputs.version }}
             ghcr.io/agentic-brain-project/agentic-brain:latest
-            josephwebber/agentic-brain:${{ steps.version.outputs.version }}
-            josephwebber/agentic-brain:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           labels: |

@@ -32,12 +32,12 @@ class TestVoiceUtterance:
         """Test creating a basic utterance."""
         now = datetime.now(timezone.utc)
         utt = VoiceUtterance(
-            text="Hello Joseph!",
+            text="Hello there!",
             timestamp=now,
             speaker="Karen",
         )
 
-        assert utt.text == "Hello Joseph!"
+        assert utt.text == "Hello there!"
         assert utt.speaker == "Karen"
         assert utt.timestamp == now
         assert utt.embedding is None
@@ -478,7 +478,7 @@ class TestVoiceMemoryNeo4jIntegration:
 
         # Store utterances
         utt1 = VoiceUtterance(
-            text="Good morning Joseph, how are you today?",
+            text="Good morning, how are you today?",
             timestamp=now,
             speaker="Karen",
         )

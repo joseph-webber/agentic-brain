@@ -282,7 +282,7 @@ Enterprise: Custom pricing
 
 ## 📋 Voice Quality Ratings
 
-### Karen (Australian) - Joseph's Preferred Voice
+### Karen (Australian) - user's Preferred Voice
 
 | Engine | Voice Name | Quality | Similarity to Karen | Notes |
 |--------|-----------|---------|---------------------|-------|
@@ -463,7 +463,7 @@ Timestamp: 2024-04-05T00:50:00Z
 
 ### 🏆 Recommended Setup
 
-**For Joseph's BrainChat:**
+**For user's BrainChat:**
 
 1. **Primary:** Cartesia (92ms, excellent quality, streaming)
 2. **Quick:** macOS cached (6ms for acknowledgments)

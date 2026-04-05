@@ -97,7 +97,7 @@ class RecordingEventProducer:
 
 def test_voice_request_round_trip() -> None:
     request = VoiceRequest(
-        text="Hello Joseph",
+        text="Hello there",
         voice="Karen",
         rate=160,
         priority=75,
@@ -108,7 +108,7 @@ def test_voice_request_round_trip() -> None:
     payload = request.to_payload()
     restored = VoiceRequest.from_payload(payload)
 
-    assert restored.text == "Hello Joseph"
+    assert restored.text == "Hello there"
     assert restored.voice == "Karen"
     assert restored.priority == 75
     assert restored.spatial_position == (1.0, 2.0, 3.0)

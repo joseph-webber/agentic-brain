@@ -37,7 +37,7 @@ final class RedpandaBridgeTests: XCTestCase {
             "topic": "brain.voice.response",
             "key": null,
             "value": {
-              "text": "G'day Joseph",
+              "text": "G'day",
               "provider": "claude",
               "latencyMs": 412,
               "success": true
@@ -55,7 +55,7 @@ final class RedpandaBridgeTests: XCTestCase {
         XCTAssertEqual(records[0].partition, 0)
         XCTAssertEqual(records[0].offset, 12)
         XCTAssertEqual(records[0].value, VoiceResponseEvent(
-            text: "G'day Joseph",
+            text: "G'day",
             provider: "claude",
             latencyMs: 412,
             success: true

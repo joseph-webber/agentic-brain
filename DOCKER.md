@@ -2,7 +2,7 @@
 
 ## Quick Start
 ```bash
-git clone https://github.com/joseph-webber/agentic-brain.git
+git clone https://github.com/agentic-brain-project/agentic-brain.git
 cd agentic-brain
 docker compose up -d --build
 ```

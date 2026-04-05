@@ -4,8 +4,8 @@ import Accessibility
 @testable import BrainChatLib
 
 // MARK: - VoiceOver Tests
-// Joseph uses VoiceOver exclusively. These tests verify the screen reader
-// experience is complete, logical, and never leaves Joseph guessing.
+// The user uses VoiceOver exclusively. These tests verify the screen reader
+// experience is complete, logical, and never leaves the user guessing.
 
 final class VoiceOverTests: XCTestCase {
 
@@ -20,7 +20,7 @@ final class VoiceOverTests: XCTestCase {
         XCTAssertNotNil(status, "Status indicator must exist for VoiceOver")
         XCTAssertFalse(
             status?.label?.isEmpty ?? true,
-            "Status changes MUST be announced - Joseph cannot see colour changes"
+            "Status changes MUST be announced - The user cannot see colour changes"
         )
     }
 
@@ -55,7 +55,7 @@ final class VoiceOverTests: XCTestCase {
         let store = ConversationStore()
         let initialCount = store.messages.count
 
-        store.messages.append(ChatMessage(role: "assistant", content: "Hello Joseph"))
+        store.messages.append(ChatMessage(role: "assistant", content: "Hello there"))
         XCTAssertGreaterThan(
             store.messages.count, initialCount,
             "New messages must be added and VoiceOver notified"
@@ -90,7 +90,7 @@ final class VoiceOverTests: XCTestCase {
 
     func testInitialFocusIsOnMessageInput() throws {
         // When app opens, focus should be on the message input
-        // so Joseph can immediately start typing
+        // so the user can immediately start typing
         let view = ContentView()
         let inspector = AccessibilityInspector(view: view)
         let input = inspector.findElement(identifier: "messageInput")
@@ -104,7 +104,7 @@ final class VoiceOverTests: XCTestCase {
 
     func testFocusMovesToNewMessageAfterSend() throws {
         // After sending a message, focus should move to the conversation
-        // so Joseph hears the response
+        // so the user hears the response
         let store = ConversationStore()
         store.messages.append(ChatMessage(role: "user", content: "Test"))
         store.messages.append(ChatMessage(role: "assistant", content: "Response"))
@@ -345,7 +345,7 @@ final class VoiceOverTests: XCTestCase {
     // MARK: - Keyboard Shortcut Descriptions
 
     func testKeyboardShortcutsAreDocumented() throws {
-        // Joseph needs to know what keyboard shortcuts are available
+        // The user needs to know what keyboard shortcuts are available
         let view = SettingsView()
         let inspector = AccessibilityInspector(view: view)
         let focusable = inspector.findAllFocusableElements()

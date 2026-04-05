@@ -6,7 +6,7 @@
 
 ## Overview
 
-BrainChat is a fully accessible macOS voice chat application that enables blind users to interact with AI assistants using speech. The app was developed specifically for Joseph Webber as part of the Agentic Brain project.
+BrainChat is a fully accessible macOS voice chat application that enables users to interact with AI assistants using speech. The app prioritizes accessibility for visually impaired users as part of the Agentic Brain project.
 
 ## Key Features
 
@@ -159,10 +159,7 @@ BrainChat.swift (4490 lines)
 
 ## Code Signing
 
-The app is signed with:
-```
-Developer ID Application: Joseph Webber (H6RKDG4RWN)
-```
+The app requires code signing with a valid Developer ID certificate.
 
 Entitlements:
 - `com.apple.security.device.audio-input`
@@ -188,8 +185,8 @@ Apache 2.0 - See [LICENSE](../../LICENSE)
 
 ## Author
 
-Created for Joseph Webber (blind consultant) by Iris Lumina (Agentic Brain AI).
+Agentic Brain Team
 
 ---
 
-**Historic Milestone**: This app proves that programming can be accessible to blind people everywhere. 💜
+**Historic Milestone**: This app proves that programming can be accessible to visually impaired users everywhere. 💜

@@ -11,7 +11,7 @@ class TestMacOSTTS:
         """Test macOS say command."""
         mock_run.return_value = Mock(returncode=0)
         
-        text = "Hello Joseph"
+        text = "Hello there"
         subprocess.run(["say", "-v", "Karen (Premium)", "-r", "160", text])
         
         mock_run.assert_called_once()

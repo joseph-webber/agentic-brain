@@ -14,9 +14,9 @@ r = sr.Recognizer()
 r.energy_threshold = 300  # Lower threshold for sensitivity
 r.dynamic_energy_threshold = False
 
-print("🎧 Using Joseph's AirPods Max")
+print("🎧 Using AirPods Max")
 print("🎤 Speak now! (10 second window)")
-speak("Speak now Joseph!")
+speak("Speak now!")
 
 mic = sr.Microphone(device_index=AIRPODS_INDEX)
 

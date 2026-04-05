@@ -319,7 +319,7 @@ class DemoDataGenerator:
         "Ruby",
         "Matthew",
         "Aria",
-        "Joseph",
+        "TestUser",
         "Madison",
     ]
 

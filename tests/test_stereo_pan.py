@@ -80,7 +80,7 @@ def test_render_panned_speech_generates_say_then_sox(monkeypatch):
     monkeypatch.setattr("agentic_brain.audio.stereo_pan.subprocess.run", fake_run)
 
     panned_audio = panner.render_panned_speech(
-        text="Hello Joseph",
+        text="Hello there",
         lady="Karen",
         voice="Karen (Premium)",
         rate=160,

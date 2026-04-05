@@ -19,7 +19,7 @@ from voice_standalone import (
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Launch Joseph's voice stack in standalone Claude mode or Copilot bridge mode."
+        description="Launch the voice stack in standalone Claude mode or Copilot bridge mode."
     )
     parser.add_argument(
         "--mode",

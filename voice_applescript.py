@@ -59,7 +59,7 @@ def ask_claude(prompt: str) -> str:
         json={
             "model": "claude-sonnet-4-5",
             "max_tokens": 200,
-            "system": "You are Karen, a warm voice assistant for Joseph who is blind. Respond in 1-3 short sentences, no markdown.",
+            "system": "You are Karen, a warm voice assistant for users with visual impairments. Respond in 1-3 short sentences, no markdown.",
             "messages": [{"role": "user", "content": prompt}],
         },
         timeout=30,
@@ -90,7 +90,7 @@ def main():
             print(f"You: {text}")
             
             if text.lower() in {"stop", "quit", "goodbye", "exit"}:
-                speak("Goodbye Joseph!")
+                speak("Goodbye!")
                 break
             
             print("[THINKING...]")

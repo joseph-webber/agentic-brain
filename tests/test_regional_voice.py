@@ -336,11 +336,11 @@ class TestHelperFunctions:
 class TestRealWorldScenarios:
     """Test real-world usage scenarios."""
 
-    def test_joseph_in_adelaide(self, tmp_path):
-        """Test Joseph's actual usage in Adelaide."""
+    def test_user_in_adelaide(self, tmp_path):
+        """Test user's actual usage in Adelaide."""
         rv = RegionalVoice(config_dir=str(tmp_path))
 
-        # Joseph says something
+        # User says something
         text = "That's very great! Thank you! Let's go to the bottle shop."
         regionalized = rv.regionalize(text)
 

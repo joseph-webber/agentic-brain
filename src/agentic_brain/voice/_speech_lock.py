@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber
+# Copyright 2024-2026 Agentic Brain Contributors
 
 """
 GLOBAL Speech Lock - Prevents ALL voice overlap ACROSS PROCESSES.
 
-CRITICAL ACCESSIBILITY MODULE for Joseph (blind user).
+CRITICAL ACCESSIBILITY MODULE for users with visual impairments.
 
 This module provides a **distributed** lock backed by Redis so that
 every process in the brain ecosystem (MCP server, CLI scripts,

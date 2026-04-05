@@ -135,8 +135,8 @@ final class ConversationStoreIntegrationTests: XCTestCase {
         let store = ConversationStore()
         let id = store.beginStreamingAssistantMessage()
         store.appendToMessage(id: id, delta: "G'day ")
-        store.appendToMessage(id: id, delta: "Joseph!")
-        XCTAssertEqual(store.messages.first?.content, "G'day Joseph!")
+        store.appendToMessage(id: id, delta: "there!")
+        XCTAssertEqual(store.messages.first?.content, "G'day!")
     }
 
     @MainActor

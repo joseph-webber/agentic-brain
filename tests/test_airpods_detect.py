@@ -45,7 +45,7 @@ def test_detector_maps_airpods_pro_max_status():
     manager = MagicMock()
     manager.status.return_value = ManagerAirPodsStatus(
         device=AirPodsDevice(
-            name="Joseph's AirPods Pro Max",
+            name="User's AirPods Pro Max",
             connected=True,
             battery=BatteryLevels(single=74),
         ),
@@ -57,7 +57,7 @@ def test_detector_maps_airpods_pro_max_status():
     status = detector.get_status()
 
     assert status.connected is True
-    assert status.name == "Joseph's AirPods Pro Max"
+    assert status.name == "User's AirPods Pro Max"
     assert status.battery_left == 74
     assert status.battery_right == 74
     assert status.battery_case is None

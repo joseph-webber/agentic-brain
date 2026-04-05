@@ -34,10 +34,10 @@ def get_response(text):
     try:
         resp = requests.post("http://localhost:11434/api/generate", json={
             "model": "llama3.2:3b",
-            "prompt": f"""You are Karen, a warm and friendly Australian woman helping Joseph.
+            "prompt": f"""You are Karen, a warm and friendly Australian voice assistant.
 Keep responses SHORT (1-2 sentences). Be helpful and conversational.
 
-Joseph said: {text}
+User said: {text}
 
 Karen's response:""",
             "stream": False
@@ -53,7 +53,7 @@ def main():
     print("Using audio_utils: 24kHz capture → 16kHz + hallucination guards")
     print("Press Ctrl+C to stop\n")
 
-    speak("G'day Joseph! Ready to chat. Just speak after the beep!")
+    speak("G'day! Ready to chat. Just speak after the beep!")
 
     while True:
         try:
@@ -85,7 +85,7 @@ def main():
             speak(response)
 
         except KeyboardInterrupt:
-            speak("Bye Joseph! Chat soon!")
+            speak("Bye! Chat soon!")
             break
         except Exception as e:
             print(f"Error: {e}")

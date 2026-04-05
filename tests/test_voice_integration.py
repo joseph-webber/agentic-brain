@@ -9,7 +9,7 @@
 #   4. Adaptive Speech Rates
 #   5. Kokoro TTS / Hybrid Router
 #
-# Joseph is blind.  These tests PROVE that the integrated system
+# These tests PROVE that the integrated system
 # guarantees exactly ONE voice at a time under every scenario.
 
 from __future__ import annotations
@@ -288,11 +288,11 @@ class TestFullFlowEnqueueToSpeech:
 
         from agentic_brain.voice import speak_safe
 
-        result = speak_safe("Hello Joseph", voice="Karen", rate=155)
+        result = speak_safe("Hello there", voice="Karen", rate=155)
 
         assert result is True
         assert len(recorder.records) == 1
-        assert recorder.records[0].text == "Hello Joseph"
+        assert recorder.records[0].text == "Hello there"
         assert recorder.records[0].voice == "Karen"
 
     @patch(_SAY_AUDIT)

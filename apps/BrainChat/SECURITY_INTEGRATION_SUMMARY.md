@@ -14,7 +14,7 @@ Security roles have been successfully integrated into BrainChat Swift to match t
 2. **SecurityManager.swift** - Singleton managing current role and permissions
    - Role switching for testing (enabled by default)
    - Persistent storage via UserDefaults
-   - Joseph's default: **Admin**
+   - user's default: **Admin**
 
 3. **SecurityGuard.swift** - Permission checks before actions
    - YOLO mode validation
@@ -96,7 +96,7 @@ Updated to include all Security files in the build.
 
 ## 🔒 Security Role Capabilities
 
-### Admin (Joseph's default)
+### Admin (user's default)
 - ✅ YOLO mode (no safety checks)
 - ✅ All LLM providers
 - ✅ No rate limits
@@ -168,12 +168,12 @@ let role = SecurityManager.shared.currentRole  // .admin
 SecurityManager.shared.switchRole(to: .user)
 
 // Reset to default
-SecurityManager.shared.resetToDefault()  // Back to .admin for Joseph
+SecurityManager.shared.resetToDefault()  // Back to .admin for user
 ```
 
 ## 🔐 Security Principles
 
-1. **Joseph defaults to Admin** - Full power, no restrictions
+1. **user defaults to Admin** - Full power, no restrictions
 2. **Mode switching is for testing** - Allows validation of lower privilege levels
 3. **Defense in depth** - Multiple layers (SecurityGuard, PermissionChecker, DangerousCommands)
 4. **Proper regex matching** - No more simple string contains bypasses
@@ -196,7 +196,7 @@ SecurityManager.shared.resetToDefault()  // Back to .admin for Joseph
 ✅ Control LLM access by role
 ✅ Fix SafetyGuard regex vulnerabilities
 ✅ All tests passing
-✅ Joseph defaults to Admin
+✅ user defaults to Admin
 ✅ Build succeeds without errors
 
 **Status: COMPLETE AND TESTED** 🚀

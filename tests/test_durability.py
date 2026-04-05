@@ -116,9 +116,9 @@ class TestWorkflowExecution:
 
         # Execute workflow
         wf = SimpleWorkflow()
-        result = await wf.start(args={"name": "Joseph"})
+        result = await wf.start(args={"name": "User"})
 
-        assert result == "Hello, Joseph!"
+        assert result == "Hello, User!"
         print("✓ Simple workflow executed successfully without Temporal")
 
     @pytest.mark.asyncio
@@ -565,12 +565,12 @@ class TestHumanInTheLoop:
         await dispatcher.send_signal(
             workflow_id="approval-wf",
             signal_name="approve",
-            payload={"approved": True, "reviewer": "Joseph"},
+            payload={"approved": True, "reviewer": "admin"},
         )
 
         assert len(received) == 1
         assert received[0]["approved"] is True
-        assert received[0]["reviewer"] == "Joseph"
+        assert received[0]["reviewer"] == "admin"
         print("✓ Signal delivered to workflow handler")
 
     @pytest.mark.asyncio

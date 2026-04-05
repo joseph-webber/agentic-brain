@@ -179,7 +179,7 @@ Live mode, wake word handling, and whisper.cpp are not implemented in this repo 
 - `is_speaking`
 - `current_text`
 - `current_voice`
-- `current_lady`
+- `current_voice`
 - `queue_depth`
 - `priority_depth`
 - `normal_depth`

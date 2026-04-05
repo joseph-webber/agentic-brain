@@ -14,9 +14,9 @@
 # limitations under the License.
 
 """
-Stereo panning for lady voices.
+Stereo panning for voice personas.
 
-Uses Sox to pan voices left/right based on lady position.
+Uses Sox to pan voices left/right based on persona position.
 Works with any headphones and does not require spatial audio support.
 """
 
@@ -30,21 +30,21 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-# Lady pan positions: -1.0 (full left) to +1.0 (full right)
-LADY_PAN_POSITIONS = {
+# Voice persona pan positions: -1.0 (full left) to +1.0 (full right)
+VOICE_PAN_POSITIONS = {
     # Center - main voice
     "Karen": 0.0,
-    # Front-right quadrant (Asian ladies for travel)
+    # Front-right quadrant (Asian voices for travel)
     "Kyoko": 0.25,
     "Tingting": 0.40,
     "Yuna": 0.55,
     "Linh": 0.70,
     "Kanya": 0.80,
-    # Back (Indonesian ladies)
+    # Back (Indonesian voices)
     "Dewi": 0.90,
     "Sari": -0.90,
     "Wayan": -0.80,
-    # Left quadrant (European ladies)
+    # Left quadrant (European voices)
     "Moira": -0.45,
     "Alice": -0.60,
     "Zosia": -0.75,
@@ -52,7 +52,10 @@ LADY_PAN_POSITIONS = {
     "Shelley": -0.15,
 }
 
-_LADY_ALIASES = {
+# Backwards compatibility alias
+LADY_PAN_POSITIONS = VOICE_PAN_POSITIONS
+
+_VOICE_ALIASES = {
     "karen": "Karen",
     "kyoko": "Kyoko",
     "tingting": "Tingting",
@@ -71,25 +74,32 @@ _LADY_ALIASES = {
     "shelley": "Shelley",
 }
 
+# Backwards compatibility alias
+_LADY_ALIASES = _VOICE_ALIASES
 
-def resolve_lady_name(lady_or_voice: str) -> str:
-    """Resolve a lady/voice name to the canonical pan identity."""
-    normalized = (lady_or_voice or "").strip()
+
+def resolve_voice_name(voice_or_persona: str) -> str:
+    """Resolve a voice/persona name to the canonical pan identity."""
+    normalized = (voice_or_persona or "").strip()
     normalized = normalized.replace(" (Premium)", "")
     normalized = normalized.replace("_", " ")
     key = normalized.lower()
-    return _LADY_ALIASES.get(key, normalized or "Karen")
+    return _VOICE_ALIASES.get(key, normalized or "Karen")
 
 
-def get_pan_position(lady_or_voice: str) -> float:
-    """Return the configured pan position for a lady or voice."""
-    return LADY_PAN_POSITIONS.get(resolve_lady_name(lady_or_voice), 0.0)
+# Backwards compatibility alias
+resolve_lady_name = resolve_voice_name
+
+
+def get_pan_position(voice_or_persona: str) -> float:
+    """Return the configured pan position for a voice persona."""
+    return VOICE_PAN_POSITIONS.get(resolve_voice_name(voice_or_persona), 0.0)
 
 
 @dataclass(frozen=True)
 class PannedAudio:
     path: Path
-    lady: str
+    voice: str
     pan: float
 
 
@@ -136,16 +146,16 @@ class StereoPanner:
         """Check if sox is available."""
         return self._sox_path is not None
 
-    def pan_audio(self, input_path: Path, lady: str) -> Path:
+    def pan_audio(self, input_path: Path, voice: str) -> Path:
         """Apply stereo pan to a mono audio file."""
         if not self._sox_path:
             return input_path
 
-        pan = get_pan_position(lady)
+        pan = get_pan_position(voice)
         left_vol = (1 - pan) / 2
         right_vol = (1 + pan) / 2
         output_path = self._temp_dir / (
-            f"panned_{resolve_lady_name(lady)}_{input_path.stem}_{uuid.uuid4().hex}.aiff"
+            f"panned_{resolve_voice_name(voice)}_{input_path.stem}_{uuid.uuid4().hex}.aiff"
         )
 
         subprocess.run(
@@ -167,13 +177,13 @@ class StereoPanner:
     def render_panned_speech(
         self,
         text: str,
-        lady: str,
+        persona: str,
         voice: str,
         rate: int = 155,
     ) -> PannedAudio:
-        """Generate speech audio, then pan it for the target lady."""
-        lady_name = resolve_lady_name(lady or voice)
-        mono_path = self._temp_dir / f"mono_{lady_name}_{uuid.uuid4().hex}.aiff"
+        """Generate speech audio, then pan it for the target voice persona."""
+        voice_name = resolve_voice_name(persona or voice)
+        mono_path = self._temp_dir / f"mono_{voice_name}_{uuid.uuid4().hex}.aiff"
 
         say_cmd = ["say", "-r", str(rate), "-o", str(mono_path)]
         normalized_voice = (voice or "").strip().lower()
@@ -188,11 +198,11 @@ class StereoPanner:
             stderr=subprocess.DEVNULL,
         )
         try:
-            panned_path = self.pan_audio(mono_path, lady_name)
+            panned_path = self.pan_audio(mono_path, voice_name)
             return PannedAudio(
                 path=panned_path,
-                lady=lady_name,
-                pan=get_pan_position(lady_name),
+                voice=voice_name,
+                pan=get_pan_position(voice_name),
             )
         finally:
             mono_path.unlink(missing_ok=True)
@@ -206,10 +216,10 @@ class StereoPanner:
         except FileNotFoundError:
             return
 
-    def speak_panned(self, text: str, lady: str, voice: str, rate: int = 155) -> bool:
-        """Speak text with stereo panning for the lady."""
+    def speak_panned(self, text: str, persona: str, voice: str, rate: int = 155) -> bool:
+        """Speak text with stereo panning for the voice persona."""
         panned_audio = self.render_panned_speech(
-            text=text, lady=lady, voice=voice, rate=rate
+            text=text, persona=persona, voice=voice, rate=rate
         )
         try:
             completed = subprocess.run(
@@ -233,6 +243,6 @@ def get_stereo_panner() -> StereoPanner:
     return _panner
 
 
-def speak_with_pan(text: str, lady: str, voice: str, rate: int = 155) -> bool:
-    """Speak text with the lady's stereo position."""
-    return get_stereo_panner().speak_panned(text, lady, voice, rate)
+def speak_with_pan(text: str, persona: str, voice: str, rate: int = 155) -> bool:
+    """Speak text with the voice persona's stereo position."""
+    return get_stereo_panner().speak_panned(text, persona, voice, rate)

@@ -34,10 +34,10 @@ struct SecurityModeView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Current security mode: \(securityManager.currentRole.accessibilityName). \(securityManager.currentRole.description)")
 
-            Text("Testing only. Full Admin is Joseph's normal operating mode.")
+            Text("Testing only. Full Admin is the normal operating mode.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                .accessibilityLabel("Testing only. Full Admin is Joseph's normal operating mode.")
+                .accessibilityLabel("Testing only. Full Admin is the normal operating mode.")
 
             Picker(
                 "Security Mode",

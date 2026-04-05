@@ -558,7 +558,7 @@ All 5 accessibility jobs must pass:
 
 ### For Users: 🚀 READY TO SHIP
 
-- Joseph can use app comfortably with VoiceOver
+- Users can navigate the app comfortably with VoiceOver
 - All information is perceivable without motion
 - All functions work without mouse
 - Text is readable on all contrast settings

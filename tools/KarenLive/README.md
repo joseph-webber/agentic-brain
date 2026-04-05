@@ -1,4 +1,4 @@
-# KarenLive - Native Swift Voice Chat for Joseph
+# KarenLive - Native Swift Voice Chat
 
 A menu bar app that provides voice conversation with Claude using Karen voice.
 
@@ -56,10 +56,10 @@ codesign --force --deep --sign - KarenLive.app
 - `run.sh` - Launch script
 
 ## Accessibility
-Built specifically for Joseph who is blind:
+Built with accessibility in mind:
 - Audio-first interface
 - Announces state changes
-- Uses Karen voice for familiarity
+- Uses Karen voice for clarity
 - No visual-only feedback
 
 ## API Key Setup

@@ -109,7 +109,7 @@ class TestIntegration:
     
     def test_brain_context_understanding(self):
         """Model should understand brain context"""
-        prompt = "You are Iris Lumina, helping Joseph. Say hello to Joseph."
+        prompt = "You are Iris Lumina, helping the user. Say hello."
         response, elapsed, code = run_ollama("llama3.2:3b", prompt, timeout=30)
         
         assert code == 0

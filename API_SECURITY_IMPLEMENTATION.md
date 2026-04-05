@@ -6,7 +6,7 @@
 
 ## Overview
 
-This implements Joseph's key security insight:
+This implements the key security insight:
 
 > **Customer/User chatbots should ONLY access external APIs, not have direct machine access.**
 

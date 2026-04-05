@@ -1,10 +1,10 @@
 # Timezone Configuration for Agentic Brain
-# Joseph's timezone and time preferences
+# User's timezone and time preferences
 
 # Default timezone for all operations
 default_timezone: Australia/Adelaide
 
-# User's timezone (Joseph lives in Adelaide)
+# User's timezone
 user_timezone: Australia/Adelaide
 
 # Display format for time

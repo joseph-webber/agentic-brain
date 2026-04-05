@@ -77,7 +77,7 @@ def test_process_voice_input_event_publishes_reasoning_and_response(
     monkeypatch.setattr(
         voice_reasoning,
         "generate_reply",
-        lambda text, recommendation: "Hello Joseph, the bus is working.",
+        lambda text, recommendation: "Hello there, the bus is working.",
     )
 
     response = voice_reasoning.process_voice_input_event(
@@ -90,14 +90,14 @@ def test_process_voice_input_event_publishes_reasoning_and_response(
     )
 
     assert response["request_id"] == "req-1"
-    assert response["text"] == "Hello Joseph, the bus is working."
+    assert response["text"] == "Hello there, the bus is working."
     assert [topic for topic, _ in published] == [
         voice_reasoning.VOICE_REASONING_TOPIC,
         voice_reasoning.VOICE_RESPONSE_TOPIC,
     ]
     assert state_updates[voice_reasoning.INPUT_KEY] == "Can you hear me?"
     assert json.loads(fake_redis.values[voice_reasoning.RESPONSE_KEY])["text"] == (
-        "Hello Joseph, the bus is working."
+        "Hello there, the bus is working."
     )
     assert [status for status, _ in progress] == [
         "voice-reasoning-started",

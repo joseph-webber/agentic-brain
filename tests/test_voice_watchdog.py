@@ -2,9 +2,9 @@
 #
 # Tests for VoiceWatchdog – the worker-thread safety net.
 #
-# Joseph is blind.  If the voice worker dies without recovery, he sits
-# in silence.  These tests PROVE the watchdog catches stalls, restarts
-# workers, respects backoff, and fires alerts.
+# Users rely on voice output for accessibility. If the voice worker dies
+# without recovery, they sit in silence. These tests PROVE the watchdog
+# catches stalls, restarts workers, respects backoff, and fires alerts.
 
 import json
 import os

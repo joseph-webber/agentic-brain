@@ -6,7 +6,7 @@ final class TestFullConversation: XCTestCase {
     func testEndToEndChatFlowAddsMessagesAndSpeaks() async {
         let http = MockHTTPClient()
         http.nextResult = .success((
-            TestFixtures.jsonData(["message": ["content": "Hello Joseph"]]),
+            TestFixtures.jsonData(["message": ["content": "Hello there"]]),
             HTTPURLResponse(url: URL(string: "http://localhost")!, statusCode: 200, httpVersion: nil, headerFields: nil)!
         ))
         let voiceSynth = MockVoiceSynthesizer()
@@ -21,12 +21,12 @@ final class TestFullConversation: XCTestCase {
 
         let expectation = expectation(description: "response")
         coordinator.sendUserMessage("Hi") { text in
-            XCTAssertEqual(text, "Hello Joseph")
+            XCTAssertEqual(text, "Hello there")
             expectation.fulfill()
         }
         await fulfillment(of: [expectation], timeout: 1)
-        XCTAssertEqual(coordinator.store.messages.map(\.content), ["Hi", "Hello Joseph"])
-        XCTAssertEqual(voiceSynth.startedTexts, ["Hello Joseph"])
+        XCTAssertEqual(coordinator.store.messages.map(\.content), ["Hi", "Hello there"])
+        XCTAssertEqual(voiceSynth.startedTexts, ["Hello there"])
         XCTAssertTrue(coordinator.store.messages[1].accessibilityDescription.contains("Brain said"))
     }
 }

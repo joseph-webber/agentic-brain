@@ -27,7 +27,7 @@ Commands:
     ab voice speak "Hello world"   Speak text with default voice
     ab voice speak "Hi" -v Moira   Speak with specific voice
 
-CRITICAL for accessibility - Joseph needs voice output!
+CRITICAL for accessibility - voice output is required for users with visual impairments!
 """
 
 import argparse
@@ -573,7 +573,7 @@ def voice_llm_command(args: argparse.Namespace) -> int:
     prompt = getattr(args, "prompt", None)
     if not prompt:
         print("Error: Please provide a prompt for the LLM")
-        print("Usage: agentic voice llm 'Hello Joseph'")
+        print("Usage: agentic voice llm 'Hello'")
         return 1
 
     personality = getattr(args, "personality", "karen")
@@ -743,7 +743,7 @@ def voice_command(args: argparse.Namespace) -> int:
     print()
     print("Examples:")
     print("  ab voice test 'Karen (Premium)'")
-    print("  ab voice speak 'Hello Joseph' -v Karen")
+    print("  ab voice speak 'Hello world' -v Karen")
     print("  ab voice conversation --demo")
     print("  ab voice mode work")
     print("  ab voice speed focused")

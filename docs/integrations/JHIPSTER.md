@@ -145,7 +145,7 @@ migrations = [
     CypherMigration(
         version="0001",
         description="Create user indexes",
-        author="joseph",
+        author="admin",
         up_cypher=[
             "CREATE INDEX user_email IF NOT EXISTS FOR (u:User) ON (u.email)",
             "CREATE INDEX user_id IF NOT EXISTS FOR (u:User) ON (u.id)",
@@ -158,7 +158,7 @@ migrations = [
     CypherMigration(
         version="0002",
         description="Add vector index for embeddings",
-        author="joseph",
+        author="admin",
         up_cypher=[
             """
             CREATE VECTOR INDEX document_embeddings IF NOT EXISTS

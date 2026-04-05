@@ -42,7 +42,7 @@ let package = Package(
                 "RedpandaIntegrationTests.swift",
                 // Speech input (STT)
                 "SpeechEngineTests.swift",
-                // Voice output (TTS) — CRITICAL for Joseph (blind)
+                // Voice output (TTS) — CRITICAL for accessibility users
                 "VoiceOutputTests.swift",
                 // Layered multi-LLM response orchestration
                 "LayeredResponseTests.swift",

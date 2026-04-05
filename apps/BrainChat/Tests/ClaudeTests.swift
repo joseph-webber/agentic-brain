@@ -34,7 +34,7 @@ final class ClaudeTests: XCTestCase {
         MockURLProtocol.requestHandler = { _ in
             let data = Data((
                 "data: {\"type\":\"content_block_delta\",\"delta\":{\"text\":\"Hello \"}}\n" +
-                "data: {\"type\":\"content_block_delta\",\"delta\":{\"text\":\"Joseph\"}}\n"
+                "data: {\"type\":\"content_block_delta\",\"delta\":{\"text\":\"there\"}}\n"
             ).utf8)
             return (httpResponse(url: url), data)
         }
@@ -49,8 +49,8 @@ final class ClaudeTests: XCTestCase {
             onDelta: { box.values.append($0) }
         )
 
-        XCTAssertEqual(box.values, ["Hello ", "Joseph"])
-        XCTAssertEqual(response, "Hello Joseph")
+        XCTAssertEqual(box.values, ["Hello ", "there"])
+        XCTAssertEqual(response, "Hello there")
     }
 
     func testRateLimitHandling() async {

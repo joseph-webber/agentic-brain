@@ -9,7 +9,7 @@
 #   4. Redpanda Voice Stream Consumer
 #   5. Unified Voice System facade
 #
-# Joseph is blind.  These tests PROVE that the integrated system
+# These tests PROVE that the integrated system
 # guarantees exactly ONE voice at a time under every scenario,
 # degrades gracefully when deps are missing, and never goes silent.
 
@@ -216,7 +216,7 @@ class TestLiveVoiceMode:
         lm.start(voice="Karen", rate=155)
         assert lm.is_active
 
-        lm.feed("Hello Joseph. ")
+        lm.feed("Hello there. ")
         assert fake.count >= 1
 
         lm.stop()
@@ -394,7 +394,7 @@ class TestUnifiedVoiceSystem:
 
         uv = self._make_unified()
         uv._serializer = mock_ser
-        result = uv.speak("Hello Joseph", voice="Karen")
+        result = uv.speak("Hello there", voice="Karen")
         assert result is True
         mock_ser.speak.assert_called_once()
 
@@ -492,7 +492,7 @@ class TestPhase2Integration:
         uv.start_live(voice="Moira", rate=150)
         assert uv.live_status()["active"] is True
 
-        uv.feed_live("G'day Joseph. How's it going?")
+        uv.feed_live("G'day mate. How's it going?")
         assert fake.count >= 1
 
         uv.stop_live()

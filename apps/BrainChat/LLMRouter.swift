@@ -249,7 +249,7 @@ final class LLMRouter: ObservableObject {
             let errorMsg = error.localizedDescription
             statusMessage = "Provider access denied"
             lastErrorMessage = errorMsg
-            return "Sorry Joseph, \(errorMsg)"
+            return "Sorry, \(errorMsg)"
         }
         
         var failures: [String] = []
@@ -304,7 +304,7 @@ final class LLMRouter: ObservableObject {
         }
         activeProviderName = "Unavailable"
         statusMessage = "All LLM backends unavailable"
-        return "Sorry Joseph, all LLM providers are unavailable right now.\n\(failures.joined(separator: "\n"))"
+        return "Sorry, all LLM providers are unavailable right now.\n\(failures.joined(separator: "\n"))"
     }
 
     func testConnection(provider: LLMProvider, configuration: LLMRouterConfiguration) async {

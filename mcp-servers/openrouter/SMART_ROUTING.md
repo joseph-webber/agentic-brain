@@ -61,7 +61,7 @@ openrouter_cascade(prompt="Complex analysis", timeout_per_provider=60)
 | Model | Speed | Best For | Cost |
 |-------|-------|----------|------|
 | `llama3.2:3b` | ⚡⚡ Fast | Instant responses, offline | FREE |
-| `claude-emulator` | ⚡ Medium | Joseph's context, recovery | FREE |
+| `claude-emulator` | ⚡ Medium | user's context, recovery | FREE |
 | `llama3.1:8b` | ⚡ Medium | Quality local responses | FREE |
 
 ### CLOUD BACKUP TIER (If Groq Down)
@@ -409,4 +409,4 @@ openrouter_daily_report()
 
 **Last Updated:** 2026-03-22  
 **Author:** Iris Lumina (Brain AI)  
-**Verified:** Joseph Webber
+**Verified:** user Webber

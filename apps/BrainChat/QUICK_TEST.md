@@ -11,7 +11,7 @@ open /Applications/Brain\ Chat.app       # Launch
 
 ## 📋 WHAT YOU SHOULD SEE
 
-1. **App launches** → Karen says "G'day Joseph"
+1. **App launches** → Karen says "G'day user"
 2. **Click mic button** → System permission dialog appears immediately
 3. **Click Allow** → Mic turns GREEN, says "Live"
 4. **Speak** → Words appear in chat as you speak
@@ -21,7 +21,7 @@ open /Applications/Brain\ Chat.app       # Launch
 
 ```bash
 # Full reset + rebuild
-tccutil reset Microphone com.josephwebber.brainchat
+tccutil reset Microphone com.userwebber.brainchat
 rm -rf /Applications/Brain\ Chat.app
 cd ~/brain/agentic-brain/apps/BrainChat
 ./build.sh --clean --install --run
@@ -34,7 +34,7 @@ cd ~/brain/agentic-brain/apps/BrainChat
 tail -f ~/brain/agentic-brain/apps/BrainChat/runtime/mic-debug.log
 
 # Check if app is registered
-tccutil reset Microphone com.josephwebber.brainchat
+tccutil reset Microphone com.userwebber.brainchat
 # If it says "No services" → App not in TCC database (bad!)
 # If it succeeds → App IS registered (good!)
 ```

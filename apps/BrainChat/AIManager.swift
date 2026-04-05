@@ -111,7 +111,7 @@ final class AIManager: ObservableObject {
         }
         activeProviderName = "Unavailable"
         statusMessage = "All AI backends unavailable"
-        return "Sorry Joseph, all AI providers are unavailable right now. \(failures.last ?? "Unknown failure")"
+        return "Sorry, all AI providers are unavailable right now. \(failures.last ?? "Unknown failure")"
     }
 
     private func routedProviders(for configuration: AIConfiguration) -> [AIProvider] {

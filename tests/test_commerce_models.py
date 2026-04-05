@@ -57,7 +57,7 @@ def test_woocommerce_product_and_order_validation():
             "email": "customer@example.com",
             "name": "Joseph Webber",
             "billing_address": {
-                "first_name": "Joseph",
+                "first_name": "Test",
                 "last_name": "Webber",
                 "address_1": "1 King William St",
                 "city": "Adelaide",
@@ -65,7 +65,7 @@ def test_woocommerce_product_and_order_validation():
                 "country": "au",
             },
             "shipping_address": {
-                "first_name": "Joseph",
+                "first_name": "Test",
                 "last_name": "Webber",
                 "address_1": "1 King William St",
                 "city": "Adelaide",

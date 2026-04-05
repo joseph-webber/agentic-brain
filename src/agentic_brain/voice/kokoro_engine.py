@@ -2,12 +2,12 @@
 # Copyright 2024-2026 Joseph Webber
 
 """
-Kokoro-82M neural TTS integration for the 14 ladies.
+Kokoro-82M neural TTS integration for the 14 voice personas.
 
 Design
 ------
 - Karen stays on Apple ``say`` for fast, reliable system/navigation speech.
-- The other ladies can use Kokoro neural voices for warm conversational speech.
+- The other voices can use Kokoro neural voices for warm conversational speech.
 - Native-language teaching prefers Kokoro where the official v1.0 model supports
   the language, and falls back to Apple voices where Kokoro does not.
 - All playback is routed through ``VoiceSerializer`` so utterances never overlap.
@@ -138,7 +138,7 @@ VOICE_PREFIX_LANGUAGE = {
     "p": "pt-br",
 }
 
-LADY_LANGUAGES = {
+VOICE_LANGUAGES = {
     "Karen": "Australian English",
     "Kyoko": "Japanese",
     "Tingting": "Mandarin Chinese",
@@ -156,10 +156,13 @@ LADY_LANGUAGES = {
     "Sinji": "Cantonese",
 }
 
+# Backwards compatibility alias
+LADY_LANGUAGES = VOICE_LANGUAGES
+
 
 @dataclass(frozen=True)
-class LadyVoiceConfig:
-    """Routing configuration for a lady voice."""
+class VoicePersonaConfig:
+    """Routing configuration for a voice persona."""
 
     engine: str
     voice: str
@@ -171,8 +174,11 @@ class LadyVoiceConfig:
     notes: str = ""
 
 
-LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
-    "Karen": LadyVoiceConfig(
+# Backwards compatibility alias
+LadyVoiceConfig = VoicePersonaConfig
+
+VOICE_PERSONA_MAP: Dict[str, VoicePersonaConfig] = {
+    "Karen": VoicePersonaConfig(
         engine="apple",
         voice="Karen (Premium)",
         language="en-au",
@@ -182,7 +188,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_language="en-au",
         notes="System/navigation voice stays on Apple for speed and reliability.",
     ),
-    "Kyoko": LadyVoiceConfig(
+    "Kyoko": VoicePersonaConfig(
         engine="kokoro",
         voice="jf_alpha",
         language="ja",
@@ -191,7 +197,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_voice="jf_tebukuro",
         native_language="ja",
     ),
-    "Tingting": LadyVoiceConfig(
+    "Tingting": VoicePersonaConfig(
         engine="kokoro",
         voice="zf_xiaoxiao",
         language="zh",
@@ -200,7 +206,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_voice="zf_xiaoyi",
         native_language="zh",
     ),
-    "Linh": LadyVoiceConfig(
+    "Linh": VoicePersonaConfig(
         engine="kokoro",
         voice="bf_alice",
         language="en-gb",
@@ -210,7 +216,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_language="vi",
         notes="Kokoro v1.0 has no official Vietnamese voice; Apple handles native phrases.",
     ),
-    "Moira": LadyVoiceConfig(
+    "Moira": VoicePersonaConfig(
         engine="kokoro",
         voice="af_heart",
         language="en-us",
@@ -220,7 +226,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_language="en-ie",
         notes="Kokoro has no dedicated Irish voice in v1.0.",
     ),
-    "Yuna": LadyVoiceConfig(
+    "Yuna": VoicePersonaConfig(
         engine="kokoro",
         voice="af_bella",
         language="en-us",
@@ -230,7 +236,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_language="ko",
         notes="Kokoro v1.0 has no official Korean voice.",
     ),
-    "Kanya": LadyVoiceConfig(
+    "Kanya": VoicePersonaConfig(
         engine="kokoro",
         voice="af_nicole",
         language="en-us",
@@ -240,7 +246,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_language="th",
         notes="Kokoro v1.0 has no official Thai voice.",
     ),
-    "Dewi": LadyVoiceConfig(
+    "Dewi": VoicePersonaConfig(
         engine="kokoro",
         voice="bf_emma",
         language="en-gb",
@@ -250,7 +256,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_language="id",
         notes="Kokoro v1.0 has no official Indonesian voice.",
     ),
-    "Sari": LadyVoiceConfig(
+    "Sari": VoicePersonaConfig(
         engine="kokoro",
         voice="bf_isabella",
         language="en-gb",
@@ -260,7 +266,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_language="id",
         notes="Uses Indonesian fallback for native teaching until Kokoro adds Javanese/Indonesian.",
     ),
-    "Wayan": LadyVoiceConfig(
+    "Wayan": VoicePersonaConfig(
         engine="kokoro",
         voice="af_sarah",
         language="en-us",
@@ -270,7 +276,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_language="id",
         notes="Uses Indonesian fallback for native teaching until Kokoro adds Balinese/Indonesian.",
     ),
-    "Zosia": LadyVoiceConfig(
+    "Zosia": VoicePersonaConfig(
         engine="kokoro",
         voice="af_aoede",
         language="en-us",
@@ -280,7 +286,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_language="pl",
         notes="Kokoro v1.0 has no official Polish voice.",
     ),
-    "Flo": LadyVoiceConfig(
+    "Flo": VoicePersonaConfig(
         engine="kokoro",
         voice="ff_siwis",
         language="fr",
@@ -290,7 +296,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_language="fr",
         notes="French neural voice gives Flo a clearly distinct timbre.",
     ),
-    "Shelley": LadyVoiceConfig(
+    "Shelley": VoicePersonaConfig(
         engine="kokoro",
         voice="bf_lily",
         language="en-gb",
@@ -299,7 +305,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_voice="Shelley",
         native_language="en-gb",
     ),
-    "Alice": LadyVoiceConfig(
+    "Alice": VoicePersonaConfig(
         engine="kokoro",
         voice="if_sara",
         language="it",
@@ -308,7 +314,7 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         native_voice="if_sara",
         native_language="it",
     ),
-    "Sinji": LadyVoiceConfig(
+    "Sinji": VoicePersonaConfig(
         engine="kokoro",
         voice="zf_xiaobei",
         language="zh",
@@ -319,6 +325,9 @@ LADY_VOICE_MAP: Dict[str, LadyVoiceConfig] = {
         notes="Conversational Kokoro voice uses Mandarin; native teaching falls back to Cantonese Apple voice.",
     ),
 }
+
+# Backwards compatibility alias
+LADY_VOICE_MAP = VOICE_PERSONA_MAP
 
 
 class KokoroEngine:
@@ -450,7 +459,7 @@ class KokoroEngine:
 
 
 class HybridVoiceRouter:
-    """Route lady voices to Apple or Kokoro while preserving serialization."""
+    """Route voice personas to Apple or Kokoro while preserving serialization."""
 
     def __init__(self, kokoro: Optional[KokoroEngine] = None):
         self._kokoro = kokoro or KokoroEngine()
@@ -458,16 +467,16 @@ class HybridVoiceRouter:
     def speak(
         self,
         text: str,
-        lady: str = "Karen",
+        persona: str = "Karen",
         rate: int = 155,
         *,
         wait: bool = True,
         use_native_voice: bool = False,
     ) -> bool:
-        """Speak with the selected lady using the correct engine."""
-        config = LADY_VOICE_MAP.get(lady, LADY_VOICE_MAP["Karen"])
+        """Speak with the selected voice persona using the correct engine."""
+        config = VOICE_PERSONA_MAP.get(persona, VOICE_PERSONA_MAP["Karen"])
         serializer = get_voice_serializer()
-        message = VoiceMessage(text=text, voice=lady, rate=rate)
+        message = VoiceMessage(text=text, voice=persona, rate=rate)
         return serializer.run_serialized(
             message,
             executor=lambda queued_message: self._speak_serialized(
@@ -481,16 +490,16 @@ class HybridVoiceRouter:
     async def speak_async(
         self,
         text: str,
-        lady: str = "Karen",
+        persona: str = "Karen",
         rate: int = 155,
         *,
         wait: bool = True,
         use_native_voice: bool = False,
     ) -> bool:
         """Async variant of :meth:`speak` for event-loop friendly playback."""
-        config = LADY_VOICE_MAP.get(lady, LADY_VOICE_MAP["Karen"])
+        config = VOICE_PERSONA_MAP.get(persona, VOICE_PERSONA_MAP["Karen"])
         serializer = get_voice_serializer()
-        message = VoiceMessage(text=text, voice=lady, rate=rate)
+        message = VoiceMessage(text=text, voice=persona, rate=rate)
         return await serializer.run_serialized_async(
             message,
             executor=lambda queued_message: asyncio.run(
@@ -503,20 +512,20 @@ class HybridVoiceRouter:
             wait=wait,
         )
 
-    def teach_phrase(self, english: str, native: str, lady: str) -> bool:
-        """Teach a phrase using Karen for guidance and the lady for pronunciation."""
-        language_name = LADY_LANGUAGES.get(lady, "that language")
+    def teach_phrase(self, english: str, native: str, persona: str) -> bool:
+        """Teach a phrase using Karen for guidance and the persona for pronunciation."""
+        language_name = VOICE_LANGUAGES.get(persona, "that language")
         steps = (
-            self.speak(f"In {language_name}, you say:", lady="Karen"),
-            self.speak(native, lady=lady, use_native_voice=True),
-            self.speak(f"Which means: {english}", lady="Karen"),
+            self.speak(f"In {language_name}, you say:", persona="Karen"),
+            self.speak(native, persona=persona, use_native_voice=True),
+            self.speak(f"Which means: {english}", persona="Karen"),
         )
         return all(steps)
 
     def _speak_serialized(
         self,
         message: VoiceMessage,
-        config: LadyVoiceConfig,
+        config: VoicePersonaConfig,
         *,
         use_native_voice: bool,
     ) -> bool:
@@ -550,7 +559,7 @@ class HybridVoiceRouter:
     async def _speak_serialized_async(
         self,
         message: VoiceMessage,
-        config: LadyVoiceConfig,
+        config: VoicePersonaConfig,
         *,
         use_native_voice: bool,
     ) -> bool:
@@ -588,7 +597,7 @@ class HybridVoiceRouter:
 
     @staticmethod
     def _resolve_route(
-        config: LadyVoiceConfig,
+        config: VoicePersonaConfig,
         *,
         use_native_voice: bool,
     ) -> tuple[str, str, str, str]:

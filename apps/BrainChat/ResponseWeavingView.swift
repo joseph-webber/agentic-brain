@@ -151,7 +151,7 @@ struct ResponseWeavingPreviews: PreviewProvider {
         VStack(spacing: 16) {
             // Plain message
             WeavedMessageBubble(
-                message: ChatMessage(role: .assistant, content: "Hello Joseph, how can I help?")
+                message: ChatMessage(role: .assistant, content: "Hello, how can I help?")
             )
 
             // Weaved message — thinking phase

@@ -14,7 +14,7 @@ F5-TTS does not require a heavy training step for each new voice. Instead, Agent
 
 - a reference audio sample
 - optional reference transcript text
-- lady assignment metadata
+- voice persona assignment metadata
 - validation details and fallback settings
 
 At synthesis time, the stored sample is passed to F5-TTS.
@@ -82,10 +82,10 @@ Delete a clone:
 ab voice clone --delete custom-karen-1234abcd
 ```
 
-Assign a clone to a lady persona:
+Assign a clone to a voice persona:
 
 ```bash
-ab voice clone --assign custom-karen-1234abcd --lady karen
+ab voice clone --assign custom-karen-1234abcd --voice karen
 ```
 
 ## Python usage
@@ -99,7 +99,7 @@ voice_id = cloner.clone_voice(
     "samples/karen.wav",
     name="custom_karen",
     reference_text="Hello there, I'm ready when you are.",
-    assigned_lady="karen",
+    assigned_voice="karen",
 )
 
 audio_path = cloner.synthesize_with_voice(
@@ -128,7 +128,7 @@ Current checks:
 If F5-TTS is not installed or inference fails:
 
 1. the cloned voice profile is still stored locally
-2. Agentic Brain falls back to a local lady/system voice when possible
+2. Agentic Brain falls back to a local system voice when possible
 3. if no system synthesis path is available, it generates a tiny local WAV fallback instead of failing hard
 
 This keeps the voice workflow usable even before F5-TTS is installed.

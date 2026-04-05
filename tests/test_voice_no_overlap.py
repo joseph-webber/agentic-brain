@@ -17,7 +17,7 @@
 
 Sound effects over voice is FINE - we only prevent voice-on-voice overlap.
 
-CRITICAL RULE: Ladies must NEVER talk over each other. One voice at a time.
+CRITICAL RULE: Voices must NEVER talk over each other. One voice at a time.
 """
 
 import asyncio
@@ -311,7 +311,7 @@ class TestNoVoiceOverlap:
         ):
             # Multiple voices trying to speak
             await asyncio.gather(
-                ResilientVoice.speak("Hello Joseph", voice="Karen"),
+                ResilientVoice.speak("Hello there", voice="Karen"),
                 ResilientVoice.speak("Good morning", voice="Moira"),
                 ResilientVoice.speak("おはよう", voice="Kyoko"),
                 ResilientVoice.speak("Let me help", voice="Tingting"),

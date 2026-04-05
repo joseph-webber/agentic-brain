@@ -142,7 +142,7 @@ class AgenticBrain: NSObject, SFSpeechRecognizerDelegate {
         
         // Check for exit commands
         if command.contains("quit") || command.contains("exit") || command.contains("stop listening") {
-            speak("Goodbye Joseph")
+            speak("Goodbye")
             stopListening()
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 NSApplication.shared.terminate(nil)

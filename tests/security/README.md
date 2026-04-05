@@ -6,7 +6,7 @@ Comprehensive CI/CD tests for the three-tier security role system in agentic-bra
 
 These tests verify that the security role system works correctly across all three security levels:
 
-- **ADMIN**: Full system access, no restrictions (Joseph's mode)
+- **ADMIN**: Full system access, no restrictions (administrator mode)
 - **USER**: Safe operations only, cannot harm OS
 - **GUEST**: Read-only chat access, help desk mode
 

@@ -4,7 +4,7 @@ FAST Mail Search Tools
 ======================
 
 Ultra-fast email search using Neo4j index + Spotlight fallback.
-Built for Joseph's accessibility needs - speaks results!
+Built for accessibility needs - speaks results!
 
 Usage:
     from tools.mail_search import mail_search, mail_sync, mail_recent, mail_from

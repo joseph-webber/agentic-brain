@@ -1,15 +1,15 @@
 # 🎤 Voice MCP Enhancement
 
-Complete voice conversation support for the Event Bus MCP server with integration to 14 regional voice ladies and Redpanda event streaming.
+Complete voice conversation support for the Event Bus MCP server with integration to 14 regional voice personas and Redpanda event streaming.
 
 ## 🚀 Quick Start
 
 ```python
 # Broadcast a spoken message
-broadcast_voice("Good morning!", lady="flo")
+broadcast_voice("Good morning!", voice="flo")
 
 # Request LLM response with voice
-send_voice_request("What's the weather?", lady="kyoko")
+send_voice_request("What's the weather?", voice="kyoko")
 ```
 
 ## 📚 Documentation
@@ -24,16 +24,16 @@ send_voice_request("What's the weather?", lady="kyoko")
 ## ✨ Features
 
 ### New MCP Tools
-- **`send_voice_request(prompt, lady, priority)`** - Generate spoken LLM response
-- **`broadcast_voice(message, lady)`** - Broadcast spoken message
+- **`send_voice_request(prompt, voice, priority)`** - Generate spoken LLM response
+- **`broadcast_voice(message, voice)`** - Broadcast spoken message
 
 ### New Event Topics
 - **`brain.voice.input`** - User voice input events
-- **`brain.voice.response`** - Lady voice responses
+- **`brain.voice.response`** - Voice responses
 - **`brain.voice.conversation`** - Conversation state changes
 - **`brain.voice.llm`** - LLM requests for voice responses
 
-### Voice Ladies (14 personalities)
+### Voice Personas (14 regional voices)
 - **Australia**: karen (165 wpm)
 - **Asia**: kyoko, tingting, sinji, linh, kanya, yuna, dewi, sari, wayan
 - **Europe**: moira, zosia, flo, shelley
@@ -60,7 +60,7 @@ macOS TTS + Distributed Services
 ```python
 send_voice_request(
     prompt="Tell me about today's tasks",
-    lady="moira",
+    voice="moira",
     priority="normal"
 )
 # → Creates voice_llm_request event
@@ -72,7 +72,7 @@ send_voice_request(
 ```python
 broadcast_voice(
     message="You have a new message from the team",
-    lady="flo"
+    voice="flo"
 )
 # → Emits voice_response event
 # → Flo (English) voice speaks immediately
@@ -84,13 +84,13 @@ broadcast_voice(
 # Kyoko answers in Japanese context
 send_voice_request(
     prompt="Japanese business etiquette",
-    lady="kyoko"  # From Japan, 155 wpm
+    voice="kyoko"  # From Japan, 155 wpm
 )
 
 # Linh answers about Southeast Asia
 send_voice_request(
     prompt="Vietnam's economic growth",
-    lady="linh"   # From Vietnam, 155 wpm
+    voice="linh"   # From Vietnam, 155 wpm
 )
 ```
 
@@ -98,7 +98,7 @@ send_voice_request(
 
 All components verified:
 - ✅ Python syntax validated
-- ✅ 14 voice ladies loaded
+- ✅ 14 voice personas loaded
 - ✅ Events emit to Redpanda
 - ✅ Local TTS working
 - ✅ Error handling in place
@@ -107,14 +107,14 @@ All components verified:
 Run verification:
 ```bash
 python3 -m py_compile server.py
-python3 -c "from server import send_voice_request, broadcast_voice, VOICE_LADIES; print(f'✅ {len(VOICE_LADIES)} ladies loaded')"
+python3 -c "from server import send_voice_request, broadcast_voice, VOICE_PERSONAS; print(f'✅ {len(VOICE_PERSONAS)} voices loaded')"
 ```
 
 ## 📊 What Changed
 
 **Modified Files:**
 - `server.py` (+150 lines)
-  - Added: 2 voice functions, 14-lady roster, imports
+  - Added: 2 voice functions, 14-voice roster, imports
   - Enhanced: topics() documentation with voice topics
 
 **No Breaking Changes:**
@@ -124,9 +124,9 @@ python3 -c "from server import send_voice_request, broadcast_voice, VOICE_LADIES
 
 ## 🔗 Related Files
 
-- `/Users/joe/brain/core/voice/` - Voice system integration
-- `/Users/joe/brain/core/kafka_bus.py` - Event bus abstraction
-- `/Users/joe/brain/mcp-servers/event-bus/server.py` - Main implementation
+- `/core/voice/` - Voice system integration
+- `/core/kafka_bus.py` - Event bus abstraction
+- `/mcp-servers/event-bus/server.py` - Main implementation
 
 ## 📞 Support
 
@@ -139,7 +139,7 @@ For issues or questions:
 ## 📋 Checklist
 
 - ✅ Voice functions implemented and tested
-- ✅ 14 voice ladies integrated
+- ✅ 14 voice personas integrated
 - ✅ 4 voice topics added to event bus
 - ✅ Redpanda/Kafka integration working
 - ✅ Comprehensive documentation

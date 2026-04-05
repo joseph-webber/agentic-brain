@@ -2,7 +2,7 @@
 """
 Regional Voice Demo - Show off location-aware expressions!
 
-This demo shows how the regional voice system adapts to Joseph's location
+This demo shows how the regional voice system adapts to the user's location
 in Adelaide, South Australia and can learn new expressions.
 """
 
@@ -211,7 +211,7 @@ def demo_voice_test():
 def main():
     """Run all demos."""
     print("\n🎙️  REGIONAL VOICE INTELLIGENCE DEMO")
-    print("   Location-aware expressions for Joseph's brain!\n")
+    print("   Location-aware expressions for the brain!\n")
 
     try:
         demo_adelaide()

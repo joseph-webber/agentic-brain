@@ -60,7 +60,7 @@ This is a **WCAG 2.1 AA accessibility requirement**, not a nice-to-have.
 ```
  ┌─────────────────────────────────────────────────────────────┐
  │                    APPLICATION LAYER                        │
- │  LLM agents · CLI commands · Background watchers · Ladies  │
+ │  LLM agents · CLI commands · Background watchers · Voices  │
  └──────────────────────────┬──────────────────────────────────┘
                             │
                             ▼

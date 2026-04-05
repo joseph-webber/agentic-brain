@@ -46,7 +46,7 @@ class VoiceEvent:
     """Base voice event shared by request and lifecycle updates."""
 
     text: str
-    lady: str = "Karen"
+    voice: str = "Karen"
     priority: VoicePriorityLane = VoicePriorityLane.NORMAL
     timestamp: float = field(default_factory=time.time)
     source: str = "agentic_brain.voice"
@@ -61,7 +61,7 @@ class VoiceEvent:
         self.priority = VoicePriorityLane.coerce(self.priority)
         self.timestamp = float(self.timestamp)
         self.source = self.source.strip() or "agentic_brain.voice"
-        self.lady = self.lady.strip() or "Karen"
+        self.voice = self.voice.strip() or "Karen"
         self.request_id = self.request_id.strip() or str(uuid.uuid4())
 
     def to_dict(self) -> dict[str, Any]:
@@ -82,7 +82,7 @@ class VoiceSpeechRequested(VoiceEvent):
     def from_dict(cls, payload: dict[str, Any]) -> VoiceSpeechRequested:
         return cls(
             text=payload["text"],
-            lady=payload.get("lady", "Karen"),
+            voice=payload.get("voice", payload.get("lady", "Karen")),
             priority=payload.get("priority", VoicePriorityLane.NORMAL),
             timestamp=payload.get("timestamp", time.time()),
             source=payload.get("source", "agentic_brain.voice"),
@@ -98,7 +98,7 @@ class VoiceSpeechStarted(VoiceEvent):
     def from_request(cls, request: VoiceSpeechRequested) -> VoiceSpeechStarted:
         return cls(
             text=request.text,
-            lady=request.lady,
+            voice=request.voice,
             priority=request.priority,
             timestamp=time.time(),
             source=request.source,
@@ -109,7 +109,7 @@ class VoiceSpeechStarted(VoiceEvent):
     def from_dict(cls, payload: dict[str, Any]) -> VoiceSpeechStarted:
         return cls(
             text=payload["text"],
-            lady=payload.get("lady", "Karen"),
+            voice=payload.get("voice", payload.get("lady", "Karen")),
             priority=payload.get("priority", VoicePriorityLane.NORMAL),
             timestamp=payload.get("timestamp", time.time()),
             source=payload.get("source", "agentic_brain.voice"),
@@ -125,7 +125,7 @@ class VoiceSpeechCompleted(VoiceEvent):
     def from_request(cls, request: VoiceSpeechRequested) -> VoiceSpeechCompleted:
         return cls(
             text=request.text,
-            lady=request.lady,
+            voice=request.voice,
             priority=request.priority,
             timestamp=time.time(),
             source=request.source,
@@ -136,7 +136,7 @@ class VoiceSpeechCompleted(VoiceEvent):
     def from_dict(cls, payload: dict[str, Any]) -> VoiceSpeechCompleted:
         return cls(
             text=payload["text"],
-            lady=payload.get("lady", "Karen"),
+            voice=payload.get("voice", payload.get("lady", "Karen")),
             priority=payload.get("priority", VoicePriorityLane.NORMAL),
             timestamp=payload.get("timestamp", time.time()),
             source=payload.get("source", "agentic_brain.voice"),
@@ -160,7 +160,7 @@ class VoiceSpeechFailed(VoiceEvent):
     ) -> VoiceSpeechFailed:
         return cls(
             text=request.text,
-            lady=request.lady,
+            voice=request.voice,
             priority=request.priority,
             timestamp=time.time(),
             source=request.source,
@@ -172,7 +172,7 @@ class VoiceSpeechFailed(VoiceEvent):
     def from_dict(cls, payload: dict[str, Any]) -> VoiceSpeechFailed:
         return cls(
             text=payload["text"],
-            lady=payload.get("lady", "Karen"),
+            voice=payload.get("voice", payload.get("lady", "Karen")),
             priority=payload.get("priority", VoicePriorityLane.NORMAL),
             timestamp=payload.get("timestamp", time.time()),
             source=payload.get("source", "agentic_brain.voice"),

@@ -239,5 +239,5 @@
 
 **Last Updated**: 2024
 **Standard**: WCAG 2.1 Level AA
-**Target User**: Joseph (blind user with VoiceOver)
+**Target Users**: Visually impaired users with VoiceOver
 **Supported Disabilities**: Blindness, Low Vision, Motor Disabilities, Vestibular Disorders, Cognitive Disabilities

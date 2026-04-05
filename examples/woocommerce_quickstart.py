@@ -114,7 +114,7 @@ async def create_order(agent: WooCommerceAgent, product_id: int, email: str) -> 
             "payment_method": "stripe",
             "payment_method_title": "Stripe",
             "billing": {
-                "first_name": "Joseph",
+                "first_name": "TestUser",
                 "last_name": "Webber",
                 "email": email,
                 "address_1": "1 King William St",
@@ -123,7 +123,7 @@ async def create_order(agent: WooCommerceAgent, product_id: int, email: str) -> 
                 "country": "AU",
             },
             "shipping": {
-                "first_name": "Joseph",
+                "first_name": "TestUser",
                 "last_name": "Webber",
                 "address_1": "1 King William St",
                 "city": "Adelaide",

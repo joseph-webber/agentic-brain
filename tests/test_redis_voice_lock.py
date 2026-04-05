@@ -2,7 +2,7 @@
 #
 # Tests for the Redis-backed distributed voice lock.
 #
-# Joseph is blind.  Cross-process voice overlap is an accessibility
+# Cross-process voice overlap is an accessibility
 # catastrophe.  These tests prove the distributed lock prevents it.
 
 import os

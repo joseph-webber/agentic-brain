@@ -1,6 +1,6 @@
 # BrainChat AppleScript E2E Test Suite
 
-End-to-end tests that drive Brain Chat through macOS System Events, validating the real UI as Joseph would experience it with VoiceOver.
+End-to-end tests that drive Brain Chat through macOS System Events, validating the real UI as user would experience it with VoiceOver.
 
 ## Tests
 

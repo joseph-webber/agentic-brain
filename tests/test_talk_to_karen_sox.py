@@ -105,7 +105,7 @@ def test_get_llm_response_uses_ollama(monkeypatch) -> None:
             return None
 
         def json(self) -> dict[str, str]:
-            return {"response": "G'day Joseph"}
+            return {"response": "G'day mate"}
 
     captured: dict[str, object] = {}
 
@@ -119,7 +119,7 @@ def test_get_llm_response_uses_ollama(monkeypatch) -> None:
 
     result = talk_to_karen_sox.get_llm_response("How are you?")
 
-    assert result == "G'day Joseph"
+    assert result == "G'day mate"
     assert captured["url"] == talk_to_karen_sox.OLLAMA_URL
     assert captured["json"]["model"] == talk_to_karen_sox.DEFAULT_MODEL
     assert "How are you?" in captured["json"]["prompt"]

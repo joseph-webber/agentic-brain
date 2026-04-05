@@ -105,7 +105,7 @@ final class LocalFallbackResponder {
         }
 
         if lowercased.contains("hello") || lowercased.contains("hi") || lowercased.contains("hey") {
-            return prefix + "Hello Joseph. I heard \"\(trimmed)\"."
+            return prefix + "Hello! I heard \"\(trimmed)\"."
         }
 
         if trimmed.isEmpty {
@@ -592,7 +592,7 @@ enum ChatMode: String, CaseIterable {
 
     var systemPrompt: String {
         switch self {
-        case .chat:     return "You are Iris Lumina, a concise AI assistant for Joseph (blind, VoiceOver user). Be brief and clear."
+        case .chat:     return "You are Iris Lumina, a concise AI assistant for users with visual impairments. Be brief and clear."
         case .code:     return "You are an expert coding assistant. Use triple-backtick code blocks with language names. Support: explain, suggest, fix."
         case .terminal: return "You are a macOS terminal expert. Provide exact shell commands, one sentence explanation each."
         case .yolo:     return "You are an autonomous task executor. List all steps, flag destructive operations before proceeding."
@@ -609,7 +609,7 @@ enum ChatMode: String, CaseIterable {
     }
 
     var speaksResponses: Bool {
-        // ALWAYS speak responses - Joseph is blind and needs audio feedback
+        // ALWAYS speak responses - accessibility users need audio feedback
         return true
     }
 
@@ -806,7 +806,7 @@ struct SecuritySettings {
         get {
             if let raw = UserDefaults.standard.string(forKey: roleKey),
                let role = SecurityRole(rawValue: raw) { return role }
-            return .developer  // Default to developer for Joseph
+            return .developer  // Default to developer for admin users
         }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: roleKey) }
     }
@@ -857,7 +857,7 @@ enum VoiceEngine: String, CaseIterable, Codable {
 /// Available voice options for the selected engine
 enum VoiceOption: String, CaseIterable, Codable {
     // System voices (macOS)
-    case karen = "Karen"                // Australian English (PREFERRED for Joseph)
+    case karen = "Karen"                // Australian English (PREFERRED voice)
     case samantha = "Samantha"          // US English
     case daniel = "Daniel"              // British English
     case moira = "Moira"                // Irish English
@@ -869,7 +869,7 @@ enum VoiceOption: String, CaseIterable, Codable {
     
     var accessibilityDescription: String {
         switch self {
-        case .karen:    return "Karen. Australian English voice. Preferred for Joseph."
+        case .karen:    return "Karen. Australian English voice. Recommended default."
         case .samantha: return "Samantha. American English voice."
         case .daniel:   return "Daniel. British English voice."
         case .moira:    return "Moira. Irish English voice."
@@ -912,7 +912,7 @@ struct VoiceSettings {
         get {
             if let raw = UserDefaults.standard.string(forKey: voiceKey),
                let voice = VoiceOption(rawValue: raw) { return voice }
-            return .karen  // Default to Karen for Joseph
+            return .karen  // Default to Karen (recommended)
         }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: voiceKey) }
     }
@@ -1950,7 +1950,7 @@ struct LLMConfig {
     static let `default` = LLMConfig(
         url: URL(string: "http://localhost:11434/v1/chat/completions")!,
         model: "llama3.2:3b",
-        systemPrompt: "You are Iris Lumina, an AI assistant for Joseph, who is blind and uses VoiceOver on macOS. Keep responses concise and clear. No filler phrases."
+        systemPrompt: "You are Iris Lumina, an AI assistant optimized for accessibility. Keep responses concise and clear. No filler phrases."
     )
 
     static func mode(_ chatMode: ChatMode) -> LLMConfig {
@@ -3462,7 +3462,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         voiceOptionDropdown.target = self
         voiceOptionDropdown.action = #selector(voiceOptionChanged)
         voiceOptionDropdown.setAccessibilityLabel("Voice")
-        voiceOptionDropdown.setAccessibilityHelp("Select which voice speaks responses. Karen is the default for Joseph. Options include Moira, Samantha, and others.")
+        voiceOptionDropdown.setAccessibilityHelp("Select which voice speaks responses. Karen is the recommended default. Options include Moira, Samantha, and others.")
         voiceOptionDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
         contentView.addSubview(voiceOptionDropdown)
         
@@ -3486,7 +3486,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         contentView.addSubview(dictationEngineDropdown)
 
         // MARK: - Main UI Elements (shifted down)
-        let instructionsLabel = NSTextField(wrappingLabelWithString: "Accessible voice chat for Joseph. Press Enter on the big button, speak your command, and Brain Chat will respond with voice.")
+        let instructionsLabel = NSTextField(wrappingLabelWithString: "Accessible voice chat. Press Enter on the big button, speak your command, and Brain Chat will respond with voice.")
         instructionsLabel.font = NSFont.systemFont(ofSize: 16)
         instructionsLabel.frame = NSRect(x: 40, y: 480, width: 820, height: 40)
         instructionsLabel.setAccessibilityLabel("Instructions")

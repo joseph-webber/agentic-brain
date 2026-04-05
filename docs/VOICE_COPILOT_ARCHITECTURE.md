@@ -84,7 +84,7 @@ Karen: "Done! I've added a validate_email function with regex
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    JOSEPH'S VOICE-FIRST DEVELOPMENT SYSTEM                  │
+│                    ACCESSIBLE VOICE-FIRST DEVELOPMENT SYSTEM                │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  ┌─────────────┐      ┌─────────────┐      ┌─────────────────────────────┐ │
@@ -687,7 +687,7 @@ Different voices for different contexts:
 ~/brain/agentic-brain/
 ├── karen_daemon.py              # Standalone voice daemon
 ├── karen_voice_chat.py          # Simple voice chat loop
-├── listen_to_joseph.py          # Basic STT listener
+├── listen_to_user.py          # Basic STT listener
 ├── talk_to_karen.py             # Main voice chat (sox)
 ├── tools/
 │   ├── voice/

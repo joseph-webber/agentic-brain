@@ -29,7 +29,7 @@
 │  ┌──────────┐   ┌──────────┐   ┌──────────┐               │
 │  │get_bus() │   │VOICE_    │   │event()   │               │
 │  │          │   │LADIES    │   │helpers   │               │
-│  │Redpanda/ │   │14 ladies │   │utilities │               │
+│  │Redpanda/ │   │14 voices │   │utilities │               │
 │  │Kafka Mgr │   │metadata  │   │          │               │
 │  └──────────┘   └──────────┘   └──────────┘               │
 └────────────┬───────────────────────────────────────────────┘
@@ -62,7 +62,7 @@
                                     ┌──────────────────┼──────────────────┐
                                     ▼                  ▼                  ▼
                               ┌────────────┐   ┌─────────────┐   ┌──────────────┐
-                              │Ladies      │   │Voice        │   │Autonomous    │
+                              │Voices      │   │Voice        │   │Autonomous    │
                               │Daemon      │   │Events       │   │Voice Agent   │
                               │            │   │Handler      │   │              │
                               │Listens:    │   │             │   │Generates:    │
@@ -101,7 +101,7 @@ Claude Desktop
     ▼
 send_voice_request()
     │
-    ├─ Validate lady name (14 ladies)
+    ├─ Validate voice name (14 voices)
     ├─ Create voice_llm_request event
     ├─ Add fallback chain: [claude, openrouter, emulator]
     ├─ Emit to brain.voice.llm
@@ -109,7 +109,7 @@ send_voice_request()
     ▼
 brain.voice.llm Topic (Redpanda)
     │
-    ├─ Ladies Daemon listens
+    ├─ Voices Daemon listens
     ├─ Voice Events handler listens
     │
     ▼
@@ -117,7 +117,7 @@ LLM Service
     │
     ├─ Processes prompt: "Tell me a joke"
     ├─ Generates response: "Why did the chicken..."
-    ├─ Marks for lady voice (kyoko)
+    ├─ Marks for voice voice (kyoko)
     │
     ▼
 Voice System
@@ -142,17 +142,17 @@ Complete
 ```
 Claude Desktop
     │
-    │ broadcast_voice("Good morning!", lady="flo")
+    │ broadcast_voice("Good morning!", voice="flo")
     │
     ▼
 broadcast_voice()
     │
-    ├─ Validate lady: "flo" → ✅ Flo (England, 160 wpm)
+    ├─ Validate voice: "flo" → ✅ Flo (England, 160 wpm)
     ├─ Create voice_response event
     │  {
     │    "type": "voice_response",
     │    "message": "Good morning!",
-    │    "lady": "flo",
+    │    "voice": "flo",
     │    "voice_name": "Flo",
     │    "region": "England"
     │  }
@@ -185,7 +185,7 @@ Complete (Resilient)
     "type": "voice_llm_request",
     "request_id": "abc-123-def",
     "prompt": "What's the weather?",
-    "lady": "kyoko",
+    "voice": "kyoko",
     "voice_name": "Kyoko",
     "region": "Japan",
     "priority": "normal",
@@ -200,8 +200,8 @@ Complete (Resilient)
 ```python
 {
     "type": "voice_response",
-    "message": "Good morning Joseph!",
-    "lady": "flo",
+    "message": "Good morning!",
+    "voice": "flo",
     "voice_name": "Flo",
     "region": "England",
     "timestamp": "2024-01-15T10:30:00.000Z",
@@ -216,8 +216,8 @@ Complete (Resilient)
     "type": "conversation_state",
     "conversation_id": "conv-456",
     "state": "active",
-    "current_lady": "moira",
-    "participants": ["joseph", "moira"],
+    "current_voice": "moira",
+    "participants": ["user", "moira"],
     "last_message": "How are you today?",
     "timestamp": "2024-01-15T10:30:00.000Z"
 }
@@ -231,7 +231,7 @@ Complete (Resilient)
     "input_id": "input-789",
     "text": "What time is it?",
     "confidence": 0.95,
-    "source_lady": None,  # Device microphone
+    "source_voice": None,  # Device microphone
     "timestamp": "2024-01-15T10:30:00.000Z"
 }
 ```
@@ -242,36 +242,36 @@ Complete (Resilient)
 ┌──────────────────────────────────────────────────────────────┐
 │ send_voice_request() Handler                                  │
 ├──────────────────────────────────────────────────────────────┤
-│ 1. Receives: (prompt, lady, priority)                        │
-│ 2. Validates: lady ∈ VOICE_LADIES (14 options)              │
-│ 3. Fallback: If invalid lady → "karen"                       │
+│ 1. Receives: (prompt, voice, priority)                        │
+│ 2. Validates: voice ∈ VOICE_LADIES (14 options)              │
+│ 3. Fallback: If invalid voice → "karen"                       │
 │ 4. Lookup: voice_name, rate, region from VOICE_LADIES       │
 │ 5. Creates: voice_llm_request event                          │
 │ 6. Emits: → brain.voice.llm topic                            │
-│ 7. Returns: {request_id, lady, voice_name, region, ...}     │
+│ 7. Returns: {request_id, voice, voice_name, region, ...}     │
 └──────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────┐
 │ broadcast_voice() Handler                                     │
 ├──────────────────────────────────────────────────────────────┤
-│ 1. Receives: (message, lady)                                 │
-│ 2. Validates: lady ∈ VOICE_LADIES (14 options)              │
-│ 3. Fallback: If invalid lady → "karen"                       │
+│ 1. Receives: (message, voice)                                 │
+│ 2. Validates: voice ∈ VOICE_LADIES (14 options)              │
+│ 3. Fallback: If invalid voice → "karen"                       │
 │ 4. Lookup: voice_name, rate from VOICE_LADIES               │
 │ 5. Creates: voice_response event                             │
 │ 6. Emits: → brain.voice.response topic                       │
 │ 7. Executes: say -v {voice_name} -r {rate} {message}        │
 │ 8. Handles: Exceptions gracefully (30s timeout)              │
-│ 9. Returns: {lady, voice_name, region, message_length, ...} │
+│ 9. Returns: {voice, voice_name, region, message_length, ...} │
 └──────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────┐
-│ Voice Ladies Daemon (Consumer)                                │
+│ Voice Voices Daemon (Consumer)                                │
 ├──────────────────────────────────────────────────────────────┤
 │ 1. Listens: brain.voice.llm topic                            │
 │ 2. On Event: voice_llm_request received                      │
 │ 3. Checks: LLM processed? (poll or subscribe brain.llm.resp) │
-│ 4. Acts: Run selected lady voice personality                 │
+│ 4. Acts: Run selected voice voice personality                 │
 │ 5. Outputs: Emits to brain.voice.response                    │
 │ 6. Logs: Analytics, conversation state updates               │
 └──────────────────────────────────────────────────────────────┘
@@ -279,11 +279,11 @@ Complete (Resilient)
 
 ## Configuration
 
-### Voice Ladies Configuration
+### Voice Voices Configuration
 
 ```python
 VOICE_LADIES = {
-    "lady_key": (voice_name, rate_wpm, region),
+    "voice_key": (voice_name, rate_wpm, region),
     ...
 }
 
@@ -306,7 +306,7 @@ BrainTopics = {
         "consumers": ["voice_daemon", "analytics"]
     },
     "brain.voice.response": {
-        "description": "Lady voice responses",
+        "description": "Voice voice responses",
         "producers": ["send_voice_request", "broadcast_voice"],
         "consumers": ["voice_daemon", "monitoring"]
     },
@@ -317,17 +317,17 @@ BrainTopics = {
 ## Error Handling
 
 ```
-send_voice_request(prompt, lady="invalid")
+send_voice_request(prompt, voice="invalid")
     │
-    └─ Validate lady: "invalid" not in VOICE_LADIES
-       └─ Fallback: lady = "karen"
+    └─ Validate voice: "invalid" not in VOICE_LADIES
+       └─ Fallback: voice = "karen"
           └─ Continue normally
-             └─ Return: {..., "lady": "karen", ...}
+             └─ Return: {..., "voice": "karen", ...}
 
-broadcast_voice(message, lady="invalid")
+broadcast_voice(message, voice="invalid")
     │
-    └─ Validate lady: "invalid" not in VOICE_LADIES
-       └─ Fallback: lady = "karen"
+    └─ Validate voice: "invalid" not in VOICE_LADIES
+       └─ Fallback: voice = "karen"
           └─ Continue normally
              └─ Emit event with karen voice
              └─ Execute: say -v Karen -r 165 {message}
