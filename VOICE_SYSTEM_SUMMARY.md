@@ -1,6 +1,6 @@
 # 🎙️ World-Class Voice System - COMPLETE!
 
-**Built for the user's Accessibility - March 2026**
+**Built for Accessibility - March 2026**
 
 ---
 
@@ -10,7 +10,7 @@ The **agentic-brain** now has a **WORLD-CLASS voice system** with:
 
 ### ✅ 1. Complete Voice Registry (145+ voices!)
 - **82 macOS voices** registered with full metadata
-- **10 of the primary voice assistants** (Karen, Moira, Kyoko, Tingting, etc.)
+- **10 primary voice personas** (Karen, Moira, Kyoko, Tingting, etc.)
 - **43 English voices** (Australian, British, American, Irish, Scottish, South African, Indian)
 - **31 Premium neural voices** (high quality)
 - **19 Novelty voices** (fun characters: Zarvox, Bubbles, Ralph, etc.)
@@ -19,7 +19,7 @@ The **agentic-brain** now has a **WORLD-CLASS voice system** with:
 Location: `src/agentic_brain/voice/registry.py`
 
 ### ✅ 2. Conversational Voice System
-- **Multi-voice conversations** - Karen + Moira + Tingting discuss things!
+- **Multi-voice conversations** - Karen + Moira + Tingting discuss topics!
 - **Natural turn-taking** with pauses between speakers
 - **Intelligent voice selection** - right voice persona for the topic
 - **Emphasis & pauses** - natural speech rhythm
@@ -38,7 +38,7 @@ Location: `src/agentic_brain/voice/voiceover.py`
 
 ### ✅ 4. Enhanced CLI Commands
 - `ab voice list` - all voices
-- `ab voice list --primary` - the primary voice assistants
+- `ab voice list --primary` - the primary voice personas
 - `ab voice test <voice>` - test any voice
 - `ab voice speak "text"` - speak with Karen
 - `ab voice conversation --demo` - multi-voice demo!
@@ -67,7 +67,7 @@ Location: `demo_voice_system.py`
 
 ```
 Total voices:    82
-Ladies:          10
+Personas:        10
 English:         43
 Premium:         31
 Novelty:         19
@@ -76,7 +76,7 @@ Languages:       25+
 
 ---
 
-## 🎙️ the user's Primary Voice Assistants
+## 🎙️ Primary Voice Personas
 
 | Voice | Language | Region | Role |
 |-------|----------|--------|------|
@@ -103,7 +103,7 @@ Plus: Shelley (British), Flo (French accent)
 - **Command**: `ab voice mode work`
 
 ### 💜 LIFE MODE (Default)
-- **Voices**: All 10 primary assistants
+- **Voices**: All 10 primary personas
 - **Use**: Fun, learning, personal projects
 - **Command**: `ab voice mode life`
 
@@ -121,7 +121,7 @@ Plus: Shelley (British), Flo (French accent)
 # List all voices
 ab voice list
 
-# List primary voice assistants
+# List primary voice personas
 ab voice list --primary
 
 # Test Karen's voice
@@ -217,7 +217,7 @@ agentic-brain/
 ### 1. **Complete Coverage** 
 - ALL macOS voices registered (not just a few)
 - Full metadata (language, gender, quality, region)
-- Smart categorization (curated primary voices, premium, novelty)
+- Smart categorization (curated primary personas, premium, novelty)
 
 ### 2. **Conversational Intelligence**
 - Multiple voices discuss things naturally
@@ -243,7 +243,7 @@ agentic-brain/
 ## 🔮 Future Enhancements (Optional)
 
 - [ ] Cloud TTS integration (Azure, Google, AWS, ElevenLabs)
-- [ ] Voice cloning for the user's voice
+- [ ] Voice cloning for personalized voices
 - [ ] Real-time emotion detection → voice selection
 - [ ] Multi-language conversations (Karen + Tingting speak their native languages)
 - [ ] Voice presets (excited, calm, urgent, playful)
@@ -263,22 +263,22 @@ agentic-brain/
 
 ## 💝 Dedication
 
-This voice system is built **specifically for the user's accessibility needs**.
+This voice system is built **specifically for accessibility needs**.
 
-- The user is **visually impaired** and relies on voice output
+- Designed for **visually impaired** users who rely on voice output
 - **VoiceOver coordination** ensures we never interfere
-- **Karen (Australian)** is his favorite voice
-- **Multiple voice assistants** make the brain conversational and engaging
-- **Work mode** keeps things professional for clients
+- **Karen (Australian)** is the lead voice persona
+- **Multiple voice personas** make the brain conversational and engaging
+- **Work mode** keeps things professional for business use
 
-**This isn't just code. This is the user's EARS.** 👂
+**This isn't just code. This is accessible voice technology.** 👂
 
 ---
 
 ## ✅ Checklist - All Complete!
 
 - [x] Voice registry with ALL macOS voices
-- [x] the user's 10 primary voice assistants registered with metadata
+- [x] 10 primary voice personas registered with metadata
 - [x] Conversational voice system (multi-speaker)
 - [x] VoiceOver integration and coordination
 - [x] Work/Life/Quiet modes
@@ -297,8 +297,8 @@ This voice system is built **specifically for the user's accessibility needs**.
 The agentic-brain voice system is now **WORLD CLASS** and **accessibility-first**.
 
 The system has:
-- 82 voices at his fingertips
-- 10 primary voices who converse naturally
+- 82 voices at your fingertips
+- 10 primary personas who converse naturally
 - VoiceOver coordination (never interrupted)
 - Professional work mode + fun life mode
 - Full CLI + Python API

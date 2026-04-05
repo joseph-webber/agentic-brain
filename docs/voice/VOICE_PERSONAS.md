@@ -1,4 +1,4 @@
-# Kokoro-82M voice personas map
+# Kokoro-82M Voice Personas
 
 This document maps the 14 voice personas onto the best available Kokoro-82M voices.
 
@@ -19,7 +19,7 @@ For Vietnamese, Korean, Thai, Indonesian, Javanese, Balinese, Polish, and Irish 
 
 ## Voice selection table
 
-| Voice Persona | Primary Kokoro voice | Language | Style | Rate | Why this works |
+| Persona | Primary Kokoro voice | Language | Style | Rate | Why this works |
 | --- | --- | --- | --- | --- | --- |
 | Karen | `bf_emma` | `en-gb` | Confident, direct, polished host | `0.98` | Strong Commonwealth feel; closest fit for Australian lead-host energy |
 | Kyoko | `jf_alpha` | `ja` | Precise, calm, meticulous | `0.94` | Best Japanese female base in the official set |
@@ -40,7 +40,7 @@ For Vietnamese, Korean, Thai, Indonesian, Javanese, Balinese, Polish, and Irish 
 
 These blends are metadata for blend-capable backends or future Kokoro post-processing. They are not required for basic synthesis.
 
-| Voice Persona | Blend | Intent |
+| Persona | Blend | Intent |
 | --- | --- | --- |
 | Karen | `bf_emma 70% + af_bella 30%` | Commonwealth authority plus extra drive |
 | Kyoko | `jf_alpha 80% + jf_tebukuro 20%` | Precision with a softer finish |
@@ -73,9 +73,9 @@ Kokoro should not be treated as a perfect ethnicity simulator. The best result c
 
 ```python
 from kokoro import KPipeline
-from agentic_brain.voice.lady_voices import get_lady_voice
+from agentic_brain.voice.persona_voices import get_persona_voice
 
-config = get_lady_voice("Kyoko")
+config = get_persona_voice("Kyoko")
 pipeline = KPipeline(lang_code="j")
 
 for _, _, audio in pipeline(
@@ -90,7 +90,7 @@ for _, _, audio in pipeline(
 ### Python: inspect a fallback chain
 
 ```python
-from agentic_brain.voice.lady_voices import get_fallback_chain
+from agentic_brain.voice.persona_voices import get_fallback_chain
 
 print(get_fallback_chain("Karen"))
 # ['bf_emma', 'af_bella', 'bf_lily', 'af_heart']
@@ -103,9 +103,9 @@ cd /Users/joe/brain/agentic-brain
 . .venv312/bin/activate
 python - <<'PY'
 from kokoro import KPipeline
-from agentic_brain.voice.lady_voices import get_lady_voice
+from agentic_brain.voice.persona_voices import get_persona_voice
 
-config = get_lady_voice("Flo")
+config = get_persona_voice("Flo")
 pipeline = KPipeline(lang_code="f")
 for _, _, audio in pipeline("Bonjour, je relis la pull request.", voice=config["voice_id"], speed=config["rate_adjustment"]):
     print(type(audio), len(audio))

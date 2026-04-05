@@ -4,7 +4,7 @@ Agentic Brain's voice stack is built for accessible, low-friction audio output.
 Phase 2 strengthened four areas:
 
 - **Safety:** one speaker at a time through the global serializer and speech lock
-- **Orientation:** optional stereo and spatial positioning so each lady has a place
+- **Orientation:** optional stereo and spatial positioning so each persona has a place
 - **Durability:** Redis and Redpanda-backed queueing with memory fallback
 - **Recovery:** watchdog monitoring so stalled voice workers restart automatically
 
@@ -65,7 +65,7 @@ from agentic_brain.voice import get_phase3_voice_system
 
 voice = get_phase3_voice_system()
 voice.play_earcon("task_started")
-voice.speak("Hello there", lady="Karen")
+voice.speak("Hello there", persona="Karen")
 print(voice.health())
 ```
 
@@ -132,7 +132,7 @@ CLI / app code / agents
 | `src/agentic_brain/voice/serializer.py` | Single serialized speech path with overlap auditing and watchdog integration |
 | `src/agentic_brain/voice/_speech_lock.py` | Cross-process Redis lock on `voice:speaking`, with local lock fallback |
 | `src/agentic_brain/voice/conversation.py` | Work, life, and quiet modes plus speaker selection |
-| `src/agentic_brain/audio/spatial_audio.py` | 3D lady positions and backend selection: `native`, `sox`, `mono` |
+| `src/agentic_brain/audio/spatial_audio.py` | 3D persona positions and backend selection: `native`, `sox`, `mono` |
 | `src/agentic_brain/audio/stereo_pan.py` | Left/right panning for any stereo output |
 | `src/agentic_brain/audio/airpods.py` | AirPods discovery, routing, battery, and head-tracking support |
 | `src/agentic_brain/voice/redpanda_queue.py` | Durable async queue with Redpanda → Redis → memory fallback |
@@ -160,7 +160,7 @@ startup.
 The spatial ring in `audio/spatial_audio.py` places **14 voice personas** around the listener.
 These are the fixed positions used by the spatial router.
 
-| Lady | Position | Voice mapping | Documented role or note |
+| Persona | Position | Voice mapping | Documented role or note |
 | --- | ---: | --- | --- |
 | Karen | 0° | `Karen (Premium)` | Lead host, center front |
 | Kyoko | 30° | `Kyoko` | Quality and JIRA; fun/travel only |
