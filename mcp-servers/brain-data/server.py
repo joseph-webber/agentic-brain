@@ -7,7 +7,7 @@ Full Core Data access for Claude via MCP protocol.
 
 CATEGORIES:
 1. Neo4j Data Tools (12 tools)
-2. JIRA API Tools (5 tools) 
+2. JIRA API Tools (5 tools)
 3. BitBucket API Tools (4 tools)
 4. Brain Health Tools (3 tools)
 5. Sync & Management (2 tools)
@@ -1954,7 +1954,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             # Search emails
             try:
                 email_query = """
-                MATCH (e:Email) 
+                MATCH (e:Email)
                 WHERE e.subject CONTAINS $topic OR e.body CONTAINS $topic
                 RETURN e.subject, e.from, e.date
                 ORDER BY e.date DESC LIMIT 10
@@ -1969,7 +1969,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             # Search teams
             try:
                 teams_query = """
-                MATCH (t:TeamsMessage) 
+                MATCH (t:TeamsMessage)
                 WHERE t.content CONTAINS $topic
                 RETURN t.content, t.sender, t.timestamp
                 ORDER BY t.timestamp DESC LIMIT 10
@@ -1984,7 +1984,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             # Search JIRA
             try:
                 jira_query = """
-                MATCH (j:Ticket) 
+                MATCH (j:Ticket)
                 WHERE j.key CONTAINS $topic OR j.summary CONTAINS $topic
                 RETURN j.key, j.summary, j.status, j.updated
                 ORDER BY j.updated DESC LIMIT 10
@@ -2006,8 +2006,8 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             # Find messages with questions that might need answers
             try:
                 query = f"""
-                MATCH (m) 
-                WHERE (m:TeamsMessage OR m:Email) 
+                MATCH (m)
+                WHERE (m:TeamsMessage OR m:Email)
                 AND (m.content CONTAINS '?' OR m.body CONTAINS '?')
                 AND m.timestamp > datetime() - duration('P{days}D')
                 RETURN labels(m)[0] as type, m.content, m.subject, m.sender, m.from, m.timestamp
@@ -2027,16 +2027,16 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             # Get all Steve communications
             try:
                 query = """
-                MATCH (m) 
+                MATCH (m)
                 WHERE (m:TeamsMessage OR m:Email OR m:Ticket)
                 AND (
-                    toLower(m.sender) CONTAINS 'steve' OR 
-                    toLower(m.from) CONTAINS 'steve' OR 
+                    toLower(m.sender) CONTAINS 'steve' OR
+                    toLower(m.from) CONTAINS 'steve' OR
                     toLower(m.assignee) CONTAINS 'steve' OR
                     toLower(m.content) CONTAINS 'steve' OR
                     toLower(m.body) CONTAINS 'steve'
                 )
-                RETURN labels(m)[0] as type, 
+                RETURN labels(m)[0] as type,
                        coalesce(m.subject, m.summary, substring(m.content, 0, 100)) as preview,
                        coalesce(m.timestamp, m.date, m.updated) as date
                 ORDER BY date DESC LIMIT 20
@@ -2368,10 +2368,7 @@ Prepared by Hermes Oracle
             spec.loader.exec_module(cont_module)
 
             status = cont_module.show_status()
-            if status:
-                result = status
-            else:
-                result = {"error": "Could not get status"}
+            result = status or {"error": "Could not get status"}
 
         elif name == "continuity_context":
             import importlib.util

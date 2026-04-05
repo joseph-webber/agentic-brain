@@ -229,7 +229,7 @@ class JinaEmbedder(Embedder):
                 results = []
                 latency_ms = (time.time() - start_time) * 1000
 
-                for text, embedding_list in zip(texts, response.embeddings):
+                for text, embedding_list in zip(texts, response.embeddings, strict=False):
                     embedding = np.array(embedding_list, dtype=np.float32)
                     results.append(
                         EmbeddingResult(

@@ -192,7 +192,7 @@ np.sin(2 * np.pi * freq * t)
 # Sawtooth
 2 * (t * freq - np.floor(0.5 + t * freq))
 
-# Square  
+# Square
 np.sign(np.sin(2 * np.pi * freq * t))
 ```
 
@@ -835,10 +835,7 @@ def generate_lead(
     detune_factor = 2 ** (detune_cents / 1200)
 
     for i in range(voices):
-        if voices > 1:
-            spread = (i - (voices - 1) / 2) / ((voices - 1) / 2)
-        else:
-            spread = 0
+        spread = (i - (voices - 1) / 2) / ((voices - 1) / 2) if voices > 1 else 0
         voice_freq = freq * (detune_factor**spread)
         lead += generate_saw(voice_freq, duration)
 
@@ -886,9 +883,9 @@ def generate_riser(
     if riser_type == "noise":
         riser = np.random.randn(len(t))
         # Sweeping filter
-        for i, sample in enumerate(t):
+        for i, _sample in enumerate(t):
             progress = i / len(t)
-            cutoff = start_freq + (end_freq - start_freq) * progress
+            start_freq + (end_freq - start_freq) * progress
             # Simple one-pole filter approximation
             pass
         riser = highpass_filter(riser, start_freq)

@@ -13,7 +13,7 @@ def check_imports(start_dir):
     src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
     sys.path.insert(0, src_path)
 
-    for root, dirs, files in os.walk(start_dir):
+    for root, _dirs, files in os.walk(start_dir):
         for file in files:
             if file.endswith(".py") and not file.startswith("test_"):
                 # Construct module name

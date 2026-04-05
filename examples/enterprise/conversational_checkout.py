@@ -487,9 +487,7 @@ class ShippingAddress:
         valid_states = {"NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"}
         if self.state.upper() not in valid_states:
             return False
-        if not re.match(r"^\d{4}$", self.postcode):
-            return False
-        return True
+        return re.match(r"^\d{4}$", self.postcode)
 
 
 @dataclass

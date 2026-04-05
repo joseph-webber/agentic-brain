@@ -498,7 +498,7 @@ class OpportunityMatcherAgent:
 
         matches = []
 
-        for opp_id, opportunity in self._opportunities.items():
+        for _opp_id, opportunity in self._opportunities.items():
             if not opportunity.is_active:
                 continue
 
@@ -539,7 +539,7 @@ class OpportunityMatcherAgent:
 
         matches = []
 
-        for cand_id, candidate in self._candidates.items():
+        for _cand_id, candidate in self._candidates.items():
             if not include_passive and candidate.availability == "passive":
                 continue
             if candidate.availability == "unavailable":
@@ -664,7 +664,7 @@ class OpportunityMatcherAgent:
                     })
                     CREATE (c)-[:APPLIED]->(a)
                     CREATE (a)-[:FOR_OPPORTUNITY]->(o)
-                    
+
                     WITH o
                     SET o.applicationsCount = coalesce(o.applicationsCount, 0) + 1
                     """,
@@ -717,7 +717,7 @@ class OpportunityMatcherAgent:
                     MATCH (a:Application {applicationId: $application_id})
                     SET a.status = $status,
                         a.updatedAt = datetime()
-                    
+
                     CREATE (a)-[:STATUS_CHANGE {
                         toStatus: $status,
                         note: $note,
@@ -946,7 +946,7 @@ async def main():
     )
 
     # Create opportunities
-    ds_role = await agent.create_opportunity(
+    await agent.create_opportunity(
         title="Senior Data Scientist",
         department="Data Science",
         location="Remote",

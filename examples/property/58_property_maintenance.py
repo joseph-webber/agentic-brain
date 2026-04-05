@@ -174,10 +174,7 @@ class Tradesperson:
             return False
         if self.insurance_expiry and self.insurance_expiry < today:
             return False
-        if not self.workcover_verified:
-            return False
-
-        return True
+        return self.workcover_verified
 
     def check_compliance_issues(self) -> list[str]:
         """Return list of compliance issues."""
@@ -1203,7 +1200,7 @@ async def demo():
     )
 
     # Urgent job
-    wo2_id = coordinator.create_work_order(
+    coordinator.create_work_order(
         property_id="PROP-002",
         property_address="8 Jacaranda Crescent, Mawson Lakes SA 5095",
         trade_category=TradeCategory.ELECTRICAL,
@@ -1376,7 +1373,7 @@ async def demo():
     print("🚨 Emergency Job Scenario")
     print("─" * 50)
 
-    emg_wo_id = coordinator.create_work_order(
+    coordinator.create_work_order(
         property_id="PROP-003",
         property_address="22 Willow Avenue, Norwood SA 5067",
         trade_category=TradeCategory.PLUMBING,

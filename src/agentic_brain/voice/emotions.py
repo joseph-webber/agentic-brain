@@ -346,7 +346,7 @@ class VoiceEmotionDetector:
                         else list(out_prob[0])
                     )
                     labels = ["neu", "hap", "sad", "ang"]  # IEMOCAP labels
-                    raw_scores = dict(zip(labels, probs[: len(labels)]))
+                    raw_scores = dict(zip(labels, probs[: len(labels)], strict=False))
                 except Exception:
                     pass
 

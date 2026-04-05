@@ -1001,7 +1001,7 @@ class ReAct(Module):
         # Build initial prompt
         prompt = self._build_prompt(kwargs, trace)
 
-        for step in range(self.max_steps):
+        for _step in range(self.max_steps):
             if lm:
                 response = lm.generate(prompt)
             else:

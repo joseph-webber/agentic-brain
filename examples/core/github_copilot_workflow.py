@@ -453,14 +453,14 @@ index 1234567..abcdefg 100644
     print(
         """
     workflow = CopilotWorkflow.create()
-    
+
     # Generate PR description
     desc = await workflow.generate_pr_description("owner", "repo", 42)
-    
+
     # Review PR
     review = await workflow.review_pull_request("owner", "repo", 42)
-    
-    # Triage issue  
+
+    # Triage issue
     triage = await workflow.triage_issue("owner", "repo", 100)
     """
     )

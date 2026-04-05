@@ -187,7 +187,7 @@ class SentenceTransformersEmbedder(Embedder):
 
             latency_per_text = ((time.time() - start_time) * 1000) / len(texts)
 
-            for text, embedding in zip(texts, embeddings):
+            for text, embedding in zip(texts, embeddings, strict=False):
                 results.append(
                     EmbeddingResult(
                         text=text,
@@ -338,7 +338,7 @@ class E5Embedder(SentenceTransformersEmbedder):
 
             latency_per_text = ((time.time() - start_time) * 1000) / len(texts)
 
-            for text, embedding in zip(texts, embeddings):
+            for text, embedding in zip(texts, embeddings, strict=False):
                 results.append(
                     EmbeddingResult(
                         text=text,

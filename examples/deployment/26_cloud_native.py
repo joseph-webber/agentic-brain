@@ -610,7 +610,7 @@ class RetailChatManager:
 
     async def get_analytics(self, store_id: str = None) -> dict:
         """Get chat analytics."""
-        total_sessions = len(self.active_sessions)
+        len(self.active_sessions)
 
         if store_id:
             sessions = [
@@ -829,7 +829,7 @@ async def run_demo():
     print("📦 PRODUCTS")
     print("-" * 40)
     products = await handler.firebase.get("products")
-    for sku, product in list(products.items())[:5]:
+    for _sku, product in list(products.items())[:5]:
         print(f"  • {product['name']} - ${product['price']:.2f}")
     print(f"  ... and {len(products) - 5} more")
     print()
@@ -941,7 +941,7 @@ async def run_interactive():
             if user_input.lower() == "products":
                 products = await handler.firebase.get("products")
                 print("\n📦 Products:")
-                for sku, p in products.items():
+                for _sku, p in products.items():
                     stock = p["stock"].get(store_id, 0)
                     print(f"  • {p['name']} (${p['price']:.2f}) - {stock} in stock")
                 print()

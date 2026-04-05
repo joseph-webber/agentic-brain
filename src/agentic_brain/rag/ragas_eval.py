@@ -496,7 +496,7 @@ def _cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
     if len(vec1) != len(vec2):
         return 0.0
 
-    dot_product = sum(a * b for a, b in zip(vec1, vec2))
+    dot_product = sum(a * b for a, b in zip(vec1, vec2, strict=False))
     norm1 = math.sqrt(sum(a * a for a in vec1))
     norm2 = math.sqrt(sum(b * b for b in vec2))
 
@@ -941,7 +941,7 @@ class RAGASEvaluator:
 
         dataset = RAGASDataset()
 
-        for question, ground_truth in zip(questions, ground_truths):
+        for question, ground_truth in zip(questions, ground_truths, strict=False):
             answer, contexts = rag_func(question)
             dataset.add_sample(
                 question=question,
@@ -1326,7 +1326,7 @@ class AspectCritiqueCalculator:
 
         # Check for redundancy
         sentences = re.split(r"[.!?]+", answer)
-        unique_sentences = set(s.strip().lower() for s in sentences if s.strip())
+        unique_sentences = {s.strip().lower() for s in sentences if s.strip()}
         redundancy = 1.0 - len(unique_sentences) / max(len(sentences), 1)
 
         score = score * (1.0 - redundancy * 0.5)

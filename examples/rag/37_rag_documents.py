@@ -538,7 +538,7 @@ class Chunker:
         """Overlapping sliding window approach."""
         chunks = []
         window_size = self.config.chunk_size
-        step_size = window_size - self.config.chunk_overlap
+        window_size - self.config.chunk_overlap
 
         sentences = re.split(r"(?<=[.!?])\s+", content)
         current_chunk = ""
@@ -825,7 +825,7 @@ class VectorStore:
                 )
 
                 results = []
-                for i, (idx, score) in enumerate(zip(indices[0], distances[0])):
+                for _i, (idx, score) in enumerate(zip(indices[0], distances[0], strict=False)):
                     if idx >= 0:
                         results.append((int(idx), float(score)))
                 return results
@@ -851,7 +851,7 @@ class VectorStore:
 
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """Compute cosine similarity between two vectors."""
-        dot_product = sum(x * y for x, y in zip(a, b))
+        dot_product = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = math.sqrt(sum(x * x for x in a))
         norm_b = math.sqrt(sum(x * x for x in b))
 
@@ -1040,7 +1040,7 @@ class Reranker:
         scores = self.model.predict(pairs)
 
         # Combine with original results
-        scored_results = list(zip(results, scores))
+        scored_results = list(zip(results, scores, strict=False))
         scored_results.sort(key=lambda x: x[1], reverse=True)
 
         # Update ranks and return top_k
@@ -1141,7 +1141,7 @@ class DocumentRAGPipeline:
         embeddings = self.embedder.embed_batch(chunk_texts)
 
         # Add to vector store and BM25 index
-        for chunk, embedding in zip(doc.chunks, embeddings):
+        for chunk, embedding in zip(doc.chunks, embeddings, strict=False):
             chunk.embedding = embedding
 
             idx = len(self.vector_store.vectors)

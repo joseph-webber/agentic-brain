@@ -286,7 +286,7 @@ class WebSocketTerminalServer:
             )
 
             # Start output reader task
-            reader_task = asyncio.create_task(
+            asyncio.create_task(
                 self._read_output_loop(websocket, pty_session)
             )
 

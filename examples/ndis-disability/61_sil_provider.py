@@ -304,10 +304,7 @@ class SupportWorker:
         # Check first aid
         if not self.first_aid_current:
             return False
-        if self.first_aid_expiry and self.first_aid_expiry < today:
-            return False
-
-        return True
+        return not (self.first_aid_expiry and self.first_aid_expiry < today)
 
     def get_upcoming_expiries(self, days: int = 30) -> list[dict]:
         """Get qualifications expiring soon."""
@@ -1018,7 +1015,7 @@ class SILCoordinator:
     ) -> list[Medication]:
         """Get medications due within time window."""
         now = datetime.now().time()
-        window = timedelta(minutes=window_minutes)
+        timedelta(minutes=window_minutes)
         now_dt = datetime.combine(date.today(), now)
 
         due_meds = []

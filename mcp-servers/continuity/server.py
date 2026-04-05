@@ -19,7 +19,7 @@ TOOLS:
 USAGE:
     # Start server
     python server.py
-    
+
     # Or run directly with stdio
     mcp run server.py
 

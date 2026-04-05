@@ -346,7 +346,7 @@ class ChildSupportCalculation:
 
         # Child support percentages
         p1_cs_percent = p1_income_percent - p1_cost_percent
-        p2_cs_percent = p2_income_percent - p2_cost_percent
+        p2_income_percent - p2_cost_percent
 
         # Cost of children (using basic formula - actual uses tables)
         num_children = len(self.children_ages)

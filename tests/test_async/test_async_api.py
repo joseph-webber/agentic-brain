@@ -38,8 +38,7 @@ class DummyPipeline:
     def _generate(self, prompt, context):
         # Simulate streaming-friendly generator when prompt starts with 'stream:'
         if prompt.startswith("stream:"):
-            for c in context.split():
-                yield c
+            yield from context.split()
         return f"generated:{prompt}:{len(context)}"
 
     def query_stream(self, query, k=5, min_score=0.3):
@@ -83,8 +82,7 @@ async def test_async_llm_agenerate_and_astream():
     def gen(prompt, context):
         if prompt.startswith("stream:"):
             # generator
-            for ch in "abc":
-                yield ch
+            yield from "abc"
         return "done"
 
     llm = AsyncLLM(gen)

@@ -211,10 +211,7 @@ class ResearchPaper:
     @property
     def cite_key(self) -> str:
         """Generate citation key like 'smith2023neural'."""
-        if self.authors:
-            last_name = self.authors[0].last_name.lower()
-        else:
-            last_name = "unknown"
+        last_name = self.authors[0].last_name.lower() if self.authors else "unknown"
 
         title_word = ""
         for word in self.title.lower().split():
@@ -563,7 +560,7 @@ class PaperVectorStore:
 
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """Compute cosine similarity."""
-        dot_product = sum(x * y for x, y in zip(a, b))
+        dot_product = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = math.sqrt(sum(x * x for x in a))
         norm_b = math.sqrt(sum(x * x for x in b))
 
@@ -1188,59 +1185,59 @@ SAMPLE_PAPERS = [
 
 ## Abstract
 
-The dominant sequence transduction models are based on complex recurrent or 
-convolutional neural networks that include an encoder and a decoder. The best 
-performing models also connect the encoder and decoder through an attention 
-mechanism. We propose a new simple network architecture, the Transformer, 
-based solely on attention mechanisms, dispensing with recurrence and convolutions 
-entirely. Experiments on two machine translation tasks show these models to be 
-superior in quality while being more parallelizable and requiring significantly 
+The dominant sequence transduction models are based on complex recurrent or
+convolutional neural networks that include an encoder and a decoder. The best
+performing models also connect the encoder and decoder through an attention
+mechanism. We propose a new simple network architecture, the Transformer,
+based solely on attention mechanisms, dispensing with recurrence and convolutions
+entirely. Experiments on two machine translation tasks show these models to be
+superior in quality while being more parallelizable and requiring significantly
 less time to train.
 
 Keywords: transformer, attention, neural networks, machine translation
 
 ## Introduction
 
-Recurrent neural networks, long short-term memory and gated recurrent neural 
-networks in particular, have been firmly established as state of the art approaches 
-in sequence modeling and transduction problems such as language modeling and 
-machine translation. Numerous efforts have since continued to push the boundaries 
+Recurrent neural networks, long short-term memory and gated recurrent neural
+networks in particular, have been firmly established as state of the art approaches
+in sequence modeling and transduction problems such as language modeling and
+machine translation. Numerous efforts have since continued to push the boundaries
 of recurrent language models and encoder-decoder architectures.
 
-The fundamental constraint of sequential computation remains a significant limitation. 
-Attention mechanisms have become an integral part of compelling sequence modeling 
-and transduction models in various tasks, allowing modeling of dependencies without 
+The fundamental constraint of sequential computation remains a significant limitation.
+Attention mechanisms have become an integral part of compelling sequence modeling
+and transduction models in various tasks, allowing modeling of dependencies without
 regard to their distance in the input or output sequences.
 
 ## Methodology
 
-We propose the Transformer, a model architecture eschewing recurrence and instead 
-relying entirely on an attention mechanism to draw global dependencies between 
+We propose the Transformer, a model architecture eschewing recurrence and instead
+relying entirely on an attention mechanism to draw global dependencies between
 input and output. The Transformer allows for significantly more parallelization.
 
 ### Self-Attention
 
-Self-attention, sometimes called intra-attention, is an attention mechanism 
-relating different positions of a single sequence in order to compute a 
+Self-attention, sometimes called intra-attention, is an attention mechanism
+relating different positions of a single sequence in order to compute a
 representation of the sequence.
 
 ### Multi-Head Attention
 
-Instead of performing a single attention function with d_model-dimensional 
-keys, values and queries, we found it beneficial to linearly project the 
+Instead of performing a single attention function with d_model-dimensional
+keys, values and queries, we found it beneficial to linearly project the
 queries, keys and values h times with different, learned linear projections.
 
 ## Results
 
-The Transformer achieves 28.4 BLEU on the WMT 2014 English-to-German translation 
-task, improving over the existing best results by over 2 BLEU. On the WMT 2014 
-English-to-French translation task, our model establishes a new single-model 
+The Transformer achieves 28.4 BLEU on the WMT 2014 English-to-German translation
+task, improving over the existing best results by over 2 BLEU. On the WMT 2014
+English-to-French translation task, our model establishes a new single-model
 state-of-the-art BLEU score of 41.0.
 
 ## Conclusion
 
-We presented the Transformer, the first sequence transduction model based entirely 
-on attention, replacing the recurrent layers most commonly used in encoder-decoder 
+We presented the Transformer, the first sequence transduction model based entirely
+on attention, replacing the recurrent layers most commonly used in encoder-decoder
 architectures with multi-headed self-attention.
 
 ## References
@@ -1262,55 +1259,55 @@ architectures with multi-headed self-attention.
 
 ## Abstract
 
-We introduce a new language representation model called BERT, which stands for 
-Bidirectional Encoder Representations from Transformers. Unlike recent language 
-representation models, BERT is designed to pre-train deep bidirectional 
-representations from unlabeled text by jointly conditioning on both left and 
-right context in all layers. As a result, the pre-trained BERT model can be 
-fine-tuned with just one additional output layer to create state-of-the-art 
-models for a wide range of tasks, such as question answering and language 
+We introduce a new language representation model called BERT, which stands for
+Bidirectional Encoder Representations from Transformers. Unlike recent language
+representation models, BERT is designed to pre-train deep bidirectional
+representations from unlabeled text by jointly conditioning on both left and
+right context in all layers. As a result, the pre-trained BERT model can be
+fine-tuned with just one additional output layer to create state-of-the-art
+models for a wide range of tasks, such as question answering and language
 inference, without substantial task-specific architecture modifications.
 
 Keywords: BERT, pre-training, transformers, NLP, language models
 
 ## Introduction
 
-Language model pre-training has been shown to be effective for improving many 
-natural language processing tasks. These include sentence-level tasks such as 
-natural language inference and paraphrasing, which aim to predict the 
-relationships between sentences by analyzing them holistically, as well as 
+Language model pre-training has been shown to be effective for improving many
+natural language processing tasks. These include sentence-level tasks such as
+natural language inference and paraphrasing, which aim to predict the
+relationships between sentences by analyzing them holistically, as well as
 token-level tasks such as named entity recognition and question answering.
 
-There are two existing strategies for applying pre-trained language 
-representations to downstream tasks: feature-based and fine-tuning. BERT uses 
+There are two existing strategies for applying pre-trained language
+representations to downstream tasks: feature-based and fine-tuning. BERT uses
 the fine-tuning approach.
 
 ## Methodology
 
-BERT's model architecture is a multi-layer bidirectional Transformer encoder 
+BERT's model architecture is a multi-layer bidirectional Transformer encoder
 based on the original implementation described in Vaswani et al. (2017).
 
 ### Pre-training Tasks
 
 We pre-train BERT using two unsupervised tasks:
 
-**Masked Language Model (MLM):** We simply mask some percentage of the input 
+**Masked Language Model (MLM):** We simply mask some percentage of the input
 tokens at random, and then predict those masked tokens.
 
-**Next Sentence Prediction (NSP):** We pre-train a binarized next sentence 
+**Next Sentence Prediction (NSP):** We pre-train a binarized next sentence
 prediction task.
 
 ## Results
 
-BERT obtains new state-of-the-art results on eleven natural language processing 
-tasks, including pushing the GLUE benchmark to 80.5%, MultiNLI accuracy to 86.7%, 
+BERT obtains new state-of-the-art results on eleven natural language processing
+tasks, including pushing the GLUE benchmark to 80.5%, MultiNLI accuracy to 86.7%,
 SQuAD v1.1 question answering Test F1 to 93.2.
 
 ## Conclusion
 
-Recent empirical improvements due to transfer learning with language models have 
-demonstrated that rich, unsupervised pre-training is an integral part of many 
-language understanding systems. Our major contribution is further generalizing 
+Recent empirical improvements due to transfer learning with language models have
+demonstrated that rich, unsupervised pre-training is an integral part of many
+language understanding systems. Our major contribution is further generalizing
 these findings to deep bidirectional architectures.
 
 ## References
@@ -1332,46 +1329,46 @@ these findings to deep bidirectional architectures.
 
 ## Abstract
 
-Recent work has demonstrated substantial gains on many NLP tasks and benchmarks 
-by pre-training on a large corpus of text followed by task-specific fine-tuning. 
-We demonstrate that scaling up language models greatly improves task-agnostic, 
-few-shot performance, sometimes even reaching competitiveness with prior 
-state-of-the-art fine-tuning approaches. Specifically, we train GPT-3, an 
-autoregressive language model with 175 billion parameters, and test its 
+Recent work has demonstrated substantial gains on many NLP tasks and benchmarks
+by pre-training on a large corpus of text followed by task-specific fine-tuning.
+We demonstrate that scaling up language models greatly improves task-agnostic,
+few-shot performance, sometimes even reaching competitiveness with prior
+state-of-the-art fine-tuning approaches. Specifically, we train GPT-3, an
+autoregressive language model with 175 billion parameters, and test its
 performance in the few-shot setting.
 
 Keywords: GPT-3, language models, few-shot learning, NLP, scaling
 
 ## Introduction
 
-Recent years have featured a trend towards pre-trained language representations 
-in NLP systems, applied in increasingly flexible and task-agnostic ways. First, 
-single-layer representations were learned using word vectors and used to improve 
-word-level tasks. Then RNNs with multiple layers of representations were used 
+Recent years have featured a trend towards pre-trained language representations
+in NLP systems, applied in increasingly flexible and task-agnostic ways. First,
+single-layer representations were learned using word vectors and used to improve
+word-level tasks. Then RNNs with multiple layers of representations were used
 to form stronger representations, and then transformers emerged.
 
 ## Methodology
 
-We train GPT-3, an autoregressive language model with 175 billion parameters, 
-10x more than any previous non-sparse language model. We test GPT-3's performance 
+We train GPT-3, an autoregressive language model with 175 billion parameters,
+10x more than any previous non-sparse language model. We test GPT-3's performance
 under few-shot, one-shot, and zero-shot conditions.
 
 ### Model Architecture
 
-GPT-3 uses the same model and architecture as GPT-2, including the modified 
-initialization, pre-normalization, and reversible tokenization, with the exception 
+GPT-3 uses the same model and architecture as GPT-2, including the modified
+initialization, pre-normalization, and reversible tokenization, with the exception
 that we use alternating dense and locally banded sparse attention patterns.
 
 ## Results
 
-GPT-3 achieves strong performance on many NLP datasets, including translation, 
-question-answering, and cloze tasks, as well as several tasks that require 
+GPT-3 achieves strong performance on many NLP datasets, including translation,
+question-answering, and cloze tasks, as well as several tasks that require
 on-the-fly reasoning or domain adaptation.
 
 ## Conclusion
 
-We presented GPT-3, a 175 billion parameter autoregressive language model 
-and measured its performance in zero-shot, one-shot, and few-shot settings 
+We presented GPT-3, a 175 billion parameter autoregressive language model
+and measured its performance in zero-shot, one-shot, and few-shot settings
 on over two dozen NLP datasets.
 
 ## References
@@ -1393,48 +1390,48 @@ on over two dozen NLP datasets.
 
 ## Abstract
 
-Large pre-trained language models have been shown to store factual knowledge 
-in their parameters, and achieve state-of-the-art results when fine-tuned on 
-downstream NLP tasks. However, their ability to access and precisely manipulate 
-knowledge is still limited. We explore a general-purpose fine-tuning recipe for 
-retrieval-augmented generation (RAG) — models which combine pre-trained parametric 
+Large pre-trained language models have been shown to store factual knowledge
+in their parameters, and achieve state-of-the-art results when fine-tuned on
+downstream NLP tasks. However, their ability to access and precisely manipulate
+knowledge is still limited. We explore a general-purpose fine-tuning recipe for
+retrieval-augmented generation (RAG) — models which combine pre-trained parametric
 and non-parametric memory for language generation.
 
 Keywords: RAG, retrieval, knowledge, generation, transformers
 
 ## Introduction
 
-Pre-trained neural language models have been shown to learn substantial amounts 
-of in-depth knowledge from data. They can do so without any access to external 
+Pre-trained neural language models have been shown to learn substantial amounts
+of in-depth knowledge from data. They can do so without any access to external
 memory, relying on knowledge learned at pre-training time.
 
-However, this approach has limitations: the knowledge is stored implicitly in 
+However, this approach has limitations: the knowledge is stored implicitly in
 parameters, requiring ever-larger models to cover more facts.
 
 ## Methodology
 
-We endow pre-trained, parametric-memory generation models with a non-parametric 
-memory through a general-purpose fine-tuning approach which we refer to as 
+We endow pre-trained, parametric-memory generation models with a non-parametric
+memory through a general-purpose fine-tuning approach which we refer to as
 retrieval-augmented generation (RAG).
 
 ### RAG Architecture
 
-RAG models combine a pre-trained seq2seq model (the generator) with a dense 
-vector index of Wikipedia (the retriever). We use the input to retrieve 
-relevant documents, and then pass these documents as additional context 
+RAG models combine a pre-trained seq2seq model (the generator) with a dense
+vector index of Wikipedia (the retriever). We use the input to retrieve
+relevant documents, and then pass these documents as additional context
 to the generator.
 
 ## Results
 
-RAG achieves state-of-the-art results on three open-domain QA tasks, outperforming 
+RAG achieves state-of-the-art results on three open-domain QA tasks, outperforming
 seq2seq models and task-specific retrieve-and-read architectures. On knowledge-
-intensive generation tasks, RAG generates more factual, specific, and diverse 
+intensive generation tasks, RAG generates more factual, specific, and diverse
 responses than a state-of-the-art parametric seq2seq baseline.
 
 ## Conclusion
 
-We introduced RAG models, which show strong performance across a variety of 
-knowledge-intensive tasks. RAG combines the benefits of both parametric and 
+We introduced RAG models, which show strong performance across a variety of
+knowledge-intensive tasks. RAG combines the benefits of both parametric and
 non-parametric memory in a single approach.
 
 ## References

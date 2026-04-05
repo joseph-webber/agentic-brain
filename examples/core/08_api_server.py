@@ -18,7 +18,7 @@ Features:
 
 Run:
     python examples/08_api_server.py
-    
+
 Then visit:
     http://localhost:8000/docs (Swagger UI)
     http://localhost:8000/health

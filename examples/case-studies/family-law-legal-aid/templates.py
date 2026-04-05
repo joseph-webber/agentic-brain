@@ -99,15 +99,15 @@ Orders typically include numbered paragraphs covering these areas:
 1. PARENTAL RESPONSIBILITY
    ─────────────────────────
    Common wording patterns:
-   
+
    (a) "That the parties have EQUAL SHARED PARENTAL RESPONSIBILITY
         for [Child's name], born [DOB]."
-   
+
    OR (if sole responsibility):
-   
+
    (b) "That [Parent name] have SOLE PARENTAL RESPONSIBILITY for
         [Child's name], born [DOB], in relation to [specific matters]."
-   
+
    KEY CONCEPT: Parental responsibility is about DECISION-MAKING, not
    where the child lives. Equal shared parental responsibility means
    both parents must consult on major long-term decisions.
@@ -115,14 +115,14 @@ Orders typically include numbered paragraphs covering these areas:
 2. "LIVES WITH" ARRANGEMENTS
    ──────────────────────────
    This defines the child's primary residence:
-   
+
    Example wording:
    "That [Child's name] live with [Parent A]."
-   
+
    OR for shared care:
    "That [Child's name] live with both [Parent A] and [Parent B]
     on a shared basis as set out in these orders."
-   
+
    TIPS:
    - Court no longer uses "custody" or "residence" terminology
    - "Lives with" is the current preferred term
@@ -131,20 +131,20 @@ Orders typically include numbered paragraphs covering these areas:
 3. "SPENDS TIME WITH" ARRANGEMENTS
    ─────────────────────────────────
    Structure for regular time (choose what suits your situation):
-   
+
    FORTNIGHTLY PATTERN EXAMPLE:
    "That [Child's name] spend time with [Parent B] as follows:
-   
+
     (a) Each alternate weekend from [day/time] to [day/time];
     (b) One midweek period from [day/time] to [day/time];
     (c) Half of each school holiday period;
     (d) [Special days as specified below]."
-   
+
    WEEK ABOUT PATTERN EXAMPLE:
    "That [Child's name] spend time with each parent on an
     alternating weekly basis, changeovers occurring each
     [day] at [time] at [location]."
-   
+
    TIPS FOR DRAFTING:
    - Be SPECIFIC about days and times
    - Define whether "weekend" means Friday-Sunday or Saturday-Sunday
@@ -154,16 +154,16 @@ Orders typically include numbered paragraphs covering these areas:
 4. COMMUNICATION PROVISIONS
    ─────────────────────────
    Include provisions for phone/video contact:
-   
+
    Example wording:
    "That the child may have reasonable telephone and/or video
     communication with [non-resident parent] at the following times:
-    
+
     (a) [Days] between [time] and [time];
     (b) The receiving parent will ensure the child is available
         and that the call occurs in a private space;
     (c) Neither parent will record calls without consent."
-   
+
    CONSIDERATIONS:
    - Age-appropriate communication methods
    - Reasonable call duration for child's age
@@ -173,10 +173,10 @@ Orders typically include numbered paragraphs covering these areas:
 5. CHANGEOVER LOGISTICS
    ─────────────────────
    Be specific to avoid disputes:
-   
+
    Example wording:
    "Changeovers shall occur:
-   
+
     (a) LOCATION: [Specific address OR 'at school' OR neutral location]
     (b) TRANSPORT: [Parent A] shall be responsible for transporting
         the child TO [Parent B]'s care, and [Parent B] shall be
@@ -185,7 +185,7 @@ Orders typically include numbered paragraphs covering these areas:
         (within 15 minutes) for changeover times.
     (d) THIRD PARTIES: If a parent cannot attend changeover personally,
         they shall give 24 hours' notice and may nominate [specify]."
-   
+
    TIPS:
    - School pickup/dropoff often works well as it's neutral
    - Consider drive times and traffic
@@ -194,23 +194,23 @@ Orders typically include numbered paragraphs covering these areas:
 6. SCHOOL HOLIDAY ARRANGEMENTS
    ────────────────────────────
    Example structure:
-   
+
    "That school holiday time be divided as follows:
-   
+
     (a) ODD YEARS (2025, 2027, etc.):
         - [Parent A] has the FIRST HALF of each holiday period
         - [Parent B] has the SECOND HALF
-        
+
     (b) EVEN YEARS (2026, 2028, etc.):
         - [Parent B] has the FIRST HALF
         - [Parent A] has the SECOND HALF
-        
+
     (c) CHRISTMAS: [Child] spends Christmas Day with [Parent A]
         in odd years and [Parent B] in even years
-        
+
     (d) Transition between holiday periods occurs at [time] on
         the [midpoint date / Wednesday of second week]."
-   
+
    SPECIFIC HOLIDAYS TO ADDRESS:
    - Christmas Eve and Christmas Day
    - Easter (Good Friday to Easter Monday)
@@ -223,20 +223,20 @@ Orders typically include numbered paragraphs covering these areas:
 7. SCHOOL AND MEDICAL DECISIONS
    ─────────────────────────────
    With equal shared parental responsibility:
-   
+
    Example wording:
    "That both parents consult and attempt to reach agreement on
     major long-term issues including:
-    
+
     (a) The child's education (including school selection);
     (b) The child's health (including major medical decisions);
     (c) The child's religious and cultural upbringing;
     (d) The child's name;
     (e) Changes to living arrangements affecting the child.
-    
+
     If agreement cannot be reached after genuine efforts, either
     party may apply to the Court for determination."
-   
+
    DAY-TO-DAY DECISIONS:
    "Each parent may make day-to-day decisions about the child's
     care during the time the child is with that parent."
@@ -244,26 +244,26 @@ Orders typically include numbered paragraphs covering these areas:
 8. PASSPORT AND TRAVEL PROVISIONS
    ────────────────────────────────
    Example wording:
-   
+
    "PASSPORT:
     (a) Each parent consents to the child holding an Australian passport;
     (b) The passport shall be held by [Parent A / alternating];
     (c) The passport shall be provided to the other parent at least
         [7 days] before any approved overseas travel.
-    
+
     DOMESTIC TRAVEL:
     Each parent may travel domestically with the child during their
     time without requiring consent, provided:
     (a) The other parent is notified in advance;
     (b) Contact details are provided for the duration.
-    
+
     INTERNATIONAL TRAVEL:
     (a) Neither parent shall take the child overseas without the
         written consent of the other parent OR a court order;
     (b) Consent requests shall be made at least [6 weeks] in advance;
     (c) Itinerary, accommodation, and contact details shall be provided;
     (d) [If applicable: The child shall not travel to [countries].]"
-   
+
    HAGUE CONVENTION NOTE:
    Australia is a signatory to the Hague Convention on International
    Child Abduction. If concerned about abduction risk, seek legal advice.
@@ -271,13 +271,13 @@ Orders typically include numbered paragraphs covering these areas:
 9. SPECIAL PROVISIONS FOR INFANTS (0-4 years)
    ───────────────────────────────────────────
    Infants have different developmental needs:
-   
+
    - SHORTER, more frequent visits (e.g., 2-3 times per week)
    - No overnight stays initially (court preference varies)
    - Gradual increase in time as child develops
    - Consistent routines around sleep and feeding
    - Consider breastfeeding arrangements
-   
+
    Example graduated plan:
    "Months 1-6:  3x per week, 2 hours each visit
     Months 7-12: 3x per week, 4 hours including one meal
@@ -287,15 +287,15 @@ Orders typically include numbered paragraphs covering these areas:
 10. SPECIAL PROVISIONS FOR TEENAGERS (13+ years)
     ─────────────────────────────────────────────
     Teenagers need flexibility and input:
-    
+
     "The parties acknowledge that as [Child] matures, [his/her]
      views about arrangements may change. The parties agree to:
-     
+
      (a) Consider [Child's] reasonable wishes about time arrangements;
      (b) Allow flexibility for [Child's] activities and friendships;
      (c) Not place [Child] in the middle of parental disputes;
      (d) Review arrangements at [Child's] request."
-    
+
     TIPS:
     - Courts give significant weight to views of children 12+
     - Forcing arrangements on teenagers often backfires
@@ -436,14 +436,14 @@ Example Order Structure:
 
    (a) The superannuation interest of [Member Spouse] in [Fund Name]
        (Member Number: [XXXXX]) be split;
-       
+
    (b) [Non-Member Spouse] is to receive [X]% / the sum of $[amount]
        of the splittable payment calculated as at [date / date of split];
-       
+
    (c) The [Non-Member Spouse's] entitlement be:
-       [Paid to an eligible rollover fund nominated by them / 
+       [Paid to an eligible rollover fund nominated by them /
         Retained in the fund in a separate account];
-        
+
    (d) The Trustee is directed to implement this order within
        [28 days / as soon as practicable]."
 
@@ -505,12 +505,12 @@ HEADER (Required at top of every page):
 
     Federal Circuit and Family Court of Australia
     File Number: [Court file number]
-    
+
     AFFIDAVIT
-    
+
     Applicant:     [Full Name]
     First Respondent: [Full Name]
-    
+
     Affidavit of: [Your full name]
     Affirmed/Sworn on: [Date]
     Filed on behalf of: [Applicant/Respondent]
@@ -518,13 +518,13 @@ HEADER (Required at top of every page):
 BODY STRUCTURE:
 
     I, [FULL LEGAL NAME], of [Suburb, State], [Occupation], state:
-    
+
     1. I am the [Applicant/Respondent] in these proceedings.
-    
+
     2. [Statement of fact]
-    
+
     3. [Statement of fact]
-    
+
     ... [Numbered paragraphs continue]
 
 SIGNATURE BLOCK:
@@ -538,9 +538,9 @@ JURAT (Witness section):
 
     This affidavit was [sworn/affirmed] by [Your name]
     at [Suburb, State] on [Date]
-    
+
     Before me:
-    
+
     ─────────────────────────────────────
     [Witness signature]
     [Witness name]
@@ -552,13 +552,13 @@ JURAT (Witness section):
 
 ✅ CORRECT FORMAT:
     1. Each paragraph numbered consecutively.
-    
+
     2. Sub-paragraphs use letters:
        (a) First sub-point
        (b) Second sub-point
            (i) Further sub-point uses Roman numerals
            (ii) Another Roman numeral point
-    
+
     3. Back to main numbering.
 
 ❌ INCORRECT:
@@ -597,7 +597,7 @@ REFERRING TO ANNEXURES IN YOUR AFFIDAVIT:
     "15. On 15 March 2024, I received a text message from the
          Respondent. A copy of that text message is annexed
          hereto and marked 'A'.
-    
+
     16.  The bank statement showing the transfer is annexed
          hereto and marked 'B'."
 
@@ -701,16 +701,16 @@ FORM 1 STRUCTURE:
         □ Other party's full name, DOB, address
         □ Relationship type (married/de facto)
         □ Date of separation
-        
+
     Part B - Children
         □ Full names and DOBs of all children
         □ Current arrangements
-        
+
     Part C - What Orders You Seek
         □ Parenting orders (if applicable)
         □ Property orders (if applicable)
         □ Spousal maintenance (if applicable)
-        
+
     Part D - Urgency
         □ Is this matter urgent?
         □ Grounds for urgency
@@ -733,12 +733,12 @@ FORM 2 STRUCTURE:
     Part A - Your Details
         □ Confirm/correct your personal details
         □ Your address for service
-        
+
     Part B - Response to Orders Sought
         □ For each order the Applicant seeks:
           - Consent / Oppose / Seek different order
         □ What orders YOU seek (if different)
-        
+
     Part C - Your Version of Events
         □ Any facts you dispute from Applicant's affidavit
 
@@ -839,20 +839,20 @@ WHAT TO INCLUDE IN FORM 4
 Part A - Child Details:
     □ Names and DOBs of children
     □ Who each child currently lives with
-    
+
 Part B - Allegations (for EACH child):
     □ Type of abuse/violence alleged
     □ Who is alleged to have committed it
     □ Brief description of allegations
     □ When did it occur (dates/periods)
     □ Are there ongoing safety concerns?
-    
+
 Part C - Relevant Orders/Investigations:
     □ Existing intervention/protection orders
     □ Child protection involvement
     □ Police involvement
     □ Family violence orders from state courts
-    
+
 Part D - Current Safety:
     □ Current arrangements to protect child
     □ Supervision arrangements (if any)
@@ -1361,16 +1361,16 @@ AVAILABLE GUIDANCE:
 
 1. PARENTING ORDERS
    get_template_guidance('parenting_orders')
-   
-2. CONSENT ORDERS  
+
+2. CONSENT ORDERS
    get_template_guidance('consent_orders')
-   
+
 3. AFFIDAVITS
    get_template_guidance('affidavit')
-   
+
 4. APPLICATIONS (Initiating, Response, Contravention)
    get_template_guidance('application')
-   
+
 5. NOTICE OF RISK
    get_template_guidance('notice_of_risk')
 

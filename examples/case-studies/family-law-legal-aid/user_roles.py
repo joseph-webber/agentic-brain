@@ -292,7 +292,7 @@ ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
         Permission.EMOTIONAL_SUPPORT,
     },
     # System
-    UserRole.ADMIN: {p for p in Permission},  # All permissions
+    UserRole.ADMIN: set(Permission),  # All permissions
     UserRole.ANONYMOUS: {
         Permission.GENERAL_QUERIES,
     },
@@ -336,10 +336,7 @@ class User:
             return True
 
         # Lawyers can see opposing case
-        if self.has_permission(Permission.VIEW_OPPOSING_CASE):
-            return True
-
-        return False
+        return bool(self.has_permission(Permission.VIEW_OPPOSING_CASE))
 
     def get_greeting(self) -> str:
         """Get role-appropriate greeting."""

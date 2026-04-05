@@ -1109,7 +1109,7 @@ class NDISComplianceAssistant:
 QUICK ACTIONS
 {'─' * 50}
 1. Review worker screening
-2. Check open incidents  
+2. Check open incidents
 3. View corrective actions
 4. Run compliance assessment
 5. Generate audit report
@@ -1200,7 +1200,7 @@ Standard Reference: NDIS Practice Standards 2.7 - Human Resource Management
    Date: {incident.date_occurred} ({days} days ago)
    Status: {incident.status.value}
    Participant: {incident.participant_id}
-   
+
    Description: {incident.description[:100]}...
 """
             # Check notification requirements
@@ -1360,7 +1360,7 @@ OVERALL COMPLIANCE SCORE: {score['score']}%
 Assessment Date: {datetime.now().strftime('%Y-%m-%d')}
 Assessor: {self.user_id}
 
-Note: This is a self-assessment. Certification audits are conducted by 
+Note: This is a self-assessment. Certification audits are conducted by
 approved quality auditors. For audit scheduling, visit ndiscommission.gov.au
 ═══════════════════════════════════════════════════════════════════════════════
 """

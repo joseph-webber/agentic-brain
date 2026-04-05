@@ -764,7 +764,7 @@ class CouponGenerator:
     ) -> list[Coupon]:
         """Generate a batch of coupons."""
         coupons = []
-        for i in range(count):
+        for _i in range(count):
             if coupon_type == "percent":
                 coupon = self.generate_percent_coupon(discount, prefix=prefix)
             elif coupon_type == "fixed":
@@ -802,18 +802,18 @@ class EmailTemplateEngine:
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
     <h2 style="color: #333;">Hi {{first_name}},</h2>
     <p>We noticed you left some great items in your cart!</p>
-    
+
     <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3>Your Cart Contains:</h3>
         {{cart_items}}
         <hr>
         <p style="font-size: 18px;"><strong>Total: {{cart_total}}</strong></p>
     </div>
-    
+
     <a href="{{checkout_url}}" style="display: inline-block; background: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px;">
         Complete Your Purchase
     </a>
-    
+
     <p style="color: #666; margin-top: 20px;">
         Need help? Reply to this email and our team will assist you.
     </p>
@@ -851,21 +851,21 @@ Need help? Reply to this email.
         <h1>{{discount}}% OFF</h1>
         <p>Use code: <strong>{{coupon_code}}</strong></p>
     </div>
-    
+
     <h2 style="color: #333; margin-top: 30px;">Hi {{first_name}},</h2>
     <p>Your cart is still waiting, and we want to help you save!</p>
-    
+
     <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
         {{cart_items}}
         <hr>
         <p><s style="color: #999;">Original: {{cart_total}}</s></p>
         <p style="font-size: 20px; color: #28a745;"><strong>With code: {{discounted_total}}</strong></p>
     </div>
-    
+
     <a href="{{checkout_url}}?coupon={{coupon_code}}" style="display: inline-block; background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px;">
         Claim Your {{discount}}% Discount
     </a>
-    
+
     <p style="color: #dc3545; margin-top: 20px;">
         ⏰ Offer expires in 48 hours!
     </p>
@@ -913,16 +913,16 @@ Offer expires in 48 hours!
 <html>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
     <h1 style="color: #007bff;">Welcome to ElectroTech!</h1>
-    
+
     <p>Hi {{first_name}},</p>
     <p>Thanks for joining our community of tech enthusiasts!</p>
-    
+
     <div style="background: #f0f7ff; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
         <h2>Your Welcome Gift</h2>
         <p style="font-size: 24px;"><strong>{{discount}}% OFF</strong></p>
         <p>Use code: <strong>{{coupon_code}}</strong></p>
     </div>
-    
+
     <h3>Why Shop With Us?</h3>
     <ul>
         <li>✅ Genuine products with warranty</li>
@@ -930,7 +930,7 @@ Offer expires in 48 hours!
         <li>✅ 30-day easy returns</li>
         <li>✅ Expert customer support</li>
     </ul>
-    
+
     <a href="{{shop_url}}" style="display: inline-block; background: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px;">
         Start Shopping
     </a>
@@ -968,22 +968,22 @@ Start shopping: {{shop_url}}
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
     <h1 style="font-size: 48px;">🎂</h1>
     <h1 style="color: #e91e63;">Happy Birthday, {{first_name}}!</h1>
-    
+
     <p>It's your special day, and we're celebrating YOU!</p>
-    
+
     <div style="background: linear-gradient(135deg, #e91e63, #ff9800); color: white; padding: 30px; border-radius: 12px; margin: 20px 0;">
         <h2>YOUR BIRTHDAY GIFT</h2>
         <p style="font-size: 36px; margin: 10px 0;"><strong>{{discount}}% OFF</strong></p>
         <p>Everything in store!</p>
         <p style="font-size: 20px;">Code: <strong>{{coupon_code}}</strong></p>
     </div>
-    
+
     <p>Valid for the next 30 days - treat yourself! 🎁</p>
-    
+
     <a href="{{shop_url}}" style="display: inline-block; background: #e91e63; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0;">
         Shop Your Birthday Sale
     </a>
-    
+
     <p style="color: #666;">From your friends at ElectroTech</p>
 </body>
 </html>
@@ -1020,19 +1020,19 @@ From your friends at ElectroTech
         <p style="font-size: 24px;"><strong>{{discount}}% OFF</strong></p>
         <p>Ends in {{hours}} hours!</p>
     </div>
-    
+
     <p style="margin-top: 20px;">Hi {{first_name}},</p>
     <p>The clock is ticking! Get {{discount}}% off select electronics right now.</p>
-    
+
     <h3>Featured Deals:</h3>
     {{featured_products}}
-    
+
     <div style="text-align: center; margin: 30px 0;">
         <a href="{{sale_url}}" style="display: inline-block; background: #ff0000; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-size: 18px;">
             SHOP THE SALE
         </a>
     </div>
-    
+
     <p style="color: #dc3545; font-weight: bold;">
         ⏰ Sale ends: {{end_time}}
     </p>
@@ -1073,16 +1073,16 @@ Sale ends: {{end_time}}
 <html>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
     <h2 style="color: #333;">Hi {{first_name}},</h2>
-    
+
     <p>It's been {{days_since}} days since your last visit, and we miss you!</p>
-    
+
     <div style="background: #007bff; color: white; padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">
         <h2>WELCOME BACK OFFER</h2>
         <p style="font-size: 32px; margin: 10px 0;"><strong>{{discount}}% OFF</strong></p>
         <p>Your entire order</p>
         <p style="font-size: 18px;">Code: <strong>{{coupon_code}}</strong></p>
     </div>
-    
+
     <h3>What's New?</h3>
     <ul>
         <li>🆕 Latest smartphones and tablets</li>
@@ -1090,11 +1090,11 @@ Sale ends: {{end_time}}
         <li>🎮 Gaming essentials</li>
         <li>📱 Must-have accessories</li>
     </ul>
-    
+
     <a href="{{shop_url}}" style="display: inline-block; background: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px;">
         Explore What's New
     </a>
-    
+
     <p style="margin-top: 20px; color: #666;">
         Offer valid for 14 days.
     </p>

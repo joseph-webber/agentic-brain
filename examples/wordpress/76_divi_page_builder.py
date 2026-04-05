@@ -1366,12 +1366,12 @@ class ABTestManager:
 (function() {{
     var testId = '{test_id}';
     var variants = {variants_json};
-    
+
     // Get or create visitor ID
-    var visitorId = localStorage.getItem('ab_visitor') || 
+    var visitorId = localStorage.getItem('ab_visitor') ||
                     Math.random().toString(36).substring(2);
     localStorage.setItem('ab_visitor', visitorId);
-    
+
     // Deterministic variant selection based on visitor ID
     var hash = 0;
     for (var i = 0; i < visitorId.length; i++) {{
@@ -1379,7 +1379,7 @@ class ABTestManager:
         hash |= 0;
     }}
     var bucket = Math.abs(hash) % 100 / 100;
-    
+
     // Select variant based on weights
     var cumulative = 0;
     var selectedVariant = variants[0];
@@ -1390,10 +1390,10 @@ class ABTestManager:
             break;
         }}
     }}
-    
+
     // Store selected variant
     localStorage.setItem(testId + '_variant', selectedVariant.id);
-    
+
     // Apply variant (show/hide sections)
     document.addEventListener('DOMContentLoaded', function() {{
         variants.forEach(function(v) {{

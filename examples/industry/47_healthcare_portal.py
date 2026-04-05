@@ -529,10 +529,7 @@ def get_messages(unread_only: bool = False) -> dict[str, Any]:
     Returns:
         List of messages
     """
-    if unread_only:
-        msgs = [m for m in messages if not m["read"]]
-    else:
-        msgs = messages
+    msgs = [m for m in messages if not m["read"]] if unread_only else messages
 
     return {
         "messages": msgs,
@@ -568,7 +565,7 @@ def send_message(
     provider = PROVIDERS[provider_id.upper()]
     msg_id = f"MSG-{random.randint(100, 999)}"
 
-    new_message = {
+    {
         "id": msg_id,
         "date": datetime.now().strftime("%Y-%m-%d"),
         "to": provider["name"],

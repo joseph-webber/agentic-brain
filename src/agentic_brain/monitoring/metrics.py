@@ -195,7 +195,7 @@ class Metrics:
         )
         s.append("# TYPE agentic_query_latency_seconds histogram")
         cumulative = 0
-        for b, count in zip(snap["latency_buckets"], snap["latency_bucket_counts"]):
+        for b, count in zip(snap["latency_buckets"], snap["latency_bucket_counts"], strict=False):
             cumulative += count
             le = "+Inf" if math.isinf(b) else f"{b}"
             s.append(f'agentic_query_latency_seconds_bucket{{le="{le}"}} {cumulative}')

@@ -217,10 +217,7 @@ async def evaluate(payload: EvaluateRequest, request: Request):
     # Very simple eval: proportion of matching words
     ref_words = set(payload.reference.split())
     cand_words = set(payload.candidate.split())
-    if not ref_words:
-        score = 0.0
-    else:
-        score = len(ref_words & cand_words) / len(ref_words)
+    score = 0.0 if not ref_words else len(ref_words & cand_words) / len(ref_words)
     return EvaluateResponse(score=round(float(score), 3), reason="simple token overlap")
 
 

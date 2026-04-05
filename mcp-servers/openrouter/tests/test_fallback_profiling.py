@@ -298,7 +298,7 @@ class TestThroughput:
         # Warmup
         call_ollama_api("warmup", "llama3.2:3b", timeout=60)
 
-        result = benchmark(run_burst)
+        benchmark(run_burst)
 
         # Should complete at least 3 of 5 queries
         assert queries_completed >= 3, f"Only {queries_completed}/5 queries succeeded"
@@ -322,7 +322,7 @@ class TestThroughput:
         # Warmup
         call_ollama_api("warmup", "llama3.2:3b", timeout=60)
 
-        total_time = benchmark(run_sequential)
+        benchmark(run_sequential)
 
         avg_time = sum(times) / len(times) if times else 0
         print(f"\nSequential query avg: {avg_time:.2f}s")
@@ -468,7 +468,7 @@ class TestRegressionDetection:
     @pytest.mark.skipif(not is_ollama_running(), reason="Ollama not running")
     def test_baseline_comparison(self):
         """Compare against baseline performance"""
-        baseline_file = Path(__file__).parent / "PERFORMANCE_BASELINE.md"
+        Path(__file__).parent / "PERFORMANCE_BASELINE.md"
 
         # Run current benchmark
         response, elapsed, meta = call_ollama_api(
@@ -515,7 +515,7 @@ class TestRegressionDetection:
             successes = 0
 
             # Run 3 iterations
-            for i in range(3):
+            for _i in range(3):
                 response, elapsed, meta = call_ollama_api(
                     BENCHMARK_PROMPTS["medium"], model, timeout=config["timeout"]
                 )

@@ -44,7 +44,7 @@ def answer_similarity(a: str, b: str) -> float:
     try:
 
         def ngrams(s, n=4):
-            return set(s[i : i + n] for i in range(max(0, len(s) - n + 1)))
+            return {s[i : i + n] for i in range(max(0, len(s) - n + 1))}
 
         n1 = ngrams(a_s, 4)
         n2 = ngrams(b_s, 4)

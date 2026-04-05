@@ -525,7 +525,7 @@ def emulator_capabilities() -> dict:
         "delegation_example": """
 Claude: "I'll create a real-time audio monitor..."
         "But I can't run continuously, so I'll delegate:"
-        
+
 emulator_continuous(
     "Monitor audio input for specific patterns",
     "audio",

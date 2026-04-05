@@ -82,7 +82,7 @@ class TestTurboChessSwarm:
         assignments = swarm.plan_deployment(tasks)
 
         # Check distribution
-        tiers_used = set(a.tier for a in assignments)
+        tiers_used = {a.tier for a in assignments}
         assert len(tiers_used) >= 2, "Should use multiple tiers"
 
     def test_concurrency_limits(self):
@@ -250,8 +250,8 @@ class TestSwarmDataClasses:
         """Test SwarmTask default values."""
         task = SwarmTask(id="1", name="test", prompt="prompt")
         assert task.complexity == "medium"
-        assert task.requires_reasoning == False
-        assert task.requires_code == False
+        assert not task.requires_reasoning
+        assert not task.requires_code
         assert task.priority == 5
 
     def test_swarm_agent_creation(self):

@@ -824,7 +824,7 @@ if VoiceTopics is not None:
    - `brain.voice.conversation.started` - Conversation begins
    - `brain.voice.conversation.turn` - Lady takes her turn
    - `brain.voice.conversation.ended` - Conversation finishes
-   
+
    **Schema:**
    ```json
    {
@@ -841,7 +841,7 @@ if VoiceTopics is not None:
 2️⃣ **CROSS-LADY COMMUNICATION**
    - `brain.voice.ladies.introduced` - New lady joins
    - `brain.voice.ladies.reaction` - Lady reacts to another
-   
+
    **Schema:**
    ```json
    {
@@ -855,7 +855,7 @@ if VoiceTopics is not None:
 
 3️⃣ **MOOD SYNCHRONIZATION**
    - `brain.voice.mood.changed` - All ladies sync mood
-   
+
    **Schema:**
    ```json
    {
@@ -871,7 +871,7 @@ if VoiceTopics is not None:
    - `brain.voice.turn.requested` - Request to speak
    - `brain.voice.turn.granted` - Turn granted
    - `brain.voice.turn.released` - Turn released
-   
+
    **Schema:**
    ```json
    {
@@ -885,7 +885,7 @@ if VoiceTopics is not None:
 
 5️⃣ **ERROR HANDLING & FALLBACK**
    - `brain.voice.fallback.local` - Rate limit fallback
-   
+
    **Schema:**
    ```json
    {
@@ -902,7 +902,7 @@ if VoiceTopics is not None:
    - `brain.voice.queue.added` - Item added to queue
    - `brain.voice.queue.speaking` - Lady is speaking
    - `brain.voice.queue.empty` - Queue is empty
-   
+
    **Schema:**
    ```json
    {

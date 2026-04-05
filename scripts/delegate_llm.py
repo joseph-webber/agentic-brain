@@ -259,10 +259,7 @@ def is_available(provider: str) -> bool:
         return False
 
     # Check rate limit
-    if not RATE_LIMITERS[provider].can_request(config.rate_limit):
-        return False
-
-    return True
+    return RATE_LIMITERS[provider].can_request(config.rate_limit)
 
 
 async def smart_route(prompt: str, task: str = "auto") -> Tuple[str, str]:
@@ -330,7 +327,7 @@ async def parallel_query(prompt: str, providers: list = None) -> Dict[str, str]:
 
     tasks = [query_one(p) for p in providers]
     results = await asyncio.gather(*tasks)
-    return dict(zip(providers, results))
+    return dict(zip(providers, results, strict=False))
 
 
 # =============================================================================
@@ -368,7 +365,7 @@ def print_status():
     print("=" * 50)
 
     status = check_status()
-    for p, info in status.items():
+    for _p, info in status.items():
         icon = "✅" if info["available"] else "❌"
         limit = info["rate_limit"]
         calls = info["recent_calls"]

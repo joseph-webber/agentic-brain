@@ -18,7 +18,7 @@ This daemon runs forever in the background, continuously:
 Once started, it never needs human intervention.
 It's a self-improving time machine.
 
-LUDICROUS MODE: Maximum aggression, M2 GPU acceleration, 
+LUDICROUS MODE: Maximum aggression, M2 GPU acceleration,
 pull faster models, optimize everything.
 
 Usage:
@@ -322,7 +322,7 @@ OLLAMA_KEEP_ALIVE=30m
 # Allow 4 parallel requests
 OLLAMA_NUM_PARALLEL=4
 
-# Load up to 4 models simultaneously  
+# Load up to 4 models simultaneously
 OLLAMA_MAX_LOADED_MODELS=4
 
 # Use Flash Attention for speed
@@ -651,7 +651,7 @@ class SelfModifier:
             return False
 
         # Backup
-        backup = self.backup_self()
+        self.backup_self()
         old_hash = self.get_own_hash()
 
         # Apply
@@ -983,13 +983,11 @@ def show_status():
     print("=" * 50)
 
     # Check if running
-    running = False
     if PID_FILE.exists():
         with open(PID_FILE) as f:
             pid = int(f.read().strip())
         try:
             os.kill(pid, 0)
-            running = True
             print(f"Status: 🟢 RUNNING (PID {pid})")
         except OSError:
             print("Status: 🔴 STOPPED (stale PID file)")

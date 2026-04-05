@@ -36,7 +36,7 @@ Exports:
     - ConversationSummary: Unified summary format
     - SummaryType: Types of summaries
     - UnifiedSummarizer: Real-time and session summarization
-    
+
     **Unified Session Management (CANONICAL - from session_manager.py):**
     - SessionManager: Factory/manager with auto-fallback
     - Session: Active conversation session
@@ -44,7 +44,7 @@ Exports:
     - SessionSummary: Session summary for persistence
     - SessionConfig: Configuration options
     - get_session_manager: Get global singleton instance
-    
+
     See docs/SESSION_MANAGEMENT.md for the canonical approach.
 """
 

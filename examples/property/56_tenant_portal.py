@@ -1070,7 +1070,7 @@ async def demo():
 
     # Submit a new request
     print("\n📝 Submitting new maintenance request...")
-    request_id = portal.submit_maintenance_request(
+    portal.submit_maintenance_request(
         category=MaintenanceCategory.ELECTRICAL,
         urgency=MaintenanceUrgency.ROUTINE,
         title="Light not working in bedroom",

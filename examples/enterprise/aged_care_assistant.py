@@ -223,9 +223,7 @@ class Medication:
         today = date.today()
         if self.start_date > today:
             return False
-        if self.end_date and self.end_date < today:
-            return False
-        return True
+        return not (self.end_date and self.end_date < today)
 
 
 @dataclass
@@ -722,7 +720,7 @@ class AgedCareAssistant:
 
             indicator_summary[indicator.value] = {
                 "total_readings": len(readings),
-                "residents_assessed": len(set(r.resident_id for r in readings)),
+                "residents_assessed": len({r.resident_id for r in readings}),
                 # In production, would calculate actual rates
             }
 
@@ -819,7 +817,7 @@ class AgedCareAssistant:
             return {"error": "Resident not found"}
 
         # Get recent care notes (excluding clinical details)
-        recent_notes = [
+        [
             note
             for note in self.care_notes
             if note.resident_id == resident_id

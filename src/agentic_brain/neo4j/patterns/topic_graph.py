@@ -123,7 +123,7 @@ class TopicGraph:
         """Check topic connectivity - are topics actually acting as semantic hubs?"""
         query = """
         MATCH (t:Topic)<-[r]-()
-        WITH t.name AS topic, count(r) AS inbound_links, 
+        WITH t.name AS topic, count(r) AS inbound_links,
              collect(DISTINCT type(r)) AS rel_types
         RETURN topic, inbound_links, rel_types
         ORDER BY inbound_links DESC

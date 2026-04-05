@@ -471,11 +471,6 @@ class ContractParser:
         expiry_date = None
 
         # Date patterns
-        date_patterns = [
-            r"(\d{1,2})[/\-](\d{1,2})[/\-](\d{2,4})",  # MM/DD/YYYY or DD/MM/YYYY
-            r"(\w+)\s+(\d{1,2}),?\s+(\d{4})",  # Month DD, YYYY
-            r"(\d{1,2})\s+(\w+)\s+(\d{4})",  # DD Month YYYY
-        ]
 
         # Effective date keywords
         effective_patterns = [
@@ -819,7 +814,7 @@ class ContractVectorStore:
 
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """Compute cosine similarity."""
-        dot_product = sum(x * y for x, y in zip(a, b))
+        dot_product = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = math.sqrt(sum(x * x for x in a))
         norm_b = math.sqrt(sum(x * x for x in b))
 
@@ -1126,7 +1121,7 @@ class ContractRAGPipeline:
         # Build response
         response_parts = ["Based on the contract analysis:\n"]
 
-        for clause, score in results[:3]:
+        for clause, _score in results[:3]:
             contract = self.contracts.get(self.clause_to_contract.get(clause.id))
 
             response_parts.append(
@@ -1509,7 +1504,7 @@ def run_demo():
                     print(f"\n   ➖ Removed: {', '.join(diff.removed_clauses)}")
                 if diff.modified_clauses:
                     print("\n   ✏️ Modified:")
-                    for clause_type, old, new in diff.modified_clauses[:3]:
+                    for clause_type, _old, _new in diff.modified_clauses[:3]:
                         print(f"      - {clause_type}")
                 if diff.risk_changes:
                     print("\n   ⚠️ Risk Changes:")

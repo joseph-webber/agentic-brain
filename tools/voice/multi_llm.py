@@ -305,7 +305,7 @@ def strategy_consensus(
         "provider": "consensus",
         "latency_ms": round(latency, 1),
         "strategy": "consensus",
-        "individual_responses": {name: text for name, text in responses},
+        "individual_responses": dict(responses),
     }
 
 

@@ -1306,10 +1306,10 @@ class FasterWhisperTranscriber(BaseTranscriber):
                     audio_float,
                     beam_size=5,
                     vad_filter=self._vad_filter,
-                    vad_parameters=dict(
-                        min_silence_duration_ms=300,
-                        speech_pad_ms=200,
-                    ),
+                    vad_parameters={
+                        "min_silence_duration_ms": 300,
+                        "speech_pad_ms": 200,
+                    },
                 )
 
                 text_parts = []

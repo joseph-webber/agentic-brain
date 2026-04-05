@@ -235,11 +235,11 @@ class PlainLanguageTranslator:
         return f"""
 💰 {category.plain_name}
    This money is {base}.
-   
+
    Total: ${amount:,.2f}
    Used: ${spent:,.2f}
    Left: ${remaining:,.2f}
-   
+
    {status}
 """
 
@@ -841,7 +841,7 @@ TOTAL PLAN: ${total:,.2f}
 
         output = self.format_heading("Your Goals")
         output += """
-Your goals are the things you want to achieve. 
+Your goals are the things you want to achieve.
 Here's how you're going:
 
 """
@@ -858,7 +858,7 @@ Here's how you're going:
 {status_emoji} GOAL {i}: {goal.plain_description}
    Status: {goal.status.value}
    Progress: {goal.progress_bar()}
-   
+
    What we're doing:
 """
             for activity in goal.activities:
@@ -970,12 +970,12 @@ Or contact your coordinator for help finding providers.
 {'─' * 50}
 🏢 {provider.name}
    {provider.plain_description}
-   
+
    Services: {', '.join(provider.services)}
    Location: {provider.location}
    Phone: {provider.phone}
    Rating: {stars} ({provider.rating}/5)
-   
+
    {wheelchair}
    {new_clients}
 """
@@ -1158,7 +1158,7 @@ def run_interactive():
                     """
 I didn't quite understand. Try:
   1 or 'budget' - Check your budget
-  2 or 'goals' - See your goals  
+  2 or 'goals' - See your goals
   3 or 'appointments' - View calendar
   4 or 'providers' - Find providers
   5 or 'help' - Ask for help

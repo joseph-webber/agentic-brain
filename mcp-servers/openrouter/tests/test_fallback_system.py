@@ -125,7 +125,7 @@ class TestFallbackState:
         with open(mock_state_file) as f:
             loaded = json.load(f)
 
-        assert loaded["rate_limited"] == True
+        assert loaded["rate_limited"]
         assert loaded["current_model"] == "claude-emulator"
 
     def test_state_default_values(self, mock_state_file):
@@ -146,8 +146,8 @@ class TestFallbackState:
                 "current_model": "copilot",
             }
 
-        assert state["rate_limited"] == False
-        assert state["fallback_active"] == False
+        assert not state["rate_limited"]
+        assert not state["fallback_active"]
         assert state["current_model"] == "copilot"
 
     def test_state_persistence_across_reload(self, mock_state_file):
@@ -167,7 +167,7 @@ class TestFallbackState:
         with open(mock_state_file) as f:
             loaded = json.load(f)
 
-        assert loaded["rate_limited"] == True
+        assert loaded["rate_limited"]
         assert loaded["last_429"] == "2026-03-21 09:00:00"
         assert loaded["current_model"] == "llama3.2:3b"
 
@@ -192,8 +192,8 @@ class TestFallbackState:
         with open(mock_state_file) as f:
             loaded = json.load(f)
 
-        assert loaded["rate_limited"] == False
-        assert loaded["fallback_active"] == False
+        assert not loaded["rate_limited"]
+        assert not loaded["fallback_active"]
 
 
 # ============================================================================
@@ -312,8 +312,8 @@ class TestFallbackFlow:
         # Step 3: Verify state is rate limited
         with open(mock_state_file) as f:
             state = json.load(f)
-        assert state["rate_limited"] == True
-        assert state["fallback_active"] == True
+        assert state["rate_limited"]
+        assert state["fallback_active"]
 
         # Step 4: Use local LLM while rate limited
         response = call_ollama_api("Say: fallback working", model=QUICK_MODEL)
@@ -332,7 +332,7 @@ class TestFallbackFlow:
         # Step 6: Verify reset
         with open(mock_state_file) as f:
             state = json.load(f)
-        assert state["rate_limited"] == False
+        assert not state["rate_limited"]
 
     @pytest.mark.skipif(not is_ollama_running(), reason="Ollama not running")
     def test_multiple_local_requests(self):
@@ -452,7 +452,7 @@ class TestE2EScenarios:
         """E2E: Local LLM can assist with code questions"""
         code_prompt = """
         Fix this Python function:
-        
+
         def add(a, b)
             return a + b
         """
@@ -524,7 +524,7 @@ class TestErrorHandling:
         except:
             state = {"rate_limited": False}
 
-        assert state["rate_limited"] == False
+        assert not state["rate_limited"]
 
     def test_handles_corrupted_state_file(self, mock_state_file):
         """Should handle corrupted state file gracefully"""
@@ -546,7 +546,7 @@ class TestErrorHandling:
                 "current_model": "copilot",
             }
 
-        assert state["rate_limited"] == False
+        assert not state["rate_limited"]
 
     def test_handles_ollama_not_running(self):
         """Should handle Ollama not running gracefully"""
@@ -561,7 +561,7 @@ class TestErrorHandling:
         # Should detect Ollama not running
         # (The actual implementation would return an error message)
         # This test just verifies the detection works
-        assert running == False  # We expect it to fail
+        assert not running  # We expect it to fail
 
 
 # ============================================================================
@@ -680,7 +680,7 @@ class TestBenchmarkMetrics:
         }
 
         # Simulate writing state (in real system this triggers fallback)
-        state_json = json.dumps(state)
+        json.dumps(state)
 
         # First query to local model after "activation"
         response = call_ollama_api("Reply: OK", model=QUICK_MODEL, timeout=30)

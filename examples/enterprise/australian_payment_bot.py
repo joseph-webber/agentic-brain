@@ -443,7 +443,7 @@ class NPPPaymentHandler:
         digits = [int(d) for d in abn_clean]
         digits[0] -= 1  # Subtract 1 from first digit
 
-        total = sum(d * w for d, w in zip(digits, weights))
+        total = sum(d * w for d, w in zip(digits, weights, strict=False))
 
         if total % 89 != 0:
             return False, "Invalid ABN - check digit failed"
@@ -467,7 +467,7 @@ class NPPPaymentHandler:
         digits = [int(d) for d in acn_clean]
 
         # Calculate weighted sum (first 8 digits)
-        total = sum(d * w for d, w in zip(digits[:8], weights))
+        total = sum(d * w for d, w in zip(digits[:8], weights, strict=False))
 
         # Calculate check digit
         remainder = total % 10

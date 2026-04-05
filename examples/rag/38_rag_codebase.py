@@ -876,7 +876,7 @@ class CodeVectorStore:
 
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """Compute cosine similarity."""
-        dot_product = sum(x * y for x, y in zip(a, b))
+        dot_product = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = math.sqrt(sum(x * x for x in a))
         norm_b = math.sqrt(sum(x * x for x in b))
 
@@ -942,7 +942,7 @@ class CodeKeywordIndex:
                     for elem_id in elem_ids:
                         scores[elem_id] = scores.get(elem_id, 0) + 0.5
 
-        results = [(k, v) for k, v in scores.items()]
+        results = list(scores.items())
         results.sort(key=lambda x: x[1], reverse=True)
         return results
 
@@ -1182,7 +1182,7 @@ class CodeRAGPipeline:
 
     def find_function(self, name: str) -> Optional[CodeElement]:
         """Find function by exact name."""
-        for elem_id, elem in self.elements.items():
+        for _elem_id, elem in self.elements.items():
             if elem.name.lower() == name.lower():
                 if elem.element_type in [
                     CodeElementType.FUNCTION,
@@ -1193,7 +1193,7 @@ class CodeRAGPipeline:
 
     def find_class(self, name: str) -> Optional[CodeElement]:
         """Find class by exact name."""
-        for elem_id, elem in self.elements.items():
+        for _elem_id, elem in self.elements.items():
             if elem.name.lower() == name.lower():
                 if elem.element_type == CodeElementType.CLASS:
                     return elem
@@ -1300,7 +1300,7 @@ class User:
     created_at: datetime
     last_login: Optional[datetime] = None
     is_active: bool = True
-    
+
     def check_password(self, password: str) -> bool:
         """Verify if password matches the stored hash."""
         hashed = hashlib.sha256(password.encode()).hexdigest()
@@ -1309,20 +1309,20 @@ class User:
 
 class AuthService:
     """Service for handling user authentication."""
-    
+
     def __init__(self, db_connection):
         """Initialize the auth service with a database connection."""
         self.db = db_connection
         self.active_sessions = {}
-    
+
     def login(self, username: str, password: str) -> Optional[str]:
         """
         Authenticate user and create session.
-        
+
         Args:
             username: The user's username
             password: The plaintext password
-            
+
         Returns:
             Session token if successful, None otherwise
         """
@@ -1333,18 +1333,18 @@ class AuthService:
             user.last_login = datetime.now()
             return token
         return None
-    
+
     def logout(self, token: str) -> bool:
         """Invalidate a session token."""
         if token in self.active_sessions:
             del self.active_sessions[token]
             return True
         return False
-    
+
     def verify_token(self, token: str) -> Optional[str]:
         """Verify token and return user ID if valid."""
         return self.active_sessions.get(token)
-    
+
     def _generate_token(self) -> str:
         """Generate a secure session token."""
         import secrets
@@ -1359,24 +1359,24 @@ def hash_password(password: str) -> str:
 def validate_password_strength(password: str) -> tuple[bool, list[str]]:
     """
     Validate password meets security requirements.
-    
+
     Returns:
         Tuple of (is_valid, list_of_errors)
     """
     errors = []
-    
+
     if len(password) < 8:
         errors.append("Password must be at least 8 characters")
-    
+
     if not any(c.isupper() for c in password):
         errors.append("Password must contain uppercase letter")
-    
+
     if not any(c.islower() for c in password):
         errors.append("Password must contain lowercase letter")
-    
+
     if not any(c.isdigit() for c in password):
         errors.append("Password must contain a digit")
-    
+
     return len(errors) == 0, errors
 '''
 
@@ -1421,7 +1421,7 @@ class ShoppingCart {
    */
   addItem(product, quantity = 1) {
     const existing = this.items.find(item => item.product.id === product.id);
-    
+
     if (existing) {
       existing.quantity += quantity;
     } else {
@@ -1505,11 +1505,11 @@ import java.time.LocalDateTime;
  * Service for managing orders in the e-commerce system.
  */
 public class OrderService {
-    
+
     private final OrderRepository orderRepository;
     private final InventoryService inventoryService;
     private final PaymentService paymentService;
-    
+
     /**
      * Creates a new OrderService with required dependencies.
      *
@@ -1525,7 +1525,7 @@ public class OrderService {
         this.inventoryService = inventoryService;
         this.paymentService = paymentService;
     }
-    
+
     /**
      * Creates a new order from the given cart.
      *
@@ -1542,23 +1542,23 @@ public class OrderService {
                 throw new InsufficientStockException(item.getProductId());
             }
         }
-        
+
         // Calculate totals
         double subtotal = calculateSubtotal(cart);
         double tax = calculateTax(subtotal, customer.getAddress());
         double shipping = calculateShipping(cart, customer.getAddress());
         double total = subtotal + tax + shipping;
-        
+
         // Process payment
         PaymentResult payment = paymentService.charge(
             customer.getPaymentMethod(),
             total
         );
-        
+
         if (!payment.isSuccessful()) {
             throw new PaymentException(payment.getError());
         }
-        
+
         // Create order
         Order order = new Order();
         order.setCustomerId(customer.getId());
@@ -1570,16 +1570,16 @@ public class OrderService {
         order.setPaymentId(payment.getTransactionId());
         order.setStatus(OrderStatus.CONFIRMED);
         order.setCreatedAt(LocalDateTime.now());
-        
+
         // Reserve inventory
         for (CartItem item : cart.getItems()) {
             inventoryService.reserveStock(item.getProductId(), item.getQuantity());
         }
-        
+
         // Save and return
         return orderRepository.save(order);
     }
-    
+
     /**
      * Cancels an existing order.
      *
@@ -1589,25 +1589,25 @@ public class OrderService {
     public Order cancelOrder(String orderId) {
         Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new OrderNotFoundException(orderId));
-        
+
         if (order.getStatus() == OrderStatus.SHIPPED) {
             throw new IllegalStateException("Cannot cancel shipped order");
         }
-        
+
         // Refund payment
         paymentService.refund(order.getPaymentId());
-        
+
         // Release inventory
         for (CartItem item : order.getItems()) {
             inventoryService.releaseStock(item.getProductId(), item.getQuantity());
         }
-        
+
         order.setStatus(OrderStatus.CANCELLED);
         order.setCancelledAt(LocalDateTime.now());
-        
+
         return orderRepository.save(order);
     }
-    
+
     /**
      * Gets order status for a customer.
      *
@@ -1619,23 +1619,23 @@ public class OrderService {
             .map(Order::getStatus)
             .orElseThrow(() -> new OrderNotFoundException(orderId));
     }
-    
+
     private double calculateSubtotal(Cart cart) {
         return cart.getItems().stream()
             .mapToDouble(item -> item.getPrice() * item.getQuantity())
             .sum();
     }
-    
+
     private double calculateTax(double subtotal, Address address) {
         double taxRate = TaxService.getTaxRate(address.getState());
         return subtotal * taxRate;
     }
-    
+
     private double calculateShipping(Cart cart, Address address) {
         int totalWeight = cart.getItems().stream()
             .mapToInt(item -> item.getWeight() * item.getQuantity())
             .sum();
-        
+
         return ShippingCalculator.calculate(totalWeight, address);
     }
 }

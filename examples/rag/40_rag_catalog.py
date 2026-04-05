@@ -365,7 +365,7 @@ class ProductVectorStore:
 
     def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """Compute cosine similarity."""
-        dot_product = sum(x * y for x, y in zip(a, b))
+        dot_product = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = math.sqrt(sum(x * x for x in a))
         norm_b = math.sqrt(sum(x * x for x in b))
 
@@ -441,7 +441,7 @@ class ProductKeywordIndex:
                     for pid in pids:
                         scores[pid] = scores.get(pid, 0) + 0.5
 
-        results = [(pid, score) for pid, score in scores.items()]
+        results = list(scores.items())
         results.sort(key=lambda x: x[1], reverse=True)
         return results
 
@@ -841,7 +841,7 @@ class CatalogRAGPipeline:
 
         # Define comparison attributes
         base_attributes = ["Price", "Rating", "Brand"]
-        spec_attributes = sorted(list(all_specs))
+        spec_attributes = sorted(all_specs)
         attributes = base_attributes + spec_attributes
 
         # Build values dict

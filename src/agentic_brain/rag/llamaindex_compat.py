@@ -2474,7 +2474,7 @@ class IngestionPipeline:
                 nodes = transform.get_nodes_from_documents(nodes, show_progress)
             elif isinstance(transform, BaseExtractor):
                 metadata_list = transform.extract(nodes)
-                for node, meta in zip(nodes, metadata_list):
+                for node, meta in zip(nodes, metadata_list, strict=False):
                     node.metadata.update(meta)
 
         return nodes

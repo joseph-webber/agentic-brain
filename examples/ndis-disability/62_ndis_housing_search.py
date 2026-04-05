@@ -1388,7 +1388,7 @@ How Much Does It Cost?
 - You pay a "reasonable rent contribution" (like normal rent)
 - The rent is usually 25% of your Disability Support Pension plus Commonwealth Rent Assistance
 
-Important: SDA is just the building. If you need support workers (help with daily tasks), 
+Important: SDA is just the building. If you need support workers (help with daily tasks),
 that's called SIL (Supported Independent Living) - it's separate funding.
         """.strip()
 
@@ -1421,7 +1421,7 @@ SIL Support Levels:
 - Active Overnight: Worker awake all night
 - Sleepover: Worker sleeps but is available
 
-Important: SIL can be in any home - including SDA, your own home, 
+Important: SIL can be in any home - including SDA, your own home,
 or a shared house with other people who have disabilities.
 
 SDA + SIL Together:
@@ -1812,7 +1812,7 @@ async def demo():
     print("📋 STEP 8: Joining Waitlist")
     print("─" * 70)
 
-    waitlist_entry = assistant.join_waitlist(
+    assistant.join_waitlist(
         searcher_id="SEARCH-001",
         property_id="PROP-002",  # Sunshine Villa (no vacancies)
     )

@@ -156,7 +156,7 @@ class TestSmartRoute:
                 "model": "llama3.1:8b",
             }
 
-            result = await smart_route("Test", task="code", prefer="local")
+            await smart_route("Test", task="code", prefer="local")
 
             # Should have tried local first due to prefer
             mock_local.assert_called()

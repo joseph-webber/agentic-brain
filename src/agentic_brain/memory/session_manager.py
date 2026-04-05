@@ -1339,7 +1339,7 @@ class Session:
         topic_words: Counter = Counter()
         hour_distribution: Counter = Counter()
 
-        for i, msg in enumerate(self._messages):
+        for _i, msg in enumerate(self._messages):
             # Count by role
             if msg.role == MessageRole.USER:
                 analytics.user_messages += 1
@@ -1554,7 +1554,7 @@ class Session:
             return (original_tokens, new_tokens)
 
         # Compress the compressible messages
-        remaining_budget = target_tokens - important_tokens
+        target_tokens - important_tokens
 
         if summarize_fn and compressible_msgs:
             summary_text = summarize_fn(compressible_msgs)

@@ -1266,7 +1266,7 @@ async def test_card_validator():
         ("abcd1234efgh5678", False, CardBrand.UNKNOWN, ""),  # Invalid chars
     ]
 
-    for card, expected_valid, expected_brand, expected_last4 in test_cases:
+    for card, expected_valid, expected_brand, _expected_last4 in test_cases:
         result = CardValidator.validate(card)
         status = "✅" if result.is_valid == expected_valid else "❌"
         print(

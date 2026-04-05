@@ -655,7 +655,7 @@ class SecurityChecklist:
         failed = [r for r in self.results if r.status == CheckStatus.FAIL]
         warned = [r for r in self.results if r.status == CheckStatus.WARN]
         skipped = [r for r in self.results if r.status == CheckStatus.SKIP]
-        info = [r for r in self.results if r.status == CheckStatus.INFO]
+        [r for r in self.results if r.status == CheckStatus.INFO]
 
         # Summary
         print(
@@ -972,8 +972,8 @@ Neo4j Setup for Air-Gapped Deployment:
 
                 conn.execute(
                     """
-                    INSERT OR REPLACE INTO documents 
-                    (doc_id, title, content, classification, system, subsystem, 
+                    INSERT OR REPLACE INTO documents
+                    (doc_id, title, content, classification, system, subsystem,
                      created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
@@ -1132,18 +1132,18 @@ services:
       dockerfile: Dockerfile
     container_name: airbrain
     restart: unless-stopped
-    
+
     # Security: Read-only filesystem
     read_only: true
-    
+
     # Security: No new privileges
     security_opt:
       - no-new-privileges:true
-    
+
     # Security: Drop all capabilities, add only needed
     cap_drop:
       - ALL
-    
+
     # Security: Resource limits
     deploy:
       resources:
@@ -1153,11 +1153,11 @@ services:
         reservations:
           cpus: "1.0"
           memory: 2G
-    
+
     # Security: No network access except to other containers
     networks:
       - airgap_internal
-    
+
     # Writable volumes
     volumes:
       - brain_data:/app/data:rw
@@ -1166,17 +1166,17 @@ services:
         target: /tmp
         tmpfs:
           size: 100M
-    
+
     environment:
       - OLLAMA_HOST=http://ollama:11434
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
       - LOG_LEVEL=INFO
-    
+
     depends_on:
       - ollama
       - neo4j
-    
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -1188,22 +1188,22 @@ services:
     image: ollama/ollama:latest
     container_name: ollama
     restart: unless-stopped
-    
+
     # Security settings
     read_only: true
     security_opt:
       - no-new-privileges:true
-    
+
     networks:
       - airgap_internal
-    
+
     volumes:
       - ollama_models:/root/.ollama:rw
       - type: tmpfs
         target: /tmp
         tmpfs:
           size: 1G
-    
+
     deploy:
       resources:
         limits:
@@ -1212,7 +1212,7 @@ services:
         reservations:
           cpus: "2.0"
           memory: 8G
-    
+
     # GPU access (if available)
     # deploy:
     #   resources:
@@ -1226,24 +1226,24 @@ services:
     image: neo4j:5-community
     container_name: neo4j
     restart: unless-stopped
-    
+
     security_opt:
       - no-new-privileges:true
-    
+
     networks:
       - airgap_internal
-    
+
     volumes:
       - neo4j_data:/data:rw
       - neo4j_logs:/logs:rw
-    
+
     environment:
       - NEO4J_AUTH=${NEO4J_PASSWORD:-changeme}
       - NEO4J_dbms_default__listen__address=0.0.0.0
       - NEO4J_dbms_security_auth__enabled=true
       - NEO4J_dbms_memory_heap_initial__size=512m
       - NEO4J_dbms_memory_heap_max__size=2G
-    
+
     deploy:
       resources:
         limits:
@@ -1282,7 +1282,7 @@ echo "=========================================="
 echo "[1/5] Running security checks..."
 
 # Check not running as root (for docker-compose)
-if [ "$EUID" -eq 0 ]; then 
+if [ "$EUID" -eq 0 ]; then
     echo "WARNING: Running as root. Use sudo for docker commands only."
 fi
 
@@ -1490,16 +1490,16 @@ For Air-Gapped Deployments:
 1. DEVELOPMENT/TESTING (SoftHSM)
    sudo apt install softhsm2
    softhsm2-util --init-token --slot 0 --label "airbrain"
-   
+
 2. PRODUCTION (Network HSM)
    - Configure network HSM on isolated management network
    - Install vendor PKCS#11 library
    - Update library_path in configuration
-   
+
 3. PRODUCTION (USB Token)
    - Use approved USB HSM token (e.g., YubiHSM)
    - Install vendor drivers and PKCS#11 library
-   
+
 Key Management:
 - Master encryption key stored in HSM only
 - Session keys derived from master key
@@ -1531,7 +1531,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # Verify command
-    verify_parser = subparsers.add_parser("verify", help="Verify deployment readiness")
+    subparsers.add_parser("verify", help="Verify deployment readiness")
 
     # Docker command
     docker_parser = subparsers.add_parser("docker", help="Generate Docker deployment")
@@ -1540,15 +1540,15 @@ def main():
     )
 
     # Security check command
-    security_parser = subparsers.add_parser(
+    subparsers.add_parser(
         "security-check", help="Run security checklist"
     )
 
     # RAG setup command
-    rag_parser = subparsers.add_parser("rag-setup", help="Initialize local RAG storage")
+    subparsers.add_parser("rag-setup", help="Initialize local RAG storage")
 
     # HSM info command
-    hsm_parser = subparsers.add_parser("hsm-info", help="Show HSM setup information")
+    subparsers.add_parser("hsm-info", help="Show HSM setup information")
 
     args = parser.parse_args()
 

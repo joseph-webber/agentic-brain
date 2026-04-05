@@ -374,7 +374,7 @@ def search_flights(
     base_price = random.randint(150, 500) * multiplier
 
     flights = []
-    for i in range(4):
+    for _i in range(4):
         airline = random.choice(AIRLINES)
         dep_hour = random.randint(6, 21)
         duration = random.randint(2, 12)

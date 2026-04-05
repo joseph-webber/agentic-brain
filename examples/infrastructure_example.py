@@ -164,7 +164,7 @@ async def main():
 
     try:
         # Your application runs here
-        for i in range(10):
+        for _i in range(10):
             # Check health periodically
             health = await infra.get_health()
             logger.info(f"Health: {health}")

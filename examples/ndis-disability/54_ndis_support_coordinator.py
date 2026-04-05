@@ -901,17 +901,17 @@ Legend: SSC=Specialist, CoS=Coordination of Supports, SC=Support Connection
 👤 {p.first_name} {p.last_name}
    ID: {p.participant_id}
    Priority: {p.priority.value}
-   
+
 📋 COORDINATION
    Type: {p.coordination_type.value}
    Plan Period: {p.plan_start} to {p.plan_end}
    Plan Manager: {p.plan_manager.value}
-   
+
 💰 BUDGET
    Total: ${p.sc_budget:,.2f}
    Spent: ${p.sc_spent:,.2f} ({p.budget_percentage_used():.0f}%)
    Remaining: ${p.budget_remaining():,.2f}
-   
+
 🎯 GOALS
 """
         for i, goal in enumerate(p.goals, 1):
@@ -996,16 +996,16 @@ Or contact NDIS for provider referral support.
 {'─' * 70}
 🏢 {provider.name}
    {provider.description}
-   
+
    Services: {', '.join(provider.services[:4])}
    Locations: {', '.join(provider.locations[:3])}
    Specializations: {', '.join(provider.specializations[:3])}
-   
+
    Rating: {stars} ({provider.rating}/5 from {provider.reviews} reviews)
    Status: {accepting}
    {'♿ Wheelchair Accessible' if provider.wheelchair_accessible else ''}
    {'💲 NDIS Price Guide Adherent' if provider.price_guide_adherence else ''}
-   
+
    📞 {provider.phone}
    📧 {provider.email}
 """
@@ -1119,7 +1119,7 @@ Or contact NDIS for provider referral support.
 
 ✅ RECOMMENDATIONS FOR NEXT PLAN
    Based on current utilization and goals, consider:
-   
+
    1. [Review if coordination level is appropriate]
    2. [Assess if budget was sufficient/excessive]
    3. [Identify any unmet needs]
@@ -1362,7 +1362,7 @@ def run_interactive():
                     """
 Commands:
   1 or caseload - View caseload
-  2 or search - Search providers  
+  2 or search - Search providers
   3 or tasks - View tasks
   view [ID] - View participant (e.g., view P001)
   report [ID] - Progress report template

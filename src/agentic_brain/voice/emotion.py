@@ -130,7 +130,7 @@ class SpeechBrainEmotionDetector:
             labels = list(
                 getattr(self._classifier.hparams.label_encoder, "ind2lab", [])
             )
-            for k, v in zip(labels, probs):
+            for k, v in zip(labels, probs, strict=False):
                 probabilities[str(k)] = float(v)
         except Exception as exc:  # pragma: no cover - best-effort mapping
             logger.warning(

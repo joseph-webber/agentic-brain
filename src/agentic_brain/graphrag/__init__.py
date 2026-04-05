@@ -12,13 +12,13 @@ Components:
 
 Usage:
     from agentic_brain.graphrag import recall, embed_sessions, extract_entities
-    
+
     # Query the brain
     answer = recall("What work was done on the voice system?")
-    
+
     # Embed session summaries
     embed_sessions()
-    
+
     # Extract entities from sessions
     extract_entities()
 """

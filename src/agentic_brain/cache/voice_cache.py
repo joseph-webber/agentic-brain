@@ -273,7 +273,7 @@ class VoiceCache:
 
         # Decode all results
         output = {}
-        for (text, voice), data in zip(requests, results_raw):
+        for (text, voice), data in zip(requests, results_raw, strict=False):
             key_str = f"{text}:{voice}"
             if data is None:
                 output[key_str] = None

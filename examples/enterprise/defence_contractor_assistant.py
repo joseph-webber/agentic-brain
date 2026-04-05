@@ -330,8 +330,8 @@ class SecureAuditLog:
 
         self.conn.execute(
             """
-            INSERT INTO audit_log 
-            (timestamp, event_type, actor_id, actor_clearance, document_id, 
+            INSERT INTO audit_log
+            (timestamp, event_type, actor_id, actor_clearance, document_id,
              action, details, previous_hash, entry_hash)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,

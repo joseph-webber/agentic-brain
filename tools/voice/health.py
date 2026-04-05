@@ -120,7 +120,7 @@ def health_check() -> dict[str, Any]:
     }
 
     # Overall status
-    statuses = [c.get("status") for c in result["components"].values()]
+    [c.get("status") for c in result["components"].values()]
     critical = ["redis", "ollama"]
     critical_ok = all(
         result["components"][c].get("status") == "healthy" for c in critical

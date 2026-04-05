@@ -1084,10 +1084,7 @@ class ConversationMemory:
             await self.initialize()
 
         # Default limit
-        if page_size:
-            limit = page_size
-        else:
-            limit = limit or self.config.max_history
+        limit = page_size or (limit or self.config.max_history)
 
         messages: List[Message] = []
 

@@ -1201,7 +1201,7 @@ class InMemoryDocumentStore:
     @staticmethod
     def _cosine_similarity(a: List[float], b: List[float]) -> float:
         """Calculate cosine similarity."""
-        dot = sum(x * y for x, y in zip(a, b))
+        dot = sum(x * y for x, y in zip(a, b, strict=False))
         norm_a = math.sqrt(sum(x * x for x in a))
         norm_b = math.sqrt(sum(x * x for x in b))
         if norm_a == 0 or norm_b == 0:
@@ -1211,7 +1211,7 @@ class InMemoryDocumentStore:
     @staticmethod
     def _dot_product(a: List[float], b: List[float]) -> float:
         """Calculate dot product."""
-        return sum(x * y for x, y in zip(a, b))
+        return sum(x * y for x, y in zip(a, b, strict=False))
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize store configuration."""

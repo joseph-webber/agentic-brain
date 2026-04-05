@@ -19,7 +19,7 @@ def _paired_ttest(a, b):
     n = len(a)
     if n < 2:
         return float("nan"), float("nan")
-    diffs = [x - y for x, y in zip(a, b)]
+    diffs = [x - y for x, y in zip(a, b, strict=False)]
     mean_diff = mean(diffs)
     sd = math.sqrt(sum((d - mean_diff) ** 2 for d in diffs) / (n - 1))
     if sd == 0:

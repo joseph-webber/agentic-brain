@@ -220,7 +220,7 @@ class RAGAgent(Agent):
         if not self._documents:
             return []
 
-        relevant = [doc for doc in self._documents[: self.rag_config.max_context_docs]]
+        relevant = list(self._documents[: self.rag_config.max_context_docs])
 
         return relevant
 

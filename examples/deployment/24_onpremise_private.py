@@ -434,13 +434,13 @@ class PolicyKnowledgeBase:
                 - Cannot reuse last 24 passwords
                 - Maximum age: 90 days
                 - Account lockout after 5 failed attempts
-                
+
                 MULTI-FACTOR AUTHENTICATION:
                 - Required for all systems
                 - Hardware tokens preferred (YubiKey, PIV card)
                 - No SMS-based MFA (security risk)
                 - Biometrics allowed as second factor
-                
+
                 SERVICE ACCOUNTS:
                 - 32+ character passwords
                 - Rotate quarterly
@@ -460,19 +460,19 @@ class PolicyKnowledgeBase:
                 - Only organization-issued encrypted USB drives
                 - Encrypted external hard drives (FIPS 140-2)
                 - Smart cards for authentication
-                
+
                 PROHIBITED:
                 - Personal USB drives
                 - Unencrypted storage devices
                 - USB devices from unknown sources
                 - Charging personal devices via USB
-                
+
                 PROCEDURES:
                 1. All USB devices must be registered with IT Security
                 2. Scan all incoming media with approved antivirus
                 3. Report any lost/stolen devices within 1 hour
                 4. Wipe devices before disposal (DoD 5220.22-M)
-                
+
                 EXCEPTIONS:
                 - Require CISO approval in writing
                 - Valid for maximum 30 days
@@ -492,19 +492,19 @@ class PolicyKnowledgeBase:
                 - Classified network: Air-gapped, no internet
                 - Corporate network: Filtered internet
                 - Guest network: Isolated, internet only
-                
+
                 WIRELESS:
                 - WPA3-Enterprise required
                 - No WPA2-Personal
                 - Hidden SSIDs for sensitive networks
                 - Regular rogue AP scanning
-                
+
                 FIREWALLS:
                 - Default deny all
                 - Whitelist approach only
                 - Log all blocked traffic
                 - Review logs weekly
-                
+
                 VPN:
                 - Required for all remote access
                 - Always-on VPN for laptops
@@ -525,19 +525,19 @@ class PolicyKnowledgeBase:
                 - Approved keyboards and mice only
                 - Cable locks required for laptops
                 - USB port control enabled
-                
+
                 SOFTWARE REQUIREMENTS:
                 - Endpoint Detection & Response (EDR) agent
                 - Full disk encryption (BitLocker/FileVault)
                 - Automatic updates enabled
                 - Application allowlisting
-                
+
                 PERIPHERALS:
                 - USB hubs must be approved models
                 - External monitors require IT approval
                 - Webcam covers when not in use
                 - No personal Bluetooth devices
-                
+
                 PHYSICAL SECURITY:
                 - Lock screen after 5 minutes
                 - Clean desk policy
@@ -559,24 +559,24 @@ class PolicyKnowledgeBase:
                 - CONTROLLED: Internal use only
                 - CONFIDENTIAL: Limited distribution
                 - SECRET: Need-to-know basis
-                
+
                 HANDLING REQUIREMENTS:
-                
+
                 UNCLASSIFIED:
                 - Standard workstations
                 - Email allowed
                 - Cloud storage permitted
-                
+
                 CONTROLLED:
                 - Encrypted storage
                 - No personal email
                 - Approved cloud only
-                
+
                 CONFIDENTIAL:
                 - Dedicated secure systems
                 - No external transmission
                 - Logged access only
-                
+
                 SECRET:
                 - Air-gapped systems only
                 - Two-person integrity

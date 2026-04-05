@@ -1223,7 +1223,7 @@ async def demo():
 
     pending = portal.get_pending_approvals()
     for req in pending:
-        details = portal.get_approval_details(req.request_id)
+        portal.get_approval_details(req.request_id)
         print(f"\n📋 {req.request_id}")
         print(f"   Property: {portal.get_property(req.property_id).suburb}")
         print(f"   Category: {req.category}")

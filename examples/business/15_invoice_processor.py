@@ -141,26 +141,26 @@ def extract_text_from_pdf(pdf_path: str) -> str:
         TAX INVOICE
         Innovative Music Distribution
         ABN: 12 345 678 901
-        
+
         Invoice Number: INV-2026-0123
         Invoice Date: 20/03/2026
         Due Date: 19/04/2026
-        
+
         Bill To:
         HappySkies Store
         123 Business Street
         Adelaide SA 5000
-        
+
         Items:
         1x Sheet Music - Bach Collection     $45.00
         2x Guitar Strings Set                $32.00
         1x Music Stand                       $89.00
-        
+
         Subtotal:                           $166.00
         GST (10%):                           $16.60
-        
+
         TOTAL:                             $182.60
-        
+
         Payment Terms: Net 30
         """
 
@@ -468,11 +468,11 @@ async def demo():
         TAX INVOICE
         Innovative Music Distribution
         ABN: 12 345 678 901
-        
+
         Invoice Number: INV-2026-0123
         Invoice Date: 20/03/2026
         Due Date: 19/04/2026
-        
+
         Subtotal: $166.00
         GST (10%): $16.60
         TOTAL: $182.60
@@ -480,12 +480,12 @@ async def demo():
         """
         AMBERTECH PTY LTD
         TAX INVOICE #AMB-44521
-        
+
         Date: 18-03-2026
-        
+
         Audio Cable 3m x5    $125.00
         XLR Adapter x10      $89.50
-        
+
         Subtotal: $214.50
         GST: $21.45
         Total: $235.95
@@ -494,7 +494,7 @@ async def demo():
         Invoice from Unknown Supplier
         Inv: 99887
         Date: 2026-03-15
-        
+
         Services rendered
         Amount Due: $500.00
         """,

@@ -30,7 +30,7 @@ def load_plugins_from_directory(directory: str) -> Dict[str, type]:
     Returns mapping plugin_name -> plugin class
     """
     plugins: Dict[str, type] = {}
-    for finder, name, ispkg in pkgutil.iter_modules([directory]):
+    for _finder, name, _ispkg in pkgutil.iter_modules([directory]):
         # import by spec
         try:
             module_path = f"{directory}/{name}.py"
@@ -75,7 +75,7 @@ def load_plugins_from_entry_points(
             if hasattr(eps, "select"):
                 entries = eps.select(group=group)
             else:
-                entries = [e for e in eps.get(group, [])]
+                entries = list(eps.get(group, []))
         except Exception:
             # older API (pkg_resources)
             import pkg_resources
@@ -114,7 +114,7 @@ def resolve_dependencies(plugins: Dict[str, type]) -> List[type]:
 
     # remove unknown dependencies (assume external)
     for name, deps in graph.items():
-        graph[name] = set(d for d in deps if d in graph)
+        graph[name] = {d for d in deps if d in graph}
 
     ordered = []
     temp = set()

@@ -422,7 +422,7 @@ class EdgeStorage:
         cursor = self.conn.cursor()
         cursor.executemany(
             """
-            INSERT OR REPLACE INTO products 
+            INSERT OR REPLACE INTO products
             (sku, name, price, category, description, stock, location)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
@@ -518,10 +518,10 @@ class EdgeStorage:
         # Prune old entries if over limit
         cursor.execute(
             """
-            DELETE FROM response_cache 
+            DELETE FROM response_cache
             WHERE query_hash NOT IN (
-                SELECT query_hash FROM response_cache 
-                ORDER BY hit_count DESC, created_at DESC 
+                SELECT query_hash FROM response_cache
+                ORDER BY hit_count DESC, created_at DESC
                 LIMIT ?
             )
         """,
@@ -547,8 +547,8 @@ class EdgeStorage:
             # Update hit count
             cursor.execute(
                 """
-                UPDATE response_cache 
-                SET hit_count = hit_count + 1 
+                UPDATE response_cache
+                SET hit_count = hit_count + 1
                 WHERE query_hash = ?
             """,
                 (query_hash,),

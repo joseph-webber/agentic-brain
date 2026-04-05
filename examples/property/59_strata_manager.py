@@ -1314,7 +1314,7 @@ async def demo():
     print("🔧 Common Property Maintenance")
     print("─" * 50)
 
-    work_id = manager.create_maintenance_work(
+    manager.create_maintenance_work(
         category=MaintenanceCategory.LIFT,
         description="Annual lift servicing and safety inspection",
         estimated_cost=Decimal("2500"),

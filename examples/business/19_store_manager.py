@@ -399,7 +399,7 @@ class StoreManagerAssistant:
 
     async def _morning_briefing(self) -> str:
         """Generate morning briefing."""
-        today = self.db.get_today_sales()
+        self.db.get_today_sales()
         comparison = self.db.get_sales_comparison()
         critical_alerts = [
             a for a in self.db.alerts if a.priority == AlertPriority.CRITICAL

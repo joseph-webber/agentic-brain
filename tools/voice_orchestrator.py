@@ -271,7 +271,7 @@ class RestConsumer:
                     "Accept": "application/vnd.kafka.v2+json",
                 },
             )
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=10):
                 pass  # 200/204, body may be empty
         except urllib.error.HTTPError as e:
             if e.code not in (200, 204):

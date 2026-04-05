@@ -1038,7 +1038,7 @@ class MedicalVectorStore:
                 np.dot(a_arr, b_arr) / (np.linalg.norm(a_arr) * np.linalg.norm(b_arr))
             )
         else:
-            dot_product = sum(x * y for x, y in zip(a, b))
+            dot_product = sum(x * y for x, y in zip(a, b, strict=False))
             norm_a = math.sqrt(sum(x * x for x in a))
             norm_b = math.sqrt(sum(x * x for x in b))
             return dot_product / (norm_a * norm_b) if norm_a and norm_b else 0
@@ -1540,18 +1540,18 @@ def get_sample_medical_documents() -> list[dict]:
             "id": "drug_paracetamol_001",
             "content": """
             Paracetamol (Acetaminophen) - Consumer Medicine Information
-            
+
             What Paracetamol is used for:
-            Paracetamol is a pain reliever (analgesic) and fever reducer (antipyretic). 
-            It is commonly used to relieve mild to moderate pain such as headaches, 
-            toothaches, muscle aches, backaches, and pain from osteoarthritis. It also 
+            Paracetamol is a pain reliever (analgesic) and fever reducer (antipyretic).
+            It is commonly used to relieve mild to moderate pain such as headaches,
+            toothaches, muscle aches, backaches, and pain from osteoarthritis. It also
             reduces fever.
-            
+
             How to take Paracetamol:
-            Adults and children 12 years and over: Take 1-2 tablets (500mg-1000mg) 
-            every 4-6 hours as needed. Do not take more than 8 tablets (4000mg) in 
+            Adults and children 12 years and over: Take 1-2 tablets (500mg-1000mg)
+            every 4-6 hours as needed. Do not take more than 8 tablets (4000mg) in
             24 hours. Do not use for more than a few days without consulting a doctor.
-            
+
             Warnings:
             - Do not exceed the recommended dose
             - Taking more than the recommended dose can cause serious liver damage
@@ -1572,16 +1572,16 @@ def get_sample_medical_documents() -> list[dict]:
             "id": "drug_ibuprofen_001",
             "content": """
             Ibuprofen - Consumer Medicine Information
-            
+
             What Ibuprofen is used for:
-            Ibuprofen is a non-steroidal anti-inflammatory drug (NSAID) used to 
-            reduce pain, fever, and inflammation. Common uses include headaches, 
+            Ibuprofen is a non-steroidal anti-inflammatory drug (NSAID) used to
+            reduce pain, fever, and inflammation. Common uses include headaches,
             dental pain, menstrual cramps, muscle aches, arthritis, and minor injuries.
-            
+
             How to take Ibuprofen:
-            Adults: 200-400mg every 4-6 hours as needed. Maximum 1200mg per day 
+            Adults: 200-400mg every 4-6 hours as needed. Maximum 1200mg per day
             for over-the-counter use. Take with food or milk to reduce stomach upset.
-            
+
             Warnings:
             - Do not take if you have stomach ulcers or bleeding disorders
             - May increase risk of heart attack or stroke with long-term use
@@ -1603,26 +1603,26 @@ def get_sample_medical_documents() -> list[dict]:
             "id": "condition_headache_001",
             "content": """
             Headaches - Patient Education Guide
-            
+
             Types of Headaches:
-            
-            1. Tension Headaches: The most common type. Feels like a band of pressure 
+
+            1. Tension Headaches: The most common type. Feels like a band of pressure
             around the head. Often caused by stress, poor posture, or muscle tension.
-            
-            2. Migraines: Severe, throbbing pain usually on one side of the head. 
-            May include nausea, vomiting, and sensitivity to light and sound. Can 
+
+            2. Migraines: Severe, throbbing pain usually on one side of the head.
+            May include nausea, vomiting, and sensitivity to light and sound. Can
             last hours to days.
-            
-            3. Cluster Headaches: Severe pain around one eye. Occur in clusters over 
+
+            3. Cluster Headaches: Severe pain around one eye. Occur in clusters over
             weeks or months, then may stop for periods.
-            
+
             When to Seek Emergency Care:
             - Sudden, severe headache ("worst headache of your life")
             - Headache with fever, stiff neck, confusion
             - Headache after head injury
             - Headache with vision changes, weakness, or numbness
             - Headache with difficulty speaking
-            
+
             Self-Care Tips:
             - Rest in a quiet, dark room
             - Apply cold or warm compress
@@ -1647,12 +1647,12 @@ def get_sample_medical_documents() -> list[dict]:
             "id": "condition_fever_001",
             "content": """
             Fever in Adults - What You Need to Know
-            
+
             What is a Fever?
-            A fever is a temporary increase in body temperature, often due to illness. 
-            Normal body temperature is around 37°C (98.6°F). A fever is generally 
+            A fever is a temporary increase in body temperature, often due to illness.
+            Normal body temperature is around 37°C (98.6°F). A fever is generally
             considered to be 38°C (100.4°F) or higher.
-            
+
             Common Causes:
             - Viral infections (cold, flu, COVID-19)
             - Bacterial infections
@@ -1660,7 +1660,7 @@ def get_sample_medical_documents() -> list[dict]:
             - Certain medications
             - Immunizations
             - Inflammatory conditions
-            
+
             When to See a Doctor:
             - Temperature above 39.4°C (103°F)
             - Fever lasting more than 3 days
@@ -1670,7 +1670,7 @@ def get_sample_medical_documents() -> list[dict]:
             - Confusion or unusual behavior
             - Persistent vomiting
             - Signs of dehydration
-            
+
             Home Care:
             - Rest and stay hydrated
             - Take paracetamol or ibuprofen as directed
@@ -1691,34 +1691,34 @@ def get_sample_medical_documents() -> list[dict]:
             "id": "guideline_bp_001",
             "content": """
             Blood Pressure Guidelines - Understanding Your Numbers
-            
+
             Blood Pressure Categories (Australian Guidelines):
-            
+
             Optimal: Less than 120/80 mmHg
             - No action needed, maintain healthy lifestyle
-            
+
             Normal: 120-129/80-84 mmHg
             - Lifestyle modifications recommended
             - Regular monitoring advised
-            
+
             High-Normal: 130-139/85-89 mmHg
             - Increased cardiovascular risk
             - Lifestyle changes important
             - Consider medication for high-risk individuals
-            
+
             Grade 1 Hypertension: 140-159/90-99 mmHg
             - Medical assessment recommended
             - Lifestyle modifications essential
             - Medication may be needed
-            
+
             Grade 2 Hypertension: 160-179/100-109 mmHg
             - Prompt medical attention required
             - Usually requires medication
-            
+
             Grade 3 Hypertension: 180+ / 110+ mmHg
             - Urgent medical care needed
             - High risk of complications
-            
+
             Risk Factors for High Blood Pressure:
             - Family history
             - Age (risk increases with age)
@@ -1742,31 +1742,31 @@ def get_sample_medical_documents() -> list[dict]:
             "id": "drug_metformin_001",
             "content": """
             Metformin - Information for Patients with Type 2 Diabetes
-            
+
             What is Metformin?
-            Metformin is a first-line medication for treating type 2 diabetes. It 
-            works by reducing glucose production in the liver and improving insulin 
+            Metformin is a first-line medication for treating type 2 diabetes. It
+            works by reducing glucose production in the liver and improving insulin
             sensitivity.
-            
+
             How to Take Metformin:
             - Usually taken 1-3 times daily with meals
             - Start with a low dose and increase gradually
             - Extended-release forms taken once daily
             - Always take with food to reduce stomach upset
-            
+
             Common Side Effects:
             - Nausea, vomiting, diarrhea (usually improve over time)
             - Stomach pain, loss of appetite
             - Metallic taste in mouth
-            
+
             Important Warnings:
             - Do not take if you have severe kidney disease
             - Stop taking before procedures with contrast dye
             - Avoid excessive alcohol (increases lactic acidosis risk)
             - May cause vitamin B12 deficiency with long-term use
-            - Seek medical help if you experience unusual muscle pain, 
+            - Seek medical help if you experience unusual muscle pain,
               difficulty breathing, or extreme fatigue
-            
+
             Regular Monitoring:
             - HbA1c every 3-6 months
             - Kidney function tests annually
@@ -1785,7 +1785,7 @@ def get_sample_medical_documents() -> list[dict]:
             "id": "provider_gp_001",
             "content": """
             Finding a General Practitioner (GP) in Australia
-            
+
             What GPs Do:
             General practitioners are primary healthcare providers who can:
             - Diagnose and treat common illnesses
@@ -1794,20 +1794,20 @@ def get_sample_medical_documents() -> list[dict]:
             - Prescribe medications
             - Refer to specialists when needed
             - Provide mental health support
-            
+
             How to Find a GP:
             - Visit Health Direct (healthdirect.gov.au)
             - Use Service Finder to locate nearby clinics
             - Ask for recommendations from family/friends
             - Check if they bulk-bill (no out-of-pocket costs with Medicare)
-            
+
             Telehealth Options:
             Many GPs now offer telehealth appointments for:
             - Follow-up consultations
             - Prescription renewals
             - Mental health support
             - General health advice
-            
+
             Preparing for Your Appointment:
             - Bring your Medicare card
             - List your current medications
@@ -1828,12 +1828,12 @@ def get_sample_medical_documents() -> list[dict]:
             "id": "condition_anxiety_001",
             "content": """
             Anxiety - Understanding and Managing Anxiety
-            
+
             What is Anxiety?
-            Anxiety is a normal response to stress, but when it becomes excessive 
-            or persistent, it may be an anxiety disorder. Common types include 
+            Anxiety is a normal response to stress, but when it becomes excessive
+            or persistent, it may be an anxiety disorder. Common types include
             generalized anxiety disorder, panic disorder, and social anxiety.
-            
+
             Common Symptoms:
             - Excessive worry or fear
             - Restlessness or feeling on edge
@@ -1842,7 +1842,7 @@ def get_sample_medical_documents() -> list[dict]:
             - Sleep problems
             - Muscle tension
             - Physical symptoms: rapid heartbeat, sweating, trembling
-            
+
             When to Seek Help:
             - Anxiety interferes with daily activities
             - Avoiding situations due to fear
@@ -1850,14 +1850,14 @@ def get_sample_medical_documents() -> list[dict]:
             - Physical symptoms without medical cause
             - Using alcohol or drugs to cope
             - Thoughts of self-harm
-            
+
             Treatment Options:
             - Cognitive behavioral therapy (CBT)
             - Medication (SSRIs, SNRIs, as prescribed)
             - Lifestyle changes (exercise, sleep, diet)
             - Relaxation techniques
             - Mindfulness and meditation
-            
+
             Self-Help Strategies:
             - Regular physical activity
             - Limit caffeine and alcohol
@@ -1865,7 +1865,7 @@ def get_sample_medical_documents() -> list[dict]:
             - Maintain social connections
             - Get adequate sleep
             - Challenge negative thoughts
-            
+
             Crisis Support:
             If you're in crisis, contact:
             - Lifeline: 13 11 14 (24/7)

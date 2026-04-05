@@ -642,7 +642,7 @@ class PayPalPaymentService:
         reason: str = "Customer requested cancellation",
     ) -> dict:
         """Cancel a PayPal subscription."""
-        result = paypal.Subscriptions.cancel(subscription_id, reason)
+        paypal.Subscriptions.cancel(subscription_id, reason)
 
         self._audit(
             user_id,

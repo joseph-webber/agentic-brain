@@ -19,7 +19,7 @@ The key principle: high scores should be earned, not constructed.
 
 Usage:
     python -m agentic_brain.benchmark.graph_benchmark
-    
+
     # Or programmatically:
     from agentic_brain.benchmark.graph_benchmark import GraphBenchmark
     result = GraphBenchmark().run()
@@ -197,7 +197,7 @@ class GraphBenchmark:
         ]
 
         struct_scores = []
-        for name, current, target, group in struct_metrics:
+        for _name, current, target, _group in struct_metrics:
             pct = min(round((current / target) * 100), 100) if target else 0
             struct_scores.append(pct)
 
@@ -443,7 +443,7 @@ class GraphBenchmark:
         print(SEP)
 
         cur_group = None
-        for (name, current, target, group), pct in zip(struct_metrics, struct_scores):
+        for (name, current, target, group), pct in zip(struct_metrics, struct_scores, strict=False):
             if group != cur_group:
                 cur_group = group
                 print(f"  {group}")

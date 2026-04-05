@@ -1516,7 +1516,7 @@ def openrouter_handoff_create(
 
 ## HOW TO CONTINUE
 1. Read this handoff carefully
-2. Complete the pending actions in order  
+2. Complete the pending actions in order
 3. Save progress frequently to ~/.brain-continuity/
 4. When done, call: openrouter_handoff_complete
 
@@ -1543,7 +1543,7 @@ Local LLM can now continue seamlessly!
 
 To resume with local LLM:
   openrouter_ask_local("Read {INSTRUCTIONS_FILE} and continue")
-  
+
 Or manually:
   ollama run claude-emulator < {INSTRUCTIONS_FILE}"""
 
@@ -1700,7 +1700,7 @@ def openrouter_agent_check(num_agents: int = 1) -> str:
     Returns advice on how many agents to deploy safely.
     """
     tracker = load_agent_tracker()
-    fallback = load_fallback_state()
+    load_fallback_state()
 
     agents_today = tracker.get("agents_today", 0)
     requests_today = tracker.get("requests_today", 0)
@@ -2475,7 +2475,7 @@ def openrouter_context_load_neo4j(
             results = brain_data.query(
                 """
                 MATCH (c:ContextChunk {id: $id})
-                RETURN c.id as id, c.summary as summary, c.timestamp as timestamp, 
+                RETURN c.id as id, c.summary as summary, c.timestamp as timestamp,
                        c.size_chars as size, c.event_type as event_type
             """,
                 {"id": context_id},
@@ -2549,7 +2549,7 @@ def openrouter_context_search_neo4j(query: str, limit: int = 10) -> str:
         results = brain_data.query(
             """
             MATCH (c:ContextChunk)
-            WHERE toLower(c.summary) CONTAINS toLower($query) 
+            WHERE toLower(c.summary) CONTAINS toLower($query)
                OR toLower(c.id) CONTAINS toLower($query)
                OR toLower(c.event_type) CONTAINS toLower($query)
             RETURN c.id as id, c.summary as summary, c.timestamp as timestamp,
@@ -2796,7 +2796,7 @@ def openrouter_voice_response(
 
     # Craft a voice-optimized prompt
     voice_prompt = f"""Please answer this question in {max_sentences} short, conversational sentences.
-    
+
 Use simple language. Be friendly. Make it easy to listen to (no long paragraphs).
 
 Question: {prompt}
@@ -3344,7 +3344,7 @@ def openrouter_event_status() -> str:
         # Kafka status
         result += "🎯 Kafka/Redpanda:\n"
         try:
-            producer = event_bus_llm.get_producer()
+            event_bus_llm.get_producer()
             result += f"  ✅ Connected to {event_bus_llm.KAFKA_BOOTSTRAP_SERVERS}\n"
             result += "  Topics:\n"
             result += f"    • {event_bus_llm.TOPIC_REQUEST} (requests)\n"

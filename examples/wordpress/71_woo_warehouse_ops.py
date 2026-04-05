@@ -1776,7 +1776,7 @@ def setup_demo_data(service: WarehouseOpsService) -> None:
 
     # Add initial inventory
     bins = list(service.bins.values())
-    for i, (sku, product) in enumerate(service.products.items()):
+    for i, (sku, _product) in enumerate(service.products.items()):
         if i < len(bins):
             qty = random.randint(20, 100)
             service.add_inventory(sku, bins[i % len(bins)].bin_id, qty)

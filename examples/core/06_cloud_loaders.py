@@ -280,16 +280,16 @@ The create_loader() factory function makes it easy to create
 loaders by name:
 
     from agentic_brain.rag import create_loader
-    
+
     # Create Google Drive loader
     drive = create_loader('google_drive', credentials_path='creds.json')
-    
+
     # Create Gmail loader
     gmail = create_loader('gmail', credentials_path='creds.json')
-    
+
     # Create iCloud loader
     icloud = create_loader('icloud', apple_id='me@icloud.com', password='xxx')
-    
+
     # Aliases work too
     drive = create_loader('drive', ...)
     email = create_loader('email', ...)
@@ -310,7 +310,7 @@ The load_from_multiple_sources() function loads documents from
 multiple cloud sources in one call:
 
     from agentic_brain.rag import load_from_multiple_sources
-    
+
     sources = [
         {
             'type': 'google_drive',
@@ -329,12 +329,12 @@ multiple cloud sources in one call:
             'folder': 'Documents/Reports'
         },
     ]
-    
+
     # Load all documents (with deduplication)
     all_docs = load_from_multiple_sources(sources, deduplicate=True)
-    
+
     print(f"Loaded {len(all_docs)} unique documents")
-    
+
     for doc in all_docs:
         print(f"- {doc.source}: {doc.filename}")
 """
@@ -358,14 +358,14 @@ build knowledge bases from cloud documents:
         create_chunker,
         ChunkingStrategy,
     )
-    
+
     # Load documents from Google Drive
     loader = GoogleDriveLoader(credentials_path='creds.json')
     docs = loader.load_folder('Knowledge Base')
-    
+
     # Create chunker
     chunker = create_chunker(ChunkingStrategy.RECURSIVE)
-    
+
     # Process documents into chunks
     all_chunks = []
     for doc in docs:
@@ -377,10 +377,10 @@ build knowledge bases from cloud documents:
                 'source_id': doc.source_id,
             })
         all_chunks.extend(chunks)
-    
+
     # Index chunks in RAG pipeline
     rag = RAGPipeline(neo4j_uri="bolt://localhost:7687")
-    
+
     # Now you can query across all cloud documents!
     result = rag.query("What are the project deadlines?")
     print(result.answer)

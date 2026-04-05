@@ -22,13 +22,13 @@ to bypass SSL verification when needed.
 
 Usage:
     from agentic_brain.utils.ssl_bypass import get_ssl_context, should_verify_ssl
-    
+
     # For aiohttp:
     async with aiohttp.ClientSession() as session:
         ssl_ctx = get_ssl_context()
         async with session.get(url, ssl=ssl_ctx) as resp:
             ...
-    
+
     # For requests:
     import requests
     requests.get(url, verify=should_verify_ssl())

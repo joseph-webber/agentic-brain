@@ -292,7 +292,7 @@ class BenchmarkSuite:
         key = query.split()[0].lower().strip("?,.")
         neighbors = sorted(self.graph.get(key, set()))
         if not neighbors:
-            for candidate, links in self.graph.items():
+            for _candidate, links in self.graph.items():
                 if key in links:
                     neighbors = sorted(links)
                     break

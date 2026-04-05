@@ -177,7 +177,7 @@ def get_report() -> str:
   Money Saved:        ${metrics['money_saved']:.2f}
   (Based on $0.04/request overage)
 
-✅ LOCAL LLM PERFORMANCE  
+✅ LOCAL LLM PERFORMANCE
 {'─' * 50}
   Success Rate:       {local_success_rate:.1f}%
   Successes:          {metrics['local_success']:,}

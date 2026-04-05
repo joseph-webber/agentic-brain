@@ -493,7 +493,7 @@ class HealthcareTriageBot:
         urgency = UrgencyLevel.ROUTINE
 
         # Simplified red flag detection
-        complaint_lower = chief_complaint.lower()
+        chief_complaint.lower()
         symptoms_text = " ".join([chief_complaint] + associated_symptoms).lower()
 
         for flag_key, flag_info in RED_FLAG_SYMPTOMS.items():

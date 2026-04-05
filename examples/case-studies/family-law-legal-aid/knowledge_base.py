@@ -523,7 +523,7 @@ class FamilyLawKnowledgeBase:
         try:
             # Generate embeddings
             if self.embedding_model:
-                for doc_id, doc in self.documents.items():
+                for _doc_id, doc in self.documents.items():
                     embedding = self.embedding_model.embed(doc.content)
                     doc.embedding = embedding
 

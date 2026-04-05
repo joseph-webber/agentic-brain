@@ -20,7 +20,7 @@ Provides automated detection of OWASP Top 10 vulnerabilities:
 
 Usage:
     from agentic_brain.security.owasp_checks import OWASPAuditor
-    
+
     auditor = OWASPAuditor()
     issues = auditor.audit_codebase("/path/to/code")
     for issue in issues:

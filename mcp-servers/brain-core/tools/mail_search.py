@@ -8,16 +8,16 @@ Built for accessibility needs - speaks results!
 
 Usage:
     from tools.mail_search import mail_search, mail_sync, mail_recent, mail_from
-    
+
     # Fast search (uses cache, Neo4j, Spotlight)
     result = mail_search("velocity", sender="virgin")
-    
+
     # Sync emails to Neo4j
     mail_sync()
-    
+
     # Recent emails
     mail_recent(days=7)
-    
+
     # Emails from specific sender
     mail_from("steve.taylor")
 """
@@ -121,7 +121,7 @@ def _search_neo4j(
         if query:
             conditions.append(
                 """
-                (toLower(e.subject) CONTAINS toLower($search_term) OR 
+                (toLower(e.subject) CONTAINS toLower($search_term) OR
                  toLower(e.preview) CONTAINS toLower($search_term))
             """
             )
@@ -143,7 +143,7 @@ def _search_neo4j(
         cypher = f"""
             MATCH (e:OutlookEmail)
             {where_clause}
-            RETURN 
+            RETURN
                 e.subject as subject,
                 e.sender as sender,
                 coalesce(e.timestamp, e.date) as date,

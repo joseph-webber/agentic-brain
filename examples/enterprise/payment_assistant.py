@@ -1230,7 +1230,7 @@ SCENARIO 2: Customer requesting refund
 ─────────────────────────────────────────────
 Customer: "I want a refund - the feature doesn't work as described"
 
-Bot: "I understand the feature isn't working as expected. Under Australian 
+Bot: "I understand the feature isn't working as expected. Under Australian
 Consumer Law, you're entitled to a refund for products not as described.
 
 Your refund request has been submitted:
@@ -1254,8 +1254,8 @@ Your current cards on file:
 • Visa ending in 4242 (expires 12/27)
 • Mastercard ending in 5555 (expires 06/26)
 
-🔒 Click the secure link below to update your card. Your card details are 
-handled by our PCI-DSS compliant payment provider - we never see or store 
+🔒 Click the secure link below to update your card. Your card details are
+handled by our PCI-DSS compliant payment provider - we never see or store
 your full card number.
 
 **Secure Link:** https://pay.example.com/update-card?token=abc123

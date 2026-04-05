@@ -672,7 +672,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
 
     elif name == "virus_jam":
         bpm = arguments.get("bpm", 174)
-        bass_patch = arguments.get("bass_patch", "random")
+        arguments.get("bass_patch", "random")
 
         # Start jam mode
         try:
@@ -741,12 +741,12 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
   Pattern: {PARAMS.pattern}
   Bass Patch: {PARAMS.bass_patch}
   Kick Style: {PARAMS.kick_style}
-  
+
   Gains:
     Bass: {PARAMS.bass_gain:.2f}
     Kick: {PARAMS.kick_gain:.2f}
     Snare: {PARAMS.snare_gain:.2f}
-  
+
   Sidechain:
     Depth: {PARAMS.sc_depth:.2f}
     Release: {PARAMS.sc_release:.3f}s"""

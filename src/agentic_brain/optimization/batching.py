@@ -47,7 +47,7 @@ class BatchEmbeddingProcessor:
             return await maybe if inspect.isawaitable(maybe) else maybe
 
         tasks = [asyncio.to_thread(self.provider.embed, text) for text in texts]
-        return [item for item in await asyncio.gather(*tasks)]
+        return list(await asyncio.gather(*tasks))
 
 
 class BatchGraphQueryProcessor:
@@ -100,7 +100,7 @@ class AsyncBatchProcessor:
         item_list = list(items)
         for batch in _chunked(item_list, self.batch_size):
             tasks = [asyncio.create_task(run(item)) for item in batch]
-            results.extend([item for item in await asyncio.gather(*tasks)])
+            results.extend(list(await asyncio.gather(*tasks)))
         return results
 
 

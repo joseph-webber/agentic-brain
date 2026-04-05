@@ -212,11 +212,7 @@ def is_obvious_spam(email: Email) -> bool:
 
     text = f"{email.sender} {email.subject}"
 
-    for pattern in SPAM_PATTERNS:
-        if re.search(pattern, text):
-            return True
-
-    return False
+    return any(re.search(pattern, text) for pattern in SPAM_PATTERNS)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

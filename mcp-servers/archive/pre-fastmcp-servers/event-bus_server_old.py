@@ -5,7 +5,7 @@ Brain Event Bus MCP Server
 MCP server that provides direct access to the brain's event bus.
 Works with both Redpanda (dev) and Kafka (prod) through abstraction.
 
-This is the NERVE CENTER of the brain - Claude talks directly to 
+This is the NERVE CENTER of the brain - Claude talks directly to
 the event bus, and all services (Python, JHipster, LLM) are peers.
 
 Architecture:

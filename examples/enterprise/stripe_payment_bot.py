@@ -917,7 +917,7 @@ class StripePaymentBot:
                 + self._format_plans()
             )
 
-        sub = await self.service.upgrade_subscription(subs[0]["id"], plan)
+        await self.service.upgrade_subscription(subs[0]["id"], plan)
 
         return (
             f"✅ You've been upgraded to {plan.name}!\n\n"
@@ -942,7 +942,7 @@ class StripePaymentBot:
         if not plan:
             return "I couldn't find that plan."
 
-        sub = await self.service.downgrade_subscription(subs[0]["id"], plan)
+        await self.service.downgrade_subscription(subs[0]["id"], plan)
 
         return (
             f"Your subscription will change to {plan.name} at the end of your current billing period.\n"

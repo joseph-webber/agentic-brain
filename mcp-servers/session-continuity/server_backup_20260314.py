@@ -230,7 +230,7 @@ def get_recent_sessions_from_neo4j(limit: int = 5) -> List[Dict]:
             result = session.run(
                 """
                 MATCH (s:Session)
-                RETURN s.id as id, s.description as description, 
+                RETURN s.id as id, s.description as description,
                        s.git_branch as branch, s.todo_count as todos,
                        toString(s.timestamp) as timestamp
                 ORDER BY s.timestamp DESC

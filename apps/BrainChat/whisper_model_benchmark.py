@@ -151,7 +151,7 @@ class WhisperModelBenchmark:
             # Load model
             load_start = time.time()
             model = WhisperModel(model_name, device=self.DEVICE, compute_type="float32")
-            load_time = time.time() - load_start
+            time.time() - load_start
 
             # Transcribe
             transcribe_start = time.time()
@@ -293,7 +293,7 @@ class WhisperModelBenchmark:
             max_time = int(np.max(data["times"]))
 
             # Check if meets target
-            audio_duration = data["audio_durations"][0]
+            data["audio_durations"][0]
             target_met = False
 
             if model_size == "tiny":

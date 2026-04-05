@@ -905,7 +905,7 @@ Guidelines:
 - Help users understand the home buying process
 - Be transparent about being a demonstration system with simulated data
 
-Available neighborhoods: Greenfield Heights, Downtown Core, Riverside Estates, 
+Available neighborhoods: Greenfield Heights, Downtown Core, Riverside Estates,
 Westwood Commons, Northview Park, Seaside Village, University District, Rural Valley
 
 Property types available: Single Family Home, Condo, Townhouse, Multi-Family"""

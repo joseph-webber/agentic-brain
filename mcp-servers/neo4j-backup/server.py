@@ -149,7 +149,7 @@ def backup_status() -> dict:
         health = "ERROR"
         issues.append("Cannot connect to Neo4j")
 
-    newest = files[0] if files else None
+    files[0] if files else None
 
     output = f"""
 ============================================================
@@ -346,7 +346,7 @@ def backup_restore(filename: str, confirm: bool = False) -> dict:
                     props = rel.get("properties", {})
                     session.run(
                         f"""
-                        MATCH (a), (b) 
+                        MATCH (a), (b)
                         WHERE elementId(a) = $from_id AND elementId(b) = $to_id
                         CREATE (a)-[r:{rel_type} $props]->(b)
                     """,

@@ -12,7 +12,7 @@ Demonstrates how to use OpenTelemetry observability in agentic-brain:
 
 Prerequisites:
     pip install agentic-brain[api,observability]
-    
+
     # Optional: Run Jaeger locally
     docker run -d --name jaeger \
       -p 16686:16686 \
@@ -293,7 +293,7 @@ def example_context_propagation():
         """Service A makes an outgoing call."""
         tracer = get_tracer()
 
-        with tracer.start_as_current_span("service-a-operation") as span:
+        with tracer.start_as_current_span("service-a-operation"):
             # Prepare headers for outgoing request
             headers = {}
             inject_context(headers)
@@ -426,7 +426,7 @@ def example_custom_metrics():
         description="Total documents processed",
     )
 
-    processing_time = histogram(
+    histogram(
         name="document_processing_seconds",
         description="Document processing time",
         unit="s",

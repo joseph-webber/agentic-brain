@@ -155,30 +155,30 @@ HTML_CLIENT = """
         const clientId = 'client-' + Math.random().toString(36).substr(2, 9);
         let ws;
         let currentBotMessage = null;
-        
+
         function connect() {
             ws = new WebSocket(`ws://${location.host}/ws/${clientId}`);
-            
+
             ws.onopen = () => {
                 document.getElementById('status').textContent = '🟢 Connected';
                 document.getElementById('status').className = 'status connected';
             };
-            
+
             ws.onclose = () => {
                 document.getElementById('status').textContent = '🔴 Disconnected - Reconnecting...';
                 document.getElementById('status').className = 'status disconnected';
                 setTimeout(connect, 2000);
             };
-            
+
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 handleMessage(data);
             };
         }
-        
+
         function handleMessage(data) {
             const messages = document.getElementById('messages');
-            
+
             if (data.type === 'stream_start') {
                 // Create new bot message for streaming
                 currentBotMessage = document.createElement('div');
@@ -200,7 +200,7 @@ HTML_CLIENT = """
                 addMessage('Error: ' + data.message, 'bot');
             }
         }
-        
+
         function addMessage(text, role) {
             const messages = document.getElementById('messages');
             const msg = document.createElement('div');
@@ -209,17 +209,17 @@ HTML_CLIENT = """
             messages.appendChild(msg);
             messages.scrollTop = messages.scrollHeight;
         }
-        
+
         function sendMessage() {
             const input = document.getElementById('input');
             const message = input.value.trim();
             if (!message) return;
-            
+
             addMessage(message, 'user');
             ws.send(JSON.stringify({ type: 'chat', message: message }));
             input.value = '';
         }
-        
+
         connect();
     </script>
 </body>

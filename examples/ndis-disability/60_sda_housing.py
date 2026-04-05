@@ -1421,7 +1421,7 @@ async def demo():
     print("🔧 STEP 5: Managing Maintenance")
     print("─" * 70)
 
-    maintenance = manager.create_maintenance_request(
+    manager.create_maintenance_request(
         property_id="SDA-001",
         category="accessibility",
         description="Ceiling hoist motor making unusual noise in bedroom",

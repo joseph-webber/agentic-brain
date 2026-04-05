@@ -477,9 +477,9 @@ class LegalComplianceService:
                 id="CL-001",
                 clause_type=ClauseType.CONFIDENTIALITY,
                 title="Standard Confidentiality Clause",
-                standard_text="""Each party agrees to maintain the confidentiality of all 
-Confidential Information received from the other party and to use such information 
-solely for the purposes of this Agreement. This obligation shall survive termination 
+                standard_text="""Each party agrees to maintain the confidentiality of all
+Confidential Information received from the other party and to use such information
+solely for the purposes of this Agreement. This obligation shall survive termination
 for a period of five (5) years.""",
                 risk_notes="Ensure duration is appropriate for the type of information exchanged",
                 negotiable=True,
@@ -489,9 +489,9 @@ for a period of five (5) years.""",
                 id="CL-002",
                 clause_type=ClauseType.LIMITATION_LIABILITY,
                 title="Limitation of Liability",
-                standard_text="""IN NO EVENT SHALL EITHER PARTY BE LIABLE FOR ANY INDIRECT, 
-INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES. THE TOTAL LIABILITY OF EACH PARTY 
-SHALL NOT EXCEED THE AMOUNTS PAID OR PAYABLE UNDER THIS AGREEMENT IN THE TWELVE 
+                standard_text="""IN NO EVENT SHALL EITHER PARTY BE LIABLE FOR ANY INDIRECT,
+INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES. THE TOTAL LIABILITY OF EACH PARTY
+SHALL NOT EXCEED THE AMOUNTS PAID OR PAYABLE UNDER THIS AGREEMENT IN THE TWELVE
 (12) MONTHS PRECEDING THE CLAIM.""",
                 risk_notes="May need higher caps for enterprise agreements. Carve-outs for IP, data breach.",
                 negotiable=True,
@@ -505,9 +505,9 @@ SHALL NOT EXCEED THE AMOUNTS PAID OR PAYABLE UNDER THIS AGREEMENT IN THE TWELVE
                 id="CL-003",
                 clause_type=ClauseType.DATA_PROTECTION,
                 title="Data Protection and Privacy",
-                standard_text="""Each party shall comply with all applicable data protection laws 
-including GDPR and CCPA. The parties shall enter into a Data Processing Agreement 
-where required. Personal data shall be processed only as necessary for the 
+                standard_text="""Each party shall comply with all applicable data protection laws
+including GDPR and CCPA. The parties shall enter into a Data Processing Agreement
+where required. Personal data shall be processed only as necessary for the
 performance of this Agreement.""",
                 risk_notes="DPA addendum required for any personal data processing. Check vendor compliance.",
                 negotiable=False,
@@ -517,8 +517,8 @@ performance of this Agreement.""",
                 id="CL-004",
                 clause_type=ClauseType.TERMINATION,
                 title="Termination for Convenience",
-                standard_text="""Either party may terminate this Agreement upon sixty (60) days 
-prior written notice to the other party. Upon termination, all accrued payment 
+                standard_text="""Either party may terminate this Agreement upon sixty (60) days
+prior written notice to the other party. Upon termination, all accrued payment
 obligations shall become immediately due and payable.""",
                 risk_notes="Consider impact on ongoing projects. May need longer notice for critical vendors.",
                 negotiable=True,
@@ -528,9 +528,9 @@ obligations shall become immediately due and payable.""",
                 id="CL-005",
                 clause_type=ClauseType.FORCE_MAJEURE,
                 title="Force Majeure",
-                standard_text="""Neither party shall be liable for any failure to perform due to 
-causes beyond its reasonable control, including acts of God, war, terrorism, 
-pandemic, labor disputes, or governmental actions. The affected party shall 
+                standard_text="""Neither party shall be liable for any failure to perform due to
+causes beyond its reasonable control, including acts of God, war, terrorism,
+pandemic, labor disputes, or governmental actions. The affected party shall
 provide notice within ten (10) days.""",
                 risk_notes="Ensure pandemic/epidemic is explicitly included post-COVID.",
                 negotiable=True,
@@ -540,8 +540,8 @@ provide notice within ten (10) days.""",
                 id="CL-006",
                 clause_type=ClauseType.GOVERNING_LAW,
                 title="Governing Law and Jurisdiction",
-                standard_text="""This Agreement shall be governed by and construed in accordance 
-with the laws of the State of Delaware, without regard to conflicts of law principles. 
+                standard_text="""This Agreement shall be governed by and construed in accordance
+with the laws of the State of Delaware, without regard to conflicts of law principles.
 Any disputes shall be resolved in the state or federal courts located in Delaware.""",
                 risk_notes="Prefer Delaware or jurisdiction where company is incorporated.",
                 negotiable=True,
@@ -551,9 +551,9 @@ Any disputes shall be resolved in the state or federal courts located in Delawar
                 id="CL-007",
                 clause_type=ClauseType.INTELLECTUAL_PROPERTY,
                 title="Intellectual Property Rights",
-                standard_text="""All pre-existing intellectual property shall remain the sole 
-property of the owning party. Any intellectual property developed specifically for 
-Client under this Agreement shall be owned by Client upon full payment. Vendor 
+                standard_text="""All pre-existing intellectual property shall remain the sole
+property of the owning party. Any intellectual property developed specifically for
+Client under this Agreement shall be owned by Client upon full payment. Vendor
 retains ownership of any underlying tools, methodologies, or pre-existing IP.""",
                 risk_notes="Clarify ownership of derivatives. Consider licensing vs assignment.",
                 negotiable=True,
@@ -1595,8 +1595,8 @@ async def demo():
     # Document classification
     print("\n🏷️ DOCUMENT CLASSIFICATION")
     print("-" * 50)
-    sample_text = """This agreement contains confidential proprietary information 
-    related to GDPR compliance and personal data processing. The parties agree 
+    sample_text = """This agreement contains confidential proprietary information
+    related to GDPR compliance and personal data processing. The parties agree
     to maintain strict confidentiality of all trade secrets."""
     classification = service.classify_document("Sample Agreement", sample_text)
     c = classification["classification"]

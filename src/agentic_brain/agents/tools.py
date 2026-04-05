@@ -342,7 +342,7 @@ class CodeExecutionTool(Tool):
 
         start_time = time.perf_counter()
         code = kwargs.get("code", "")
-        timeout = min(kwargs.get("timeout_seconds", 5.0), self.max_timeout)
+        min(kwargs.get("timeout_seconds", 5.0), self.max_timeout)
 
         is_valid, error = self.validate_parameters(**kwargs)
         if not is_valid:

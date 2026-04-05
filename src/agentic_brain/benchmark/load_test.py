@@ -214,7 +214,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print(
-        "Running sustained load test: users=%s duration=%ss target=%s"
-        % (args.users, args.duration, args.target)
+        f"Running sustained load test: users={args.users} duration={args.duration}s target={args.target}"
     )
     print(run_sustained_load(args.target, users=args.users, duration_s=args.duration))

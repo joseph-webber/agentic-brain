@@ -8,7 +8,7 @@ Uses connection pooling and caching for maximum speed.
 
 Tools (30):
 - Neo4j queries (search, status, ask)
-- JIRA basics (get, search, sprint)  
+- JIRA basics (get, search, sprint)
 - Bitbucket (PRs, commits)
 - Brain health & sync
 

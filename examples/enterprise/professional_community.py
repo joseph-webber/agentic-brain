@@ -347,17 +347,17 @@ class ProfessionalCommunityAgent:
                     WHERE other.userId <> $user_id
                     AND NOT (me)-[:CONNECTED_TO]-(other)
                     WITH other, collect(skill.name) as sharedSkills, count(skill) as skillOverlap
-                    
+
                     OPTIONAL MATCH (me)-[:CONNECTED_TO]-(mutual)-[:CONNECTED_TO]-(other)
                     WITH other, sharedSkills, skillOverlap, count(distinct mutual) as mutualCount
-                    
+
                     // Calculate relevance score
                     WITH other, sharedSkills, mutualCount,
                          (skillOverlap * 0.6 + mutualCount * 0.4) as relevanceScore
-                    
+
                     ORDER BY relevanceScore DESC
                     LIMIT $limit
-                    
+
                     RETURN other.userId as userId,
                            other.displayName as displayName,
                            other.title as title,
@@ -557,7 +557,7 @@ class ProfessionalCommunityAgent:
                         createdAt: datetime()
                     })
                     CREATE (author)-[:AUTHORED]->(p)
-                    
+
                     // Create tag relationships for discovery
                     WITH p
                     UNWIND $tags as tagName
@@ -607,25 +607,25 @@ class ProfessionalCommunityAgent:
                 result = await session.run(
                     """
                     MATCH (me:Professional {userId: $user_id})
-                    
+
                     // Get posts from connections
                     OPTIONAL MATCH (me)-[:CONNECTED_TO]-(connection)-[:AUTHORED]->(post:Post)
-                    
+
                     // Get posts with tags matching user's skills/interests
                     OPTIONAL MATCH (me)-[:HAS_SKILL]->(skill:Skill)
                     OPTIONAL MATCH (relevant:Post)-[:TAGGED]->(tag:Tag)
                     WHERE tag.name IN me.interests OR tag.name = skill.name
-                    
+
                     WITH collect(distinct post) + collect(distinct relevant) as allPosts
                     UNWIND allPosts as p
-                    
+
                     WITH DISTINCT p
                     ORDER BY p.createdAt DESC
                     SKIP $offset
                     LIMIT $limit
-                    
+
                     MATCH (author:Professional)-[:AUTHORED]->(p)
-                    
+
                     RETURN p.postId as postId,
                            author.userId as authorId,
                            p.contentType as contentType,
@@ -733,7 +733,7 @@ class ProfessionalCommunityAgent:
                         MATCH (p:Post {postId: $post_id})
                         MERGE (u)-[e:ENGAGED {type: $engagement_type}]->(p)
                         SET e.timestamp = datetime()
-                        
+
                         WITH p
                         SET p.reactions = coalesce(p.reactions, 0) + 1
                         """,
@@ -763,16 +763,16 @@ class ProfessionalCommunityAgent:
                 result = await session.run(
                     """
                     MATCH (me:Professional {userId: $user_id})
-                    
+
                     OPTIONAL MATCH (me)-[:CONNECTED_TO]-(connection)
                     WITH me, count(connection) as connectionCount
-                    
+
                     OPTIONAL MATCH (me)-[:AUTHORED]->(post:Post)
                     WITH me, connectionCount, count(post) as postCount, sum(post.views) as totalViews
-                    
+
                     OPTIONAL MATCH (endorser)-[:ENDORSES]->(me)
                     WITH me, connectionCount, postCount, totalViews, count(endorser) as endorsementCount
-                    
+
                     RETURN connectionCount, postCount, totalViews, endorsementCount
                     """,
                     user_id=user_id,
@@ -815,7 +815,7 @@ async def main():
     agent = ProfessionalCommunityAgent()
 
     # Create professional profiles
-    alice = await agent.create_profile(
+    await agent.create_profile(
         user_id="alice_001",
         display_name="Alice Chen",
         title="Senior Data Scientist",
@@ -825,7 +825,7 @@ async def main():
         experience_years=8,
     )
 
-    bob = await agent.create_profile(
+    await agent.create_profile(
         user_id="bob_002",
         display_name="Bob Martinez",
         title="ML Engineer",

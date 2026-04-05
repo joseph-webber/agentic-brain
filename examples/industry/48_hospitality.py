@@ -682,7 +682,7 @@ def add_to_order(
     item_id = item_id.upper()
 
     # Find item
-    for category, items in MENU.items():
+    for _category, items in MENU.items():
         for item in items:
             if item["id"] == item_id:
                 order_item = {

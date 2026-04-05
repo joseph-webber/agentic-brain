@@ -107,7 +107,7 @@ def search_all_sessions(query: str, limit: int = 20) -> dict:
                 """
                 MATCH (e:HookEvent)
                 WHERE toLower(e.content) CONTAINS toLower($query)
-                RETURN e.session_id as session, e.role as role, 
+                RETURN e.session_id as session, e.role as role,
                        e.content as content, e.primary_topic as topic
                 ORDER BY e.timestamp DESC LIMIT $limit
             """,
@@ -150,11 +150,11 @@ def get_recent_memories(hours: int = 24, limit: int = 30) -> dict:
         with hooks.neo4j_driver.session() as session:
             result = session.run(
                 f"""
-                MATCH (m:Memory) 
+                MATCH (m:Memory)
                 WHERE m.timestamp > datetime() - duration('PT{hours}H')
-                RETURN m.text as text, m.importance as importance, 
+                RETURN m.text as text, m.importance as importance,
                        m.session_id as session_id, m.timestamp as timestamp
-                ORDER BY m.timestamp DESC 
+                ORDER BY m.timestamp DESC
                 LIMIT $limit
             """,
                 {"limit": limit},

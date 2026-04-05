@@ -105,7 +105,6 @@ BANK_BSB_PREFIXES = {
     "03": "Westpac",
     "01": "ANZ",
     "12": "Bendigo Bank",
-    "08": "NAB",
     "48": "Macquarie",
 }
 
@@ -1368,7 +1367,7 @@ def run_demo():
 
     # Mark some invoices as paid for distribution demo
     print("💰 Processing payments and calculating distributions...")
-    for inv_id, invoice in manager.invoices.items():
+    for _inv_id, invoice in manager.invoices.items():
         # Simulate full payment for demo
         invoice.rrc_paid = invoice.rrc_amount
         invoice.sda_paid = invoice.sda_amount
@@ -1429,7 +1428,7 @@ def run_demo():
     # Show ABA file preview
     print("📄 ABA File Preview (first 5 lines):")
     print("-" * 80)
-    for i, line in enumerate(aba_batch.file_content.split("\r\n")[:5]):
+    for _i, line in enumerate(aba_batch.file_content.split("\r\n")[:5]):
         print(f"   {line[:70]}...")
     print("-" * 80)
     print()

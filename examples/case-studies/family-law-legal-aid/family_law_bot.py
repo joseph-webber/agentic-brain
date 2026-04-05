@@ -477,7 +477,7 @@ If you are having thoughts of suicide or self-harm, please call:
 
 You are not alone. Help is available right now.
 
-Would you like me to continue, or would you prefer to speak with 
+Would you like me to continue, or would you prefer to speak with
 a crisis counsellor first?
 """
 
@@ -492,7 +492,7 @@ If you are in danger, please call 000 immediately.
 For support with family violence:
 • 1800RESPECT: 1800 737 732 (24/7)
 
-I'll continue to help you with your family law matter, but please 
+I'll continue to help you with your family law matter, but please
 reach out to these services if you need immediate support.
 
 """
@@ -958,7 +958,7 @@ class LegalKnowledgeBase:
             if any(kw in obj.lower() for kw in keywords):
                 results.append(obj)
         elif isinstance(obj, dict):
-            for key, value in obj.items():
+            for _key, value in obj.items():
                 self._search_recursive(value, keywords, results, score)
         elif isinstance(obj, list):
             for item in obj:
@@ -1804,13 +1804,13 @@ You are not alone. Help is available.
 
         if overdue:
             response += "⚠️ OVERDUE DEADLINES:\n"
-            for case, deadline in overdue:
+            for _case, deadline in overdue:
                 response += f"• {deadline.to_voice()}\n"
             response += "\n"
 
         if upcoming:
             response += "UPCOMING DEADLINES (next 30 days):\n"
-            for case, deadline in upcoming:
+            for _case, deadline in upcoming:
                 response += f"• {deadline.to_voice()}\n"
         elif not overdue:
             response = "No upcoming deadlines in the next 30 days."
@@ -1843,7 +1843,7 @@ Next steps:
 2. Do you have a Section 60I certificate?
 3. Are there any family violence or child safety concerns?
 
-Tell me more about your situation, and I'll help you understand 
+Tell me more about your situation, and I'll help you understand
 your options and what steps to take.
 """
 
@@ -1871,7 +1871,7 @@ Family Relationship Centres offer free or low-cost FDR.
 Private practitioners charge fees (often $150-$400 per session).
 
 IMPORTANT: FDR is usually REQUIRED before filing parenting applications.
-Call the Family Relationship Advice Line on 1800 050 321 for help 
+Call the Family Relationship Advice Line on 1800 050 321 for help
 finding an FDR service near you.
 """
 
@@ -1901,7 +1901,7 @@ HOW TO FILE:
 3. Attach Minute of Consent Orders with exact wording
 4. Both parties must sign
 
-IMPORTANT: Consent orders have the same legal force as orders 
+IMPORTANT: Consent orders have the same legal force as orders
 made after a trial. Make sure you're happy with them before signing.
 """
 
@@ -1932,8 +1932,8 @@ IMPORTANT CONSIDERATIONS:
 
 COST: Filing fee approximately $395 (fee reductions available)
 
-Remember: The court prefers parties to work things out. Minor 
-breaches may not succeed. Serious or repeated breaches are 
+Remember: The court prefers parties to work things out. Minor
+breaches may not succeed. Serious or repeated breaches are
 treated more seriously.
 """
 
@@ -1970,8 +1970,8 @@ IF YOUR CHILD HAS BEEN TAKEN:
    • Phone: (02) 6141 6666
    • Time is critical - act immediately
 
-IMPORTANT: Recovery orders are serious. If you're considering 
-taking your child without proper authority, understand this could 
+IMPORTANT: Recovery orders are serious. If you're considering
+taking your child without proper authority, understand this could
 result in recovery orders against you and damage your case.
 """
 
@@ -2021,7 +2021,7 @@ Most property matters settle without trial. Options include:
 • Mediation
 • Collaborative law
 
-IMPORTANT: Get a lawyer to review any property settlement 
+IMPORTANT: Get a lawyer to review any property settlement
 before you agree. These decisions are final.
 """
 
@@ -2062,7 +2062,7 @@ KEY POINTS:
    • Provide relevant documents
    • Be honest - they're there for the children
 
-IMPORTANT: The ICL is not on anyone's "side". Their job is to 
+IMPORTANT: The ICL is not on anyone's "side". Their job is to
 help the court determine what's best for your children.
 """
 
@@ -2097,7 +2097,7 @@ FILING FEES (2024, approximate):
 • Affidavit: No fee
 
 FEE REDUCTIONS:
-If you have a Health Care Card, pension card, or financial 
+If you have a Health Care Card, pension card, or financial
 hardship, you may be eligible for reduced or waived fees.
 Ask about fee reduction when filing.
 
@@ -2112,7 +2112,7 @@ AFTER FILING:
 • You must serve documents on the other party
 • The Initiating Application must be personally served
 
-IMPORTANT: Check the court's website for current fees and 
+IMPORTANT: Check the court's website for current fees and
 forms. Forms are updated regularly.
 """
 
@@ -2145,26 +2145,26 @@ WHAT TO INCLUDE:
 IMPORTANT POINTS:
 
 1. MUST BE FILED if you have concerns
-   Filing an Initiating Application without a required Notice 
+   Filing an Initiating Application without a required Notice
    of Risk is a breach of the Rules.
 
 2. DISCLOSE EVERYTHING
-   The court needs to know about any risks to children. 
+   The court needs to know about any risks to children.
    Non-disclosure is taken very seriously.
 
 3. THIS IS NOT EVIDENCE
-   The Notice of Risk alerts the court to concerns. You still 
+   The Notice of Risk alerts the court to concerns. You still
    need to provide evidence in your Affidavit.
 
 4. BOTH PARTIES FILE
-   If you receive an application, you also need to file a 
+   If you receive an application, you also need to file a
    Notice of Risk if you have any concerns.
 
 5. CONFIDENTIALITY
-   The Notice is filed with the court and provided to the 
+   The Notice is filed with the court and provided to the
    other party. Consider safety implications.
 
-If you have concerns about child safety or family violence, 
+If you have concerns about child safety or family violence,
 please disclose them. The court's priority is protecting children.
 """
 

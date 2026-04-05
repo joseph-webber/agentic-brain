@@ -1235,7 +1235,7 @@ async def demo():
     print("🔧 Maintenance Requests")
     print("─" * 50)
 
-    maint1_id = pm.create_maintenance_request(
+    pm.create_maintenance_request(
         property_id=property_ids[0],
         category="Plumbing",
         description="Leaking tap in bathroom. Dripping continuously.",

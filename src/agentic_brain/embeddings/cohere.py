@@ -231,7 +231,7 @@ class CohereEmbedder(Embedder):
                 results = []
                 latency_ms = (time.time() - start_time) * 1000
 
-                for text, embedding in zip(texts, response.embeddings.float):
+                for text, embedding in zip(texts, response.embeddings.float, strict=False):
                     emb_array = np.array(embedding, dtype=np.float32)
                     results.append(
                         EmbeddingResult(

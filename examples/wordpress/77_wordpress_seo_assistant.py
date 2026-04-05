@@ -720,8 +720,8 @@ class KeywordResearcher:
         cls, target_keywords: List[str], ranking_keywords: List[str]
     ) -> Dict[str, List[str]]:
         """Analyze keyword gaps."""
-        target_set = set(kw.lower() for kw in target_keywords)
-        ranking_set = set(kw.lower() for kw in ranking_keywords)
+        target_set = {kw.lower() for kw in target_keywords}
+        ranking_set = {kw.lower() for kw in ranking_keywords}
 
         return {
             "missing": list(target_set - ranking_set),
@@ -928,7 +928,7 @@ class OnPageSEOAnalyzer:
                 )
 
         # Check heading hierarchy
-        h1s = len(headings.get("h1", []))
+        len(headings.get("h1", []))
         h2s = len(headings.get("h2", []))
         h3s = len(headings.get("h3", []))
 
@@ -1644,7 +1644,7 @@ class SitemapManager:
 
         # Check for duplicates
         urls = [e.loc for e in self.entries]
-        duplicates = set([u for u in urls if urls.count(u) > 1])
+        duplicates = {u for u in urls if urls.count(u) > 1}
 
         for dup in duplicates:
             issues.append(
@@ -1904,7 +1904,7 @@ class WordPressSEOAssistant:
             description=meta_description,
             canonical=url,
         )
-        meta_issues = meta_tags.validate()
+        meta_tags.validate()
         # Don't add duplicate issues already caught
 
         # Create analysis result
@@ -1969,7 +1969,7 @@ class WordPressSEOAssistant:
             meta_description="Shop our premium wireless earbuds with active noise cancellation.",
             content="""
                 <h1>Wireless Earbuds Pro</h1>
-                <p>Experience premium audio quality with our wireless earbuds. 
+                <p>Experience premium audio quality with our wireless earbuds.
                 Features include active noise cancellation, 30-hour battery life,
                 and comfortable fit for all-day wear.</p>
                 <h2>Key Features</h2>

@@ -1260,10 +1260,7 @@ def run_demo():
     for worker_id in tracker.workers:
         summary = tracker.get_worker_compliance_summary(worker_id)
 
-        if summary["has_valid_ndis_screening"]:
-            icon = "✅"
-        else:
-            icon = "❌"
+        icon = "✅" if summary["has_valid_ndis_screening"] else "❌"
 
         print(f"   {icon} {summary['name']} ({summary['role']})")
         for screening in summary["screenings"]:
@@ -1299,7 +1296,7 @@ def run_demo():
     # SDA Design Categories reference
     print("📖 SDA DESIGN CATEGORY REFERENCE")
     print("-" * 80)
-    for category, info in SDA_REQUIREMENTS.items():
+    for _category, info in SDA_REQUIREMENTS.items():
         print(f"\n   {info['name']} (Tier {info['price_tier']})")
         print(f"   {info['description']}")
         print("   Key Features:")

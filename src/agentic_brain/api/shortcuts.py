@@ -323,7 +323,7 @@ def quick_eval(
                 from difflib import SequenceMatcher
 
                 similarities = []
-                for result, golden in zip(results, golden_answers):
+                for result, golden in zip(results, golden_answers, strict=False):
                     sim = SequenceMatcher(
                         None, result.answer.lower(), golden.lower()
                     ).ratio()
@@ -334,7 +334,7 @@ def quick_eval(
                 ) / len(similarities)
                 eval_results["generation"]["exact_matches"] = sum(
                     1
-                    for result, golden in zip(results, golden_answers)
+                    for result, golden in zip(results, golden_answers, strict=False)
                     if result.answer.lower() == golden.lower()
                 )
 

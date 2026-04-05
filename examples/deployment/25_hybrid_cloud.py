@@ -386,24 +386,24 @@ class CorporateKnowledgeBase:
                 category="HR",
                 content="""
                 REMOTE WORK GUIDELINES:
-                
+
                 Eligibility:
                 - All employees after 90-day probation
                 - Manager approval required
                 - Performance-based
-                
+
                 Equipment:
                 - Company laptop provided
                 - Monitors: Up to 2x 27-inch monitors
                 - Keyboard and mouse: Ergonomic options available
                 - $500 home office stipend (one-time)
-                
+
                 Expectations:
                 - Core hours: 10am-3pm local time
                 - Video on for meetings
                 - Response time: 1 hour during work hours
                 - Minimum 2 days in office per week (hybrid)
-                
+
                 Security:
                 - VPN required for all company resources
                 - No public WiFi for sensitive work
@@ -418,27 +418,27 @@ class CorporateKnowledgeBase:
                 category="Finance",
                 content="""
                 EXPENSE POLICY:
-                
+
                 Pre-Approval Required:
                 - Travel over $500
                 - Equipment over $200
                 - Client entertainment over $100
-                
+
                 Submission:
                 - Within 30 days of expense
                 - Original receipts required
                 - Manager approval in Concur
-                
+
                 Categories:
                 - Travel: Air, hotel, car rental
                 - Meals: Per diem or actuals with receipts
                 - Equipment: Monitors, keyboards, mice (need IT approval)
                 - Supplies: Office supplies under $50 auto-approved
-                
+
                 Processing Time:
                 - Domestic: 5 business days
                 - International: 10 business days
-                
+
                 Direct deposit to payroll account.
                 """,
                 last_updated="2024-02-15",
@@ -450,29 +450,29 @@ class CorporateKnowledgeBase:
                 category="IT",
                 content="""
                 IT SUPPORT:
-                
+
                 How to Get Help:
                 1. Self-service portal: help.company.com
                 2. Slack: #it-support
                 3. Email: it@company.com
                 4. Phone: x5555 (urgent only)
-                
+
                 Common Issues:
-                
+
                 Password Reset:
                 - Self-service: password.company.com
                 - If locked out: call IT
-                
+
                 VPN Issues:
                 - Restart VPN client
                 - Check internet connection
                 - Try alternate server
-                
+
                 Equipment Requests:
                 - Monitors, keyboards, mice through IT portal
                 - Standard equipment: 3-day delivery
                 - Special requests: 2-week lead time
-                
+
                 Lost/Stolen Device:
                 - IMMEDIATELY report to security@company.com
                 - Device will be remotely wiped
@@ -487,28 +487,28 @@ class CorporateKnowledgeBase:
                 category="Products",
                 content="""
                 OFFICE ELECTRONICS CATALOG:
-                
+
                 Monitors:
                 - Pro Display 27" 4K: $399 (SKU: MON-27-4K)
                 - Standard 24" HD: $199 (SKU: MON-24-HD)
                 - Ultrawide 34" Curved: $599 (SKU: MON-34-UW)
-                
+
                 Keyboards:
                 - Ergonomic Wireless: $89 (SKU: KB-ERGO)
                 - Mechanical RGB: $129 (SKU: KB-MECH)
                 - Standard USB: $29 (SKU: KB-STD)
-                
+
                 Mice:
                 - Ergonomic Vertical: $49 (SKU: MS-VERT)
                 - Wireless Pro: $79 (SKU: MS-WL-PRO)
                 - Standard USB: $19 (SKU: MS-STD)
-                
+
                 Accessories:
                 - USB-C Hub 7-port: $59 (SKU: HUB-7P)
                 - USB Hub 4-port: $29 (SKU: HUB-4P)
                 - HDMI Cable 2m: $15 (SKU: CBL-HDMI)
                 - USB-C Cable 1m: $12 (SKU: CBL-USBC)
-                
+
                 Employee Discount: 25% off all items
                 """,
                 last_updated="2024-03-10",
@@ -520,24 +520,24 @@ class CorporateKnowledgeBase:
                 category="Facilities",
                 content="""
                 MEETING ROOM BOOKING:
-                
+
                 How to Book:
                 - Outlook calendar: Add room as attendee
                 - Slack: /book-room command
                 - Portal: rooms.company.com
-                
+
                 Available Rooms:
                 - Conference A (12 people): Video conferencing
                 - Conference B (8 people): Whiteboard, video
                 - Huddle 1-4 (4 people each): Quick meetings
                 - Boardroom (20 people): Executive meetings only
-                
+
                 Rules:
                 - Maximum 2-hour booking
                 - Release room if not using within 10 min
                 - Clean up after use
                 - No food in Boardroom
-                
+
                 Equipment Issues:
                 - Report to facilities@company.com
                 - Or Slack: #room-issues
@@ -703,7 +703,7 @@ class HybridKnowledgeAssistant:
             }
 
         # Build context from articles
-        context = "\n\n".join(
+        "\n\n".join(
             [f"[{a.article_id}] {a.title}:\n{a.content}" for a in articles[:3]]
         )
 

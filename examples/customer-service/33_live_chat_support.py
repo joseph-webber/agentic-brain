@@ -307,10 +307,7 @@ class CannedResponses:
 
     def get_response(self, category: str, subcategory: Optional[str] = None) -> str:
         """Get a canned response by category."""
-        if subcategory:
-            key = f"{category}.{subcategory}"
-        else:
-            key = category
+        key = f"{category}.{subcategory}" if subcategory else category
 
         parts = key.split(".")
         response = self.responses
@@ -462,7 +459,7 @@ class LiveChatBot:
         """Show typing indicator based on message length."""
         typing_time = min(len(content) * self.typing_delay, self.max_typing_delay)
 
-        typing_msg = ChatMessage(
+        ChatMessage(
             id=self._generate_id("typing"),
             content="",
             sender="bot",

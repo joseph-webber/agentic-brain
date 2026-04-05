@@ -191,10 +191,7 @@ class APIAccessController:
             return False
 
         # GUEST can only use PUBLIC scope
-        if self.role == SecurityRole.GUEST and scope != APIScope.PUBLIC:
-            return False
-
-        return True
+        return not (self.role == SecurityRole.GUEST and scope != APIScope.PUBLIC)
 
     def _method_to_scope(self, method: str) -> APIScope:
         """Convert HTTP method to API scope."""

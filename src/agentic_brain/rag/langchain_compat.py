@@ -1704,8 +1704,7 @@ class BaseLoader(ABC):
         Yields:
             Individual Document objects.
         """
-        for doc in self.load():
-            yield doc
+        yield from self.load()
 
 
 class TextLoader(BaseLoader):
@@ -2064,10 +2063,7 @@ class CharacterTextSplitter(TextSplitter):
 
     def split_text(self, text: str) -> List[str]:
         """Split text by separator."""
-        if self.separator:
-            splits = text.split(self.separator)
-        else:
-            splits = list(text)
+        splits = text.split(self.separator) if self.separator else list(text)
 
         separator = self.separator if self.keep_separator else ""
         return self._merge_splits(splits, separator)
@@ -2120,10 +2116,7 @@ class RecursiveCharacterTextSplitter(TextSplitter):
                 break
 
         # Split by the chosen separator
-        if separator:
-            splits = text.split(separator)
-        else:
-            splits = list(text)
+        splits = text.split(separator) if separator else list(text)
 
         # Process splits
         good_splits: List[str] = []

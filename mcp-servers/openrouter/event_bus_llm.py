@@ -22,11 +22,11 @@ Features:
 Usage:
     # Start consumer (daemon)
     python3 -m mcp-servers.openrouter.event_bus_llm start
-    
+
     # Publish a request
     from event_bus_llm import publish_llm_request
     request_id = publish_llm_request("What is 2+2?", task_type="simple")
-    
+
     # Wait for response
     response = wait_for_response(request_id, timeout=10)
     print(response["response"])
@@ -386,7 +386,7 @@ def consumer_loop():
             # Poll for messages with 1 second timeout
             msg_pack = _consumer.poll(timeout_ms=1000, max_records=10)
 
-            for topic_partition, messages in msg_pack.items():
+            for _topic_partition, messages in msg_pack.items():
                 for message in messages:
                     if not _running:
                         break

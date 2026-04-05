@@ -323,7 +323,7 @@ def search_communications(
             """
             MATCH (e)
             WHERE (e:OutlookEmail OR e:ScrapedEmail)
-            AND (toLower(e.subject) CONTAINS toLower($query) 
+            AND (toLower(e.subject) CONTAINS toLower($query)
                  OR toLower(COALESCE(e.preview, '')) CONTAINS toLower($query)
                  OR toLower(e.sender) CONTAINS toLower($query))
             RETURN e.sender as sender, e.subject as subject, e.preview as preview

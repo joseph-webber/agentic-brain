@@ -794,7 +794,7 @@ def get_practice_problems(subject: str, topic: str, count: int = 5) -> dict[str,
 
     if subject == "mathematics":
         if topic == "algebra":
-            for i in range(count):
+            for _i in range(count):
                 a, b, c = (
                     random.randint(1, 10),
                     random.randint(1, 20),
@@ -808,7 +808,7 @@ def get_practice_problems(subject: str, topic: str, count: int = 5) -> dict[str,
                     }
                 )
         elif topic == "geometry":
-            for i in range(count):
+            for _i in range(count):
                 r = random.randint(1, 10)
                 problems.append(
                     {

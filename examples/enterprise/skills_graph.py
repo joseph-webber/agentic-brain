@@ -406,12 +406,12 @@ class SkillsGraphAgent:
                     MATCH (endorser:Professional {professionalId: $endorser_id})
                     MATCH (endorsed:Professional {professionalId: $endorsed_id})
                     MATCH (skill:Skill {name: $skill_name})
-                    
+
                     MERGE (endorser)-[e:ENDORSES {skill: $skill_name}]->(endorsed)
                     SET e.type = $endorsement_type,
                         e.note = $note,
                         e.timestamp = datetime()
-                    
+
                     // Update endorsement count on skill relationship
                     WITH endorsed, skill
                     MATCH (endorsed)-[r:HAS_SKILL]->(skill)
@@ -632,13 +632,13 @@ class SkillsGraphAgent:
                     """
                     MATCH (p:Professional)-[r:HAS_SKILL]->(s:Skill {name: $skill_name})
                     WHERE r.level >= $min_level
-                    
+
                     OPTIONAL MATCH (endorser)-[e:ENDORSES {skill: $skill_name}]->(p)
-                    
+
                     WITH p, r, count(endorser) as endorsements
                     ORDER BY r.level DESC, endorsements DESC
                     LIMIT $limit
-                    
+
                     RETURN p.professionalId as id,
                            p.name as name,
                            r.level as level,
@@ -707,14 +707,14 @@ class SkillsGraphAgent:
                     WHERE $domain IS NULL OR d.name = $domain
                     OPTIONAL MATCH (s:Skill)-[:BELONGS_TO]->(d)
                     OPTIONAL MATCH (s)-[:SPECIALIZATION_OF]->(parent:Skill)
-                    
+
                     WITH d, collect({
                         skill: s.name,
                         parent: parent.name,
                         demand: s.demandScore,
                         trend: s.trend
                     }) as skills
-                    
+
                     RETURN d.name as domain, skills
                 """
 
@@ -801,14 +801,14 @@ class SkillsGraphAgent:
                     MATCH (s:Skill)-[:BELONGS_TO]->(d:Domain)
                     WHERE ($domain IS NULL OR d.name = $domain)
                     AND s.trend IN ['rising', 'emerging']
-                    
+
                     // Count professionals with this skill
                     OPTIONAL MATCH (p:Professional)-[r:HAS_SKILL]->(s)
-                    
+
                     WITH s, d, count(p) as practitioners, avg(r.level) as avgLevel
                     ORDER BY s.demandScore DESC
                     LIMIT $limit
-                    
+
                     RETURN s.name as skill,
                            d.name as domain,
                            s.trend as trend,

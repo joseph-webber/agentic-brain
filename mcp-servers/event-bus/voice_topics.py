@@ -25,26 +25,26 @@ Voice Ladies:
 
 Example:
   publisher = VoiceEventPublisher(bus)
-  
+
   # Start conversation
   publisher.publish_conversation_started(["karen", "moira"], "standup")
-  
+
   # Lady takes turn
   publisher.publish_conversation_turn("karen", "Let's discuss the sprint...")
-  
+
   # Lady responds to another
   publisher.publish_lady_reaction("moira", "karen", "That sounds good!")
-  
+
   # Mood sync
   publisher.publish_mood_changed("calm", reason="spa_time")
-  
+
   # Turn-taking
   publisher.publish_turn_requested("kyoko")
   publisher.publish_turn_granted("kyoko")
-  
+
   # Fallback
   publisher.publish_fallback_local("Rate limit hit")
-  
+
   # Queue
   publisher.publish_queue_event("added", lady="tingting", text="Hello!")
 """

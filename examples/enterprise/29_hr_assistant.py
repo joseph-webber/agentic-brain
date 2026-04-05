@@ -680,7 +680,7 @@ Return to Work:
             for lr in self.leave_requests.values()
             if lr.employee_id == emp_id and lr.status == RequestStatus.PENDING
         ]
-        pending_days = sum(lr.days for lr in pending)
+        sum(lr.days for lr in pending)
 
         return {
             "success": True,

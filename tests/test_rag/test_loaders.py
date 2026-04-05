@@ -36,12 +36,12 @@ from agentic_brain.rag.loaders.text import MarkdownLoader, TextLoader
 
 class TestLoadedDocument:
     def _make_doc(self, **kwargs: Any) -> LoadedDocument:
-        defaults = dict(
-            content="Hello world",
-            id="doc-001",
-            source="test",
-            metadata={"author": "joe"},
-        )
+        defaults = {
+            "content": "Hello world",
+            "id": "doc-001",
+            "source": "test",
+            "metadata": {"author": "joe"},
+        }
         defaults.update(kwargs)
         return LoadedDocument(**defaults)
 

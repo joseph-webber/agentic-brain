@@ -848,7 +848,7 @@ def print_categories():
         table.add_column("Examples", justify="center")
         table.add_column("Description")
 
-        for i, (slug, cat) in enumerate(CATEGORIES.items(), 1):
+        for i, (_slug, cat) in enumerate(CATEGORIES.items(), 1):
             table.add_row(
                 str(i),
                 f"{cat.icon} {cat.name}",
@@ -863,7 +863,7 @@ def print_categories():
     else:
         print("\n📂 Categories:")
         print("-" * 60)
-        for i, (slug, cat) in enumerate(CATEGORIES.items(), 1):
+        for i, (_slug, cat) in enumerate(CATEGORIES.items(), 1):
             print(f"  {i}. {cat.icon} {cat.name} ({len(cat.examples)} examples)")
         print()
 

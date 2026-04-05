@@ -426,7 +426,7 @@ async def demo_claude_integration() -> None:
     OpenAI, Ollama, and OpenRouter. The framework is designed
     for enterprise use with features like multi-tenant isolation,
     on-premise deployment, and comprehensive security controls.
-    
+
     Key features include:
     - MCP server for Claude Desktop integration
     - Neo4j knowledge graphs for persistent memory

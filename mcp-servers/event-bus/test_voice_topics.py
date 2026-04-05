@@ -107,7 +107,7 @@ class TestConversationLifecycle(unittest.TestCase):
     def test_conversation_turn(self):
         """Test conversation turn event"""
         # Start conversation first
-        conv_result = self.publisher.publish_conversation_started(
+        self.publisher.publish_conversation_started(
             ladies=["karen", "moira"]
         )
 

@@ -510,7 +510,7 @@ def validate_cypher_semantics(
 
     # Check property access
     prop_pattern = re.compile(r"(\w+)\.(\w+)")
-    for var, prop in prop_pattern.findall(cypher):
+    for _var, _prop in prop_pattern.findall(cypher):
         # We can't easily validate without knowing variable types
         # This would require more sophisticated parsing
         pass
@@ -525,7 +525,7 @@ def check_cartesian_product(cypher: str) -> tuple[bool, str]:
     Returns (has_cartesian, warning message).
     """
     # Count distinct node patterns
-    node_patterns = re.findall(r"\((\w+):\w+\)", cypher)
+    re.findall(r"\((\w+):\w+\)", cypher)
 
     # Check if there are multiple unconnected MATCH clauses
     matches = re.findall(
@@ -583,7 +583,7 @@ def optimize_query(
             where_clause = where_match.group(1)
             # Check if using indexed properties
             prop_comparisons = re.findall(r"(\w+)\.(\w+)\s*=", where_clause)
-            for var, prop in prop_comparisons:
+            for _var, prop in prop_comparisons:
                 for label_info in schema.node_labels.values():
                     if prop in label_info.indexes:
                         optimizations.append(f"Query uses indexed property: {prop}")

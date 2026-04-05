@@ -358,7 +358,7 @@ Period: Last {days} days
 SUMMARY
 -------
 Total Actions: {len(entries)}
-Unique Users: {len(set(e.user_id for e in entries))}
+Unique Users: {len({e.user_id for e in entries})}
 Failed Actions: {len([e for e in entries if not e.success])}
 
 BY ACTION TYPE
@@ -944,7 +944,7 @@ class NDISProviderAgent:
     All participant data stays local.
     """
 
-    SYSTEM_PROMPT = """You are an NDIS Provider Management Assistant. You help disability support 
+    SYSTEM_PROMPT = """You are an NDIS Provider Management Assistant. You help disability support
 providers manage their operations while maintaining strict privacy and compliance.
 
 IMPORTANT RULES:
@@ -1222,8 +1222,8 @@ Location: {location}
 
 {'=' * 50}
 ⚠️  REPORTABLE INCIDENT - NOTIFY NDIS COMMISSION WITHIN 24 HOURS!
-    
-This incident type MUST be reported to the NDIS Quality and 
+
+This incident type MUST be reported to the NDIS Quality and
 Safeguards Commission within 24 hours.
 
 Report at: https://www.ndiscommission.gov.au/providers/reportable-incidents

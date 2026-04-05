@@ -376,7 +376,7 @@ async def session_lifespan(mcp_server: FastMCP):
                 datetime.now() - datetime.fromisoformat(_current_session["started_at"])
             ).total_seconds()
 
-            final_state = save_state(
+            save_state(
                 description=f"Session {_current_session['id']} ended cleanly after {int(duration)}s",
                 auto_save=True,
             )
@@ -845,7 +845,7 @@ def get_recent_sessions_from_neo4j(limit: int = 5) -> List[Dict]:
             result = session.run(
                 """
                 MATCH (s:Session)
-                RETURN s.id as id, s.description as description, 
+                RETURN s.id as id, s.description as description,
                        s.git_branch as branch, s.todo_count as todos,
                        toString(s.timestamp) as timestamp
                 ORDER BY s.timestamp DESC

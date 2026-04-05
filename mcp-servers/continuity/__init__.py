@@ -6,7 +6,7 @@ MCP server for clock chain session continuity.
 
 Start the server:
     python -m mcp_servers.continuity.server
-    
+
 Or:
     cd ~/brain/mcp-servers/continuity && python server.py
 """

@@ -560,7 +560,7 @@ class ShippingLogisticsService:
             total = subtotal + gst
 
             # Calculate delivery estimate
-            delivery_min = datetime.now() + timedelta(days=rate.estimated_days_min)
+            datetime.now() + timedelta(days=rate.estimated_days_min)
             delivery_max = datetime.now() + timedelta(days=rate.estimated_days_max)
 
             quote = RateQuote(
@@ -1714,7 +1714,7 @@ async def tracking_menu(service: ShippingLogisticsService) -> None:
         ]
 
         print("\nAdd tracking event:")
-        for i, (status, loc, desc) in enumerate(statuses, 1):
+        for i, (status, _loc, desc) in enumerate(statuses, 1):
             print(f"  {i}. {status.value} - {desc}")
 
         selection = int(input("\nSelect (1-4): ").strip() or "1") - 1
@@ -2120,7 +2120,7 @@ async def demo_mode(service: ShippingLogisticsService) -> None:
     ]
 
     for status, location, description in events:
-        event = service.add_tracking_event(
+        service.add_tracking_event(
             shipment.tracking_number,
             status,
             location,

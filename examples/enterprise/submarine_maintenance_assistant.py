@@ -149,10 +149,7 @@ class SecurityContext:
                 return False
 
         # Session must not be expired
-        if datetime.now() > self.session_expiry:
-            return False
-
-        return True
+        return not datetime.now() > self.session_expiry
 
     def __hash__(self):
         return hash(self.session_id)
@@ -279,19 +276,19 @@ class AuditLogger:
         )
         conn.execute(
             """
-            CREATE INDEX IF NOT EXISTS idx_audit_timestamp 
+            CREATE INDEX IF NOT EXISTS idx_audit_timestamp
             ON audit_events(timestamp)
         """
         )
         conn.execute(
             """
-            CREATE INDEX IF NOT EXISTS idx_audit_user 
+            CREATE INDEX IF NOT EXISTS idx_audit_user
             ON audit_events(user_id)
         """
         )
         conn.execute(
             """
-            CREATE INDEX IF NOT EXISTS idx_audit_type 
+            CREATE INDEX IF NOT EXISTS idx_audit_type
             ON audit_events(event_type)
         """
         )
@@ -335,7 +332,7 @@ class AuditLogger:
         conn = sqlite3.connect(self.db_path)
         conn.execute(
             """
-            INSERT INTO audit_events 
+            INSERT INTO audit_events
             (event_id, timestamp, event_type, user_id, session_id,
              workstation_id, classification, details, previous_hash, event_hash)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -1107,7 +1104,7 @@ class NavalMaintenanceAssistant:
     - Encryption at rest (with HSM)
     """
 
-    SYSTEM_PROMPT = """You are a Naval Vessel Maintenance Assistant operating 
+    SYSTEM_PROMPT = """You are a Naval Vessel Maintenance Assistant operating
 in an air-gapped, secure environment. You help maintenance personnel with:
 
 1. TECHNICAL MANUAL LOOKUP
@@ -1280,7 +1277,7 @@ Compartments: {compartments}
         )
 
         # Generate response
-        full_prompt = f"""Based on the following technical documentation and your knowledge 
+        full_prompt = f"""Based on the following technical documentation and your knowledge
 of naval vessel systems, please answer the maintenance query.
 
 RETRIEVED DOCUMENTATION:
@@ -1288,7 +1285,7 @@ RETRIEVED DOCUMENTATION:
 
 QUERY: {question}
 
-Provide a helpful, technically accurate response. Include any relevant 
+Provide a helpful, technically accurate response. Include any relevant
 safety precautions and document references."""
 
         response = await self.llm.generate(

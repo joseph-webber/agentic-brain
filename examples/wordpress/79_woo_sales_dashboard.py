@@ -1122,7 +1122,7 @@ class SalesAnalytics:
 
         # Count orders per category
         for order in orders:
-            categories_in_order = set(item.product.category for item in order.items)
+            categories_in_order = {item.product.category for item in order.items}
             for category in categories_in_order:
                 if category in category_stats:
                     category_stats[category].total_orders += 1
@@ -1191,7 +1191,7 @@ class SalesAnalytics:
     def get_conversion_funnel(self, visitors: int = 10000) -> list[FunnelStage]:
         """Calculate conversion funnel stages."""
         # Simulate funnel data based on orders
-        total_orders = len(
+        len(
             [o for o in self.orders if o.status != OrderStatus.CANCELLED]
         )
 

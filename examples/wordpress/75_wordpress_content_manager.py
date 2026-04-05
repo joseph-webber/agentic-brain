@@ -1044,7 +1044,7 @@ class RevisionManager:
         if not revisions:
             return {"count": 0}
 
-        authors = set(r.author_id for r in revisions)
+        authors = {r.author_id for r in revisions}
         dates = [r.date for r in revisions]
 
         return {

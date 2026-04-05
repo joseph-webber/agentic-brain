@@ -25,11 +25,11 @@ Example:
     >>> vec = embedder.embed("Hello world")
     >>> len(vec)
     384
-    
+
     # Batch processing with streaming
     >>> for batch_result in embedder.embed_stream(texts, batch_size=32):
     ...     process(batch_result)
-    
+
     # GPU-accelerated similarity search
     >>> results = embedder.similarity_search(query_vec, corpus_vecs, top_k=10)
 """
@@ -664,10 +664,7 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
             List of (index, score) tuples sorted by similarity
         """
         # Get query embedding if needed
-        if isinstance(query, str):
-            query_vec = self.embed(query)
-        else:
-            query_vec = query
+        query_vec = self.embed(query) if isinstance(query, str) else query
 
         # Get corpus embeddings if needed
         if corpus and isinstance(corpus[0], str):
@@ -966,10 +963,7 @@ class MLXEmbeddings:
             return cls._accelerated.similarity_search(query, corpus, top_k=top_k)
         else:
             # Basic fallback
-            if isinstance(query, str):
-                query_vec = cls.embed(query)
-            else:
-                query_vec = query
+            query_vec = cls.embed(query) if isinstance(query, str) else query
 
             if corpus and isinstance(corpus[0], str):
                 corpus_vecs = cls.embed_batch(corpus)  # type: ignore[arg-type]

@@ -263,13 +263,7 @@ class RateLimitManager:
                 return False
 
             # Check token limit
-            if (
-                tokens > 0
-                and state.tokens_this_minute + tokens > quota.tokens_per_minute
-            ):
-                return False
-
-            return True
+            return not (tokens > 0 and state.tokens_this_minute + tokens > quota.tokens_per_minute)
 
     def get_available_provider(
         self, exclude: Optional[List[str]] = None
@@ -838,7 +832,7 @@ class TurboChessSwarm:
                 "LOW" if self._tier_counts.get("king", 0) <= 2 else "MEDIUM"
             ),
             "strategy": "TURBO_CHESS",
-            "models_used": list(set(a.model for a in self._assignments)),
+            "models_used": list({a.model for a in self._assignments}),
         }
 
     def _estimate_cost(self, tier: str) -> float:

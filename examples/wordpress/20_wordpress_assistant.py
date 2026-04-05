@@ -466,7 +466,7 @@ When would you like to publish?
 - "schedule for March 20 2024 at 2pm"
 """
 
-        result = await self.client.update_post(post_id, {"status": "publish"})
+        await self.client.update_post(post_id, {"status": "publish"})
         return f"✅ Published: {post.title}\n\nThe post is now live on your site!"
 
     async def _handle_categories(self) -> str:

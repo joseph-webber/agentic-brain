@@ -901,7 +901,7 @@ Guidelines:
 
 Vehicle on file: 2021 Honda Accord EX-L with 45,000 miles
 
-Services we offer: Oil Change, Brake Service, Tire Service, Engine Diagnostics, 
+Services we offer: Oil Change, Brake Service, Tire Service, Engine Diagnostics,
 Transmission Service, A/C Service, Scheduled Maintenance, and more.
 
 Remember: Safety first! Always recommend professional inspection for any safety concerns."""

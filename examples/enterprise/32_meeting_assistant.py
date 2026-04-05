@@ -294,7 +294,7 @@ class MeetingService:
                 meeting_id="MTG-001",
                 raw_transcript="""
 Alice: Let's start with the Q4 retrospective. Carol, can you summarize?
-Carol: Sure. Main wins were the payment integration and mobile app release. 
+Carol: Sure. Main wins were the payment integration and mobile app release.
 Challenges were the database migration delays and some communication gaps.
 Bob: I think we should focus on better documentation this quarter.
 Alice: Agreed. Let's add that to our goals. Now for Q1 priorities...

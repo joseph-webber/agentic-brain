@@ -570,7 +570,7 @@ copilot            varies   Fast     FREE*       Terminal, git, coding
 💡 RECOMMENDATIONS
 ──────────────────
 • Offline/Private → claude-emulator (trained for YOU)
-• Speed needed → llama3.2:3b or claude-sonnet  
+• Speed needed → llama3.2:3b or claude-sonnet
 • Complex task → claude-opus
 • Coding → copilot or claude-sonnet
 • Recovery → claude-emulator"""

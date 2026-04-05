@@ -1677,7 +1677,7 @@ def setup_demo_data(service: InventorySyncService) -> None:
         reorder_pt,
         reorder_qty,
     ) in products_data:
-        product = service.create_product(
+        service.create_product(
             sku,
             name,
             f"High quality {name.lower()}",
@@ -1703,7 +1703,7 @@ def setup_demo_data(service: InventorySyncService) -> None:
             )
 
     # Allocate stock
-    for sku in service.products.keys():
+    for sku in service.products:
         service.allocate_stock(sku, AllocationStrategy.WEIGHTED)
 
     print(
@@ -1922,7 +1922,7 @@ async def allocation_menu(service: InventorySyncService) -> None:
         )
         print(f"\n⏳ Reallocating all products with {strategy} strategy...")
 
-        for sku in service.products.keys():
+        for sku in service.products:
             service.allocate_stock(sku, AllocationStrategy(strategy))
 
         print(f"✅ Reallocated {len(service.products)} products")
@@ -1953,7 +1953,7 @@ async def oversell_menu(service: InventorySyncService) -> None:
         print("\n📊 Oversell Risk Check:")
         at_risk = 0
 
-        for sku in service.products.keys():
+        for sku in service.products:
             risk = service.check_oversell_risk(sku)
             if risk.get("oversell_risk"):
                 at_risk += 1
@@ -1972,7 +1972,7 @@ async def oversell_menu(service: InventorySyncService) -> None:
         print("\n⏳ Running oversell prevention...")
         total_adjustments = 0
 
-        for sku in service.products.keys():
+        for sku in service.products:
             adjustments = service.prevent_oversell(sku)
             if adjustments:
                 total_adjustments += len(adjustments)

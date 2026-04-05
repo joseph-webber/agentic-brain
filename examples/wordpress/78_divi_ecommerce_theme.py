@@ -251,7 +251,7 @@ class PromotionBanner:
         [et_pb_column type="4_4"]
             [et_pb_text text_orientation="center" text_text_color="#ffffff"]
                 <p style="margin: 0; font-weight: bold;">
-                    {self.headline} 
+                    {self.headline}
                     <a href="{self.button_url}" style="color: #ffffff; text-decoration: underline;">
                         {self.button_text}
                     </a>
@@ -448,7 +448,7 @@ class ProductPageBuilder:
         [et_pb_column type="1_2"]
             [et_pb_wc_images product="current" /]
         [/et_pb_column]
-        
+
         <!-- Product Details -->
         [et_pb_column type="1_2"]
             [et_pb_wc_breadcrumb product="current" /]
@@ -504,7 +504,7 @@ class ProductPageBuilder:
             [et_pb_wc_title product="current" /]
             [et_pb_wc_rating product="current" /]
             [et_pb_wc_price product="current" /]
-            
+
             <!-- Trust Badges -->
             [et_pb_blurb title="Free Shipping" use_icon="on" font_icon="%%47%%" icon_color="#10b981" icon_placement="left"]
                 On orders over $50
@@ -512,7 +512,7 @@ class ProductPageBuilder:
             [et_pb_blurb title="Secure Payment" use_icon="on" font_icon="%%96%%" icon_color="#10b981" icon_placement="left"]
                 256-bit SSL encryption
             [/et_pb_blurb]
-            
+
             [et_pb_wc_add_to_cart product="current" /]
             [et_pb_wc_meta product="current" /]
         [/et_pb_column]
@@ -567,7 +567,7 @@ class ProductPageBuilder:
             [et_pb_wc_price product="current" text_orientation="center" /]
         [/et_pb_column]
     [/et_pb_row]
-    
+
     [et_pb_row column_structure="1_4,1_2,1_4"]
         [et_pb_column type="1_4"][/et_pb_column]
         [et_pb_column type="1_2"]
@@ -600,7 +600,7 @@ class ProductPageBuilder:
         [/et_pb_column]
         [et_pb_column type="1_3"][/et_pb_column]
     [/et_pb_row]
-    
+
     [et_pb_row]
         [et_pb_column type="4_4"]
             [et_pb_wc_title product="current" text_orientation="center" /]
@@ -608,7 +608,7 @@ class ProductPageBuilder:
             [et_pb_wc_price product="current" text_orientation="center" /]
         [/et_pb_column]
     [/et_pb_row]
-    
+
     [et_pb_row column_structure="1_4,1_2,1_4"]
         [et_pb_column type="1_4"][/et_pb_column]
         [et_pb_column type="1_2"]
@@ -629,7 +629,7 @@ class ProductPageBuilder:
         [et_pb_column type="1_2" background_color="#f3f4f6"]
             [et_pb_wc_images product="current" custom_padding="60px|40px|60px|40px" /]
         [/et_pb_column]
-        
+
         <!-- Right: Product Details -->
         [et_pb_column type="1_2" custom_padding="60px|40px|60px|40px"]
             [et_pb_wc_breadcrumb product="current" /]
@@ -638,9 +638,9 @@ class ProductPageBuilder:
             [et_pb_wc_price product="current" /]
             [et_pb_wc_description product="current" /]
             [et_pb_wc_add_to_cart product="current" /]
-            
+
             [et_pb_divider show_divider="off" height="20px" /]
-            
+
             <!-- Features List -->
             [et_pb_text]
                 <ul class="product-features">
@@ -710,7 +710,7 @@ class ShopPageBuilder:
         [et_pb_column type="1_4"]
             [et_pb_sidebar area="shop-sidebar" /]
         [/et_pb_column]
-        
+
         <!-- Products -->
         [et_pb_column type="3_4"]
             [et_pb_shop
@@ -735,7 +735,7 @@ class ShopPageBuilder:
         [et_pb_column type="1_4"]
             [et_pb_sidebar area="shop-sidebar" /]
         [/et_pb_column]
-        
+
         <!-- Products List -->
         [et_pb_column type="3_4"]
             [et_pb_shop
@@ -803,7 +803,7 @@ class ShopPageBuilder:
             [/et_pb_text]
         [/et_pb_column]
     [/et_pb_row]
-    
+
     [et_pb_row column_structure="1_3,1_3,1_3"]
         [et_pb_column type="1_3"]
             [et_pb_blurb
@@ -1130,7 +1130,7 @@ class CartCheckoutBuilder:
             <span class="text">30-day returns</span>
         </div>
     </div>
-    
+
     <div class="payment-icons">
         <img src="/images/payment-visa.svg" alt="Visa" />
         <img src="/images/payment-mastercard.svg" alt="Mastercard" />
@@ -1201,7 +1201,7 @@ class CategoryTemplateBuilder:
             [/et_pb_text]
             [et_pb_sidebar area="shop-filters" /]
         [/et_pb_column]
-        
+
         [et_pb_column type="3_4"]
             [et_pb_shop
                 type="product_cat"
@@ -1514,7 +1514,7 @@ class MobileCommerceOptimizer:
     .mobile-menu-toggle {
         display: block;
     }
-    
+
     .site-navigation {
         position: fixed;
         top: 0;
@@ -1526,23 +1526,23 @@ class MobileCommerceOptimizer:
         z-index: 1000;
         overflow-y: auto;
     }
-    
+
     .site-navigation.active {
         left: 0;
     }
-    
+
     .site-navigation .menu-item {
         display: block;
         padding: 15px 20px;
         border-bottom: 1px solid #e5e7eb;
     }
-    
+
     /* Mobile Search */
     .mobile-search {
         padding: 15px;
         background: #f3f4f6;
     }
-    
+
     .mobile-search input {
         width: 100%;
         padding: 12px 15px;
@@ -1550,7 +1550,7 @@ class MobileCommerceOptimizer:
         border-radius: 8px;
         font-size: 16px;
     }
-    
+
     /* Mobile Cart Icon */
     .mobile-cart-icon {
         position: fixed;
@@ -1567,7 +1567,7 @@ class MobileCommerceOptimizer:
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
         z-index: 1000;
     }
-    
+
     .mobile-cart-icon .cart-count {
         position: absolute;
         top: -5px;
@@ -1583,7 +1583,7 @@ class MobileCommerceOptimizer:
         align-items: center;
         justify-content: center;
     }
-    
+
     /* Quick View Modal */
     .quick-view-modal {
         position: fixed;
@@ -1599,11 +1599,11 @@ class MobileCommerceOptimizer:
         max-height: 80vh;
         overflow-y: auto;
     }
-    
+
     .quick-view-modal.active {
         transform: translateY(0);
     }
-    
+
     .quick-view-modal .handle {
         width: 40px;
         height: 4px;
@@ -1611,12 +1611,12 @@ class MobileCommerceOptimizer:
         border-radius: 2px;
         margin: 0 auto 20px;
     }
-    
+
     /* Product Card Touch Optimizations */
     .woocommerce ul.products li.product {
         touch-action: manipulation;
     }
-    
+
     .woocommerce ul.products li.product .add_to_cart_button {
         opacity: 1;
         transform: none;
@@ -1628,7 +1628,7 @@ class MobileCommerceOptimizer:
     .woocommerce ul.products {
         grid-template-columns: repeat(3, 1fr);
     }
-    
+
     .product-page .product-gallery,
     .product-page .product-details {
         width: 100%;
@@ -1674,22 +1674,22 @@ class MobileCommerceOptimizer:
     .woocommerce-checkout .col2-set {
         grid-template-columns: 1fr;
     }
-    
+
     .woocommerce-checkout .form-row {
         width: 100%;
         float: none;
     }
-    
+
     .woocommerce-checkout .form-row-first,
     .woocommerce-checkout .form-row-last {
         width: 100%;
     }
-    
+
     /* Express Checkout Buttons */
     .express-checkout {
         margin-bottom: 30px;
     }
-    
+
     .express-checkout .button {
         display: flex;
         align-items: center;
@@ -1700,23 +1700,23 @@ class MobileCommerceOptimizer:
         padding: 15px;
         border-radius: 8px;
     }
-    
+
     .express-checkout .apple-pay-btn {
         background: #000000;
         color: #ffffff;
     }
-    
+
     .express-checkout .google-pay-btn {
         background: #ffffff;
         color: #000000;
         border: 1px solid #e5e7eb;
     }
-    
+
     .express-checkout .paypal-btn {
         background: #ffc439;
         color: #000000;
     }
-    
+
     /* Order Summary Sticky */
     .woocommerce-checkout #order_review {
         position: sticky;
@@ -1726,7 +1726,7 @@ class MobileCommerceOptimizer:
         border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    
+
     /* Auto-fill Styles */
     input:-webkit-autofill {
         -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
@@ -1748,15 +1748,15 @@ class MobileCommerceOptimizer:
             Quick View
         </button>
     </div>
-    
+
     <div class="product-info">
         <h3 class="product-title">{{product_name}}</h3>
-        
+
         <div class="product-rating">
             <span class="stars">{{rating_stars}}</span>
             <span class="count">({{review_count}})</span>
         </div>
-        
+
         <div class="product-price">
             {{#if on_sale}}
             <span class="original-price">${{regular_price}}</span>
@@ -1765,7 +1765,7 @@ class MobileCommerceOptimizer:
             <span class="price">${{price}}</span>
             {{/if}}
         </div>
-        
+
         <button class="add-to-cart-btn" data-product-id="{{product_id}}">
             Add to Cart
         </button>
@@ -1854,7 +1854,7 @@ class CrossSellManager:
             [/et_pb_text]
         [/et_pb_column]
     [/et_pb_row]
-    
+
     [et_pb_row column_structure="1_3,1_3,1_3"]
         [et_pb_column type="1_3"]
             [et_pb_blurb

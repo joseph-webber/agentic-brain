@@ -317,40 +317,6 @@ class ShopifyStorefrontAPI:
             filters: Optional filters like price_max, collection, in_stock
             limit: Maximum results to return
         """
-        gql_query = """
-        query SearchProducts($query: String!, $first: Int!) {
-            products(first: $first, query: $query) {
-                edges {
-                    node {
-                        id
-                        title
-                        description
-                        handle
-                        productType
-                        tags
-                        priceRange {
-                            minVariantPrice { amount currencyCode }
-                            maxVariantPrice { amount currencyCode }
-                        }
-                        images(first: 1) {
-                            edges { node { url altText } }
-                        }
-                        variants(first: 10) {
-                            edges {
-                                node {
-                                    id
-                                    title
-                                    price { amount currencyCode }
-                                    availableForSale
-                                    quantityAvailable
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        """
 
         # Build Shopify search query with filters
         search_query = query
@@ -449,24 +415,6 @@ class ShopifyStorefrontAPI:
             for item in cart.items
         ]
 
-        mutation = """
-        mutation CreateCheckout($input: CheckoutCreateInput!) {
-            checkoutCreate(input: $input) {
-                checkout {
-                    id
-                    webUrl
-                    totalPriceV2 { amount currencyCode }
-                    lineItems(first: 50) {
-                        edges { node { title quantity } }
-                    }
-                }
-                checkoutUserErrors {
-                    field
-                    message
-                }
-            }
-        }
-        """
 
         checkout_input = {"lineItems": line_items, "email": email}
 
@@ -1154,7 +1102,7 @@ class ShopifyWebhookHandler:
     async def handle_order_fulfilled(self, payload: Dict) -> None:
         """Handle order fulfillment webhook - send tracking info."""
         order_id = payload.get("id")
-        email = payload.get("email")
+        payload.get("email")
         tracking = payload.get("fulfillments", [{}])[0].get("tracking_number")
 
         # In production, send notification via email/SMS
@@ -1163,7 +1111,7 @@ class ShopifyWebhookHandler:
     async def handle_abandoned_checkout(self, payload: Dict) -> None:
         """Handle abandoned checkout - trigger recovery flow."""
         checkout_id = payload.get("id")
-        email = payload.get("email")
+        payload.get("email")
         cart_value = payload.get("total_price")
 
         # In production, queue abandoned cart email
