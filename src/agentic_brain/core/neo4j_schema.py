@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Shared Neo4j schema helpers for indexes used across GraphRAG modules.
 
 Maintains a canonical set of indexes for fulltext search, range filtering,

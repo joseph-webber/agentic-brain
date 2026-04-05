@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Topic-Centric Graph Patterns - Adopted from arraz2000/happy-skies-automation
 

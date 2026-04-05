@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Health check helpers and a minimal WSGI app for health & metrics."""
 
 import json

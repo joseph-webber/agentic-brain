@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Neo4j Graph Patterns - arraz2000 architecture adopted.
 

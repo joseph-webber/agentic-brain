@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 # guardrails package
 from .hallucination import HallucinationDetector
 from .output_filter import OutputFilter

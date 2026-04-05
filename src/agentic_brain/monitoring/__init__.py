@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Monitoring package for agentic-brain (expose registry helpers)."""
 
 from .health import create_wsgi_app, get_health_status

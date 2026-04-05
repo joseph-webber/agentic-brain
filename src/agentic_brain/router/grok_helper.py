@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 """Redis-backed Grok helper for inter-agent coordination."""

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Policy enforcer that composes various guardrails."""
 
 from .hallucination import HallucinationDetector

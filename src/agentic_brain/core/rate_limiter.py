@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Rate Limit Manager - Learns from 429 errors and manages API quotas intelligently.
 

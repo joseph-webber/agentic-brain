@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Neo4j integration for agentic-brain.
 

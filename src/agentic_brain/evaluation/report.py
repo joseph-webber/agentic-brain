@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Report generation for RAG evaluation."""
 
 from dataclasses import dataclass, field

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Metrics used by the RAG evaluation framework.
 
 Provides: faithfulness_score, relevancy_score, context_precision, context_recall, answer_similarity

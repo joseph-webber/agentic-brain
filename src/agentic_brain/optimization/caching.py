@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Caching helpers for embeddings and Neo4j queries."""
 
 from __future__ import annotations

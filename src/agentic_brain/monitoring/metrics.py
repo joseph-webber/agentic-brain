@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Metrics collection and Prometheus exposition for agentic-brain.
 
 This module provides a lightweight in-process metrics registry and Prometheus

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Lightweight Langfuse integration shim.
 This module does not depend on the official Langfuse SDK to keep tests simple.
 """

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Shared Neo4j connection pool with lazy initialization.
 
 Provides both synchronous and asynchronous access to Neo4j.

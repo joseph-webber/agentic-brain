@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """RAGEvaluator: orchestrates evaluation using datasets and metrics."""
 
 from typing import List, Optional

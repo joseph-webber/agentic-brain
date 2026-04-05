@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Lightweight load testing utilities for the Agentic Brain.
 - Uses ThreadPoolExecutor + urllib to avoid external deps.

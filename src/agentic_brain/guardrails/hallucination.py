@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Heuristic hallucination detection.
 
 This module implements simple heuristics to flag potential hallucinations

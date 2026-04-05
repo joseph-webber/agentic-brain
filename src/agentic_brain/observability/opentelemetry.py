@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """OpenTelemetry exporter shim.
 If opentelemetry is available, the real exporter could be implemented here. For testing and safety
 we provide a minimal shim that converts spans to a serializable form.

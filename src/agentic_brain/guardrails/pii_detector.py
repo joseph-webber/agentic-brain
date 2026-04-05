@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Simple PII detection utilities."""
 
 import re

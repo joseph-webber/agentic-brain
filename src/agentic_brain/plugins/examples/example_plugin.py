@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import asyncio
 
 from agentic_brain.plugins.base import Plugin

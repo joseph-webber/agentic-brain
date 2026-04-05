@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """RAGTracer: collect spans and metrics for retrieval-augmented generation flows.
 Tracks latency, token usage, retrieval quality, and costs. Provides hooks to export to third-party systems.
 """

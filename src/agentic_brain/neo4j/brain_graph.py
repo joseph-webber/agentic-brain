@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Brain Graph - Unified interface to the topic-centric Neo4j graph."""
 
 from __future__ import annotations
