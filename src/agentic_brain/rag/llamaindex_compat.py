@@ -501,8 +501,16 @@ class AgenticSynthesizer(BaseSynthesizer):
                 )
             context = "\n\n".join(context_parts)
 
-            # Generate response using pipeline's internal generate method
-            answer = self._pipeline._generate(query, context)
+            # Try to generate response, fall back to context summary if LLM unavailable
+            try:
+                answer = self._pipeline._generate(query, context)
+            except Exception as e:
+                logger.debug(f"LLM generation failed, using context summary: {e}")
+                # Fallback: summarize context as the answer
+                answer = f"Based on the provided context:\n\n{context[:500]}"
+                if len(context) > 500:
+                    answer += "..."
+
             confidence = (
                 sum(c.score for c in context_chunks) / len(context_chunks)
                 if context_chunks
