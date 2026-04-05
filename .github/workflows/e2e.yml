@@ -27,7 +27,7 @@ jobs:
         run: mkdir -p apps/BrainChat/Tests/Artifacts
 
       - name: Run full BrainChat E2E suite
-        run: swift test --package-path apps/BrainChat/Tests --no-parallel
+        run: swift test --package-path apps/BrainChat/Tests 
 
       - name: Upload E2E artifacts
         if: always()
