@@ -138,7 +138,9 @@ class AgentClock:
     def local_now(self) -> str:
         return datetime.now(self._local_tz).strftime("%I:%M %p, %A %d %B")
 
-    def stamp(self, data: dict[str, object], field: str = "timestamp") -> dict[str, object]:
+    def stamp(
+        self, data: dict[str, object], field: str = "timestamp"
+    ) -> dict[str, object]:
         data[field] = self.now()
         return data
 

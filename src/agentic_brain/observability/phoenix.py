@@ -1,6 +1,7 @@
 """Arize Phoenix (Phoenix) lightweight shim.
 No external dependency required for tests — collects events in memory.
 """
+
 from __future__ import annotations
 from typing import Any
 

@@ -118,7 +118,9 @@ def test_fixed_chunker_alias_is_token_chunker() -> None:
         (8, 0, [TOKEN_TEXT]),
     ],
 )
-def test_token_chunker_windowing(chunk_size: int, overlap: int, expected: list[str]) -> None:
+def test_token_chunker_windowing(
+    chunk_size: int, overlap: int, expected: list[str]
+) -> None:
     chunks = TokenChunker(chunk_size=chunk_size, overlap=overlap).chunk(TOKEN_TEXT)
     assert [chunk.content for chunk in chunks] == expected
 
@@ -142,8 +144,12 @@ def test_token_chunker_deduplicates(text: str, expected_count: int) -> None:
     "chunk_size, overlap",
     [(8, 0), (9, 3), (10, 2), (12, 4)],
 )
-def test_sentence_chunker_splits_on_sentence_boundaries(chunk_size: int, overlap: int) -> None:
-    chunks = SentenceChunker(chunk_size=chunk_size, overlap=overlap).chunk(SENTENCE_TEXT)
+def test_sentence_chunker_splits_on_sentence_boundaries(
+    chunk_size: int, overlap: int
+) -> None:
+    chunks = SentenceChunker(chunk_size=chunk_size, overlap=overlap).chunk(
+        SENTENCE_TEXT
+    )
     assert chunks
     assert all(chunk.content.endswith((".", "!", "?")) for chunk in chunks)
     assert chunks[0].content.startswith("One.")
@@ -167,7 +173,9 @@ def test_sentence_chunker_deduplicates(text: str, expected_count: int) -> None:
     "similarity_threshold, expected_count",
     [(0.15, 3), (0.18, 3), (0.25, 4), (0.4, 4)],
 )
-def test_semantic_chunker_respects_topic_shifts(similarity_threshold: float, expected_count: int) -> None:
+def test_semantic_chunker_respects_topic_shifts(
+    similarity_threshold: float, expected_count: int
+) -> None:
     chunks = SemanticChunker(
         chunk_size=120,
         overlap=0,
@@ -186,7 +194,9 @@ def test_semantic_chunker_respects_topic_shifts(similarity_threshold: float, exp
         (RECURSIVE_TEXT, ["\n\n", " ", ""]),
     ],
 )
-def test_recursive_chunker_splits_hierarchically(text: str, separators: list[str] | None) -> None:
+def test_recursive_chunker_splits_hierarchically(
+    text: str, separators: list[str] | None
+) -> None:
     chunker = RecursiveChunker(chunk_size=12, overlap=2, separators=separators)
     chunks = chunker.chunk(text)
     assert chunks
@@ -198,7 +208,9 @@ def test_recursive_chunker_splits_hierarchically(text: str, separators: list[str
     "chunk_size, expected_min",
     [(20, 2), (30, 3), (40, 3), (60, 2)],
 )
-def test_markdown_chunker_recognizes_structure(chunk_size: int, expected_min: int) -> None:
+def test_markdown_chunker_recognizes_structure(
+    chunk_size: int, expected_min: int
+) -> None:
     chunks = MarkdownChunker(chunk_size=chunk_size, overlap=0).chunk(MARKDOWN_TEXT)
     assert len(chunks) >= expected_min
     assert any(chunk.metadata.get("heading") == "Title" for chunk in chunks)
@@ -210,8 +222,12 @@ def test_markdown_chunker_recognizes_structure(chunk_size: int, expected_min: in
     "include_metadata, expected",
     [(True, True), (False, False)],
 )
-def test_markdown_chunker_metadata_toggle(include_metadata: bool, expected: bool) -> None:
-    chunker = MarkdownChunker(chunk_size=40, overlap=0, include_metadata=include_metadata)
+def test_markdown_chunker_metadata_toggle(
+    include_metadata: bool, expected: bool
+) -> None:
+    chunker = MarkdownChunker(
+        chunk_size=40, overlap=0, include_metadata=include_metadata
+    )
     chunks = chunker.chunk(MARKDOWN_TEXT, metadata={"source": "doc"})
     if expected:
         assert all(chunk.metadata.get("source") == "doc" for chunk in chunks)

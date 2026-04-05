@@ -45,8 +45,12 @@ def _from_iso8601(value: str | None) -> datetime | None:
 def generate_session_id(prefix: str = "session") -> str:
     """Generate a collision-resistant, readable session ID."""
     cleaned_prefix = prefix.strip().lower()
-    if not cleaned_prefix or any(char not in _ALLOWED_PREFIX_CHARS for char in cleaned_prefix):
-        raise ValueError("prefix must contain only letters, numbers, hyphens, or underscores")
+    if not cleaned_prefix or any(
+        char not in _ALLOWED_PREFIX_CHARS for char in cleaned_prefix
+    ):
+        raise ValueError(
+            "prefix must contain only letters, numbers, hyphens, or underscores"
+        )
 
     timestamp = _utc_now().strftime("%Y%m%dT%H%M%S")
     entropy = secrets.token_hex(6)

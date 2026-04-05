@@ -253,7 +253,9 @@ class MLXBackend:
                 mx.eval(scores)
             score_list = scores.tolist()
         else:
-            score_list = [self.similarity(query_vec, candidate) for candidate in corpus_vecs]
+            score_list = [
+                self.similarity(query_vec, candidate) for candidate in corpus_vecs
+            ]
 
         ordered = sorted(enumerate(score_list), key=lambda item: item[1], reverse=True)
         return [(index, float(score)) for index, score in ordered[:top_k]]

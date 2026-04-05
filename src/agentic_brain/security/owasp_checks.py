@@ -40,6 +40,7 @@ logger = None
 
 class Severity(str, Enum):
     """Issue severity levels."""
+
     CRITICAL = "CRITICAL"
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
@@ -49,6 +50,7 @@ class Severity(str, Enum):
 
 class OWASPCategory(str, Enum):
     """OWASP Top 10 categories."""
+
     A01_BROKEN_ACCESS_CONTROL = "A01_BROKEN_ACCESS_CONTROL"
     A02_CRYPTOGRAPHIC_FAILURES = "A02_CRYPTOGRAPHIC_FAILURES"
     A03_INJECTION = "A03_INJECTION"
@@ -64,6 +66,7 @@ class OWASPCategory(str, Enum):
 @dataclass
 class SecurityIssue:
     """Represents a security issue found during audit."""
+
     file_path: str
     line_number: int
     category: OWASPCategory
@@ -100,10 +103,12 @@ class CodeAnalyzer(ast.NodeVisitor):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Track when entering function definitions."""
         # Check if first statement is a docstring
-        if (node.body and 
-            isinstance(node.body[0], ast.Expr) and 
-            isinstance(node.body[0].value, ast.Constant) and
-            isinstance(node.body[0].value.value, str)):
+        if (
+            node.body
+            and isinstance(node.body[0], ast.Expr)
+            and isinstance(node.body[0].value, ast.Constant)
+            and isinstance(node.body[0].value.value, str)
+        ):
             # Skip this first constant as docstring
             for child in node.body[1:]:
                 self.visit(child)
@@ -145,7 +150,12 @@ class CodeAnalyzer(ast.NodeVisitor):
             )
 
         # A01: Broken Access Control - subprocess without validation
-        if func_name in ("subprocess.run", "subprocess.call", "subprocess.Popen", "os.system"):
+        if func_name in (
+            "subprocess.run",
+            "subprocess.call",
+            "subprocess.Popen",
+            "os.system",
+        ):
             if self._has_shell_true(node) or self._has_unsanitized_args(node):
                 self.issues.append(
                     SecurityIssue(
@@ -168,11 +178,22 @@ class CodeAnalyzer(ast.NodeVisitor):
             # Only check strings that are not docstrings (min length for actual secret)
             # Exclude typical documentation strings
             value_lower = node.value.lower()
-            is_doc = any(keyword in value_lower for keyword in [
-                "example:", "format:", "args:", "returns:", "raises:",
-                "authenticat", "provide", "configure", "set to", "default:",
-            ])
-            
+            is_doc = any(
+                keyword in value_lower
+                for keyword in [
+                    "example:",
+                    "format:",
+                    "args:",
+                    "returns:",
+                    "raises:",
+                    "authenticat",
+                    "provide",
+                    "configure",
+                    "set to",
+                    "default:",
+                ]
+            )
+
             if not is_doc and self._is_likely_secret(node.value):
                 self.issues.append(
                     SecurityIssue(
@@ -181,7 +202,11 @@ class CodeAnalyzer(ast.NodeVisitor):
                         category=OWASPCategory.A02_CRYPTOGRAPHIC_FAILURES,
                         severity=Severity.HIGH,
                         description="Hardcoded secret detected in source code",
-                        code_snippet=node.value[:50] + "..." if len(node.value) > 50 else node.value,
+                        code_snippet=(
+                            node.value[:50] + "..."
+                            if len(node.value) > 50
+                            else node.value
+                        ),
                         remediation="Move secrets to environment variables or secure vault (e.g., Vault, AWS Secrets Manager)",
                         cwe_id="CWE-798",
                     )
@@ -197,7 +222,10 @@ class CodeAnalyzer(ast.NodeVisitor):
             and isinstance(node.ops[0], (ast.Eq, ast.NotEq))
             and self._looks_like_sensitive_comparison(node)
         ):
-            if "password" in ast.unparse(node).lower() or "token" in ast.unparse(node).lower():
+            if (
+                "password" in ast.unparse(node).lower()
+                or "token" in ast.unparse(node).lower()
+            ):
                 self.issues.append(
                     SecurityIssue(
                         file_path=self.file_path,
@@ -239,7 +267,11 @@ class CodeAnalyzer(ast.NodeVisitor):
     def _has_unsanitized_args(self, node: ast.Call) -> bool:
         """Check for user input in command args."""
         code = ast.unparse(node)
-        return "user" in code.lower() or "input" in code.lower() or "request" in code.lower()
+        return (
+            "user" in code.lower()
+            or "input" in code.lower()
+            or "request" in code.lower()
+        )
 
     def _is_likely_secret(self, value: str) -> bool:
         """Heuristic to detect likely secrets (avoid false positives in docs)."""
@@ -247,17 +279,27 @@ class CodeAnalyzer(ast.NodeVisitor):
             return False
         if not any(c.isalnum() for c in value):
             return False
-        
+
         # Skip if this looks like documentation
         value_lower = value.lower()
         doc_keywords = [
-            "data extracted", "environment variable", "token missing",
-            "extracted from", "rejected", "endpoint", "add to", "generate",
-            "example", "format", "check if", "error", "verify",
+            "data extracted",
+            "environment variable",
+            "token missing",
+            "extracted from",
+            "rejected",
+            "endpoint",
+            "add to",
+            "generate",
+            "example",
+            "format",
+            "check if",
+            "error",
+            "verify",
         ]
         if any(kw in value_lower for kw in doc_keywords):
             return False
-        
+
         # Only flag actual secret patterns
         secret_keywords = ["sk_", "sk-", "api_", "secret", "password"]
         # Require actual secret-like content, not just the word "token" or "key"
@@ -267,7 +309,8 @@ class CodeAnalyzer(ast.NodeVisitor):
         """Check if comparison looks like it's comparing sensitive data."""
         code = ast.unparse(node).lower()
         return any(
-            term in code for term in ["password", "token", "secret", "key", "auth", "credential"]
+            term in code
+            for term in ["password", "token", "secret", "key", "auth", "credential"]
         )
 
 
@@ -280,7 +323,7 @@ class RegexPatternChecker:
         r'f["\'](SELECT|INSERT|UPDATE|DELETE)',
         r'\.query\s*\(\s*f["\']',
         r'execute\s*\(\s*f["\']',
-        r'SQL.*%s.*%',
+        r"SQL.*%s.*%",
     ]
 
     CYPHER_INJECTION_PATTERNS = [
@@ -297,23 +340,23 @@ class RegexPatternChecker:
 
     # A02: Cryptographic failures
     WEAK_CRYPTO_PATTERNS = [
-        r'hashlib\.md5',
-        r'hashlib\.sha1',
-        r'random\.random',
-        r'os\.urandom',  # Actually OK, but flagged for review
+        r"hashlib\.md5",
+        r"hashlib\.sha1",
+        r"random\.random",
+        r"os\.urandom",  # Actually OK, but flagged for review
     ]
 
     # A05: Misconfiguration
     DEBUG_PATTERNS = [
-        r'DEBUG\s*=\s*True',
-        r'debug\s*=\s*True',
-        r'TESTING\s*=\s*True',
+        r"DEBUG\s*=\s*True",
+        r"debug\s*=\s*True",
+        r"TESTING\s*=\s*True",
     ]
 
     # A09: Logging failures
     LOGGING_PATTERNS = [
-        r'print\s*\(',  # Should use logging instead
-        r'sys\.stdout\.write',
+        r"print\s*\(",  # Should use logging instead
+        r"sys\.stdout\.write",
     ]
 
     def check_file(self, file_path: str, content: str) -> list[SecurityIssue]:
@@ -323,7 +366,7 @@ class RegexPatternChecker:
         # SQL Injection checks
         for pattern in self.SQL_INJECTION_PATTERNS:
             for match in re.finditer(pattern, content):
-                line_num = content[:match.start()].count("\n") + 1
+                line_num = content[: match.start()].count("\n") + 1
                 issues.append(
                     SecurityIssue(
                         file_path=file_path,
@@ -340,7 +383,7 @@ class RegexPatternChecker:
         # Cypher injection checks
         for pattern in self.CYPHER_INJECTION_PATTERNS:
             for match in re.finditer(pattern, content):
-                line_num = content[:match.start()].count("\n") + 1
+                line_num = content[: match.start()].count("\n") + 1
                 issues.append(
                     SecurityIssue(
                         file_path=file_path,
@@ -357,7 +400,7 @@ class RegexPatternChecker:
         # Debug mode in production
         for pattern in self.DEBUG_PATTERNS:
             for match in re.finditer(pattern, content):
-                line_num = content[:match.start()].count("\n") + 1
+                line_num = content[: match.start()].count("\n") + 1
                 issues.append(
                     SecurityIssue(
                         file_path=file_path,
@@ -373,9 +416,11 @@ class RegexPatternChecker:
 
         # Logging with print instead of logger
         for pattern in self.LOGGING_PATTERNS:
-            if "logging" not in content and "log" not in content.lower():  # Skip if using logging module
+            if (
+                "logging" not in content and "log" not in content.lower()
+            ):  # Skip if using logging module
                 for match in re.finditer(pattern, content):
-                    line_num = content[:match.start()].count("\n") + 1
+                    line_num = content[: match.start()].count("\n") + 1
                     issues.append(
                         SecurityIssue(
                             file_path=file_path,
@@ -425,7 +470,9 @@ class OWASPAuditor:
 
         return file_issues
 
-    def audit_codebase(self, root_path: str, extensions: list[str] | None = None) -> list[SecurityIssue]:
+    def audit_codebase(
+        self, root_path: str, extensions: list[str] | None = None
+    ) -> list[SecurityIssue]:
         """Audit entire codebase for OWASP vulnerabilities."""
         if extensions is None:
             extensions = [".py"]
@@ -434,7 +481,9 @@ class OWASPAuditor:
         root = Path(root_path)
 
         for file_path in root.rglob("*"):
-            if file_path.is_file() and any(file_path.suffix == ext for ext in extensions):
+            if file_path.is_file() and any(
+                file_path.suffix == ext for ext in extensions
+            ):
                 # Skip test and example files
                 if "test" in str(file_path) or "example" in str(file_path):
                     continue
@@ -497,7 +546,9 @@ class OWASPAuditor:
         return report_text
 
 
-def audit_and_report(root_path: str, output_file: str | None = None) -> list[SecurityIssue]:
+def audit_and_report(
+    root_path: str, output_file: str | None = None
+) -> list[SecurityIssue]:
     """Convenience function to audit and generate report."""
     auditor = OWASPAuditor(verbose=True)
     issues = auditor.audit_codebase(root_path)

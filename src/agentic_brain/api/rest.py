@@ -32,6 +32,7 @@ from .auth import get_api_keys, require_auth, AuthContext
 # Models
 # ---------------------------------------------------------------------------
 
+
 class QueryRequest(BaseModel):
     question: str = Field(..., min_length=1, max_length=2000, example="What is AI?")
     top_k: int = Field(5, gt=0, le=50)
@@ -87,11 +88,14 @@ class ConfigModel(BaseModel):
 # Simple middleware: API key auth and rate limiter
 # ---------------------------------------------------------------------------
 
+
 class ApiKeyAuthMiddleware(BaseHTTPMiddleware):
     """Attach validated API key (if provided) to request.state.api_key."""
 
     async def dispatch(self, request: Request, call_next):
-        api_key = request.headers.get("X-API-Key") or request.query_params.get("api_key")
+        api_key = request.headers.get("X-API-Key") or request.query_params.get(
+            "api_key"
+        )
         request.state.api_key = None
         if api_key:
             valid = get_api_keys()
@@ -107,7 +111,14 @@ class SimpleRateLimitMiddleware(BaseHTTPMiddleware):
     Anonymous (by IP): default 10/min
     """
 
-    def __init__(self, app, *, auth_limit: int = 100, anon_limit: int = 10, window_seconds: int = 60):
+    def __init__(
+        self,
+        app,
+        *,
+        auth_limit: int = 100,
+        anon_limit: int = 10,
+        window_seconds: int = 60,
+    ):
         super().__init__(app)
         self.auth_limit = int(os.getenv("REST_RATE_LIMIT_AUTH", str(auth_limit)))
         self.anon_limit = int(os.getenv("REST_RATE_LIMIT_ANON", str(anon_limit)))
@@ -185,7 +196,10 @@ async def metrics_endpoint():
     return Response(content=body, media_type="text/plain")
 
 
-from fastapi.responses import JSONResponse, Response  # placed here to avoid import ordering
+from fastapi.responses import (
+    JSONResponse,
+    Response,
+)  # placed here to avoid import ordering
 
 
 @router.post("/graph/query", response_model=GraphQueryResponse, tags=["graph"])
@@ -219,7 +233,9 @@ async def get_config(request: Request):
 
 
 @router.put("/config", response_model=ConfigModel, tags=["config"])
-async def update_config(new_cfg: ConfigModel, request: Request, auth: AuthContext = Depends(require_auth)):
+async def update_config(
+    new_cfg: ConfigModel, request: Request, auth: AuthContext = Depends(require_auth)
+):
     """Update in-memory config. In production this should persist to file or DB.
 
     This endpoint requires authentication when AUTH_ENABLED=true.

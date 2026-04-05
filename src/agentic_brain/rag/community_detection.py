@@ -78,7 +78,9 @@ class CommunityHierarchy:
     @property
     def flat_communities(self) -> dict[int, list[str]]:
         """Backward-compatible flat community map."""
-        return {cid: list(community.entities) for cid, community in self.communities.items()}
+        return {
+            cid: list(community.entities) for cid, community in self.communities.items()
+        }
 
     @property
     def max_level(self) -> int:
@@ -87,7 +89,11 @@ class CommunityHierarchy:
         return max(community.level for community in self.communities.values())
 
     def communities_at_level(self, level: int) -> list[Community]:
-        return [community for community in self.communities.values() if community.level == level]
+        return [
+            community
+            for community in self.communities.values()
+            if community.level == level
+        ]
 
     def get_entity_community(self, entity_name: str) -> Optional[Community]:
         cid = self.entity_to_community.get(entity_name)
@@ -158,7 +164,9 @@ def _query_records(session: Any, query: str, **params: Any) -> list[dict[str, An
     return [_record_to_dict(record) for record in result]
 
 
-async def _async_query_records(session: Any, query: str, **params: Any) -> list[dict[str, Any]]:
+async def _async_query_records(
+    session: Any, query: str, **params: Any
+) -> list[dict[str, Any]]:
     result = session.run(query, **params)
     if inspect.isawaitable(result):
         result = await result
@@ -204,10 +212,14 @@ def _drop_graph_if_exists(session: Any, name: str = GRAPH_PROJECT_NAME) -> None:
         pass
 
 
-async def _drop_graph_if_exists_async(session: Any, name: str = GRAPH_PROJECT_NAME) -> None:
+async def _drop_graph_if_exists_async(
+    session: Any, name: str = GRAPH_PROJECT_NAME
+) -> None:
     """Async graph projection cleanup."""
     try:
-        await _async_query_records(session, "CALL gds.graph.drop($name, false)", name=name)
+        await _async_query_records(
+            session, "CALL gds.graph.drop($name, false)", name=name
+        )
     except Exception:
         pass
 
@@ -226,12 +238,13 @@ def _build_resolution_schedule(
         return []
     multiplier = max(resolution_multiplier, 1.0)
     return [
-        base_resolution * (multiplier ** power)
-        for power in reversed(range(max_levels))
+        base_resolution * (multiplier**power) for power in reversed(range(max_levels))
     ]
 
 
-def _partition_signature(level_communities: dict[int, list[str]]) -> tuple[tuple[str, ...], ...]:
+def _partition_signature(
+    level_communities: dict[int, list[str]]
+) -> tuple[tuple[str, ...], ...]:
     return tuple(
         sorted(tuple(sorted(set(entities))) for entities in level_communities.values())
     )
@@ -365,7 +378,9 @@ def _populate_metrics(
     for community in hierarchy.communities.values():
         members = set(community.entities)
         internal_edges = sum(
-            1 for source, target in normalized_edges if source in members and target in members
+            1
+            for source, target in normalized_edges
+            if source in members and target in members
         )
         possible_edges = community.size * (community.size - 1) / 2
         if community.size <= 1:
@@ -393,23 +408,38 @@ def _populate_metrics(
         communities_by_level[community.level].append(community)
 
     for level, communities in communities_by_level.items():
-        total_internal_edges = sum(int(community.metadata.get("internal_edges", 0)) for community in communities)
+        total_internal_edges = sum(
+            int(community.metadata.get("internal_edges", 0))
+            for community in communities
+        )
         total_size = sum(max(community.size, 1) for community in communities)
         hierarchy.level_metrics[level] = {
-            "modularity": float(sum(community.modularity_score for community in communities)),
-            "coverage": float(total_internal_edges / total_edges) if total_edges else 0.0,
-            "cohesion": float(
-                sum(community.cohesion_score * max(community.size, 1) for community in communities)
-                / total_size
-            )
-            if total_size
-            else 0.0,
+            "modularity": float(
+                sum(community.modularity_score for community in communities)
+            ),
+            "coverage": (
+                float(total_internal_edges / total_edges) if total_edges else 0.0
+            ),
+            "cohesion": (
+                float(
+                    sum(
+                        community.cohesion_score * max(community.size, 1)
+                        for community in communities
+                    )
+                    / total_size
+                )
+                if total_size
+                else 0.0
+            ),
             "community_count": float(len(communities)),
-            "resolution": float(
-                sum((community.resolution or 0.0) for community in communities) / len(communities)
-            )
-            if communities
-            else 0.0,
+            "resolution": (
+                float(
+                    sum((community.resolution or 0.0) for community in communities)
+                    / len(communities)
+                )
+                if communities
+                else 0.0
+            ),
         }
 
     return hierarchy
@@ -449,7 +479,9 @@ def _detect_leiden_hierarchical(
         "randomness": randomness,
         "resolution_multiplier": resolution_multiplier,
     }
-    schedule = _build_resolution_schedule(base_resolution, max_levels, resolution_multiplier)
+    schedule = _build_resolution_schedule(
+        base_resolution, max_levels, resolution_multiplier
+    )
     hierarchy_levels: list[tuple[float, dict[int, list[str]]]] = []
     last_signature: tuple[tuple[str, ...], ...] | None = None
 
@@ -473,7 +505,9 @@ def _detect_leiden_hierarchical(
                     random_seed=randomness,
                 )
             except Exception as exc:
-                logger.warning("Leiden at resolution %.2f failed: %s", current_resolution, exc)
+                logger.warning(
+                    "Leiden at resolution %.2f failed: %s", current_resolution, exc
+                )
                 break
 
             communities: dict[int, list[str]] = defaultdict(list)
@@ -655,7 +689,9 @@ def resolve_entities(session: Any, similarity_threshold: float = 0.85) -> int:
                 merge_id=merge_id,
             )
             merged_count += 1
-            logger.debug("Merged entity '%s' (duplicate %s → %s)", name, merge_id, keep_id)
+            logger.debug(
+                "Merged entity '%s' (duplicate %s → %s)", name, merge_id, keep_id
+            )
     except Exception as exc:
         logger.warning("Entity resolution failed: %s", exc)
 
@@ -714,7 +750,14 @@ def summarize_community(
                             f"{record.get('name')} -{rel_type or 'RELATES_TO'}-> {target}"
                         )
         except Exception:
-            entity_details = [{"name": name, "type": community.entity_types.get(name, "Entity"), "mentions": 1} for name in entity_names]
+            entity_details = [
+                {
+                    "name": name,
+                    "type": community.entity_types.get(name, "Entity"),
+                    "mentions": 1,
+                }
+                for name in entity_names
+            ]
     else:
         entity_details = []
 
@@ -786,7 +829,9 @@ def summarize_all_communities(
 ) -> CommunityHierarchy:
     """Generate summaries for all communities at one level or across the full hierarchy."""
     if level is None:
-        levels = sorted({community.level for community in hierarchy.communities.values()})
+        levels = sorted(
+            {community.level for community in hierarchy.communities.values()}
+        )
     else:
         levels = [level]
 
@@ -794,12 +839,15 @@ def summarize_all_communities(
         hierarchy.summaries_by_level.setdefault(current_level, {})
         for community in hierarchy.communities_at_level(current_level):
             if community.summary:
-                hierarchy.summaries_by_level[current_level][community.id] = community.summary
+                hierarchy.summaries_by_level[current_level][
+                    community.id
+                ] = community.summary
                 continue
             child_summaries = [
                 hierarchy.communities[child_id].summary
                 for child_id in community.children_ids
-                if child_id in hierarchy.communities and hierarchy.communities[child_id].summary
+                if child_id in hierarchy.communities
+                and hierarchy.communities[child_id].summary
             ]
             community.summary = summarize_community(
                 session,
@@ -807,7 +855,9 @@ def summarize_all_communities(
                 llm=llm,
                 child_summaries=child_summaries,
             )
-            hierarchy.summaries_by_level[current_level][community.id] = community.summary
+            hierarchy.summaries_by_level[current_level][
+                community.id
+            ] = community.summary
     return hierarchy
 
 
@@ -1020,7 +1070,9 @@ async def _async_leiden_hierarchical(
         "randomness": randomness,
         "resolution_multiplier": resolution_multiplier,
     }
-    schedule = _build_resolution_schedule(base_resolution, max_levels, resolution_multiplier)
+    schedule = _build_resolution_schedule(
+        base_resolution, max_levels, resolution_multiplier
+    )
     hierarchy_levels: list[tuple[float, dict[int, list[str]]]] = []
     last_signature: tuple[tuple[str, ...], ...] | None = None
 
@@ -1044,7 +1096,11 @@ async def _async_leiden_hierarchical(
                     random_seed=randomness,
                 )
             except Exception as exc:
-                logger.warning("Async Leiden at resolution %.2f failed: %s", current_resolution, exc)
+                logger.warning(
+                    "Async Leiden at resolution %.2f failed: %s",
+                    current_resolution,
+                    exc,
+                )
                 break
 
             communities: dict[int, list[str]] = defaultdict(list)

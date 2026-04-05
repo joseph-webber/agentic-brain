@@ -247,7 +247,7 @@ class TestToolRegistry:
         registry = ToolRegistry()
         tool = CustomTool()
         registry.register(tool)
-        
+
         with pytest.raises(ValueError):
             registry.register(tool)
 
@@ -256,7 +256,7 @@ class TestToolRegistry:
         registry = ToolRegistry()
         tool = CustomTool()
         registry.register(tool)
-        
+
         retrieved = registry.get_tool("custom")
         assert retrieved is not None
         assert retrieved.name == "custom"
@@ -272,7 +272,7 @@ class TestToolRegistry:
         registry = ToolRegistry()
         registry.register(CustomTool())
         registry.register(SearchTool())
-        
+
         tools = registry.list_tools()
         assert len(tools) == 2
 
@@ -281,7 +281,7 @@ class TestToolRegistry:
         registry = ToolRegistry()
         registry.register(SearchTool())
         registry.register(CalculatorTool())
-        
+
         search_tools = registry.list_tools(ToolCategory.SEARCH)
         assert len(search_tools) == 1
         assert search_tools[0]["name"] == "search"
@@ -292,7 +292,7 @@ class TestToolRegistry:
         tool = CustomTool()
         registry.register(tool)
         registry.unregister("custom")
-        
+
         assert "custom" not in registry._tools
 
     @pytest.mark.asyncio
@@ -300,7 +300,7 @@ class TestToolRegistry:
         """Test calling tool through registry."""
         registry = ToolRegistry()
         registry.register(CustomTool())
-        
+
         result = await registry.call_tool("custom", input="test")
         assert result.success is True
 
@@ -308,7 +308,7 @@ class TestToolRegistry:
     async def test_registry_call_nonexistent(self):
         """Test calling nonexistent tool."""
         registry = ToolRegistry()
-        
+
         result = await registry.call_tool("nonexistent")
         assert result.success is False
 
@@ -316,7 +316,7 @@ class TestToolRegistry:
         """Test registry representation."""
         registry = ToolRegistry()
         registry.register(CustomTool())
-        
+
         repr_str = repr(registry)
         assert "1 tools" in repr_str
 
@@ -327,7 +327,7 @@ class TestDefaultRegistry:
     def test_create_default_registry(self):
         """Test default registry creation."""
         registry = create_default_registry()
-        
+
         assert registry.get_tool("search") is not None
         assert registry.get_tool("calculate") is not None
         assert registry.get_tool("execute_code") is not None
@@ -337,7 +337,7 @@ class TestDefaultRegistry:
     async def test_default_registry_tools_work(self):
         """Test that default tools work."""
         registry = create_default_registry()
-        
+
         result = await registry.call_tool("calculate", expression="2 + 2")
         assert result.success is True
 

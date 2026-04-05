@@ -169,7 +169,9 @@ class StreamingResponse:
         self.api_base = api_base
 
         if self.provider == StreamProvider.OLLAMA:
-            self.api_base = api_base or os.getenv("OLLAMA_API_BASE", "http://localhost:11434")
+            self.api_base = api_base or os.getenv(
+                "OLLAMA_API_BASE", "http://localhost:11434"
+            )
         elif self.provider == StreamProvider.OPENAI:
             self.api_base = api_base or "https://api.openai.com/v1"
             self.api_key = api_key or os.getenv("OPENAI_API_KEY")
@@ -181,7 +183,9 @@ class StreamingResponse:
             if not self.api_key:
                 raise ValueError("ANTHROPIC_API_KEY required for Anthropic provider")
 
-    def _make_messages(self, message: str, history: list[dict[str, str]] | None) -> list[dict[str, str]]:
+    def _make_messages(
+        self, message: str, history: list[dict[str, str]] | None
+    ) -> list[dict[str, str]]:
         messages = list(history or [])
         messages.append({"role": "user", "content": message})
         return messages
@@ -222,7 +226,9 @@ class StreamingResponse:
                 async with session.post(
                     url,
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=300, sock_read=30, sock_connect=10),
+                    timeout=aiohttp.ClientTimeout(
+                        total=300, sock_read=30, sock_connect=10
+                    ),
                 ) as resp:
                     if resp.status != 200:
                         error_text = await resp.text()
@@ -257,11 +263,25 @@ class StreamingResponse:
                                 metadata={"provider": "ollama", "model": self.model},
                             )
                             is_first = False
-                    logger.info("Ollama stream complete: %s tokens in %.2fs", total_tokens, time.time() - start_time)
+                    logger.info(
+                        "Ollama stream complete: %s tokens in %.2fs",
+                        total_tokens,
+                        time.time() - start_time,
+                    )
         except (asyncio.TimeoutError, TimeoutError):
-            yield StreamToken(token="", finish_reason="error", is_end=True, metadata={"error": "timeout"})
+            yield StreamToken(
+                token="",
+                finish_reason="error",
+                is_end=True,
+                metadata={"error": "timeout"},
+            )
         except Exception as exc:
-            yield StreamToken(token="", finish_reason="error", is_end=True, metadata={"error": str(exc)})
+            yield StreamToken(
+                token="",
+                finish_reason="error",
+                is_end=True,
+                metadata={"error": str(exc)},
+            )
 
     async def _stream_openai(
         self,
@@ -273,7 +293,10 @@ class StreamingResponse:
         if self.system_prompt:
             messages = [{"role": "system", "content": self.system_prompt}] + messages
 
-        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
         payload = {
             "model": self.model,
             "messages": messages,
@@ -295,7 +318,9 @@ class StreamingResponse:
                     ) as resp:
                         if resp.status != 200:
                             error_text = await resp.text()
-                            raise RuntimeError(f"OpenAI error {resp.status}: {error_text}")
+                            raise RuntimeError(
+                                f"OpenAI error {resp.status}: {error_text}"
+                            )
 
                         is_first = True
                         async for payload_text in iter_sse_payloads(resp.content):
@@ -304,7 +329,10 @@ class StreamingResponse:
                                     token="",
                                     is_end=True,
                                     finish_reason="stop",
-                                    metadata={"provider": "openai", "model": self.model},
+                                    metadata={
+                                        "provider": "openai",
+                                        "model": self.model,
+                                    },
                                 )
                                 return
 
@@ -322,17 +350,36 @@ class StreamingResponse:
                                     is_start=is_first,
                                     is_end=finish_reason is not None,
                                     finish_reason=finish_reason,
-                                    metadata={"provider": "openai", "model": self.model},
+                                    metadata={
+                                        "provider": "openai",
+                                        "model": self.model,
+                                    },
                                 )
                                 is_first = False
                         return
             except (asyncio.TimeoutError, aiohttp.ClientError) as exc:
                 attempt += 1
                 if attempt >= max_retries:
-                    yield StreamToken(token="", finish_reason="error", is_end=True, metadata={"error": str(exc) if not isinstance(exc, asyncio.TimeoutError) else "timeout"})
+                    yield StreamToken(
+                        token="",
+                        finish_reason="error",
+                        is_end=True,
+                        metadata={
+                            "error": (
+                                str(exc)
+                                if not isinstance(exc, asyncio.TimeoutError)
+                                else "timeout"
+                            )
+                        },
+                    )
                     return
             except Exception as exc:
-                yield StreamToken(token="", finish_reason="error", is_end=True, metadata={"error": str(exc)})
+                yield StreamToken(
+                    token="",
+                    finish_reason="error",
+                    is_end=True,
+                    metadata={"error": str(exc)},
+                )
                 return
 
     async def _stream_anthropic(
@@ -364,11 +411,15 @@ class StreamingResponse:
                         url,
                         json=payload,
                         headers=headers,
-                        timeout=aiohttp.ClientTimeout(total=300, sock_read=30, sock_connect=10),
+                        timeout=aiohttp.ClientTimeout(
+                            total=300, sock_read=30, sock_connect=10
+                        ),
                     ) as resp:
                         if resp.status != 200:
                             error_text = await resp.text()
-                            raise RuntimeError(f"Anthropic error {resp.status}: {error_text}")
+                            raise RuntimeError(
+                                f"Anthropic error {resp.status}: {error_text}"
+                            )
 
                         is_first = True
                         async for payload_text in iter_sse_payloads(resp.content):
@@ -383,7 +434,10 @@ class StreamingResponse:
                                         token=text,
                                         is_start=is_first,
                                         is_end=False,
-                                        metadata={"provider": "anthropic", "model": self.model},
+                                        metadata={
+                                            "provider": "anthropic",
+                                            "model": self.model,
+                                        },
                                     )
                                     is_first = False
                             elif event_type == "message_stop":
@@ -391,7 +445,10 @@ class StreamingResponse:
                                     token="",
                                     is_end=True,
                                     finish_reason="stop",
-                                    metadata={"provider": "anthropic", "model": self.model},
+                                    metadata={
+                                        "provider": "anthropic",
+                                        "model": self.model,
+                                    },
                                 )
                                 return
                         yield StreamToken(
@@ -404,10 +461,26 @@ class StreamingResponse:
             except (asyncio.TimeoutError, aiohttp.ClientError) as exc:
                 attempt += 1
                 if attempt >= max_retries:
-                    yield StreamToken(token="", finish_reason="error", is_end=True, metadata={"error": str(exc) if not isinstance(exc, asyncio.TimeoutError) else "timeout"})
+                    yield StreamToken(
+                        token="",
+                        finish_reason="error",
+                        is_end=True,
+                        metadata={
+                            "error": (
+                                str(exc)
+                                if not isinstance(exc, asyncio.TimeoutError)
+                                else "timeout"
+                            )
+                        },
+                    )
                     return
             except Exception as exc:
-                yield StreamToken(token="", finish_reason="error", is_end=True, metadata={"error": str(exc)})
+                yield StreamToken(
+                    token="",
+                    finish_reason="error",
+                    is_end=True,
+                    metadata={"error": str(exc)},
+                )
                 return
 
     async def stream_sse(

@@ -2,4 +2,4 @@ from agentic_brain.evaluation.metrics import answer_similarity
 
 
 def test_unicode_handling():
-    assert answer_similarity("café","CAFE") > 0.5
+    assert answer_similarity("café", "CAFE") > 0.5

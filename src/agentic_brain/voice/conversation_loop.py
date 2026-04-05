@@ -63,6 +63,7 @@ logger = logging.getLogger(__name__)
 _HAS_PYAUDIO = False
 try:
     import pyaudio  # type: ignore[import-untyped]
+
     _HAS_PYAUDIO = True
 except ImportError:
     pyaudio = None  # type: ignore[assignment]
@@ -80,6 +81,7 @@ MAX_UTTERANCE_SECONDS = 30.0
 
 class ConversationState(Enum):
     """State machine for the conversation loop."""
+
     IDLE = "idle"
     LISTENING = "listening"
     PROCESSING = "processing"
@@ -462,7 +464,9 @@ class VoiceConversationLoop:
                 if speech_active:
                     if silence_start is None:
                         silence_start = time.monotonic()
-                    elif (time.monotonic() - silence_start) * 1000 >= self.config.silence_ms:
+                    elif (
+                        time.monotonic() - silence_start
+                    ) * 1000 >= self.config.silence_ms:
                         # End of utterance detected
                         if audio_buffer:
                             await self._process_utterance(audio_buffer)
@@ -497,6 +501,7 @@ class VoiceConversationLoop:
         # Kill any macOS say process
         try:
             from agentic_brain.voice.serializer import get_voice_serializer
+
             serializer = get_voice_serializer()
             serializer.reset()
         except Exception:
@@ -649,8 +654,10 @@ class VoiceConversationLoop:
         try:
             proc = await asyncio.create_subprocess_exec(
                 "say",
-                "-v", self.config.voice,
-                "-r", str(self.config.rate),
+                "-v",
+                self.config.voice,
+                "-r",
+                str(self.config.rate),
                 text,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,

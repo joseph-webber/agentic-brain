@@ -84,10 +84,12 @@ class TestBasicRRFFusion:
 
     def test_rrf_two_sources(self, vector_results, keyword_results) -> None:
         """Test RRF with two input sources."""
-        result = reciprocal_rank_fusion([
-            {"source": "vector", "results": vector_results},
-            {"source": "keyword", "results": keyword_results},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "vector", "results": vector_results},
+                {"source": "keyword", "results": keyword_results},
+            ]
+        )
 
         assert isinstance(result, RRFResult)
         assert len(result.items) > 0
@@ -104,29 +106,39 @@ class TestBasicRRFFusion:
 
     def test_rrf_scores_are_positive(self, vector_results, keyword_results) -> None:
         """RRF scores should be positive."""
-        result = reciprocal_rank_fusion([
-            {"source": "vector", "results": vector_results},
-            {"source": "keyword", "results": keyword_results},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "vector", "results": vector_results},
+                {"source": "keyword", "results": keyword_results},
+            ]
+        )
 
         assert all(item["rrf_score"] > 0 for item in result.items)
 
-    def test_rrf_scores_sorted_descending(self, vector_results, keyword_results) -> None:
+    def test_rrf_scores_sorted_descending(
+        self, vector_results, keyword_results
+    ) -> None:
         """RRF scores should be sorted in descending order."""
-        result = reciprocal_rank_fusion([
-            {"source": "vector", "results": vector_results},
-            {"source": "keyword", "results": keyword_results},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "vector", "results": vector_results},
+                {"source": "keyword", "results": keyword_results},
+            ]
+        )
 
         scores = [item["rrf_score"] for item in result.items]
         assert scores == sorted(scores, reverse=True)
 
-    def test_rrf_common_items_ranked_higher(self, vector_results, keyword_results) -> None:
+    def test_rrf_common_items_ranked_higher(
+        self, vector_results, keyword_results
+    ) -> None:
         """Items appearing in multiple sources should score higher."""
-        result = reciprocal_rank_fusion([
-            {"source": "vector", "results": vector_results},
-            {"source": "keyword", "results": keyword_results},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "vector", "results": vector_results},
+                {"source": "keyword", "results": keyword_results},
+            ]
+        )
 
         # doc_1 and doc_2 appear in both lists
         scores = {item["id"]: item["rrf_score"] for item in result.items}
@@ -144,12 +156,16 @@ class TestBasicRRFFusion:
 class TestWeightedRRF:
     """Tests for weighted RRF functionality."""
 
-    def test_weighted_rrf_vector_priority(self, vector_results, keyword_results) -> None:
+    def test_weighted_rrf_vector_priority(
+        self, vector_results, keyword_results
+    ) -> None:
         """Test that weights affect final scores."""
-        unweighted = reciprocal_rank_fusion([
-            {"source": "vector", "results": vector_results},
-            {"source": "keyword", "results": keyword_results},
-        ])
+        unweighted = reciprocal_rank_fusion(
+            [
+                {"source": "vector", "results": vector_results},
+                {"source": "keyword", "results": keyword_results},
+            ]
+        )
 
         weighted = reciprocal_rank_fusion(
             [
@@ -179,7 +195,9 @@ class TestWeightedRRF:
         assert result.weights == {"vector": 1.5, "keyword": 1.0, "graph": 1.2}
         assert len(result.items) > 0
 
-    def test_weighted_rrf_missing_weight_uses_default(self, vector_results, keyword_results) -> None:
+    def test_weighted_rrf_missing_weight_uses_default(
+        self, vector_results, keyword_results
+    ) -> None:
         """Missing weight should default to 1.0."""
         result = reciprocal_rank_fusion(
             [
@@ -201,7 +219,9 @@ class TestWeightedRRF:
 class TestExplainMode:
     """Tests for RRF explain mode (per-source score breakdown)."""
 
-    def test_explain_mode_returns_explanations(self, vector_results, keyword_results) -> None:
+    def test_explain_mode_returns_explanations(
+        self, vector_results, keyword_results
+    ) -> None:
         """Explain mode should return per-item explanations."""
         result = reciprocal_rank_fusion(
             [
@@ -214,7 +234,9 @@ class TestExplainMode:
         assert result.explanations is not None
         assert len(result.explanations) == len(result.items)
 
-    def test_explain_mode_shows_source_contributions(self, vector_results, keyword_results) -> None:
+    def test_explain_mode_shows_source_contributions(
+        self, vector_results, keyword_results
+    ) -> None:
         """Explanations should show per-source contributions."""
         result = reciprocal_rank_fusion(
             [
@@ -234,7 +256,9 @@ class TestExplainMode:
         assert "vector" in source_names
         assert "keyword" in source_names
 
-    def test_explain_mode_contribution_details(self, vector_results, keyword_results) -> None:
+    def test_explain_mode_contribution_details(
+        self, vector_results, keyword_results
+    ) -> None:
         """Source contributions should have rank, raw score, weighted score."""
         result = reciprocal_rank_fusion(
             [
@@ -251,12 +275,16 @@ class TestExplainMode:
             assert contrib.raw_score > 0
             assert contrib.weighted_score > 0
 
-    def test_explain_mode_disabled_by_default(self, vector_results, keyword_results) -> None:
+    def test_explain_mode_disabled_by_default(
+        self, vector_results, keyword_results
+    ) -> None:
         """Explain mode should be disabled by default."""
-        result = reciprocal_rank_fusion([
-            {"source": "vector", "results": vector_results},
-            {"source": "keyword", "results": keyword_results},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "vector", "results": vector_results},
+                {"source": "keyword", "results": keyword_results},
+            ]
+        )
 
         assert result.explanations is None
 
@@ -374,27 +402,33 @@ class TestEdgeCases:
 
     def test_empty_results_in_source(self, vector_results) -> None:
         """RRF with one empty source."""
-        result = reciprocal_rank_fusion([
-            {"source": "vector", "results": vector_results},
-            {"source": "keyword", "results": []},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "vector", "results": vector_results},
+                {"source": "keyword", "results": []},
+            ]
+        )
 
         assert len(result.items) == len(vector_results)
 
     def test_all_empty_results(self) -> None:
         """RRF with all sources having empty results."""
-        result = reciprocal_rank_fusion([
-            {"source": "vector", "results": []},
-            {"source": "keyword", "results": []},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "vector", "results": []},
+                {"source": "keyword", "results": []},
+            ]
+        )
 
         assert result.items == []
 
     def test_single_item_single_source(self) -> None:
         """RRF with single item in single source."""
-        result = reciprocal_rank_fusion([
-            {"source": "vector", "results": [{"id": "a", "score": 0.9}]},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "vector", "results": [{"id": "a", "score": 0.9}]},
+            ]
+        )
 
         assert len(result.items) == 1
         assert result.items[0]["id"] == "a"
@@ -406,9 +440,11 @@ class TestEdgeCases:
             {"id": "a", "score": 0.8},  # Duplicate
         ]
 
-        result = reciprocal_rank_fusion([
-            {"source": "test", "results": results},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "test", "results": results},
+            ]
+        )
 
         # Should merge (update strategy by default)
         assert len(result.items) == 1
@@ -416,12 +452,16 @@ class TestEdgeCases:
     def test_large_result_sets(self) -> None:
         """RRF should handle large result sets efficiently."""
         list1 = [{"id": f"doc_{i}", "score": 0.9 - i * 0.0001} for i in range(1000)]
-        list2 = [{"id": f"doc_{i}", "score": 0.85 - i * 0.0001} for i in range(500, 1500)]
+        list2 = [
+            {"id": f"doc_{i}", "score": 0.85 - i * 0.0001} for i in range(500, 1500)
+        ]
 
-        result = reciprocal_rank_fusion([
-            {"source": "list1", "results": list1},
-            {"source": "list2", "results": list2},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "list1", "results": list1},
+                {"source": "list2", "results": list2},
+            ]
+        )
 
         assert len(result.items) == 1500
         assert result.total_unique_items == 1500
@@ -433,9 +473,11 @@ class TestEdgeCases:
             {"score": 0.8},  # No ID - should be skipped
         ]
 
-        result = reciprocal_rank_fusion([
-            {"source": "test", "results": results},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "test", "results": results},
+            ]
+        )
 
         assert len(result.items) == 1
         assert result.items[0]["id"] == "valid"
@@ -524,7 +566,9 @@ class TestLegacyAPI:
         assert len(fused) > 0
         assert all("rrf_score" in item for item in fused)
 
-    def test_legacy_api_three_sources(self, vector_results, keyword_results, graph_results) -> None:
+    def test_legacy_api_three_sources(
+        self, vector_results, keyword_results, graph_results
+    ) -> None:
         """Legacy API should work with optional keyword results."""
         fused = reciprocal_rank_fusion_legacy(
             vector_results, keyword_results, graph_results
@@ -535,9 +579,7 @@ class TestLegacyAPI:
 
     def test_legacy_api_custom_k(self, vector_results, keyword_results) -> None:
         """Legacy API should accept custom k parameter."""
-        fused = reciprocal_rank_fusion_legacy(
-            vector_results, keyword_results, k=100
-        )
+        fused = reciprocal_rank_fusion_legacy(vector_results, keyword_results, k=100)
 
         assert isinstance(fused, list)
 
@@ -560,10 +602,12 @@ class TestRRFResultDataclass:
 
     def test_result_has_metadata(self, vector_results, keyword_results) -> None:
         """RRFResult should include metadata."""
-        result = reciprocal_rank_fusion([
-            {"source": "vector", "results": vector_results},
-            {"source": "keyword", "results": keyword_results},
-        ])
+        result = reciprocal_rank_fusion(
+            [
+                {"source": "vector", "results": vector_results},
+                {"source": "keyword", "results": keyword_results},
+            ]
+        )
 
         assert result.k == DEFAULT_K
         assert result.total_sources == 2

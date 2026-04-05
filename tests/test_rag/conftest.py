@@ -229,8 +229,12 @@ def retrieved_chunks() -> list[RetrievedChunk]:
 def temp_text_dir(tmp_path: Path) -> Path:
     """Temporary directory with sample text files."""
     (tmp_path / "readme.txt").write_text("This is a readme file.\nIt has two lines.")
-    (tmp_path / "notes.txt").write_text("Meeting notes from Monday.\nAction items follow.")
-    (tmp_path / "log.log").write_text("2026-01-01 INFO: Service started\n2026-01-01 ERROR: timeout")
+    (tmp_path / "notes.txt").write_text(
+        "Meeting notes from Monday.\nAction items follow."
+    )
+    (tmp_path / "log.log").write_text(
+        "2026-01-01 INFO: Service started\n2026-01-01 ERROR: timeout"
+    )
     sub = tmp_path / "sub"
     sub.mkdir()
     (sub / "nested.txt").write_text("Nested document content here.")
@@ -243,13 +247,20 @@ def temp_json_dir(tmp_path: Path) -> Path:
     import json
 
     (tmp_path / "article.json").write_text(
-        json.dumps({"title": "ML Article", "body": "Machine learning overview.", "tags": ["ml", "ai"]})
+        json.dumps(
+            {
+                "title": "ML Article",
+                "body": "Machine learning overview.",
+                "tags": ["ml", "ai"],
+            }
+        )
     )
     (tmp_path / "config.json").write_text(
         json.dumps({"name": "brain", "version": "1.0", "debug": False})
     )
     (tmp_path / "data.jsonl").write_text(
-        json.dumps({"id": 1, "text": "First record"}) + "\n"
+        json.dumps({"id": 1, "text": "First record"})
+        + "\n"
         + json.dumps({"id": 2, "text": "Second record"})
     )
     return tmp_path

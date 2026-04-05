@@ -42,4 +42,6 @@ class GoogleDocsProcessor:
         logger.debug("GoogleDocsProcessor stub initialized")
 
     def process(self, *args, **kwargs):
-        raise NotImplementedError("GoogleDocsProcessor has been removed during refactor")
+        raise NotImplementedError(
+            "GoogleDocsProcessor has been removed during refactor"
+        )

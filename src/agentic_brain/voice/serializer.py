@@ -912,7 +912,9 @@ class VoiceSerializer:
                 VoiceState(
                     is_speaking=is_speaking,
                     current_text=current_message.text if current_message else "",
-                    current_voice=current_message.voice if current_message else "Samantha",
+                    current_voice=(
+                        current_message.voice if current_message else "Samantha"
+                    ),
                     queue_depth=(
                         self.queue_size()
                         if queue_depth_override is None

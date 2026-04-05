@@ -2,6 +2,7 @@
 
 Provides: faithfulness_score, relevancy_score, context_precision, context_recall, answer_similarity
 """
+
 from typing import Iterable, Set
 from difflib import SequenceMatcher
 
@@ -41,13 +42,19 @@ def answer_similarity(a: str, b: str) -> float:
         tok = 0.0
     # also consider character n-gram overlap for highly repetitive texts
     try:
+
         def ngrams(s, n=4):
-            return set(s[i:i+n] for i in range(max(0, len(s)-n+1)))
+            return set(s[i : i + n] for i in range(max(0, len(s) - n + 1)))
+
         n1 = ngrams(a_s, 4)
         n2 = ngrams(b_s, 4)
         if n1 or n2:
             inter = n1 & n2
-            ngram = (2 * len(inter)) / (len(n1) + len(n2)) if (len(n1) + len(n2)) > 0 else 0.0
+            ngram = (
+                (2 * len(inter)) / (len(n1) + len(n2))
+                if (len(n1) + len(n2)) > 0
+                else 0.0
+            )
         else:
             ngram = 0.0
     except Exception:
@@ -85,7 +92,9 @@ def relevancy_score(retrieved_scores: Iterable[float]) -> float:
     return sum(scores) / len(scores)
 
 
-def faithfulness_score(answer: str, supporting_contexts: Iterable[str], gold_answer: str) -> float:
+def faithfulness_score(
+    answer: str, supporting_contexts: Iterable[str], gold_answer: str
+) -> float:
     """Estimate faithfulness by measuring how similar the answer is to the gold answer
     when supported contexts are provided.
 

@@ -41,7 +41,7 @@ def load_plugins_from_directory(directory: str) -> Dict[str, type]:
                     continue
                 try:
                     if issubclass(obj, Plugin):
-                        key = getattr(obj, 'name', obj.__name__)
+                        key = getattr(obj, "name", obj.__name__)
                         # class may define a @property 'name' on instances; prefer class __name__ then
                         if isinstance(key, property):
                             key = obj.__name__
@@ -55,7 +55,9 @@ def load_plugins_from_directory(directory: str) -> Dict[str, type]:
     return plugins
 
 
-def load_plugins_from_entry_points(group: str = "agentic_brain.plugins") -> Dict[str, type]:
+def load_plugins_from_entry_points(
+    group: str = "agentic_brain.plugins",
+) -> Dict[str, type]:
     """Load plugin callables registered via packaging entry points.
 
     Returns mapping plugin_name -> plugin class
@@ -70,7 +72,7 @@ def load_plugins_from_entry_points(group: str = "agentic_brain.plugins") -> Dict
             # new API returns EntryPoints object
             entries = []
             # support both data shapes
-            if hasattr(eps, 'select'):
+            if hasattr(eps, "select"):
                 entries = eps.select(group=group)
             else:
                 entries = [e for e in eps.get(group, [])]
@@ -84,7 +86,7 @@ def load_plugins_from_entry_points(group: str = "agentic_brain.plugins") -> Dict
             try:
                 obj = ep.load()
                 if inspect.isclass(obj) and issubclass(obj, Plugin):
-                    key = getattr(obj, 'name', obj.__name__)
+                    key = getattr(obj, "name", obj.__name__)
                     if isinstance(key, property):
                         key = obj.__name__
                     plugins[key] = obj
@@ -105,7 +107,10 @@ def resolve_dependencies(plugins: Dict[str, type]) -> List[type]:
     plugins: mapping name->plugin class
     returns: ordered list of plugin classes
     """
-    graph = {name: set(getattr(cls, 'dependencies', []) or []) for name, cls in plugins.items()}
+    graph = {
+        name: set(getattr(cls, "dependencies", []) or [])
+        for name, cls in plugins.items()
+    }
 
     # remove unknown dependencies (assume external)
     for name, deps in graph.items():
@@ -134,7 +139,9 @@ def resolve_dependencies(plugins: Dict[str, type]) -> List[type]:
     return ordered
 
 
-def load_all_plugins(directory: str = None, entry_point_group: str = "agentic_brain.plugins") -> List[type]:
+def load_all_plugins(
+    directory: str = None, entry_point_group: str = "agentic_brain.plugins"
+) -> List[type]:
     """Convenience loader that loads from directory and entry points and resolves dependencies.
 
     Returns ordered list of plugin classes

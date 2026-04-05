@@ -141,7 +141,7 @@ Be concise and accurate. If you don't know something, say so."""
             security_role=security_role,
             agent_id=name,
         )
-        
+
         self.config = AgentConfig(
             name=name,
             system_prompt=system_prompt,
@@ -463,11 +463,11 @@ Be concise and accurate. If you don't know something, say so."""
             f"scope={self.config.memory_scope.value}, "
             f"role={self.security_role.value})"
         )
-    
+
     def _execute_impl(self, action: str, **kwargs):
         """
         Implementation required by BaseSecureAgent.
-        
+
         This method isn't used by the Agent class's chat interface,
         but is required for the security model.
         """

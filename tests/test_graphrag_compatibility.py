@@ -27,6 +27,7 @@ import pytest
 # Schema Compatibility Tests
 # ---------------------------------------------------------------------------
 
+
 class TestSchemaCompatibility:
     """Verify our Neo4j schema matches standard Graph RAG patterns."""
 
@@ -38,6 +39,7 @@ class TestSchemaCompatibility:
         # The initialize() method creates constraints for these three labels
         # Verify the source mentions all three
         import inspect
+
         source = inspect.getsource(rag.initialize)
         for label in ("Document", "Chunk", "Entity"):
             assert label in source, f"Missing constraint for {label} in initialize()"
@@ -53,9 +55,9 @@ class TestSchemaCompatibility:
         from agentic_brain.core.neo4j_schema import INDEXES
 
         for idx in INDEXES:
-            assert "IF NOT EXISTS" in idx, (
-                f"Index DDL missing IF NOT EXISTS — unsafe for shared databases: {idx[:60]}..."
-            )
+            assert (
+                "IF NOT EXISTS" in idx
+            ), f"Index DDL missing IF NOT EXISTS — unsafe for shared databases: {idx[:60]}..."
 
     def test_fulltext_indexes_cover_standard_fields(self):
         """Fulltext indexes should cover name, description, content."""
@@ -89,14 +91,15 @@ class TestSchemaCompatibility:
 
         cfg = GraphRAGConfig()
         for rel_type in ("MENTIONS", "RELATED_TO", "PART_OF", "CONTAINS"):
-            assert rel_type in cfg.relationship_weights, (
-                f"Missing relationship weight for {rel_type}"
-            )
+            assert (
+                rel_type in cfg.relationship_weights
+            ), f"Missing relationship weight for {rel_type}"
 
 
 # ---------------------------------------------------------------------------
 # Data Structure Compatibility Tests
 # ---------------------------------------------------------------------------
+
 
 class TestDataStructureCompatibility:
     """Verify our data classes match the standard Graph RAG interchange format."""
@@ -168,6 +171,7 @@ class TestDataStructureCompatibility:
 # Query Compatibility Tests
 # ---------------------------------------------------------------------------
 
+
 class TestQueryCompatibility:
     """Verify Cypher query patterns match standard Graph RAG conventions."""
 
@@ -219,6 +223,7 @@ class TestQueryCompatibility:
 # Data Import Compatibility Tests
 # ---------------------------------------------------------------------------
 
+
 class TestDataImportCompatibility:
     """Verify we can accept data in standard external Graph RAG formats."""
 
@@ -230,6 +235,7 @@ class TestDataImportCompatibility:
         # Don't connect to a real DB — just verify the method signature
         grag = GraphRAG(config)
         import inspect
+
         sig = inspect.signature(grag.ingest)
         params = list(sig.parameters.keys())
         assert "documents" in params, "ingest() must accept documents parameter"
@@ -241,9 +247,9 @@ class TestDataImportCompatibility:
 
         source = inspect.getsource(GraphRAG.ingest)
         for key in ("content", "text", "page_content"):
-            assert key in source, (
-                f"ingest() should support '{key}' key in document dicts"
-            )
+            assert (
+                key in source
+            ), f"ingest() should support '{key}' key in document dicts"
 
     def test_ingest_accepts_entity_and_relationship_dicts(self):
         """When no text content, ingest() accepts pre-extracted entities/rels."""
@@ -281,6 +287,7 @@ class TestDataImportCompatibility:
 # ---------------------------------------------------------------------------
 # Embedding Compatibility Tests
 # ---------------------------------------------------------------------------
+
 
 class TestEmbeddingCompatibility:
     """Verify embedding handling is compatible with external data."""
@@ -320,12 +327,15 @@ class TestEmbeddingCompatibility:
 # Knowledge Extractor Compatibility Tests
 # ---------------------------------------------------------------------------
 
+
 class TestKnowledgeExtractorCompatibility:
     """Verify entity extraction patterns match standard conventions."""
 
     def test_extractor_config_schema_has_standard_node_types(self):
         """KnowledgeExtractorConfig schema includes standard node types."""
-        from agentic_brain.rag.graphrag.knowledge_extractor import KnowledgeExtractorConfig
+        from agentic_brain.rag.graphrag.knowledge_extractor import (
+            KnowledgeExtractorConfig,
+        )
 
         cfg = KnowledgeExtractorConfig()
         node_types = cfg.schema["node_types"]
@@ -334,7 +344,9 @@ class TestKnowledgeExtractorCompatibility:
 
     def test_extractor_config_schema_has_standard_relationship_types(self):
         """KnowledgeExtractorConfig schema includes standard relationship types."""
-        from agentic_brain.rag.graphrag.knowledge_extractor import KnowledgeExtractorConfig
+        from agentic_brain.rag.graphrag.knowledge_extractor import (
+            KnowledgeExtractorConfig,
+        )
 
         cfg = KnowledgeExtractorConfig()
         rel_types = cfg.schema["relationship_types"]
@@ -344,7 +356,9 @@ class TestKnowledgeExtractorCompatibility:
     def test_extractor_config_uses_env_vars(self):
         """Neo4j connection should read from environment variables."""
         import os
-        from agentic_brain.rag.graphrag.knowledge_extractor import KnowledgeExtractorConfig
+        from agentic_brain.rag.graphrag.knowledge_extractor import (
+            KnowledgeExtractorConfig,
+        )
 
         with patch.dict(os.environ, {"NEO4J_URI": "bolt://custom:7687"}):
             cfg = KnowledgeExtractorConfig()
@@ -370,6 +384,7 @@ class TestKnowledgeExtractorCompatibility:
 # ---------------------------------------------------------------------------
 # Community Detection Compatibility Tests
 # ---------------------------------------------------------------------------
+
 
 class TestCommunityDetectionCompatibility:
     """Verify community detection follows Microsoft GraphRAG conventions."""

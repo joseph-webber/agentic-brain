@@ -158,7 +158,11 @@ class VoiceOverCoordinator:
             )
             if result.returncode == 0 and "speaking" in result.stdout:
                 return True
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+        except (
+            subprocess.TimeoutExpired,
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+        ):
             pass
 
         # Method 2: Check VoiceOver defaults for speech status
@@ -172,7 +176,11 @@ class VoiceOverCoordinator:
             # If 1 is returned, VoiceOver speech is enabled
             if result.returncode == 0 and "1" in result.stdout:
                 return True
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+        except (
+            subprocess.TimeoutExpired,
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+        ):
             pass
 
         # Method 3: Check for VoiceOver audio output using ioreg
@@ -185,7 +193,11 @@ class VoiceOverCoordinator:
             )
             if result.returncode == 0 and result.stdout.strip():
                 return True
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError):
+        except (
+            subprocess.TimeoutExpired,
+            subprocess.CalledProcessError,
+            FileNotFoundError,
+        ):
             pass
 
         # Method 4: Poll VoiceOver process for active speech synthesis

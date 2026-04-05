@@ -244,7 +244,10 @@ class TestSerializerEmotionSupport:
         assert "[[volm 90]]" in rendered
         assert rendered.endswith("Hello there")
 
-    @patch("agentic_brain.voice.expression.ExpressionEngine.is_work_mode", return_value=False)
+    @patch(
+        "agentic_brain.voice.expression.ExpressionEngine.is_work_mode",
+        return_value=False,
+    )
     @patch("agentic_brain.voice.serializer.shutil.which", return_value="/usr/bin/say")
     @patch("agentic_brain.voice.serializer.subprocess.Popen")
     def test_speak_serialized_auto_detects_emotion(self, popen_mock, _which, _wm):
@@ -262,7 +265,10 @@ class TestSerializerEmotionSupport:
         assert int(cmd[4]) > 155
         assert "[[pbas" in cmd[-1]
 
-    @patch("agentic_brain.voice.expression.ExpressionEngine.is_work_mode", return_value=False)
+    @patch(
+        "agentic_brain.voice.expression.ExpressionEngine.is_work_mode",
+        return_value=False,
+    )
     @patch("agentic_brain.voice.serializer.shutil.which", return_value="/usr/bin/say")
     @patch("agentic_brain.voice.serializer.subprocess.Popen")
     def test_speak_serialized_respects_explicit_emotion(self, popen_mock, _which, _wm):
@@ -283,7 +289,10 @@ class TestSerializerEmotionSupport:
         assert int(cmd[4]) < 155
         assert "[[pbas" in cmd[-1]
 
-    @patch("agentic_brain.voice.expression.ExpressionEngine.is_work_mode", return_value=False)
+    @patch(
+        "agentic_brain.voice.expression.ExpressionEngine.is_work_mode",
+        return_value=False,
+    )
     @patch("agentic_brain.voice.serializer.shutil.which", return_value="/usr/bin/say")
     @patch("agentic_brain.voice.serializer.subprocess.Popen")
     def test_speak_serialized_applies_lady_style(self, popen_mock, _which, _wm):
@@ -374,10 +383,14 @@ class TestEmotionToVoiceEmotionMapping:
     """Tests for mapping between Emotion and VoiceEmotion."""
 
     def test_happy_low_arousal_maps_to_happy(self):
-        assert emotion_to_voice_emotion(Emotion.HAPPY, arousal=0.5) == VoiceEmotion.HAPPY
+        assert (
+            emotion_to_voice_emotion(Emotion.HAPPY, arousal=0.5) == VoiceEmotion.HAPPY
+        )
 
     def test_happy_high_arousal_maps_to_excited(self):
-        assert emotion_to_voice_emotion(Emotion.HAPPY, arousal=0.8) == VoiceEmotion.EXCITED
+        assert (
+            emotion_to_voice_emotion(Emotion.HAPPY, arousal=0.8) == VoiceEmotion.EXCITED
+        )
 
     def test_sad_maps_to_concerned(self):
         assert emotion_to_voice_emotion(Emotion.SAD) == VoiceEmotion.CONCERNED
@@ -395,7 +408,9 @@ class TestEmotionToVoiceEmotionMapping:
         assert emotion_to_voice_emotion(Emotion.NEUTRAL) == VoiceEmotion.NEUTRAL
 
     def test_emotion_result_to_voice_emotion(self):
-        result = EmotionResult(Emotion.HAPPY, 0.9, 0.8, 0.5)  # arousal < 0.7 maps to HAPPY
+        result = EmotionResult(
+            Emotion.HAPPY, 0.9, 0.8, 0.5
+        )  # arousal < 0.7 maps to HAPPY
         assert emotion_result_to_voice_emotion(result) == VoiceEmotion.HAPPY
 
 
@@ -498,4 +513,3 @@ class TestVoiceEmotionDetectorAudioSupport:
         assert isinstance(result, EmotionResult)
         # Without model loaded, should return neutral with low confidence
         assert result.confidence <= 0.5 or result.emotion == Emotion.NEUTRAL
-

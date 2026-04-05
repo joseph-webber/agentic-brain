@@ -48,13 +48,15 @@ class TerminalChat:
 
     def run(self) -> None:
         """Start interactive chat loop."""
-        self.console.print(Panel.fit(
-            "[bold blue]🧠 Agentic Brain Terminal Chat[/]\n"
-            f"Mode: [cyan]{self.brain.mode.value}[/] | "
-            f"Voice: {'[green]✅[/]' if self.voice_enabled else '[red]❌[/]'} | "
-            f"YOLO: {'[yellow]⚡[/]' if self.yolo_mode else '[red]❌[/]'}",
-            title="Welcome",
-        ))
+        self.console.print(
+            Panel.fit(
+                "[bold blue]🧠 Agentic Brain Terminal Chat[/]\n"
+                f"Mode: [cyan]{self.brain.mode.value}[/] | "
+                f"Voice: {'[green]✅[/]' if self.voice_enabled else '[red]❌[/]'} | "
+                f"YOLO: {'[yellow]⚡[/]' if self.yolo_mode else '[red]❌[/]'}",
+                title="Welcome",
+            )
+        )
 
         while True:
             try:
@@ -97,17 +99,21 @@ class TerminalChat:
             )
 
         if self.show_layers and response.instant:
-            self.console.print(Panel(
-                response.instant,
-                title="⚡ Instant",
-                border_style="green",
-            ))
+            self.console.print(
+                Panel(
+                    response.instant,
+                    title="⚡ Instant",
+                    border_style="green",
+                )
+            )
 
-        self.console.print(Panel(
-            Markdown(response.final),
-            title="🧠 Brain",
-            border_style="blue",
-        ))
+        self.console.print(
+            Panel(
+                Markdown(response.final),
+                title="🧠 Brain",
+                border_style="blue",
+            )
+        )
 
         self.history.append({"user": text, "assistant": response.final})
 
@@ -117,6 +123,7 @@ class TerminalChat:
     def _speak(self, text: str) -> None:
         """Speak text via macOS say (accessibility helper)."""
         import subprocess
+
         try:
             subprocess.Popen(
                 ["say", "-v", "Karen", text],
@@ -132,23 +139,27 @@ class TerminalChat:
         command = parts[0].lower()
 
         if command == "/help":
-            self.console.print(Panel(
-                "[bold]/help[/]             Show this help\n"
-                "[bold]/mode[/] <mode>      Switch mode: airlocked | cloud | hybrid\n"
-                "[bold]/voice[/]            Toggle voice output\n"
-                "[bold]/yolo[/]             Toggle YOLO (auto-execute) mode\n"
-                "[bold]/layers[/]           Toggle instant-layer display\n"
-                "[bold]/clear[/]            Clear conversation history\n"
-                "[bold]/status[/]           Show current settings",
-                title="Commands",
-                border_style="dim",
-            ))
+            self.console.print(
+                Panel(
+                    "[bold]/help[/]             Show this help\n"
+                    "[bold]/mode[/] <mode>      Switch mode: airlocked | cloud | hybrid\n"
+                    "[bold]/voice[/]            Toggle voice output\n"
+                    "[bold]/yolo[/]             Toggle YOLO (auto-execute) mode\n"
+                    "[bold]/layers[/]           Toggle instant-layer display\n"
+                    "[bold]/clear[/]            Clear conversation history\n"
+                    "[bold]/status[/]           Show current settings",
+                    title="Commands",
+                    border_style="dim",
+                )
+            )
 
         elif command == "/mode" and len(parts) > 1:
             try:
                 new_mode = DeploymentMode(parts[1])
                 self.brain.mode = new_mode
-                self.console.print(f"[green]Switched to [bold]{new_mode.value}[/] mode[/]")
+                self.console.print(
+                    f"[green]Switched to [bold]{new_mode.value}[/] mode[/]"
+                )
             except ValueError:
                 self.console.print(
                     f"[red]Unknown mode '[bold]{parts[1]}[/]'. "
@@ -163,7 +174,9 @@ class TerminalChat:
         elif command == "/yolo":
             self.yolo_mode = not self.yolo_mode
             if self.yolo_mode:
-                self.console.print("[yellow]⚡ YOLO mode ON — commands will auto-execute[/]")
+                self.console.print(
+                    "[yellow]⚡ YOLO mode ON — commands will auto-execute[/]"
+                )
             else:
                 self.console.print("[green]YOLO mode OFF[/]")
 
@@ -178,23 +191,28 @@ class TerminalChat:
             self.console.print("[dim]History cleared[/]")
 
         elif command == "/status":
-            self.console.print(Panel(
-                f"Mode:         [cyan]{self.brain.mode.value}[/]\n"
-                f"Voice:        {'[green]on[/]' if self.voice_enabled else '[red]off[/]'}\n"
-                f"YOLO:         {'[yellow]on ⚡[/]' if self.yolo_mode else '[red]off[/]'}\n"
-                f"Show layers:  {'[green]yes[/]' if self.show_layers else '[dim]no[/]'}\n"
-                f"History msgs: [cyan]{len(self.history)}[/]",
-                title="Status",
-                border_style="dim",
-            ))
+            self.console.print(
+                Panel(
+                    f"Mode:         [cyan]{self.brain.mode.value}[/]\n"
+                    f"Voice:        {'[green]on[/]' if self.voice_enabled else '[red]off[/]'}\n"
+                    f"YOLO:         {'[yellow]on ⚡[/]' if self.yolo_mode else '[red]off[/]'}\n"
+                    f"Show layers:  {'[green]yes[/]' if self.show_layers else '[dim]no[/]'}\n"
+                    f"History msgs: [cyan]{len(self.history)}[/]",
+                    title="Status",
+                    border_style="dim",
+                )
+            )
 
         else:
-            self.console.print(f"[red]Unknown command: {cmd}[/]  Type [bold]/help[/] for options.")
+            self.console.print(
+                f"[red]Unknown command: {cmd}[/]  Type [bold]/help[/] for options."
+            )
 
 
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """CLI entry point for the [bold]brain-chat[/] command."""
@@ -218,8 +236,12 @@ def main() -> None:
         help="Deployment mode (default: hybrid)",
     )
     parser.add_argument("--voice", action="store_true", help="Enable voice output")
-    parser.add_argument("--yolo", action="store_true", help="Enable YOLO auto-execute mode")
-    parser.add_argument("--no-layers", action="store_true", help="Hide instant-layer output")
+    parser.add_argument(
+        "--yolo", action="store_true", help="Enable YOLO auto-execute mode"
+    )
+    parser.add_argument(
+        "--no-layers", action="store_true", help="Hide instant-layer output"
+    )
     args = parser.parse_args()
 
     chat = TerminalChat(

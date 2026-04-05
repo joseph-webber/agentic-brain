@@ -46,10 +46,10 @@ Agentic Brain is an enterprise AI orchestration platform that combines:
 
 ```bash
 # macOS/Linux
-curl -fsSL https://raw.githubusercontent.com/ecomlounge/brain/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/joseph-webber/brain/main/install.sh | bash
 
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/ecomlounge/brain/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/joseph-webber/brain/main/install.ps1 | iex
 ```
 
 ### PyPI Installation
@@ -102,7 +102,7 @@ ab chat "Hello, Brain!"
 ### Docker
 
 ```bash
-git clone https://github.com/ecomlounge/brain.git
+git clone https://github.com/joseph-webber/brain.git
 cd brain
 cp .env.docker.example .env.docker
 docker compose up -d

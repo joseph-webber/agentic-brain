@@ -51,7 +51,9 @@ def router(classifier: QueryClassifier, decomposer: QueryDecomposer) -> QueryRou
         ("Compare the document summary and graph links", RouteType.HYBRID),
     ],
 )
-def test_classifier_routes(query: str, route: RouteType, classifier: QueryClassifier) -> None:
+def test_classifier_routes(
+    query: str, route: RouteType, classifier: QueryClassifier
+) -> None:
     result = classifier.classify(query)
     assert result.route == route
     assert 0.0 <= result.confidence <= 1.0
@@ -79,7 +81,9 @@ def test_classifier_confidence_is_reasonable(
         ("Search the web for the latest release notes", "current"),
     ],
 )
-def test_classifier_reasons_reflect_route(query: str, contains: str, classifier: QueryClassifier) -> None:
+def test_classifier_reasons_reflect_route(
+    query: str, contains: str, classifier: QueryClassifier
+) -> None:
     result = classifier.classify(query)
     assert any(contains in reason for reason in result.reasons)
 
@@ -104,12 +108,17 @@ def test_classifier_fallbacks_include_hybrid(
     [
         ("Find the policy; then check the graph", 2),
         ("Summarize the policy and also search the web", 2),
-        ("First find docs, then find related entities, then check the latest update", 3),
+        (
+            "First find docs, then find related entities, then check the latest update",
+            3,
+        ),
         ("Simple query", 1),
         ("Compare apples and oranges", 1),
     ],
 )
-def test_decomposer_parts(query: str, expected_parts: int, decomposer: QueryDecomposer) -> None:
+def test_decomposer_parts(
+    query: str, expected_parts: int, decomposer: QueryDecomposer
+) -> None:
     result = decomposer.decompose(query)
     assert len(result.parts) == expected_parts
 
@@ -291,7 +300,9 @@ def test_router_handles_string_route_keys() -> None:
     assert decision.route == RouteType.VECTOR
 
 
-def test_query_classification_metadata_contains_gap(classifier: QueryClassifier) -> None:
+def test_query_classification_metadata_contains_gap(
+    classifier: QueryClassifier,
+) -> None:
     result = classifier.classify("Find relevant documents about onboarding")
     assert "top_score_gap" in result.metadata
 

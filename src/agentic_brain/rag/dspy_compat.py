@@ -708,6 +708,7 @@ class Retrieve(Module):
         metadata: List[Dict[str, Any]] = []
 
         try:
+
             def append_item(item: Any) -> None:
                 if isinstance(item, dict):
                     content = (
@@ -838,7 +839,9 @@ class ChainOfThought(Module):
         lm = self.lm or get_lm()
 
         # Build prompt with CoT
-        sig = self.signature(**{k: v for k, v in kwargs.items() if k in self.signature._input_fields})
+        sig = self.signature(
+            **{k: v for k, v in kwargs.items() if k in self.signature._input_fields}
+        )
         prompt = sig.format_prompt()
         prompt = prompt.replace(
             list(self.signature._output_fields.values())[0].prefix,
@@ -1002,7 +1005,9 @@ class ReAct(Module):
             if lm:
                 response = lm.generate(prompt)
             else:
-                response = "Thought: I need to search.\nAction: Finish[answer based on input]"
+                response = (
+                    "Thought: I need to search.\nAction: Finish[answer based on input]"
+                )
 
             # Parse thought and action
             thought = self._extract_thought(response)
@@ -1102,7 +1107,10 @@ class ReAct(Module):
 
         # Find matching tool (case-insensitive)
         for name, tool in self.tools.items():
-            if name.lower() == action.type.value.lower() or name.lower() == tool_name.lower():
+            if (
+                name.lower() == action.type.value.lower()
+                or name.lower() == tool_name.lower()
+            ):
                 try:
                     return str(tool(action.input))
                 except Exception as e:
@@ -1160,7 +1168,9 @@ class Predict(Module):
         lm = self.lm or get_lm()
 
         # Build prompt
-        sig = self.signature(**{k: v for k, v in kwargs.items() if k in self.signature._input_fields})
+        sig = self.signature(
+            **{k: v for k, v in kwargs.items() if k in self.signature._input_fields}
+        )
         prompt = sig.format_prompt()
 
         # Generate
@@ -1566,7 +1576,10 @@ class Evaluate:
             failed=len(results) - passed - errors,
             errors=errors,
             mean_score=mean_score,
-            scores={"mean": mean_score, "accuracy": passed / len(results) if results else 0.0},
+            scores={
+                "mean": mean_score,
+                "accuracy": passed / len(results) if results else 0.0,
+            },
         )
 
 
@@ -1655,11 +1668,13 @@ class MultiHopRetrieve(Module):
             all_passages.extend(result.passages)
             all_scores.extend(result.scores)
 
-            hops.append({
-                "hop": hop + 1,
-                "query": current_query,
-                "passages": result.passages,
-            })
+            hops.append(
+                {
+                    "hop": hop + 1,
+                    "query": current_query,
+                    "passages": result.passages,
+                }
+            )
 
             # Generate next query if LLM available
             if self.lm and result.passages:
@@ -1794,7 +1809,9 @@ def compile_module(
     }
 
     if optimizer not in optimizers:
-        raise ValueError(f"Unknown optimizer: {optimizer}. Use: {list(optimizers.keys())}")
+        raise ValueError(
+            f"Unknown optimizer: {optimizer}. Use: {list(optimizers.keys())}"
+        )
 
     opt = optimizers[optimizer](metric=metric, **kwargs)
     return opt.compile(module, trainset)
@@ -1851,7 +1868,9 @@ def from_native_dspy(native_module: Any) -> Module:
 
         def forward(self, **kwargs: Any) -> Prediction:
             result = self._native(**kwargs)
-            return Prediction(**vars(result) if hasattr(result, "__dict__") else {"output": result})
+            return Prediction(
+                **vars(result) if hasattr(result, "__dict__") else {"output": result}
+            )
 
     return WrappedModule(native_module)
 

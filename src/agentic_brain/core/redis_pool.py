@@ -40,7 +40,7 @@ def _json_loads(data: str) -> Any:
 @dataclass(frozen=True)
 class RedisConfig:
     """Configuration for Redis connection pool.
-    
+
     Attributes:
         host: Redis server hostname (default: localhost).
         port: Redis server port (default: 6379).
@@ -49,6 +49,7 @@ class RedisConfig:
         url: Alternative connection string (overrides host/port/password).
         decode_responses: Auto-decode responses to strings (default: True).
     """
+
     host: str = "localhost"
     port: int = 6379
     password: Optional[str] = None
@@ -59,14 +60,14 @@ class RedisConfig:
     @staticmethod
     def from_env() -> RedisConfig:
         """Create config from environment variables.
-        
+
         Reads from:
             REDIS_URL: Optional connection string (overrides other vars)
             REDIS_HOST: Server hostname (default: localhost)
             REDIS_PORT: Server port (default: 6379)
             REDIS_PASSWORD: Optional password
             REDIS_DB: Database number (default: 0)
-            
+
         Returns:
             RedisConfig instance with values from environment or defaults.
         """
@@ -80,10 +81,10 @@ class RedisConfig:
 
 class RedisPoolManager:
     """Lazy Redis client and connection pool wrapper.
-    
+
     Defers importing redis and creating connections until first use.
     Thread-safe and compatible with both redis.Redis and pool patterns.
-    
+
     Attributes:
         _config: RedisConfig with connection parameters.
         _pool: Optional ConnectionPool instance.
@@ -97,7 +98,7 @@ class RedisPoolManager:
         client: Any | None = None,
     ):
         """Initialize the Redis pool manager.
-        
+
         Args:
             config: Optional RedisConfig. If None, creates from environment.
             client: Optional pre-created redis.Redis client (for testing).
@@ -108,10 +109,10 @@ class RedisPoolManager:
 
     def _import_redis(self):
         """Import redis module, raising helpful error if unavailable.
-        
+
         Returns:
             redis module object.
-            
+
         Raises:
             ImportError: If redis package is not installed.
         """
@@ -166,7 +167,7 @@ class RedisPoolManager:
     @property
     def client(self):
         """Get the underlying Redis client, creating it if needed.
-        
+
         Returns:
             redis.Redis client instance.
         """
@@ -175,7 +176,7 @@ class RedisPoolManager:
 
     def health_check(self) -> Dict[str, Any]:
         """Check Redis connectivity without raising exceptions.
-        
+
         Returns:
             Dictionary with keys:
                 ok (bool): True if Redis is reachable
@@ -199,11 +200,11 @@ class RedisPoolManager:
 
     def publish(self, channel: str, payload: Any) -> int:
         """Publish a message to a Redis channel.
-        
+
         Args:
             channel: Channel name or pattern.
             payload: Message data (dict or string).
-            
+
         Returns:
             Number of subscribers that received the message.
         """
@@ -212,10 +213,10 @@ class RedisPoolManager:
 
     def pubsub(self, *, ignore_subscribe_messages: bool = True):
         """Create a pub/sub subscription handler.
-        
+
         Args:
             ignore_subscribe_messages: If True, filter subscribe/unsubscribe confirmations.
-            
+
         Returns:
             PubSub object with subscribe() and listen() methods.
         """
@@ -227,7 +228,7 @@ _default_pool: RedisPoolManager | None = None
 
 def get_redis_pool() -> RedisPoolManager:
     """Get the default global Redis pool (lazy-initialized).
-    
+
     Returns:
         RedisPoolManager configured from environment.
     """
@@ -235,7 +236,7 @@ def get_redis_pool() -> RedisPoolManager:
 
 class RedisCoordination:
     """High-level Redis primitives for agent coordination.
-    
+
     Provides agent registry, task queues, result caching, and pub/sub
     for distributed agent systems.
     """
@@ -247,7 +248,7 @@ class RedisCoordination:
         client: Any | None = None,
     ):
         """Initialize coordination using a Redis pool.
-        
+
         Args:
             pool: Optional RedisPoolManager. If None, uses default global pool.
             client: Optional pre-created redis client (for dependency injection).
@@ -271,9 +272,9 @@ class RedisCoordination:
         ttl_seconds: int = 60,
     ) -> None:
         """Register an agent with the system.
-        
+
         Adds the agent to the registry and sets up a heartbeat key with TTL.
-        
+
         Args:
             agent_id: Unique agent identifier.
             metadata: Optional metadata (role, capacity, status, etc).
@@ -291,7 +292,7 @@ class RedisCoordination:
 
     def heartbeat_agent(self, agent_id: str, *, ttl_seconds: int = 60) -> None:
         """Refresh an agent's heartbeat to keep it active.
-        
+
         Args:
             agent_id: Agent to heartbeat.
             ttl_seconds: Heartbeat expiration time (default: 60).
@@ -302,7 +303,7 @@ class RedisCoordination:
 
     def list_active_agents(self) -> Dict[str, Dict[str, Any]]:
         """Get all agents with active heartbeats.
-        
+
         Returns:
             Dictionary mapping agent_id to agent metadata.
         """
@@ -330,9 +331,9 @@ class RedisCoordination:
         self, task: Dict[str, Any], *, queue: str = "brain.tasks.queue"
     ) -> None:
         """Add a task to the queue.
-        
+
         Also publishes a task_enqueued event to brain.events.task_enqueued.
-        
+
         Args:
             task: Task dictionary (should include task_id).
             queue: Queue name (default: brain.tasks.queue).
@@ -350,11 +351,11 @@ class RedisCoordination:
         block_seconds: int = 0,
     ) -> Optional[Dict[str, Any]]:
         """Retrieve and remove a task from the queue.
-        
+
         Args:
             queue: Queue name (default: brain.tasks.queue).
             block_seconds: Blocking timeout (0 = non-blocking, >0 = wait max N seconds).
-            
+
         Returns:
             Task dictionary or None if queue is empty.
         """
@@ -377,7 +378,7 @@ class RedisCoordination:
         self, cache_key: str, result: Dict[str, Any], *, ttl_seconds: int = 3600
     ) -> None:
         """Store a result in the cache.
-        
+
         Args:
             cache_key: Unique cache key.
             result: Result data to cache.
@@ -389,10 +390,10 @@ class RedisCoordination:
 
     def get_cached_result(self, cache_key: str) -> Optional[Dict[str, Any]]:
         """Retrieve a cached result.
-        
+
         Args:
             cache_key: Cache key to look up.
-            
+
         Returns:
             Cached result dictionary or None if key doesn't exist or expired.
         """
@@ -407,9 +408,9 @@ class RedisCoordination:
         self, topic: str, payload: Dict[str, Any], *, persistent: bool = False
     ) -> None:
         """Publish an event to a topic (brain.* channels).
-        
+
         Integrates with RedisRedpandaBridge for Redpanda event streaming.
-        
+
         Args:
             topic: Event topic (brain.* prefix recommended).
             payload: Event data.
@@ -426,10 +427,10 @@ class RedisCoordination:
 
     def subscribe(self, topics: Iterable[str]):
         """Subscribe to one or more topics.
-        
+
         Args:
             topics: Iterable of topic names or patterns.
-            
+
         Returns:
             PubSub object. Call listen() to receive messages.
         """

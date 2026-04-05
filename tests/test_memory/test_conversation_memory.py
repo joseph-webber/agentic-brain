@@ -101,12 +101,16 @@ class TestEntityExtraction:
         assert "SD-1234" in names
 
     def test_extracts_email_address(self, conv_mem):
-        entities = conv_mem._extract_entities("Send results to user@example.com please.")
+        entities = conv_mem._extract_entities(
+            "Send results to user@example.com please."
+        )
         names = [e[0] for e in entities]
         assert "user@example.com" in names
 
     def test_no_entities_in_plain_lowercase(self, conv_mem):
-        entities = conv_mem._extract_entities("the quick brown fox jumps over the lazy dog")
+        entities = conv_mem._extract_entities(
+            "the quick brown fox jumps over the lazy dog"
+        )
         # Plain lowercase English → no meaningful entities expected
         assert isinstance(entities, list)
 

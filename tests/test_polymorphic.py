@@ -89,5 +89,7 @@ def test_should_use_consensus_for_high_stakes_queries() -> None:
     brain = PolymorphicBrain()
     brain.adapt(user_type=UserType.BEGINNER, context=ContextType.CASUAL)
 
-    assert brain.should_use_consensus("Should I deploy this to production today?") is True
+    assert (
+        brain.should_use_consensus("Should I deploy this to production today?") is True
+    )
     assert brain.should_use_consensus("Tell me a fun fact about Adelaide.") is False

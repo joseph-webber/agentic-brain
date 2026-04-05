@@ -23,15 +23,15 @@ logger = logging.getLogger(__name__)
 class BaseSecureAgent(ABC):
     """
     Base class for all autonomous agents with security enforcement.
-    
+
     The 4-tier security model applies to ALL agent types:
     - FULL_ADMIN: Complete unrestricted access (Joseph only)
     - SAFE_ADMIN: Full access with safety guardrails (Developers/Trusted admins)
     - USER: API-only access for customers/employees (no machine access)
     - GUEST: Very restricted, FAQ/help documentation only (anonymous visitors)
-    
+
     Every agent operation MUST check security role before executing.
-    
+
     Example:
         >>> class MyTaskAgent(BaseSecureAgent):
         ...     def _execute_impl(self, action: str, **kwargs):
@@ -51,7 +51,7 @@ class BaseSecureAgent(ABC):
     ):
         """
         Initialize secure agent.
-        
+
         Args:
             security_role: The security role this agent runs under
             agent_id: Unique identifier for this agent (for logging/audit)
@@ -72,17 +72,17 @@ class BaseSecureAgent(ABC):
     def execute(self, action: str, **kwargs: Any) -> Any:
         """
         Execute an action with security enforcement.
-        
+
         This method wraps all agent actions and enforces security checks
         before delegating to the implementation.
-        
+
         Args:
             action: The action to perform (e.g., "read_file", "call_api", "execute_command")
             **kwargs: Action-specific parameters
-            
+
         Returns:
             Result from the implementation
-            
+
         Raises:
             SecurityViolation: If the action is not permitted for this role
         """
@@ -99,8 +99,7 @@ class BaseSecureAgent(ABC):
             return result
         except Exception as e:
             logger.error(
-                f"Agent {self.agent_id} failed to execute {action}: {e}",
-                exc_info=True
+                f"Agent {self.agent_id} failed to execute {action}: {e}", exc_info=True
             )
             raise
 
@@ -108,14 +107,14 @@ class BaseSecureAgent(ABC):
     def _execute_impl(self, action: str, **kwargs: Any) -> Any:
         """
         Agent-specific implementation of action execution.
-        
+
         Subclasses MUST implement this method.
         Security checks are already done by execute().
-        
+
         Args:
             action: The action to perform
             **kwargs: Action-specific parameters
-            
+
         Returns:
             Implementation-specific result
         """
@@ -124,11 +123,11 @@ class BaseSecureAgent(ABC):
     def _check_action_allowed(self, action: str, **kwargs: Any) -> None:
         """
         Check if an action is allowed based on role and action type.
-        
+
         Args:
             action: The action being attempted
             **kwargs: Action parameters (may contain paths, commands, etc.)
-            
+
         Raises:
             SecurityViolation: If the action is not permitted
         """
@@ -141,7 +140,7 @@ class BaseSecureAgent(ABC):
                     reason or "Command execution not allowed",
                     self.security_role,
                     action,
-                    command[:100]
+                    command[:100],
                 )
 
         # File write check
@@ -153,11 +152,14 @@ class BaseSecureAgent(ABC):
                     reason or "File write not allowed",
                     self.security_role,
                     action,
-                    str(path)
+                    str(path),
                 )
 
         # File read check (for restricted roles)
-        elif action in ("read_file", "list_directory") and self.security_role < SecurityRole.USER:
+        elif (
+            action in ("read_file", "list_directory")
+            and self.security_role < SecurityRole.USER
+        ):
             path = kwargs.get("path", "")
             allowed, reason = self.guard.check_file_read(path)
             if not allowed:
@@ -165,7 +167,7 @@ class BaseSecureAgent(ABC):
                     reason or "File read not allowed",
                     self.security_role,
                     action,
-                    str(path)
+                    str(path),
                 )
 
         # Code execution check
@@ -220,7 +222,7 @@ class BaseSecureAgent(ABC):
     def get_permissions_summary(self) -> Dict[str, Any]:
         """
         Get a summary of this agent's permissions.
-        
+
         Returns:
             Dictionary containing permission details
         """
@@ -241,13 +243,15 @@ class BaseSecureAgent(ABC):
             "rate_limit_per_minute": perms.rate_limit_per_minute,
             "api_only_mode": perms.api_only_mode,
             "allowed_apis": list(perms.allowed_apis),
-            "allowed_api_scopes": list(perms.allowed_api_scopes) if perms.allowed_api_scopes else [],
+            "allowed_api_scopes": (
+                list(perms.allowed_api_scopes) if perms.allowed_api_scopes else []
+            ),
         }
 
     def get_audit_log(self) -> list[Dict[str, Any]]:
         """
         Get the security audit log for this agent.
-        
+
         Returns:
             List of audit log entries
         """
@@ -264,7 +268,7 @@ class BaseSecureAgent(ABC):
 class TaskAgent(BaseSecureAgent):
     """
     Example task agent that processes tasks with security enforcement.
-    
+
     This demonstrates how to implement a concrete agent type.
     """
 
@@ -284,7 +288,7 @@ class TaskAgent(BaseSecureAgent):
                     f"API access not permitted for role {self.security_role.value}",
                     self.security_role,
                     action,
-                    api_name
+                    api_name,
                 )
             if endpoint:
                 allowed, reason = self.guard.check_platform_endpoint(endpoint)
@@ -316,7 +320,7 @@ class TaskAgent(BaseSecureAgent):
 class ExploreAgent(BaseSecureAgent):
     """
     Exploration/research agent with security enforcement.
-    
+
     Used for exploring codebases, researching information, etc.
     Typically runs at USER or SAFE_ADMIN level.
     """
@@ -340,7 +344,7 @@ class ExploreAgent(BaseSecureAgent):
 class BackgroundWorker(BaseSecureAgent):
     """
     Background worker agent with security enforcement.
-    
+
     Processes background jobs, queued tasks, etc.
     """
 
@@ -358,7 +362,7 @@ class BackgroundWorker(BaseSecureAgent):
 class EventProcessor(BaseSecureAgent):
     """
     Event processor agent with security enforcement.
-    
+
     Handles events from event bus, webhooks, etc.
     """
 

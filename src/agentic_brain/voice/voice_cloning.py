@@ -46,7 +46,7 @@ class VoiceValidationResult:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert validation result to dictionary.
-        
+
         Returns:
             Dictionary representation of validation results.
         """
@@ -55,11 +55,11 @@ class VoiceValidationResult:
 
 class VoiceCloner:
     """Voice cloning system using F5-TTS with fallback to system voices.
-    
+
     Manages voice profiles, validates audio quality, and synthesizes speech
     using either F5-TTS neural voice cloning or system voice fallbacks.
     """
-    
+
     def __init__(
         self,
         *,
@@ -69,7 +69,7 @@ class VoiceCloner:
         fallback_voice: str = "Karen (Premium)",
     ) -> None:
         """Initialize voice cloner.
-        
+
         Args:
             library: Voice library instance.
             base_dir: Base directory for voice storage.
@@ -84,7 +84,7 @@ class VoiceCloner:
     @property
     def is_f5_available(self) -> bool:
         """Check if F5-TTS backend is available.
-        
+
         Returns:
             True if F5-TTS can be imported.
         """
@@ -106,19 +106,19 @@ class VoiceCloner:
         metadata: dict[str, Any] | None = None,
     ) -> str:
         """Clone a voice from audio sample.
-        
+
         Validates audio quality and registers the voice profile.
-        
+
         Args:
             audio_sample_path: Path to reference audio file.
             name: Display name for the voice.
             reference_text: Transcript of reference audio.
             assigned_lady: Lady identifier to assign to.
             metadata: Additional metadata.
-            
+
         Returns:
             Generated voice_id.
-            
+
         Raises:
             ValueError: If audio validation fails.
         """
@@ -146,17 +146,17 @@ class VoiceCloner:
         output_path: str | Path | None = None,
     ) -> Path:
         """Synthesize speech using a cloned voice.
-        
+
         Uses F5-TTS if available, falls back to system voices.
-        
+
         Args:
             text: Text to synthesize.
             voice_id: Voice profile identifier.
             output_path: Optional output file path.
-            
+
         Returns:
             Path to generated audio file.
-            
+
         Raises:
             ValueError: If text is empty.
             KeyError: If voice_id not found.
@@ -185,12 +185,12 @@ class VoiceCloner:
 
     def validate_voice_quality(self, audio_path: str | Path) -> VoiceValidationResult:
         """Validate reference audio quality for voice cloning.
-        
+
         Checks duration, sample rate, channels, and signal presence.
-        
+
         Args:
             audio_path: Path to audio file.
-            
+
         Returns:
             VoiceValidationResult with validation details.
         """
@@ -272,11 +272,11 @@ class VoiceCloner:
 
     def _has_signal(self, preview: bytes, sample_width: int) -> bool:
         """Check if audio preview contains actual signal.
-        
+
         Args:
             preview: Audio bytes preview.
             sample_width: Sample width in bytes.
-            
+
         Returns:
             True if audio has detectable signal above noise floor.
         """
@@ -296,11 +296,11 @@ class VoiceCloner:
         self, voice_id: str, output_path: str | Path | None
     ) -> Path:
         """Resolve output path for synthesized audio.
-        
+
         Args:
             voice_id: Voice identifier.
             output_path: Optional explicit output path.
-            
+
         Returns:
             Resolved path in renders directory if not specified.
         """
@@ -315,7 +315,7 @@ class VoiceCloner:
 
     def _get_engine(self) -> Any:
         """Get or create F5-TTS engine instance.
-        
+
         Returns:
             F5-TTS engine instance.
         """
@@ -334,15 +334,15 @@ class VoiceCloner:
         self, *, text: str, profile: Any, output_path: Path
     ) -> Path:
         """Synthesize using F5-TTS neural voice cloning.
-        
+
         Args:
             text: Text to synthesize.
             profile: Voice profile.
             output_path: Output file path.
-            
+
         Returns:
             Path to generated audio file.
-            
+
         Raises:
             RuntimeError: If generated audio fails validation.
         """
@@ -371,12 +371,12 @@ class VoiceCloner:
         self, *, text: str, profile: Any, output_path: Path
     ) -> Path:
         """Synthesize using system voice fallback.
-        
+
         Args:
             text: Text to synthesize.
             profile: Voice profile.
             output_path: Output file path.
-            
+
         Returns:
             Path to generated audio (or silence WAV on failure).
         """
@@ -410,15 +410,15 @@ class VoiceCloner:
         output_path: Path,
     ) -> Path:
         """Synthesize using macOS system voice.
-        
+
         Args:
             text: Text to synthesize.
             voice_name: System voice name.
             output_path: Output file path.
-            
+
         Returns:
             Path to generated AIFF file.
-            
+
         Raises:
             RuntimeError: If synthesis fails.
         """
@@ -446,12 +446,12 @@ class VoiceCloner:
         sample_rate: int = 24_000,
     ) -> Path:
         """Write a silence WAV file as last-resort fallback.
-        
+
         Args:
             output_path: Output file path.
             duration_seconds: Duration of silence.
             sample_rate: Audio sample rate.
-            
+
         Returns:
             Path to generated silence WAV.
         """

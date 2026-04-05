@@ -52,7 +52,7 @@ SYNTHESIS_SYSTEM = (
 class GraphRAGSynthesis:
     """
     GraphRAG recall system.
-    
+
     Combines:
     1. Vector similarity search (semantic)
     2. Graph traversal (structural)
@@ -63,7 +63,7 @@ class GraphRAGSynthesis:
     def __init__(self, llm_ask_fn=None):
         """
         Initialize synthesis layer.
-        
+
         Args:
             llm_ask_fn: Function to call LLM. Signature: (prompt, system=None) -> str
         """
@@ -74,6 +74,7 @@ class GraphRAGSynthesis:
         """Get Neo4j driver."""
         if self._driver is None:
             from neo4j import GraphDatabase
+
             self._driver = GraphDatabase.driver(
                 NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)
             )
@@ -96,23 +97,30 @@ class GraphRAGSynthesis:
             print(f"ERROR: Ollama embedding failed: {e}")
             return None
 
-    def _ann_search(self, index: str, embedding: list[float], top_k: int) -> list[tuple[str, int]]:
+    def _ann_search(
+        self, index: str, embedding: list[float], top_k: int
+    ) -> list[tuple[str, int]]:
         """
         Perform ANN (Approximate Nearest Neighbor) search.
-        
+
         Returns:
             List of (session_id, rank) tuples
         """
         driver = self._get_driver()
         try:
             with driver.session() as session:
-                results = session.run("""
+                results = session.run(
+                    """
                     CALL db.index.vector.queryNodes($index, $top_k, $embedding)
                     YIELD node, score
                     WHERE node:Session
                     RETURN node.id AS id, score
                     ORDER BY score DESC
-                """, index=index, top_k=top_k, embedding=embedding).data()
+                """,
+                    index=index,
+                    top_k=top_k,
+                    embedding=embedding,
+                ).data()
                 return [(r["id"], rank + 1) for rank, r in enumerate(results)]
         except Exception as e:
             # Index may not exist
@@ -124,29 +132,29 @@ class GraphRAGSynthesis:
         text_results: list[tuple[str, int]],
         struct_results: list[tuple[str, int]],
         top_k: int,
-        k: int = RRF_K
+        k: int = RRF_K,
     ) -> list[str]:
         """
         Reciprocal Rank Fusion — merge rankings from multiple sources.
-        
+
         Returns:
             Top-k session IDs by combined RRF score
         """
         scores: dict[str, float] = {}
-        
+
         for sid, rank in text_results:
             scores[sid] = scores.get(sid, 0.0) + 1.0 / (rank + k)
-        
+
         for sid, rank in struct_results:
             scores[sid] = scores.get(sid, 0.0) + 1.0 / (rank + k)
-        
+
         ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
         return [sid for sid, _ in ranked[:top_k]]
 
     def _fetch_session_context(self, session_ids: list[str]) -> list[dict]:
         """
         Fetch enriched context for sessions.
-        
+
         Includes summary, topics, entities, and continuation chain.
         """
         if not session_ids:
@@ -154,7 +162,8 @@ class GraphRAGSynthesis:
 
         driver = self._get_driver()
         with driver.session() as session:
-            results = session.run("""
+            results = session.run(
+                """
                 UNWIND $ids AS sid
                 MATCH (sess:Session {id: sid})
                 OPTIONAL MATCH (sess)-[:DISCUSSES]->(t:Topic)
@@ -168,7 +177,9 @@ class GraphRAGSynthesis:
                     collect(DISTINCT {name: e.name, type: e.type}) AS entities,
                     prev.id AS continues_from,
                     prev.title AS continues_from_title
-            """, ids=session_ids).data()
+            """,
+                ids=session_ids,
+            ).data()
 
         # Preserve the RRF order
         id_to_ctx = {r["id"]: r for r in results}
@@ -181,17 +192,20 @@ class GraphRAGSynthesis:
             title = sess.get("title") or sess.get("id", "")[:8]
             summary = sess.get("summary") or "(no summary)"
             topics = ", ".join(sess.get("topics") or []) or "none"
-            entities = ", ".join(
-                f"{e['name']} ({e['type']})" 
-                for e in (sess.get("entities") or []) 
-                if e.get("name")
-            ) or "none"
-            
+            entities = (
+                ", ".join(
+                    f"{e['name']} ({e['type']})"
+                    for e in (sess.get("entities") or [])
+                    if e.get("name")
+                )
+                or "none"
+            )
+
             continues = ""
             if sess.get("continues_from"):
                 cf_title = sess.get("continues_from_title") or sess["continues_from"]
                 continues = f"\n    Continues from: {cf_title}"
-            
+
             parts.append(
                 f"[{i}] {title}\n"
                 f"    Summary: {summary}\n"
@@ -205,14 +219,16 @@ class GraphRAGSynthesis:
         """Ask LLM for response."""
         if self._llm_ask:
             return self._llm_ask(prompt, system=system)
-        
+
         # Default: try local Ollama
         try:
-            payload = json.dumps({
-                "model": "llama3.2:3b",
-                "prompt": f"{system}\n\n{prompt}",
-                "stream": False,
-            }).encode()
+            payload = json.dumps(
+                {
+                    "model": "llama3.2:3b",
+                    "prompt": f"{system}\n\n{prompt}",
+                    "stream": False,
+                }
+            ).encode()
             req = urllib.request.Request(
                 f"{OLLAMA_URL}/api/generate",
                 data=payload,
@@ -224,20 +240,15 @@ class GraphRAGSynthesis:
         except Exception as e:
             return f"LLM call failed: {e}"
 
-    def recall(
-        self,
-        question: str,
-        top_k: int = 5,
-        synthesize: bool = True
-    ) -> str:
+    def recall(self, question: str, top_k: int = 5, synthesize: bool = True) -> str:
         """
         Main recall function.
-        
+
         Args:
             question: The question to answer
             top_k: Number of sessions to retrieve
             synthesize: If True, use LLM to synthesize answer. If False, return raw context.
-            
+
         Returns:
             Answer string (synthesized or raw context)
         """
@@ -276,7 +287,7 @@ class GraphRAGSynthesis:
             f"Sessions:\n{context}"
         )
         result = self._ask_llm(prompt, SYNTHESIS_SYSTEM)
-        
+
         if not result or "failed" in result.lower():
             return f"Synthesis failed. Raw context:\n\n{context}"
 
@@ -290,20 +301,17 @@ class GraphRAGSynthesis:
 
 
 def recall(
-    question: str,
-    top_k: int = 5,
-    synthesize: bool = True,
-    llm_ask_fn=None
+    question: str, top_k: int = 5, synthesize: bool = True, llm_ask_fn=None
 ) -> str:
     """
     Query the brain using GraphRAG.
-    
+
     Args:
         question: What to ask
         top_k: Number of sessions to retrieve
         synthesize: Use LLM to synthesize (True) or return raw context (False)
         llm_ask_fn: Optional custom LLM function
-        
+
     Returns:
         Answer string
     """
@@ -317,8 +325,12 @@ def recall(
 def main():
     parser = argparse.ArgumentParser(description="GraphRAG recall from brain.")
     parser.add_argument("question", nargs="?", help="Question to ask.")
-    parser.add_argument("--top-k", type=int, default=5, help="Number of sessions (default 5).")
-    parser.add_argument("--no-synthesis", action="store_true", help="Return raw summaries.")
+    parser.add_argument(
+        "--top-k", type=int, default=5, help="Number of sessions (default 5)."
+    )
+    parser.add_argument(
+        "--no-synthesis", action="store_true", help="Return raw summaries."
+    )
     args = parser.parse_args()
 
     if not args.question:

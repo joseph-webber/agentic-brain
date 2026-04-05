@@ -30,11 +30,15 @@ class SemanticChunker(SentenceChunker):
         min_chunk_size: int = 1,
         separator: str = "\n\n",
     ) -> None:
-        super().__init__(chunk_size, overlap, deduplicate=deduplicate, separator=separator)
+        super().__init__(
+            chunk_size, overlap, deduplicate=deduplicate, separator=separator
+        )
         self.similarity_threshold = similarity_threshold
         self.min_chunk_size = min_chunk_size
 
-    def chunk(self, text: str | bytes | None, metadata: dict[str, Any] | None = None) -> list[Chunk]:
+    def chunk(
+        self, text: str | bytes | None, metadata: dict[str, Any] | None = None
+    ) -> list[Chunk]:
         source = self._prepare_text(text)
         if not source:
             return []
@@ -82,14 +86,19 @@ class SemanticChunker(SentenceChunker):
             if current_len < self.min_chunk_size:
                 window.append(sentence)
                 continue
-            if len(candidate) <= self.chunk_size and similarity >= self.similarity_threshold:
+            if (
+                len(candidate) <= self.chunk_size
+                and similarity >= self.similarity_threshold
+            ):
                 window.append(sentence)
                 continue
 
             flush()
             if self.overlap > 0 and chunks:
                 previous = chunks[-1]
-                overlap_start = max(previous.start_char, previous.end_char - self.overlap)
+                overlap_start = max(
+                    previous.start_char, previous.end_char - self.overlap
+                )
                 overlap_text = source[overlap_start : previous.end_char].strip()
                 if overlap_text:
                     window.append(

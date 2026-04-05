@@ -43,7 +43,7 @@ class TestRAGAgent:
         """Test agent creation."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         assert agent.config.name == "test_rag"
         assert agent.memory is not None
         assert agent.tool_registry is not None
@@ -51,11 +51,11 @@ class TestRAGAgent:
     def test_agent_with_custom_registry(self):
         """Test agent with custom tool registry."""
         from agentic_brain.agents import create_default_registry
-        
+
         config = RAGAgentConfig(name="test_rag")
         registry = create_default_registry()
         agent = RAGAgent(config, tool_registry=registry)
-        
+
         assert agent.tool_registry is registry
 
     @pytest.mark.asyncio
@@ -63,9 +63,9 @@ class TestRAGAgent:
         """Test executing task."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         result = await agent.execute("What is Python?")
-        
+
         assert result.success is True
         assert result.output is not None
 
@@ -74,7 +74,7 @@ class TestRAGAgent:
         """Test agent thinking."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         thinking = await agent.think("Sample question")
         assert "Considering" in thinking
 
@@ -83,7 +83,7 @@ class TestRAGAgent:
         """Test agent observation."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         observation = await agent.observe()
         assert "memory_size" in observation
         assert "available_tools" in observation
@@ -93,7 +93,7 @@ class TestRAGAgent:
         """Test adding document to knowledge base."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         await agent.add_document("Python is a programming language")
         assert len(agent._documents) == 1
 
@@ -102,7 +102,7 @@ class TestRAGAgent:
         """Test adding multiple documents."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         docs = [
             {"content": "Document 1"},
             {"content": "Document 2"},
@@ -114,7 +114,7 @@ class TestRAGAgent:
         """Test getting tools schema."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         tools = agent.get_tools()
         assert len(tools) > 0
         assert any(t["name"] == "search" for t in tools)
@@ -124,7 +124,7 @@ class TestRAGAgent:
         """Test calling tool through agent."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         result = await agent.call_tool("calculate", expression="2 + 2")
         assert result.success is True
 
@@ -132,7 +132,7 @@ class TestRAGAgent:
         """Test getting conversation history."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         history = agent.get_conversation_history()
         assert isinstance(history, list)
 
@@ -141,12 +141,12 @@ class TestRAGAgent:
         """Test agent execution with context."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         result = await agent.execute(
             "Answer a question",
             context_data="relevant info",
         )
-        
+
         assert result.success is True
 
     @pytest.mark.asyncio
@@ -154,13 +154,13 @@ class TestRAGAgent:
         """Test memory across calls."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         await agent.execute("First task")
         history1 = agent.get_conversation_history()
-        
+
         await agent.execute("Second task")
         history2 = agent.get_conversation_history()
-        
+
         assert len(history2) > len(history1)
 
     @pytest.mark.asyncio
@@ -171,7 +171,7 @@ class TestRAGAgent:
             enable_planning=False,
         )
         agent = RAGAgent(config)
-        
+
         result = await agent.execute("Quick task")
         assert result.success is True
 
@@ -183,7 +183,7 @@ class TestRAGAgent:
             enable_reflection=False,
         )
         agent = RAGAgent(config)
-        
+
         result = await agent.execute("Task")
         assert result.success is True
         assert "reflection" not in result.context.metadata
@@ -193,7 +193,7 @@ class TestRAGAgent:
         """Test agent cleanup."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         await agent.reset()
         history = agent.get_conversation_history()
         assert len(history) == 0
@@ -202,7 +202,7 @@ class TestRAGAgent:
         """Test agent metadata."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         metadata = agent.get_metadata()
         assert metadata["role"] == "rag_agent"
         assert metadata["name"] == "test_rag"
@@ -212,12 +212,12 @@ class TestRAGAgent:
         """Test multiple sequential task executions."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         results = []
         for i in range(3):
             result = await agent.execute(f"Task {i}")
             results.append(result)
-        
+
         assert all(r.success for r in results)
 
     @pytest.mark.asyncio
@@ -225,10 +225,10 @@ class TestRAGAgent:
         """Test document retrieval for context."""
         config = RAGAgentConfig(name="test_rag", max_context_docs=3)
         agent = RAGAgent(config)
-        
+
         for i in range(5):
             await agent.add_document(f"Document {i}")
-        
+
         docs = await agent._retrieve_context("test query")
         assert len(docs) <= 3
 
@@ -237,7 +237,7 @@ class TestRAGAgent:
         """Test that execution time is measured."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         result = await agent.execute("Test task")
         assert result.execution_time_ms > 0
 
@@ -245,10 +245,10 @@ class TestRAGAgent:
         """Test tool listing."""
         config = RAGAgentConfig(name="test_rag")
         agent = RAGAgent(config)
-        
+
         tools = agent.get_tools()
         tool_names = [t["name"] for t in tools]
-        
+
         assert "search" in tool_names
         assert "calculate" in tool_names
         assert "execute_code" in tool_names
@@ -266,12 +266,12 @@ class TestRAGAgentIntegration:
             enable_reflection=True,
         )
         agent = RAGAgent(config)
-        
+
         await agent.add_document("Python is a programming language")
         await agent.add_document("It was created by Guido van Rossum")
-        
+
         result = await agent.execute("Tell me about Python")
-        
+
         assert result.success is True
         assert len(agent.get_conversation_history()) > 0
 
@@ -280,10 +280,10 @@ class TestRAGAgentIntegration:
         """Test RAG agent using tools."""
         config = RAGAgentConfig(name="tool_test")
         agent = RAGAgent(config)
-        
+
         await agent.add_document("2 plus 2 equals 4")
         result = await agent.execute("Calculate: what is 2 + 2?")
-        
+
         assert result.success is True
 
 

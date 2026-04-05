@@ -196,7 +196,10 @@ def ensure_voice_topics() -> tuple[str, ...]:
             admin.create_topics(new_topics=topics, validate_only=False)
         except Exception as exc:  # pragma: no cover - broker state dependent
             message = f"{type(exc).__name__}: {exc}".lower()
-            if "already exists" not in message and "already been created" not in message:
+            if (
+                "already exists" not in message
+                and "already been created" not in message
+            ):
                 raise
         _topics_ensured = True
         return VOICE_TOPICS
@@ -204,7 +207,9 @@ def ensure_voice_topics() -> tuple[str, ...]:
         admin.close()
 
 
-def _publish(topic: str, payload: dict[str, Any], *, key: str | None = None) -> dict[str, Any]:
+def _publish(
+    topic: str, payload: dict[str, Any], *, key: str | None = None
+) -> dict[str, Any]:
     ensure_voice_topics()
     producer = _get_producer()
     producer.send(topic, value=payload, key=key.encode("utf-8") if key else None)
@@ -244,7 +249,8 @@ def normalize_voice_response_event(payload: dict[str, Any]) -> dict[str, Any]:
     )
     normalized["text"] = _require_text("text", normalized.get("text"))
     normalized["voice"] = _require_text(
-        "voice", normalized.get("voice") or normalized.get("voice_persona") or DEFAULT_VOICE
+        "voice",
+        normalized.get("voice") or normalized.get("voice_persona") or DEFAULT_VOICE,
     )
     normalized["priority"] = _normalize_priority(normalized.get("priority"))
     normalized.setdefault("source", normalized.get("provider") or DEFAULT_SOURCE)
@@ -319,7 +325,9 @@ def get_voice_status() -> dict[str, Any]:
         finally:
             admin.close()
 
-        missing_topics = [topic for topic in VOICE_TOPICS if topic not in available_topics]
+        missing_topics = [
+            topic for topic in VOICE_TOPICS if topic not in available_topics
+        ]
         status = "healthy" if not missing_topics else "degraded"
         details = {
             "bootstrap_servers": REDPANDA_BOOTSTRAP_SERVERS,

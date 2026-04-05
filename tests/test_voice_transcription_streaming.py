@@ -67,7 +67,9 @@ class TestStreamingBuffer:
         assert remaining_ms == pytest.approx(200, rel=0.1)  # 0.2 seconds overlap
 
     def test_buffer_segment_index_increments(self) -> None:
-        buffer = StreamingBuffer(window_secs=0.25, overlap_secs=0.05, sample_rate=16_000)
+        buffer = StreamingBuffer(
+            window_secs=0.25, overlap_secs=0.05, sample_rate=16_000
+        )
 
         assert buffer.segment_index == 0
 
@@ -104,7 +106,7 @@ class TestStreamingStitcher:
 
         result1 = StreamingTranscriptionResult(text="Hello", is_partial=True)
         stitcher.add_result(result1)
-        
+
         # Final result adds to stable
         result2 = StreamingTranscriptionResult(text="world", is_final=True)
         updated = stitcher.add_result(result2)
@@ -119,9 +121,7 @@ class TestStreamingStitcher:
         stitcher.add_result(result1)
 
         # Overlap: "brown" appears at end of first, start of second
-        result2 = StreamingTranscriptionResult(
-            text="brown fox jumps", is_partial=True
-        )
+        result2 = StreamingTranscriptionResult(text="brown fox jumps", is_partial=True)
         updated = stitcher.add_result(result2)
 
         # Should have removed the duplicate "brown" - text is "fox jumps"
@@ -181,9 +181,7 @@ class TestBaseTranscriberStreaming:
     def test_configure_streaming_enables_mode(self) -> None:
         transcriber = WhisperTranscriber()
 
-        transcriber.configure_streaming(
-            window_secs=1.5, overlap_secs=0.3, enabled=True
-        )
+        transcriber.configure_streaming(window_secs=1.5, overlap_secs=0.3, enabled=True)
 
         assert transcriber.streaming_enabled is True
         assert transcriber._streaming_buffer is not None
@@ -300,7 +298,9 @@ class TestMacOSDictationErrorHandling:
                 "_recognise_with_sf",
                 side_effect=TranscriptionTimeoutError("timed out"),
             ),
-            patch("agentic_brain.voice.transcription.os.path.exists", return_value=True),
+            patch(
+                "agentic_brain.voice.transcription.os.path.exists", return_value=True
+            ),
             patch("agentic_brain.voice.transcription.os.unlink") as mock_unlink,
         ):
             result = transcriber.transcribe_bytes(_make_pcm_bytes(4_000))

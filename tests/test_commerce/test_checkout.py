@@ -22,29 +22,39 @@ def test_checkout_reserve_stock_holds_quantity(inventory_manager: InventoryManag
     assert inventory_manager.get_local_stock(1) == 8
 
 
-def test_checkout_release_reservation_restores_availability(inventory_manager: InventoryManager):
+def test_checkout_release_reservation_restores_availability(
+    inventory_manager: InventoryManager,
+):
     reservation = inventory_manager.reserve_stock(product_id=1, quantity=2, sku="SKU-1")
     inventory_manager.release_reservation(reservation.reservation_id)
     assert inventory_manager.get_local_stock(1) == 10
 
 
-def test_checkout_release_missing_reservation_raises(inventory_manager: InventoryManager):
+def test_checkout_release_missing_reservation_raises(
+    inventory_manager: InventoryManager,
+):
     with pytest.raises(ReservationNotFoundError):
         inventory_manager.release_reservation("missing")
 
 
-def test_checkout_confirm_reservation_deducts_stock(inventory_manager: InventoryManager):
+def test_checkout_confirm_reservation_deducts_stock(
+    inventory_manager: InventoryManager,
+):
     reservation = inventory_manager.reserve_stock(product_id=1, quantity=4, sku="SKU-1")
     inventory_manager.confirm_reservation(reservation.reservation_id)
     assert inventory_manager.get_local_stock(1) == 6
 
 
-def test_checkout_confirm_missing_reservation_raises(inventory_manager: InventoryManager):
+def test_checkout_confirm_missing_reservation_raises(
+    inventory_manager: InventoryManager,
+):
     with pytest.raises(ReservationNotFoundError):
         inventory_manager.confirm_reservation("missing")
 
 
-def test_checkout_reserve_insufficient_stock_raises(inventory_manager: InventoryManager):
+def test_checkout_reserve_insufficient_stock_raises(
+    inventory_manager: InventoryManager,
+):
     with pytest.raises(InsufficientStockError):
         inventory_manager.reserve_stock(product_id=1, quantity=999, sku="SKU-1")
 

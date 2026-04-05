@@ -160,8 +160,16 @@ def print_summary(report: Dict[str, Any]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Run dependency security audit and generate a JSON report.")
-    parser.add_argument("--output", "-o", type=str, default="dependency_audit.json", help="Output JSON report path")
+    parser = argparse.ArgumentParser(
+        description="Run dependency security audit and generate a JSON report."
+    )
+    parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        default="dependency_audit.json",
+        help="Output JSON report path",
+    )
     ns = parser.parse_args(argv)
 
     out_path = Path(ns.output)

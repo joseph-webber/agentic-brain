@@ -14,9 +14,23 @@ class DummyWSStreamer:
 
     async def stream_websocket(self, message: str, history: list[dict]):
         # Emit two chunks and a terminating token.
-        meta = {"provider": self.provider, "model": self.model, "temperature": self.temperature}
-        yield json.dumps({"token": "Echo:", "is_start": True, "is_end": False, "metadata": meta})
-        yield json.dumps({"token": f" {message}", "is_start": False, "is_end": True, "finish_reason": "stop", "metadata": meta})
+        meta = {
+            "provider": self.provider,
+            "model": self.model,
+            "temperature": self.temperature,
+        }
+        yield json.dumps(
+            {"token": "Echo:", "is_start": True, "is_end": False, "metadata": meta}
+        )
+        yield json.dumps(
+            {
+                "token": f" {message}",
+                "is_start": False,
+                "is_end": True,
+                "finish_reason": "stop",
+                "metadata": meta,
+            }
+        )
 
 
 class ErrorWSStreamer(DummyWSStreamer):

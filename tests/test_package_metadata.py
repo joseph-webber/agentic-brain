@@ -258,7 +258,9 @@ class TestPackageClassifiers:
 
         content = pyproject_file.read_text()
         assert '"Programming Language :: Python :: 3"' in content
-        assert '"Programming Language :: Python :: 3.11"' in content or "3.11" in content
+        assert (
+            '"Programming Language :: Python :: 3.11"' in content or "3.11" in content
+        )
 
     def test_license_classifier(self):
         """Verify license classifier."""

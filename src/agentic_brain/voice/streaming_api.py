@@ -45,7 +45,9 @@ class StreamingAPIConfig:
     chunk_size: int = 4096
 
 
-TranscriberFn = Callable[[bytes], Awaitable[dict[str, Any] | str | None] | dict[str, Any] | str | None]
+TranscriberFn = Callable[
+    [bytes], Awaitable[dict[str, Any] | str | None] | dict[str, Any] | str | None
+]
 
 
 class VoiceStreamingAPI:
@@ -100,7 +102,9 @@ class VoiceStreamingAPI:
         )
         self._running = True
         logger.info(
-            "Voice streaming API started on ws://%s:%s", self.config.host, self.config.port
+            "Voice streaming API started on ws://%s:%s",
+            self.config.host,
+            self.config.port,
         )
 
     async def stop(self) -> None:
@@ -147,7 +151,9 @@ class VoiceStreamingAPI:
     # Client handling
     # ------------------------------------------------------------------
 
-    async def _handle_client(self, websocket: Any, path: str) -> None:  # pragma: no cover -
+    async def _handle_client(
+        self, websocket: Any, path: str
+    ) -> None:  # pragma: no cover -
         """Handle a client connection.
 
         The handler accepts two message types:
@@ -277,7 +283,9 @@ class VoiceStreamingAPI:
         if not self._clients:
             return
 
-        message = json.dumps({"type": "transcription", "text": text, "is_final": is_final})
+        message = json.dumps(
+            {"type": "transcription", "text": text, "is_final": is_final}
+        )
 
         # Iterate over a copy so we can safely remove closed clients
         for client in list(self._clients):
@@ -285,7 +293,9 @@ class VoiceStreamingAPI:
                 await client.send(message)
             except Exception:  # pragma: no cover - network glitches
                 self._clients.discard(client)
-                logger.debug("Failed to broadcast to client; removed from set", exc_info=True)
+                logger.debug(
+                    "Failed to broadcast to client; removed from set", exc_info=True
+                )
 
     async def wait_closed(self) -> None:
         """Wait until the underlying server is closed.

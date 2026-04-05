@@ -30,13 +30,13 @@ INDEXES = [
 
 async def ensure_indexes(session) -> None:
     """Create the shared Neo4j indexes using an async session.
-    
+
     Idempotent: safe to call multiple times. Uses IF NOT EXISTS clauses
     to avoid errors if indexes already exist.
-    
+
     Args:
         session: Async Neo4j session from async_get_session().
-        
+
     Raises:
         ServiceUnavailable: If Neo4j connection is unavailable.
     """
@@ -47,13 +47,13 @@ async def ensure_indexes(session) -> None:
 
 def ensure_indexes_sync(session) -> None:
     """Create the shared Neo4j indexes using a synchronous session.
-    
+
     Synchronous version of ensure_indexes for blocking contexts.
     Idempotent: safe to call multiple times.
-    
+
     Args:
         session: Sync Neo4j session from get_session().
-        
+
     Raises:
         ServiceUnavailable: If Neo4j connection is unavailable.
     """

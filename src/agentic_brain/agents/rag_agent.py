@@ -72,16 +72,16 @@ class RAGAgent(Agent):
             )
         elif config.role == AgentRole.GENERALIST:
             config.role = AgentRole.RAG_AGENT
-        
+
         super().__init__(config)
         self.rag_config = config
-        
+
         self.memory = AgentMemory(MemoryConfig(max_items=1000))
         self.tool_registry = tool_registry or create_default_registry()
         self.executor = ToolExecutor(tool_registry=self.tool_registry)
         self.planner = Planner(strategy=PlanningStrategy.HIERARCHICAL)
         self.react_agent = ReActAgent(planning_strategy=PlanningStrategy.HIERARCHICAL)
-        
+
         self._documents: list[dict[str, Any]] = []
         self._embeddings: dict[str, list[float]] = {}
 
@@ -97,32 +97,33 @@ class RAGAgent(Agent):
             AgentResult with execution outcome
         """
         import time
+
         start_time = time.perf_counter()
 
         try:
             self.set_state(AgentState.PLANNING)
-            
+
             self.memory.add_message("user", task)
-            
+
             if self.rag_config.enable_planning:
                 plan = await self.planner.create_plan(task)
                 self.context.metadata["plan"] = plan.to_dict()
-            
+
             self.set_state(AgentState.EXECUTING)
-            
+
             response = await self._execute_with_rag(task, **kwargs)
-            
+
             self.memory.add_message("assistant", response)
-            
+
             if self.rag_config.enable_reflection:
                 self.set_state(AgentState.THINKING)
                 reflection = await self._reflect_on_response(response)
                 self.context.metadata["reflection"] = reflection
-            
+
             self.set_state(AgentState.COMPLETE)
-            
+
             execution_time = (time.perf_counter() - start_time) * 1000
-            
+
             return AgentResult(
                 success=True,
                 output=response,
@@ -157,10 +158,10 @@ class RAGAgent(Agent):
             Reasoning string
         """
         self.set_state(AgentState.THINKING)
-        
+
         retrieved = await self._retrieve_context(task)
         reasoning = f"Considering {len(retrieved)} relevant documents for: {task}"
-        
+
         return reasoning
 
     async def observe(self, **kwargs: Any) -> dict[str, Any]:
@@ -174,7 +175,7 @@ class RAGAgent(Agent):
             Dictionary with observations
         """
         self.set_state(AgentState.OBSERVING)
-        
+
         return {
             "memory_size": len(self.memory._conversation_history),
             "available_tools": list(self.tool_registry._tools.keys()),
@@ -194,16 +195,16 @@ class RAGAgent(Agent):
             Generated response
         """
         retrieved_docs = await self._retrieve_context(task)
-        
+
         context_str = self._format_context(retrieved_docs)
-        
+
         plan, results = await self.react_agent.think_and_act(
             task,
             context={"retrieved_context": context_str, **kwargs},
         )
-        
+
         response = await self._generate_response(task, context_str, results)
-        
+
         return response
 
     async def _retrieve_context(self, query: str) -> list[dict[str, Any]]:
@@ -218,11 +219,9 @@ class RAGAgent(Agent):
         """
         if not self._documents:
             return []
-        
-        relevant = [
-            doc for doc in self._documents[:self.rag_config.max_context_docs]
-        ]
-        
+
+        relevant = [doc for doc in self._documents[: self.rag_config.max_context_docs]]
+
         return relevant
 
     def _format_context(self, documents: list[dict[str, Any]]) -> str:
@@ -237,12 +236,12 @@ class RAGAgent(Agent):
         """
         if not documents:
             return "No relevant context available."
-        
+
         context_parts = ["Retrieved context:"]
         for i, doc in enumerate(documents, 1):
             content = doc.get("content", "")[:200]
             context_parts.append(f"{i}. {content}...")
-        
+
         return "\n".join(context_parts)
 
     async def _generate_response(
@@ -267,7 +266,7 @@ class RAGAgent(Agent):
             f"Using context: {len(context.split('Retrieved'))} sources",
             f"Completed {len(plan_results)} planning steps",
         ]
-        
+
         return "\n".join(response_parts)
 
     async def _reflect_on_response(self, response: str) -> str:

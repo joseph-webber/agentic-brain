@@ -22,7 +22,9 @@ class DummyVectorStore(VectorStore):
     def close(self) -> None:
         self._connected = False
 
-    def create_collection(self, collection_name=None, *, dimension=None, metric=None, **kwargs):
+    def create_collection(
+        self, collection_name=None, *, dimension=None, metric=None, **kwargs
+    ):
         return self._memory_create_collection(
             collection_name, dimension=dimension, metric=metric
         )
@@ -34,7 +36,9 @@ class DummyVectorStore(VectorStore):
         return self._memory_list_collections()
 
     def upsert(self, records, *, collection_name=None, namespace=None):
-        return self._memory_upsert(records, collection_name=collection_name, namespace=namespace)
+        return self._memory_upsert(
+            records, collection_name=collection_name, namespace=namespace
+        )
 
     def search(
         self,
@@ -57,7 +61,15 @@ class DummyVectorStore(VectorStore):
             include_metadata=include_metadata,
         )
 
-    def delete(self, *, collection_name=None, ids=None, namespace=None, filter=None, delete_all=False):
+    def delete(
+        self,
+        *,
+        collection_name=None,
+        ids=None,
+        namespace=None,
+        filter=None,
+        delete_all=False,
+    ):
         return self._memory_delete(
             collection_name=collection_name,
             ids=ids,
@@ -145,7 +157,10 @@ def test_dummy_store_memory_round_trip():
     store = DummyVectorStore(collection_name="docs", dimension=3)
     assert store.connect() is True
     assert store.create_collection("docs") is True
-    assert store.upsert([{"id": "x", "vector": [1, 0, 0], "metadata": {"tag": "one"}}]) == 1
+    assert (
+        store.upsert([{"id": "x", "vector": [1, 0, 0], "metadata": {"tag": "one"}}])
+        == 1
+    )
     assert store.count() == 1
     assert store.search([1, 0, 0])[0].id == "x"
     assert store.delete(ids=["x"]) == 1

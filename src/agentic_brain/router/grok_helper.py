@@ -232,7 +232,9 @@ class GrokHelperService:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Redis-backed Grok helper")
-    parser.add_argument("--once", action="store_true", help="Process backlog once and exit")
+    parser.add_argument(
+        "--once", action="store_true", help="Process backlog once and exit"
+    )
     parser.add_argument(
         "--poll-interval",
         type=float,

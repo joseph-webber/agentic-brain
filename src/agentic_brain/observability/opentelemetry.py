@@ -2,6 +2,7 @@
 If opentelemetry is available, the real exporter could be implemented here. For testing and safety
 we provide a minimal shim that converts spans to a serializable form.
 """
+
 from __future__ import annotations
 from typing import Any, Dict
 

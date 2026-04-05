@@ -85,7 +85,9 @@ def test_agent_clock_provides_utc_first_timestamp_utilities():
 def test_causal_reasoner_is_importable_and_operational():
     reasoner = CausalReasoner()
     reasoner.initialize()
-    reasoner.learn_causal_relationship("network down", "service unavailable", mechanism="dependency chain")
+    reasoner.learn_causal_relationship(
+        "network down", "service unavailable", mechanism="dependency chain"
+    )
 
     causes = reasoner.infer_causes("service unavailable")
 

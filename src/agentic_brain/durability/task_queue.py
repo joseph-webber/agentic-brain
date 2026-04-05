@@ -184,7 +184,9 @@ class TaskQueue:
         visibility_timeout: float = 300.0,
     ):
         self.queue_name = queue_name
-        self.bootstrap_servers = bootstrap_servers or os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+        self.bootstrap_servers = bootstrap_servers or os.getenv(
+            "KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"
+        )
         self.consumer_group = consumer_group or f"workers-{queue_name}"
         self.visibility_timeout = visibility_timeout
 
@@ -467,7 +469,9 @@ class TaskQueueManager:
     """
 
     def __init__(self, bootstrap_servers: Optional[str] = None):
-        self.bootstrap_servers = bootstrap_servers or os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+        self.bootstrap_servers = bootstrap_servers or os.getenv(
+            "KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"
+        )
         self._queues: Dict[str, TaskQueue] = {}
         self._running = False
         self._timeout_checker: Optional[asyncio.Task] = None

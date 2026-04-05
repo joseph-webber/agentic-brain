@@ -83,7 +83,11 @@ class SlackConnector(Connector):
             headers=self._headers,
             params={"limit": self.page_size},
         )
-        return [channel["id"] for channel in response.get("channels", []) if channel.get("id")]
+        return [
+            channel["id"]
+            for channel in response.get("channels", [])
+            if channel.get("id")
+        ]
 
     def _channel_name_map(self) -> dict[str, str]:
         if self.channels:
@@ -128,7 +132,9 @@ class SlackConnector(Connector):
             for message in messages:
                 if len(records) >= limit:
                     break
-                record = self._message_record(channel_id, message, channel_names.get(channel_id))
+                record = self._message_record(
+                    channel_id, message, channel_names.get(channel_id)
+                )
                 records.append(record)
                 ts = record.updated_at.timestamp() if record.updated_at else None
                 if ts is not None:
@@ -157,7 +163,11 @@ class SlackConnector(Connector):
                         if reply_ts is not None:
                             channel_state[channel_id] = str(reply_ts)
                         latest = max(
-                            [d for d in [latest, reply_record.updated_at] if d is not None],
+                            [
+                                d
+                                for d in [latest, reply_record.updated_at]
+                                if d is not None
+                            ],
                             default=latest,
                         )
                         if len(records) >= limit:

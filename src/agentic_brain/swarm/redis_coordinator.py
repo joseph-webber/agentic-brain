@@ -219,25 +219,38 @@ class SwarmCoordinator:
             "failed_tasks": 0,
             **(metadata or {}),
         }
-        self._r.hset(_key_status(swarm_id), mapping={k: str(v) for k, v in status.items()})
-        self.publish(swarm_id, CoordinationEvent(
-            event_type="swarm_started",
-            swarm_id=swarm_id,
-            payload={"total_tasks": total_tasks},
-        ))
+        self._r.hset(
+            _key_status(swarm_id), mapping={k: str(v) for k, v in status.items()}
+        )
+        self.publish(
+            swarm_id,
+            CoordinationEvent(
+                event_type="swarm_started",
+                swarm_id=swarm_id,
+                payload={"total_tasks": total_tasks},
+            ),
+        )
         logger.info("Swarm %s started (total_tasks=%d)", swarm_id, total_tasks)
 
-    def finish_swarm(self, swarm_id: str, *, status: SwarmStatus = SwarmStatus.COMPLETED) -> None:
+    def finish_swarm(
+        self, swarm_id: str, *, status: SwarmStatus = SwarmStatus.COMPLETED
+    ) -> None:
         """Mark swarm as finished and emit final event."""
-        self._r.hset(_key_status(swarm_id), mapping={
-            "status": str(status),
-            "finished_at": str(time.time()),
-        })
-        self.publish(swarm_id, CoordinationEvent(
-            event_type="swarm_finished",
-            swarm_id=swarm_id,
-            payload={"status": str(status)},
-        ))
+        self._r.hset(
+            _key_status(swarm_id),
+            mapping={
+                "status": str(status),
+                "finished_at": str(time.time()),
+            },
+        )
+        self.publish(
+            swarm_id,
+            CoordinationEvent(
+                event_type="swarm_finished",
+                swarm_id=swarm_id,
+                payload={"status": str(status)},
+            ),
+        )
         logger.info("Swarm %s finished with status=%s", swarm_id, status)
 
     def swarm_status(self, swarm_id: str) -> Dict[str, Any]:
@@ -279,12 +292,15 @@ class SwarmCoordinator:
         self._r.hset(_key_agents_hash(swarm_id), agent_id, _dumps(record))
         self._r.sadd(_key_agents_set(swarm_id), agent_id)
         self._heartbeat(swarm_id, agent_id, ttl=ttl)
-        self.publish(swarm_id, CoordinationEvent(
-            event_type="agent_registered",
-            swarm_id=swarm_id,
-            agent_id=agent_id,
-            payload={"capabilities": capabilities or []},
-        ))
+        self.publish(
+            swarm_id,
+            CoordinationEvent(
+                event_type="agent_registered",
+                swarm_id=swarm_id,
+                agent_id=agent_id,
+                payload={"capabilities": capabilities or []},
+            ),
+        )
         logger.debug("Agent %s registered in swarm %s", agent_id, swarm_id)
 
     def deregister_agent(self, swarm_id: str, agent_id: str) -> None:
@@ -292,11 +308,14 @@ class SwarmCoordinator:
         self._r.hdel(_key_agents_hash(swarm_id), agent_id)
         self._r.srem(_key_agents_set(swarm_id), agent_id)
         self._r.delete(_key_hb(swarm_id, agent_id))
-        self.publish(swarm_id, CoordinationEvent(
-            event_type="agent_deregistered",
-            swarm_id=swarm_id,
-            agent_id=agent_id,
-        ))
+        self.publish(
+            swarm_id,
+            CoordinationEvent(
+                event_type="agent_deregistered",
+                swarm_id=swarm_id,
+                agent_id=agent_id,
+            ),
+        )
 
     def heartbeat(self, swarm_id: str, agent_id: str, *, ttl: int = _AGENT_TTL) -> None:
         """Renew the agent heartbeat TTL key."""
@@ -337,13 +356,21 @@ class SwarmCoordinator:
     ) -> str:
         """Push a task onto the swarm's task list.  Returns the task_id."""
         tid = task_id or str(uuid.uuid4())
-        task = {**task, "task_id": tid, "priority": priority, "enqueued_at": time.time()}
+        task = {
+            **task,
+            "task_id": tid,
+            "priority": priority,
+            "enqueued_at": time.time(),
+        }
         self._r.lpush(_key_tasks(swarm_id), _dumps(task))
-        self.publish(swarm_id, CoordinationEvent(
-            event_type="task_enqueued",
-            swarm_id=swarm_id,
-            payload={"task_id": tid},
-        ))
+        self.publish(
+            swarm_id,
+            CoordinationEvent(
+                event_type="task_enqueued",
+                swarm_id=swarm_id,
+                payload={"task_id": tid},
+            ),
+        )
         return tid
 
     def pull_task(
@@ -376,13 +403,19 @@ class SwarmCoordinator:
         """Store a completed task result."""
         result = {**result, "stored_at": time.time()}
         self._r.lpush(_key_results(swarm_id), _dumps(result))
-        self._r.hset(_key_status(swarm_id), "completed_tasks",
-                     int(self._r.hget(_key_status(swarm_id), "completed_tasks") or 0) + 1)
-        self.publish(swarm_id, CoordinationEvent(
-            event_type="result_stored",
-            swarm_id=swarm_id,
-            payload={"task_id": result.get("task_id")},
-        ))
+        self._r.hset(
+            _key_status(swarm_id),
+            "completed_tasks",
+            int(self._r.hget(_key_status(swarm_id), "completed_tasks") or 0) + 1,
+        )
+        self.publish(
+            swarm_id,
+            CoordinationEvent(
+                event_type="result_stored",
+                swarm_id=swarm_id,
+                payload={"task_id": result.get("task_id")},
+            ),
+        )
 
     def get_results(self, swarm_id: str, *, limit: int = 0) -> List[Dict[str, Any]]:
         """Drain (pop) up to *limit* results (0 = all) from the results list."""

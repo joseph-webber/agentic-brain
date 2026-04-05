@@ -298,7 +298,9 @@ def reciprocal_rank_fusion(
                     )
 
                 original_score = (
-                    item.get("score") if isinstance(item, dict) else getattr(item, "score", None)
+                    item.get("score")
+                    if isinstance(item, dict)
+                    else getattr(item, "score", None)
                 )
                 explanations[item_id].sources.append(
                     RRFSourceContribution(

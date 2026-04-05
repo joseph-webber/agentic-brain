@@ -79,7 +79,7 @@ python -c "from agentic_brain import Agent, Neo4jMemory, AgenticBrainError; prin
 Once published:
 - PyPI Project: https://pypi.org/project/agentic-brain/
 - PyPI Version: https://pypi.org/project/agentic-brain/3.1.1/
-- Repository: https://github.com/ecomlounge/brain
+- Repository: https://github.com/joseph-webber/brain
 - GitHub Release: Add git tag `git tag v3.1.1 && git push --tags`
 
 ## 📊 Package Statistics
@@ -185,4 +185,4 @@ When ready for 3.1.2:
 - 📖 Full Guide: PYPI_PACKAGING_GUIDE.md
 - 📊 Summary: PYPI_PUBLICATION_SUMMARY.txt
 - 📦 PyPI: https://pypi.org/project/agentic-brain/
-- 🔗 GitHub: https://github.com/ecomlounge/brain
+- 🔗 GitHub: https://github.com/joseph-webber/brain

@@ -109,11 +109,15 @@ class Neo4jSchemaGenerator:
         return out
 
     def _relationship_comment(self, rel: RelationshipDef) -> str:
-        rel_type = rel.kind.upper().replace("ONETOMANY", "HAS_MANY").replace(
-            "MANYTOMANY", "MANY_TO_MANY"
-        ).replace("ONETOONE", "HAS_ONE").replace(
-            "ManyToMany", "MANY_TO_MANY"
-        ).replace("OneToMany", "HAS_MANY").replace("OneToOne", "HAS_ONE")
+        rel_type = (
+            rel.kind.upper()
+            .replace("ONETOMANY", "HAS_MANY")
+            .replace("MANYTOMANY", "MANY_TO_MANY")
+            .replace("ONETOONE", "HAS_ONE")
+            .replace("ManyToMany", "MANY_TO_MANY")
+            .replace("OneToMany", "HAS_MANY")
+            .replace("OneToOne", "HAS_ONE")
+        )
 
         from_field = f"{{{rel.from_end.field}}}" if rel.from_end.field else ""
         to_field = f"{{{rel.to_end.field}}}" if rel.to_end.field else ""

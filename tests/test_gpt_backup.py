@@ -58,7 +58,10 @@ def test_handle_payload_for_tagged_request_publishes_result_and_resets_status():
     assert result["result"]["summary"] == "REVIEW ASYNC FIXTURE"
     assert redis_client.get("voice:gpt_backup_status") == "standby"
     assert redis_client.llen("voice:gpt_backup_results") == 2
-    assert json.loads(redis_client.get("voice:gpt_backup_last_result"))["status"] == "completed"
+    assert (
+        json.loads(redis_client.get("voice:gpt_backup_last_result"))["status"]
+        == "completed"
+    )
 
     accepted = json.loads(_get_pubsub_message(pubsub)["data"])
     completed = json.loads(_get_pubsub_message(pubsub)["data"])
@@ -82,7 +85,10 @@ def test_process_task_queue_handles_voice_coding_tasks():
 
     assert processed == 1
     assert redis_client.llen("voice:coding_tasks") == 0
-    assert json.loads(redis_client.get("voice:gpt_backup_last_result"))["status"] == "completed"
+    assert (
+        json.loads(redis_client.get("voice:gpt_backup_last_result"))["status"]
+        == "completed"
+    )
 
 
 def test_should_ignore_unaddressed_channel_noise():

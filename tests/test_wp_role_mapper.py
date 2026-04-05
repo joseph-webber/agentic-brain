@@ -46,7 +46,11 @@ def test_resolve_primary_wordpress_role_requires_at_least_one_role():
         (WordPressRole.CONTRIBUTOR, WordPressChatbotMode.USER, SecurityRole.USER),
         (WordPressRole.AUTHOR, WordPressChatbotMode.USER, SecurityRole.USER),
         (WordPressRole.EDITOR, WordPressChatbotMode.POWER_USER, SecurityRole.USER),
-        (WordPressRole.SHOP_MANAGER, WordPressChatbotMode.POWER_USER, SecurityRole.USER),
+        (
+            WordPressRole.SHOP_MANAGER,
+            WordPressChatbotMode.POWER_USER,
+            SecurityRole.USER,
+        ),
         (
             WordPressRole.ADMINISTRATOR,
             WordPressChatbotMode.ADMIN,
@@ -64,7 +68,9 @@ def test_administrator_can_be_downgraded_to_power_user_mode():
         get_chatbot_mode("administrator", allow_admin_mode=False)
         == WordPressChatbotMode.POWER_USER
     )
-    assert get_security_role("administrator", allow_admin_mode=False) == SecurityRole.USER
+    assert (
+        get_security_role("administrator", allow_admin_mode=False) == SecurityRole.USER
+    )
 
 
 def test_customer_capabilities_are_self_service_only():

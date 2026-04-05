@@ -314,8 +314,7 @@ class AgentMemory:
             "memories": len(self._memories),
             "context_size": len(self._current_context),
             "avg_importance": (
-                sum(m.importance for m in self._memories.values())
-                / len(self._memories)
+                sum(m.importance for m in self._memories.values()) / len(self._memories)
                 if self._memories
                 else 0.0
             ),

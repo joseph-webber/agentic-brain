@@ -68,6 +68,7 @@ def _check_mlx_available() -> bool:
     if _MLX_AVAILABLE is None:
         try:
             import mlx.core as mx  # noqa: F401
+
             _MLX_AVAILABLE = True
             logger.debug("MLX is available for Apple Silicon acceleration")
         except ImportError:
@@ -84,28 +85,29 @@ def _check_mlx_available() -> bool:
 @dataclass
 class MLXTensorOps:
     """MLX-native tensor operations for GPU-accelerated computations."""
-    
+
     _mx: Any = field(default=None, repr=False)
-    
+
     def __post_init__(self) -> None:
         if _check_mlx_available():
             import mlx.core as mx
+
             self._mx = mx
-    
+
     @property
     def available(self) -> bool:
         return self._mx is not None
-    
+
     def to_mlx(self, data: list[float] | list[list[float]]) -> Any:
         """Convert Python list to MLX array."""
         if not self.available:
             raise RuntimeError("MLX not available")
         return self._mx.array(data)
-    
+
     def to_list(self, arr: Any) -> list[float] | list[list[float]]:
         """Convert MLX array to Python list."""
         return arr.tolist()
-    
+
     def normalize(self, vectors: Any) -> Any:
         """L2-normalize vectors (batch-safe)."""
         if not self.available:
@@ -117,7 +119,7 @@ class MLXTensorOps:
         else:
             norms = mx.sqrt(mx.sum(vectors * vectors, axis=1, keepdims=True))
             return vectors / (norms + 1e-10)
-    
+
     def cosine_similarity(self, a: Any, b: Any) -> Any:
         """Compute cosine similarity between vectors."""
         if not self.available:
@@ -126,7 +128,7 @@ class MLXTensorOps:
         a_norm = self.normalize(a)
         b_norm = self.normalize(b)
         return mx.sum(a_norm * b_norm)
-    
+
     def cosine_similarity_matrix(self, queries: Any, corpus: Any) -> Any:
         """Compute similarity matrix between query vectors and corpus."""
         if not self.available:
@@ -136,7 +138,7 @@ class MLXTensorOps:
         corpus_norm = self.normalize(corpus)
         # Matrix multiply for batch similarity
         return mx.matmul(queries_norm, corpus_norm.T)
-    
+
     def topk(self, scores: Any, k: int) -> tuple[Any, Any]:
         """Get top-k scores and indices."""
         if not self.available:
@@ -146,7 +148,7 @@ class MLXTensorOps:
         indices = mx.argsort(scores)[-k:][::-1]
         values = scores[indices]
         return values, indices
-    
+
     def quantize_4bit(self, vectors: Any) -> tuple[Any, float, float]:
         """Quantize vectors to 4-bit representation."""
         if not self.available:
@@ -158,14 +160,14 @@ class MLXTensorOps:
         quantized = mx.round((vectors - v_min) / (scale + 1e-10))
         quantized = mx.clip(quantized, 0, 15).astype(mx.uint8)
         return quantized, float(v_min), float(scale)
-    
+
     def dequantize_4bit(self, quantized: Any, v_min: float, scale: float) -> Any:
         """Dequantize 4-bit vectors back to float32."""
         if not self.available:
             raise RuntimeError("MLX not available")
         mx = self._mx
         return quantized.astype(mx.float32) * scale + v_min
-    
+
     def quantize_8bit(self, vectors: Any) -> tuple[Any, float, float]:
         """Quantize vectors to 8-bit representation."""
         if not self.available:
@@ -177,7 +179,7 @@ class MLXTensorOps:
         quantized = mx.round((vectors - v_min) / (scale + 1e-10))
         quantized = mx.clip(quantized, 0, 255).astype(mx.uint8)
         return quantized, float(v_min), float(scale)
-    
+
     def dequantize_8bit(self, quantized: Any, v_min: float, scale: float) -> Any:
         """Dequantize 8-bit vectors back to float32."""
         if not self.available:
@@ -194,35 +196,35 @@ class MLXTensorOps:
 @dataclass
 class MemoryMappedEmbeddings:
     """Memory-efficient storage for large embedding datasets.
-    
+
     Uses memory mapping for O(1) access to embeddings without loading
     the entire file into RAM. Supports both read and write operations.
-    
+
     File format:
     - Header (16 bytes): magic (4) + version (4) + count (4) + dims (4)
     - Data: count * dims * 4 bytes (float32)
-    
+
     Example:
         >>> storage = MemoryMappedEmbeddings("embeddings.bin", dimensions=384)
         >>> storage.append([0.1, 0.2, ...])
         >>> vec = storage[0]
     """
-    
+
     path: Path
     dimensions: int
     mode: Literal["r", "w", "rw"] = "rw"
-    
+
     _file: Any = field(default=None, repr=False)
     _mmap: Any = field(default=None, repr=False)
     _count: int = field(default=0, repr=False)
     _header_size: int = field(default=16, repr=False)
     _magic: bytes = field(default=b"MLXE", repr=False)
     _version: int = field(default=1, repr=False)
-    
+
     def __post_init__(self) -> None:
         self.path = Path(self.path)
         self._open()
-    
+
     def _open(self) -> None:
         """Open or create the memory-mapped file."""
         if self.path.exists():
@@ -233,13 +235,17 @@ class MemoryMappedEmbeddings:
             if magic != self._magic:
                 raise ValueError(f"Invalid file format: {self.path}")
             if dims != self.dimensions:
-                raise ValueError(f"Dimension mismatch: expected {self.dimensions}, got {dims}")
+                raise ValueError(
+                    f"Dimension mismatch: expected {self.dimensions}, got {dims}"
+                )
             self._count = count
             self._mmap = mmap.mmap(self._file.fileno(), 0)
         else:
             # Create new file with header
             self._file = open(self.path, "w+b")
-            header = struct.pack("<4sIII", self._magic, self._version, 0, self.dimensions)
+            header = struct.pack(
+                "<4sIII", self._magic, self._version, 0, self.dimensions
+            )
             self._file.write(header)
             self._file.flush()
             self._count = 0
@@ -248,62 +254,66 @@ class MemoryMappedEmbeddings:
             self._file.write(b"\x00" * (self.dimensions * 4))
             self._file.flush()
             self._mmap = mmap.mmap(self._file.fileno(), 0)
-    
+
     def __len__(self) -> int:
         return self._count
-    
+
     def __getitem__(self, index: int) -> list[float]:
         """Get embedding at index."""
         if index < 0:
             index = self._count + index
         if index < 0 or index >= self._count:
             raise IndexError(f"Index {index} out of range [0, {self._count})")
-        
+
         offset = self._header_size + index * self.dimensions * 4
         self._mmap.seek(offset)
         data = self._mmap.read(self.dimensions * 4)
         return list(struct.unpack(f"<{self.dimensions}f", data))
-    
+
     def __iter__(self) -> Iterator[list[float]]:
         """Iterate over all embeddings."""
         for i in range(self._count):
             yield self[i]
-    
+
     def append(self, embedding: list[float]) -> int:
         """Append a new embedding and return its index."""
         if len(embedding) != self.dimensions:
-            raise ValueError(f"Expected {self.dimensions} dimensions, got {len(embedding)}")
-        
+            raise ValueError(
+                f"Expected {self.dimensions} dimensions, got {len(embedding)}"
+            )
+
         # Extend file if needed
         required_size = self._header_size + (self._count + 1) * self.dimensions * 4
         if len(self._mmap) < required_size:
             self._mmap.close()
             self._file.seek(0, 2)  # End of file
-            self._file.write(b"\x00" * self.dimensions * 4 * 100)  # Grow by 100 embeddings
+            self._file.write(
+                b"\x00" * self.dimensions * 4 * 100
+            )  # Grow by 100 embeddings
             self._file.flush()
             self._mmap = mmap.mmap(self._file.fileno(), 0)
-        
+
         # Write embedding
         offset = self._header_size + self._count * self.dimensions * 4
         self._mmap.seek(offset)
         self._mmap.write(struct.pack(f"<{self.dimensions}f", *embedding))
-        
+
         # Update count in header
         self._count += 1
         self._mmap.seek(8)
         self._mmap.write(struct.pack("<I", self._count))
         self._mmap.flush()
-        
+
         return self._count - 1
-    
+
     def extend(self, embeddings: list[list[float]]) -> list[int]:
         """Append multiple embeddings."""
         return [self.append(emb) for emb in embeddings]
-    
+
     def get_batch(self, indices: list[int]) -> list[list[float]]:
         """Get multiple embeddings by indices."""
         return [self[i] for i in indices]
-    
+
     def close(self) -> None:
         """Close the memory-mapped file."""
         if self._mmap:
@@ -312,13 +322,13 @@ class MemoryMappedEmbeddings:
         if self._file:
             self._file.close()
             self._file = None
-    
+
     def __del__(self) -> None:
         self.close()
-    
+
     def __enter__(self) -> "MemoryMappedEmbeddings":
         return self
-    
+
     def __exit__(self, *args: Any) -> None:
         self.close()
 
@@ -331,26 +341,26 @@ class MemoryMappedEmbeddings:
 @dataclass
 class QuantizedEmbeddingStore:
     """Memory-efficient quantized embedding storage.
-    
+
     Stores embeddings in 4-bit or 8-bit format with scale/offset metadata
     for reconstruction. Provides 4-8x memory reduction.
-    
+
     Example:
         >>> store = QuantizedEmbeddingStore(dimensions=384, bits=4)
         >>> store.add([0.1, 0.2, ...])
         >>> reconstructed = store.get(0)
     """
-    
+
     dimensions: int
     bits: Literal[4, 8] = 8
-    
+
     _embeddings: list[bytes] = field(default_factory=list)
     _metadata: list[tuple[float, float]] = field(default_factory=list)
     _ops: MLXTensorOps = field(default_factory=MLXTensorOps)
-    
+
     def __len__(self) -> int:
         return len(self._embeddings)
-    
+
     def add(self, embedding: list[float]) -> int:
         """Add an embedding and return its index."""
         if self._ops.available:
@@ -363,33 +373,37 @@ class QuantizedEmbeddingStore:
         else:
             # NumPy fallback
             import numpy as np
+
             arr = np.array(embedding, dtype=np.float32)
             v_min, v_max = arr.min(), arr.max()
             levels = 15 if self.bits == 4 else 255
             scale = (v_max - v_min) / levels
-            quantized = np.clip(np.round((arr - v_min) / (scale + 1e-10)), 0, levels).astype(np.uint8)
+            quantized = np.clip(
+                np.round((arr - v_min) / (scale + 1e-10)), 0, levels
+            ).astype(np.uint8)
             data = quantized.tobytes()
-        
+
         self._embeddings.append(data)
         self._metadata.append((v_min, scale))
         return len(self._embeddings) - 1
-    
+
     def add_batch(self, embeddings: list[list[float]]) -> list[int]:
         """Add multiple embeddings."""
         return [self.add(emb) for emb in embeddings]
-    
+
     def get(self, index: int) -> list[float]:
         """Get and dequantize an embedding."""
         if index < 0:
             index = len(self._embeddings) + index
         if index < 0 or index >= len(self._embeddings):
             raise IndexError(f"Index {index} out of range")
-        
+
         data = self._embeddings[index]
         v_min, scale = self._metadata[index]
-        
+
         if self._ops.available:
             import mlx.core as mx
+
             quantized = mx.array(list(data), dtype=mx.uint8)
             if self.bits == 4:
                 dequantized = self._ops.dequantize_4bit(quantized, v_min, scale)
@@ -398,14 +412,15 @@ class QuantizedEmbeddingStore:
             return self._ops.to_list(dequantized)
         else:
             import numpy as np
+
             quantized = np.frombuffer(data, dtype=np.uint8)
             dequantized = quantized.astype(np.float32) * scale + v_min
             return dequantized.tolist()
-    
+
     def get_batch(self, indices: list[int]) -> list[list[float]]:
         """Get multiple dequantized embeddings."""
         return [self.get(i) for i in indices]
-    
+
     @property
     def memory_bytes(self) -> int:
         """Estimate memory usage in bytes."""
@@ -414,7 +429,7 @@ class QuantizedEmbeddingStore:
         bytes_per_embedding = len(self._embeddings[0])
         metadata_per = 16  # Two floats
         return len(self._embeddings) * (bytes_per_embedding + metadata_per)
-    
+
     @property
     def compression_ratio(self) -> float:
         """Compute compression ratio vs float32."""
@@ -432,7 +447,7 @@ class QuantizedEmbeddingStore:
 class MLXAcceleratedEmbeddings(EmbeddingProvider):
     """
     MLX-accelerated embeddings with advanced features for Apple Silicon.
-    
+
     Features:
     - Native MLX tensor operations for GPU acceleration
     - Batch processing with configurable parallelism
@@ -441,19 +456,19 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
     - 4-bit/8-bit quantization support
     - Streaming embeddings generation
     - Graceful fallback to NumPy/CUDA
-    
+
     Benchmarks on M2 Pro (10k texts):
     - embed_batch: 500ms (50μs/text)
     - similarity_search: 2ms for 10k corpus
     - quantized similarity: 0.8ms for 10k corpus
-    
+
     Example:
         >>> embedder = MLXAcceleratedEmbeddings()
         >>> vec = embedder.embed("Hello world")
         >>> batch = embedder.embed_batch(["Hello", "World"], parallel=True)
         >>> results = embedder.similarity_search(query_vec, corpus_vecs, top_k=5)
     """
-    
+
     def __init__(
         self,
         model: str = "all-MiniLM-L6-v2",
@@ -464,7 +479,7 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
     ):
         """
         Initialize MLX-accelerated embeddings.
-        
+
         Args:
             model: Model name (sentence-transformers compatible)
             batch_size: Default batch size for parallel processing
@@ -477,44 +492,47 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
         self.quantize = quantize
         self.allow_fallback = allow_fallback
         self._dimensions = 384 if "MiniLM" in model else 768
-        
+
         # Cache directory
         if cache_dir:
             self.cache_dir = Path(cache_dir)
         else:
             self.cache_dir = Path.home() / ".agentic_brain" / "mlx_embeddings"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # MLX operations
         self._ops = MLXTensorOps()
         self._mlx_available = _check_mlx_available()
-        
+
         if not self._mlx_available and not allow_fallback:
-            raise ImportError("MLX required but not available. Install with: pip install mlx")
-        
+            raise ImportError(
+                "MLX required but not available. Install with: pip install mlx"
+            )
+
         # Lazy-loaded base embedder
         self._embedder: Optional[EmbeddingProvider] = None
         self._load_time: Optional[float] = None
-        
+
         # Quantized store (if enabled)
         self._quantized_store: Optional[QuantizedEmbeddingStore] = None
         if quantize:
             self._quantized_store = QuantizedEmbeddingStore(
                 dimensions=self._dimensions, bits=quantize
             )
-    
+
     def _load_embedder(self) -> None:
         """Lazy-load the underlying embedding model."""
         if self._embedder is not None:
             return
-        
+
         start = time.time()
-        
+
         # Try to use the best available backend
         device = get_best_device()
-        
+
         if self._mlx_available or device in ("mlx", "mps"):
             from .embeddings import SentenceTransformerEmbeddings
+
             # Use MPS for sentence-transformers (MLX native coming soon)
             self._embedder = SentenceTransformerEmbeddings(
                 model=self.model,
@@ -524,24 +542,28 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
             logger.info(f"Loaded {self.model} with MPS backend")
         elif device == "cuda":
             from .embeddings import CUDAEmbeddings
-            self._embedder = CUDAEmbeddings(model=self.model, batch_size=self.batch_size)
+
+            self._embedder = CUDAEmbeddings(
+                model=self.model, batch_size=self.batch_size
+            )
             logger.info(f"Loaded {self.model} with CUDA backend")
         else:
             from .embeddings import SentenceTransformerEmbeddings
+
             self._embedder = SentenceTransformerEmbeddings(
                 model=self.model, device="cpu", batch_size=self.batch_size
             )
             logger.info(f"Loaded {self.model} with CPU backend")
-        
+
         self._load_time = time.time() - start
-    
+
     def embed(self, text: str) -> list[float]:
         """Generate embedding for a single text."""
         self._load_embedder()
         if self._embedder is None:
             return _fallback_embedding(text, self._dimensions)
         return list(self._embedder.embed(text))
-    
+
     def embed_batch(
         self,
         texts: list[str],
@@ -550,32 +572,34 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
     ) -> list[list[float]]:
         """
         Generate embeddings for multiple texts with optional parallelism.
-        
+
         Args:
             texts: List of texts to embed
             parallel: Use parallel processing (MLX streams)
             show_progress: Show progress bar
-            
+
         Returns:
             List of embedding vectors
         """
         self._load_embedder()
         if self._embedder is None:
             return [_fallback_embedding(text, self._dimensions) for text in texts]
-        
+
         if parallel and self._mlx_available and len(texts) > self.batch_size:
             # Process in parallel batches using MLX
             results: list[list[float]] = []
             for i in range(0, len(texts), self.batch_size):
-                batch = texts[i:i + self.batch_size]
+                batch = texts[i : i + self.batch_size]
                 batch_results = self._embedder.embed_batch(batch)
                 results.extend([list(e) for e in batch_results])
                 if show_progress:
-                    logger.info(f"Processed {min(i + self.batch_size, len(texts))}/{len(texts)}")
+                    logger.info(
+                        f"Processed {min(i + self.batch_size, len(texts))}/{len(texts)}"
+                    )
             return results
-        
+
         return [list(e) for e in self._embedder.embed_batch(texts)]
-    
+
     def embed_stream(
         self,
         texts: list[str],
@@ -583,31 +607,31 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
     ) -> Generator[list[list[float]], None, None]:
         """
         Stream embeddings as they're computed.
-        
+
         Yields batches of embeddings, allowing processing before
         the entire corpus is embedded.
-        
+
         Args:
             texts: List of texts to embed
             batch_size: Batch size (defaults to self.batch_size)
-            
+
         Yields:
             Batches of embedding vectors
-            
+
         Example:
             >>> for batch in embedder.embed_stream(large_corpus):
             ...     process_batch(batch)
         """
         batch_size = batch_size or self.batch_size
         self._load_embedder()
-        
+
         for i in range(0, len(texts), batch_size):
-            batch = texts[i:i + batch_size]
+            batch = texts[i : i + batch_size]
             if self._embedder is None:
                 yield [_fallback_embedding(t, self._dimensions) for t in batch]
             else:
                 yield [list(e) for e in self._embedder.embed_batch(batch)]
-    
+
     def similarity(self, vec1: list[float], vec2: list[float]) -> float:
         """Compute cosine similarity between two vectors."""
         if self._mlx_available:
@@ -617,10 +641,11 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
         else:
             # NumPy fallback
             import numpy as np
+
             a = np.array(vec1)
             b = np.array(vec2)
             return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-10))
-    
+
     def similarity_search(
         self,
         query: Union[str, list[float]],
@@ -629,12 +654,12 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
     ) -> list[tuple[int, float]]:
         """
         GPU-accelerated similarity search.
-        
+
         Args:
             query: Query text or embedding vector
             corpus: Corpus of texts or embedding vectors
             top_k: Number of results to return
-            
+
         Returns:
             List of (index, score) tuples sorted by similarity
         """
@@ -643,22 +668,24 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
             query_vec = self.embed(query)
         else:
             query_vec = query
-        
+
         # Get corpus embeddings if needed
         if corpus and isinstance(corpus[0], str):
             corpus_vecs = self.embed_batch(corpus)  # type: ignore[arg-type]
         else:
             corpus_vecs = corpus  # type: ignore[assignment]
-        
+
         if not corpus_vecs:
             return []
-        
+
         if self._mlx_available:
             # MLX accelerated search
             q = self._ops.to_mlx([query_vec])
             c = self._ops.to_mlx(corpus_vecs)
             scores = self._ops.cosine_similarity_matrix(q, c)[0]
-            top_values, top_indices = self._ops.topk(scores, min(top_k, len(corpus_vecs)))
+            top_values, top_indices = self._ops.topk(
+                scores, min(top_k, len(corpus_vecs))
+            )
             return [
                 (int(idx), float(score))
                 for idx, score in zip(
@@ -670,6 +697,7 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
         else:
             # NumPy fallback
             import numpy as np
+
             q = np.array(query_vec)
             c = np.array(corpus_vecs)
             q_norm = q / (np.linalg.norm(q) + 1e-10)
@@ -677,7 +705,7 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
             scores = np.dot(c_norm, q_norm)
             top_indices = np.argsort(scores)[-top_k:][::-1]
             return [(int(idx), float(scores[idx])) for idx in top_indices]
-    
+
     def similarity_matrix(
         self,
         vectors1: list[list[float]],
@@ -685,17 +713,17 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
     ) -> list[list[float]]:
         """
         Compute pairwise similarity matrix.
-        
+
         Args:
             vectors1: First set of vectors
             vectors2: Second set of vectors (defaults to vectors1)
-            
+
         Returns:
             Similarity matrix as nested lists
         """
         if vectors2 is None:
             vectors2 = vectors1
-        
+
         if self._mlx_available:
             v1 = self._ops.to_mlx(vectors1)
             v2 = self._ops.to_mlx(vectors2)
@@ -703,12 +731,13 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
             return self._ops.to_list(matrix)
         else:
             import numpy as np
+
             v1 = np.array(vectors1)
             v2 = np.array(vectors2)
             v1_norm = v1 / (np.linalg.norm(v1, axis=1, keepdims=True) + 1e-10)
             v2_norm = v2 / (np.linalg.norm(v2, axis=1, keepdims=True) + 1e-10)
             return np.dot(v1_norm, v2_norm.T).tolist()
-    
+
     def quantize_embeddings(
         self,
         embeddings: list[list[float]],
@@ -716,30 +745,30 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
     ) -> QuantizedEmbeddingStore:
         """
         Quantize embeddings for memory-efficient storage.
-        
+
         Args:
             embeddings: List of embedding vectors
             bits: Quantization bits (4 or 8)
-            
+
         Returns:
             QuantizedEmbeddingStore with compressed embeddings
         """
         store = QuantizedEmbeddingStore(dimensions=self._dimensions, bits=bits)
         store.add_batch(embeddings)
         return store
-    
+
     def create_mmap_store(self, path: Union[str, Path]) -> MemoryMappedEmbeddings:
         """
         Create a memory-mapped embedding store.
-        
+
         Args:
             path: Path for the storage file
-            
+
         Returns:
             MemoryMappedEmbeddings instance
         """
         return MemoryMappedEmbeddings(path=Path(path), dimensions=self._dimensions)
-    
+
     def benchmark(
         self,
         n_texts: int = 100,
@@ -747,11 +776,11 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
     ) -> dict[str, Any]:
         """
         Benchmark embedding and search performance.
-        
+
         Args:
             n_texts: Number of texts to benchmark
             include_similarity: Include similarity search benchmark
-            
+
         Returns:
             Dictionary with benchmark results
         """
@@ -759,53 +788,53 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
             f"This is test text number {i} for benchmarking the MLX embedding system."
             for i in range(n_texts)
         ]
-        
+
         results: dict[str, Any] = {
             "backend": "mlx" if self._mlx_available else "numpy",
             "model": self.model,
             "n_texts": n_texts,
             "batch_size": self.batch_size,
         }
-        
+
         # Warmup
         _ = self.embed(test_texts[0])
-        
+
         # Batch embedding benchmark
         start = time.time()
         embeddings = self.embed_batch(test_texts)
         embed_time = time.time() - start
-        
+
         results["embed_batch_ms"] = embed_time * 1000
         results["embed_per_text_us"] = (embed_time * 1_000_000) / n_texts
         results["texts_per_second"] = n_texts / embed_time
-        
+
         if include_similarity and len(embeddings) > 1:
             # Similarity search benchmark
             query = embeddings[0]
             corpus = embeddings[1:]
-            
+
             start = time.time()
             _ = self.similarity_search(query, corpus, top_k=10)
             search_time = time.time() - start
-            
+
             results["similarity_search_ms"] = search_time * 1000
             results["similarity_corpus_size"] = len(corpus)
-        
+
         # Quantization benchmark (if enabled)
         if self.quantize:
             start = time.time()
             store = self.quantize_embeddings(embeddings, bits=self.quantize)
             quant_time = time.time() - start
-            
+
             results["quantize_ms"] = quant_time * 1000
             results["compression_ratio"] = store.compression_ratio
-        
+
         return results
-    
+
     @property
     def dimensions(self) -> int:
         return self._dimensions
-    
+
     @property
     def model_name(self) -> str:
         backend = "mlx" if self._mlx_available else "numpy"
@@ -921,7 +950,7 @@ class MLXEmbeddings:
         else:
             # Fallback: process in batches
             for i in range(0, len(texts), batch_size):
-                batch = texts[i:i + batch_size]
+                batch = texts[i : i + batch_size]
                 yield cls.embed_batch(batch)
 
     @classmethod
@@ -941,13 +970,14 @@ class MLXEmbeddings:
                 query_vec = cls.embed(query)
             else:
                 query_vec = query
-            
+
             if corpus and isinstance(corpus[0], str):
                 corpus_vecs = cls.embed_batch(corpus)  # type: ignore[arg-type]
             else:
                 corpus_vecs = corpus  # type: ignore[assignment]
-            
+
             import numpy as np
+
             q = np.array(query_vec)
             c = np.array(corpus_vecs)
             q_norm = q / (np.linalg.norm(q) + 1e-10)
@@ -1006,16 +1036,16 @@ def create_accelerated_embedder(
 def benchmark_backends(n_texts: int = 100) -> dict[str, dict[str, Any]]:
     """Benchmark all available embedding backends."""
     results: dict[str, dict[str, Any]] = {}
-    
+
     test_texts = [f"Test text {i} for benchmarking." for i in range(n_texts)]
-    
+
     # MLX/MPS
     try:
         embedder = MLXAcceleratedEmbeddings(allow_fallback=False)
         results["mlx"] = embedder.benchmark(n_texts=n_texts)
     except ImportError:
         results["mlx"] = {"error": "MLX not available"}
-    
+
     # NumPy fallback
     try:
         embedder = MLXAcceleratedEmbeddings(allow_fallback=True)
@@ -1023,10 +1053,11 @@ def benchmark_backends(n_texts: int = 100) -> dict[str, dict[str, Any]]:
         results["numpy"] = embedder.benchmark(n_texts=n_texts)
     except Exception as e:
         results["numpy"] = {"error": str(e)}
-    
+
     # CUDA (if available)
     try:
         from .embeddings import CUDAEmbeddings
+
         cuda_embedder = CUDAEmbeddings()
         start = time.time()
         _ = cuda_embedder.embed_batch(test_texts)
@@ -1037,5 +1068,5 @@ def benchmark_backends(n_texts: int = 100) -> dict[str, dict[str, Any]]:
         }
     except (ImportError, RuntimeError):
         results["cuda"] = {"error": "CUDA not available"}
-    
+
     return results

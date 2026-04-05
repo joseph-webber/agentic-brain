@@ -1,4 +1,5 @@
 """Dataset utilities for RAG evaluation."""
+
 from dataclasses import dataclass
 from typing import List, Optional, Iterable
 
@@ -34,13 +35,18 @@ class Dataset:
                 question=it.get("question", ""),
                 gold_answer=it.get("gold_answer", ""),
                 gold_context_ids=list(it.get("gold_context_ids", [])),
-                contexts=list(it.get("contexts", [])) if it.get("contexts") is not None else None,
+                contexts=(
+                    list(it.get("contexts", []))
+                    if it.get("contexts") is not None
+                    else None
+                ),
             )
             examples.append(ex)
         return cls(examples)
 
     def sample(self, n=1):
         from random import sample
+
         if n > len(self.examples):
             raise ValueError("sample size larger than dataset")
         return sample(self.examples, n)

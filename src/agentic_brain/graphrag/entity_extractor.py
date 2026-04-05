@@ -63,7 +63,7 @@ class EntityExtractor:
     def __init__(self, llm_ask_fn=None):
         """
         Initialize extractor.
-        
+
         Args:
             llm_ask_fn: Function to call LLM. Signature: (prompt, system=None) -> str
                        If None, uses local Ollama or falls back to simple extraction.
@@ -75,6 +75,7 @@ class EntityExtractor:
         """Get Neo4j driver."""
         if self._driver is None:
             from neo4j import GraphDatabase
+
             self._driver = GraphDatabase.driver(
                 NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD)
             )
@@ -85,15 +86,18 @@ class EntityExtractor:
         """Ask LLM for response."""
         if self._llm_ask:
             return self._llm_ask(prompt, system=system)
-        
+
         # Default: try local Ollama
         try:
             import urllib.request
-            payload = json.dumps({
-                "model": "llama3.2:3b",
-                "prompt": f"{system}\n\n{prompt}",
-                "stream": False,
-            }).encode()
+
+            payload = json.dumps(
+                {
+                    "model": "llama3.2:3b",
+                    "prompt": f"{system}\n\n{prompt}",
+                    "stream": False,
+                }
+            ).encode()
             req = urllib.request.Request(
                 "http://localhost:11434/api/generate",
                 data=payload,
@@ -111,7 +115,7 @@ class EntityExtractor:
         last_close = raw.rfind("}")
         if last_close == -1:
             return raw
-        truncated = raw[:last_close + 1].rstrip().rstrip(",")
+        truncated = raw[: last_close + 1].rstrip().rstrip(",")
         start = truncated.find("[")
         if start == -1:
             return raw
@@ -120,7 +124,7 @@ class EntityExtractor:
     def extract(self, text: str) -> list[dict]:
         """
         Extract entities from text.
-        
+
         Returns:
             List of {"name": str, "type": str, "confidence": float}
         """
@@ -129,12 +133,12 @@ class EntityExtractor:
 
         prompt = EXTRACTION_PROMPT.format(text=text[:8000])
         response = self._ask_llm(prompt, EXTRACTION_SYSTEM)
-        
+
         if not response:
             return []
 
         raw = response.strip()
-        
+
         # Strip markdown code fences if present
         if raw.startswith("```"):
             parts = raw.split("```")
@@ -163,32 +167,25 @@ class EntityExtractor:
             name = ent.get("name", "").strip()
             etype = ent.get("type", "").strip()
             confidence = float(ent.get("confidence", 0.0))
-            
+
             if not name or etype not in ENTITY_TYPES:
                 continue
-            
-            validated.append({
-                "name": name,
-                "type": etype,
-                "confidence": confidence
-            })
+
+            validated.append({"name": name, "type": etype, "confidence": confidence})
 
         return validated
 
     def extract_and_store(
-        self,
-        session_id: str,
-        text: str,
-        dry_run: bool = False
+        self, session_id: str, text: str, dry_run: bool = False
     ) -> list[dict]:
         """
         Extract entities and store to Neo4j.
-        
+
         Args:
             session_id: Session UUID to link entities to
             text: Text to extract from
             dry_run: If True, don't write to Neo4j
-            
+
         Returns:
             List of entities that were stored
         """
@@ -208,7 +205,8 @@ class EntityExtractor:
         driver = self._get_driver()
         with driver.session() as session:
             for ent in entities:
-                session.run("""
+                session.run(
+                    """
                     MERGE (e:Entity {name: $name, type: $type})
                     ON CREATE SET e.confidence = $confidence
                     ON MATCH SET e.confidence = CASE
@@ -218,15 +216,19 @@ class EntityExtractor:
                     WITH e
                     MATCH (sess:Session {id: $sid})
                     MERGE (sess)-[:MENTIONS]->(e)
-                """, name=ent["name"], type=ent["type"],
-                     confidence=ent["confidence"], sid=session_id)
+                """,
+                    name=ent["name"],
+                    type=ent["type"],
+                    confidence=ent["confidence"],
+                    sid=session_id,
+                )
 
     def _log_extraction(
         self,
         session_id: str,
         all_entities: list[dict],
         written: list[dict],
-        dry_run: bool
+        dry_run: bool,
     ):
         """Log extraction for debugging."""
         entry = {
@@ -248,7 +250,9 @@ class EntityExtractor:
             self._driver = None
 
 
-def _fetch_sessions(driver, session_id: Optional[str] = None, force: bool = False) -> list[dict]:
+def _fetch_sessions(
+    driver, session_id: Optional[str] = None, force: bool = False
+) -> list[dict]:
     """Fetch sessions for extraction."""
     if session_id:
         query = """
@@ -274,12 +278,14 @@ def _fetch_sessions(driver, session_id: Optional[str] = None, force: bool = Fals
             RETURN s.id AS id, s.summary AS summary, s.path AS path,
                    collect(cp.file) AS checkpoint_files
         """
-    
+
     with driver.session() as session:
         return [dict(r) for r in session.run(query)]
 
 
-def _read_checkpoint_content(session_path: Optional[str], checkpoint_files: list) -> str:
+def _read_checkpoint_content(
+    session_path: Optional[str], checkpoint_files: list
+) -> str:
     """Read checkpoint content from filesystem."""
     if not session_path or not checkpoint_files:
         return ""
@@ -301,11 +307,11 @@ def extract_entities(
     dry_run: bool = False,
     force: bool = False,
     session_id: Optional[str] = None,
-    llm_ask_fn=None
+    llm_ask_fn=None,
 ):
     """
     Extract entities from sessions and store to Neo4j.
-    
+
     Args:
         dry_run: Show what would happen without writing
         force: Re-extract even sessions that have MENTIONS
@@ -313,15 +319,15 @@ def extract_entities(
         llm_ask_fn: Optional LLM function
     """
     from neo4j import GraphDatabase
-    
+
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
     driver.verify_connectivity()
-    
+
     extractor = EntityExtractor(llm_ask_fn=llm_ask_fn)
-    
+
     try:
         sessions = _fetch_sessions(driver, session_id=session_id, force=force)
-        
+
         print(f"Sessions to process: {len(sessions)}")
         if dry_run:
             print("DRY RUN — no writes will occur.\n")
@@ -342,14 +348,18 @@ def extract_entities(
                 print(f"  [{i}/{len(sessions)}] {sid[:8]}... — no text, skipping")
                 continue
 
-            print(f"  [{i}/{len(sessions)}] {sid[:8]}... ({len(checkpoint_files)} checkpoints, {len(combined)} chars)")
+            print(
+                f"  [{i}/{len(sessions)}] {sid[:8]}... ({len(checkpoint_files)} checkpoints, {len(combined)} chars)"
+            )
 
             try:
                 entities = extractor.extract_and_store(sid, combined, dry_run=dry_run)
                 if entities:
                     total_written += len(entities)
                     for ent in entities:
-                        print(f"      [{ent['type']}] {ent['name']} (confidence={ent['confidence']:.2f})")
+                        print(
+                            f"      [{ent['type']}] {ent['name']} (confidence={ent['confidence']:.2f})"
+                        )
             except Exception as e:
                 print(f"    ERROR: {e}")
                 total_errors += 1
@@ -366,17 +376,19 @@ def extract_entities(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract entities from Session checkpoints.")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would happen without writing.")
+    parser = argparse.ArgumentParser(
+        description="Extract entities from Session checkpoints."
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would happen without writing."
+    )
     parser.add_argument("--force", action="store_true", help="Re-extract all sessions.")
-    parser.add_argument("--session-id", metavar="ID", help="Run on single session only.")
+    parser.add_argument(
+        "--session-id", metavar="ID", help="Run on single session only."
+    )
     args = parser.parse_args()
 
-    extract_entities(
-        dry_run=args.dry_run,
-        force=args.force,
-        session_id=args.session_id
-    )
+    extract_entities(dry_run=args.dry_run, force=args.force, session_id=args.session_id)
 
 
 if __name__ == "__main__":

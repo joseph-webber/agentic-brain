@@ -371,8 +371,13 @@ def _register_chat_routes(app) -> None:
         tags=["chat"],
         status_code=status.HTTP_200_OK,
         responses={
-            200: {"description": "Message processed successfully", "model": ChatResponse},
-            400: {"description": "Invalid request - empty message or missing required fields"},
+            200: {
+                "description": "Message processed successfully",
+                "model": ChatResponse,
+            },
+            400: {
+                "description": "Invalid request - empty message or missing required fields"
+            },
             401: {"description": "Unauthorized - authentication required"},
             403: {"description": "Forbidden - insufficient permissions"},
             429: {"description": "Rate limit exceeded - max 60 requests per minute"},
@@ -610,7 +615,9 @@ def _register_streaming_routes(app) -> None:
         tags=["chat"],
         responses={
             200: {"description": "Server-Sent Events stream of response tokens"},
-            400: {"description": "Invalid request - empty message or missing parameters"},
+            400: {
+                "description": "Invalid request - empty message or missing parameters"
+            },
             401: {"description": "Unauthorized - authentication required"},
             403: {"description": "Forbidden - insufficient permissions"},
             429: {"description": "Rate limit exceeded"},
@@ -845,7 +852,10 @@ def _register_session_routes(app) -> None:
         description="Retrieve information about a specific session",
         tags=["chat"],
         responses={
-            200: {"description": "Session information retrieved successfully", "model": SessionInfo},
+            200: {
+                "description": "Session information retrieved successfully",
+                "model": SessionInfo,
+            },
             401: {"description": "Unauthorized - authentication required"},
             403: {"description": "Forbidden - insufficient permissions"},
             404: {"description": "Session not found"},

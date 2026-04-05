@@ -48,9 +48,13 @@ class FakeLegacyAdapter:
         return sorted(self.collections)
 
     def upsert(self, collection_name, vectors, namespace=None):
-        bucket = self.collections.setdefault(collection_name, {}).setdefault(namespace or "__default__", [])
+        bucket = self.collections.setdefault(collection_name, {}).setdefault(
+            namespace or "__default__", []
+        )
         bucket.extend(vectors)
-        self.calls.append(("upsert", (collection_name, vectors), {"namespace": namespace}))
+        self.calls.append(
+            ("upsert", (collection_name, vectors), {"namespace": namespace})
+        )
         return len(vectors)
 
     def search(
@@ -88,7 +92,9 @@ class FakeLegacyAdapter:
             )
         ][:top_k]
 
-    def delete(self, collection_name, ids=None, namespace=None, filter=None, delete_all=False):
+    def delete(
+        self, collection_name, ids=None, namespace=None, filter=None, delete_all=False
+    ):
         self.calls.append(
             (
                 "delete",
@@ -105,7 +111,9 @@ class FakeLegacyAdapter:
 
     def count(self, collection_name, namespace=None):
         self.calls.append(("count", (collection_name,), {"namespace": namespace}))
-        return sum(len(bucket) for bucket in self.collections.get(collection_name, {}).values())
+        return sum(
+            len(bucket) for bucket in self.collections.get(collection_name, {}).values()
+        )
 
     def collection_exists(self, name):
         return name in self.collections
@@ -211,7 +219,9 @@ def test_memory_namespace_support(backend_name, backend_cls):
     store.upsert([{"id": "b", "vector": [1, 0, 0]}], namespace="team-b")
     assert store.count(collection_name="docs", namespace="team-a") == 1
     assert store.count(collection_name="docs", namespace="team-b") == 1
-    assert store.search([1, 0, 0], collection_name="docs", namespace="team-b")[0].id == "b"
+    assert (
+        store.search([1, 0, 0], collection_name="docs", namespace="team-b")[0].id == "b"
+    )
 
 
 @pytest.mark.parametrize("backend_name,backend_cls", BACKENDS)
@@ -261,7 +271,9 @@ def test_remote_adapter_delegation(monkeypatch, backend_name, backend_cls):
         monkeypatch.setattr(module, "chromadb", fake_module)
     else:
         monkeypatch.setattr(module, f"HAS_{backend_name.upper()}", True)
-        monkeypatch.setattr(module, f"Legacy{backend_name.title()}Adapter", FakeLegacyAdapter)
+        monkeypatch.setattr(
+            module, f"Legacy{backend_name.title()}Adapter", FakeLegacyAdapter
+        )
 
     assert store.connect() is True
     assert store.mode == "remote"

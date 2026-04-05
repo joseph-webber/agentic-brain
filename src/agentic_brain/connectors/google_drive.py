@@ -58,7 +58,9 @@ class GoogleDriveConnector(Connector):
             parts.append(f"modifiedTime > '{cursor.updated_after.isoformat()}'")
         return " and ".join(parts)
 
-    def _file_to_record(self, payload: Mapping[str, Any], content: str) -> ConnectorRecord:
+    def _file_to_record(
+        self, payload: Mapping[str, Any], content: str
+    ) -> ConnectorRecord:
         return ConnectorRecord(
             source=self.source_name,
             id=str(payload.get("id") or ""),
@@ -117,7 +119,9 @@ class GoogleDriveConnector(Connector):
         records: list[ConnectorRecord] = []
         latest: datetime | None = cursor.updated_after if cursor else None
         for file in response.get("files", []):
-            content = self._load_file_content(str(file.get("id")), str(file.get("mimeType") or ""))
+            content = self._load_file_content(
+                str(file.get("id")), str(file.get("mimeType") or "")
+            )
             record = self._file_to_record(file, content)
             records.append(record)
             latest = max(
@@ -145,7 +149,9 @@ class GoogleDriveConnector(Connector):
                     "fields": "id,name,mimeType,createdTime,modifiedTime,parents,size,webViewLink,webContentLink"
                 },
             )
-            content = self._load_file_content(item_id, str(payload.get("mimeType") or ""))
+            content = self._load_file_content(
+                item_id, str(payload.get("mimeType") or "")
+            )
             return self._file_to_record(payload, content)
         except Exception:
             return None

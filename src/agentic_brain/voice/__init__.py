@@ -687,7 +687,10 @@ _VOICE_EXPORTS = {
     "WakeWordDetector": ("agentic_brain.voice.wake_word", "WakeWordDetector"),
     "WakeWordConfig": ("agentic_brain.voice.wake_word", "WakeWordConfig"),
     "WakeWordResult": ("agentic_brain.voice.wake_word", "WakeWordResult"),
-    "get_wake_word_detector": ("agentic_brain.voice.wake_word", "get_wake_word_detector"),
+    "get_wake_word_detector": (
+        "agentic_brain.voice.wake_word",
+        "get_wake_word_detector",
+    ),
     "detect_wake_word": ("agentic_brain.voice.wake_word", "detect_wake_word"),
     # Voice Conversation Loop (real-time bidirectional voice)
     "VoiceConversationLoop": (
@@ -712,8 +715,14 @@ _VOICE_EXPORTS = {
     ),
     # Cartesia TTS streaming bridge (40ms TTFA)
     "CartesiaLiveMode": ("agentic_brain.voice.cartesia_bridge", "CartesiaLiveMode"),
-    "CartesiaStreamPlayer": ("agentic_brain.voice.cartesia_bridge", "CartesiaStreamPlayer"),
-    "get_cartesia_live_mode": ("agentic_brain.voice.cartesia_bridge", "get_cartesia_live_mode"),
+    "CartesiaStreamPlayer": (
+        "agentic_brain.voice.cartesia_bridge",
+        "CartesiaStreamPlayer",
+    ),
+    "get_cartesia_live_mode": (
+        "agentic_brain.voice.cartesia_bridge",
+        "get_cartesia_live_mode",
+    ),
     # TTS Fallback Chain - NEVER fails (Cartesia → Kokoro → macOS say)
     "TTSFallbackChain": ("agentic_brain.voice.tts_fallback", "TTSFallbackChain"),
     "TTSResult": ("agentic_brain.voice.tts_fallback", "TTSResult"),

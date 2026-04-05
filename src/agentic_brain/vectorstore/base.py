@@ -193,7 +193,9 @@ class VectorStore(ABC):
         records: Sequence[Mapping[str, Any] | VectorRecord],
         namespace: str | None = None,
     ) -> list[VectorRecord]:
-        return [VectorRecord.from_mapping(record, namespace=namespace) for record in records]
+        return [
+            VectorRecord.from_mapping(record, namespace=namespace) for record in records
+        ]
 
     def _ensure_collection(
         self,
@@ -219,7 +221,11 @@ class VectorStore(ABC):
             return True
 
         for key, expected in filter_criteria.items():
-            actual = record.namespace if key in {"namespace", "_namespace"} else record.metadata.get(key)
+            actual = (
+                record.namespace
+                if key in {"namespace", "_namespace"}
+                else record.metadata.get(key)
+            )
             if isinstance(expected, Mapping):
                 for operator, value in expected.items():
                     if not self._compare(actual, operator, value):
@@ -243,11 +249,17 @@ class VectorStore(ABC):
             return actual <= expected
         return False
 
-    def _score(self, query_vector: Sequence[float], vector: Sequence[float]) -> tuple[float, float | None]:
+    def _score(
+        self, query_vector: Sequence[float], vector: Sequence[float]
+    ) -> tuple[float, float | None]:
         metric = self.config.metric.lower()
         if metric in {"cosine", "cos"}:
-            dot = sum(left * right for left, right in zip(query_vector, vector, strict=False))
-            left_norm = math.sqrt(sum(component * component for component in query_vector))
+            dot = sum(
+                left * right for left, right in zip(query_vector, vector, strict=False)
+            )
+            left_norm = math.sqrt(
+                sum(component * component for component in query_vector)
+            )
             right_norm = math.sqrt(sum(component * component for component in vector))
             if not left_norm or not right_norm:
                 return 0.0, None
@@ -255,10 +267,19 @@ class VectorStore(ABC):
             return score, 1.0 - score
 
         if metric in {"dot", "dotproduct"}:
-            return sum(left * right for left, right in zip(query_vector, vector, strict=False)), None
+            return (
+                sum(
+                    left * right
+                    for left, right in zip(query_vector, vector, strict=False)
+                ),
+                None,
+            )
 
         distance = math.sqrt(
-            sum((left - right) ** 2 for left, right in zip(query_vector, vector, strict=False))
+            sum(
+                (left - right) ** 2
+                for left, right in zip(query_vector, vector, strict=False)
+            )
         )
         return 1.0 / (1.0 + distance), distance
 
@@ -327,7 +348,9 @@ class VectorStore(ABC):
         )
         candidates: list[VectorRecord] = []
         for namespace_name in namespaces:
-            candidates.extend(self._collections[collection_name].get(namespace_name, {}).values())
+            candidates.extend(
+                self._collections[collection_name].get(namespace_name, {}).values()
+            )
 
         results: list[VectorSearchResult] = []
         for record in candidates:
@@ -363,7 +386,9 @@ class VectorStore(ABC):
             return 0
 
         if delete_all:
-            deleted = self._memory_count(collection_name=collection_name, namespace=namespace)
+            deleted = self._memory_count(
+                collection_name=collection_name, namespace=namespace
+            )
             self._collections[collection_name] = {}
             return deleted
 
@@ -374,7 +399,9 @@ class VectorStore(ABC):
             else list(self._collections[collection_name])
         )
         for namespace_name in namespaces:
-            namespace_bucket = self._collections[collection_name].get(namespace_name, {})
+            namespace_bucket = self._collections[collection_name].get(
+                namespace_name, {}
+            )
             for record_id, record in list(namespace_bucket.items()):
                 if ids and record_id not in ids:
                     continue
@@ -394,8 +421,14 @@ class VectorStore(ABC):
         if collection_name not in self._collections:
             return 0
         if namespace:
-            return len(self._collections[collection_name].get(self._namespace_name(namespace), {}))
-        return sum(len(bucket) for bucket in self._collections[collection_name].values())
+            return len(
+                self._collections[collection_name].get(
+                    self._namespace_name(namespace), {}
+                )
+            )
+        return sum(
+            len(bucket) for bucket in self._collections[collection_name].values()
+        )
 
     def _memory_stats(self) -> dict[str, Any]:
         return {
@@ -419,15 +452,19 @@ class VectorStore(ABC):
             "mode": self.mode,
         }
 
-    def _result_from_mapping(self, value: Mapping[str, Any] | VectorSearchResult) -> VectorSearchResult:
+    def _result_from_mapping(
+        self, value: Mapping[str, Any] | VectorSearchResult
+    ) -> VectorSearchResult:
         if isinstance(value, VectorSearchResult):
             return value
         return VectorSearchResult(
             id=str(value["id"]),
             score=float(value["score"]),
-            vector=[float(component) for component in value.get("vector", [])]
-            if value.get("vector") is not None
-            else None,
+            vector=(
+                [float(component) for component in value.get("vector", [])]
+                if value.get("vector") is not None
+                else None
+            ),
             metadata=dict(value.get("metadata") or {}),
             distance=value.get("distance"),
             text=value.get("text"),

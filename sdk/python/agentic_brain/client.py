@@ -123,8 +123,7 @@ class AgenticBrain:
         layers: list[ResponseLayer],
     ) -> AsyncIterator[tuple[ResponseLayer, str]]:
         tasks = [
-            asyncio.create_task(self._execute_layer(layer, message))
-            for layer in layers
+            asyncio.create_task(self._execute_layer(layer, message)) for layer in layers
         ]
 
         for completed in asyncio.as_completed(tasks):
@@ -157,7 +156,9 @@ class AgenticBrain:
             if self._groq_key:
                 return await self._call_groq(model=self._instant_model, message=message)
             if self._openai_key:
-                return await self._call_openai(model=self._openai_model, message=message)
+                return await self._call_openai(
+                    model=self._openai_model, message=message
+                )
             if self._anthropic_key:
                 return await self._call_anthropic(
                     model="claude-3-5-haiku-latest",
@@ -179,7 +180,9 @@ class AgenticBrain:
                 model="llama-3.3-70b-versatile",
                 message=message,
             )
-        return await self._get_fast(message) if self.mode == DeploymentMode.HYBRID else ""
+        return (
+            await self._get_fast(message) if self.mode == DeploymentMode.HYBRID else ""
+        )
 
     async def _get_consensus(self, message: str) -> str:
         """Get a synthesized consensus response from multiple layers."""

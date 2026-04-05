@@ -57,6 +57,7 @@ def _get_producer():
     global _producer
     if _producer is None:
         from kafka import KafkaProducer
+
         _producer = KafkaProducer(
             bootstrap_servers=REDPANDA_BOOTSTRAP,
             value_serializer=lambda v: json.dumps(v).encode(),
@@ -68,6 +69,7 @@ def _get_redis():
     global _redis_client
     if _redis_client is None:
         import redis
+
         _redis_client = redis.from_url(REDIS_URL, decode_responses=True)
     return _redis_client
 
@@ -75,6 +77,7 @@ def _get_redis():
 # ---------------------------------------------------------------------------
 # Publishing
 # ---------------------------------------------------------------------------
+
 
 def publish(topic_key: str, data: dict[str, Any]) -> None:
     """Publish an event to a voice topic.
@@ -107,29 +110,36 @@ def publish_metric(
     **extra: Any,
 ) -> None:
     """Publish a voice metrics event."""
-    publish("metrics", {
-        "event_type": event_type,
-        "provider": provider,
-        "latency_ms": round(latency_ms, 1),
-        "strategy": strategy,
-        "complexity": complexity,
-        "success": success,
-        **extra,
-    })
+    publish(
+        "metrics",
+        {
+            "event_type": event_type,
+            "provider": provider,
+            "latency_ms": round(latency_ms, 1),
+            "strategy": strategy,
+            "complexity": complexity,
+            "success": success,
+            **extra,
+        },
+    )
 
 
 def publish_health_event(component: str, status: str, **extra: Any) -> None:
     """Publish a health event for a voice component."""
-    publish("health", {
-        "component": component,
-        "status": status,
-        **extra,
-    })
+    publish(
+        "health",
+        {
+            "component": component,
+            "status": status,
+            **extra,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
 # State management (Redis)
 # ---------------------------------------------------------------------------
+
 
 def set_state(key: str, value: str, *, expire: int | None = None) -> None:
     """Set a Redis state value."""
@@ -160,10 +170,12 @@ def set_progress(message: str) -> None:
 # Topic management
 # ---------------------------------------------------------------------------
 
+
 def ensure_topics() -> list[str]:
     """Create all voice topics if they don't exist."""
     try:
         from kafka.admin import KafkaAdminClient, NewTopic
+
         admin = KafkaAdminClient(bootstrap_servers=REDPANDA_BOOTSTRAP)
         new_topics = [
             NewTopic(name=topic, num_partitions=1, replication_factor=1)
@@ -185,6 +197,7 @@ def ensure_topics() -> list[str]:
 # Consuming (for daemons)
 # ---------------------------------------------------------------------------
 
+
 def create_consumer(
     topic_key: str,
     *,
@@ -193,6 +206,7 @@ def create_consumer(
 ) -> Any:
     """Create a Kafka consumer for a voice topic."""
     from kafka import KafkaConsumer
+
     topic = TOPICS.get(topic_key, topic_key)
     return KafkaConsumer(
         topic,

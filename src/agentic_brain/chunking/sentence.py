@@ -20,7 +20,9 @@ class SentenceChunker(BaseChunker):
         max_sentences: int | None = None,
         separator: str = "\n\n",
     ) -> None:
-        super().__init__(chunk_size, overlap, deduplicate=deduplicate, separator=separator)
+        super().__init__(
+            chunk_size, overlap, deduplicate=deduplicate, separator=separator
+        )
         self.max_sentences = max_sentences
 
     def _sentence_spans(self, text: str) -> list[Span]:
@@ -28,7 +30,9 @@ class SentenceChunker(BaseChunker):
         for match in _SENTENCE_PATTERN.finditer(text):
             sentence = match.group(0).strip()
             if sentence:
-                spans.append(Span(sentence, match.start(), match.end(), {"kind": "sentence"}))
+                spans.append(
+                    Span(sentence, match.start(), match.end(), {"kind": "sentence"})
+                )
         return spans
 
     def chunk(

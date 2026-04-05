@@ -458,7 +458,9 @@ class EnhancedGraphRAG:
             with self._get_session() as session:
                 merged = resolve_entities(session)
                 if merged:
-                    logger.info(f"Entity resolution merged {merged} duplicates after indexing {doc_id}")
+                    logger.info(
+                        f"Entity resolution merged {merged} duplicates after indexing {doc_id}"
+                    )
         except Exception as exc:
             logger.debug(f"Entity resolution skipped: {exc}")
 

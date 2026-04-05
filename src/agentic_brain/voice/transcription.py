@@ -110,7 +110,9 @@ class TranscriptionMetrics:
     avg_confidence: float = 0.0
     _confidence_samples: list[float] = field(default_factory=list)
 
-    def record(self: "TranscriptionMetrics", result: TranscriptionResult, processing_ms: float) -> None:
+    def record(
+        self: "TranscriptionMetrics", result: TranscriptionResult, processing_ms: float
+    ) -> None:
         self.total_requests += 1
         self.successful += 1
         self.total_audio_ms += result.duration_ms
@@ -336,11 +338,11 @@ class StreamingStitcher:
         self, last_words: list[str], new_words: list[str]
     ) -> Optional[list[str]]:
         """Find overlap point and merge word lists.
-        
+
         Args:
             last_words: Words from previous segment.
             new_words: Words from new segment.
-            
+
         Returns:
             Merged word list or None if no overlap found.
         """
@@ -351,7 +353,7 @@ class StreamingStitcher:
 
     def finalize(self) -> str:
         """Finalize and return complete transcription.
-        
+
         Returns:
             Complete transcribed text with all partials merged.
         """
@@ -387,11 +389,11 @@ class BaseTranscriber(ABC):
         sample_rate: int = 16_000,
     ) -> Optional[TranscriptionResult]:
         """Transcribe raw PCM int16 audio bytes.
-        
+
         Args:
             audio_data: Raw PCM audio bytes (int16 format).
             sample_rate: Audio sample rate in Hz.
-            
+
         Returns:
             Transcription result or None on failure.
         """
@@ -400,7 +402,7 @@ class BaseTranscriber(ABC):
     @abstractmethod
     def is_available(self) -> bool:
         """Return True if this backend can be used.
-        
+
         Returns:
             True if backend is initialized and ready.
         """
@@ -412,14 +414,14 @@ class BaseTranscriber(ABC):
         sample_rate: int = 16_000,
     ) -> tuple[bytes, int]:
         """Load PCM audio from raw bytes or a WAV file path.
-        
+
         Args:
             audio_source: Raw PCM bytes or path to WAV file.
             sample_rate: Target sample rate in Hz.
-            
+
         Returns:
             Tuple of (audio_bytes, actual_sample_rate).
-            
+
         Raises:
             AudioFormatError: If audio format is invalid.
         """
@@ -510,23 +512,32 @@ class BaseTranscriber(ABC):
                 audio_source,
                 sample_rate=sample_rate,
             )
-            if timeout_seconds is not None and (
-                time.monotonic() - started_at
-            ) > timeout_seconds:
+            if (
+                timeout_seconds is not None
+                and (time.monotonic() - started_at) > timeout_seconds
+            ):
                 raise TimeoutError("Audio loading timed out before transcription")
 
-            result = self.transcribe_bytes(audio_data, sample_rate=effective_sample_rate)
+            result = self.transcribe_bytes(
+                audio_data, sample_rate=effective_sample_rate
+            )
 
-            if timeout_seconds is not None and (
-                time.monotonic() - started_at
-            ) > timeout_seconds:
+            if (
+                timeout_seconds is not None
+                and (time.monotonic() - started_at) > timeout_seconds
+            ):
                 raise TimeoutError("Transcription timed out")
             return result
         except FileNotFoundError as exc:
             self.metrics.record_error()
             logger.warning("%s: audio file missing: %s", self.name, exc)
             return None
-        except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+        except (
+            AudioFormatError,
+            ModelLoadError,
+            TimeoutError,
+            TranscriptionError,
+        ) as exc:
             self.metrics.record_error()
             logger.warning("%s: transcription failed: %s", self.name, exc)
             return None
@@ -585,12 +596,19 @@ class BaseTranscriber(ABC):
         except FileNotFoundError as exc:
             self.metrics.record_error()
             logger.warning("%s: streaming audio file missing: %s", self.name, exc)
-        except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+        except (
+            AudioFormatError,
+            ModelLoadError,
+            TimeoutError,
+            TranscriptionError,
+        ) as exc:
             self.metrics.record_error()
             logger.warning("%s: streaming transcription failed: %s", self.name, exc)
         except Exception as exc:
             self.metrics.record_error()
-            logger.exception("%s: unexpected streaming transcription failure", self.name)
+            logger.exception(
+                "%s: unexpected streaming transcription failure", self.name
+            )
             logger.debug("Unexpected streaming error: %s", exc)
         finally:
             buffered_chunks = None
@@ -632,7 +650,9 @@ class BaseTranscriber(ABC):
         except Exception as exc:
             self._streaming_buffer = None
             self._streaming_stitcher = None
-            self._streaming_config = StreamingConfig(sample_rate=sample_rate, enabled=False)
+            self._streaming_config = StreamingConfig(
+                sample_rate=sample_rate, enabled=False
+            )
             logger.warning("%s: failed to configure streaming: %s", self.name, exc)
 
     def transcribe_streaming(
@@ -668,7 +688,12 @@ class BaseTranscriber(ABC):
                 )
                 if result and self._streaming_stitcher:
                     yield self._streaming_stitcher.add_result(result)
-        except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+        except (
+            AudioFormatError,
+            ModelLoadError,
+            TimeoutError,
+            TranscriptionError,
+        ) as exc:
             self.metrics.record_error()
             logger.warning("%s: streaming chunk failed: %s", self.name, exc)
         except Exception as exc:
@@ -711,7 +736,9 @@ class BaseTranscriber(ABC):
             logger.warning("%s: failed to pack streaming audio: %s", self.name, exc)
             return None
         except Exception as exc:
-            logger.warning("%s: failed to transcribe streaming segment: %s", self.name, exc)
+            logger.warning(
+                "%s: failed to transcribe streaming segment: %s", self.name, exc
+            )
             return None
         finally:
             audio_bytes = None
@@ -977,7 +1004,9 @@ class VADStreamingTranscriber:
                 timestamp_ms=time.monotonic() * 1000,
             )
         except Exception as exc:
-            logger.warning("VADStreamingTranscriber: final transcription failed: %s", exc)
+            logger.warning(
+                "VADStreamingTranscriber: final transcription failed: %s", exc
+            )
             return None
         finally:
             audio_data = None
@@ -1128,7 +1157,12 @@ class WhisperTranscriber(BaseTranscriber):
                 self.metrics.record(result, processing_ms)
                 return result
 
-            except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+            except (
+                AudioFormatError,
+                ModelLoadError,
+                TimeoutError,
+                TranscriptionError,
+            ) as exc:
                 self.metrics.record_error()
                 logger.warning("WhisperTranscriber: transcription error: %s", exc)
                 return None
@@ -1304,7 +1338,12 @@ class FasterWhisperTranscriber(BaseTranscriber):
                 self.metrics.record(result, processing_ms)
                 return result
 
-            except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+            except (
+                AudioFormatError,
+                ModelLoadError,
+                TimeoutError,
+                TranscriptionError,
+            ) as exc:
                 self.metrics.record_error()
                 logger.warning("FasterWhisperTranscriber: transcription error: %s", exc)
                 return None
@@ -1376,7 +1415,12 @@ class FasterWhisperTranscriber(BaseTranscriber):
                     timestamp_ms=time.monotonic() * 1000,
                 )
 
-            except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+            except (
+                AudioFormatError,
+                ModelLoadError,
+                TimeoutError,
+                TranscriptionError,
+            ) as exc:
                 logger.warning("FasterWhisperTranscriber: segment error: %s", exc)
                 return None
             except Exception as exc:
@@ -1445,7 +1489,9 @@ class MacOSDictationTranscriber(BaseTranscriber):
                     try:
                         os.unlink(wav_path)
                     except OSError:
-                        logger.debug("MacOSDictation: failed to remove temp WAV", exc_info=True)
+                        logger.debug(
+                            "MacOSDictation: failed to remove temp WAV", exc_info=True
+                        )
                 wav_path = None
 
     def _write_wav(self, audio_data: bytes, sample_rate: int) -> Optional[str]:
@@ -1466,7 +1512,9 @@ class MacOSDictationTranscriber(BaseTranscriber):
         except AudioFormatError:
             raise
         except Exception as exc:
-            raise TranscriptionError(f"MacOSDictation: WAV write failed: {exc}") from exc
+            raise TranscriptionError(
+                f"MacOSDictation: WAV write failed: {exc}"
+            ) from exc
 
     def _recognise_with_sf(self, wav_path: Optional[str]) -> Optional[str]:
         """Attempt speech recognition via macOS SFSpeechRecognizer.
@@ -1520,7 +1568,9 @@ print(resultText)
         except subprocess.TimeoutExpired as exc:
             raise TimeoutError("macOS speech recognition timed out") from exc
         except FileNotFoundError as exc:
-            raise TranscriptionError("Swift runtime not available for dictation") from exc
+            raise TranscriptionError(
+                "Swift runtime not available for dictation"
+            ) from exc
         except Exception as exc:
             raise TranscriptionError(
                 f"MacOSDictation: Swift recognition failed: {exc}"

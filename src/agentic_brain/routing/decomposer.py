@@ -35,7 +35,10 @@ class QueryDecomposer:
     """Split a query into safe, actionable sub-queries."""
 
     CONNECTOR_PATTERNS = (
-        (re.compile(r"\b(?:and also|as well as|along with|plus)\b", re.I), "coordination"),
+        (
+            re.compile(r"\b(?:and also|as well as|along with|plus)\b", re.I),
+            "coordination",
+        ),
         (re.compile(r"\b(?:then|after that|next)\b", re.I), "sequence"),
         (re.compile(r"[;\n]+"), "delimiter"),
     )
@@ -46,7 +49,9 @@ class QueryDecomposer:
             return QueryDecomposition(query, (), metadata={"word_count": 0})
 
         parts, connectors = self._split(normalized)
-        parts = tuple(self._cleanup_part(part) for part in parts if self._cleanup_part(part))
+        parts = tuple(
+            self._cleanup_part(part) for part in parts if self._cleanup_part(part)
+        )
         if not parts:
             parts = (normalized,)
         metadata = {
@@ -70,7 +75,11 @@ class QueryDecomposer:
             next_parts: list[str] = []
             changed = False
             for chunk in current:
-                segments = [segment.strip() for segment in pattern.split(chunk) if segment and segment.strip()]
+                segments = [
+                    segment.strip()
+                    for segment in pattern.split(chunk)
+                    if segment and segment.strip()
+                ]
                 if len(segments) > 1:
                     next_parts.extend(segments)
                     connectors.extend([label] * (len(segments) - 1))
@@ -81,8 +90,16 @@ class QueryDecomposer:
             if changed:
                 continue
 
-        if len(current) == 1 and " and " in query.lower() and not self._looks_like_compare(query):
-            current = [segment.strip() for segment in re.split(r"\band\b", query, flags=re.I) if segment and segment.strip()]
+        if (
+            len(current) == 1
+            and " and " in query.lower()
+            and not self._looks_like_compare(query)
+        ):
+            current = [
+                segment.strip()
+                for segment in re.split(r"\band\b", query, flags=re.I)
+                if segment and segment.strip()
+            ]
             if len(current) > 1:
                 connectors.extend(["conjunction"] * (len(current) - 1))
 
@@ -102,8 +119,15 @@ class QueryDecomposer:
 
     def _should_keep_single(self, query: str) -> bool:
         word_count = len(re.findall(r"[a-z0-9]+", query.lower()))
-        has_conjunction = " and " in query.lower() and not self._looks_like_compare(query)
-        return word_count <= 5 and not has_conjunction and ";" not in query and "\n" not in query
+        has_conjunction = " and " in query.lower() and not self._looks_like_compare(
+            query
+        )
+        return (
+            word_count <= 5
+            and not has_conjunction
+            and ";" not in query
+            and "\n" not in query
+        )
 
     def _looks_like_compare(self, query: str) -> bool:
         lowered = query.lower()

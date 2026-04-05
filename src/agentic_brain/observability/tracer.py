@@ -1,6 +1,7 @@
 """RAGTracer: collect spans and metrics for retrieval-augmented generation flows.
 Tracks latency, token usage, retrieval quality, and costs. Provides hooks to export to third-party systems.
 """
+
 from __future__ import annotations
 import time
 from typing import Any, Dict, List, Optional
@@ -22,7 +23,9 @@ class RAGTracer:
         self.phoenix = None
         self.opentelemetry = None
 
-    def start_span(self, name: str, attributes: Optional[Dict[str, Any]] = None) -> Span:
+    def start_span(
+        self, name: str, attributes: Optional[Dict[str, Any]] = None
+    ) -> Span:
         parent = self._active_spans[-1] if self._active_spans else None
         span = Span(name=name, tracer=self, attributes=attributes)
         if parent:
@@ -80,7 +83,9 @@ class RAGTracer:
     def export(self) -> Dict[str, Any]:
         total_latency = sum(s.duration for s in self._finished_spans if s.duration)
         avg_retrieval = (
-            sum(self.retrieval_scores) / len(self.retrieval_scores) if self.retrieval_scores else None
+            sum(self.retrieval_scores) / len(self.retrieval_scores)
+            if self.retrieval_scores
+            else None
         )
         return {
             "spans": [s.to_dict() for s in self._finished_spans],

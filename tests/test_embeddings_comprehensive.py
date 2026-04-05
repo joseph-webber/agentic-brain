@@ -470,9 +470,7 @@ class TestCohereEmbedder:
     def test_model_dimensions(self):
         """Test known model dimensions."""
         with patch("agentic_brain.embeddings.cohere.cohere"):
-            embedder_v3 = CohereEmbedder(
-                api_key="test", model="embed-english-v3.0"
-            )
+            embedder_v3 = CohereEmbedder(api_key="test", model="embed-english-v3.0")
             assert embedder_v3.dimension == 1024
 
             embedder_light = CohereEmbedder(
@@ -494,10 +492,7 @@ class TestCohereEmbedder:
     def test_input_type_parameter(self):
         """Test input_type parameter."""
         with patch("agentic_brain.embeddings.cohere.cohere"):
-            embedder = CohereEmbedder(
-                api_key="test",
-                input_type="search_query"
-            )
+            embedder = CohereEmbedder(api_key="test", input_type="search_query")
             assert embedder.input_type == "search_query"
 
     def test_unknown_model_fails(self):
@@ -531,9 +526,7 @@ class TestSentenceTransformersEmbedder:
         mock_model = MagicMock()
         mock_st.return_value = mock_model
 
-        embedder = SentenceTransformersEmbedder(
-            model="all-MiniLM-L6-v2", device="cpu"
-        )
+        embedder = SentenceTransformersEmbedder(model="all-MiniLM-L6-v2", device="cpu")
         assert embedder.device == "cpu"
 
     @patch("agentic_brain.embeddings.sentence_transformers.SentenceTransformer")
@@ -656,9 +649,7 @@ class TestE5Embedder:
         mock_st.return_value = mock_model
 
         embedder = E5Embedder(model="intfloat/e5-small")
-        result = embedder.embed_batch_sync(
-            ["query1", "query2"], task_type="query"
-        )
+        result = embedder.embed_batch_sync(["query1", "query2"], task_type="query")
 
         assert len(result.results) == 2
         assert result.successful == 2
@@ -705,14 +696,10 @@ class TestVoyageEmbedder:
             embedder = VoyageEmbedder(api_key="test", model="voyage-2")
             assert embedder.dimension == 1024
 
-            embedder_large = VoyageEmbedder(
-                api_key="test", model="voyage-large-2"
-            )
+            embedder_large = VoyageEmbedder(api_key="test", model="voyage-large-2")
             assert embedder_large.dimension == 1536
 
-            embedder_law = VoyageEmbedder(
-                api_key="test", model="voyage-law-2"
-            )
+            embedder_law = VoyageEmbedder(api_key="test", model="voyage-law-2")
             assert embedder_law.dimension == 1024
 
     def test_provider_property(self):
@@ -757,9 +744,7 @@ class TestJinaEmbedder:
     def test_model_dimensions(self):
         """Test known model dimensions."""
         with patch("agentic_brain.embeddings.jina.JinaAI"):
-            embedder = JinaEmbedder(
-                api_key="test", model="jina-embeddings-v2-base-en"
-            )
+            embedder = JinaEmbedder(api_key="test", model="jina-embeddings-v2-base-en")
             assert embedder.dimension == 512
 
             embedder_small = JinaEmbedder(
@@ -776,9 +761,7 @@ class TestJinaEmbedder:
     def test_task_parameter(self):
         """Test task parameter."""
         with patch("agentic_brain.embeddings.jina.JinaAI"):
-            embedder = JinaEmbedder(
-                api_key="test", task="retrieval.query"
-            )
+            embedder = JinaEmbedder(api_key="test", task="retrieval.query")
             assert embedder.task == "retrieval.query"
 
     def test_unknown_model_fails(self):

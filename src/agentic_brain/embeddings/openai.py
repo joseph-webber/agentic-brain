@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class OpenAIEmbedder(Embedder):
     """
     OpenAI Embeddings Client.
-    
+
     Models:
     - text-embedding-3-small (1536 dimensions)
     - text-embedding-3-large (3072 dimensions)
@@ -46,7 +46,7 @@ class OpenAIEmbedder(Embedder):
     ):
         """
         Initialize OpenAI Embedder.
-        
+
         Args:
             api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
             model: Model name to use
@@ -72,7 +72,9 @@ class OpenAIEmbedder(Embedder):
         try:
             from openai import OpenAI, AsyncOpenAI
         except ImportError:
-            raise ImportError("openai package required. Install with: pip install openai")
+            raise ImportError(
+                "openai package required. Install with: pip install openai"
+            )
 
         self.client = OpenAI(api_key=self.api_key, timeout=timeout)
         self.async_client = AsyncOpenAI(api_key=self.api_key, timeout=timeout)
@@ -131,7 +133,7 @@ class OpenAIEmbedder(Embedder):
             except Exception as e:
                 last_error = e
                 if attempt < self.max_retries - 1:
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     logger.warning(
                         f"Embedding attempt {attempt + 1} failed: {e}. "
                         f"Retrying in {wait_time}s..."
@@ -140,7 +142,9 @@ class OpenAIEmbedder(Embedder):
                 else:
                     logger.error(f"Embedding failed after {self.max_retries} attempts")
 
-        raise RuntimeError(f"Failed to embed text after {self.max_retries} attempts: {last_error}")
+        raise RuntimeError(
+            f"Failed to embed text after {self.max_retries} attempts: {last_error}"
+        )
 
     async def embed_async(self, text: str) -> EmbeddingResult:
         """Embed a single text asynchronously."""
@@ -177,14 +181,16 @@ class OpenAIEmbedder(Embedder):
             except Exception as e:
                 last_error = e
                 if attempt < self.max_retries - 1:
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     logger.warning(
                         f"Async embedding attempt {attempt + 1} failed: {e}. "
                         f"Retrying in {wait_time}s..."
                     )
                     await asyncio.sleep(wait_time)
                 else:
-                    logger.error(f"Async embedding failed after {self.max_retries} attempts")
+                    logger.error(
+                        f"Async embedding failed after {self.max_retries} attempts"
+                    )
 
         raise RuntimeError(
             f"Failed to embed text asynchronously after {self.max_retries} attempts: {last_error}"
@@ -198,7 +204,7 @@ class OpenAIEmbedder(Embedder):
     ) -> BatchEmbeddingResult:
         """Embed batch of texts synchronously."""
         self.validate_texts(texts)
-        
+
         results = []
         errors = []
         total_tokens = 0
@@ -206,6 +212,7 @@ class OpenAIEmbedder(Embedder):
 
         try:
             from tqdm import tqdm
+
             iterator = tqdm(texts, disable=not show_progress, desc="Embedding texts")
         except ImportError:
             iterator = texts
@@ -270,6 +277,7 @@ class OpenAIEmbedder(Embedder):
 
         try:
             from tqdm.asyncio import tqdm
+
             results_list = await tqdm.gather(*tasks, disable=not show_progress)
         except ImportError:
             results_list = await asyncio.gather(*tasks)

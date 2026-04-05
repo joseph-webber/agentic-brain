@@ -42,19 +42,19 @@ async def resilient_query(
     max_retries: int = 3,
 ) -> list[dict[str, Any]]:
     """Execute query with exponential backoff retry on transient errors.
-    
+
     Retries automatically on ServiceUnavailable and TransientError with
     backoff delays: 1s, 2s, 4s, etc. Fails immediately on ClientError.
-    
+
     Args:
         session: Async Neo4j session.
         query: Cypher query string.
         params: Optional query parameters.
         max_retries: Maximum retry attempts (default: 3).
-        
+
     Returns:
         List of result rows as dictionaries.
-        
+
     Raises:
         ClientError: Query syntax or semantic errors (not retried).
         ServiceUnavailable: Raised after max retries exhausted.
@@ -91,20 +91,20 @@ def resilient_query_sync(
     max_retries: int = 3,
 ) -> list[dict[str, Any]]:
     """Execute query synchronously with exponential backoff retry.
-    
+
     Synchronous version of resilient_query for blocking contexts.
     Retries automatically on ServiceUnavailable and TransientError with
     backoff delays: 1s, 2s, 4s, etc. Fails immediately on ClientError.
-    
+
     Args:
         session: Sync Neo4j session.
         query: Cypher query string.
         params: Optional query parameters.
         max_retries: Maximum retry attempts (default: 3).
-        
+
     Returns:
         List of result rows as dictionaries.
-        
+
     Raises:
         ClientError: Query syntax or semantic errors (not retried).
         ServiceUnavailable: Raised after max retries exhausted.

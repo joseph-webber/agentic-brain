@@ -335,7 +335,11 @@ def test_library_default_examples_are_in_answer_prompt():
 
 def test_chain_single_step():
     chain = PromptChain(
-        [PromptChainStep("first", PromptTemplate.from_string("first", "Hello {{ name }}"))]
+        [
+            PromptChainStep(
+                "first", PromptTemplate.from_string("first", "Hello {{ name }}")
+            )
+        ]
     )
     assert chain.render({"name": "Joseph"}) == "Hello Joseph"
 

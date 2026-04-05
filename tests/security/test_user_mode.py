@@ -17,7 +17,13 @@ class TestUserMode:
         return SecurityGuard(SecurityRole.USER)
 
     def test_user_cannot_execute_any_shell_commands(self, user: SecurityGuard) -> None:
-        for command in ("ls -la", "python script.py", "git status", "rm -rf /", "sudo apt install test"):
+        for command in (
+            "ls -la",
+            "python script.py",
+            "git status",
+            "rm -rf /",
+            "sudo apt install test",
+        ):
             allowed, _ = user.check_command(command)
             assert allowed is False
 

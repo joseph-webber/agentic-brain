@@ -73,7 +73,7 @@ class RedisInterBotComm:
         client: Any | None = None,
     ):
         """Initialize Redis inter-bot communication with password support.
-        
+
         Uses environment variables for configuration in Docker:
         - REDIS_HOST: Redis hostname (default: localhost)
         - REDIS_PORT: Redis port (default: 6379)

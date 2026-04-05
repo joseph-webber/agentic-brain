@@ -49,7 +49,11 @@ def sample_community() -> Community:
         id=1,
         level=0,
         entities=["entity_a", "entity_b", "entity_c"],
-        entity_types={"entity_a": "Person", "entity_b": "Company", "entity_c": "Project"},
+        entity_types={
+            "entity_a": "Person",
+            "entity_b": "Company",
+            "entity_c": "Project",
+        },
         summary="A community of related entities",
         modularity_score=0.85,
     )
@@ -67,9 +71,7 @@ def sample_hierarchy() -> CommunityHierarchy:
     hierarchy.communities[1] = Community(
         id=1, level=0, entities=["a", "b", "c"], size=3
     )
-    hierarchy.communities[2] = Community(
-        id=2, level=0, entities=["d", "e"], size=2
-    )
+    hierarchy.communities[2] = Community(id=2, level=0, entities=["d", "e"], size=2)
     # Add level 1 (parent) community
     hierarchy.communities[3] = Community(
         id=3, level=1, entities=["a", "b", "c", "d", "e"], size=5, children_ids=[1, 2]
@@ -78,7 +80,11 @@ def sample_hierarchy() -> CommunityHierarchy:
     hierarchy.communities[1].parent_id = 3
     hierarchy.communities[2].parent_id = 3
     hierarchy.entity_to_community = {
-        "a": 1, "b": 1, "c": 1, "d": 2, "e": 2,
+        "a": 1,
+        "b": 1,
+        "c": 1,
+        "d": 2,
+        "e": 2,
     }
     return hierarchy
 
@@ -131,7 +137,9 @@ class TestCommunityHierarchy:
         assert hierarchy.detection_method == "leiden_hierarchical"
         assert len(hierarchy.communities) == 0
 
-    def test_flat_communities_property(self, sample_hierarchy: CommunityHierarchy) -> None:
+    def test_flat_communities_property(
+        self, sample_hierarchy: CommunityHierarchy
+    ) -> None:
         flat = sample_hierarchy.flat_communities
         assert isinstance(flat, dict)
         assert 1 in flat
@@ -148,16 +156,22 @@ class TestCommunityHierarchy:
         assert community is not None
         assert community.id == 1
 
-    def test_get_entity_community_not_found(self, sample_hierarchy: CommunityHierarchy) -> None:
+    def test_get_entity_community_not_found(
+        self, sample_hierarchy: CommunityHierarchy
+    ) -> None:
         community = sample_hierarchy.get_entity_community("nonexistent")
         assert community is None
 
-    def test_get_community_ancestors(self, sample_hierarchy: CommunityHierarchy) -> None:
+    def test_get_community_ancestors(
+        self, sample_hierarchy: CommunityHierarchy
+    ) -> None:
         ancestors = sample_hierarchy.get_community_ancestors(1)
         assert len(ancestors) == 1
         assert ancestors[0].id == 3
 
-    def test_get_community_ancestors_root_has_none(self, sample_hierarchy: CommunityHierarchy) -> None:
+    def test_get_community_ancestors_root_has_none(
+        self, sample_hierarchy: CommunityHierarchy
+    ) -> None:
         ancestors = sample_hierarchy.get_community_ancestors(3)
         assert len(ancestors) == 0
 
@@ -175,11 +189,15 @@ class TestGDSAvailability:
 
         assert _gds_available(mock_session) is True
 
-    def test_gds_available_returns_false_on_error(self, mock_session: MagicMock) -> None:
+    def test_gds_available_returns_false_on_error(
+        self, mock_session: MagicMock
+    ) -> None:
         mock_session.run.side_effect = Exception("GDS not installed")
         assert _gds_available(mock_session) is False
 
-    def test_gds_available_returns_false_no_record(self, mock_session: MagicMock) -> None:
+    def test_gds_available_returns_false_no_record(
+        self, mock_session: MagicMock
+    ) -> None:
         mock_result = MagicMock()
         mock_result.single.return_value = None
         mock_session.run.return_value = mock_result
@@ -222,7 +240,9 @@ class TestLeidenHierarchical:
         mock_session.run.return_value = mock_result
 
         with patch("agentic_brain.rag.community_detection._drop_graph_if_exists"):
-            hierarchy = _detect_leiden_hierarchical(mock_session, gamma=1.0, max_levels=1)
+            hierarchy = _detect_leiden_hierarchical(
+                mock_session, gamma=1.0, max_levels=1
+            )
 
         assert hierarchy.detection_method == "leiden_hierarchical"
         assert len(hierarchy.communities) > 0
@@ -237,7 +257,9 @@ class TestLeidenHierarchical:
         mock_session.run.return_value = mock_result
 
         with patch("agentic_brain.rag.community_detection._drop_graph_if_exists"):
-            hierarchy = _detect_leiden_hierarchical(mock_session, gamma=1.0, max_levels=2)
+            hierarchy = _detect_leiden_hierarchical(
+                mock_session, gamma=1.0, max_levels=2
+            )
 
         assert hierarchy.levels >= 0
 
@@ -258,7 +280,9 @@ class TestLeidenHierarchical:
 
 
 class TestLouvainDetection:
-    def test_louvain_creates_single_level_hierarchy(self, mock_session: MagicMock) -> None:
+    def test_louvain_creates_single_level_hierarchy(
+        self, mock_session: MagicMock
+    ) -> None:
         mock_result = MagicMock()
         mock_result.__iter__.return_value = [
             {"entity": "a", "communityId": 0},
@@ -277,7 +301,9 @@ class TestLouvainDetection:
         assert "a" in hierarchy.communities[0].entities
         assert "c" in hierarchy.communities[1].entities
 
-    def test_louvain_maps_entities_to_communities(self, mock_session: MagicMock) -> None:
+    def test_louvain_maps_entities_to_communities(
+        self, mock_session: MagicMock
+    ) -> None:
         mock_result = MagicMock()
         mock_result.__iter__.return_value = [
             {"entity": "x", "communityId": 0},
@@ -298,7 +324,9 @@ class TestLouvainDetection:
 
 
 class TestConnectedComponents:
-    def test_connected_components_creates_hierarchy(self, mock_session: MagicMock) -> None:
+    def test_connected_components_creates_hierarchy(
+        self, mock_session: MagicMock
+    ) -> None:
         mock_result = MagicMock()
         mock_result.__iter__.return_value = [
             {"entity": "a", "community_key": "comp_a"},
@@ -312,7 +340,9 @@ class TestConnectedComponents:
         assert hierarchy.detection_method == "connected_components"
         assert len(hierarchy.communities) == 2
 
-    def test_connected_components_groups_by_canonical(self, mock_session: MagicMock) -> None:
+    def test_connected_components_groups_by_canonical(
+        self, mock_session: MagicMock
+    ) -> None:
         mock_result = MagicMock()
         mock_result.__iter__.return_value = [
             {"entity": "x", "community_key": "canonical_key"},
@@ -328,7 +358,9 @@ class TestConnectedComponents:
         assert "x" in community_entities
         assert "y" in community_entities
 
-    def test_connected_components_handles_empty_graph(self, mock_session: MagicMock) -> None:
+    def test_connected_components_handles_empty_graph(
+        self, mock_session: MagicMock
+    ) -> None:
         mock_result = MagicMock()
         mock_result.__iter__.return_value = []
         mock_session.run.return_value = mock_result
@@ -348,9 +380,7 @@ class TestCommunityDetectionEdgeCases:
     def test_hierarchy_with_isolated_entities(self) -> None:
         """Test that isolated entities aren't in communities."""
         hierarchy = CommunityHierarchy()
-        hierarchy.communities[1] = Community(
-            id=1, level=0, entities=["a", "b"]
-        )
+        hierarchy.communities[1] = Community(id=1, level=0, entities=["a", "b"])
         hierarchy.entity_to_community = {"a": 1, "b": 1}
         # c is not in entity_to_community, so it's isolated
         assert hierarchy.get_entity_community("c") is None
@@ -390,14 +420,18 @@ class TestCommunityDetectionEdgeCases:
 
 
 class TestHierarchyDataConsistency:
-    def test_entity_community_mapping_consistency(self, sample_hierarchy: CommunityHierarchy) -> None:
+    def test_entity_community_mapping_consistency(
+        self, sample_hierarchy: CommunityHierarchy
+    ) -> None:
         """Verify that entity_to_community is consistent with communities."""
         for entity, cid in sample_hierarchy.entity_to_community.items():
             community = sample_hierarchy.communities.get(cid)
             assert community is not None
             assert entity in community.entities
 
-    def test_parent_child_relationship_consistency(self, sample_hierarchy: CommunityHierarchy) -> None:
+    def test_parent_child_relationship_consistency(
+        self, sample_hierarchy: CommunityHierarchy
+    ) -> None:
         """Verify parent-child relationships are bidirectional."""
         for cid, community in sample_hierarchy.communities.items():
             if community.parent_id is not None:

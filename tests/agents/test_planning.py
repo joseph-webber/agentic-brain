@@ -60,7 +60,7 @@ class TestActionAndPlan:
             estimated_duration_seconds=1.0,
         )
         plan.add_action(action)
-        
+
         assert len(plan.actions) == 1
         assert plan.estimated_total_duration == 1.0
 
@@ -69,10 +69,10 @@ class TestActionAndPlan:
         plan = Plan(goal="Test")
         action1 = Action(type=ActionType.THINK, status="pending")
         action2 = Action(type=ActionType.ACT, status="pending")
-        
+
         plan.actions.append(action1)
         plan.actions.append(action2)
-        
+
         next_action = plan.get_next_action()
         assert next_action is not None
         assert next_action.type == ActionType.THINK
@@ -82,7 +82,7 @@ class TestActionAndPlan:
         plan = Plan(goal="Test")
         action = Action(type=ActionType.THINK, status="pending")
         plan.actions.append(action)
-        
+
         plan.mark_action_complete(action.id)
         assert action.status == "complete"
 
@@ -91,17 +91,17 @@ class TestActionAndPlan:
         plan = Plan(goal="Test")
         action1 = Action(type=ActionType.THINK, status="complete")
         action2 = Action(type=ActionType.ACT, status="complete")
-        
+
         plan.actions.append(action1)
         plan.actions.append(action2)
-        
+
         assert plan.is_complete() is True
 
     def test_plan_to_dict(self):
         """Test plan to dictionary."""
         plan = Plan(goal="Test goal")
         plan_dict = plan.to_dict()
-        
+
         assert plan_dict["goal"] == "Test goal"
         assert "actions" in plan_dict
 
@@ -120,7 +120,7 @@ class TestPlanner:
         """Test creating linear plan."""
         planner = Planner(PlanningStrategy.LINEAR)
         plan = await planner.create_plan("Complete task")
-        
+
         assert plan.goal == "Complete task"
         assert len(plan.actions) > 0
         assert plan.strategy == PlanningStrategy.LINEAR
@@ -130,7 +130,7 @@ class TestPlanner:
         """Test creating hierarchical plan."""
         planner = Planner(PlanningStrategy.HIERARCHICAL)
         plan = await planner.create_plan("Complete complex task")
-        
+
         assert plan.strategy == PlanningStrategy.HIERARCHICAL
         assert len(plan.actions) > 0
 
@@ -139,7 +139,7 @@ class TestPlanner:
         """Test creating reactive plan."""
         planner = Planner(PlanningStrategy.REACTIVE)
         plan = await planner.create_plan("Adapt to changes")
-        
+
         assert plan.strategy == PlanningStrategy.REACTIVE
         assert any(a.type == ActionType.OBSERVE for a in plan.actions)
 
@@ -149,7 +149,7 @@ class TestPlanner:
         planner = Planner()
         plan = await planner.create_plan("Initial task")
         original_count = len(plan.actions)
-        
+
         refined = await planner.refine_plan(plan, "Plan failed")
         assert len(refined.actions) >= original_count
 
@@ -168,7 +168,7 @@ class TestReActAgent:
         """Test ReAct think and act loop."""
         agent = ReActAgent()
         plan, results = await agent.think_and_act("Test task")
-        
+
         assert plan is not None
         assert isinstance(results, list)
         assert len(results) > 0
@@ -178,7 +178,7 @@ class TestReActAgent:
         """Test ReAct executes all actions."""
         agent = ReActAgent()
         plan, results = await agent.think_and_act("Complete workflow")
-        
+
         assert plan.is_complete() is True
 
 
@@ -190,7 +190,7 @@ class TestToolExecutor:
         """Test executor creation."""
         registry = create_default_registry()
         executor = ToolExecutor(tool_registry=registry)
-        
+
         assert executor.tool_registry is not None
         assert executor.max_concurrent == 10
 
@@ -199,12 +199,12 @@ class TestToolExecutor:
         """Test successful tool execution."""
         registry = create_default_registry()
         executor = ToolExecutor(tool_registry=registry)
-        
+
         result = await executor.execute_tool(
             "calculate",
             expression="2 + 2",
         )
-        
+
         assert result.success is True
 
     @pytest.mark.asyncio
@@ -212,7 +212,7 @@ class TestToolExecutor:
         """Test executing nonexistent tool."""
         registry = create_default_registry()
         executor = ToolExecutor(tool_registry=registry)
-        
+
         result = await executor.execute_tool("nonexistent")
         assert result.success is False
 
@@ -221,12 +221,12 @@ class TestToolExecutor:
         """Test batch execution."""
         registry = create_default_registry()
         executor = ToolExecutor(tool_registry=registry)
-        
+
         operations = [
             ("calculate", {"expression": "2 + 2"}),
             ("calculate", {"expression": "5 * 5"}),
         ]
-        
+
         results = await executor.execute_batch(operations)
         assert len(results) == 2
         assert all(r.success for r in results)
@@ -236,12 +236,12 @@ class TestToolExecutor:
         """Test batch execution with stop on error."""
         registry = create_default_registry()
         executor = ToolExecutor(tool_registry=registry)
-        
+
         operations = [
             ("calculate", {"expression": "invalid"}),
             ("calculate", {"expression": "2 + 2"}),
         ]
-        
+
         results = await executor.execute_batch(
             operations,
             stop_on_error=True,
@@ -253,14 +253,14 @@ class TestToolExecutor:
         """Test execution with fallback."""
         registry = create_default_registry()
         executor = ToolExecutor(tool_registry=registry)
-        
+
         result = await executor.execute_with_fallback(
             "calculate",
             "search",
             expression="2 + 2",
             query="test",
         )
-        
+
         assert result.success is True
 
     @pytest.mark.asyncio
@@ -268,23 +268,23 @@ class TestToolExecutor:
         """Test execution with validation."""
         registry = create_default_registry()
         executor = ToolExecutor(tool_registry=registry)
-        
+
         def validator(result):
             return result.output.get("result", 0) > 0
-        
+
         result = await executor.execute_with_validation(
             "calculate",
             validator=validator,
             expression="2 + 2",
         )
-        
+
         assert result.success is True
 
     def test_executor_stats(self):
         """Test executor statistics."""
         registry = create_default_registry()
         executor = ToolExecutor(tool_registry=registry)
-        
+
         stats = executor.get_stats()
         assert "active_executions" in stats
         assert stats["available_tools"] > 0

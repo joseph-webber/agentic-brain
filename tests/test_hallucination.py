@@ -3,7 +3,9 @@ from agentic_brain.guardrails.hallucination import HallucinationDetector
 
 def test_detect_hedging():
     h = HallucinationDetector()
-    assert any(r.startswith("hedging") for r in h.detect_hallucination("I think this is true"))
+    assert any(
+        r.startswith("hedging") for r in h.detect_hallucination("I think this is true")
+    )
 
 
 def test_detect_numeric_unverified():
@@ -23,7 +25,9 @@ def test_no_hallucination_on_safe_text():
 
 def test_multiple_reasons():
     h = HallucinationDetector()
-    res = h.detect_hallucination("I believe there were 1234 events and everyone always knew")
+    res = h.detect_hallucination(
+        "I believe there were 1234 events and everyone always knew"
+    )
     assert len(res) >= 2
 
 

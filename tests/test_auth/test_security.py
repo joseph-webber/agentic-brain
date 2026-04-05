@@ -141,11 +141,15 @@ async def test_rate_limit_blocks_after_max_attempts():
 async def test_rate_limit_resets_after_success():
     calls = {"count": 0}
 
-    @rate_limit(lambda username, succeed=False: username, max_attempts=2, window_seconds=300)
+    @rate_limit(
+        lambda username, succeed=False: username, max_attempts=2, window_seconds=300
+    )
     async def authenticate(username: str, succeed: bool = False):
         calls["count"] += 1
         if succeed:
-            return AuthenticationResult.successful(User(login=username, authorities=["ROLE_USER"]))
+            return AuthenticationResult.successful(
+                User(login=username, authorities=["ROLE_USER"])
+            )
         return AuthenticationResult.failed("invalid_credentials")
 
     await authenticate("alice")
@@ -178,7 +182,10 @@ def test_rate_limiter_reset_clears_recorded_attempts():
 
 def test_invalid_security_expression_defaults_to_false_without_execution():
     with SecurityContextManager(User(login="admin", authorities=["ROLE_ADMIN"])):
-        assert _evaluate_security_expression("__import__('os').system('echo hacked')") is False
+        assert (
+            _evaluate_security_expression("__import__('os').system('echo hacked')")
+            is False
+        )
         assert _evaluate_security_expression("hasRole('ADMIN'") is False
 
 
@@ -186,7 +193,11 @@ def test_invalid_security_expression_defaults_to_false_without_execution():
 async def test_jwt_generation_does_not_include_secret_like_claims(jwt_auth, auth_user):
     token = await jwt_auth.generate_token(
         auth_user,
-        extra_claims={"safe": "yes", "key_material": "hide-me", "credential": "hide-me-too"},
+        extra_claims={
+            "safe": "yes",
+            "key_material": "hide-me",
+            "credential": "hide-me-too",
+        },
     )
 
     payload = _decode_without_verification(token.access_token)
@@ -197,7 +208,9 @@ async def test_jwt_generation_does_not_include_secret_like_claims(jwt_auth, auth
 
 
 @pytest.mark.asyncio
-async def test_session_remember_me_storage_never_keeps_raw_token(session_auth, auth_user):
+async def test_session_remember_me_storage_never_keeps_raw_token(
+    session_auth, auth_user
+):
     remember_me = await session_auth._create_remember_me_token(auth_user)
 
     assert remember_me not in session_auth._remember_me_tokens

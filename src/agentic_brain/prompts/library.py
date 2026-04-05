@@ -162,7 +162,9 @@ class PromptLibrary:
         template = self.templates[prompt_name]
         return template.render(**context)
 
-    def optimize(self, name: str, optimizer: PromptOptimizer | None = None) -> PromptTemplate:
+    def optimize(
+        self, name: str, optimizer: PromptOptimizer | None = None
+    ) -> PromptTemplate:
         """Optimize a stored template."""
         template = self.templates[name]
         return (optimizer or PromptOptimizer()).optimize_template(template)

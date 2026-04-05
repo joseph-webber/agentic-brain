@@ -74,7 +74,9 @@ def make_chat() -> talk_to_karen.KarenVoiceChat:
 
 def test_select_route_prefers_ollama_for_simple_queries() -> None:
     chat = make_chat()
-    chat.provider_status = lambda: talk_to_karen.ProviderStatus(True, True, True, True, True)
+    chat.provider_status = lambda: talk_to_karen.ProviderStatus(
+        True, True, True, True, True
+    )
 
     route = chat.select_route("Hi Karen")
 
@@ -85,9 +87,13 @@ def test_select_route_prefers_ollama_for_simple_queries() -> None:
 
 def test_select_route_prefers_claude_for_complex_queries() -> None:
     chat = make_chat()
-    chat.provider_status = lambda: talk_to_karen.ProviderStatus(True, True, True, True, True)
+    chat.provider_status = lambda: talk_to_karen.ProviderStatus(
+        True, True, True, True, True
+    )
 
-    route = chat.select_route("Explain how Redis coordination helps multiple voice agents work together in detail.")
+    route = chat.select_route(
+        "Explain how Redis coordination helps multiple voice agents work together in detail."
+    )
 
     assert route.provider == "claude"
     assert route.model == "claude-test"
@@ -96,7 +102,9 @@ def test_select_route_prefers_claude_for_complex_queries() -> None:
 
 def test_select_route_supports_explicit_gpt_requests() -> None:
     chat = make_chat()
-    chat.provider_status = lambda: talk_to_karen.ProviderStatus(True, True, True, True, True)
+    chat.provider_status = lambda: talk_to_karen.ProviderStatus(
+        True, True, True, True, True
+    )
 
     route = chat.select_route("Use GPT to help me write a Python loop.")
 
@@ -106,7 +114,9 @@ def test_select_route_supports_explicit_gpt_requests() -> None:
 
 def test_select_route_prefers_gemini_for_research_queries() -> None:
     chat = make_chat()
-    chat.provider_status = lambda: talk_to_karen.ProviderStatus(True, True, True, True, True)
+    chat.provider_status = lambda: talk_to_karen.ProviderStatus(
+        True, True, True, True, True
+    )
 
     route = chat.select_route("Please research the latest facts about Redis failover.")
 
@@ -116,7 +126,9 @@ def test_select_route_prefers_gemini_for_research_queries() -> None:
 
 def test_select_route_prefers_grok_for_creative_queries() -> None:
     chat = make_chat()
-    chat.provider_status = lambda: talk_to_karen.ProviderStatus(True, True, True, True, True)
+    chat.provider_status = lambda: talk_to_karen.ProviderStatus(
+        True, True, True, True, True
+    )
 
     route = chat.select_route("Tell me a witty joke about programmers.")
 
@@ -126,7 +138,9 @@ def test_select_route_prefers_grok_for_creative_queries() -> None:
 
 def test_select_route_prefers_grok_for_funny_queries() -> None:
     chat = make_chat()
-    chat.provider_status = lambda: talk_to_karen.ProviderStatus(True, True, True, True, True)
+    chat.provider_status = lambda: talk_to_karen.ProviderStatus(
+        True, True, True, True, True
+    )
 
     route = chat.select_route("Make me laugh with a funny robot banter line.")
 
@@ -136,7 +150,9 @@ def test_select_route_prefers_grok_for_funny_queries() -> None:
 
 def test_get_reply_publishes_redis_state_and_falls_back_from_claude_to_ollama() -> None:
     chat = make_chat()
-    chat.provider_status = lambda: talk_to_karen.ProviderStatus(True, True, True, True, True)
+    chat.provider_status = lambda: talk_to_karen.ProviderStatus(
+        True, True, True, True, True
+    )
     progress_messages: list[str] = []
     chat._set_progress = progress_messages.append
 
@@ -152,16 +168,25 @@ def test_get_reply_publishes_redis_state_and_falls_back_from_claude_to_ollama() 
     reply = chat.get_reply("Explain why fallback routing matters for voice chat.")
 
     assert reply == "Ollama fallback reply"
-    assert chat.redis.store[talk_to_karen.VOICE_CURRENT_INPUT_KEY] == "Explain why fallback routing matters for voice chat."
+    assert (
+        chat.redis.store[talk_to_karen.VOICE_CURRENT_INPUT_KEY]
+        == "Explain why fallback routing matters for voice chat."
+    )
 
     llm_used = json.loads(chat.redis.store[talk_to_karen.VOICE_LLM_USED_KEY])
     assert llm_used["provider"] == "ollama"
     assert llm_used["status"] == "success"
     assert chat.history[-2:] == [
-        {"role": "user", "content": "Explain why fallback routing matters for voice chat."},
+        {
+            "role": "user",
+            "content": "Explain why fallback routing matters for voice chat.",
+        },
         {"role": "assistant", "content": "Ollama fallback reply"},
     ]
-    assert ("user", "Explain why fallback routing matters for voice chat.") in chat.redis.history
+    assert (
+        "user",
+        "Explain why fallback routing matters for voice chat.",
+    ) in chat.redis.history
     assert ("assistant", "Ollama fallback reply") in chat.redis.history
     assert any("claude failed" in message for message in progress_messages)
 
@@ -188,11 +213,14 @@ def test_call_grok_discovers_current_models_and_sets_ready_state() -> None:
     original_get = talk_to_karen.requests.get
     talk_to_karen.requests.get = lambda *args, **kwargs: FakeResponse()
     try:
+
         def fake_reply(messages, model):
             seen_models.append(model)
             return f"reply from {model}"
 
-        chat.grok_client = type("FakeGrokClient", (), {"reply": staticmethod(fake_reply)})()
+        chat.grok_client = type(
+            "FakeGrokClient", (), {"reply": staticmethod(fake_reply)}
+        )()
 
         reply = chat._call_grok(
             [{"role": "user", "content": "Tell me something witty."}],
@@ -205,4 +233,6 @@ def test_call_grok_discovers_current_models_and_sets_ready_state() -> None:
     assert seen_models == ["grok-4-fast-non-reasoning"]
     assert chat.grok_model == "grok-4-fast-non-reasoning"
     assert chat.redis.store[talk_to_karen.VOICE_GROK_READY_KEY] == "true"
-    assert "xAI reply succeeded" in chat.redis.store[talk_to_karen.VOICE_GROK_PROGRESS_KEY]
+    assert (
+        "xAI reply succeeded" in chat.redis.store[talk_to_karen.VOICE_GROK_PROGRESS_KEY]
+    )

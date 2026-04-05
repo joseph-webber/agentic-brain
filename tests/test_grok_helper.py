@@ -91,6 +91,9 @@ def test_announce_ready_sets_ready_key_and_status():
     helper.announce_ready()
 
     assert redis_client.get("voice:grok_helper_ready") == "true"
-    assert redis_client.get("voice:grok_helper_status") == "ready - waiting for XAI_API_KEY"
+    assert (
+        redis_client.get("voice:grok_helper_status")
+        == "ready - waiting for XAI_API_KEY"
+    )
     payload = json.loads(_get_pubsub_message(pubsub)["data"])
     assert payload["status"] == "ready"

@@ -812,9 +812,7 @@ class Runnable(ABC, Generic[Input, Output]):
     """
 
     @abstractmethod
-    def invoke(
-        self, input: Input, config: Optional[Dict[str, Any]] = None
-    ) -> Output:
+    def invoke(self, input: Input, config: Optional[Dict[str, Any]] = None) -> Output:
         """Synchronously invoke the runnable.
 
         Args:
@@ -909,7 +907,9 @@ class Runnable(ABC, Generic[Input, Output]):
         """
         yield self.invoke(input, config)
 
-    def __or__(self, other: "Runnable[Output, Other]") -> "RunnableSequence[Input, Other]":
+    def __or__(
+        self, other: "Runnable[Output, Other]"
+    ) -> "RunnableSequence[Input, Other]":
         """Compose with another runnable using pipe operator.
 
         Args:
@@ -994,9 +994,7 @@ class RunnableSequence(Runnable[Input, Output]):
         """Get all steps in order."""
         return [self.first] + self.middle + [self.last]
 
-    def invoke(
-        self, input: Input, config: Optional[Dict[str, Any]] = None
-    ) -> Output:
+    def invoke(self, input: Input, config: Optional[Dict[str, Any]] = None) -> Output:
         """Execute all steps in sequence."""
         result = input
         for step in self.steps:
@@ -1051,9 +1049,7 @@ class RunnableLambda(Runnable[Input, Output]):
         self.afunc = afunc
         self.name = name or getattr(func, "__name__", "lambda")
 
-    def invoke(
-        self, input: Input, config: Optional[Dict[str, Any]] = None
-    ) -> Output:
+    def invoke(self, input: Input, config: Optional[Dict[str, Any]] = None) -> Output:
         """Execute the wrapped function."""
         return self.func(input)
 
@@ -1087,9 +1083,7 @@ class RunnablePassthrough(Runnable[Input, Input]):
         """
         self.func = func
 
-    def invoke(
-        self, input: Input, config: Optional[Dict[str, Any]] = None
-    ) -> Input:
+    def invoke(self, input: Input, config: Optional[Dict[str, Any]] = None) -> Input:
         """Return input unchanged, optionally calling func as side effect."""
         if self.func:
             self.func(input)
@@ -1200,8 +1194,7 @@ class RunnableParallel(Runnable[Input, Dict[str, Any]]):
     ) -> Dict[str, Any]:
         """Async execute all runnables in parallel."""
         tasks = {
-            key: runnable.ainvoke(input, config)
-            for key, runnable in self.steps.items()
+            key: runnable.ainvoke(input, config) for key, runnable in self.steps.items()
         }
         return {key: await task for key, task in tasks.items()}
 
@@ -1232,9 +1225,7 @@ class RunnableBinding(Runnable[Input, Output]):
         self.kwargs = kwargs or {}
         self.config = config or {}
 
-    def invoke(
-        self, input: Input, config: Optional[Dict[str, Any]] = None
-    ) -> Output:
+    def invoke(self, input: Input, config: Optional[Dict[str, Any]] = None) -> Output:
         """Execute with bound arguments."""
         merged_config = {**self.config, **(config or {})}
         return self.bound.invoke(input, merged_config)
@@ -1282,9 +1273,7 @@ class RunnableBranch(Runnable[Input, Output]):
             else:
                 self.default = branch
 
-    def invoke(
-        self, input: Input, config: Optional[Dict[str, Any]] = None
-    ) -> Output:
+    def invoke(self, input: Input, config: Optional[Dict[str, Any]] = None) -> Output:
         """Execute matching branch or default."""
         for condition, runnable in self.branches:
             if condition(input):
@@ -1337,9 +1326,7 @@ class BaseMemory(ABC):
     return_messages: bool = False
 
     @abstractmethod
-    def load_memory_variables(
-        self, inputs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def load_memory_variables(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Load memory variables for prompt formatting.
 
         Args:
@@ -1351,9 +1338,7 @@ class BaseMemory(ABC):
         pass
 
     @abstractmethod
-    def save_context(
-        self, inputs: Dict[str, Any], outputs: Dict[str, str]
-    ) -> None:
+    def save_context(self, inputs: Dict[str, Any], outputs: Dict[str, str]) -> None:
         """Save context from this conversation turn.
 
         Args:
@@ -1426,9 +1411,7 @@ class ConversationBufferMemory(BaseMemory):
         """
         self.messages.append(ChatMessage(role="ai", content=content))
 
-    def load_memory_variables(
-        self, inputs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def load_memory_variables(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Load conversation history as memory variables."""
         if self.return_messages:
             return {self.memory_key: self.messages.copy()}
@@ -1440,9 +1423,7 @@ class ConversationBufferMemory(BaseMemory):
 
         return {self.memory_key: "\n".join(history_lines)}
 
-    def save_context(
-        self, inputs: Dict[str, Any], outputs: Dict[str, str]
-    ) -> None:
+    def save_context(self, inputs: Dict[str, Any], outputs: Dict[str, str]) -> None:
         """Save input/output pair to memory.
 
         Args:
@@ -1599,15 +1580,11 @@ class ConversationSummaryMemory(BaseMemory):
 
             self.buffer = self._get_summary(self.buffer, "\n".join(new_lines))
 
-    def load_memory_variables(
-        self, inputs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def load_memory_variables(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Load summary as memory variables."""
         return {self.memory_key: self.buffer}
 
-    def save_context(
-        self, inputs: Dict[str, Any], outputs: Dict[str, str]
-    ) -> None:
+    def save_context(self, inputs: Dict[str, Any], outputs: Dict[str, str]) -> None:
         """Save context and update summary."""
         input_key = list(inputs.keys())[0] if inputs else None
         output_key = list(outputs.keys())[0] if outputs else None
@@ -1662,6 +1639,7 @@ class VectorStoreRetrieverMemory(BaseMemory):
             self._store = vectorstore
         else:
             from .store import InMemoryDocumentStore
+
             self._store = InMemoryDocumentStore()
 
     def add_user_message(self, content: str) -> None:
@@ -1676,9 +1654,7 @@ class VectorStoreRetrieverMemory(BaseMemory):
         self.messages.append(msg)
         self._store.add(f"AI: {content}")
 
-    def load_memory_variables(
-        self, inputs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def load_memory_variables(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Retrieve relevant past messages based on current input."""
         query = inputs.get(self.input_key, "")
         if not query:
@@ -1688,9 +1664,7 @@ class VectorStoreRetrieverMemory(BaseMemory):
         history = "\n".join(doc.content for doc in results)
         return {self.memory_key: history}
 
-    def save_context(
-        self, inputs: Dict[str, Any], outputs: Dict[str, str]
-    ) -> None:
+    def save_context(self, inputs: Dict[str, Any], outputs: Dict[str, str]) -> None:
         """Save input/output to vector store."""
         input_key = self.input_key
         output_key = list(outputs.keys())[0] if outputs else None
@@ -1854,9 +1828,7 @@ class DirectoryLoader(BaseLoader):
                         logger.warning(f"Error loading {file_path}: {e}")
         return docs
 
-    def _load_multithreaded(
-        self, files: List[Path]
-    ) -> List["LangChainDocument"]:
+    def _load_multithreaded(self, files: List[Path]) -> List["LangChainDocument"]:
         """Load files using multiple threads."""
         docs: List["LangChainDocument"] = []
 
@@ -1920,7 +1892,17 @@ class UnstructuredFileLoader(BaseLoader):
         ext = self.file_path.suffix.lower()
 
         # Handle common text formats
-        if ext in {".txt", ".md", ".rst", ".py", ".js", ".ts", ".json", ".yaml", ".yml"}:
+        if ext in {
+            ".txt",
+            ".md",
+            ".rst",
+            ".py",
+            ".js",
+            ".ts",
+            ".json",
+            ".yaml",
+            ".yml",
+        }:
             text = self.file_path.read_text(encoding=self.encoding)
         elif ext in {".html", ".htm"}:
             text = self._parse_html()
@@ -2034,9 +2016,7 @@ class TextSplitter(ABC):
                 chunks.append(LCDocument(page_content=text, metadata=metadata))
         return chunks
 
-    def _merge_splits(
-        self, splits: List[str], separator: str
-    ) -> List[str]:
+    def _merge_splits(self, splits: List[str], separator: str) -> List[str]:
         """Merge splits into chunks respecting size limits."""
         chunks = []
         current_chunk: List[str] = []
@@ -2128,9 +2108,7 @@ class RecursiveCharacterTextSplitter(TextSplitter):
         """Recursively split text using separator hierarchy."""
         return self._split_text(text, self.separators)
 
-    def _split_text(
-        self, text: str, separators: List[str]
-    ) -> List[str]:
+    def _split_text(self, text: str, separators: List[str]) -> List[str]:
         """Internal recursive split implementation."""
         final_chunks: List[str] = []
 
@@ -2152,7 +2130,11 @@ class RecursiveCharacterTextSplitter(TextSplitter):
 
         # Process splits
         good_splits: List[str] = []
-        remaining_separators = separators[separators.index(separator) + 1:] if separator in separators else []
+        remaining_separators = (
+            separators[separators.index(separator) + 1 :]
+            if separator in separators
+            else []
+        )
 
         for split in splits:
             if self.length_function(split) < self.chunk_size:
@@ -2195,7 +2177,17 @@ class RecursiveCharacterTextSplitter(TextSplitter):
         separators_by_language = {
             "python": ["\nclass ", "\ndef ", "\n\tdef ", "\n\n", "\n", " ", ""],
             "javascript": ["\nfunction ", "\nconst ", "\nlet ", "\n\n", "\n", " ", ""],
-            "typescript": ["\nfunction ", "\nconst ", "\nlet ", "\ninterface ", "\ntype ", "\n\n", "\n", " ", ""],
+            "typescript": [
+                "\nfunction ",
+                "\nconst ",
+                "\nlet ",
+                "\ninterface ",
+                "\ntype ",
+                "\n\n",
+                "\n",
+                " ",
+                "",
+            ],
             "markdown": ["\n## ", "\n### ", "\n#### ", "\n\n", "\n", " ", ""],
             "html": ["<div", "<p", "<h1", "<h2", "<h3", "\n\n", "\n", " ", ""],
             "go": ["\nfunc ", "\ntype ", "\n\n", "\n", " ", ""],
@@ -2312,9 +2304,7 @@ class BaseOutputParser(ABC, Generic[Output]):
         """
         pass
 
-    def parse_with_prompt(
-        self, completion: str, prompt: str
-    ) -> Output:
+    def parse_with_prompt(self, completion: str, prompt: str) -> Output:
         """Parse with access to the original prompt.
 
         Args:
@@ -3060,9 +3050,7 @@ class StdOutCallbackHandler(BaseCallbackHandler):
         name = serialized.get("name", "Chain")
         self._print(f"\n> Entering {name}...", "green")
 
-    def on_chain_end(
-        self, outputs: Dict[str, Any], **kwargs: Any
-    ) -> None:
+    def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> None:
         """Print chain end."""
         self._print("> Finished chain.", "green")
 
@@ -3082,9 +3070,7 @@ class StdOutCallbackHandler(BaseCallbackHandler):
         """Print retriever start."""
         self._print(f"\n[Retriever] Searching: {query[:50]}...", "yellow")
 
-    def on_retriever_end(
-        self, documents: List[Any], **kwargs: Any
-    ) -> None:
+    def on_retriever_end(self, documents: List[Any], **kwargs: Any) -> None:
         """Print retriever end."""
         self._print(f"[Retriever] Found {len(documents)} documents.", "yellow")
 
@@ -3122,13 +3108,17 @@ class TracingCallbackHandler(BaseCallbackHandler):
         run_id: Optional[str] = None,
     ) -> None:
         """Record an event."""
-        self.traces.append({
-            "type": event_type,
-            "run_id": run_id or str(uuid.uuid4()),
-            "timestamp": datetime.now().isoformat(),
-            "elapsed_ms": (time.time() - self.start_time) * 1000 if self.start_time else 0,
-            "data": data,
-        })
+        self.traces.append(
+            {
+                "type": event_type,
+                "run_id": run_id or str(uuid.uuid4()),
+                "timestamp": datetime.now().isoformat(),
+                "elapsed_ms": (
+                    (time.time() - self.start_time) * 1000 if self.start_time else 0
+                ),
+                "data": data,
+            }
+        )
 
     def on_chain_start(
         self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
@@ -3141,15 +3131,11 @@ class TracingCallbackHandler(BaseCallbackHandler):
             kwargs.get("run_id"),
         )
 
-    def on_chain_end(
-        self, outputs: Dict[str, Any], **kwargs: Any
-    ) -> None:
+    def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> None:
         """Record chain end."""
         self._record("chain_end", {"outputs": outputs}, kwargs.get("run_id"))
 
-    def on_chain_error(
-        self, error: Exception, **kwargs: Any
-    ) -> None:
+    def on_chain_error(self, error: Exception, **kwargs: Any) -> None:
         """Record chain error."""
         self._record(
             "chain_error",
@@ -3177,9 +3163,7 @@ class TracingCallbackHandler(BaseCallbackHandler):
         """Record retriever start."""
         self._record("retriever_start", {"query": query}, kwargs.get("run_id"))
 
-    def on_retriever_end(
-        self, documents: List[Any], **kwargs: Any
-    ) -> None:
+    def on_retriever_end(self, documents: List[Any], **kwargs: Any) -> None:
         """Record retriever end."""
         self._record(
             "retriever_end",
@@ -3245,15 +3229,11 @@ class FileCallbackHandler(BaseCallbackHandler):
         """Log chain start."""
         self._log(f"CHAIN_START: {serialized.get('name', 'unknown')}")
 
-    def on_chain_end(
-        self, outputs: Dict[str, Any], **kwargs: Any
-    ) -> None:
+    def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> None:
         """Log chain end."""
         self._log(f"CHAIN_END: {list(outputs.keys())}")
 
-    def on_chain_error(
-        self, error: Exception, **kwargs: Any
-    ) -> None:
+    def on_chain_error(self, error: Exception, **kwargs: Any) -> None:
         """Log chain error."""
         self._log(f"CHAIN_ERROR: {error}")
 
@@ -3273,9 +3253,7 @@ class FileCallbackHandler(BaseCallbackHandler):
         """Log retriever start."""
         self._log(f"RETRIEVER_START: {query[:100]}")
 
-    def on_retriever_end(
-        self, documents: List[Any], **kwargs: Any
-    ) -> None:
+    def on_retriever_end(self, documents: List[Any], **kwargs: Any) -> None:
         """Log retriever end."""
         self._log(f"RETRIEVER_END: {len(documents)} docs")
 

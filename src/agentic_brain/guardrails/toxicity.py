@@ -1,4 +1,5 @@
 """Basic toxicity detection and filtering."""
+
 from typing import List
 import re
 

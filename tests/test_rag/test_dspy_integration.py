@@ -221,7 +221,9 @@ class TestRetrieve:
                 self.last_strategy = None
                 self.last_top_k = None
 
-            async def search(self, query: str, top_k: int = 5, strategy: Any = None) -> List[Dict[str, Any]]:
+            async def search(
+                self, query: str, top_k: int = 5, strategy: Any = None
+            ) -> List[Dict[str, Any]]:
                 self.last_strategy = strategy
                 self.last_top_k = top_k
                 return [{"content": query, "score": 0.7}]
@@ -265,7 +267,7 @@ class TestChainOfThought:
             answer = dspy.OutputField(format="json")
 
         responses = {
-            "Answer:": "Reasoning: ok\nAnswer: {\"items\": [\"a\"]}",
+            "Answer:": 'Reasoning: ok\nAnswer: {"items": ["a"]}',
         }
         lm = dspy.MockLLM(responses=responses)
         cot = dspy.ChainOfThought(Sig, lm=lm)
@@ -383,6 +385,8 @@ class TestUtilities:
         dataset = [
             {"inputs": {"question": "hi"}, "expected": {"answer": "hi"}},
         ]
-        evaluator = dspy.Evaluate(devset=dataset, metric=dspy.exact_match, display_progress=False)
+        evaluator = dspy.Evaluate(
+            devset=dataset, metric=dspy.exact_match, display_progress=False
+        )
         results = evaluator(Echo())
         assert results.accuracy == 1.0

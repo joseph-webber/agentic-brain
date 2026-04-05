@@ -18,14 +18,15 @@ import sys
 import threading
 import time
 
-sys.path.insert(0, os.path.expanduser('~/brain'))
-sys.path.insert(0, os.path.expanduser('~/brain/tools'))
+sys.path.insert(0, os.path.expanduser("~/brain"))
+sys.path.insert(0, os.path.expanduser("~/brain/tools"))
 
 from mcp.server.fastmcp import FastMCP
 
 # Import real-time audio engine
 try:
     from realtime_audio_engine import RealtimeAudioEngine, midi_to_freq, note_to_freq
+
     HAS_REALTIME = True
 except ImportError:
     HAS_REALTIME = False
@@ -89,8 +90,8 @@ def audio_notify(message: str, urgency: str = "normal") -> dict:
 @mcp.tool()
 def audio_voiceover(text: str) -> dict:
     """Format text for VoiceOver (removes emoji, adds section markers)."""
-    text = re.sub(r'[^\x00-\x7F]+', '', text)
-    text = re.sub(r'^#+\s*(.+)$', r'SECTION: \1', text, flags=re.MULTILINE)
+    text = re.sub(r"[^\x00-\x7F]+", "", text)
+    text = re.sub(r"^#+\s*(.+)$", r"SECTION: \1", text, flags=re.MULTILINE)
     return {"formatted": text}
 
 
@@ -98,8 +99,11 @@ def audio_voiceover(text: str) -> dict:
 def audio_volume(action: str = "get", level: int = None) -> dict:
     """Get or set system volume. Actions: get, set, mute, unmute."""
     if action == "get":
-        result = subprocess.run(["osascript", "-e", "output volume of (get volume settings)"], 
-                               capture_output=True, text=True)
+        result = subprocess.run(
+            ["osascript", "-e", "output volume of (get volume settings)"],
+            capture_output=True,
+            text=True,
+        )
         return {"volume": int(result.stdout.strip())}
     elif action == "set" and level is not None:
         subprocess.run(["osascript", "-e", f"set volume output volume {level}"])
@@ -117,10 +121,13 @@ def audio_volume(action: str = "get", level: int = None) -> dict:
 def audio_devices() -> dict:
     """List audio input/output devices."""
     result = subprocess.run(
-        ["system_profiler", "SPAudioDataType", "-json"],
-        capture_output=True, text=True
+        ["system_profiler", "SPAudioDataType", "-json"], capture_output=True, text=True
     )
-    return json.loads(result.stdout) if result.returncode == 0 else {"error": "Could not get devices"}
+    return (
+        json.loads(result.stdout)
+        if result.returncode == 0
+        else {"error": "Could not get devices"}
+    )
 
 
 @mcp.tool()
@@ -136,15 +143,13 @@ def audio_voices() -> dict:
 # REAL-TIME SYNTHESIZER TOOLS
 # =============================================================================
 
+
 def _get_engine():
     """Get or create the singleton real-time engine"""
     global _realtime_engine
     with _engine_lock:
         if _realtime_engine is None and HAS_REALTIME:
-            _realtime_engine = RealtimeAudioEngine(
-                sample_rate=44100,
-                buffer_size=512
-            )
+            _realtime_engine = RealtimeAudioEngine(sample_rate=44100, buffer_size=512)
             _realtime_engine.start()
         return _realtime_engine
 
@@ -154,7 +159,7 @@ def realtime_status() -> dict:
     """Get real-time audio engine status."""
     if not HAS_REALTIME:
         return {"error": "Real-time engine not available", "has_realtime": False}
-    
+
     engine = _get_engine()
     if engine:
         return engine.get_status()
@@ -162,37 +167,46 @@ def realtime_status() -> dict:
 
 
 @mcp.tool()
-def realtime_note(freq: float = 440.0, duration: float = 1.0, 
-                  waveform: str = "saw", amplitude: float = 0.5,
-                  filter_cutoff: float = 5000.0) -> dict:
+def realtime_note(
+    freq: float = 440.0,
+    duration: float = 1.0,
+    waveform: str = "saw",
+    amplitude: float = 0.5,
+    filter_cutoff: float = 5000.0,
+) -> dict:
     """
     Play a note in REAL-TIME (no WAV files!).
     Waveforms: sine, saw, square, triangle
     """
     if not HAS_REALTIME:
         return {"error": "Real-time engine not available"}
-    
+
     engine = _get_engine()
     if engine:
-        engine.play_note(freq, duration, amplitude, waveform, 
-                        filter_cutoff=filter_cutoff)
+        engine.play_note(
+            freq, duration, amplitude, waveform, filter_cutoff=filter_cutoff
+        )
         return {
             "playing": True,
             "freq": freq,
             "duration": duration,
             "waveform": waveform,
-            "latency_ms": engine.get_status()["latency_ms"]
+            "latency_ms": engine.get_status()["latency_ms"],
         }
     return {"error": "Engine not initialized"}
 
 
 @mcp.tool()
-def realtime_chord(frequencies: list, duration: float = 1.0,
-                   waveform: str = "saw", amplitude: float = 0.3) -> dict:
+def realtime_chord(
+    frequencies: list,
+    duration: float = 1.0,
+    waveform: str = "saw",
+    amplitude: float = 0.3,
+) -> dict:
     """Play a chord in real-time (multiple simultaneous notes)."""
     if not HAS_REALTIME:
         return {"error": "Real-time engine not available"}
-    
+
     engine = _get_engine()
     if engine:
         engine.play_chord(frequencies, duration, waveform, amplitude)
@@ -200,18 +214,19 @@ def realtime_chord(frequencies: list, duration: float = 1.0,
             "playing": True,
             "frequencies": frequencies,
             "duration": duration,
-            "waveform": waveform
+            "waveform": waveform,
         }
     return {"error": "Engine not initialized"}
 
 
 @mcp.tool()
-def realtime_midi_note(midi_note: int, duration: float = 1.0,
-                       waveform: str = "saw", amplitude: float = 0.5) -> dict:
+def realtime_midi_note(
+    midi_note: int, duration: float = 1.0, waveform: str = "saw", amplitude: float = 0.5
+) -> dict:
     """Play a MIDI note (0-127) in real-time. Middle C = 60."""
     if not HAS_REALTIME:
         return {"error": "Real-time engine not available"}
-    
+
     freq = midi_to_freq(midi_note)
     engine = _get_engine()
     if engine:
@@ -220,7 +235,7 @@ def realtime_midi_note(midi_note: int, duration: float = 1.0,
             "playing": True,
             "midi_note": midi_note,
             "freq": freq,
-            "duration": duration
+            "duration": duration,
         }
     return {"error": "Engine not initialized"}
 
@@ -230,7 +245,7 @@ def realtime_lfo(rate: float = 5.0, depth: float = 0.5) -> dict:
     """Set LFO for vibrato/modulation. Rate in Hz, depth 0-1."""
     if not HAS_REALTIME:
         return {"error": "Real-time engine not available"}
-    
+
     engine = _get_engine()
     if engine:
         engine.set_lfo(rate, depth)
@@ -243,7 +258,7 @@ def realtime_reverb(room_size: float = 0.5, wet: float = 0.3) -> dict:
     """Add reverb effect to real-time output."""
     if not HAS_REALTIME:
         return {"error": "Real-time engine not available"}
-    
+
     engine = _get_engine()
     if engine:
         engine.add_reverb(room_size, wet)
@@ -252,17 +267,22 @@ def realtime_reverb(room_size: float = 0.5, wet: float = 0.3) -> dict:
 
 
 @mcp.tool()
-def realtime_delay(delay_seconds: float = 0.25, feedback: float = 0.4,
-                   mix: float = 0.3) -> dict:
+def realtime_delay(
+    delay_seconds: float = 0.25, feedback: float = 0.4, mix: float = 0.3
+) -> dict:
     """Add delay effect to real-time output."""
     if not HAS_REALTIME:
         return {"error": "Real-time engine not available"}
-    
+
     engine = _get_engine()
     if engine:
         engine.add_delay(delay_seconds, feedback, mix)
-        return {"delay_added": True, "delay_seconds": delay_seconds, 
-                "feedback": feedback, "mix": mix}
+        return {
+            "delay_added": True,
+            "delay_seconds": delay_seconds,
+            "feedback": feedback,
+            "mix": mix,
+        }
     return {"error": "Engine not initialized"}
 
 
@@ -271,7 +291,7 @@ def realtime_clear_effects() -> dict:
     """Clear all real-time effects."""
     if not HAS_REALTIME:
         return {"error": "Real-time engine not available"}
-    
+
     engine = _get_engine()
     if engine:
         engine.clear_effects()
@@ -280,19 +300,20 @@ def realtime_clear_effects() -> dict:
 
 
 @mcp.tool()
-def realtime_bass(freq: float = 55.0, duration: float = 1.5,
-                  style: str = "standard") -> dict:
+def realtime_bass(
+    freq: float = 55.0, duration: float = 1.5, style: str = "standard"
+) -> dict:
     """
     Play a bass note with proper bass settings.
     Styles: standard, hard, soft, filtered
     """
     if not HAS_REALTIME:
         return {"error": "Real-time engine not available"}
-    
+
     engine = _get_engine()
     if not engine:
         return {"error": "Engine not initialized"}
-    
+
     # Style presets
     styles = {
         "standard": {"waveform": "saw", "filter_cutoff": 800, "amplitude": 0.6},
@@ -300,52 +321,52 @@ def realtime_bass(freq: float = 55.0, duration: float = 1.5,
         "soft": {"waveform": "sine", "filter_cutoff": 500, "amplitude": 0.7},
         "filtered": {"waveform": "saw", "filter_cutoff": 400, "amplitude": 0.6},
     }
-    
+
     preset = styles.get(style, styles["standard"])
     engine.play_note(
-        freq, duration, 
+        freq,
+        duration,
         amplitude=preset["amplitude"],
         waveform=preset["waveform"],
         filter_cutoff=preset["filter_cutoff"],
         attack=0.01,
         decay=0.2,
         sustain=0.6,
-        release=0.3
+        release=0.3,
     )
-    
+
     return {
         "playing": True,
         "freq": freq,
         "duration": duration,
         "style": style,
-        **preset
+        **preset,
     }
 
 
 @mcp.tool()
-def realtime_dnb_roller(bars: int = 4, bpm: int = 174, 
-                        root_note: str = "A") -> dict:
+def realtime_dnb_roller(bars: int = 4, bpm: int = 174, root_note: str = "A") -> dict:
     """
     Play a DnB rolling bassline in real-time!
     Root notes: A, C, D, E, F, G
     """
     if not HAS_REALTIME:
         return {"error": "Real-time engine not available"}
-    
+
     engine = _get_engine()
     if not engine:
         return {"error": "Engine not initialized"}
-    
+
     # Root frequencies
     roots = {"A": 55, "C": 65.41, "D": 73.42, "E": 82.41, "F": 87.31, "G": 98}
     root = roots.get(root_note, 55)
-    
+
     beat = 60 / bpm
     sixteenth = beat / 4
-    
+
     # Pentatonic pattern from root
     pattern = [root, root, root * 1.189, root, root * 1.335, root, root, root * 1.498]
-    
+
     def play_bassline():
         for _ in range(bars):
             for i, note in enumerate(pattern):
@@ -358,19 +379,19 @@ def realtime_dnb_roller(bars: int = 4, bpm: int = 174,
                     attack=0.005,
                     decay=0.05,
                     sustain=0.6,
-                    release=0.1
+                    release=0.1,
                 )
                 time.sleep(sixteenth)
-    
+
     # Play in background thread
     threading.Thread(target=play_bassline, daemon=True).start()
-    
+
     return {
         "playing": True,
         "bars": bars,
         "bpm": bpm,
         "root": root_note,
-        "duration_seconds": bars * 4 * beat
+        "duration_seconds": bars * 4 * beat,
     }
 
 

@@ -40,7 +40,6 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 
-
 class LLMClient(Protocol):
     """Protocol for LLM client used in decomposition."""
 

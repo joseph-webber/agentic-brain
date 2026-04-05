@@ -2,7 +2,9 @@ from agentic_brain.evaluation.datasets import Dataset, Example
 
 
 def test_dataset_from_list_and_len():
-    items = [{"id": "1", "question": "Q", "gold_answer": "A", "gold_context_ids": ["c1"]}]
+    items = [
+        {"id": "1", "question": "Q", "gold_answer": "A", "gold_context_ids": ["c1"]}
+    ]
     ds = Dataset.from_list(items)
     assert len(ds) == 1
     ex = ds.examples[0]

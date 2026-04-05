@@ -85,7 +85,7 @@ class PythonModelGenerator:
         pag = entity_has_pagination(cfg, name)
         if pag:
             lines.append("")
-            lines.append(f'    class Config:')
+            lines.append(f"    class Config:")
             lines.append(f'        pagination = "{pag}"')
 
         return lines

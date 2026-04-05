@@ -41,7 +41,8 @@ from agentic_brain.adl.generators.react_components import ReactComponentGenerato
 # Fixtures
 # ---------------------------------------------------------------------------
 
-FULL_JDL_ADL = textwrap.dedent("""\
+FULL_JDL_ADL = textwrap.dedent(
+    """\
     application MyBrain {
       name "Knowledge Brain"
       version "2.0.0"
@@ -106,9 +107,11 @@ FULL_JDL_ADL = textwrap.dedent("""\
       deploymentType docker-compose
       dockerRepositoryName "myrepo"
     }
-""")
+"""
+)
 
-MINIMAL_ENTITY_ADL = textwrap.dedent("""\
+MINIMAL_ENTITY_ADL = textwrap.dedent(
+    """\
     application Test {
       name "Test"
     }
@@ -121,7 +124,8 @@ MINIMAL_ENTITY_ADL = textwrap.dedent("""\
     entity Simple {
       name String required
     }
-""")
+"""
+)
 
 
 # ===========================================================================
@@ -154,7 +158,8 @@ class TestEntityParsing:
         assert field_map["score"].type == "Float"
 
     def test_entity_with_annotations(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
 
@@ -163,7 +168,8 @@ class TestEntityParsing:
               key String required unique
               value String
             }
-        """)
+        """
+        )
         cfg = parse_adl(adl)
         assert "Config" in cfg.entities
         assert any(a.name == "readOnly" for a in cfg.entities["Config"].annotations)
@@ -248,21 +254,25 @@ class TestEnumParsing:
         assert cfg.enums["Priority"].values == ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
 
     def test_empty_enum(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
             enum Empty { }
-        """)
+        """
+        )
         cfg = parse_adl(adl)
         assert cfg.enums["Empty"].values == []
 
     def test_enum_with_annotations(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
             @deprecated
             enum OldStatus { ACTIVE, INACTIVE }
-        """)
+        """
+        )
         cfg = parse_adl(adl)
         assert any(a.name == "deprecated" for a in cfg.enums["OldStatus"].annotations)
 
@@ -299,7 +309,8 @@ class TestRelationshipParsing:
         assert oto[0].to_end.entity == "KnowledgeNode"
 
     def test_relationship_without_fields(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
             entity A { name String }
@@ -307,7 +318,8 @@ class TestRelationshipParsing:
             relationship OneToMany {
               A to B
             }
-        """)
+        """
+        )
         cfg = parse_adl(adl)
         rel = cfg.relationships[0]
         assert rel.from_end.entity == "A"
@@ -316,7 +328,8 @@ class TestRelationshipParsing:
         assert rel.to_end.field is None
 
     def test_multiple_relationships_in_block(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
             entity A { name String }
@@ -326,7 +339,8 @@ class TestRelationshipParsing:
               A{items} to B{parent}
               A{children} to C{root}
             }
-        """)
+        """
+        )
         cfg = parse_adl(adl)
         assert len(cfg.relationships) == 2
 
@@ -362,12 +376,14 @@ class TestDirectiveParsing:
         assert cfg.services[0].impl == "serviceImpl"
 
     def test_paginate_all_with_pager(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
             entity X { name String }
             paginate all with pager
-        """)
+        """
+        )
         cfg = parse_adl(adl)
         assert len(cfg.paginations) == 1
         assert cfg.paginations[0].entities == ["all"]
@@ -387,7 +403,8 @@ class TestDeploymentParsing:
         assert cfg.deployment.values["dockerRepositoryName"] == "myrepo"
 
     def test_deployment_with_extra_options(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
             deployment {
@@ -396,7 +413,8 @@ class TestDeploymentParsing:
               kubernetesNamespace brain
               ingressDomain "brain.example.com"
             }
-        """)
+        """
+        )
         cfg = parse_adl(adl)
         d = cfg.deployment.values
         assert d["deploymentType"] == "kubernetes"
@@ -423,14 +441,16 @@ class TestCypherSchemaGenerator:
         assert "IS NOT NULL" in schema
 
     def test_generates_fulltext_index(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
             entity Doc {
               title String required searchable
               body String searchable
             }
-        """)
+        """
+        )
         cfg = parse_adl(adl)
         gen = Neo4jSchemaGenerator()
         schema = gen.generate(cfg)
@@ -677,31 +697,37 @@ class TestIntegration:
 
 class TestErrorHandling:
     def test_missing_entity_name(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
             entity { name String }
-        """)
+        """
+        )
         with pytest.raises(ADLParseError):
             parse_adl(adl)
 
     def test_unterminated_entity(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
             entity Broken {
               name String
-        """)
+        """
+        )
         with pytest.raises(ADLParseError):
             parse_adl(adl)
 
     def test_missing_relationship_to(self):
-        adl = textwrap.dedent("""\
+        adl = textwrap.dedent(
+            """\
             application T { name "T" }
             llm P { provider ollama model "llama3.2:3b" }
             relationship OneToMany {
               A B
             }
-        """)
+        """
+        )
         with pytest.raises(ADLParseError):
             parse_adl(adl)

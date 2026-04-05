@@ -24,7 +24,7 @@ import uuid
 import subprocess
 from datetime import datetime
 
-sys.path.insert(0, os.path.expanduser('~/brain'))
+sys.path.insert(0, os.path.expanduser("~/brain"))
 sys.path.insert(0, os.path.dirname(__file__))
 
 from mcp.server.fastmcp import FastMCP
@@ -35,12 +35,23 @@ from core.kafka_bus import BrainTopics, BrainEventBus
 # Import voice topics (enhanced)
 try:
     from voice_topics import (
-        VoiceTopics, VoiceEventPublisher, VoiceEventSubscriber,
-        ConversationStartedEvent, ConversationTurnEvent, ConversationEndedEvent,
-        LadyIntroducedEvent, LadyReactionEvent, MoodChangedEvent,
-        TurnRequestedEvent, TurnGrantedEvent, TurnReleasedEvent,
-        FallbackLocalEvent, QueueAddedEvent, QueueSpeakingEvent, QueueEmptyEvent,
-        validate_voice_event
+        VoiceTopics,
+        VoiceEventPublisher,
+        VoiceEventSubscriber,
+        ConversationStartedEvent,
+        ConversationTurnEvent,
+        ConversationEndedEvent,
+        LadyIntroducedEvent,
+        LadyReactionEvent,
+        MoodChangedEvent,
+        TurnRequestedEvent,
+        TurnGrantedEvent,
+        TurnReleasedEvent,
+        FallbackLocalEvent,
+        QueueAddedEvent,
+        QueueSpeakingEvent,
+        QueueEmptyEvent,
+        validate_voice_event,
     )
 except ImportError as e:
     VoiceTopics = None
@@ -69,7 +80,7 @@ mcp = FastMCP("event-bus")
 
 # Global bus connection
 _bus = None
-_provider = os.getenv('EVENT_BUS_PROVIDER', 'redpanda')
+_provider = os.getenv("EVENT_BUS_PROVIDER", "redpanda")
 
 # Global voice publishers and subscribers
 _voice_publisher = None
@@ -107,27 +118,23 @@ def get_voice_subscriber():
 # CORE EVENT BUS TOOLS (unchanged from v1)
 # ============================================================================
 
+
 @mcp.tool()
 def emit(topic: str, event_type: str, data: dict) -> dict:
     """Publish an event to a brain topic. Topics: brain.health, brain.tasks, brain.state, brain.alerts, brain.learning, brain.llm.request, brain.commands"""
     bus = get_bus()
-    
+
     event = {
-        'type': event_type,
-        'data': data,
-        'timestamp': datetime.now().isoformat(),
-        'source': 'claude-mcp'
+        "type": event_type,
+        "data": data,
+        "timestamp": datetime.now().isoformat(),
+        "source": "claude-mcp",
     }
-    
+
     success = bus.emit(topic, event)
-    
+
     if success:
-        return {
-            "success": True,
-            "topic": topic,
-            "event_type": event_type,
-            "data": data
-        }
+        return {"success": True, "topic": topic, "event_type": event_type, "data": data}
     else:
         return {"success": False, "error": f"Failed to emit to {topic}"}
 
@@ -138,9 +145,9 @@ def health() -> str:
     global _provider
     bus = get_bus()
     health_data = bus.health_check()
-    
-    status_emoji = "✅" if health_data.get('status') == 'healthy' else "❌"
-    
+
+    status_emoji = "✅" if health_data.get("status") == "healthy" else "❌"
+
     return f"""🧠 **Brain Event Bus Status**
 
 {status_emoji} Status: {health_data.get('status', 'unknown')}
@@ -227,21 +234,21 @@ voice_queue_added "tingting" "Hello there!"
 def switch_provider(provider: str) -> str:
     """Switch between Redpanda (dev) and Kafka (prod). Same API, different backend."""
     global _bus, _provider
-    
+
     old_provider = _provider
-    
+
     # Disconnect old bus
     if _bus:
         _bus.disconnect()
         _bus = None
-    
+
     # Switch provider
     _provider = provider
-    
+
     # Connect new bus
     bus = get_bus()
     health_data = bus.health_check()
-    
+
     return f"""🔄 **Provider Switched**
 
 From: {old_provider}
@@ -255,28 +262,28 @@ Same Kafka API - all services continue working!"""
 def send_llm_request(prompt: str, system: str = None, priority: str = "normal") -> dict:
     """Send a request to the LLM pool (Claude → OpenRouter → Emulator fallback chain)."""
     bus = get_bus()
-    
+
     request_id = str(uuid.uuid4())
-    
+
     event = {
-        'type': 'llm_request',
-        'request_id': request_id,
-        'prompt': prompt,
-        'system': system or '',
-        'priority': priority,
-        'timestamp': datetime.now().isoformat(),
-        'source': 'claude-mcp',
-        'fallback_chain': ['claude', 'openrouter', 'emulator']
+        "type": "llm_request",
+        "request_id": request_id,
+        "prompt": prompt,
+        "system": system or "",
+        "priority": priority,
+        "timestamp": datetime.now().isoformat(),
+        "source": "claude-mcp",
+        "fallback_chain": ["claude", "openrouter", "emulator"],
     }
-    
+
     bus.emit(BrainTopics.LLM_REQUEST, event)
-    
+
     return {
         "request_id": request_id,
         "prompt_preview": prompt[:100] + "..." if len(prompt) > 100 else prompt,
         "priority": priority,
-        "fallback_chain": ['claude', 'openrouter', 'emulator'],
-        "note": "Response will arrive on brain.llm.response topic"
+        "fallback_chain": ["claude", "openrouter", "emulator"],
+        "note": "Response will arrive on brain.llm.response topic",
     }
 
 
@@ -284,25 +291,25 @@ def send_llm_request(prompt: str, system: str = None, priority: str = "normal") 
 def broadcast_alert(level: str, message: str, source: str = "claude-mcp") -> dict:
     """Broadcast an alert to all brain components. Levels: info, warning, error, critical"""
     bus = get_bus()
-    
+
     event = {
-        'type': 'alert',
-        'level': level,
-        'message': message,
-        'source': source,
-        'timestamp': datetime.now().isoformat()
+        "type": "alert",
+        "level": level,
+        "message": message,
+        "source": source,
+        "timestamp": datetime.now().isoformat(),
     }
-    
+
     bus.emit(BrainTopics.ALERTS, event)
-    
-    level_emoji = {'info': 'ℹ️', 'warning': '⚠️', 'error': '❌', 'critical': '🚨'}
-    
+
+    level_emoji = {"info": "ℹ️", "warning": "⚠️", "error": "❌", "critical": "🚨"}
+
     return {
-        "emoji": level_emoji.get(level, '📢'),
+        "emoji": level_emoji.get(level, "📢"),
         "level": level.upper(),
         "message": message,
         "source": source,
-        "note": "All brain components notified"
+        "note": "All brain components notified",
     }
 
 
@@ -311,16 +318,16 @@ def query_state(component: str = "all") -> dict:
     """Query the current state of brain components. Components: llm, bots, jhipster, all"""
     global _provider, _bus
     bus = get_bus()
-    
+
     event = {
-        'type': 'state_query',
-        'component': component,
-        'timestamp': datetime.now().isoformat(),
-        'source': 'claude-mcp'
+        "type": "state_query",
+        "component": component,
+        "timestamp": datetime.now().isoformat(),
+        "source": "claude-mcp",
     }
-    
+
     bus.emit(BrainTopics.STATE, event)
-    
+
     return {
         "component": component,
         "query_sent": True,
@@ -328,8 +335,8 @@ def query_state(component: str = "all") -> dict:
         "current_bus_state": {
             "provider": _provider,
             "connected": _bus is not None,
-            "topics_configured": len(BrainTopics.all())
-        }
+            "topics_configured": len(BrainTopics.all()),
+        },
     }
 
 
@@ -338,22 +345,19 @@ def query_state(component: str = "all") -> dict:
 # ============================================================================
 
 if VoiceTopics is not None:
-    
+
     # =====================================================================
     # CONVERSATION LIFECYCLE TOOLS
     # =====================================================================
-    
+
     @mcp.tool()
     def voice_conversation_started(
-        ladies: list,
-        topic: str = "",
-        speaker_order: list = None,
-        context: dict = None
+        ladies: list, topic: str = "", speaker_order: list = None, context: dict = None
     ) -> dict:
         """Start a multi-lady conversation. Publishes to brain.voice.conversation.started
-        
+
         Ladies: karen, kyoko, tingting, sinji, linh, kanya, yuna, dewi, sari, wayan, moira, zosia, flo, shelley
-        
+
         Example:
             voice_conversation_started ["karen", "moira"] "standup"
         """
@@ -362,9 +366,9 @@ if VoiceTopics is not None:
             ladies=ladies,
             topic=topic,
             speaker_order=speaker_order or ladies,
-            context=context or {}
+            context=context or {},
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Conversation Started",
@@ -372,25 +376,21 @@ if VoiceTopics is not None:
                 "topic": topic,
                 "conversation_id": result.get("conversation_id"),
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.CONVERSATION_STARTED
+                "topic_name": VoiceTopics.CONVERSATION_STARTED,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     @mcp.tool()
     def voice_conversation_turn(
         lady: str,
         text: str,
         voice_name: str = "",
         region: str = "",
-        turn_number: int = 0
+        turn_number: int = 0,
     ) -> dict:
         """Lady takes a turn in the conversation. Publishes to brain.voice.conversation.turn
-        
+
         Example:
             voice_conversation_turn "karen" "Let's discuss the sprint backlog"
         """
@@ -400,35 +400,31 @@ if VoiceTopics is not None:
             text=text,
             voice_name=voice_name,
             region=region,
-            turn_number=turn_number
+            turn_number=turn_number,
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Turn Published",
                 "lady": lady,
                 "text_preview": result.get("text_preview"),
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.CONVERSATION_TURN
+                "topic_name": VoiceTopics.CONVERSATION_TURN,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     @mcp.tool()
     def voice_conversation_ended(
         ladies: list,
         total_turns: int = 0,
         duration_seconds: float = 0.0,
-        reason: str = "completed"
+        reason: str = "completed",
     ) -> dict:
         """End a conversation. Publishes to brain.voice.conversation.ended
-        
+
         Reason: "completed", "interrupted", "error"
-        
+
         Example:
             voice_conversation_ended ["karen", "moira"] 4 30.5 "completed"
         """
@@ -437,9 +433,9 @@ if VoiceTopics is not None:
             ladies=ladies,
             total_turns=total_turns,
             duration_seconds=duration_seconds,
-            reason=reason
+            reason=reason,
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Conversation Ended",
@@ -448,66 +444,52 @@ if VoiceTopics is not None:
                 "duration_seconds": result.get("duration_seconds"),
                 "reason": reason,
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.CONVERSATION_ENDED
+                "topic_name": VoiceTopics.CONVERSATION_ENDED,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     # =====================================================================
     # LADY INTRODUCTION AND REACTIONS
     # =====================================================================
-    
+
     @mcp.tool()
     def voice_lady_introduced(
-        lady: str,
-        voice_name: str = "",
-        region: str = "",
-        greeting: str = ""
+        lady: str, voice_name: str = "", region: str = "", greeting: str = ""
     ) -> dict:
         """Introduce a new lady to the team. Publishes to brain.voice.ladies.introduced
-        
+
         Example:
             voice_lady_introduced "iris" "Iris" "San Francisco" "Hello there!"
         """
         publisher = get_voice_publisher()
         result = publisher.publish_lady_introduced(
-            lady=lady,
-            voice_name=voice_name,
-            region=region,
-            greeting=greeting
+            lady=lady, voice_name=voice_name, region=region, greeting=greeting
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Lady Introduced",
                 "lady": lady,
                 "region": result.get("region"),
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.LADY_INTRODUCED
+                "topic_name": VoiceTopics.LADY_INTRODUCED,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     @mcp.tool()
     def voice_lady_reaction(
         from_lady: str,
         to_lady: str,
         original_text: str = "",
         reaction_text: str = "",
-        emotion: str = ""
+        emotion: str = "",
     ) -> dict:
         """Lady reacts to what another lady said. Publishes to brain.voice.ladies.reaction
-        
+
         Emotions: "agreement", "disagreement", "question", "excitement", "support"
-        
+
         Example:
             voice_lady_reaction "moira" "karen" "Let's discuss..." "That sounds great!" "agreement"
         """
@@ -517,9 +499,9 @@ if VoiceTopics is not None:
             to_lady=to_lady,
             original_text=original_text,
             reaction_text=reaction_text,
-            emotion=emotion
+            emotion=emotion,
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Reaction Published",
@@ -527,40 +509,30 @@ if VoiceTopics is not None:
                 "to_lady": to_lady,
                 "emotion": emotion,
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.LADY_REACTION
+                "topic_name": VoiceTopics.LADY_REACTION,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     # =====================================================================
     # MOOD SYNCHRONIZATION
     # =====================================================================
-    
+
     @mcp.tool()
-    def voice_mood_changed(
-        mood: str,
-        reason: str = "",
-        ladies: list = None
-    ) -> dict:
+    def voice_mood_changed(mood: str, reason: str = "", ladies: list = None) -> dict:
         """Change mood - all ladies sync! Publishes to brain.voice.mood.changed
-        
+
         Moods: "calm", "working", "party", "focused", "bali_spa", "creative"
-        
+
         Example:
             voice_mood_changed "calm" "time_for_spa"
             voice_mood_changed "working" "sprint_standup" ["karen", "moira", "tingting"]
         """
         publisher = get_voice_publisher()
         result = publisher.publish_mood_changed(
-            mood=mood,
-            reason=reason,
-            ladies=ladies or []
+            mood=mood, reason=reason, ladies=ladies or []
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Mood Changed",
@@ -569,39 +541,29 @@ if VoiceTopics is not None:
                 "reason": reason,
                 "ladies_synced": result.get("ladies_synced"),
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.MOOD_CHANGED
+                "topic_name": VoiceTopics.MOOD_CHANGED,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     # =====================================================================
     # TURN-TAKING EVENTS (prevent overlapping speech)
     # =====================================================================
-    
+
     @mcp.tool()
-    def voice_turn_requested(
-        lady: str,
-        priority: int = 0,
-        reason: str = ""
-    ) -> dict:
+    def voice_turn_requested(lady: str, priority: int = 0, reason: str = "") -> dict:
         """Request speaking turn. Publishes to brain.voice.turn.requested
-        
+
         Priority: 0=normal, 1=high, 2=critical
-        
+
         Example:
             voice_turn_requested "kyoko" 0 "wants_to_comment"
         """
         publisher = get_voice_publisher()
         result = publisher.publish_turn_requested(
-            lady=lady,
-            priority=priority,
-            reason=reason
+            lady=lady, priority=priority, reason=reason
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Turn Requested",
@@ -609,24 +571,20 @@ if VoiceTopics is not None:
                 "request_id": result.get("request_id"),
                 "priority": priority,
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.TURN_REQUESTED
+                "topic_name": VoiceTopics.TURN_REQUESTED,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     @mcp.tool()
     def voice_turn_granted(
         lady: str,
         request_id: str = "",
         granted_by: str = "moderator",
-        duration_seconds: float = 30.0
+        duration_seconds: float = 30.0,
     ) -> dict:
         """Grant speaking turn. Publishes to brain.voice.turn.granted
-        
+
         Example:
             voice_turn_granted "kyoko" "" "karen" 30.0
         """
@@ -635,9 +593,9 @@ if VoiceTopics is not None:
             lady=lady,
             request_id=request_id,
             granted_by=granted_by,
-            duration_seconds=duration_seconds
+            duration_seconds=duration_seconds,
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Turn Granted",
@@ -645,26 +603,22 @@ if VoiceTopics is not None:
                 "request_id": result.get("request_id"),
                 "duration_seconds": duration_seconds,
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.TURN_GRANTED
+                "topic_name": VoiceTopics.TURN_GRANTED,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     @mcp.tool()
     def voice_turn_released(
         lady: str,
         request_id: str = "",
         reason: str = "finished",
-        duration_held_seconds: float = 0.0
+        duration_held_seconds: float = 0.0,
     ) -> dict:
         """Release speaking turn. Publishes to brain.voice.turn.released
-        
+
         Reason: "finished", "interrupted", "timeout"
-        
+
         Example:
             voice_turn_released "kyoko" "" "finished" 25.5
         """
@@ -673,9 +627,9 @@ if VoiceTopics is not None:
             lady=lady,
             request_id=request_id,
             reason=reason,
-            duration_held_seconds=duration_held_seconds
+            duration_held_seconds=duration_held_seconds,
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Turn Released",
@@ -683,30 +637,26 @@ if VoiceTopics is not None:
                 "reason": reason,
                 "duration_held": duration_held_seconds,
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.TURN_RELEASED
+                "topic_name": VoiceTopics.TURN_RELEASED,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     # =====================================================================
     # ERROR HANDLING AND FALLBACK
     # =====================================================================
-    
+
     @mcp.tool()
     def voice_fallback_local(
         reason: str = "",
         lady: str = "karen",
         error_code: str = "429",
-        retry_after_seconds: int = 60
+        retry_after_seconds: int = 60,
     ) -> dict:
         """Fallback to local LLM (rate limited). Publishes to brain.voice.fallback.local
-        
+
         Lady announces switch to local mode automatically!
-        
+
         Example:
             voice_fallback_local "Rate limit hit" "karen" "429" 60
         """
@@ -715,22 +665,31 @@ if VoiceTopics is not None:
             reason=reason,
             lady=lady,
             error_code=error_code,
-            retry_after_seconds=retry_after_seconds
+            retry_after_seconds=retry_after_seconds,
         )
-        
+
         if result.get("success"):
             # Also announce it locally
             try:
-                voice_name, rate, _ = VOICE_LADIES.get(lady, ("Karen", 165, "Australia"))
+                voice_name, rate, _ = VOICE_LADIES.get(
+                    lady, ("Karen", 165, "Australia")
+                )
                 subprocess.run(
-                    ["say", "-v", voice_name, "-r", str(rate), "I'm switching to local mode. Be right back!"],
+                    [
+                        "say",
+                        "-v",
+                        voice_name,
+                        "-r",
+                        str(rate),
+                        "I'm switching to local mode. Be right back!",
+                    ],
                     timeout=10,
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
                 )
             except:
                 pass
-            
+
             return {
                 "status": "✅ Fallback Activated",
                 "lady": lady,
@@ -738,19 +697,15 @@ if VoiceTopics is not None:
                 "retry_after_seconds": retry_after_seconds,
                 "announcement": "Lady announced switch to local mode",
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.FALLBACK_LOCAL
+                "topic_name": VoiceTopics.FALLBACK_LOCAL,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     # =====================================================================
     # VOICE QUEUE MANAGEMENT
     # =====================================================================
-    
+
     @mcp.tool()
     def voice_queue_added(
         lady: str,
@@ -758,10 +713,10 @@ if VoiceTopics is not None:
         voice_name: str = "",
         region: str = "",
         queue_position: int = 0,
-        queue_length_after: int = 0
+        queue_length_after: int = 0,
     ) -> dict:
         """Add item to voice queue. Publishes to brain.voice.queue.added
-        
+
         Example:
             voice_queue_added "tingting" "Hello there!" "" "China" 0 1
         """
@@ -772,9 +727,9 @@ if VoiceTopics is not None:
             voice_name=voice_name,
             region=region,
             queue_position=queue_position,
-            queue_length_after=queue_length_after
+            queue_length_after=queue_length_after,
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Added to Queue",
@@ -782,25 +737,21 @@ if VoiceTopics is not None:
                 "queue_position": result.get("queue_position"),
                 "queue_length_after": result.get("queue_length_after"),
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.QUEUE_ADDED
+                "topic_name": VoiceTopics.QUEUE_ADDED,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     @mcp.tool()
     def voice_queue_speaking(
         lady: str,
         text: str,
         voice_name: str = "",
         region: str = "",
-        queue_remaining: int = 0
+        queue_remaining: int = 0,
     ) -> dict:
         """Lady is now speaking from queue. Publishes to brain.voice.queue.speaking
-        
+
         Example:
             voice_queue_speaking "tingting" "Hello there!" "" "China" 0
         """
@@ -810,63 +761,54 @@ if VoiceTopics is not None:
             text=text,
             voice_name=voice_name,
             region=region,
-            queue_remaining=queue_remaining
+            queue_remaining=queue_remaining,
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Speaking",
                 "lady": lady,
                 "queue_remaining": result.get("queue_remaining"),
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.QUEUE_SPEAKING
+                "topic_name": VoiceTopics.QUEUE_SPEAKING,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     @mcp.tool()
     def voice_queue_empty(
-        total_processed: int = 0,
-        total_duration_seconds: float = 0.0
+        total_processed: int = 0, total_duration_seconds: float = 0.0
     ) -> dict:
         """Voice queue is now empty. Publishes to brain.voice.queue.empty
-        
+
         Example:
             voice_queue_empty 5 45.3
         """
         publisher = get_voice_publisher()
         result = publisher.publish_queue_empty(
             total_processed=total_processed,
-            total_duration_seconds=total_duration_seconds
+            total_duration_seconds=total_duration_seconds,
         )
-        
+
         if result.get("success"):
             return {
                 "status": "✅ Queue Empty",
                 "total_processed": result.get("total_processed"),
                 "total_duration_seconds": result.get("total_duration_seconds"),
                 "event_id": result.get("event_id"),
-                "topic_name": VoiceTopics.QUEUE_EMPTY
+                "topic_name": VoiceTopics.QUEUE_EMPTY,
             }
         else:
-            return {
-                "status": "❌ Failed",
-                "error": result.get("error")
-            }
-    
-    
+            return {"status": "❌ Failed", "error": result.get("error")}
+
     # =====================================================================
     # DOCUMENTATION TOOLS
     # =====================================================================
-    
+
     @mcp.tool()
     def voice_topics_list() -> str:
         """List all ENHANCED v2 voice event topics and their schemas.
-        
+
         Features:
         - Conversation lifecycle (started, turn, ended)
         - Cross-lady communication (introductions, reactions)

@@ -182,7 +182,9 @@ class GraphSchema:
             starts = ", ".join(info.start_labels) or "Any"
             ends = ", ".join(info.end_labels) or "Any"
             props = ", ".join(f"{k}: {v}" for k, v in info.properties.items())
-            lines.append(f"- (:{starts})-[:{rel_type}]->(:{ends}) [{info.count}] {{{props}}}")
+            lines.append(
+                f"- (:{starts})-[:{rel_type}]->(:{ends}) [{info.count}] {{{props}}}"
+            )
 
         return "\n".join(lines)
 
@@ -374,14 +376,26 @@ UNSAFE_PATTERNS_STRICT: list[tuple[re.Pattern, str]] = [
     (re.compile(r"\bDELETE\b", re.IGNORECASE), "DELETE operations not allowed"),
     (re.compile(r"\bDETACH\s+DELETE\b", re.IGNORECASE), "DETACH DELETE not allowed"),
     (re.compile(r"\bDROP\b", re.IGNORECASE), "DROP operations not allowed"),
-    (re.compile(r"\bCREATE\b", re.IGNORECASE), "CREATE operations not allowed in strict mode"),
-    (re.compile(r"\bMERGE\b", re.IGNORECASE), "MERGE operations not allowed in strict mode"),
-    (re.compile(r"\bSET\b", re.IGNORECASE), "SET operations not allowed in strict mode"),
+    (
+        re.compile(r"\bCREATE\b", re.IGNORECASE),
+        "CREATE operations not allowed in strict mode",
+    ),
+    (
+        re.compile(r"\bMERGE\b", re.IGNORECASE),
+        "MERGE operations not allowed in strict mode",
+    ),
+    (
+        re.compile(r"\bSET\b", re.IGNORECASE),
+        "SET operations not allowed in strict mode",
+    ),
     (re.compile(r"\bREMOVE\b", re.IGNORECASE), "REMOVE operations not allowed"),
     (re.compile(r"\bCALL\s+\{", re.IGNORECASE), "Subqueries with CALL not allowed"),
     (re.compile(r"\bCALL\s+apoc\.", re.IGNORECASE), "APOC procedures not allowed"),
     (re.compile(r"\bCALL\s+dbms\.", re.IGNORECASE), "DBMS procedures not allowed"),
-    (re.compile(r"\bCALL\s+db\.(index|constraint)", re.IGNORECASE), "Schema modifications not allowed"),
+    (
+        re.compile(r"\bCALL\s+db\.(index|constraint)", re.IGNORECASE),
+        "Schema modifications not allowed",
+    ),
     (re.compile(r";\s*\w", re.IGNORECASE), "Multiple statements not allowed"),
 ]
 
@@ -391,13 +405,19 @@ UNSAFE_PATTERNS_NORMAL: list[tuple[re.Pattern, str]] = [
     (re.compile(r"\bDROP\b", re.IGNORECASE), "DROP operations not allowed"),
     (re.compile(r"\bREMOVE\b", re.IGNORECASE), "REMOVE operations not allowed"),
     (re.compile(r"\bCALL\s+dbms\.", re.IGNORECASE), "DBMS procedures not allowed"),
-    (re.compile(r"\bCALL\s+db\.(index|constraint)", re.IGNORECASE), "Schema modifications not allowed"),
+    (
+        re.compile(r"\bCALL\s+db\.(index|constraint)", re.IGNORECASE),
+        "Schema modifications not allowed",
+    ),
     (re.compile(r";\s*\w", re.IGNORECASE), "Multiple statements not allowed"),
 ]
 
 UNSAFE_PATTERNS_PERMISSIVE: list[tuple[re.Pattern, str]] = [
     (re.compile(r"\bDROP\s+DATABASE\b", re.IGNORECASE), "DROP DATABASE not allowed"),
-    (re.compile(r"\bCALL\s+dbms\.security", re.IGNORECASE), "Security procedures not allowed"),
+    (
+        re.compile(r"\bCALL\s+dbms\.security", re.IGNORECASE),
+        "Security procedures not allowed",
+    ),
     (re.compile(r";\s*\w", re.IGNORECASE), "Multiple statements not allowed"),
 ]
 
@@ -437,7 +457,9 @@ def validate_cypher_syntax(cypher: str) -> tuple[bool, list[str]]:
     if re.search(r"\bMATCH\b.*\bMATCH\b", cypher, re.IGNORECASE) and not re.search(
         r"\b(WITH|OPTIONAL|UNION)\b", cypher, re.IGNORECASE
     ):
-        errors.append("Multiple MATCH clauses should be connected with WITH or OPTIONAL MATCH")
+        errors.append(
+            "Multiple MATCH clauses should be connected with WITH or OPTIONAL MATCH"
+        )
 
     # Check RETURN clause exists (unless it's a write-only query)
     if not re.search(r"\bRETURN\b", cypher, re.IGNORECASE):
@@ -458,7 +480,9 @@ def validate_cypher_syntax(cypher: str) -> tuple[bool, list[str]]:
     return len(errors) == 0, errors
 
 
-def validate_cypher_semantics(cypher: str, schema: GraphSchema) -> tuple[bool, list[str]]:
+def validate_cypher_semantics(
+    cypher: str, schema: GraphSchema
+) -> tuple[bool, list[str]]:
     """
     Semantic validation against schema.
 
@@ -504,13 +528,20 @@ def check_cartesian_product(cypher: str) -> tuple[bool, str]:
     node_patterns = re.findall(r"\((\w+):\w+\)", cypher)
 
     # Check if there are multiple unconnected MATCH clauses
-    matches = re.findall(r"\bMATCH\b\s*(.+?)(?=\bMATCH\b|\bWHERE\b|\bRETURN\b|\bWITH\b|$)", cypher, re.IGNORECASE | re.DOTALL)
+    matches = re.findall(
+        r"\bMATCH\b\s*(.+?)(?=\bMATCH\b|\bWHERE\b|\bRETURN\b|\bWITH\b|$)",
+        cypher,
+        re.IGNORECASE | re.DOTALL,
+    )
 
     if len(matches) > 1:
         # Check if patterns are connected via relationships or WHERE clauses
         for match in matches:
             if not re.search(r"[\-\<\>]", match):  # No relationship syntax
-                return True, "Multiple MATCH clauses without relationships may cause cartesian product"
+                return (
+                    True,
+                    "Multiple MATCH clauses without relationships may cause cartesian product",
+                )
 
     return False, ""
 
@@ -543,7 +574,11 @@ def optimize_query(
     # Check for indexed property usage
     if config.prefer_indexed_properties:
         # Find WHERE clauses with property comparisons
-        where_match = re.search(r"\bWHERE\b(.+?)(?=\bRETURN\b|\bWITH\b|\bORDER\b|$)", result, re.IGNORECASE | re.DOTALL)
+        where_match = re.search(
+            r"\bWHERE\b(.+?)(?=\bRETURN\b|\bWITH\b|\bORDER\b|$)",
+            result,
+            re.IGNORECASE | re.DOTALL,
+        )
         if where_match:
             where_clause = where_match.group(1)
             # Check if using indexed properties
@@ -709,7 +744,9 @@ class OllamaLLMBackend:
         try:
             import aiohttp
         except ImportError:
-            raise LLMProviderError("aiohttp package not installed. Run: pip install aiohttp")
+            raise LLMProviderError(
+                "aiohttp package not installed. Run: pip install aiohttp"
+            )
 
         full_prompt = f"{system}\n\n{prompt}" if system else prompt
 
@@ -732,7 +769,9 @@ class OllamaLLMBackend:
                 ) as response:
                     if response.status != 200:
                         text = await response.text()
-                        raise LLMProviderError(f"Ollama error {response.status}: {text}")
+                        raise LLMProviderError(
+                            f"Ollama error {response.status}: {text}"
+                        )
                     data = await response.json()
                     return data.get("response", "")
         except asyncio.TimeoutError:
@@ -816,12 +855,14 @@ class MockLLMBackend:
         temperature: float = 0.0,
         max_tokens: int = 2048,
     ) -> str:
-        self.calls.append({
-            "prompt": prompt,
-            "system": system,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        })
+        self.calls.append(
+            {
+                "prompt": prompt,
+                "system": system,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
+        )
 
         # Check for matching response
         for key, response in self.responses.items():
@@ -918,11 +959,15 @@ class SchemaExtractor:
                     records = [record async for record in result]
 
                     for record in records:
-                        schema.node_labels[label].properties[record["key"]] = record["type"]
+                        schema.node_labels[label].properties[record["key"]] = record[
+                            "type"
+                        ]
 
                     # Get sample values if requested
                     if include_samples:
-                        for prop in list(schema.node_labels[label].properties.keys())[:3]:
+                        for prop in list(schema.node_labels[label].properties.keys())[
+                            :3
+                        ]:
                             try:
                                 result = await session.run(
                                     f"MATCH (n:{label}) "
@@ -973,7 +1018,9 @@ class SchemaExtractor:
                         start_labels.update(record["start_labels"])
                         end_labels.update(record["end_labels"])
 
-                    schema.relationship_types[rel_type].start_labels = list(start_labels)
+                    schema.relationship_types[rel_type].start_labels = list(
+                        start_labels
+                    )
                     schema.relationship_types[rel_type].end_labels = list(end_labels)
 
                 except Exception as e:
@@ -1062,10 +1109,18 @@ class Text2Cypher:
                 neo4j_user=neo4j_user,
                 neo4j_password=neo4j_password or os.getenv("NEO4J_PASSWORD", ""),
                 neo4j_database=neo4j_database,
-                llm_provider=LLMProvider(llm_provider) if isinstance(llm_provider, str) else llm_provider,
+                llm_provider=(
+                    LLMProvider(llm_provider)
+                    if isinstance(llm_provider, str)
+                    else llm_provider
+                ),
                 llm_model=llm_model,
                 llm_api_key=llm_api_key,
-                safety_level=SafetyLevel(safety_level) if isinstance(safety_level, str) else safety_level,
+                safety_level=(
+                    SafetyLevel(safety_level)
+                    if isinstance(safety_level, str)
+                    else safety_level
+                ),
             )
 
         # Initialize components
@@ -1213,13 +1268,16 @@ class Text2Cypher:
 
         # Error context for retry
         if error_context:
-            parts.append(f"\n## Previous Attempt Failed\n{error_context}\nPlease fix the query.\n")
+            parts.append(
+                f"\n## Previous Attempt Failed\n{error_context}\nPlease fix the query.\n"
+            )
 
         # The actual question
         parts.append(f"\n## Question\n{question}")
 
         # Instructions
-        parts.append("""
+        parts.append(
+            """
 ## Instructions
 Generate a valid Cypher query for the question above.
 - Use only labels and relationships from the schema
@@ -1227,7 +1285,8 @@ Generate a valid Cypher query for the question above.
 - Use parameterized values where appropriate (e.g., $param_name)
 - Return only the Cypher query, no explanation
 - Do NOT include any markdown code blocks
-""")
+"""
+        )
 
         return "\n".join(parts)
 
@@ -1259,13 +1318,24 @@ Generate a valid Cypher query for the question above.
             # Start of Cypher (common keywords)
             if any(
                 stripped.upper().startswith(kw)
-                for kw in ["MATCH", "OPTIONAL", "CREATE", "MERGE", "WITH", "CALL", "RETURN", "UNWIND"]
+                for kw in [
+                    "MATCH",
+                    "OPTIONAL",
+                    "CREATE",
+                    "MERGE",
+                    "WITH",
+                    "CALL",
+                    "RETURN",
+                    "UNWIND",
+                ]
             ):
                 in_cypher = True
 
             if in_cypher:
                 # End of Cypher (explanatory text)
-                if stripped.startswith(("//", "#", "Note:", "Explanation:", "This query")):
+                if stripped.startswith(
+                    ("//", "#", "Note:", "Explanation:", "This query")
+                ):
                     break
                 cypher_lines.append(line)
 
@@ -1372,7 +1442,9 @@ Generate a valid Cypher query for the question above.
                         last_error = f"Syntax errors: {', '.join(syntax_errors)}"
                         continue
 
-                    semantic_ok, semantic_errors = validate_cypher_semantics(generated_cypher, schema)
+                    semantic_ok, semantic_errors = validate_cypher_semantics(
+                        generated_cypher, schema
+                    )
                     if not semantic_ok:
                         validation_errors.extend(semantic_errors)
                         # Semantic errors are warnings, not failures
@@ -1453,7 +1525,11 @@ Generate a valid Cypher query for the question above.
             score += 2
 
         # WHERE with multiple conditions
-        where_match = re.search(r"\bWHERE\b(.+?)(?=\bRETURN\b|\bWITH\b|\bORDER\b|$)", cypher, re.IGNORECASE | re.DOTALL)
+        where_match = re.search(
+            r"\bWHERE\b(.+?)(?=\bRETURN\b|\bWITH\b|\bORDER\b|$)",
+            cypher,
+            re.IGNORECASE | re.DOTALL,
+        )
         if where_match:
             where_clause = where_match.group(1)
             score += where_clause.count(" AND ") * 0.5
@@ -1491,7 +1567,9 @@ Generate a valid Cypher query for the question above.
         import time
 
         # Generate query
-        generated = await self.generate_cypher(question, validate=validate, optimize=optimize)
+        generated = await self.generate_cypher(
+            question, validate=validate, optimize=optimize
+        )
 
         # Execute
         driver = await self._get_driver()

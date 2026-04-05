@@ -64,6 +64,7 @@ result = eval(user_input)
 """
         analyzer = CodeAnalyzer(code, "test.py")
         import ast
+
         tree = ast.parse(code)
         analyzer.visit(tree)
 
@@ -76,6 +77,7 @@ result = eval(user_input)
         code = "exec(user_code)"
         analyzer = CodeAnalyzer(code, "test.py")
         import ast
+
         tree = ast.parse(code)
         analyzer.visit(tree)
 
@@ -91,6 +93,7 @@ obj = pickle.loads(data)
 """
         analyzer = CodeAnalyzer(code, "test.py")
         import ast
+
         tree = ast.parse(code)
         analyzer.visit(tree)
 
@@ -117,10 +120,13 @@ subprocess.run(f"echo {user_input}", shell=True)
 """
         analyzer = CodeAnalyzer(code, "test.py")
         import ast
+
         tree = ast.parse(code)
         analyzer.visit(tree)
 
-        issues = [i for i in analyzer.issues if i.category == OWASPCategory.A03_INJECTION]
+        issues = [
+            i for i in analyzer.issues if i.category == OWASPCategory.A03_INJECTION
+        ]
         assert len(issues) > 0
 
 
@@ -132,10 +138,15 @@ class TestA02CryptographicFailures:
         code = 'API_KEY = "sk_live_1234567890abcdefghij"'
         analyzer = CodeAnalyzer(code, "test.py")
         import ast
+
         tree = ast.parse(code)
         analyzer.visit(tree)
 
-        issues = [i for i in analyzer.issues if i.category == OWASPCategory.A02_CRYPTOGRAPHIC_FAILURES]
+        issues = [
+            i
+            for i in analyzer.issues
+            if i.category == OWASPCategory.A02_CRYPTOGRAPHIC_FAILURES
+        ]
         # May detect as potential hardcoded secret
 
     def test_hardcoded_password(self):
@@ -143,10 +154,15 @@ class TestA02CryptographicFailures:
         code = 'db_password = "SuperSecret123!@#"'
         analyzer = CodeAnalyzer(code, "test.py")
         import ast
+
         tree = ast.parse(code)
         analyzer.visit(tree)
 
-        issues = [i for i in analyzer.issues if i.category == OWASPCategory.A02_CRYPTOGRAPHIC_FAILURES]
+        issues = [
+            i
+            for i in analyzer.issues
+            if i.category == OWASPCategory.A02_CRYPTOGRAPHIC_FAILURES
+        ]
 
     def test_weak_md5_hashing(self):
         """Detect weak MD5 hashing."""
@@ -166,6 +182,7 @@ if provided_password == stored_password:
 """
         analyzer = CodeAnalyzer(code, "test.py")
         import ast
+
         tree = ast.parse(code)
         analyzer.visit(tree)
 
@@ -181,20 +198,28 @@ class TestA05SecurityMisconfiguration:
 
     def test_debug_mode_enabled(self):
         """Detect DEBUG=True in production code."""
-        code = 'DEBUG = True'
+        code = "DEBUG = True"
         checker = RegexPatternChecker()
         issues = checker.check_file("test.py", code)
 
-        debug_issues = [i for i in issues if i.category == OWASPCategory.A05_SECURITY_MISCONFIGURATION]
+        debug_issues = [
+            i
+            for i in issues
+            if i.category == OWASPCategory.A05_SECURITY_MISCONFIGURATION
+        ]
         assert len(debug_issues) > 0
 
     def test_testing_mode_enabled(self):
         """Detect TESTING=True in source code."""
-        code = 'TESTING = True'
+        code = "TESTING = True"
         checker = RegexPatternChecker()
         issues = checker.check_file("test.py", code)
 
-        test_issues = [i for i in issues if i.category == OWASPCategory.A05_SECURITY_MISCONFIGURATION]
+        test_issues = [
+            i
+            for i in issues
+            if i.category == OWASPCategory.A05_SECURITY_MISCONFIGURATION
+        ]
         # May detect as security misconfiguration
 
 
@@ -287,6 +312,7 @@ def add(a, b):
 """
         analyzer = CodeAnalyzer(code, "test.py")
         import ast
+
         tree = ast.parse(code)
         analyzer.visit(tree)
 
@@ -297,6 +323,7 @@ def add(a, b):
         code = "eval('1+1')"
         analyzer = CodeAnalyzer(code, "test.py")
         import ast
+
         tree = ast.parse(code)
         analyzer.visit(tree)
 

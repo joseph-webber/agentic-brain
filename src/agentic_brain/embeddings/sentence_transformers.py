@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 class SentenceTransformersEmbedder(Embedder):
     """
     Local Embeddings using Sentence Transformers.
-    
+
     Supports models from Hugging Face:
     - all-MiniLM-L6-v2 (384 dimensions, fast, multilingual)
     - all-mpnet-base-v2 (768 dimensions, high quality)
@@ -58,7 +58,7 @@ class SentenceTransformersEmbedder(Embedder):
     ):
         """
         Initialize Sentence Transformers Embedder.
-        
+
         Args:
             model: Model name from Hugging Face
             device: Device to use ('cpu', 'cuda', 'mps', or None for auto-detect)
@@ -234,9 +234,9 @@ class SentenceTransformersEmbedder(Embedder):
     async def close(self) -> None:
         """Clean up resources."""
         try:
-            if hasattr(self.model, 'model'):
-                if hasattr(self.model.model, 'to'):
-                    self.model.model.to('cpu')
+            if hasattr(self.model, "model"):
+                if hasattr(self.model.model, "to"):
+                    self.model.model.to("cpu")
         except Exception as e:
             logger.warning(f"Error during cleanup: {e}")
 
@@ -249,11 +249,11 @@ class E5Embedder(SentenceTransformersEmbedder):
         model: str = "intfloat/e5-small",
         device: Optional[str] = None,
         batch_size: int = 32,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize E5 Embedder.
-        
+
         Args:
             model: E5 model variant (small, base, large)
             device: Device to use
@@ -264,13 +264,13 @@ class E5Embedder(SentenceTransformersEmbedder):
             device=device,
             batch_size=batch_size,
             normalize_embeddings=True,
-            **kwargs
+            **kwargs,
         )
 
     def embed_sync(self, text: str, task_type: str = "passage") -> EmbeddingResult:
         """
         Embed text with E5 model.
-        
+
         Args:
             text: Text to embed
             task_type: Task context ('query' or 'passage')
@@ -308,7 +308,7 @@ class E5Embedder(SentenceTransformersEmbedder):
     ) -> BatchEmbeddingResult:
         """
         Embed batch with E5 model.
-        
+
         Args:
             texts: Texts to embed
             batch_size: Batch size

@@ -10,12 +10,13 @@ import sys
 import os
 from pathlib import Path
 
+
 def install_dependencies():
     """Install required packages."""
     print("📦 Installing dependencies...")
     result = subprocess.run(
         [sys.executable, "-m", "pip", "install", "-q", "websockets"],
-        capture_output=True
+        capture_output=True,
     )
     if result.returncode != 0:
         print(f"❌ Failed to install dependencies")
@@ -26,11 +27,13 @@ def install_dependencies():
 
 def show_banner():
     """Show welcome banner."""
-    print("""
+    print(
+        """
 ╔════════════════════════════════════════════════════════════╗
 ║   WebSocket PTY Bridge Server - Quickstart                 ║
 ╚════════════════════════════════════════════════════════════╝
-""")
+"""
+    )
 
 
 def show_menu():
@@ -57,14 +60,14 @@ def start_server(host="localhost"):
     print(f"\n🚀 Starting server on {host}:{port}")
     print(f"📂 Directory: {script_dir}")
     print(f"🔗 WebSocket URL: ws://{host}:{port}")
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Server starting... (Press Ctrl+C to stop)")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
     try:
         subprocess.run(
             [sys.executable, str(server_script), "--host", host, "--port", str(port)],
-            cwd=str(script_dir)
+            cwd=str(script_dir),
         )
     except KeyboardInterrupt:
         print("\n\n✓ Server stopped")
@@ -77,10 +80,7 @@ def run_tests():
 
     print("\n🧪 Running tests...\n")
     try:
-        subprocess.run(
-            [sys.executable, str(test_script)],
-            cwd=str(script_dir)
-        )
+        subprocess.run([sys.executable, str(test_script)], cwd=str(script_dir))
     except Exception as e:
         print(f"❌ Test failed: {e}")
 
@@ -99,7 +99,8 @@ def show_readme():
 
 def show_connection_info():
     """Show how to connect."""
-    print("""
+    print(
+        """
 📱 To connect to the server:
 
 Option 1 - Direct File (Easiest)
@@ -127,7 +128,8 @@ Resize terminal:
 
 Receive output:
   {"type": "output", "data": "drwxr-xr-x  12 user  staff  384 Apr  1 12:00 \\n"}
-""")
+"""
+    )
 
 
 def main():
@@ -160,9 +162,9 @@ def main():
             print("❌ Invalid choice, try again")
 
         if choice in ["1", "2"]:
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             show_connection_info()
-            print("="*60 + "\n")
+            print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":

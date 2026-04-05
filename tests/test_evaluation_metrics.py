@@ -25,7 +25,7 @@ def test_context_precision_empty_retrieved():
 
 
 def test_context_precision_perfect():
-    assert context_precision(["a","b"], ["a","b","c"]) == 1.0
+    assert context_precision(["a", "b"], ["a", "b", "c"]) == 1.0
 
 
 def test_context_recall_empty_gold():
@@ -33,7 +33,7 @@ def test_context_recall_empty_gold():
 
 
 def test_context_recall_partial():
-    assert pytest.approx(context_recall(["a","b"], ["b","c"])) == 0.5
+    assert pytest.approx(context_recall(["a", "b"], ["b", "c"])) == 0.5
 
 
 def test_relevancy_score_empty():

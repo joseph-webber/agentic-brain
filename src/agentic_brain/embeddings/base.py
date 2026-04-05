@@ -17,6 +17,7 @@ from enum import Enum
 
 class EmbeddingProvider(str, Enum):
     """Supported embedding providers."""
+
     OPENAI = "openai"
     COHERE = "cohere"
     SENTENCE_TRANSFORMERS = "sentence_transformers"
@@ -28,6 +29,7 @@ class EmbeddingProvider(str, Enum):
 @dataclass
 class EmbeddingResult:
     """Result of a single embedding operation."""
+
     text: str
     embedding: np.ndarray
     dimension: int
@@ -40,6 +42,7 @@ class EmbeddingResult:
 @dataclass
 class BatchEmbeddingResult:
     """Result of a batch embedding operation."""
+
     results: List[EmbeddingResult]
     total_texts: int
     successful: int
@@ -52,7 +55,7 @@ class BatchEmbeddingResult:
 class Embedder(ABC):
     """
     Abstract base class for all embedding models.
-    
+
     All embedder implementations must inherit from this class and implement
     the required abstract methods.
     """
@@ -79,13 +82,13 @@ class Embedder(ABC):
     def embed_sync(self, text: str) -> EmbeddingResult:
         """
         Synchronously embed a single text.
-        
+
         Args:
             text: Text to embed
-            
+
         Returns:
             EmbeddingResult with embedding vector and metadata
-            
+
         Raises:
             ValueError: If text is empty
             RuntimeError: If embedding fails
@@ -96,13 +99,13 @@ class Embedder(ABC):
     async def embed_async(self, text: str) -> EmbeddingResult:
         """
         Asynchronously embed a single text.
-        
+
         Args:
             text: Text to embed
-            
+
         Returns:
             EmbeddingResult with embedding vector and metadata
-            
+
         Raises:
             ValueError: If text is empty
             RuntimeError: If embedding fails
@@ -118,12 +121,12 @@ class Embedder(ABC):
     ) -> BatchEmbeddingResult:
         """
         Synchronously embed a batch of texts.
-        
+
         Args:
             texts: List of texts to embed
             batch_size: Number of texts to process per batch
             show_progress: Whether to show progress bar
-            
+
         Returns:
             BatchEmbeddingResult with all embeddings and statistics
         """
@@ -139,13 +142,13 @@ class Embedder(ABC):
     ) -> BatchEmbeddingResult:
         """
         Asynchronously embed a batch of texts.
-        
+
         Args:
             texts: List of texts to embed
             batch_size: Number of texts to process per batch
             show_progress: Whether to show progress bar
             concurrent_requests: Number of concurrent requests
-            
+
         Returns:
             BatchEmbeddingResult with all embeddings and statistics
         """
@@ -159,10 +162,10 @@ class Embedder(ABC):
     def validate_text(self, text: str) -> None:
         """
         Validate text before embedding.
-        
+
         Args:
             text: Text to validate
-            
+
         Raises:
             ValueError: If text is invalid
         """
@@ -174,10 +177,10 @@ class Embedder(ABC):
     def validate_texts(self, texts: List[str]) -> None:
         """
         Validate list of texts before embedding.
-        
+
         Args:
             texts: Texts to validate
-            
+
         Raises:
             ValueError: If texts are invalid
         """
@@ -194,10 +197,10 @@ class Embedder(ABC):
     def normalize_embedding(self, embedding: np.ndarray) -> np.ndarray:
         """
         Normalize embedding to unit vector (L2 norm).
-        
+
         Args:
             embedding: Embedding vector
-            
+
         Returns:
             Normalized embedding
         """
@@ -209,11 +212,11 @@ class Embedder(ABC):
     def cosine_similarity(self, emb1: np.ndarray, emb2: np.ndarray) -> float:
         """
         Calculate cosine similarity between two embeddings.
-        
+
         Args:
             emb1: First embedding
             emb2: Second embedding
-            
+
         Returns:
             Cosine similarity score (-1 to 1)
         """

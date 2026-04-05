@@ -396,8 +396,12 @@ class HybridSearch:
                 "_chunk": chunk,
             }
 
-        vector_dicts = [chunk_to_dict(c, i, "vector") for i, c in enumerate(vector_results)]
-        keyword_dicts = [chunk_to_dict(c, i, "keyword") for i, c in enumerate(keyword_results)]
+        vector_dicts = [
+            chunk_to_dict(c, i, "vector") for i, c in enumerate(vector_results)
+        ]
+        keyword_dicts = [
+            chunk_to_dict(c, i, "keyword") for i, c in enumerate(keyword_results)
+        ]
 
         result = rrf_unified(
             [

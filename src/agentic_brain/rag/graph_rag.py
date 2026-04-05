@@ -42,6 +42,7 @@ def _get_community_detection():
     global _community_detection_module
     if _community_detection_module is None:
         from . import community_detection
+
         _community_detection_module = community_detection
     return _community_detection_module
 
@@ -334,7 +335,7 @@ class GraphRAG:
     async def _global_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """
         Execute Microsoft GraphRAG-style global search.
-        
+
         Uses map-reduce pattern across community summaries for queries that
         require understanding the entire knowledge graph.
         """
@@ -356,17 +357,19 @@ class GraphRAG:
         # Convert GlobalSearchResult to standard result format
         results = []
         for cr in result.community_responses[:top_k]:
-            results.append({
-                "entity_id": f"community_{cr.community_id}",
-                "community_id": cr.community_id,
-                "level": cr.level,
-                "content": cr.response or cr.summary,
-                "summary": cr.summary,
-                "score": cr.relevance_score,
-                "themes": cr.themes,
-                "entities": cr.entities_mentioned,
-                "strategy": "global",
-            })
+            results.append(
+                {
+                    "entity_id": f"community_{cr.community_id}",
+                    "community_id": cr.community_id,
+                    "level": cr.level,
+                    "content": cr.response or cr.summary,
+                    "summary": cr.summary,
+                    "score": cr.relevance_score,
+                    "themes": cr.themes,
+                    "entities": cr.entities_mentioned,
+                    "strategy": "global",
+                }
+            )
 
         # Add metadata about the global search
         if results:
@@ -381,7 +384,7 @@ class GraphRAG:
 
     async def _community_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """Search using community detection for broader context.
-        
+
         NOTE: This method assumes enable_communities=True. Callers should check
         the config before calling, or use search() which handles the fallback.
         """

@@ -55,7 +55,7 @@ def should_verify_ssl() -> bool:
 
 def get_ssl_context() -> Union[ssl.SSLContext, bool]:
     """Get SSL context for aiohttp/httpx.
-    
+
     Returns:
         ssl.SSLContext with verification disabled, or False to skip SSL entirely
     """
@@ -70,13 +70,14 @@ def get_ssl_context() -> Union[ssl.SSLContext, bool]:
 
 def patch_ssl_globally() -> None:
     """Patch SSL globally for all requests.
-    
+
     Call this at application startup if you need to bypass SSL everywhere.
     WARNING: This is insecure and should only be used in development!
     """
     import urllib3
+
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-    
+
     # Patch ssl default context
     ssl._create_default_https_context = ssl._create_unverified_context
 

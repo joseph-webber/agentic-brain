@@ -51,7 +51,9 @@ class CSVLoader(SyncDocumentLoader):
             if rows:
                 headers = list(rows[0].keys())
                 text_lines.append(" | ".join(headers))
-                text_lines.append("-" * (sum(len(h) for h in headers) + 3 * len(headers)))
+                text_lines.append(
+                    "-" * (sum(len(h) for h in headers) + 3 * len(headers))
+                )
 
                 for row in rows:
                     values = [str(row.get(h, "")) for h in headers]

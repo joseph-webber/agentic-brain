@@ -46,7 +46,7 @@ from kafka.errors import KafkaError
 import redis
 
 # Add brain to path
-sys.path.insert(0, os.path.expanduser('~/brain'))
+sys.path.insert(0, os.path.expanduser("~/brain"))
 
 # ═══════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -84,6 +84,7 @@ _pending_responses: Dict[str, Dict[str, Any]] = {}
 # KAFKA CONNECTION
 # ═══════════════════════════════════════════════════════════════
 
+
 def get_producer() -> KafkaProducer:
     """Get or create Kafka producer (lazy initialization)"""
     global _producer
@@ -91,10 +92,10 @@ def get_producer() -> KafkaProducer:
         try:
             _producer = KafkaProducer(
                 bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-                value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
                 acks=1,  # Wait for leader acknowledgment
                 retries=3,
-                max_in_flight_requests_per_connection=5
+                max_in_flight_requests_per_connection=5,
             )
         except Exception as e:
             print(f"❌ Failed to create Kafka producer: {e}")
@@ -108,10 +109,10 @@ def get_consumer(topics: List[str]) -> KafkaConsumer:
         consumer = KafkaConsumer(
             *topics,
             bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-            value_deserializer=lambda m: json.loads(m.decode('utf-8')),
-            group_id='openrouter-llm-pool',
-            auto_offset_reset='latest',  # Only new messages
-            enable_auto_commit=True
+            value_deserializer=lambda m: json.loads(m.decode("utf-8")),
+            group_id="openrouter-llm-pool",
+            auto_offset_reset="latest",  # Only new messages
+            enable_auto_commit=True,
             # Removed consumer_timeout_ms to keep consumer running indefinitely
         )
         return consumer
@@ -132,7 +133,7 @@ def get_redis() -> redis.Redis:
                 password=REDIS_PASSWORD,
                 decode_responses=True,
                 socket_timeout=2,
-                socket_connect_timeout=2
+                socket_connect_timeout=2,
             )
             # Test connection
             _redis_client.ping()
@@ -144,7 +145,7 @@ def get_redis() -> redis.Redis:
                     port=REDIS_PORT,
                     decode_responses=True,
                     socket_timeout=2,
-                    socket_connect_timeout=2
+                    socket_connect_timeout=2,
                 )
                 _redis_client.ping()
             except Exception as e:
@@ -160,12 +161,13 @@ def get_redis() -> redis.Redis:
 # CACHE OPERATIONS
 # ═══════════════════════════════════════════════════════════════
 
+
 def get_cached_response(query: str, task_type: str) -> Optional[Dict[str, Any]]:
     """Check Redis cache for existing response"""
     r = get_redis()
     if not r:
         return None
-    
+
     try:
         cache_key = f"{CACHE_PREFIX}{task_type}:{hash(query)}"
         cached = r.get(cache_key)
@@ -173,7 +175,7 @@ def get_cached_response(query: str, task_type: str) -> Optional[Dict[str, Any]]:
             return json.loads(cached)
     except Exception as e:
         print(f"⚠️  Cache read failed: {e}")
-    
+
     return None
 
 
@@ -182,7 +184,7 @@ def cache_response(query: str, task_type: str, response_data: Dict[str, Any]):
     r = get_redis()
     if not r:
         return
-    
+
     try:
         cache_key = f"{CACHE_PREFIX}{task_type}:{hash(query)}"
         r.setex(cache_key, CACHE_TTL, json.dumps(response_data))
@@ -194,10 +196,13 @@ def cache_response(query: str, task_type: str, response_data: Dict[str, Any]):
 # LLM ROUTING (imports from existing OpenRouter system)
 # ═══════════════════════════════════════════════════════════════
 
-def route_llm_request(query: str, task_type: str, preferred_provider: Optional[str] = None) -> Dict[str, Any]:
+
+def route_llm_request(
+    query: str, task_type: str, preferred_provider: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Route LLM request using existing OpenRouter smart routing.
-    
+
     Returns:
         {
             "response": "LLM response text",
@@ -209,23 +214,25 @@ def route_llm_request(query: str, task_type: str, preferred_provider: Optional[s
         }
     """
     start_time = time.time()
-    
+
     try:
         # Import routing function (lazy to avoid startup delays)
         # Use relative import since we're in the same directory
         import server as openrouter_server
-        
+
         # Use smart routing
         if preferred_provider and preferred_provider != "any":
             # TODO: Add provider-specific routing
             result = openrouter_server.openrouter_smart_route(query, task=task_type)
         else:
             # Default: smart routing with cascade fallback
-            result = openrouter_server.openrouter_cascade(query, timeout_per_provider=30)
-        
+            result = openrouter_server.openrouter_cascade(
+                query, timeout_per_provider=30
+            )
+
         # Parse result (it returns formatted string, we need to extract)
         latency_ms = int((time.time() - start_time) * 1000)
-        
+
         # Extract provider from result string (look for provider mentions)
         provider_used = "unknown"
         result_lower = result.lower()
@@ -237,19 +244,20 @@ def route_llm_request(query: str, task_type: str, preferred_provider: Optional[s
             provider_used = "claude"
         elif "openai" in result_lower or "gpt" in result_lower:
             provider_used = "openai"
-        
+
         return {
             "response": result,
             "provider_used": provider_used,
             "latency_ms": latency_ms,
             "tokens_used": len(result.split()),  # Rough estimate
             "cached": False,
-            "error": None
+            "error": None,
         }
-        
+
     except Exception as e:
         latency_ms = int((time.time() - start_time) * 1000)
         import traceback
+
         error_detail = f"{str(e)}\n{traceback.format_exc()}"
         print(f"❌ Routing error: {error_detail}")
         return {
@@ -258,13 +266,14 @@ def route_llm_request(query: str, task_type: str, preferred_provider: Optional[s
             "latency_ms": latency_ms,
             "tokens_used": 0,
             "cached": False,
-            "error": str(e)
+            "error": str(e),
         }
 
 
 # ═══════════════════════════════════════════════════════════════
 # REQUEST HANDLING
 # ═══════════════════════════════════════════════════════════════
+
 
 def handle_llm_request(message: Dict[str, Any]):
     """Process an LLM request from the event bus"""
@@ -274,15 +283,15 @@ def handle_llm_request(message: Dict[str, Any]):
     preferred_provider = message.get("preferred_provider", "any")
     callback_topic = message.get("callback_topic", TOPIC_RESPONSE)
     context = message.get("context", {})
-    
+
     if not query:
         print(f"⚠️  Invalid request {request_id}: missing query")
         return
-    
+
     print(f"📨 Processing LLM request {request_id[:8]}...")
     print(f"   Query: {query[:80]}...")
     print(f"   Task: {task_type}, Provider: {preferred_provider}")
-    
+
     # Check cache first
     cached = get_cached_response(query, task_type)
     if cached:
@@ -294,21 +303,21 @@ def handle_llm_request(message: Dict[str, Any]):
         # Route to appropriate provider
         response_data = route_llm_request(query, task_type, preferred_provider)
         response_data["request_id"] = request_id
-        
+
         # Cache successful responses
         if response_data.get("response") and not response_data.get("error"):
             cache_response(query, task_type, response_data)
-    
+
     # Add reasoning steps if available (from context)
     if "reasoning_steps" in context:
         response_data["reasoning_steps"] = context["reasoning_steps"]
-    
+
     # Publish response
     publish_response(response_data, callback_topic)
-    
+
     # Update status
     publish_status_update(response_data)
-    
+
     print(f"✅ Request {request_id[:8]} completed in {response_data['latency_ms']}ms")
 
 
@@ -318,12 +327,12 @@ def publish_response(response_data: Dict[str, Any], topic: str = TOPIC_RESPONSE)
         producer = get_producer()
         producer.send(topic, value=response_data)
         producer.flush()
-        
+
         # Store for synchronous waiters
         request_id = response_data.get("request_id")
         if request_id:
             _pending_responses[request_id] = response_data
-            
+
             # Call any registered callbacks
             if request_id in _response_callbacks:
                 try:
@@ -331,7 +340,7 @@ def publish_response(response_data: Dict[str, Any], topic: str = TOPIC_RESPONSE)
                     del _response_callbacks[request_id]
                 except Exception as e:
                     print(f"⚠️  Callback failed: {e}")
-                    
+
     except Exception as e:
         print(f"❌ Failed to publish response: {e}")
 
@@ -344,9 +353,9 @@ def publish_status_update(response_data: Dict[str, Any]):
             "provider": response_data.get("provider_used"),
             "latency_ms": response_data.get("latency_ms"),
             "success": response_data.get("error") is None,
-            "error": response_data.get("error")
+            "error": response_data.get("error"),
         }
-        
+
         producer = get_producer()
         producer.send(TOPIC_STATUS, value=status)
         producer.flush()
@@ -358,40 +367,43 @@ def publish_status_update(response_data: Dict[str, Any]):
 # CONSUMER SERVICE
 # ═══════════════════════════════════════════════════════════════
 
+
 def consumer_loop():
     """Main consumer loop - listens for LLM requests"""
     global _running, _consumer
-    
+
     print(f"🎧 Starting LLM consumer on {TOPIC_REQUEST}...")
-    
+
     try:
         _consumer = get_consumer([TOPIC_REQUEST])
         _running = True
-        
+
         print(f"✅ LLM consumer ready!")
-        
+
         # Poll with timeout to allow clean shutdown
         while _running:
             # Poll for messages with 1 second timeout
             msg_pack = _consumer.poll(timeout_ms=1000, max_records=10)
-            
+
             for topic_partition, messages in msg_pack.items():
                 for message in messages:
                     if not _running:
                         break
-                    
+
                     try:
                         handle_llm_request(message.value)
                     except Exception as e:
                         print(f"❌ Error handling request: {e}")
                         import traceback
+
                         traceback.print_exc()
-        
+
     except KeyboardInterrupt:
         print("\n🛑 Consumer interrupted")
     except Exception as e:
         print(f"❌ Consumer error: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         if _consumer:
@@ -403,29 +415,29 @@ def consumer_loop():
 def start_llm_consumer(background: bool = False) -> bool:
     """
     Start the LLM consumer service
-    
+
     Args:
         background: If True, run in background thread
-        
+
     Returns:
         True if started successfully
     """
     global _consumer_thread, _running
-    
+
     if _running:
         print("⚠️  Consumer already running")
         return True  # Already running counts as success
-    
+
     if background:
         _consumer_thread = threading.Thread(target=consumer_loop, daemon=True)
         _consumer_thread.start()
-        
+
         # Wait for startup with timeout
         for _ in range(20):  # 2 second timeout
             if _running:
                 return True
             time.sleep(0.1)
-        
+
         return _running
     else:
         consumer_loop()
@@ -435,14 +447,14 @@ def start_llm_consumer(background: bool = False) -> bool:
 def stop_llm_consumer():
     """Stop the LLM consumer service"""
     global _running
-    
+
     if not _running:
         print("⚠️  Consumer not running")
         return
-    
+
     print("🛑 Stopping consumer...")
     _running = False
-    
+
     if _consumer_thread:
         _consumer_thread.join(timeout=5)
 
@@ -451,17 +463,18 @@ def stop_llm_consumer():
 # PUBLIC API
 # ═══════════════════════════════════════════════════════════════
 
+
 def publish_llm_request(
     query: str,
     task_type: str = "general",
     preferred_provider: str = "any",
     timeout_ms: int = 30000,
     callback_topic: Optional[str] = None,
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
 ) -> str:
     """
     Publish an LLM request to the event bus
-    
+
     Args:
         query: The question or prompt
         task_type: Type of task (simple, complex, coding, general)
@@ -469,12 +482,12 @@ def publish_llm_request(
         timeout_ms: Timeout in milliseconds
         callback_topic: Optional custom response topic
         context: Optional context data
-    
+
     Returns:
         request_id: UUID of the request
     """
     request_id = str(uuid.uuid4())
-    
+
     message = {
         "request_id": request_id,
         "query": query,
@@ -483,9 +496,9 @@ def publish_llm_request(
         "timeout_ms": timeout_ms,
         "callback_topic": callback_topic or TOPIC_RESPONSE,
         "context": context or {},
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
-    
+
     try:
         producer = get_producer()
         producer.send(TOPIC_REQUEST, value=message)
@@ -500,31 +513,33 @@ def publish_llm_request(
 def wait_for_response(request_id: str, timeout: int = 30) -> Optional[Dict[str, Any]]:
     """
     Wait synchronously for a response to a request
-    
+
     Args:
         request_id: The request ID to wait for
         timeout: Timeout in seconds
-        
+
     Returns:
         Response data or None if timeout
     """
     start_time = time.time()
-    
+
     while time.time() - start_time < timeout:
         if request_id in _pending_responses:
             response = _pending_responses[request_id]
             del _pending_responses[request_id]
             return response
         time.sleep(0.1)
-    
+
     print(f"⏱️  Timeout waiting for response to {request_id[:8]}")
     return None
 
 
-def subscribe_responses(callback: Callable[[Dict[str, Any]], None], request_id: Optional[str] = None):
+def subscribe_responses(
+    callback: Callable[[Dict[str, Any]], None], request_id: Optional[str] = None
+):
     """
     Subscribe to LLM responses (async)
-    
+
     Args:
         callback: Function to call when response arrives
         request_id: Optional specific request ID to listen for
@@ -537,7 +552,7 @@ def subscribe_responses(callback: Callable[[Dict[str, Any]], None], request_id: 
             consumer = get_consumer([TOPIC_RESPONSE])
             for message in consumer:
                 callback(message.value)
-        
+
         thread = threading.Thread(target=response_listener, daemon=True)
         thread.start()
 
@@ -546,51 +561,52 @@ def subscribe_responses(callback: Callable[[Dict[str, Any]], None], request_id: 
 # CLI
 # ═══════════════════════════════════════════════════════════════
 
+
 def main():
     """CLI entry point"""
     import sys
-    
+
     if len(sys.argv) < 2:
         print("Usage: python -m mcp-servers.openrouter.event_bus_llm [start|test]")
         sys.exit(1)
-    
+
     command = sys.argv[1]
-    
+
     if command == "start":
         print("🚀 Starting LLM Event Bus Consumer...")
         start_llm_consumer(background=False)
-    
+
     elif command == "test":
         print("🧪 Testing LLM Event Bus...")
-        
+
         # Start consumer in background
         print("📡 Starting consumer in background...")
         success = start_llm_consumer(background=True)
-        
+
         if not success:
             print("❌ Failed to start consumer!")
             sys.exit(1)
-        
+
         print("✅ Consumer is running")
         time.sleep(5)  # Give it more time to start
-        
+
         # Send test request
         print("\n📤 Sending test request...")
         try:
             request_id = publish_llm_request(
                 query="What is 2+2? Respond with just the number.",
                 task_type="simple",
-                preferred_provider="any"
+                preferred_provider="any",
             )
         except Exception as e:
             print(f"❌ Failed to publish: {e}")
             stop_llm_consumer()
             sys.exit(1)
-        
+
         # Wait for response
         print(f"⏳ Waiting for response to {request_id[:8]}...")
         response = wait_for_response(request_id, timeout=35)
-        
+
         if response:
             print(f"\n✅ Got response!")
             print(f"   Provider: {response.get('provider_used')}")
@@ -603,12 +619,12 @@ def main():
             print("   1. Consumer not processing messages")
             print("   2. Routing failed")
             print("   3. Kafka connectivity issue")
-        
+
         # Cleanup
         print("\n🛑 Stopping consumer...")
         stop_llm_consumer()
         print("✅ Test complete")
-    
+
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)

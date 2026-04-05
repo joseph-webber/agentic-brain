@@ -57,7 +57,12 @@ class TestChunk:
 
     def test_chunk_index_preserved(self) -> None:
         chunks = [
-            Chunk(content=f"chunk {i}", start_char=i * 10, end_char=i * 10 + 7, chunk_index=i)
+            Chunk(
+                content=f"chunk {i}",
+                start_char=i * 10,
+                end_char=i * 10 + 7,
+                chunk_index=i,
+            )
             for i in range(5)
         ]
         for i, c in enumerate(chunks):
@@ -251,7 +256,11 @@ class TestMarkdownChunker:
         chunker = MarkdownChunker(chunk_size=500, include_metadata=True)
         chunks = chunker.chunk(md)
         # At least one chunk should have header metadata
-        headers = [c.metadata.get("last_header") for c in chunks if c.metadata.get("last_header")]
+        headers = [
+            c.metadata.get("last_header")
+            for c in chunks
+            if c.metadata.get("last_header")
+        ]
         assert len(headers) >= 0  # Some chunks may have it
 
     def test_empty_returns_empty(self) -> None:

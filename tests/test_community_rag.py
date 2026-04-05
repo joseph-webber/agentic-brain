@@ -69,9 +69,15 @@ async def test_summaries_generated_and_stored():
 async def test_query_routing_correct():
     rag = CommunityGraphRAG(FakeDriver())
 
-    assert await rag.route_query("Summarize the overall themes across all communities") == "community"
+    assert (
+        await rag.route_query("Summarize the overall themes across all communities")
+        == "community"
+    )
     assert await rag.route_query("Who is Alice?") == "entity"
-    assert await rag.route_query("How does Alice connect to Neo4j architecture") == "hybrid"
+    assert (
+        await rag.route_query("How does Alice connect to Neo4j architecture")
+        == "hybrid"
+    )
 
 
 @pytest.mark.asyncio

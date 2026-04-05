@@ -189,13 +189,19 @@ def timeout(
     """Raise TimeoutError if a function takes too long."""
 
     def decorator(callable_obj: Callable[..., T]) -> Callable[..., T]:
-        timeout_message = message or f"{callable_obj.__name__} timed out after {seconds}s"
+        timeout_message = (
+            message or f"{callable_obj.__name__} timed out after {seconds}s"
+        )
 
         async def async_wrapper(*args: Any, **kwargs: Any) -> T:
             return await asyncio.wait_for(callable_obj(*args, **kwargs), timeout=seconds)  # type: ignore[misc]
 
         def sync_wrapper(*args: Any, **kwargs: Any) -> T:
-            if hasattr(signal, "SIGALRM") and threading.current_thread() is threading.main_thread():
+            if (
+                hasattr(signal, "SIGALRM")
+                and threading.current_thread() is threading.main_thread()
+            ):
+
                 def _raise_timeout(*_: Any) -> None:
                     raise TimeoutError(timeout_message)
 
@@ -217,6 +223,7 @@ def timeout(
 
         wrapper: Callable[..., T]
         if inspect.iscoroutinefunction(callable_obj):
+
             async def wrapped_async(*args: Any, **kwargs: Any) -> T:
                 try:
                     return await async_wrapper(*args, **kwargs)
@@ -225,6 +232,7 @@ def timeout(
 
             wrapper = functools.wraps(callable_obj)(wrapped_async)  # type: ignore[assignment]
         else:
+
             def wrapped_sync(*args: Any, **kwargs: Any) -> T:
                 try:
                     return sync_wrapper(*args, **kwargs)

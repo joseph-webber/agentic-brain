@@ -75,7 +75,10 @@ def test_graph_query_basic():
 
 def test_evaluate_basic():
     client = make_client()
-    r = client.post("/evaluate", json={"reference": "the cat sat", "candidate": "the cat sat on the mat"})
+    r = client.post(
+        "/evaluate",
+        json={"reference": "the cat sat", "candidate": "the cat sat on the mat"},
+    )
     assert r.status_code == 200
     data = r.json()
     assert "score" in data
@@ -106,7 +109,9 @@ def test_auth_required_when_enabled(monkeypatch):
     assert r.status_code == 401
 
     # With header
-    r2 = client.put("/config", json={"values": {"a": 1}}, headers={"X-API-Key": "testkey123"})
+    r2 = client.put(
+        "/config", json={"values": {"a": 1}}, headers={"X-API-Key": "testkey123"}
+    )
     assert r2.status_code == 200
     assert r2.json()["values"]["a"] == 1
 
@@ -215,7 +220,9 @@ def test_api_key_header_and_query_both_work(monkeypatch):
     monkeypatch.setenv("API_KEYS", "hdrkey,qpkey")
     client = make_client()
     # header
-    r1 = client.put("/config", json={"values": {"h": 1}}, headers={"X-API-Key": "hdrkey"})
+    r1 = client.put(
+        "/config", json={"values": {"h": 1}}, headers={"X-API-Key": "hdrkey"}
+    )
     assert r1.status_code == 200
     # query
     r2 = client.put("/config?api_key=qpkey", json={"values": {"q": 2}})

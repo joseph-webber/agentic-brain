@@ -65,7 +65,9 @@ class GPTBackupCoderService:
         self.claim_ttl = claim_ttl
         self.requester = requester or self.default_requester
 
-    def default_requester(self, prompt: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    def default_requester(
+        self, prompt: str, payload: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Fallback requester for standby coordination mode."""
         return {
             "summary": prompt,
@@ -139,7 +141,9 @@ class GPTBackupCoderService:
                     if part.strip()
                 )
             elif isinstance(value, (list, tuple, set)):
-                tags.update(str(item).strip().lower() for item in value if str(item).strip())
+                tags.update(
+                    str(item).strip().lower() for item in value if str(item).strip()
+                )
         return tags
 
     def should_handle(self, payload: dict[str, Any]) -> bool:
@@ -155,7 +159,14 @@ class GPTBackupCoderService:
 
         has_prompt = any(
             self._normalize_text(payload.get(key))
-            for key in ("prompt", "question", "task", "content", "request", "description")
+            for key in (
+                "prompt",
+                "question",
+                "task",
+                "content",
+                "request",
+                "description",
+            )
         )
         if not has_prompt:
             return False
@@ -304,7 +315,9 @@ class GPTBackupCoderService:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Redis-backed GPT backup coder")
-    parser.add_argument("--once", action="store_true", help="Process queued tasks once and exit")
+    parser.add_argument(
+        "--once", action="store_true", help="Process queued tasks once and exit"
+    )
     parser.add_argument(
         "--poll-interval",
         type=float,

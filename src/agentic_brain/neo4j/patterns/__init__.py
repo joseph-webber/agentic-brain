@@ -16,7 +16,7 @@ from .topic_graph import (
 
 __all__ = [
     "TopicGraph",
-    "ZonedGraph", 
+    "ZonedGraph",
     "CORE_TOPICS",
     "setup_graph_constraints",
 ]

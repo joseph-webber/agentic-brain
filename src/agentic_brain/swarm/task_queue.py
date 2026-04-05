@@ -207,7 +207,9 @@ class TaskQueue:
         self._r.hset(_key_inflight(self.swarm_id), tid, _dumps(task))
         self._r.zadd(_key_inflight_ts(self.swarm_id), {tid: time.time()})
 
-        logger.debug("Task %s claimed by agent=%s in swarm %s", tid, agent_id, self.swarm_id)
+        logger.debug(
+            "Task %s claimed by agent=%s in swarm %s", tid, agent_id, self.swarm_id
+        )
         return task
 
     def complete(
@@ -265,11 +267,13 @@ class TaskQueue:
             task["enqueued_at"] = time.time()
             self._r.lpush(_key_tasks(self.swarm_id), _dumps(task))
             logger.warning(
-                "Task %s failed (retry %d/%d): %s", task_id, retries, self.max_retries, error
+                "Task %s failed (retry %d/%d): %s",
+                task_id,
+                retries,
+                self.max_retries,
+                error,
             )
-            return TaskResult(
-                task_id=task_id, state=TaskState.PENDING, error=error
-            )
+            return TaskResult(task_id=task_id, state=TaskState.PENDING, error=error)
 
         # Dead-letter
         dl: Dict[str, Any] = {
@@ -285,7 +289,10 @@ class TaskQueue:
             "Task %s permanently failed after %d retries: %s", task_id, retries, error
         )
         return TaskResult(
-            task_id=task_id, state=TaskState.FAILED, error=error, agent_id=dl.get("agent_id")
+            task_id=task_id,
+            state=TaskState.FAILED,
+            error=error,
+            agent_id=dl.get("agent_id"),
         )
 
     # ------------------------------------------------------------------
@@ -330,7 +337,9 @@ class TaskQueue:
 
     def failed_tasks(self, *, limit: int = 0) -> List[Dict[str, Any]]:
         """Return dead-lettered tasks (all or up to *limit*)."""
-        raw_list = self._r.lrange(_key_failed(self.swarm_id), 0, limit - 1 if limit else -1)
+        raw_list = self._r.lrange(
+            _key_failed(self.swarm_id), 0, limit - 1 if limit else -1
+        )
         return [_loads(r) for r in raw_list]
 
     # ------------------------------------------------------------------

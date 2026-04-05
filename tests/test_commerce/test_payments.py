@@ -65,7 +65,9 @@ def test_charge_calls_gateway_and_records_transaction(payment_processor, fake_ga
 
 
 def test_charge_supports_authorize_only_capture_false(payment_method, fake_gateway):
-    processor = PaymentProcessor(gateways={"fake": fake_gateway}, default_gateway="fake")
+    processor = PaymentProcessor(
+        gateways={"fake": fake_gateway}, default_gateway="fake"
+    )
     request = PaymentRequest(
         amount=Decimal("25"),
         currency="USD",
@@ -77,14 +79,18 @@ def test_charge_supports_authorize_only_capture_false(payment_method, fake_gatew
     assert result.metadata.get("captured") is False
 
 
-def test_refund_calls_gateway_and_records(payment_processor, refund_request, fake_gateway):
+def test_refund_calls_gateway_and_records(
+    payment_processor, refund_request, fake_gateway
+):
     result = payment_processor.refund_payment(refund_request)
     assert result.refund_id == "rf_tx_order_123"
     assert fake_gateway.calls[-1].operation == "refund_payment"
     assert payment_processor.transaction_log[-1].operation == "refund"
 
 
-def test_create_checkout_calls_gateway(payment_processor, payment_request, fake_gateway):
+def test_create_checkout_calls_gateway(
+    payment_processor, payment_request, fake_gateway
+):
     result = payment_processor.create_checkout(
         payment_request,
         return_url="https://return",

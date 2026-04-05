@@ -41,18 +41,21 @@ from agentic_brain.loaders import (
 # Optional dependencies
 try:
     from docx import Document as DocxDocument
+
     HAS_DOCX = True
 except ImportError:
     HAS_DOCX = False
 
 try:
     import pypdf
+
     HAS_PYPDF = True
 except ImportError:
     HAS_PYPDF = False
 
 try:
     from bs4 import BeautifulSoup
+
     HAS_BEAUTIFULSOUP = True
 except ImportError:
     HAS_BEAUTIFULSOUP = False
@@ -71,9 +74,7 @@ class TestDocument:
     def test_document_with_metadata(self):
         """Test document with metadata."""
         metadata = {"key": "value", "count": 42}
-        doc = Document(
-            content="Content", source="test.txt", metadata=metadata
-        )
+        doc = Document(content="Content", source="test.txt", metadata=metadata)
         assert doc.metadata == metadata
         assert doc.metadata["key"] == "value"
 

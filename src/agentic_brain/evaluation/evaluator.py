@@ -1,4 +1,5 @@
 """RAGEvaluator: orchestrates evaluation using datasets and metrics."""
+
 from typing import List, Optional
 from .metrics import (
     faithfulness_score,
@@ -32,14 +33,24 @@ class RAGEvaluator:
         report = EvaluationReport()
         for idx, ex in enumerate(dataset):
             retrieved = retrievals[idx] if retrievals and idx < len(retrievals) else []
-            scores = retrieved_scores[idx] if retrieved_scores and idx < len(retrieved_scores) else []
-            gen = generated_answers[idx] if generated_answers and idx < len(generated_answers) else ""
+            scores = (
+                retrieved_scores[idx]
+                if retrieved_scores and idx < len(retrieved_scores)
+                else []
+            )
+            gen = (
+                generated_answers[idx]
+                if generated_answers and idx < len(generated_answers)
+                else ""
+            )
 
             ans_sim = answer_similarity(gen, ex.gold_answer)
             prec = context_precision(retrieved, ex.gold_context_ids)
             rec = context_recall(retrieved, ex.gold_context_ids)
             rel = relevancy_score(scores)
-            faith = faithfulness_score(gen, retrieved, ex.gold_answer if ex.gold_answer else None)
+            faith = faithfulness_score(
+                gen, retrieved, ex.gold_answer if ex.gold_answer else None
+            )
 
             item_result = {
                 "id": ex.id,

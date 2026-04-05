@@ -38,7 +38,6 @@ WOOCOMMERCE_GUEST_ENDPOINTS = {
     "GET /wp-json/wc/store/products/categories": "List product categories (guest)",
     "GET /wp-json/wc/store/products/tags": "List product tags (guest)",
     "GET /wp-json/wc/store/products/attributes": "List product attributes (guest)",
-    
     # Cart operations - session-based, no authentication required
     "GET /wp-json/wc/store/cart": "View cart (guest session)",
     "POST /wp-json/wc/store/cart/add-item": "Add item to cart (guest)",
@@ -46,11 +45,9 @@ WOOCOMMERCE_GUEST_ENDPOINTS = {
     "POST /wp-json/wc/store/cart/update-item": "Update cart item quantity (guest)",
     "POST /wp-json/wc/store/cart/apply-coupon": "Apply coupon code (guest)",
     "POST /wp-json/wc/store/cart/remove-coupon": "Remove coupon code (guest)",
-    
     # Checkout - guest checkout without account
     "GET /wp-json/wc/store/checkout": "Get checkout form data (guest)",
     "POST /wp-json/wc/store/checkout": "Process guest checkout (create order)",
-    
     # Shipping and payment
     "GET /wp-json/wc/store/cart/shipping-rates": "Get shipping rates (guest)",
     "POST /wp-json/wc/store/cart/select-shipping-rate": "Select shipping method (guest)",
@@ -61,19 +58,19 @@ WOOCOMMERCE_GUEST_ENDPOINTS = {
 @dataclass
 class GuestCartItem:
     """An item in a guest cart."""
-    
+
     product_id: int
     quantity: int
     variation_id: Optional[int] = None
     variation: Optional[Dict[str, Any]] = None
-    
+
     def to_api_dict(self) -> Dict[str, Any]:
         """Convert to WooCommerce Store API format."""
         data = {
             "id": self.product_id,
             "quantity": self.quantity,
         }
-        
+
         if self.variation_id:
             data["variation"] = [
                 {
@@ -82,14 +79,14 @@ class GuestCartItem:
                 }
                 for key, value in (self.variation or {}).items()
             ]
-        
+
         return data
 
 
 @dataclass
 class GuestCheckoutInfo:
     """Billing and shipping information for guest checkout."""
-    
+
     # Billing
     billing_first_name: str
     billing_last_name: str
@@ -101,7 +98,7 @@ class GuestCheckoutInfo:
     billing_postcode: str
     billing_country: str
     billing_address_2: Optional[str] = None
-    
+
     # Shipping (optional - can use billing)
     shipping_first_name: Optional[str] = None
     shipping_last_name: Optional[str] = None
@@ -111,7 +108,7 @@ class GuestCheckoutInfo:
     shipping_state: Optional[str] = None
     shipping_postcode: Optional[str] = None
     shipping_country: Optional[str] = None
-    
+
     def to_api_dict(self) -> Dict[str, Any]:
         """Convert to WooCommerce Store API format."""
         data = {
@@ -127,10 +124,10 @@ class GuestCheckoutInfo:
                 "country": self.billing_country,
             }
         }
-        
+
         if self.billing_address_2:
             data["billing_address"]["address_2"] = self.billing_address_2
-        
+
         # Add shipping if different from billing
         if self.shipping_first_name:
             data["shipping_address"] = {
@@ -142,27 +139,27 @@ class GuestCheckoutInfo:
                 "postcode": self.shipping_postcode,
                 "country": self.shipping_country,
             }
-            
+
             if self.shipping_address_2:
                 data["shipping_address"]["address_2"] = self.shipping_address_2
-        
+
         return data
 
 
 class WooCommerceGuestAPI:
     """
     WooCommerce Store API client for guest (unauthenticated) operations.
-    
+
     This API uses session-based cart management, allowing guests to shop
     without creating an account. The cart is stored in browser session cookies.
-    
+
     Key Security Notes:
     - NO authentication required for these endpoints
     - Cart is session-based (stored in cookies)
     - Guest checkout creates order without account
     - Rate limiting still applies
     """
-    
+
     def __init__(
         self,
         store_url: str,
@@ -170,7 +167,7 @@ class WooCommerceGuestAPI:
     ):
         """
         Initialize WooCommerce Guest API client.
-        
+
         Args:
             store_url: WooCommerce store URL (e.g., "https://example.com")
             api_controller: API access controller (for rate limiting)
@@ -178,9 +175,9 @@ class WooCommerceGuestAPI:
         self.store_url = store_url.rstrip("/")
         self.api_controller = api_controller
         self.cart_token = None  # Session-based cart token (from cookies)
-    
+
     # --- Product Browsing (Public) ---
-    
+
     async def browse_products(
         self,
         per_page: int = 10,
@@ -192,7 +189,7 @@ class WooCommerceGuestAPI:
     ) -> List[Dict[str, Any]]:
         """
         Browse products - available to guests.
-        
+
         Args:
             per_page: Products per page
             page: Page number
@@ -200,7 +197,7 @@ class WooCommerceGuestAPI:
             category: Filter by category ID
             min_price: Minimum price filter
             max_price: Maximum price filter
-        
+
         Returns:
             List of products
         """
@@ -208,7 +205,7 @@ class WooCommerceGuestAPI:
             "per_page": per_page,
             "page": page,
         }
-        
+
         if search:
             params["search"] = search
         if category:
@@ -217,7 +214,7 @@ class WooCommerceGuestAPI:
             params["min_price"] = min_price
         if max_price is not None:
             params["max_price"] = max_price
-        
+
         response = await self.api_controller.call_api(
             "woocommerce_store",
             "GET",
@@ -226,14 +223,14 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def get_product(self, product_id: int) -> Dict[str, Any]:
         """
         Get product details - available to guests.
-        
+
         Args:
             product_id: Product ID
-        
+
         Returns:
             Product data
         """
@@ -244,7 +241,7 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def list_categories(self) -> List[Dict[str, Any]]:
         """List product categories - available to guests."""
         response = await self.api_controller.call_api(
@@ -254,15 +251,15 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     # --- Cart Operations (Session-based) ---
-    
+
     async def get_cart(self) -> Dict[str, Any]:
         """
         Get current cart contents - available to guests.
-        
+
         Cart is stored in session cookies, no authentication required.
-        
+
         Returns:
             Cart data including items, totals, shipping
         """
@@ -273,7 +270,7 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def add_to_cart(
         self,
         product_id: int,
@@ -283,13 +280,13 @@ class WooCommerceGuestAPI:
     ) -> Dict[str, Any]:
         """
         Add product to cart - available to guests.
-        
+
         Args:
             product_id: Product ID to add
             quantity: Quantity to add
             variation_id: Variation ID (for variable products)
             variation: Variation attributes (e.g., {"color": "red", "size": "M"})
-        
+
         Returns:
             Updated cart data
         """
@@ -299,7 +296,7 @@ class WooCommerceGuestAPI:
             variation_id=variation_id,
             variation=variation,
         )
-        
+
         response = await self.api_controller.call_api(
             "woocommerce_store",
             "POST",
@@ -308,7 +305,7 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def update_cart_item(
         self,
         cart_item_key: str,
@@ -316,11 +313,11 @@ class WooCommerceGuestAPI:
     ) -> Dict[str, Any]:
         """
         Update cart item quantity - available to guests.
-        
+
         Args:
             cart_item_key: Cart item key (from cart response)
             quantity: New quantity
-        
+
         Returns:
             Updated cart data
         """
@@ -335,14 +332,14 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def remove_from_cart(self, cart_item_key: str) -> Dict[str, Any]:
         """
         Remove item from cart - available to guests.
-        
+
         Args:
             cart_item_key: Cart item key (from cart response)
-        
+
         Returns:
             Updated cart data
         """
@@ -354,14 +351,14 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def apply_coupon(self, coupon_code: str) -> Dict[str, Any]:
         """
         Apply coupon code to cart - available to guests.
-        
+
         Args:
             coupon_code: Coupon code to apply
-        
+
         Returns:
             Updated cart data with discount applied
         """
@@ -373,14 +370,14 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def remove_coupon(self, coupon_code: str) -> Dict[str, Any]:
         """
         Remove coupon code from cart - available to guests.
-        
+
         Args:
             coupon_code: Coupon code to remove
-        
+
         Returns:
             Updated cart data
         """
@@ -392,13 +389,13 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     # --- Shipping and Customer ---
-    
+
     async def get_shipping_rates(self) -> Dict[str, Any]:
         """
         Get available shipping rates - available to guests.
-        
+
         Returns:
             Shipping rates based on cart and destination
         """
@@ -409,7 +406,7 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def select_shipping_rate(
         self,
         package_id: str,
@@ -417,11 +414,11 @@ class WooCommerceGuestAPI:
     ) -> Dict[str, Any]:
         """
         Select shipping method - available to guests.
-        
+
         Args:
             package_id: Shipping package ID
             rate_id: Shipping rate ID to select
-        
+
         Returns:
             Updated cart data
         """
@@ -436,7 +433,7 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def update_customer(
         self,
         billing_address: Optional[Dict[str, str]] = None,
@@ -444,21 +441,21 @@ class WooCommerceGuestAPI:
     ) -> Dict[str, Any]:
         """
         Update customer details for shipping calculation - available to guests.
-        
+
         Args:
             billing_address: Billing address data
             shipping_address: Shipping address data
-        
+
         Returns:
             Updated cart data with recalculated shipping
         """
         data = {}
-        
+
         if billing_address:
             data["billing_address"] = billing_address
         if shipping_address:
             data["shipping_address"] = shipping_address
-        
+
         response = await self.api_controller.call_api(
             "woocommerce_store",
             "POST",
@@ -467,13 +464,13 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     # --- Checkout (Guest Checkout) ---
-    
+
     async def get_checkout_form(self) -> Dict[str, Any]:
         """
         Get checkout form data - available to guests.
-        
+
         Returns:
             Checkout form fields and requirements
         """
@@ -484,7 +481,7 @@ class WooCommerceGuestAPI:
         )
         response.raise_for_status()
         return response.json()
-    
+
     async def checkout_as_guest(
         self,
         checkout_info: GuestCheckoutInfo,
@@ -494,15 +491,15 @@ class WooCommerceGuestAPI:
     ) -> Dict[str, Any]:
         """
         Complete guest checkout - available to guests.
-        
+
         Creates an order without requiring account login.
-        
+
         Args:
             checkout_info: Billing and shipping information
             payment_method: Payment method ID
             create_account: Whether to create account during checkout
             account_password: Password if creating account
-        
+
         Returns:
             Order data
         """
@@ -510,12 +507,12 @@ class WooCommerceGuestAPI:
             **checkout_info.to_api_dict(),
             "payment_method": payment_method,
         }
-        
+
         if create_account:
             data["create_account"] = True
             if account_password:
                 data["account_password"] = account_password
-        
+
         response = await self.api_controller.call_api(
             "woocommerce_store",
             "POST",
@@ -533,11 +530,11 @@ def create_guest_api_client(
 ) -> WooCommerceGuestAPI:
     """
     Create a WooCommerce Guest API client.
-    
+
     Args:
         store_url: WooCommerce store URL
         api_controller: API access controller (must allow guest APIs)
-    
+
     Returns:
         Configured WooCommerceGuestAPI client
     """

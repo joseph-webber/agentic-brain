@@ -1,4 +1,3 @@
-
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2024-2026 Agentic Brain Contributors
 
@@ -15,7 +14,14 @@ from typing import Any, Mapping
 
 import tomllib
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    field_validator,
+    model_validator,
+)
 
 from .profiles import (
     ConfigProfile,
@@ -97,7 +103,14 @@ class Neo4jSettings(BaseModel):
         if not value:
             raise ValueError("Neo4j URI cannot be blank")
         if not value.startswith(
-            ("bolt://", "neo4j://", "bolt+s://", "neo4j+s://", "bolt+ssc://", "neo4j+ssc://")
+            (
+                "bolt://",
+                "neo4j://",
+                "bolt+s://",
+                "neo4j+s://",
+                "bolt+ssc://",
+                "neo4j+ssc://",
+            )
         ):
             raise ValueError("Neo4j URI must use bolt:// or neo4j://")
         return value
@@ -169,7 +182,9 @@ class SecuritySettings(BaseModel):
     api_key_header: str = Field(default="X-API-Key", min_length=1)
     require_auth: bool = True
     cors_enabled: bool = True
-    allowed_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
+    allowed_origins: list[str] = Field(
+        default_factory=lambda: ["http://localhost:3000"]
+    )
     rate_limit_requests: int = Field(default=100, ge=1, le=100000)
     rate_limit_requests_per_minute: int | None = Field(default=None, ge=1, le=100000)
     secrets_source: str = Field(default="environment", min_length=1)
@@ -329,7 +344,9 @@ class Settings(BaseModel):
         data = deep_merge(data, _load_config_file(config_file, base_path=base_path))
         data = deep_merge(
             data,
-            _load_env_file(env_file, profile=resolved_profile.name, base_path=base_path),
+            _load_env_file(
+                env_file, profile=resolved_profile.name, base_path=base_path
+            ),
         )
         data = deep_merge(data, _load_environment_variables())
         data = _normalize_legacy_aliases(data)
@@ -436,7 +453,11 @@ def deep_merge(base: Mapping[str, Any], override: Mapping[str, Any]) -> dict[str
 
     merged: dict[str, Any] = dict(base)
     for key, value in override.items():
-        if key in merged and isinstance(merged[key], dict) and isinstance(value, Mapping):
+        if (
+            key in merged
+            and isinstance(merged[key], dict)
+            and isinstance(value, Mapping)
+        ):
             merged[key] = deep_merge(merged[key], value)
         else:
             merged[key] = value
@@ -667,7 +688,9 @@ def _normalize_legacy_aliases(data: Mapping[str, Any]) -> dict[str, Any]:
         normalized["server"] = normalized.pop("api")
     elif "api" in normalized:
         api_section = normalized.pop("api")
-        if isinstance(api_section, Mapping) and isinstance(normalized.get("server"), Mapping):
+        if isinstance(api_section, Mapping) and isinstance(
+            normalized.get("server"), Mapping
+        ):
             normalized["server"] = deep_merge(normalized["server"], api_section)
         elif isinstance(api_section, Mapping):
             normalized["server"] = api_section

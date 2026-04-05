@@ -247,7 +247,9 @@ class TestVoiceMemoryInMemory:
         # Query with embedding similar to utt1
         query_embedding = [1.0, 0.0, 0.0] * (EMBEDDING_DIM // 3)
 
-        results = memory._recall_memory(query_embedding, limit=2, speaker_filter=None, min_score=0.5)
+        results = memory._recall_memory(
+            query_embedding, limit=2, speaker_filter=None, min_score=0.5
+        )
 
         assert len(results) == 2
         # utt1 should be most similar (exact match)

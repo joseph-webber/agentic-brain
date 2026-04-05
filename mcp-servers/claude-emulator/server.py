@@ -46,7 +46,9 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 from collections import deque
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from mcp.server.fastmcp import FastMCP
 
@@ -58,6 +60,7 @@ mcp = FastMCP("claude-emulator")
 # TASK MANAGEMENT
 # ============================================================================
 
+
 class TaskStatus(Enum):
     PENDING = "pending"
     RUNNING = "running"
@@ -67,10 +70,10 @@ class TaskStatus(Enum):
 
 
 class TaskType(Enum):
-    ONE_SHOT = "one_shot"         # Single query
-    CONTINUOUS = "continuous"     # Runs until stopped
-    SCHEDULED = "scheduled"       # Runs periodically
-    REACTIVE = "reactive"         # Triggered by events
+    ONE_SHOT = "one_shot"  # Single query
+    CONTINUOUS = "continuous"  # Runs until stopped
+    SCHEDULED = "scheduled"  # Runs periodically
+    REACTIVE = "reactive"  # Triggered by events
 
 
 @dataclass
@@ -97,13 +100,13 @@ _running = True
 
 # Load tracking
 _load_stats = {
-    'active_tasks': 0,
-    'completed_today': 0,
-    'failed_today': 0,
-    'avg_response_time': 0.0,
-    'response_times': deque(maxlen=100),
-    'overloaded': False,
-    'max_concurrent': 5,
+    "active_tasks": 0,
+    "completed_today": 0,
+    "failed_today": 0,
+    "avg_response_time": 0.0,
+    "response_times": deque(maxlen=100),
+    "overloaded": False,
+    "max_concurrent": 5,
 }
 
 
@@ -111,15 +114,18 @@ _load_stats = {
 # EMULATOR INTERFACE
 # ============================================================================
 
-def query_emulator(prompt: str, system: str = None, max_tokens: int = 500) -> tuple[Optional[str], float]:
+
+def query_emulator(
+    prompt: str, system: str = None, max_tokens: int = 500
+) -> tuple[Optional[str], float]:
     """Query the local emulator, returns (response, response_time)."""
     start_time = time.time()
-    
+
     try:
         full_prompt = prompt
         if system:
             full_prompt = f"System: {system}\n\n{prompt}"
-        
+
         payload = {
             "model": "claude-emulator:latest",
             "prompt": full_prompt,
@@ -127,43 +133,55 @@ def query_emulator(prompt: str, system: str = None, max_tokens: int = 500) -> tu
             "options": {
                 "num_predict": max_tokens,
                 "temperature": 0.7,
-            }
+            },
         }
-        
+
         result = subprocess.run(
-            ['curl', '-s', '-X', 'POST',
-             'http://localhost:11434/api/generate',
-             '-d', json.dumps(payload)],
-            capture_output=True, text=True, timeout=120
+            [
+                "curl",
+                "-s",
+                "-X",
+                "POST",
+                "http://localhost:11434/api/generate",
+                "-d",
+                json.dumps(payload),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
-        
+
         response_time = time.time() - start_time
-        
+
         if result.returncode == 0:
             data = json.loads(result.stdout)
-            return data.get('response'), response_time
-        
+            return data.get("response"), response_time
+
         return None, response_time
-        
+
     except Exception as e:
         return None, time.time() - start_time
 
 
 def update_load_stats(response_time: float, success: bool):
     """Update load statistics."""
-    _load_stats['response_times'].append(response_time)
-    _load_stats['avg_response_time'] = sum(_load_stats['response_times']) / len(_load_stats['response_times'])
-    
+    _load_stats["response_times"].append(response_time)
+    _load_stats["avg_response_time"] = sum(_load_stats["response_times"]) / len(
+        _load_stats["response_times"]
+    )
+
     if success:
-        _load_stats['completed_today'] += 1
+        _load_stats["completed_today"] += 1
     else:
-        _load_stats['failed_today'] += 1
-    
+        _load_stats["failed_today"] += 1
+
     # Check if overloaded
-    _load_stats['active_tasks'] = len([t for t in _tasks.values() if t.status == TaskStatus.RUNNING])
-    _load_stats['overloaded'] = (
-        _load_stats['active_tasks'] >= _load_stats['max_concurrent'] or
-        _load_stats['avg_response_time'] > 30.0  # > 30s avg = overloaded
+    _load_stats["active_tasks"] = len(
+        [t for t in _tasks.values() if t.status == TaskStatus.RUNNING]
+    )
+    _load_stats["overloaded"] = (
+        _load_stats["active_tasks"] >= _load_stats["max_concurrent"]
+        or _load_stats["avg_response_time"] > 30.0  # > 30s avg = overloaded
     )
 
 
@@ -171,36 +189,37 @@ def update_load_stats(response_time: float, success: bool):
 # MCP TOOLS
 # ============================================================================
 
+
 @mcp.tool()
 def emulator_delegate(
     task_description: str,
     task_type: str = "one_shot",
     interval_seconds: int = 60,
     max_iterations: int = 0,
-    context: dict = None
+    context: dict = None,
 ) -> dict:
     """
     Delegate a task to the autonomous emulator.
-    
+
     Use this when Claude can't fulfill a task that requires:
     - Continuous monitoring
     - Real-time processing
     - Persistent loops
     - Background work
-    
+
     Args:
         task_description: What the emulator should do (natural language)
-        task_type: "one_shot" (single query), "continuous" (runs until stopped), 
+        task_type: "one_shot" (single query), "continuous" (runs until stopped),
                   "scheduled" (periodic), "reactive" (event-triggered)
         interval_seconds: For scheduled tasks, how often to run
         max_iterations: Max runs (0 = unlimited for continuous)
         context: Additional context data
-        
+
     Returns:
         Task ID and status for tracking
     """
     task_id = f"task_{uuid.uuid4().hex[:8]}"
-    
+
     task = EmulatorTask(
         id=task_id,
         task_type=TaskType(task_type),
@@ -209,11 +228,11 @@ def emulator_delegate(
         created_at=datetime.now(),
         interval_seconds=interval_seconds,
         max_iterations=max_iterations,
-        context=context or {}
+        context=context or {},
     )
-    
+
     _tasks[task_id] = task
-    
+
     # Start task execution
     if task_type == "one_shot":
         thread = threading.Thread(target=_run_one_shot, args=(task_id,), daemon=True)
@@ -221,15 +240,15 @@ def emulator_delegate(
         thread = threading.Thread(target=_run_continuous, args=(task_id,), daemon=True)
     else:
         thread = threading.Thread(target=_run_one_shot, args=(task_id,), daemon=True)
-    
+
     _task_threads[task_id] = thread
     thread.start()
-    
+
     return {
         "task_id": task_id,
         "status": "delegated",
         "type": task_type,
-        "message": f"Task delegated to emulator. Track with: emulator_status('{task_id}')"
+        "message": f"Task delegated to emulator. Track with: emulator_status('{task_id}')",
     }
 
 
@@ -237,10 +256,10 @@ def emulator_delegate(
 def emulator_status(task_id: str = None) -> dict:
     """
     Check status of emulator tasks.
-    
+
     Args:
         task_id: Specific task to check, or None for all tasks
-        
+
     Returns:
         Task status and results if completed
     """
@@ -248,7 +267,7 @@ def emulator_status(task_id: str = None) -> dict:
         task = _tasks.get(task_id)
         if not task:
             return {"error": f"Task {task_id} not found"}
-        
+
         return {
             "task_id": task.id,
             "status": task.status.value,
@@ -260,17 +279,19 @@ def emulator_status(task_id: str = None) -> dict:
             "result": task.result[:500] if task.result else None,
             "error": task.error,
         }
-    
+
     # All tasks summary
     return {
         "total_tasks": len(_tasks),
         "running": len([t for t in _tasks.values() if t.status == TaskStatus.RUNNING]),
-        "completed": len([t for t in _tasks.values() if t.status == TaskStatus.COMPLETED]),
+        "completed": len(
+            [t for t in _tasks.values() if t.status == TaskStatus.COMPLETED]
+        ),
         "failed": len([t for t in _tasks.values() if t.status == TaskStatus.FAILED]),
         "tasks": [
             {"id": t.id, "status": t.status.value, "type": t.task_type.value}
             for t in list(_tasks.values())[-10:]  # Last 10 tasks
-        ]
+        ],
     }
 
 
@@ -278,30 +299,30 @@ def emulator_status(task_id: str = None) -> dict:
 def emulator_query(prompt: str, system: str = None, max_tokens: int = 500) -> dict:
     """
     Quick one-shot query to the emulator.
-    
+
     Use for simple questions that don't need task tracking.
-    
+
     Args:
         prompt: Question or task
         system: Optional system prompt
         max_tokens: Max response length
-        
+
     Returns:
         Emulator response
     """
     response, response_time = query_emulator(prompt, system, max_tokens)
     update_load_stats(response_time, response is not None)
-    
+
     if response:
         return {
             "response": response,
             "response_time": f"{response_time:.2f}s",
-            "model": "claude-emulator:latest"
+            "model": "claude-emulator:latest",
         }
     else:
         return {
             "error": "Emulator failed to respond",
-            "response_time": f"{response_time:.2f}s"
+            "response_time": f"{response_time:.2f}s",
         }
 
 
@@ -310,23 +331,23 @@ def emulator_continuous(
     description: str,
     monitor_type: str,
     interval_seconds: int = 30,
-    alert_condition: str = None
+    alert_condition: str = None,
 ) -> dict:
     """
     Start a continuous monitoring job.
-    
+
     The emulator will run this task continuously in the background,
     optionally alerting when conditions are met.
-    
+
     Args:
         description: What to monitor/do
         monitor_type: "audio", "events", "files", "api", "custom"
         interval_seconds: How often to check
         alert_condition: Condition that triggers an alert (natural language)
-        
+
     Returns:
         Job ID for tracking
-        
+
     Example:
         emulator_continuous(
             "Monitor Neo4j for anomalies in email patterns",
@@ -336,7 +357,7 @@ def emulator_continuous(
         )
     """
     task_id = f"continuous_{uuid.uuid4().hex[:8]}"
-    
+
     system_prompt = f"""You are a continuous monitoring agent.
 
 TASK: {description}
@@ -361,24 +382,24 @@ Keep responses concise. Focus on changes and anomalies."""
         created_at=datetime.now(),
         interval_seconds=interval_seconds,
         context={
-            'monitor_type': monitor_type,
-            'alert_condition': alert_condition,
-            'description': description,
-        }
+            "monitor_type": monitor_type,
+            "alert_condition": alert_condition,
+            "description": description,
+        },
     )
-    
+
     _tasks[task_id] = task
-    
+
     thread = threading.Thread(target=_run_continuous, args=(task_id,), daemon=True)
     _task_threads[task_id] = thread
     thread.start()
-    
+
     return {
         "job_id": task_id,
         "status": "started",
         "monitor_type": monitor_type,
         "interval": f"{interval_seconds}s",
-        "message": f"Continuous job started. Stop with: emulator_stop('{task_id}')"
+        "message": f"Continuous job started. Stop with: emulator_stop('{task_id}')",
     }
 
 
@@ -386,28 +407,28 @@ Keep responses concise. Focus on changes and anomalies."""
 def emulator_stop(task_id: str) -> dict:
     """
     Stop a running emulator task.
-    
+
     Args:
         task_id: Task to stop
-        
+
     Returns:
         Confirmation and final results
     """
     task = _tasks.get(task_id)
     if not task:
         return {"error": f"Task {task_id} not found"}
-    
+
     if task.status != TaskStatus.RUNNING:
         return {"error": f"Task {task_id} is not running (status: {task.status.value})"}
-    
+
     task.status = TaskStatus.CANCELLED
     task.completed_at = datetime.now()
-    
+
     return {
         "task_id": task_id,
         "status": "stopped",
         "iterations_completed": task.iterations,
-        "last_result": task.result[:500] if task.result else None
+        "last_result": task.result[:500] if task.result else None,
     }
 
 
@@ -415,18 +436,18 @@ def emulator_stop(task_id: str) -> dict:
 def emulator_results(task_id: str, last_n: int = 5) -> dict:
     """
     Get results from a task (especially useful for continuous tasks).
-    
+
     Args:
         task_id: Task to get results from
         last_n: Number of recent results to return
-        
+
     Returns:
         Task results and history
     """
     task = _tasks.get(task_id)
     if not task:
         return {"error": f"Task {task_id} not found"}
-    
+
     return {
         "task_id": task_id,
         "status": task.status.value,
@@ -440,25 +461,27 @@ def emulator_results(task_id: str, last_n: int = 5) -> dict:
 def emulator_load() -> dict:
     """
     Check emulator load and get warnings if overloaded.
-    
+
     Use this to decide whether to delegate more tasks or wait.
-    
+
     Returns:
         Load statistics and recommendations
     """
     return {
-        "active_tasks": _load_stats['active_tasks'],
-        "max_concurrent": _load_stats['max_concurrent'],
-        "completed_today": _load_stats['completed_today'],
-        "failed_today": _load_stats['failed_today'],
+        "active_tasks": _load_stats["active_tasks"],
+        "max_concurrent": _load_stats["max_concurrent"],
+        "completed_today": _load_stats["completed_today"],
+        "failed_today": _load_stats["failed_today"],
         "avg_response_time": f"{_load_stats['avg_response_time']:.2f}s",
-        "overloaded": _load_stats['overloaded'],
+        "overloaded": _load_stats["overloaded"],
         "recommendation": (
             "⚠️ Emulator is overloaded. Wait for tasks to complete or increase capacity."
-            if _load_stats['overloaded']
+            if _load_stats["overloaded"]
             else "✅ Emulator has capacity for more tasks."
         ),
-        "capacity_remaining": max(0, _load_stats['max_concurrent'] - _load_stats['active_tasks'])
+        "capacity_remaining": max(
+            0, _load_stats["max_concurrent"] - _load_stats["active_tasks"]
+        ),
     }
 
 
@@ -466,9 +489,9 @@ def emulator_load() -> dict:
 def emulator_capabilities() -> dict:
     """
     List what the emulator can do that Claude cannot.
-    
+
     Use this to understand when to delegate.
-    
+
     Returns:
         Capability comparison
     """
@@ -509,7 +532,7 @@ emulator_continuous(
     interval_seconds=5,
     alert_condition="Detect speech or unusual sounds"
 )
-"""
+""",
     }
 
 
@@ -517,27 +540,28 @@ emulator_continuous(
 # TASK EXECUTION
 # ============================================================================
 
+
 def _run_one_shot(task_id: str):
     """Execute a one-shot task."""
     task = _tasks.get(task_id)
     if not task:
         return
-    
+
     task.status = TaskStatus.RUNNING
     task.started_at = datetime.now()
-    
+
     response, response_time = query_emulator(task.prompt)
     update_load_stats(response_time, response is not None)
-    
+
     task.iterations = 1
-    
+
     if response:
         task.status = TaskStatus.COMPLETED
         task.result = response
     else:
         task.status = TaskStatus.FAILED
         task.error = "Emulator failed to respond"
-    
+
     task.completed_at = datetime.now()
 
 
@@ -546,17 +570,17 @@ def _run_continuous(task_id: str):
     task = _tasks.get(task_id)
     if not task:
         return
-    
+
     task.status = TaskStatus.RUNNING
     task.started_at = datetime.now()
-    
+
     while task.status == TaskStatus.RUNNING:
         # Check max iterations
         if task.max_iterations > 0 and task.iterations >= task.max_iterations:
             task.status = TaskStatus.COMPLETED
             task.completed_at = datetime.now()
             break
-        
+
         # Run iteration
         iteration_prompt = f"""Iteration {task.iterations + 1}
 Previous result: {task.result[:200] if task.result else 'None'}
@@ -565,24 +589,24 @@ Previous result: {task.result[:200] if task.result else 'None'}
 
 Current time: {datetime.now().isoformat()}
 Provide update:"""
-        
+
         response, response_time = query_emulator(iteration_prompt)
         update_load_stats(response_time, response is not None)
-        
+
         task.iterations += 1
-        
+
         if response:
             task.result = response
-            
+
             # Check for alerts
             if "🚨 ALERT:" in response:
                 _emit_alert(task, response)
         else:
             task.error = f"Iteration {task.iterations} failed"
-        
+
         # Wait for next interval
         time.sleep(task.interval_seconds)
-    
+
     if task.status == TaskStatus.RUNNING:
         task.status = TaskStatus.COMPLETED
         task.completed_at = datetime.now()
@@ -592,15 +616,19 @@ def _emit_alert(task: EmulatorTask, alert_message: str):
     """Emit alert to event bus."""
     try:
         from core.kafka_bus import BrainEventBus, BrainTopics
+
         bus = BrainEventBus(group_id="emulator-alerts")
         bus.connect()
-        bus.emit(BrainTopics.ALERTS, {
-            '_event_type': 'emulator_alert',
-            'task_id': task.id,
-            'message': alert_message,
-            'context': task.context,
-            'timestamp': datetime.now().isoformat(),
-        })
+        bus.emit(
+            BrainTopics.ALERTS,
+            {
+                "_event_type": "emulator_alert",
+                "task_id": task.id,
+                "message": alert_message,
+                "context": task.context,
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
         bus.disconnect()
     except Exception:
         pass
@@ -613,7 +641,9 @@ def _emit_alert(task: EmulatorTask, alert_message: str):
 if __name__ == "__main__":
     print("🤖 Claude Emulator MCP Server starting...")
     print("   Model: claude-emulator:latest")
-    print("   Tools: delegate, status, query, continuous, stop, results, load, capabilities")
-    print("   Max concurrent tasks:", _load_stats['max_concurrent'])
-    
+    print(
+        "   Tools: delegate, status, query, continuous, stop, results, load, capabilities"
+    )
+    print("   Max concurrent tasks:", _load_stats["max_concurrent"])
+
     mcp.run()

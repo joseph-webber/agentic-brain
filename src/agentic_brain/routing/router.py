@@ -96,9 +96,17 @@ class QueryRouter:
     ) -> QueryDecision:
         classification = self.classify(query)
         plan = self.plan(query)
-        allowed = self._normalize_routes(available_routes) if available_routes is not None else tuple(RouteType)
+        allowed = (
+            self._normalize_routes(available_routes)
+            if available_routes is not None
+            else tuple(RouteType)
+        )
         route = self._choose_route(classification, allowed)
-        fallback_routes = tuple(route_type for route_type in classification.fallback_routes if route_type in allowed and route_type != route)
+        fallback_routes = tuple(
+            route_type
+            for route_type in classification.fallback_routes
+            if route_type in allowed and route_type != route
+        )
         metadata = {
             "allowed_routes": [route_type.value for route_type in allowed],
             "decomposed": plan.is_multi_step,
@@ -172,7 +180,9 @@ class QueryRouter:
         available_routes: Sequence[RouteType],
         fallback_routes: Sequence[RouteType],
     ) -> tuple[Any, tuple[RouteType, ...]]:
-        route_order = self._route_attempt_order(step.route, fallback_routes, available_routes)
+        route_order = self._route_attempt_order(
+            step.route, fallback_routes, available_routes
+        )
         last_error: Exception | None = None
         used_fallbacks: list[RouteType] = []
         for route in route_order:

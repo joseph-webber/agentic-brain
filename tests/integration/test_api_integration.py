@@ -49,7 +49,9 @@ def test_chat_creates_session_and_echoes_message(monkeypatch):
 
 def test_session_messages_include_user_and_assistant(monkeypatch):
     client = make_client(monkeypatch)
-    chat = client.post("/chat", json={"message": "Track this session", "session_id": "sess_demo"})
+    chat = client.post(
+        "/chat", json={"message": "Track this session", "session_id": "sess_demo"}
+    )
 
     assert chat.status_code == 200
     messages = client.get("/session/sess_demo/messages?limit=10").json()
@@ -138,7 +140,9 @@ def test_stream_endpoint_returns_sse_payload(monkeypatch):
         async def post(self, *args, **kwargs):
             return FakeStreamResponse()
 
-    monkeypatch.setattr("agentic_brain.streaming.stream.aiohttp.ClientSession", FakeClientSession)
+    monkeypatch.setattr(
+        "agentic_brain.streaming.stream.aiohttp.ClientSession", FakeClientSession
+    )
     client = make_client(monkeypatch)
 
     with client.stream(

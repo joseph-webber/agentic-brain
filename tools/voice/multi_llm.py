@@ -29,32 +29,70 @@ from tools.voice.llm_providers import (
 # ---------------------------------------------------------------------------
 
 SPECIALISATION: dict[str, list[str]] = {
-    "code":      ["gpt", "claude", "ollama", "gemini", "grok"],
+    "code": ["gpt", "claude", "ollama", "gemini", "grok"],
     "reasoning": ["claude", "gpt", "gemini", "grok", "ollama"],
-    "creative":  ["grok", "claude", "gpt", "gemini", "ollama"],
-    "facts":     ["gemini", "gpt", "claude", "grok", "ollama"],
-    "speed":     ["ollama", "gpt", "gemini", "grok", "claude"],
-    "general":   ["claude", "gpt", "gemini", "grok", "ollama"],
+    "creative": ["grok", "claude", "gpt", "gemini", "ollama"],
+    "facts": ["gemini", "gpt", "claude", "grok", "ollama"],
+    "speed": ["ollama", "gpt", "gemini", "grok", "claude"],
+    "general": ["claude", "gpt", "gemini", "grok", "ollama"],
 }
 
 # Keywords that suggest a task type
 _TASK_SIGNALS: dict[str, list[str]] = {
     "code": [
-        "code", "python", "javascript", "typescript", "function", "class",
-        "debug", "refactor", "regex", "json", "sql", "api", "script",
-        "write a", "implement", "build a",
+        "code",
+        "python",
+        "javascript",
+        "typescript",
+        "function",
+        "class",
+        "debug",
+        "refactor",
+        "regex",
+        "json",
+        "sql",
+        "api",
+        "script",
+        "write a",
+        "implement",
+        "build a",
     ],
     "reasoning": [
-        "explain", "why", "how does", "what if", "compare", "analyse",
-        "analyze", "pros and cons", "trade-off", "should i", "reason",
+        "explain",
+        "why",
+        "how does",
+        "what if",
+        "compare",
+        "analyse",
+        "analyze",
+        "pros and cons",
+        "trade-off",
+        "should i",
+        "reason",
     ],
     "creative": [
-        "story", "poem", "creative", "imagine", "brainstorm", "idea",
-        "funny", "joke", "name for", "slogan", "write me",
+        "story",
+        "poem",
+        "creative",
+        "imagine",
+        "brainstorm",
+        "idea",
+        "funny",
+        "joke",
+        "name for",
+        "slogan",
+        "write me",
     ],
     "facts": [
-        "what is", "who is", "when did", "where is", "how many",
-        "define", "capital of", "population", "history of",
+        "what is",
+        "who is",
+        "when did",
+        "where is",
+        "how many",
+        "define",
+        "capital of",
+        "population",
+        "history of",
     ],
 }
 
@@ -86,6 +124,7 @@ def _ordered_providers(task_type: str) -> list[str]:
 # Strategies
 # ---------------------------------------------------------------------------
 
+
 def strategy_fastest(
     messages: Sequence[dict[str, str]],
     *,
@@ -110,8 +149,10 @@ def strategy_fastest(
         for name in providers_ordered:
             provider = get_provider(name)
             future = pool.submit(
-                provider.call, messages,
-                max_tokens=max_tokens, temperature=temperature,
+                provider.call,
+                messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
             )
             future_to_name[future] = name
 
@@ -159,7 +200,9 @@ def strategy_smartest(
         t0 = time.monotonic()
         try:
             text = provider.call(
-                messages, max_tokens=max_tokens, temperature=temperature,
+                messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
             )
             latency = (time.monotonic() - t0) * 1000
             return {
@@ -201,8 +244,10 @@ def strategy_consensus(
         for name in providers_ordered:
             provider = get_provider(name)
             future = pool.submit(
-                provider.call, messages,
-                max_tokens=max_tokens, temperature=temperature,
+                provider.call,
+                messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
             )
             future_to_name[future] = name
 
@@ -236,7 +281,9 @@ def strategy_consensus(
     )
     for name, text in responses:
         synthesis_prompt += f"Response from {name}:\n{text}\n\n"
-    synthesis_prompt += "Your merged response (2-3 sentences, spoken conversational style):"
+    synthesis_prompt += (
+        "Your merged response (2-3 sentences, spoken conversational style):"
+    )
 
     synthesis_messages = [{"role": "user", "content": synthesis_prompt}]
 
@@ -275,8 +322,10 @@ def strategy_fallback(
     Identical to strategy_smartest but named for clarity in config.
     """
     return strategy_smartest(
-        messages, task_type=task_type,
-        max_tokens=max_tokens, temperature=temperature,
+        messages,
+        task_type=task_type,
+        max_tokens=max_tokens,
+        temperature=temperature,
     )
 
 

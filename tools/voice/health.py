@@ -30,6 +30,7 @@ def _check_url(url: str, timeout: int = 3) -> bool:
 def _check_redis() -> dict[str, Any]:
     try:
         import redis
+
         r = redis.from_url(REDIS_URL, decode_responses=True)
         r.ping()
         history_len = r.llen("voice:history")
@@ -41,9 +42,14 @@ def _check_redis() -> dict[str, Any]:
 def _check_neo4j() -> dict[str, Any]:
     try:
         from neo4j import GraphDatabase
+
         uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
         driver = GraphDatabase.driver(
-            uri, auth=(os.getenv("NEO4J_USER", "neo4j"), os.getenv("NEO4J_PASSWORD", "Brain2026")),
+            uri,
+            auth=(
+                os.getenv("NEO4J_USER", "neo4j"),
+                os.getenv("NEO4J_PASSWORD", "Brain2026"),
+            ),
         )
         with driver.session() as session:
             result = session.run("MATCH (m:VoiceMessage) RETURN count(m) AS cnt")
@@ -88,6 +94,7 @@ def _check_cartesia() -> dict[str, Any]:
 def _check_circuit_breakers() -> list[dict[str, Any]]:
     try:
         from tools.voice.circuit_breaker import CircuitBreakerRegistry
+
         return CircuitBreakerRegistry.get().all_stats()
     except Exception:
         return []
@@ -128,6 +135,7 @@ def publish_health_to_redis() -> None:
     """Run health check and publish to Redis for monitoring."""
     try:
         import redis
+
         r = redis.from_url(REDIS_URL, decode_responses=True)
         status = health_check()
         r.set("voice:health", json.dumps(status), ex=60)
@@ -140,8 +148,10 @@ def publish_health_to_redis() -> None:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     import sys
+
     status = health_check()
     print(json.dumps(status, indent=2))
     # Exit code 0 if healthy, 1 if degraded

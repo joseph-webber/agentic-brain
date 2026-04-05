@@ -51,10 +51,11 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-PANDAPROXY    = "http://localhost:8082"   # Redpanda HTTP REST proxy
-REDIS_URL     = "redis://:BrainRedis2026@localhost:6379/0"
-OLLAMA_URL    = "http://localhost:11434"
-POLL_INTERVAL = 0.5   # seconds between consume polls
+PANDAPROXY = "http://localhost:8082"  # Redpanda HTTP REST proxy
+REDIS_URL = "redis://:BrainRedis2026@localhost:6379/0"
+OLLAMA_URL = "http://localhost:11434"
+POLL_INTERVAL = 0.5  # seconds between consume polls
+
 
 # Load Claude API key from env / .env file
 def _load_claude_key() -> str:
@@ -68,26 +69,27 @@ def _load_claude_key() -> str:
                     break
     return key
 
+
 CLAUDE_API_KEY = _load_claude_key()
 
 # Topics
-TOPIC_INPUT        = "brain.voice.input"
-TOPIC_RESPONSE     = "brain.voice.response"
+TOPIC_INPUT = "brain.voice.input"
+TOPIC_RESPONSE = "brain.voice.response"
 TOPIC_COORDINATION = "brain.voice.coordination"
 
 # Redis keys
-REDIS_PROGRESS_KEY  = "voice:claude_orchestrator_progress"
-REDIS_READY_KEY     = "voice:orchestrator_ready"
-REDIS_HISTORY_KEY   = "voice:history"
-REDIS_GPT_KEY       = "voice:gpt_redpanda_progress"
+REDIS_PROGRESS_KEY = "voice:claude_orchestrator_progress"
+REDIS_READY_KEY = "voice:orchestrator_ready"
+REDIS_HISTORY_KEY = "voice:history"
+REDIS_GPT_KEY = "voice:gpt_redpanda_progress"
 
 # Memory
-HISTORY_MAX_PAIRS    = 6   # store up to 6 role/content entries (3 exchanges)
+HISTORY_MAX_PAIRS = 6  # store up to 6 role/content entries (3 exchanges)
 HISTORY_CONTEXT_PAIRS = 3  # include last 3 exchanges in LLM context
 
 # Consumer group
 CONSUMER_GROUP = "voice-orchestrator"
-CONSUMER_ID    = "orchestrator-1"
+CONSUMER_ID = "orchestrator-1"
 
 # ---------------------------------------------------------------------------
 # Karen's personality prompt
@@ -105,10 +107,33 @@ KAREN_SYSTEM = (
 # Complexity classifier (mirrors voice_reasoning.py so recommendations align)
 # ---------------------------------------------------------------------------
 _SIMPLE_WORDS = {
-    "hi", "hello", "hey", "thanks", "thank", "you", "bye", "goodbye",
-    "yes", "no", "ok", "okay", "sure", "great", "cool", "nice", "good",
-    "cheers", "ta", "yep", "nope", "alright", "right", "got", "it",
+    "hi",
+    "hello",
+    "hey",
+    "thanks",
+    "thank",
+    "you",
+    "bye",
+    "goodbye",
+    "yes",
+    "no",
+    "ok",
+    "okay",
+    "sure",
+    "great",
+    "cool",
+    "nice",
+    "good",
+    "cheers",
+    "ta",
+    "yep",
+    "nope",
+    "alright",
+    "right",
+    "got",
+    "it",
 }
+
 
 def classify_complexity(text: str) -> str:
     """Return 'simple', 'medium', or 'complex'."""
@@ -121,9 +146,23 @@ def classify_complexity(text: str) -> str:
         return "simple"
     # Explicit complexity signals
     complex_signals = [
-        "write", "code", "script", "explain", "how does", "why does",
-        "analyse", "analyze", "compare", "difference", "create", "build",
-        "implement", "generate", "summarise", "summarize", "design",
+        "write",
+        "code",
+        "script",
+        "explain",
+        "how does",
+        "why does",
+        "analyse",
+        "analyze",
+        "compare",
+        "difference",
+        "create",
+        "build",
+        "implement",
+        "generate",
+        "summarise",
+        "summarize",
+        "design",
     ]
     for sig in complex_signals:
         if sig in lower:
@@ -135,8 +174,8 @@ def classify_complexity(text: str) -> str:
 
 # LLM routing table: complexity → preferred provider
 _ROUTING: dict[str, list[str]] = {
-    "simple":  ["ollama", "claude", "gpt"],
-    "medium":  ["claude", "ollama", "gpt"],
+    "simple": ["ollama", "claude", "gpt"],
+    "medium": ["claude", "ollama", "gpt"],
     "complex": ["claude", "gpt", "ollama"],
 }
 
@@ -150,6 +189,7 @@ def _redis() -> Any:
     global _redis_client
     if _redis_client is None:
         import redis as _r
+
         _redis_client = _r.from_url(REDIS_URL, decode_responses=True)
     return _redis_client
 
@@ -158,13 +198,22 @@ def _redis() -> Any:
 # Redpanda REST transport (Pandaproxy on port 8082)
 # ---------------------------------------------------------------------------
 
-def _rest_post(path: str, body: Any, content_type: str = "application/vnd.kafka.json.v2+json") -> Any:
+
+def _rest_post(
+    path: str, body: Any, content_type: str = "application/vnd.kafka.json.v2+json"
+) -> Any:
     """POST to Pandaproxy and return parsed JSON response."""
     url = f"{PANDAPROXY}{path}"
     data = json.dumps(body).encode()
-    req = urllib.request.Request(url, data=data, method="POST",
-                                  headers={"Content-Type": content_type,
-                                           "Accept": "application/vnd.kafka.v2+json"})
+    req = urllib.request.Request(
+        url,
+        data=data,
+        method="POST",
+        headers={
+            "Content-Type": content_type,
+            "Accept": "application/vnd.kafka.v2+json",
+        },
+    )
     with urllib.request.urlopen(req, timeout=10) as resp:
         return json.loads(resp.read())
 
@@ -188,8 +237,13 @@ def rest_produce(topic: str, value: dict, key: str | None = None) -> None:
 class RestConsumer:
     """Long-poll consumer via Pandaproxy REST API."""
 
-    def __init__(self, group: str, instance: str, topics: list[str],
-                 offset_reset: str = "earliest"):
+    def __init__(
+        self,
+        group: str,
+        instance: str,
+        topics: list[str],
+        offset_reset: str = "earliest",
+    ):
         self._group = group
         self._instance = instance
         self._base = f"/consumers/{group}/instances/{instance}"
@@ -202,16 +256,20 @@ class RestConsumer:
                 content_type="application/vnd.kafka.v2+json",
             )
         except urllib.error.HTTPError as e:
-            if e.code != 409:   # 409 = already exists, fine
+            if e.code != 409:  # 409 = already exists, fine
                 raise
         # Subscribe – response body may be empty (204/200)
         try:
             req_url = f"{PANDAPROXY}{self._base}/subscription"
             data = json.dumps({"topics": topics}).encode()
             req = urllib.request.Request(
-                req_url, data=data, method="POST",
-                headers={"Content-Type": "application/vnd.kafka.v2+json",
-                         "Accept": "application/vnd.kafka.v2+json"},
+                req_url,
+                data=data,
+                method="POST",
+                headers={
+                    "Content-Type": "application/vnd.kafka.v2+json",
+                    "Accept": "application/vnd.kafka.v2+json",
+                },
             )
             with urllib.request.urlopen(req, timeout=10) as resp:
                 pass  # 200/204, body may be empty
@@ -223,7 +281,9 @@ class RestConsumer:
         """Return list of records (may be empty)."""
         try:
             url = f"{PANDAPROXY}{self._base}/records?max_bytes={max_bytes}&timeout={timeout_ms}"
-            req = urllib.request.Request(url, headers={"Accept": "application/vnd.kafka.json.v2+json"})
+            req = urllib.request.Request(
+                url, headers={"Accept": "application/vnd.kafka.json.v2+json"}
+            )
             with urllib.request.urlopen(req, timeout=timeout_ms // 1000 + 5) as resp:
                 body = resp.read()
                 if not body:
@@ -235,8 +295,11 @@ class RestConsumer:
 
     def delete(self) -> None:
         url = f"{PANDAPROXY}{self._base}"
-        req = urllib.request.Request(url, method="DELETE",
-                                      headers={"Content-Type": "application/vnd.kafka.v2+json"})
+        req = urllib.request.Request(
+            url,
+            method="DELETE",
+            headers={"Content-Type": "application/vnd.kafka.v2+json"},
+        )
         try:
             urllib.request.urlopen(req, timeout=5)
         except Exception:
@@ -246,6 +309,7 @@ class RestConsumer:
 # ---------------------------------------------------------------------------
 # Redis history helpers
 # ---------------------------------------------------------------------------
+
 
 def push_history(role: str, content: str) -> None:
     r = _redis()
@@ -271,19 +335,23 @@ def get_context_messages() -> list[dict[str, str]]:
 # LLM callers
 # ---------------------------------------------------------------------------
 
+
 def _call_ollama(query: str, context: list[dict]) -> str | None:
     """Call local Ollama. Returns text or None on failure."""
     try:
         import urllib.request
+
         messages = [{"role": "system", "content": KAREN_SYSTEM}]
         messages.extend(context)
         messages.append({"role": "user", "content": query})
-        payload = json.dumps({
-            "model": "llama3.2:3b",
-            "messages": messages,
-            "stream": False,
-            "options": {"temperature": 0.7, "num_predict": 200},
-        }).encode()
+        payload = json.dumps(
+            {
+                "model": "llama3.2:3b",
+                "messages": messages,
+                "stream": False,
+                "options": {"temperature": 0.7, "num_predict": 200},
+            }
+        ).encode()
         req = urllib.request.Request(
             f"{OLLAMA_URL}/api/chat",
             data=payload,
@@ -304,14 +372,17 @@ def _call_claude(query: str, context: list[dict]) -> str | None:
         return None
     try:
         import urllib.request
+
         messages = list(context)
         messages.append({"role": "user", "content": query})
-        payload = json.dumps({
-            "model": "claude-3-haiku-20240307",
-            "max_tokens": 300,
-            "system": KAREN_SYSTEM,
-            "messages": messages,
-        }).encode()
+        payload = json.dumps(
+            {
+                "model": "claude-3-haiku-20240307",
+                "max_tokens": 300,
+                "system": KAREN_SYSTEM,
+                "messages": messages,
+            }
+        ).encode()
         req = urllib.request.Request(
             "https://api.anthropic.com/v1/messages",
             data=payload,
@@ -325,7 +396,9 @@ def _call_claude(query: str, context: list[dict]) -> str | None:
         with urllib.request.urlopen(req, timeout=20) as resp:
             data = json.loads(resp.read())
             blocks = data.get("content", [])
-            text = " ".join(b.get("text", "") for b in blocks if b.get("type") == "text")
+            text = " ".join(
+                b.get("text", "") for b in blocks if b.get("type") == "text"
+            )
             return text.strip() or None
     except Exception as exc:
         print(f"[orchestrator] Claude error: {exc}", flush=True)
@@ -339,7 +412,12 @@ def _call_gpt(query: str, context: list[dict]) -> str | None:
         if "ready" in gpt_status.lower():
             rest_produce(
                 TOPIC_COORDINATION,
-                {"type": "gpt_request", "query": query, "context": context, "ts": time.time()},
+                {
+                    "type": "gpt_request",
+                    "query": query,
+                    "context": context,
+                    "ts": time.time(),
+                },
                 key="gpt_request",
             )
             # Give GPT agent 10s to respond via Redis
@@ -363,7 +441,7 @@ def route_and_respond(query: str, complexity: str) -> tuple[str, str]:
     caller_map = {
         "ollama": _call_ollama,
         "claude": _call_claude,
-        "gpt":    _call_gpt,
+        "gpt": _call_gpt,
     }
 
     for provider in providers:
@@ -373,12 +451,16 @@ def route_and_respond(query: str, complexity: str) -> tuple[str, str]:
             return result, provider
 
     # Hard fallback: honest minimal answer
-    return "Sorry, I'm having a bit of trouble connecting right now. Give me a moment and try again!", "fallback"
+    return (
+        "Sorry, I'm having a bit of trouble connecting right now. Give me a moment and try again!",
+        "fallback",
+    )
 
 
 # ---------------------------------------------------------------------------
 # Progress helper
 # ---------------------------------------------------------------------------
+
 
 def _set_progress(status: str) -> None:
     try:
@@ -390,6 +472,7 @@ def _set_progress(status: str) -> None:
 # ---------------------------------------------------------------------------
 # Message processor
 # ---------------------------------------------------------------------------
+
 
 def process_input_message(msg_value: dict) -> None:
     """Handle one brain.voice.input message end-to-end."""
@@ -417,7 +500,10 @@ def process_input_message(msg_value: dict) -> None:
     # Push assistant turn into history
     push_history("assistant", response_text)
 
-    print(f"[orchestrator] → [{provider}] {latency_ms}ms: {response_text[:80]}", flush=True)
+    print(
+        f"[orchestrator] → [{provider}] {latency_ms}ms: {response_text[:80]}",
+        flush=True,
+    )
     _set_progress(f"done: {provider}/{complexity}/{latency_ms}ms")
 
     # Publish to brain.voice.response
@@ -456,6 +542,7 @@ def process_input_message(msg_value: dict) -> None:
 # Coordination message handler (runs in background thread)
 # ---------------------------------------------------------------------------
 
+
 def _coordination_listener() -> None:
     """Listen to brain.voice.coordination and act on peer agent messages."""
     try:
@@ -472,10 +559,15 @@ def _coordination_listener() -> None:
                 evt = rec.get("value", {})
                 etype = evt.get("type", "")
                 if etype == "gpt_agent_ready":
-                    print(f"[orchestrator] GPT agent signalled ready: {evt}", flush=True)
+                    print(
+                        f"[orchestrator] GPT agent signalled ready: {evt}", flush=True
+                    )
                     _redis().set(REDIS_GPT_KEY, "ready")
                 elif etype == "peer_status":
-                    print(f"[orchestrator] Peer status: {evt.get('agent')} → {evt.get('status')}", flush=True)
+                    print(
+                        f"[orchestrator] Peer status: {evt.get('agent')} → {evt.get('status')}",
+                        flush=True,
+                    )
             time.sleep(POLL_INTERVAL)
     except Exception as exc:
         print(f"[orchestrator] Coordination listener error: {exc}", flush=True)
@@ -484,6 +576,7 @@ def _coordination_listener() -> None:
 # ---------------------------------------------------------------------------
 # Main daemon
 # ---------------------------------------------------------------------------
+
 
 def run_daemon() -> None:
     r = _redis()
@@ -494,7 +587,9 @@ def run_daemon() -> None:
     try:
         topics = _rest_get("/topics", accept="application/vnd.kafka.v2+json")
         voice_topics = [t for t in topics if "voice" in t]
-        print(f"[orchestrator] Pandaproxy OK — voice topics: {voice_topics}", flush=True)
+        print(
+            f"[orchestrator] Pandaproxy OK — voice topics: {voice_topics}", flush=True
+        )
     except Exception as exc:
         print(f"[orchestrator] WARNING: Pandaproxy probe failed: {exc}", flush=True)
 
@@ -546,6 +641,7 @@ def run_daemon() -> None:
 # CLI helpers
 # ---------------------------------------------------------------------------
 
+
 def cmd_test() -> None:
     """Send a test query through the full pipeline."""
     import uuid, subprocess
@@ -559,7 +655,10 @@ def cmd_test() -> None:
     }
 
     rest_produce(TOPIC_INPUT, test_query)
-    print(f"[test] Published (request_id={rid}). Waiting for daemon to process…", flush=True)
+    print(
+        f"[test] Published (request_id={rid}). Waiting for daemon to process…",
+        flush=True,
+    )
 
     # Poll Pandaproxy consumer for new responses
     c = RestConsumer(group=f"test-{rid}", instance="t1", topics=[TOPIC_RESPONSE])
@@ -568,7 +667,9 @@ def cmd_test() -> None:
         for rec in c.poll(max_bytes=65536, timeout_ms=3000):
             inner = rec.get("value", {})
             if inner.get("request_id") == rid:
-                print(f"[test] ✓ Response from [{inner.get('provider','?')}] in {inner.get('latency_ms','?')}ms:")
+                print(
+                    f"[test] ✓ Response from [{inner.get('provider','?')}] in {inner.get('latency_ms','?')}ms:"
+                )
                 print(f"       {inner.get('text','')}")
                 c.delete()
                 return
@@ -579,7 +680,9 @@ def cmd_test() -> None:
 
 def cmd_status() -> None:
     r = _redis()
-    print("voice:claude_orchestrator_progress:", r.get(REDIS_PROGRESS_KEY) or "(not set)")
+    print(
+        "voice:claude_orchestrator_progress:", r.get(REDIS_PROGRESS_KEY) or "(not set)"
+    )
     print("voice:orchestrator_ready          :", r.get(REDIS_READY_KEY) or "(not set)")
     print("voice:gpt_redpanda_progress       :", r.get(REDIS_GPT_KEY) or "(not set)")
     print("voice:history length              :", r.llen(REDIS_HISTORY_KEY))
@@ -597,8 +700,10 @@ def cmd_status() -> None:
     # Check Pandaproxy reachable
     try:
         urllib.request.urlopen(
-            urllib.request.Request(f"{PANDAPROXY}/topics",
-                                   headers={"Accept": "application/vnd.kafka.v2+json"}),
+            urllib.request.Request(
+                f"{PANDAPROXY}/topics",
+                headers={"Accept": "application/vnd.kafka.v2+json"},
+            ),
             timeout=3,
         )
         print("Pandaproxy reachable              : yes")
@@ -608,11 +713,17 @@ def cmd_status() -> None:
 
 def cmd_topics() -> None:
     import subprocess
+
     result = subprocess.run(
         ["docker", "exec", "agentic-brain-redpanda", "rpk", "topic", "list"],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
-    lines = [l for l in result.stdout.splitlines() if "voice" in l or "brain" in l or "NAME" in l]
+    lines = [
+        l
+        for l in result.stdout.splitlines()
+        if "voice" in l or "brain" in l or "NAME" in l
+    ]
     print("Voice / brain topics:")
     for line in lines:
         print(f"  {line}")

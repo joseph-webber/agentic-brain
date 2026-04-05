@@ -79,10 +79,14 @@ class TestCommunityLevel:
         assert level.level == 0
         assert len(level.members) == 3
 
-    def test_community_level_member_count_property(self, sample_community_level: CommunityLevel) -> None:
+    def test_community_level_member_count_property(
+        self, sample_community_level: CommunityLevel
+    ) -> None:
         assert sample_community_level.member_count == 3
 
-    def test_community_level_to_dict(self, sample_community_level: CommunityLevel) -> None:
+    def test_community_level_to_dict(
+        self, sample_community_level: CommunityLevel
+    ) -> None:
         d = sample_community_level.to_dict()
         assert isinstance(d, dict)
         assert d["community_id"] == "comm_1"
@@ -90,7 +94,9 @@ class TestCommunityLevel:
         assert d["member_count"] == 3
         assert len(d["members"]) == 3
 
-    def test_community_level_to_dict_includes_all_fields(self, sample_community_level: CommunityLevel) -> None:
+    def test_community_level_to_dict_includes_all_fields(
+        self, sample_community_level: CommunityLevel
+    ) -> None:
         d = sample_community_level.to_dict()
         assert "community_id" in d
         assert "level" in d
@@ -104,11 +110,15 @@ class TestCommunityLevel:
         level = CommunityLevel(community_id="empty", level=0)
         assert level.member_count == 0
 
-    def test_community_level_with_metadata(self, sample_community_level: CommunityLevel) -> None:
+    def test_community_level_with_metadata(
+        self, sample_community_level: CommunityLevel
+    ) -> None:
         assert sample_community_level.metadata["modularity"] == 0.85
         assert sample_community_level.metadata["size"] == 3
 
-    def test_community_level_with_children(self, sample_community_level: CommunityLevel) -> None:
+    def test_community_level_with_children(
+        self, sample_community_level: CommunityLevel
+    ) -> None:
         assert len(sample_community_level.child_ids) == 2
         assert "comm_2" in sample_community_level.child_ids
 
@@ -139,7 +149,9 @@ class TestCommunityQueryResult:
             )
             assert result.strategy == strategy
 
-    def test_query_result_multiple_results(self, sample_query_result: CommunityQueryResult) -> None:
+    def test_query_result_multiple_results(
+        self, sample_query_result: CommunityQueryResult
+    ) -> None:
         assert len(sample_query_result.results) == 2
 
     def test_query_result_empty_results(self) -> None:
@@ -178,35 +190,46 @@ class TestCommunityGraphRAGInitialization:
 
 class TestCommunityDetection:
     @pytest.mark.asyncio
-    async def test_detect_communities_returns_dict(self, mock_driver: MagicMock) -> None:
+    async def test_detect_communities_returns_dict(
+        self, mock_driver: MagicMock
+    ) -> None:
         rag = CommunityGraphRAG(mock_driver)
-        
-        with patch.object(rag, '_detect_hierarchy', new_callable=AsyncMock) as mock_detect:
-            from agentic_brain.rag.community_detection import CommunityHierarchy, Community
-            
+
+        with patch.object(
+            rag, "_detect_hierarchy", new_callable=AsyncMock
+        ) as mock_detect:
+            from agentic_brain.rag.community_detection import (
+                CommunityHierarchy,
+                Community,
+            )
+
             # Create mock hierarchy
             hierarchy = CommunityHierarchy()
-            hierarchy.communities[1] = Community(
-                id=1, level=0, entities=["a", "b"]
-            )
+            hierarchy.communities[1] = Community(id=1, level=0, entities=["a", "b"])
             mock_detect.return_value = hierarchy
-            
-            with patch.object(rag, '_persist_leaf_communities', new_callable=AsyncMock):
+
+            with patch.object(rag, "_persist_leaf_communities", new_callable=AsyncMock):
                 result = await rag.detect_communities()
-                
+
         assert isinstance(result, dict)
 
     @pytest.mark.asyncio
-    async def test_detect_communities_persists_hierarchy(self, mock_driver: MagicMock) -> None:
+    async def test_detect_communities_persists_hierarchy(
+        self, mock_driver: MagicMock
+    ) -> None:
         rag = CommunityGraphRAG(mock_driver)
-        
-        with patch.object(rag, '_detect_hierarchy', new_callable=AsyncMock) as mock_detect:
+
+        with patch.object(
+            rag, "_detect_hierarchy", new_callable=AsyncMock
+        ) as mock_detect:
             from agentic_brain.rag.community_detection import CommunityHierarchy
-            
+
             hierarchy = CommunityHierarchy()
             mock_detect.return_value = hierarchy
-            
-            with patch.object(rag, '_persist_leaf_communities', new_callable=AsyncMock) as mock_persist:
+
+            with patch.object(
+                rag, "_persist_leaf_communities", new_callable=AsyncMock
+            ) as mock_persist:
                 await rag.detect_communities()
                 mock_persist.assert_called_once()
 
@@ -218,33 +241,37 @@ class TestCommunityDetection:
 
 class TestCommunityQueries:
     @pytest.mark.asyncio
-    async def test_query_returns_community_query_result(self, mock_driver: MagicMock) -> None:
+    async def test_query_returns_community_query_result(
+        self, mock_driver: MagicMock
+    ) -> None:
         rag = CommunityGraphRAG(mock_driver)
-        
+
         # Mock the query method
-        with patch.object(rag, 'query', new_callable=AsyncMock) as mock_query:
+        with patch.object(rag, "query", new_callable=AsyncMock) as mock_query:
             mock_query.return_value = CommunityQueryResult(
                 strategy="community",
                 results=[{"id": "r1"}],
                 hierarchy_level=0,
             )
-            
+
             result = await rag.query("test")
-        
+
         assert isinstance(result, CommunityQueryResult)
 
     @pytest.mark.asyncio
-    async def test_query_multiple_hierarchy_levels(self, mock_driver: MagicMock) -> None:
+    async def test_query_multiple_hierarchy_levels(
+        self, mock_driver: MagicMock
+    ) -> None:
         rag = CommunityGraphRAG(mock_driver)
-        
+
         for level in range(3):
-            with patch.object(rag, 'query', new_callable=AsyncMock) as mock_query:
+            with patch.object(rag, "query", new_callable=AsyncMock) as mock_query:
                 mock_query.return_value = CommunityQueryResult(
                     strategy="community",
                     results=[],
                     hierarchy_level=level,
                 )
-                
+
                 result = await rag.query("test")
                 assert result.hierarchy_level == level
 
@@ -256,18 +283,22 @@ class TestCommunityQueries:
 
 class TestEntityResolution:
     @pytest.mark.asyncio
-    async def test_resolve_entity_across_communities(self, mock_driver: MagicMock) -> None:
+    async def test_resolve_entity_across_communities(
+        self, mock_driver: MagicMock
+    ) -> None:
         rag = CommunityGraphRAG(mock_driver)
-        
-        with patch.object(rag, '_resolve_entity', new_callable=AsyncMock) as mock_resolve:
+
+        with patch.object(
+            rag, "_resolve_entity", new_callable=AsyncMock
+        ) as mock_resolve:
             mock_resolve.return_value = {
                 "canonical_id": "entity_canonical",
                 "communities": [1, 2, 3],
                 "aliases": ["entity_alias_1", "entity_alias_2"],
             }
-            
+
             result = await rag._resolve_entity("entity_name")
-        
+
         assert result["canonical_id"] == "entity_canonical"
 
 
@@ -280,17 +311,19 @@ class TestEdgeCasesAndFallbacks:
     @pytest.mark.asyncio
     async def test_detect_communities_empty_graph(self, mock_driver: MagicMock) -> None:
         rag = CommunityGraphRAG(mock_driver)
-        
-        with patch.object(rag, '_detect_hierarchy', new_callable=AsyncMock) as mock_detect:
+
+        with patch.object(
+            rag, "_detect_hierarchy", new_callable=AsyncMock
+        ) as mock_detect:
             from agentic_brain.rag.community_detection import CommunityHierarchy
-            
+
             # Empty hierarchy
             hierarchy = CommunityHierarchy()
             mock_detect.return_value = hierarchy
-            
-            with patch.object(rag, '_persist_leaf_communities', new_callable=AsyncMock):
+
+            with patch.object(rag, "_persist_leaf_communities", new_callable=AsyncMock):
                 result = await rag.detect_communities()
-                
+
         assert isinstance(result, dict)
         assert len(result) == 0
 
@@ -298,17 +331,17 @@ class TestEdgeCasesAndFallbacks:
     async def test_query_no_hierarchy_set(self, mock_driver: MagicMock) -> None:
         rag = CommunityGraphRAG(mock_driver)
         rag._latest_hierarchy = None  # No hierarchy detected yet
-        
+
         # Should handle gracefully
-        with patch.object(rag, 'query', new_callable=AsyncMock) as mock_query:
+        with patch.object(rag, "query", new_callable=AsyncMock) as mock_query:
             mock_query.return_value = CommunityQueryResult(
                 strategy="hybrid",  # Fallback to hybrid
                 results=[],
                 hierarchy_level=0,
             )
-            
+
             result = await rag.query("test")
-        
+
         assert isinstance(result, CommunityQueryResult)
 
     @pytest.mark.asyncio
@@ -316,15 +349,19 @@ class TestEdgeCasesAndFallbacks:
         with patch("agentic_brain.rag.community.LeidenCommunityDetector", None):
             rag = CommunityGraphRAG(mock_driver)
             assert rag.detector is None
-            
+
             # Should still work, maybe with fallback detection
-            with patch.object(rag, '_detect_hierarchy', new_callable=AsyncMock) as mock_detect:
+            with patch.object(
+                rag, "_detect_hierarchy", new_callable=AsyncMock
+            ) as mock_detect:
                 from agentic_brain.rag.community_detection import CommunityHierarchy
-                
+
                 mock_detect.return_value = CommunityHierarchy()
-                with patch.object(rag, '_persist_leaf_communities', new_callable=AsyncMock):
+                with patch.object(
+                    rag, "_persist_leaf_communities", new_callable=AsyncMock
+                ):
                     result = await rag.detect_communities()
-            
+
             assert isinstance(result, dict)
 
 
@@ -338,29 +375,29 @@ class TestHierarchyLevels:
     async def test_query_at_different_levels(self, mock_driver: MagicMock) -> None:
         """Test querying at different hierarchy levels."""
         rag = CommunityGraphRAG(mock_driver)
-        
+
         # Level 0 (leaf communities)
-        with patch.object(rag, '_query_level', new_callable=AsyncMock) as mock_query:
+        with patch.object(rag, "_query_level", new_callable=AsyncMock) as mock_query:
             mock_query.return_value = [{"id": "e1", "score": 0.9}]
             level_0_results = await rag._query_level("test", level=0)
-        
+
         assert len(level_0_results) > 0
 
     @pytest.mark.asyncio
     async def test_ascending_hierarchy_on_failure(self, mock_driver: MagicMock) -> None:
         """Test moving to higher hierarchy level when lower level fails."""
         rag = CommunityGraphRAG(mock_driver)
-        
-        with patch.object(rag, '_query_level', new_callable=AsyncMock) as mock_query:
+
+        with patch.object(rag, "_query_level", new_callable=AsyncMock) as mock_query:
             # Level 0 returns empty
             mock_query.side_effect = [[], [{"id": "e1"}], [{"id": "e2", "id": "e3"}]]
-            
+
             # Should ascend hierarchy
             results = []
             for level in range(3):
                 r = await rag._query_level("test", level=level)
                 results.extend(r)
-        
+
         assert len(results) > 0
 
 
@@ -378,7 +415,7 @@ class TestPerformanceConsiderations:
             level=0,
             members=members,
         )
-        
+
         d = level.to_dict()
         assert d["member_count"] == 10000
         assert len(d["members"]) == 10000
@@ -395,7 +432,7 @@ class TestPerformanceConsiderations:
                 child_ids=[f"comm_{i+1}"] if i < 99 else [],
             )
             levels.append(level)
-        
+
         # Should handle without issues
         assert len(levels) == 100
         assert levels[-1].level == 99
@@ -415,14 +452,14 @@ class TestDataConsistency:
             level=0,
             members=members,
         )
-        
+
         assert level.member_count == len(members)
         assert level.to_dict()["member_count"] == len(members)
 
     def test_query_result_strategy_values(self) -> None:
         """Test that query result strategies are from valid set."""
         valid_strategies = ["vector", "graph", "hybrid", "community", "multi_hop"]
-        
+
         for strategy in valid_strategies:
             result = CommunityQueryResult(
                 strategy=strategy,

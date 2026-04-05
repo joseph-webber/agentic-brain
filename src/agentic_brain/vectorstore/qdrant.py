@@ -87,7 +87,9 @@ class QdrantVectorStore(VectorStore):
                 self._legacy.connect()
                 self._mode = "remote"
             except Exception as exc:
-                logger.warning("Qdrant connection failed, using memory fallback: %s", exc)
+                logger.warning(
+                    "Qdrant connection failed, using memory fallback: %s", exc
+                )
                 self._legacy = None
                 self._mode = "memory"
         self._connected = True
@@ -148,10 +150,15 @@ class QdrantVectorStore(VectorStore):
             with contextlib.suppress(Exception):
                 self._legacy.upsert(
                     collection_name,
-                    [record.as_dict() if isinstance(record, VectorRecord) else record for record in records],
+                    [
+                        record.as_dict() if isinstance(record, VectorRecord) else record
+                        for record in records
+                    ],
                     namespace=namespace,
                 )
-        return self._memory_upsert(records, collection_name=collection_name, namespace=namespace)
+        return self._memory_upsert(
+            records, collection_name=collection_name, namespace=namespace
+        )
 
     def search(
         self,
@@ -176,7 +183,9 @@ class QdrantVectorStore(VectorStore):
                     include_vectors=include_vectors,
                     include_metadata=include_metadata,
                 )
-                return [self._result_from_mapping(result.__dict__) for result in results]
+                return [
+                    self._result_from_mapping(result.__dict__) for result in results
+                ]
         return self._memory_search(
             query_vector,
             collection_name=collection_name,

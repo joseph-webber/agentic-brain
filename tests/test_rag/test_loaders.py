@@ -229,7 +229,9 @@ class TestTextLoader:
 class TestMarkdownLoader:
     def test_load_md_file(self, tmp_path: Path) -> None:
         md_file = tmp_path / "docs.md"
-        md_file.write_text("# Title\n\nSome content here.\n\n## Section\n\nMore content.")
+        md_file.write_text(
+            "# Title\n\nSome content here.\n\n## Section\n\nMore content."
+        )
         loader = MarkdownLoader(base_path=str(tmp_path))
         doc = loader.load_document("docs.md")
         assert doc is not None
@@ -271,7 +273,11 @@ class TestJSONLoader:
 
     def test_content_key_extraction(self, tmp_path: Path) -> None:
         """content_key should extract the specified field as content."""
-        data = {"title": "AI Overview", "body": "Artificial intelligence is broad.", "other": "ignore"}
+        data = {
+            "title": "AI Overview",
+            "body": "Artificial intelligence is broad.",
+            "other": "ignore",
+        }
         (tmp_path / "doc.json").write_text(json.dumps(data))
         loader = JSONLoader(base_path=str(tmp_path), content_key="body")
         doc = loader.load_document("doc.json")
@@ -321,7 +327,8 @@ class TestJSONLLoader:
 
     def test_load_folder_includes_jsonl(self, tmp_path: Path) -> None:
         (tmp_path / "records.jsonl").write_text(
-            json.dumps({"id": 1, "text": "record one"}) + "\n"
+            json.dumps({"id": 1, "text": "record one"})
+            + "\n"
             + json.dumps({"id": 2, "text": "record two"})
         )
         loader = JSONLLoader(base_path=str(tmp_path))

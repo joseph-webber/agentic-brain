@@ -274,7 +274,9 @@ class WakeWordDetector:
             latency_ms=(time.monotonic() - t0) * 1000,
         )
 
-    def detect_auto(self, audio_chunk: bytes, text: Optional[str] = None) -> WakeWordResult:
+    def detect_auto(
+        self, audio_chunk: bytes, text: Optional[str] = None
+    ) -> WakeWordResult:
         """Detect wake word using best available method.
 
         Tries ML detection first, falls back to text matching if:

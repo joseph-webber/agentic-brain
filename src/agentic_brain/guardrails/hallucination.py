@@ -4,6 +4,7 @@ This module implements simple heuristics to flag potential hallucinations
 such as ungrounded superlative claims, definitive statements without
 citations, and overconfident phrasing.
 """
+
 import re
 from typing import List
 

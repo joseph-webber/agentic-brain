@@ -124,7 +124,9 @@ class PromptTemplate:
         try:
             return _ENVIRONMENT.from_string(self.template).render(**context)
         except Exception as exc:  # pragma: no cover - defensive
-            raise PromptRenderError(f"Failed to render template '{self.name}': {exc}") from exc
+            raise PromptRenderError(
+                f"Failed to render template '{self.name}': {exc}"
+            ) from exc
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize the template to a dictionary."""

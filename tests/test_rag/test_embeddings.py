@@ -87,7 +87,9 @@ class TestFallbackEmbedding:
 class TestEmbeddingResult:
     def test_stores_embedding_and_dimensions(self) -> None:
         vec = [0.1, 0.2, 0.3]
-        result = EmbeddingResult(text="test", embedding=vec, model="test-model", dimensions=3)
+        result = EmbeddingResult(
+            text="test", embedding=vec, model="test-model", dimensions=3
+        )
         assert result.embedding == vec
         assert result.dimensions == 3
 
@@ -97,7 +99,9 @@ class TestEmbeddingResult:
         assert result.dimensions == 8
 
     def test_text_field_stored(self) -> None:
-        result = EmbeddingResult(text="my text", embedding=[0.5], model="m", dimensions=1)
+        result = EmbeddingResult(
+            text="my text", embedding=[0.5], model="m", dimensions=1
+        )
         assert result.text == "my text"
 
     def test_cached_field_default_false(self) -> None:
@@ -121,6 +125,7 @@ class TestOllamaEmbeddings:
         # OllamaEmbeddings.embed does not catch ConnectionError; that is expected
         # behaviour — callers should wrap in try/except or use get_embeddings(cache=True).
         import requests as _requests
+
         with patch.object(_requests, "post", side_effect=ConnectionError("no server")):
             with pytest.raises((ConnectionError, Exception)):
                 emb.embed("test text for fallback")
@@ -165,6 +170,7 @@ class TestOllamaEmbeddings:
 class TestOpenAIEmbeddings:
     def _make(self, model: str) -> "OpenAIEmbeddings":
         import os
+
         os.environ.setdefault("OPENAI_API_KEY", "test-key-for-tests")
         return OpenAIEmbeddings(model=model, api_key="test-key-for-tests")
 
@@ -180,9 +186,7 @@ class TestOpenAIEmbeddings:
         """embed() should call the OpenAI API endpoint."""
         expected_vec = [0.01] * 512
         mock_resp = MagicMock()
-        mock_resp.json.return_value = {
-            "data": [{"embedding": expected_vec}]
-        }
+        mock_resp.json.return_value = {"data": [{"embedding": expected_vec}]}
         mock_resp.raise_for_status = MagicMock()
 
         emb = self._make("text-embedding-3-small")
@@ -194,6 +198,7 @@ class TestOpenAIEmbeddings:
     def test_embed_raises_without_api_key(self) -> None:
         """Constructing without an API key or env var should raise."""
         import os
+
         old = os.environ.pop("OPENAI_API_KEY", None)
         try:
             with pytest.raises((ValueError, Exception)):
@@ -269,6 +274,7 @@ class TestGetEmbeddings:
     def test_ollama_provider(self) -> None:
         """get_embeddings(provider='ollama') may wrap in CachedEmbeddings but is still an EmbeddingProvider."""
         from agentic_brain.rag.embeddings import CachedEmbeddings
+
         provider = get_embeddings(provider="ollama")
         assert isinstance(provider, EmbeddingProvider)
         # When cache=True (default), it may be wrapped in CachedEmbeddings

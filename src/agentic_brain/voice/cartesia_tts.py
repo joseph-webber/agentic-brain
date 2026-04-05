@@ -48,13 +48,17 @@ class CartesiaTTS:
         self.container = container
         self.encoding = encoding
         self._client = None
-        self._cache_dir = cache_dir or Path.home() / ".cache" / "agentic-brain" / "cartesia"
+        self._cache_dir = (
+            cache_dir or Path.home() / ".cache" / "agentic-brain" / "cartesia"
+        )
         try:
             self._cache_dir.mkdir(parents=True, exist_ok=True)
         except Exception:
             # Cache directory is an optimization only – never fail construction
             logger.debug(
-                "CartesiaTTS: unable to create cache dir %s", self._cache_dir, exc_info=True
+                "CartesiaTTS: unable to create cache dir %s",
+                self._cache_dir,
+                exc_info=True,
             )
 
     def _ensure_client(self):
@@ -144,7 +148,9 @@ class CartesiaTTS:
                     tmp_path.unlink()
             except OSError:
                 logger.debug(
-                    "CartesiaTTS: failed to remove temp file %s", tmp_path, exc_info=True
+                    "CartesiaTTS: failed to remove temp file %s",
+                    tmp_path,
+                    exc_info=True,
                 )
 
     def synthesize_streaming(self, text: str) -> Iterator[bytes]:

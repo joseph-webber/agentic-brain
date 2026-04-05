@@ -103,7 +103,9 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         self.state.record("POST", parsed, payload)
 
         if self.state.should_fail(parsed):
-            self._send_json(429, {"error": {"message": "rate limited", "retry_after": 0}})
+            self._send_json(
+                429, {"error": {"message": "rate limited", "retry_after": 0}}
+            )
             return
 
         if parsed == "/api/generate":
@@ -140,7 +142,11 @@ class MockLLMHandler(BaseHTTPRequestHandler):
 
         if parsed == "/v1/chat/completions":
             user = next(
-                (msg.get("content", "") for msg in payload.get("messages", []) if msg.get("role") == "user"),
+                (
+                    msg.get("content", "")
+                    for msg in payload.get("messages", [])
+                    if msg.get("role") == "user"
+                ),
                 "",
             )
             self._send_json(
@@ -161,7 +167,11 @@ class MockLLMHandler(BaseHTTPRequestHandler):
 
         if parsed == "/v1/messages":
             user = next(
-                (msg.get("content", "") for msg in payload.get("messages", []) if msg.get("role") == "user"),
+                (
+                    msg.get("content", "")
+                    for msg in payload.get("messages", [])
+                    if msg.get("role") == "user"
+                ),
                 "",
             )
             self._send_json(
@@ -194,13 +204,19 @@ class MockGraphStore:
         return dot / (norm_left * norm_right)
 
     def _chunk_entities_for_doc(self, doc_id: str) -> list[str]:
-        chunk_ids = [chunk_id for chunk_id, chunk in self.chunks.items() if chunk["document_id"] == doc_id]
+        chunk_ids = [
+            chunk_id
+            for chunk_id, chunk in self.chunks.items()
+            if chunk["document_id"] == doc_id
+        ]
         entity_ids: set[str] = set()
         for chunk_id in chunk_ids:
             entity_ids.update(self.chunk_entities.get(chunk_id, set()))
         return sorted(entity_ids)
 
-    def _vector_results(self, embedding: list[float], top_k: int) -> list[dict[str, Any]]:
+    def _vector_results(
+        self, embedding: list[float], top_k: int
+    ) -> list[dict[str, Any]]:
         results = []
         for chunk_id, chunk in self.chunks.items():
             score = self._cosine(embedding, chunk["embedding"])
@@ -272,7 +288,9 @@ class MockGraphStore:
                     "id": entity_id,
                     "name": entity["name"],
                     "type": entity["type"],
-                    "mention_count": self.entities.get(entity_id, {}).get("mention_count", 0)
+                    "mention_count": self.entities.get(entity_id, {}).get(
+                        "mention_count", 0
+                    )
                     + entity.get("count", 1),
                     "positions": entity.get("positions", []),
                 }
@@ -294,10 +312,15 @@ class MockGraphStore:
 
         if "UNWIND $links AS link" in normalized:
             for link in params.get("links", []):
-                self.chunk_entities.setdefault(link["chunk_id"], set()).add(link["entity_id"])
+                self.chunk_entities.setdefault(link["chunk_id"], set()).add(
+                    link["entity_id"]
+                )
             return []
 
-        if "db.index.vector.queryNodes" in normalized and "YIELD node, score" in normalized:
+        if (
+            "db.index.vector.queryNodes" in normalized
+            and "YIELD node, score" in normalized
+        ):
             embedding = params.get("embedding", [])
             top_k = int(params.get("k", 5))
             results = []
@@ -306,7 +329,11 @@ class MockGraphStore:
                 if score >= float(params.get("min_score", 0.0)):
                     results.append(
                         {
-                            "node": {"content": chunk["content"], "text": chunk["content"], **chunk},
+                            "node": {
+                                "content": chunk["content"],
+                                "text": chunk["content"],
+                                **chunk,
+                            },
                             "score": score,
                             "labels": ["Chunk"],
                         }
@@ -324,8 +351,13 @@ class MockGraphStore:
             top_k = int(params.get("top_k", 5))
             results = []
             for entity_id, entity in self.entities.items():
-                if not pattern or entity["name"].lower() in pattern or any(
-                    token and token in entity["name"].lower() for token in pattern.split("|")
+                if (
+                    not pattern
+                    or entity["name"].lower() in pattern
+                    or any(
+                        token and token in entity["name"].lower()
+                        for token in pattern.split("|")
+                    )
                 ):
                     for chunk_id, linked_entities in self.chunk_entities.items():
                         if entity_id not in linked_entities:
@@ -350,7 +382,15 @@ class MockGraphStore:
             rows = []
             for chunk in self.chunks.values():
                 if label.lower() == "chunk":
-                    rows.append({"n": {"content": chunk["content"], "text": chunk["content"]}, "embedding": chunk["embedding"]})
+                    rows.append(
+                        {
+                            "n": {
+                                "content": chunk["content"],
+                                "text": chunk["content"],
+                            },
+                            "embedding": chunk["embedding"],
+                        }
+                    )
             return rows
 
         return []

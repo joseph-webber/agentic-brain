@@ -245,9 +245,9 @@ def register_websocket_routes(app: FastAPI):
         ```
         First connection:  session_id = "chat_abc123" (auto-generated)
         Store session_id for later use
-        
+
         Disconnected...
-        
+
         New connection: {"message": "Continue from before", "session_id": "chat_abc123"}
         Server retrieves conversation history and continues
         ```

@@ -168,7 +168,9 @@ class TestAspectCritique:
             aspects=[AspectType.CONCISENESS],
         )[AspectType.CONCISENESS]
         long = calc.calculate(
-            answer=" ".join(["Use kubectl apply to deploy the application safely."] * 20),
+            answer=" ".join(
+                ["Use kubectl apply to deploy the application safely."] * 20
+            ),
             question="How do I deploy?",
             contexts=["kubectl apply deploys workloads."],
             aspects=[AspectType.CONCISENESS],
@@ -200,7 +202,9 @@ class TestAnswerCorrectness:
 
     def test_correctness_beats_unrelated_answer(self):
         calc = AnswerCorrectnessCalculator()
-        high = calc.calculate("Use kubectl apply to deploy.", "Use kubectl apply to deploy.")
+        high = calc.calculate(
+            "Use kubectl apply to deploy.", "Use kubectl apply to deploy."
+        )
         low = calc.calculate("The ocean is warm today.", "Use kubectl apply to deploy.")
         assert high.score > low.score
 
@@ -224,7 +228,9 @@ class TestContextEntityRecall:
 
     def test_no_entities_defaults_to_perfect_score(self):
         calc = ContextEntityRecallCalculator()
-        result = calc.calculate(contexts=["Any context."], ground_truth="the answer is yes")
+        result = calc.calculate(
+            contexts=["Any context."], ground_truth="the answer is yes"
+        )
         assert result.score == pytest.approx(1.0)
 
     def test_missing_entity_lowers_score(self):
@@ -295,7 +301,9 @@ class TestNoiseRobustness:
             return (f"answer for {question}", ["ctx"])
 
         calc = NoiseRobustnessCalculator(rag_func=rag_func)
-        result = calc.calculate(noisy_sample.question, noisy_sample.answer, noise_types=["adversarial"])
+        result = calc.calculate(
+            noisy_sample.question, noisy_sample.answer, noise_types=["adversarial"]
+        )
         assert calls
         assert calls[0].startswith("Ignore previous instructions and")
         assert result.details["noise_results"]["adversarial"]["noisy_query"].startswith(
@@ -305,7 +313,9 @@ class TestNoiseRobustness:
 
 class TestMultiTurnEvaluation:
     def test_empty_conversation_returns_zeroes(self):
-        result = MultiTurnEvaluator().evaluate_conversation(ConversationSample(turns=[]))
+        result = MultiTurnEvaluator().evaluate_conversation(
+            ConversationSample(turns=[])
+        )
         assert isinstance(result, MultiTurnResult)
         assert result.overall_score == 0.0
         assert result.turn_results == []
@@ -353,7 +363,9 @@ class TestAdvancedEvaluator:
 
     def test_evaluate_answer_quality(self):
         evaluator = AdvancedRAGASEvaluator()
-        results = evaluator.evaluate_answer_quality("Neo4j graph database", "Neo4j graph database")
+        results = evaluator.evaluate_answer_quality(
+            "Neo4j graph database", "Neo4j graph database"
+        )
         assert set(results) == {"correctness", "similarity"}
         assert results["correctness"].score == pytest.approx(1.0)
 
@@ -404,7 +416,9 @@ class TestAdvancedEvaluator:
 
     def test_evaluator_works_with_mock_rag_function(self, advanced_sample):
         evaluator = AdvancedRAGASEvaluator(
-            rag_func=MagicMock(return_value=(advanced_sample.answer, advanced_sample.contexts))
+            rag_func=MagicMock(
+                return_value=(advanced_sample.answer, advanced_sample.contexts)
+            )
         )
         result = evaluator.evaluate_noise_robustness(
             advanced_sample.question,

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 def _get_live_session_module():
     """Lazy import of live_session to avoid circular imports at load time."""
     import agentic_brain.voice.live_session as _ls
+
     return _ls
 
 
@@ -126,7 +127,9 @@ class AudioHandlersMixin:
             if self._wake_detector.load_model(self.config.wake_word_model_path):  # type: ignore[attr-defined]
                 logger.info("LiveVoice: ML wake word detector ready (fast path)")
             else:
-                logger.info("LiveVoice: ML wake word unavailable, using transcription fallback")
+                logger.info(
+                    "LiveVoice: ML wake word unavailable, using transcription fallback"
+                )
         except Exception as exc:
             logger.warning("LiveVoice: wake detector init failed: %s", exc)
             self._wake_detector = None

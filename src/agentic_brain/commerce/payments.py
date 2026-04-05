@@ -177,7 +177,9 @@ class PaymentMethodReference:
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("PaymentMethodReference validation failed: %s", exc, exc_info=True)
+            logger.error(
+                "PaymentMethodReference validation failed: %s", exc, exc_info=True
+            )
             raise ValidationError(f"Invalid payment method: {exc}") from exc
 
     @property
@@ -225,8 +227,12 @@ class PaymentRequest:
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("PaymentRequest validation failed for order_id=%s: %s", 
-                        getattr(self, 'order_id', 'unknown'), exc, exc_info=True)
+            logger.error(
+                "PaymentRequest validation failed for order_id=%s: %s",
+                getattr(self, "order_id", "unknown"),
+                exc,
+                exc_info=True,
+            )
             raise ValidationError(f"Invalid payment request: {exc}") from exc
 
 
@@ -254,8 +260,12 @@ class SubscriptionRequest:
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("SubscriptionRequest validation failed for customer_id=%s: %s",
-                        getattr(self, 'customer_id', 'unknown'), exc, exc_info=True)
+            logger.error(
+                "SubscriptionRequest validation failed for customer_id=%s: %s",
+                getattr(self, "customer_id", "unknown"),
+                exc,
+                exc_info=True,
+            )
             raise ValidationError(f"Invalid subscription request: {exc}") from exc
 
 
@@ -283,8 +293,12 @@ class RefundRequest:
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("RefundRequest validation failed for transaction_id=%s: %s",
-                        getattr(self, 'transaction_id', 'unknown'), exc, exc_info=True)
+            logger.error(
+                "RefundRequest validation failed for transaction_id=%s: %s",
+                getattr(self, "transaction_id", "unknown"),
+                exc,
+                exc_info=True,
+            )
             raise ValidationError(f"Invalid refund request: {exc}") from exc
 
 
@@ -409,9 +423,13 @@ class StripeGateway(PaymentGateway):
 
     def create_payment(self, request: PaymentRequest) -> PaymentResult:
         try:
-            logger.info("Creating Stripe payment for order_id=%s amount=%s %s",
-                       request.order_id, request.amount, request.currency)
-            
+            logger.info(
+                "Creating Stripe payment for order_id=%s amount=%s %s",
+                request.order_id,
+                request.amount,
+                request.currency,
+            )
+
             payload = _call_client_method(
                 self.client,
                 [
@@ -428,7 +446,7 @@ class StripeGateway(PaymentGateway):
                 metadata=request.metadata,
             )
             data = _ensure_mapping(payload)
-            
+
             result = PaymentResult(
                 gateway=self.name,
                 transaction_id=str(data["id"]),
@@ -438,24 +456,39 @@ class StripeGateway(PaymentGateway):
                 client_token=_safe_string(data.get("client_secret")),
                 metadata=_sanitize_for_logging(data),
             )
-            
-            logger.info("Stripe payment created: transaction_id=%s status=%s",
-                       result.transaction_id, result.status)
+
+            logger.info(
+                "Stripe payment created: transaction_id=%s status=%s",
+                result.transaction_id,
+                result.status,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except TimeoutError as exc:
-            logger.error("Stripe payment timeout for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "Stripe payment timeout for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayTimeoutError(f"Stripe payment timeout: {exc}") from exc
         except ConnectionError as exc:
-            logger.error("Stripe connection error for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "Stripe connection error for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayConnectionError(f"Cannot connect to Stripe: {exc}") from exc
         except Exception as exc:
-            logger.error("Stripe payment failed for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "Stripe payment failed for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"Stripe payment failed: {exc}") from exc
 
     def create_payment_intent(self, request: PaymentRequest) -> PaymentResult:
@@ -464,9 +497,12 @@ class StripeGateway(PaymentGateway):
 
     def create_subscription(self, request: SubscriptionRequest) -> PaymentResult:
         try:
-            logger.info("Creating Stripe subscription for customer_id=%s price_id=%s",
-                       request.customer_id, request.price_id)
-            
+            logger.info(
+                "Creating Stripe subscription for customer_id=%s price_id=%s",
+                request.customer_id,
+                request.price_id,
+            )
+
             payload = _call_client_method(
                 self.client,
                 ["subscriptions_create", "subscriptions.create", "Subscription.create"],
@@ -476,7 +512,7 @@ class StripeGateway(PaymentGateway):
                 metadata=request.metadata,
             )
             data = _ensure_mapping(payload)
-            
+
             result = PaymentResult(
                 gateway=self.name,
                 transaction_id=str(data.get("latest_invoice", data.get("id"))),
@@ -484,31 +520,49 @@ class StripeGateway(PaymentGateway):
                 subscription_id=str(data["id"]),
                 metadata=_sanitize_for_logging(data),
             )
-            
-            logger.info("Stripe subscription created: subscription_id=%s status=%s",
-                       result.subscription_id, result.status)
+
+            logger.info(
+                "Stripe subscription created: subscription_id=%s status=%s",
+                result.subscription_id,
+                result.status,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except TimeoutError as exc:
-            logger.error("Stripe subscription timeout for customer_id=%s: %s",
-                        request.customer_id, exc, exc_info=True)
+            logger.error(
+                "Stripe subscription timeout for customer_id=%s: %s",
+                request.customer_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayTimeoutError(f"Stripe subscription timeout: {exc}") from exc
         except ConnectionError as exc:
-            logger.error("Stripe connection error for customer_id=%s: %s",
-                        request.customer_id, exc, exc_info=True)
+            logger.error(
+                "Stripe connection error for customer_id=%s: %s",
+                request.customer_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayConnectionError(f"Cannot connect to Stripe: {exc}") from exc
         except Exception as exc:
-            logger.error("Stripe subscription failed for customer_id=%s: %s",
-                        request.customer_id, exc, exc_info=True)
+            logger.error(
+                "Stripe subscription failed for customer_id=%s: %s",
+                request.customer_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"Stripe subscription failed: {exc}") from exc
 
     def refund_payment(self, request: RefundRequest) -> RefundResult:
         try:
-            logger.info("Creating Stripe refund for transaction_id=%s amount=%s",
-                       request.transaction_id, request.amount or "full")
-            
+            logger.info(
+                "Creating Stripe refund for transaction_id=%s amount=%s",
+                request.transaction_id,
+                request.amount or "full",
+            )
+
             kwargs: dict[str, Any] = {
                 "payment_intent": request.transaction_id,
                 "reason": request.reason,
@@ -519,14 +573,14 @@ class StripeGateway(PaymentGateway):
                     request.amount,
                     request.currency or "USD",
                 )
-                
+
             payload = _call_client_method(
                 self.client,
                 ["refunds_create", "refunds.create", "Refund.create"],
                 **kwargs,
             )
             data = _ensure_mapping(payload)
-            
+
             result = RefundResult(
                 gateway=self.name,
                 refund_id=str(data["id"]),
@@ -536,24 +590,39 @@ class StripeGateway(PaymentGateway):
                 currency=request.currency,
                 metadata=_sanitize_for_logging(data),
             )
-            
-            logger.info("Stripe refund created: refund_id=%s status=%s",
-                       result.refund_id, result.status)
+
+            logger.info(
+                "Stripe refund created: refund_id=%s status=%s",
+                result.refund_id,
+                result.status,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except TimeoutError as exc:
-            logger.error("Stripe refund timeout for transaction_id=%s: %s",
-                        request.transaction_id, exc, exc_info=True)
+            logger.error(
+                "Stripe refund timeout for transaction_id=%s: %s",
+                request.transaction_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayTimeoutError(f"Stripe refund timeout: {exc}") from exc
         except ConnectionError as exc:
-            logger.error("Stripe connection error for transaction_id=%s: %s",
-                        request.transaction_id, exc, exc_info=True)
+            logger.error(
+                "Stripe connection error for transaction_id=%s: %s",
+                request.transaction_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayConnectionError(f"Cannot connect to Stripe: {exc}") from exc
         except Exception as exc:
-            logger.error("Stripe refund failed for transaction_id=%s: %s",
-                        request.transaction_id, exc, exc_info=True)
+            logger.error(
+                "Stripe refund failed for transaction_id=%s: %s",
+                request.transaction_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"Stripe refund failed: {exc}") from exc
 
     def verify_webhook(
@@ -565,7 +634,7 @@ class StripeGateway(PaymentGateway):
     ) -> WebhookEvent:
         try:
             logger.info("Verifying Stripe webhook signature")
-            
+
             body = payload.decode("utf-8") if isinstance(payload, bytes) else payload
             signed_body = _verify_stripe_signature(
                 body,
@@ -573,7 +642,7 @@ class StripeGateway(PaymentGateway):
                 secret=webhook_secret,
             )
             event = json.loads(signed_body)
-            
+
             result = WebhookEvent(
                 gateway=self.name,
                 event_id=_safe_string(event.get("id")),
@@ -581,11 +650,14 @@ class StripeGateway(PaymentGateway):
                 verified=True,
                 payload=event,
             )
-            
-            logger.info("Stripe webhook verified: event_id=%s event_type=%s",
-                       result.event_id, result.event_type)
+
+            logger.info(
+                "Stripe webhook verified: event_id=%s event_type=%s",
+                result.event_id,
+                result.event_type,
+            )
             return result
-            
+
         except PaymentSecurityError:
             raise
         except json.JSONDecodeError as exc:
@@ -629,9 +701,13 @@ class PayPalGateway(PaymentGateway):
         cancel_url: str,
     ) -> PaymentResult:
         try:
-            logger.info("Creating PayPal checkout for order_id=%s amount=%s %s",
-                       request.order_id, request.amount, request.currency)
-            
+            logger.info(
+                "Creating PayPal checkout for order_id=%s amount=%s %s",
+                request.order_id,
+                request.amount,
+                request.currency,
+            )
+
             payload = _call_client_method(
                 self.client,
                 ["orders_create", "orders.create", "Order.create"],
@@ -658,7 +734,7 @@ class PayPalGateway(PaymentGateway):
             )
             data = _ensure_mapping(payload)
             checkout_url = _extract_link(data.get("links", []), rel="approve")
-            
+
             result = PaymentResult(
                 gateway=self.name,
                 transaction_id=str(data["id"]),
@@ -668,24 +744,39 @@ class PayPalGateway(PaymentGateway):
                 checkout_url=checkout_url,
                 metadata=_sanitize_for_logging(data),
             )
-            
-            logger.info("PayPal checkout created: transaction_id=%s status=%s",
-                       result.transaction_id, result.status)
+
+            logger.info(
+                "PayPal checkout created: transaction_id=%s status=%s",
+                result.transaction_id,
+                result.status,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except TimeoutError as exc:
-            logger.error("PayPal checkout timeout for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "PayPal checkout timeout for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayTimeoutError(f"PayPal checkout timeout: {exc}") from exc
         except ConnectionError as exc:
-            logger.error("PayPal connection error for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "PayPal connection error for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayConnectionError(f"Cannot connect to PayPal: {exc}") from exc
         except Exception as exc:
-            logger.error("PayPal checkout failed for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "PayPal checkout failed for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"PayPal checkout failed: {exc}") from exc
 
     def create_express_checkout(
@@ -704,9 +795,12 @@ class PayPalGateway(PaymentGateway):
 
     def refund_payment(self, request: RefundRequest) -> RefundResult:
         try:
-            logger.info("Creating PayPal refund for transaction_id=%s amount=%s",
-                       request.transaction_id, request.amount or "full")
-            
+            logger.info(
+                "Creating PayPal refund for transaction_id=%s amount=%s",
+                request.transaction_id,
+                request.amount or "full",
+            )
+
             currency = request.currency or "USD"
             kwargs: dict[str, Any] = {
                 "capture_id": request.transaction_id,
@@ -717,14 +811,14 @@ class PayPalGateway(PaymentGateway):
                     "value": f"{request.amount:.2f}",
                     "currency_code": currency,
                 }
-                
+
             payload = _call_client_method(
                 self.client,
                 ["refunds_create", "payments_refund", "refunds.create"],
                 **kwargs,
             )
             data = _ensure_mapping(payload)
-            
+
             result = RefundResult(
                 gateway=self.name,
                 refund_id=str(data["id"]),
@@ -734,24 +828,39 @@ class PayPalGateway(PaymentGateway):
                 currency=currency,
                 metadata=_sanitize_for_logging(data),
             )
-            
-            logger.info("PayPal refund created: refund_id=%s status=%s",
-                       result.refund_id, result.status)
+
+            logger.info(
+                "PayPal refund created: refund_id=%s status=%s",
+                result.refund_id,
+                result.status,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except TimeoutError as exc:
-            logger.error("PayPal refund timeout for transaction_id=%s: %s",
-                        request.transaction_id, exc, exc_info=True)
+            logger.error(
+                "PayPal refund timeout for transaction_id=%s: %s",
+                request.transaction_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayTimeoutError(f"PayPal refund timeout: {exc}") from exc
         except ConnectionError as exc:
-            logger.error("PayPal connection error for transaction_id=%s: %s",
-                        request.transaction_id, exc, exc_info=True)
+            logger.error(
+                "PayPal connection error for transaction_id=%s: %s",
+                request.transaction_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayConnectionError(f"Cannot connect to PayPal: {exc}") from exc
         except Exception as exc:
-            logger.error("PayPal refund failed for transaction_id=%s: %s",
-                        request.transaction_id, exc, exc_info=True)
+            logger.error(
+                "PayPal refund failed for transaction_id=%s: %s",
+                request.transaction_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"PayPal refund failed: {exc}") from exc
 
 
@@ -775,9 +884,13 @@ class SquareGateway(PaymentGateway):
 
     def create_payment(self, request: PaymentRequest) -> PaymentResult:
         try:
-            logger.info("Creating Square payment for order_id=%s amount=%s %s",
-                       request.order_id, request.amount, request.currency)
-            
+            logger.info(
+                "Creating Square payment for order_id=%s amount=%s %s",
+                request.order_id,
+                request.amount,
+                request.currency,
+            )
+
             payload = _call_client_method(
                 self.client,
                 ["payments_create", "payments.create", "PaymentsApi.create_payment"],
@@ -796,7 +909,7 @@ class SquareGateway(PaymentGateway):
             )
             data = _ensure_mapping(payload)
             payment = _ensure_mapping(data.get("payment", data))
-            
+
             result = PaymentResult(
                 gateway=self.name,
                 transaction_id=str(payment["id"]),
@@ -805,31 +918,49 @@ class SquareGateway(PaymentGateway):
                 currency=request.currency,
                 metadata=_sanitize_for_logging(payment),
             )
-            
-            logger.info("Square payment created: transaction_id=%s status=%s",
-                       result.transaction_id, result.status)
+
+            logger.info(
+                "Square payment created: transaction_id=%s status=%s",
+                result.transaction_id,
+                result.status,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except TimeoutError as exc:
-            logger.error("Square payment timeout for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "Square payment timeout for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayTimeoutError(f"Square payment timeout: {exc}") from exc
         except ConnectionError as exc:
-            logger.error("Square connection error for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "Square connection error for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayConnectionError(f"Cannot connect to Square: {exc}") from exc
         except Exception as exc:
-            logger.error("Square payment failed for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "Square payment failed for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"Square payment failed: {exc}") from exc
 
     def refund_payment(self, request: RefundRequest) -> RefundResult:
         try:
-            logger.info("Creating Square refund for transaction_id=%s amount=%s",
-                       request.transaction_id, request.amount or "full")
-            
+            logger.info(
+                "Creating Square refund for transaction_id=%s amount=%s",
+                request.transaction_id,
+                request.amount or "full",
+            )
+
             currency = request.currency or "USD"
             payload = _call_client_method(
                 self.client,
@@ -856,7 +987,7 @@ class SquareGateway(PaymentGateway):
             )
             data = _ensure_mapping(payload)
             refund = _ensure_mapping(data.get("refund", data))
-            
+
             result = RefundResult(
                 gateway=self.name,
                 refund_id=str(refund["id"]),
@@ -866,24 +997,39 @@ class SquareGateway(PaymentGateway):
                 currency=currency,
                 metadata=_sanitize_for_logging(refund),
             )
-            
-            logger.info("Square refund created: refund_id=%s status=%s",
-                       result.refund_id, result.status)
+
+            logger.info(
+                "Square refund created: refund_id=%s status=%s",
+                result.refund_id,
+                result.status,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except TimeoutError as exc:
-            logger.error("Square refund timeout for transaction_id=%s: %s",
-                        request.transaction_id, exc, exc_info=True)
+            logger.error(
+                "Square refund timeout for transaction_id=%s: %s",
+                request.transaction_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayTimeoutError(f"Square refund timeout: {exc}") from exc
         except ConnectionError as exc:
-            logger.error("Square connection error for transaction_id=%s: %s",
-                        request.transaction_id, exc, exc_info=True)
+            logger.error(
+                "Square connection error for transaction_id=%s: %s",
+                request.transaction_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayConnectionError(f"Cannot connect to Square: {exc}") from exc
         except Exception as exc:
-            logger.error("Square refund failed for transaction_id=%s: %s",
-                        request.transaction_id, exc, exc_info=True)
+            logger.error(
+                "Square refund failed for transaction_id=%s: %s",
+                request.transaction_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"Square refund failed: {exc}") from exc
 
 
@@ -896,9 +1042,13 @@ class CashOnDeliveryGateway(PaymentGateway):
 
     def create_payment(self, request: PaymentRequest) -> PaymentResult:
         try:
-            logger.info("Creating COD payment for order_id=%s amount=%s %s",
-                       request.order_id, request.amount, request.currency)
-            
+            logger.info(
+                "Creating COD payment for order_id=%s amount=%s %s",
+                request.order_id,
+                request.amount,
+                request.currency,
+            )
+
             result = PaymentResult(
                 gateway=self.name,
                 transaction_id=f"cod_{request.order_id}",
@@ -910,13 +1060,17 @@ class CashOnDeliveryGateway(PaymentGateway):
                     "instructions": "Collect payment from the customer at fulfilment time.",
                 },
             )
-            
+
             logger.info("COD payment created: transaction_id=%s", result.transaction_id)
             return result
-            
+
         except Exception as exc:
-            logger.error("COD payment failed for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "COD payment failed for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"COD payment failed: {exc}") from exc
 
     def refund_payment(self, request: RefundRequest) -> RefundResult:
@@ -972,7 +1126,9 @@ class PaymentProcessor:
     ) -> PaymentGateway:
         """Return the configured gateway by name."""
         try:
-            selected = self._normalize_gateway_name(gateway_name or self._default_gateway)
+            selected = self._normalize_gateway_name(
+                gateway_name or self._default_gateway
+            )
             gateway = self._gateways.get(selected)
             if gateway is None:
                 raise ValidationError(f"unknown payment gateway: {selected}")
@@ -980,7 +1136,9 @@ class PaymentProcessor:
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("Failed to get gateway %s: %s", gateway_name, exc, exc_info=True)
+            logger.error(
+                "Failed to get gateway %s: %s", gateway_name, exc, exc_info=True
+            )
             raise GatewayError(f"Gateway lookup failed: {exc}") from exc
 
     def charge(
@@ -997,9 +1155,14 @@ class PaymentProcessor:
     ) -> PaymentIntent:
         """Backward-compatible convenience wrapper for direct charges."""
         try:
-            logger.info("Processing charge for order_id=%s amount=%s %s gateway=%s",
-                       order_id, amount, currency, gateway_name or "default")
-            
+            logger.info(
+                "Processing charge for order_id=%s amount=%s %s gateway=%s",
+                order_id,
+                amount,
+                currency,
+                gateway_name or "default",
+            )
+
             request = PaymentRequest(
                 amount=amount,
                 currency=currency,
@@ -1010,11 +1173,13 @@ class PaymentProcessor:
                 metadata=dict(metadata or {}),
             )
             return self.process_payment(request, gateway_name=gateway_name)
-            
+
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("Charge failed for order_id=%s: %s", order_id, exc, exc_info=True)
+            logger.error(
+                "Charge failed for order_id=%s: %s", order_id, exc, exc_info=True
+            )
             raise PaymentError(f"Charge operation failed: {exc}") from exc
 
     def process_payment(
@@ -1024,13 +1189,16 @@ class PaymentProcessor:
         gateway_name: str | None = None,
     ) -> PaymentResult:
         try:
-            logger.info("Processing payment for order_id=%s gateway=%s",
-                       request.order_id, gateway_name or "default")
-            
+            logger.info(
+                "Processing payment for order_id=%s gateway=%s",
+                request.order_id,
+                gateway_name or "default",
+            )
+
             gateway = self.get_gateway(gateway_name)
             fraud_metadata = self._run_fraud_checks(gateway.name, "payment", request)
             result = gateway.create_payment(request)
-            
+
             self._record_transaction(
                 operation="payment",
                 gateway=gateway.name,
@@ -1043,16 +1211,23 @@ class PaymentProcessor:
                 payment_method=request.payment_method,
                 metadata={**fraud_metadata, **result.metadata},
             )
-            
-            logger.info("Payment processed successfully: transaction_id=%s status=%s",
-                       result.transaction_id, result.status)
+
+            logger.info(
+                "Payment processed successfully: transaction_id=%s status=%s",
+                result.transaction_id,
+                result.status,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("Payment processing failed for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "Payment processing failed for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"Payment processing failed: {exc}") from exc
 
     def create_subscription(
@@ -1062,13 +1237,18 @@ class PaymentProcessor:
         gateway_name: str | None = None,
     ) -> PaymentResult:
         try:
-            logger.info("Creating subscription for customer_id=%s gateway=%s",
-                       request.customer_id, gateway_name or "default")
-            
+            logger.info(
+                "Creating subscription for customer_id=%s gateway=%s",
+                request.customer_id,
+                gateway_name or "default",
+            )
+
             gateway = self.get_gateway(gateway_name)
-            fraud_metadata = self._run_fraud_checks(gateway.name, "subscription", request)
+            fraud_metadata = self._run_fraud_checks(
+                gateway.name, "subscription", request
+            )
             result = gateway.create_subscription(request)
-            
+
             self._record_transaction(
                 operation="subscription",
                 gateway=gateway.name,
@@ -1078,16 +1258,23 @@ class PaymentProcessor:
                 payment_method=request.payment_method,
                 metadata={**fraud_metadata, **result.metadata},
             )
-            
-            logger.info("Subscription created successfully: subscription_id=%s status=%s",
-                       result.subscription_id, result.status)
+
+            logger.info(
+                "Subscription created successfully: subscription_id=%s status=%s",
+                result.subscription_id,
+                result.status,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("Subscription creation failed for customer_id=%s: %s",
-                        request.customer_id, exc, exc_info=True)
+            logger.error(
+                "Subscription creation failed for customer_id=%s: %s",
+                request.customer_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"Subscription creation failed: {exc}") from exc
 
     def create_checkout(
@@ -1099,9 +1286,12 @@ class PaymentProcessor:
         gateway_name: str | None = None,
     ) -> PaymentResult:
         try:
-            logger.info("Creating checkout for order_id=%s gateway=%s",
-                       request.order_id, gateway_name or "default")
-            
+            logger.info(
+                "Creating checkout for order_id=%s gateway=%s",
+                request.order_id,
+                gateway_name or "default",
+            )
+
             gateway = self.get_gateway(gateway_name)
             fraud_metadata = self._run_fraud_checks(gateway.name, "checkout", request)
             result = gateway.create_checkout(
@@ -1109,7 +1299,7 @@ class PaymentProcessor:
                 return_url=return_url,
                 cancel_url=cancel_url,
             )
-            
+
             self._record_transaction(
                 operation="checkout",
                 gateway=gateway.name,
@@ -1122,16 +1312,23 @@ class PaymentProcessor:
                 payment_method=request.payment_method,
                 metadata={**fraud_metadata, **result.metadata},
             )
-            
-            logger.info("Checkout created successfully: transaction_id=%s checkout_url=%s",
-                       result.transaction_id, result.checkout_url)
+
+            logger.info(
+                "Checkout created successfully: transaction_id=%s checkout_url=%s",
+                result.transaction_id,
+                result.checkout_url,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("Checkout creation failed for order_id=%s: %s",
-                        request.order_id, exc, exc_info=True)
+            logger.error(
+                "Checkout creation failed for order_id=%s: %s",
+                request.order_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"Checkout creation failed: {exc}") from exc
 
     def refund_payment(
@@ -1141,13 +1338,16 @@ class PaymentProcessor:
         gateway_name: str | None = None,
     ) -> RefundResult:
         try:
-            logger.info("Processing refund for transaction_id=%s gateway=%s",
-                       request.transaction_id, gateway_name or "default")
-            
+            logger.info(
+                "Processing refund for transaction_id=%s gateway=%s",
+                request.transaction_id,
+                gateway_name or "default",
+            )
+
             gateway = self.get_gateway(gateway_name)
             fraud_metadata = self._run_fraud_checks(gateway.name, "refund", request)
             result = gateway.refund_payment(request)
-            
+
             self._record_transaction(
                 operation="refund",
                 gateway=gateway.name,
@@ -1161,16 +1361,23 @@ class PaymentProcessor:
                     **result.metadata,
                 },
             )
-            
-            logger.info("Refund processed successfully: refund_id=%s status=%s",
-                       result.refund_id, result.status)
+
+            logger.info(
+                "Refund processed successfully: refund_id=%s status=%s",
+                result.refund_id,
+                result.status,
+            )
             return result
-            
+
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("Refund processing failed for transaction_id=%s: %s",
-                        request.transaction_id, exc, exc_info=True)
+            logger.error(
+                "Refund processing failed for transaction_id=%s: %s",
+                request.transaction_id,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"Refund processing failed: {exc}") from exc
 
     def handle_webhook(
@@ -1183,14 +1390,14 @@ class PaymentProcessor:
     ) -> WebhookEvent:
         try:
             logger.info("Handling webhook for gateway=%s", gateway_name)
-            
+
             gateway = self.get_gateway(gateway_name)
             event = gateway.verify_webhook(
                 payload,
                 signature=signature,
                 webhook_secret=webhook_secret,
             )
-            
+
             self._record_transaction(
                 operation="webhook",
                 gateway=gateway.name,
@@ -1198,16 +1405,24 @@ class PaymentProcessor:
                 transaction_id=event.event_id,
                 metadata=_sanitize_for_logging(event.payload),
             )
-            
-            logger.info("Webhook processed: event_id=%s event_type=%s verified=%s",
-                       event.event_id, event.event_type, event.verified)
+
+            logger.info(
+                "Webhook processed: event_id=%s event_type=%s verified=%s",
+                event.event_id,
+                event.event_type,
+                event.verified,
+            )
             return event
-            
+
         except PaymentError:
             raise
         except Exception as exc:
-            logger.error("Webhook handling failed for gateway=%s: %s",
-                        gateway_name, exc, exc_info=True)
+            logger.error(
+                "Webhook handling failed for gateway=%s: %s",
+                gateway_name,
+                exc,
+                exc_info=True,
+            )
             raise GatewayError(f"Webhook handling failed: {exc}") from exc
 
     def _run_fraud_checks(
@@ -1223,12 +1438,18 @@ class PaymentProcessor:
                     decision = hook(gateway_name, operation, payload)
                     normalized = _normalize_fraud_decision(decision)
                     findings.append(normalized)
-                    
+
                     if not normalized["allow"]:
-                        reason = normalized.get("reason") or "fraud hook rejected request"
-                        logger.warning("Fraud check rejected operation=%s gateway=%s reason=%s",
-                                     operation, gateway_name, reason)
-                        
+                        reason = (
+                            normalized.get("reason") or "fraud hook rejected request"
+                        )
+                        logger.warning(
+                            "Fraud check rejected operation=%s gateway=%s reason=%s",
+                            operation,
+                            gateway_name,
+                            reason,
+                        )
+
                         self._record_transaction(
                             operation=operation,
                             gateway=gateway_name,
@@ -1242,20 +1463,22 @@ class PaymentProcessor:
                             metadata={"fraud": findings},
                         )
                         raise FraudRejectedError(str(reason))
-                        
+
                 except FraudRejectedError:
                     raise
                 except Exception as exc:
                     logger.error("Fraud check hook failed: %s", exc, exc_info=True)
                     # Continue to other hooks even if one fails
-                    findings.append({
-                        "allow": True,
-                        "error": str(exc),
-                        "hook_failed": True,
-                    })
-                    
+                    findings.append(
+                        {
+                            "allow": True,
+                            "error": str(exc),
+                            "hook_failed": True,
+                        }
+                    )
+
             return {"fraud": findings} if findings else {}
-            
+
         except FraudRejectedError:
             raise
         except Exception as exc:
@@ -1394,7 +1617,7 @@ def _call_client_method(client: Any, paths: Sequence[str], **kwargs: Any) -> Any
                     target = getattr(target, part)
             except AttributeError:
                 continue
-                
+
             if callable(target):
                 try:
                     filtered_kwargs = {k: v for k, v in kwargs.items() if v is not None}
@@ -1403,12 +1626,21 @@ def _call_client_method(client: Any, paths: Sequence[str], **kwargs: Any) -> Any
                     logger.error("Gateway method timeout: path=%s error=%s", path, exc)
                     raise GatewayTimeoutError(f"Gateway timeout: {exc}") from exc
                 except ConnectionError as exc:
-                    logger.error("Gateway connection error: path=%s error=%s", path, exc)
-                    raise GatewayConnectionError(f"Gateway connection failed: {exc}") from exc
+                    logger.error(
+                        "Gateway connection error: path=%s error=%s", path, exc
+                    )
+                    raise GatewayConnectionError(
+                        f"Gateway connection failed: {exc}"
+                    ) from exc
                 except Exception as exc:
-                    logger.error("Gateway method call failed: path=%s error=%s", path, exc, exc_info=True)
+                    logger.error(
+                        "Gateway method call failed: path=%s error=%s",
+                        path,
+                        exc,
+                        exc_info=True,
+                    )
                     raise GatewayError(f"Gateway method failed: {exc}") from exc
-                    
+
         raise GatewayError(
             f"client for gateway operation is missing supported method paths: {', '.join(paths)}"
         )
@@ -1455,7 +1687,7 @@ def _verify_stripe_signature(
     try:
         timestamp: str | None = None
         signature: str | None = None
-        
+
         for part in signature_header.split(","):
             part = part.strip()
             if part.startswith("t="):
@@ -1481,10 +1713,10 @@ def _verify_stripe_signature(
         if not hmac.compare_digest(expected, signature):
             logger.error("Webhook signature verification failed")
             raise PaymentSecurityError("invalid webhook signature")
-            
+
         logger.debug("Webhook signature verified successfully")
         return payload
-        
+
     except PaymentSecurityError:
         raise
     except Exception as exc:

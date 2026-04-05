@@ -73,7 +73,9 @@ class FakeSession:
         self.calls = []
 
     def post(self, url, headers=None, json=None, timeout=None):
-        self.calls.append({"url": url, "headers": headers, "json": json, "timeout": timeout})
+        self.calls.append(
+            {"url": url, "headers": headers, "json": json, "timeout": timeout}
+        )
         return FakeResponse(
             {
                 "content": [
@@ -109,7 +111,9 @@ def test_standalone_process_turn_updates_state(monkeypatch):
 
 
 def test_copilot_bridge_runs_copilot_and_speaks(monkeypatch):
-    settings = voice_standalone.VoiceSettings(namespace="voice:bridge", say_enabled=True)
+    settings = voice_standalone.VoiceSettings(
+        namespace="voice:bridge", say_enabled=True
+    )
     io = FakeVoiceIO()
     state = FakeStateStore()
     bridge = voice_copilot_bridge.CopilotVoiceBridge(
@@ -166,7 +170,9 @@ def test_launcher_records_integrator_state(monkeypatch):
     monkeypatch.setattr(voice_launcher, "StandaloneVoiceAgent", FakeStandaloneAgent)
     monkeypatch.setattr(voice_launcher, "VoiceIO", lambda settings: FakeVoiceIO())
 
-    exit_code = voice_launcher.main(["--mode", "standalone", "--once", "--text", "hello", "--no-speak"])
+    exit_code = voice_launcher.main(
+        ["--mode", "standalone", "--once", "--text", "hello", "--no-speak"]
+    )
 
     assert exit_code == 0
     assert launches[0][0] == "last_launch"

@@ -81,7 +81,7 @@ class SecurityViolation(Exception):
 class SecurityGuard:
     """
     Central security guard for checking role-based permissions.
-    
+
     Integrates with YOLO executor and other components to enforce
     role-based access control.
     """
@@ -148,18 +148,29 @@ class SecurityGuard:
             )
             return False, reason
 
-        if required_access is AccessLevel.PUBLIC and not self._permissions.can_access_guest_apis:
+        if (
+            required_access is AccessLevel.PUBLIC
+            and not self._permissions.can_access_guest_apis
+        ):
             reason = "Public endpoint access not permitted for this role"
-        elif required_access is AccessLevel.AUTHENTICATED and not self._permissions.can_access_authenticated_apis:
+        elif (
+            required_access is AccessLevel.AUTHENTICATED
+            and not self._permissions.can_access_authenticated_apis
+        ):
             reason = "Authenticated endpoint access not permitted for this role"
-        elif required_access is AccessLevel.PRIVILEGED and not self._permissions.can_access_admin_apis:
+        elif (
+            required_access is AccessLevel.PRIVILEGED
+            and not self._permissions.can_access_admin_apis
+        ):
             reason = "Privileged endpoint access not permitted for this role"
         elif (
             self.role == SecurityRole.GUEST
             and normalized.startswith(("POST ", "PUT ", "PATCH ", "DELETE "))
             and not self.platform_profile.allows_guest_writes
         ):
-            reason = f"Guest write access disabled for platform {self.platform_profile.name}"
+            reason = (
+                f"Guest write access disabled for platform {self.platform_profile.name}"
+            )
         else:
             reason = None
 
@@ -183,9 +194,14 @@ class SecurityGuard:
             reason = None if allowed else "Help access not permitted for this role"
         elif normalized == "web_search":
             allowed = self._permissions.can_access_admin_apis or (
-                self.role == SecurityRole.GUEST and self.platform_profile.allows_guest_search
+                self.role == SecurityRole.GUEST
+                and self.platform_profile.allows_guest_search
             )
-            reason = None if allowed else "Web search is restricted to admin for this platform"
+            reason = (
+                None
+                if allowed
+                else "Web search is restricted to admin for this platform"
+            )
         elif normalized == "heavy_llm":
             allowed = self._permissions.can_access_admin_apis
             reason = None if allowed else "Heavy LLM access is restricted to admin"
@@ -193,10 +209,16 @@ class SecurityGuard:
             return self.check_code_execution()
         elif normalized in {"file_system", "filesystem"}:
             allowed = self._permissions.can_access_filesystem
-            reason = None if allowed else "File system access not permitted for this role"
+            reason = (
+                None if allowed else "File system access not permitted for this role"
+            )
         elif normalized in {"system_command", "system_commands", "shell"}:
             allowed = self._permissions.can_execute_shell
-            reason = None if allowed else "System command execution not permitted for this role"
+            reason = (
+                None
+                if allowed
+                else "System command execution not permitted for this role"
+            )
         else:
             reason = f"Unknown platform operation: {operation}"
             allowed = False
@@ -213,10 +235,10 @@ class SecurityGuard:
     def check_command(self, command: str) -> tuple[bool, str | None]:
         """
         Check if a shell command is allowed.
-        
+
         Args:
             command: The shell command to check.
-            
+
         Returns:
             Tuple of (allowed, reason_if_blocked)
         """
@@ -234,10 +256,10 @@ class SecurityGuard:
     def check_file_write(self, path: str | Path) -> tuple[bool, str | None]:
         """
         Check if writing to a file path is allowed.
-        
+
         Args:
             path: The file path to check.
-            
+
         Returns:
             Tuple of (allowed, reason_if_blocked)
         """
@@ -255,10 +277,10 @@ class SecurityGuard:
     def check_file_read(self, path: str | Path) -> tuple[bool, str | None]:
         """
         Check if reading a file path is allowed.
-        
+
         Args:
             path: The file path to check.
-            
+
         Returns:
             Tuple of (allowed, reason_if_blocked)
         """
@@ -356,7 +378,7 @@ class SecurityGuard:
     def check_rate_limit(self) -> tuple[bool, str | None]:
         """
         Check if the rate limit allows another request.
-        
+
         Returns:
             Tuple of (allowed, reason_if_blocked)
         """
@@ -367,7 +389,9 @@ class SecurityGuard:
         self._request_times = [t for t in self._request_times if t > minute_ago]
 
         if len(self._request_times) >= self._permissions.rate_limit_per_minute:
-            reason = f"Rate limit exceeded: {self._permissions.rate_limit_per_minute}/minute"
+            reason = (
+                f"Rate limit exceeded: {self._permissions.rate_limit_per_minute}/minute"
+            )
             self._log_event(
                 action="rate_limit",
                 resource=None,
@@ -386,10 +410,10 @@ class SecurityGuard:
     def require_command_allowed(self, command: str) -> None:
         """
         Require that a command is allowed, raising SecurityViolation if not.
-        
+
         Args:
             command: The command to check.
-            
+
         Raises:
             SecurityViolation: If the command is not allowed.
         """
@@ -405,10 +429,10 @@ class SecurityGuard:
     def require_file_write_allowed(self, path: str | Path) -> None:
         """
         Require that file writing is allowed, raising SecurityViolation if not.
-        
+
         Args:
             path: The path to check.
-            
+
         Raises:
             SecurityViolation: If writing is not allowed.
         """
@@ -424,7 +448,7 @@ class SecurityGuard:
     def require_admin(self) -> None:
         """
         Require admin role.
-        
+
         Raises:
             SecurityViolation: If current role is not admin.
         """
@@ -438,7 +462,7 @@ class SecurityGuard:
     def require_user_or_above(self) -> None:
         """
         Require at least USER role.
-        
+
         Raises:
             SecurityViolation: If current role is GUEST.
         """
@@ -483,7 +507,7 @@ class SecurityGuard:
 
         # Trim if over limit
         if len(self._audit_entries) > self._max_audit_entries:
-            self._audit_entries = self._audit_entries[-self._max_audit_entries:]
+            self._audit_entries = self._audit_entries[-self._max_audit_entries :]
 
         # Also log to standard logger
         log_msg = f"Security: role={self.role.value} action={action} allowed={allowed}"
@@ -536,18 +560,22 @@ def get_or_create_guard(
 
 # Decorators for role-based access control
 
-def require_role(minimum_role: SecurityRole) -> Callable[[Callable[P, R]], Callable[P, R]]:
+
+def require_role(
+    minimum_role: SecurityRole,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """
     Decorator that requires a minimum security role.
-    
+
     Args:
         minimum_role: The minimum role required to call this function.
-        
+
     Example:
         @require_role(SecurityRole.FULL_ADMIN)
         def delete_all_data():
             ...
     """
+
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         @functools.wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -569,13 +597,14 @@ def require_role(minimum_role: SecurityRole) -> Callable[[Callable[P, R]], Calla
             return func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 def require_admin(func: Callable[P, R]) -> Callable[P, R]:
     """
     Decorator that requires ADMIN role.
-    
+
     Example:
         @require_admin
         def shutdown_server():
@@ -587,7 +616,7 @@ def require_admin(func: Callable[P, R]) -> Callable[P, R]:
 def require_user_or_above(func: Callable[P, R]) -> Callable[P, R]:
     """
     Decorator that requires at least USER role.
-    
+
     Example:
         @require_user_or_above
         def run_tests():
@@ -598,14 +627,15 @@ def require_user_or_above(func: Callable[P, R]) -> Callable[P, R]:
 
 # Helper functions
 
+
 def check_file_access(path: str | Path, write: bool = False) -> tuple[bool, str | None]:
     """
     Check if file access is allowed for current role.
-    
+
     Args:
         path: The file path to check.
         write: Whether write access is needed.
-        
+
     Returns:
         Tuple of (allowed, reason_if_blocked)
     """
@@ -621,10 +651,10 @@ def check_file_access(path: str | Path, write: bool = False) -> tuple[bool, str 
 def check_command_allowed(command: str) -> tuple[bool, str | None]:
     """
     Check if a command is allowed for current role.
-    
+
     Args:
         command: The shell command to check.
-        
+
     Returns:
         Tuple of (allowed, reason_if_blocked)
     """

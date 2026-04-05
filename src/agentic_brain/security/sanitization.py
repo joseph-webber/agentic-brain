@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 class SanitizationType(Enum):
     """Types of sanitization to apply."""
+
     CYPHER = "cypher"
     PROMPT = "prompt"
     SQL = "sql"
@@ -37,12 +38,14 @@ class SanitizationType(Enum):
 
 class SanitizationError(Exception):
     """Raised when input fails sanitization."""
+
     pass
 
 
 @dataclass(slots=True)
 class SanitizationResult:
     """Result of sanitization operation."""
+
     is_clean: bool
     sanitized: str
     violations: list[str]
@@ -56,49 +59,57 @@ class InputSanitizer:
 
     # Cypher injection patterns
     CYPHER_DANGEROUS_KEYWORDS = {
-        r'\bOR\b', r'\bAND\b', r'\bUNION\b',
-        r'\bSHOW\b', r'\bCREATE\b', r'\bDROP\b',
-        r'\bDELETE\b', r'\bALTER\b', r'\bGRANT\b',
-        r'\bREVOKE\b', r'\bCONSTRAINT\b', r'\bINDEX\b',
+        r"\bOR\b",
+        r"\bAND\b",
+        r"\bUNION\b",
+        r"\bSHOW\b",
+        r"\bCREATE\b",
+        r"\bDROP\b",
+        r"\bDELETE\b",
+        r"\bALTER\b",
+        r"\bGRANT\b",
+        r"\bREVOKE\b",
+        r"\bCONSTRAINT\b",
+        r"\bINDEX\b",
     }
 
     # Prompt injection indicators
     PROMPT_INJECTION_PATTERNS = [
-        r'(?i)ignore.*previous.*instruction',
-        r'(?i)forget.*everything',
-        r'(?i)system.*override',
-        r'(?i)admin.*password',
-        r'(?i)execute.*command',
-        r'(?i)<<.*>>',  # jailbreak markers
-        r'(?i)\[SYSTEM\]',
-        r'(?i)\[ADMIN\]',
-        r'(?i)act as.*without.*filter',
+        r"(?i)ignore.*previous.*instruction",
+        r"(?i)forget.*everything",
+        r"(?i)system.*override",
+        r"(?i)admin.*password",
+        r"(?i)execute.*command",
+        r"(?i)<<.*>>",  # jailbreak markers
+        r"(?i)\[SYSTEM\]",
+        r"(?i)\[ADMIN\]",
+        r"(?i)act as.*without.*filter",
     ]
 
     # SQL injection patterns
     SQL_INJECTION_PATTERNS = [
         r"('\s*(OR|AND)\s*'[^']*'\s*=\s*')",
-        r'(union\s+select)',
-        r'(;.*delete)',
-        r'(;.*drop)',
-        r'(--|#)',  # SQL comments
+        r"(union\s+select)",
+        r"(;.*delete)",
+        r"(;.*drop)",
+        r"(--|#)",  # SQL comments
     ]
 
     # Command injection patterns
     COMMAND_INJECTION_PATTERNS = [
-        r'[;&|`$(){}[\]<>\\]',
-        r'\$\{.*\}',
-        r'\$\(.*\)',
+        r"[;&|`$(){}[\]<>\\]",
+        r"\$\{.*\}",
+        r"\$\(.*\)",
     ]
 
     # Path traversal patterns
     PATH_TRAVERSAL_PATTERNS = [
-        r'\.\./',
-        r'\.\.//',
-        r'\.\.\\',
-        r'\.\.\\\\',
-        r'%2e%2e/',
-        r'%252e%252e',
+        r"\.\./",
+        r"\.\.//",
+        r"\.\.\\",
+        r"\.\.\\\\",
+        r"%2e%2e/",
+        r"%252e%252e",
     ]
 
     def sanitize_cypher(
@@ -109,12 +120,12 @@ class InputSanitizer:
     ) -> SanitizationResult:
         """
         Sanitize Cypher query.
-        
+
         Args:
             query: Raw Cypher query string
             strict: If True, fail on any suspicious patterns
             allow_params: If True, allow $param1 style parameters
-            
+
         Returns:
             SanitizationResult with sanitized query and threat info
         """
@@ -123,7 +134,7 @@ class InputSanitizer:
         sanitized = query
 
         # Check for null bytes
-        if '\x00' in query:
+        if "\x00" in query:
             violations.append("Null byte detected")
             threat_level = "critical"
 
@@ -135,9 +146,9 @@ class InputSanitizer:
 
         # Check for dangerous Cypher keywords outside of parameters
         # Split by $ to separate parameters from query
-        parts = query.split('$')
+        parts = query.split("$")
         query_part = parts[0]
-        
+
         for pattern in self.CYPHER_DANGEROUS_KEYWORDS:
             if re.search(pattern, query_part, re.IGNORECASE):
                 # Dangerous keywords in non-parameter context
@@ -152,12 +163,12 @@ class InputSanitizer:
             threat_level = "high"
 
         # Check for comment sequences (can bypass sanitization)
-        if '//' in query or '/*' in query or '--' in query:
+        if "//" in query or "/*" in query or "--" in query:
             violations.append("SQL/Cypher comment syntax detected")
             threat_level = "high"
 
         # Check for property injection patterns
-        if re.search(r'\{.*\}|\[.*\]', query):
+        if re.search(r"\{.*\}|\[.*\]", query):
             # This is normal in Cypher, just log if suspicious
             if re.search(r'\{[^}]*[\'"`][^}]*\}', query):
                 violations.append("Property injection pattern detected")
@@ -168,7 +179,7 @@ class InputSanitizer:
         if strict and not is_clean:
             logger.warning(
                 f"Cypher sanitization violations: {violations}",
-                extra={"threat_level": threat_level}
+                extra={"threat_level": threat_level},
             )
 
         return SanitizationResult(
@@ -183,11 +194,11 @@ class InputSanitizer:
     def sanitize_prompt(self, prompt: str, strict: bool = True) -> SanitizationResult:
         """
         Detect prompt injection attempts.
-        
+
         Args:
             prompt: User-provided prompt text
             strict: If True, fail on suspicious patterns
-            
+
         Returns:
             SanitizationResult with threat assessment
         """
@@ -202,7 +213,9 @@ class InputSanitizer:
                 threat_level = "high"
 
         # Check for excessive special characters
-        special_chars = sum(1 for c in prompt if not c.isalnum() and c not in ' \n\t.,!?-"\'')
+        special_chars = sum(
+            1 for c in prompt if not c.isalnum() and c not in " \n\t.,!?-\"'"
+        )
         if special_chars > len(prompt) * 0.3:  # > 30% special chars
             violations.append(f"Excessive special characters ({special_chars})")
             threat_level = "medium"
@@ -214,11 +227,11 @@ class InputSanitizer:
             threat_level = "medium"
 
         # Check for control characters
-        control_chars = sum(1 for c in prompt if ord(c) < 32 and c not in '\n\t\r')
+        control_chars = sum(1 for c in prompt if ord(c) < 32 and c not in "\n\t\r")
         if control_chars > 0:
             violations.append(f"Control characters detected ({control_chars})")
             threat_level = "high"
-            sanitized = ''.join(c for c in prompt if ord(c) >= 32 or c in '\n\t\r')
+            sanitized = "".join(c for c in prompt if ord(c) >= 32 or c in "\n\t\r")
 
         # Check for nested prompts (meta-injection)
         if re.search(r'(""".*"""|\[SYSTEM\].*\[/SYSTEM\])', prompt, re.DOTALL):
@@ -239,11 +252,11 @@ class InputSanitizer:
     def sanitize_sql(self, query: str, strict: bool = True) -> SanitizationResult:
         """
         Sanitize SQL query.
-        
+
         Args:
             query: Raw SQL query
             strict: If True, fail on suspicious patterns
-            
+
         Returns:
             SanitizationResult with sanitized query
         """
@@ -262,7 +275,7 @@ class InputSanitizer:
             threat_level = "high"
 
         # Check for comment bypass
-        if re.search(r'(--|#|/\*)', query):
+        if re.search(r"(--|#|/\*)", query):
             violations.append("SQL comment syntax detected")
             threat_level = "high"
 
@@ -280,11 +293,11 @@ class InputSanitizer:
     def sanitize_command(self, command: str, strict: bool = True) -> SanitizationResult:
         """
         Sanitize shell command.
-        
+
         Args:
             command: Command string to sanitize
             strict: If True, fail on any suspicious characters
-            
+
         Returns:
             SanitizationResult with threat assessment
         """
@@ -300,10 +313,19 @@ class InputSanitizer:
 
         # Check for known dangerous commands
         dangerous_commands = {
-            'rm', 'dd', 'mkfs', 'shutdown', 'reboot', 'sudo',
-            'format', 'fdisk', 'delpart', 'kill', 'pkill'
+            "rm",
+            "dd",
+            "mkfs",
+            "shutdown",
+            "reboot",
+            "sudo",
+            "format",
+            "fdisk",
+            "delpart",
+            "kill",
+            "pkill",
         }
-        cmd_name = command.split()[0].split('/')[-1] if command else ''
+        cmd_name = command.split()[0].split("/")[-1] if command else ""
         if cmd_name in dangerous_commands:
             violations.append(f"Dangerous command: {cmd_name}")
             threat_level = "critical"
@@ -322,11 +344,11 @@ class InputSanitizer:
     def sanitize_path(self, path: str, strict: bool = True) -> SanitizationResult:
         """
         Sanitize file path.
-        
+
         Args:
             path: File path to sanitize
             strict: If True, fail on traversal attempts
-            
+
         Returns:
             SanitizationResult with sanitized path
         """
@@ -342,8 +364,13 @@ class InputSanitizer:
 
         # Normalize path and check if it escapes base
         import os.path
+
         normalized = os.path.normpath(path)
-        if normalized.startswith('..') or normalized.startswith('/') or normalized.startswith('~'):
+        if (
+            normalized.startswith("..")
+            or normalized.startswith("/")
+            or normalized.startswith("~")
+        ):
             violations.append("Path attempts to escape base directory")
             threat_level = "high"
 
@@ -361,11 +388,11 @@ class InputSanitizer:
     def sanitize_regex(self, pattern: str, strict: bool = True) -> SanitizationResult:
         """
         Validate regex pattern (prevent ReDoS).
-        
+
         Args:
             pattern: Regex pattern to validate
             strict: If True, fail on risky patterns
-            
+
         Returns:
             SanitizationResult with validation result
         """
@@ -374,13 +401,13 @@ class InputSanitizer:
 
         # Check for catastrophic backtracking patterns
         redos_patterns = [
-            r'\([^)]*\*\).*\*',  # Nested quantifiers
-            r'\([^)]*\+\).*\+',
-            r'\([^)]*\*\)\+',
-            r'\([^)]*\+\)\*',
-            r'(a+)+',  # Canonical ReDoS
-            r'(a|a)*',
-            r'(a|ab)*',
+            r"\([^)]*\*\).*\*",  # Nested quantifiers
+            r"\([^)]*\+\).*\+",
+            r"\([^)]*\*\)\+",
+            r"\([^)]*\+\)\*",
+            r"(a+)+",  # Canonical ReDoS
+            r"(a|a)*",
+            r"(a|ab)*",
         ]
 
         for redos in redos_patterns:
@@ -409,11 +436,11 @@ class InputSanitizer:
     def sanitize_json(self, json_str: str, strict: bool = True) -> SanitizationResult:
         """
         Validate JSON structure.
-        
+
         Args:
             json_str: JSON string to validate
             strict: If True, fail on parsing errors
-            
+
         Returns:
             SanitizationResult with validation result
         """
@@ -446,12 +473,12 @@ class InputSanitizer:
     ) -> SanitizationResult:
         """
         Universal sanitization dispatcher.
-        
+
         Args:
             value: Input to sanitize
             sanitization_type: Type of sanitization to apply
             strict: If True, fail on violations
-            
+
         Returns:
             SanitizationResult with sanitization outcome
         """
@@ -475,7 +502,7 @@ class InputSanitizer:
     @staticmethod
     def _is_in_parameter_context(query: str, part: str) -> bool:
         """Check if a pattern appears in parameter context (after $)."""
-        param_start = query.find('$' + part)
+        param_start = query.find("$" + part)
         return param_start >= 0
 
 

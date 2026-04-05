@@ -1768,8 +1768,11 @@ class HookEvent:
     content: str = ""
     role: str = "user"  # user, assistant, tool, system
     metadata: dict = field(default_factory=dict)
-    event_id: str = field(default_factory=lambda: str(hashlib.sha256(
-        f"{datetime.now(UTC).isoformat()}".encode()).hexdigest())[:16])
+    event_id: str = field(
+        default_factory=lambda: str(
+            hashlib.sha256(f"{datetime.now(UTC).isoformat()}".encode()).hexdigest()
+        )[:16]
+    )
 
     def to_dict(self) -> dict:
         return {
@@ -1837,7 +1840,8 @@ class SessionHooks:
         """
         self.memory = memory
         timestamp_hash = hashlib.sha256(
-            datetime.now(UTC).isoformat().encode()).hexdigest()[:16]
+            datetime.now(UTC).isoformat().encode()
+        ).hexdigest()[:16]
         self.session_id = session_id or f"session-{timestamp_hash}"
         self.session_start = datetime.now(UTC)
         self.turn_count = 0
@@ -1850,6 +1854,7 @@ class SessionHooks:
             try:
                 # Try to import event bus - optional dependency
                 from event_bus import EventBus
+
                 self._event_bus = EventBus()
             except ImportError:
                 logger.debug("Event bus not available")
@@ -1903,9 +1908,7 @@ class SessionHooks:
         )
         return {"success": True, "event_id": event.event_id}
 
-    def on_assistant_response(
-        self, response: str, data: Optional[dict] = None
-    ) -> dict:
+    def on_assistant_response(self, response: str, data: Optional[dict] = None) -> dict:
         """Called when assistant responds."""
         event = self._capture_event(
             event_type="assistantResponse",
@@ -2022,8 +2025,7 @@ class SessionHooks:
 
         return {
             "recent_memories": [
-                {"text": m.content[:300], "importance": m.importance}
-                for m in recent
+                {"text": m.content[:300], "importance": m.importance} for m in recent
             ],
             "related_context": [
                 {"text": m.content[:300], "session": m.session_id}
@@ -2082,9 +2084,7 @@ class SessionStitcher:
         self._message_count = 0
         return session_id
 
-    def process_message(
-        self, message: str, session_id: Optional[str] = None
-    ) -> dict:
+    def process_message(self, message: str, session_id: Optional[str] = None) -> dict:
         """
         Process a message - extract entities/topics and link to past sessions.
 
@@ -2262,9 +2262,7 @@ class SessionStitcher:
                 "session_id": self._current_session,
                 "summary": summary,
                 "message_count": self._message_count,
-                "entities": {
-                    k: list(v) for k, v in self._session_entities.items()
-                },
+                "entities": {k: list(v) for k, v in self._session_entities.items()},
                 "topics": list(self._session_topics),
             },
         )
@@ -2302,7 +2300,9 @@ class SessionStitcher:
         # File paths - match /path, ./path, ~/path patterns
         path_pattern = r"(?:~/|\./?|(?<![/\w]))[\w\-./]{2,}(?:\.\w+)?"
         paths = re.findall(path_pattern, message)
-        entities["file_paths"] = [p for p in paths if "/" in p]  # Only keep paths with /
+        entities["file_paths"] = [
+            p for p in paths if "/" in p
+        ]  # Only keep paths with /
 
         return entities
 
@@ -2326,9 +2326,7 @@ class SessionStitcher:
 
         return topics
 
-    def _find_related_sessions(
-        self, entities: dict, topics: set[str]
-    ) -> list[dict]:
+    def _find_related_sessions(self, entities: dict, topics: set[str]) -> list[dict]:
         """Find sessions related to entities and topics."""
         related = []
 
@@ -2374,7 +2372,9 @@ class SessionStitcher:
         parts = [f"{self._message_count} messages"]
 
         if self._session_entities["jira_tickets"]:
-            parts.append(f"JIRA: {', '.join(list(self._session_entities['jira_tickets'])[:3])}")
+            parts.append(
+                f"JIRA: {', '.join(list(self._session_entities['jira_tickets'])[:3])}"
+            )
 
         if self._session_topics:
             parts.append(f"Topics: {', '.join(list(self._session_topics)[:3])}")

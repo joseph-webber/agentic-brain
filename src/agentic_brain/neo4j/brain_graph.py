@@ -55,7 +55,7 @@ def query(cypher: str, params: Dict = None) -> List[Dict[str, Any]]:
         raise SanitizationError(
             f"Cypher query failed sanitization: {result.violations}"
         )
-    
+
     with get_driver().session() as session:
         result = session.run(cypher, params or {})
         return [dict(r) for r in result]
@@ -66,8 +66,9 @@ def query_by_topic(topic: str, limit: int = 20) -> List[Dict[str, Any]]:
     return get_topic_graph().query_by_topic(topic, limit)
 
 
-def link_to_topic(node_label: str, node_id: str, topic: str, 
-                  relationship: str = "RELATES_TO") -> bool:
+def link_to_topic(
+    node_label: str, node_id: str, topic: str, relationship: str = "RELATES_TO"
+) -> bool:
     """Link any node to a topic."""
     return get_topic_graph().link_to_topic(node_label, node_id, topic, relationship)
 
@@ -102,26 +103,28 @@ def init_graph():
 # Convenience function for RAG context
 def get_rag_context(topics: List[str], limit_per_topic: int = 5) -> str:
     """Get RAG context by querying multiple topics.
-    
+
     Returns formatted context string for LLM consumption.
     """
     context_parts = []
     tg = get_topic_graph()
-    
+
     for topic in topics:
         results = tg.query_by_topic(topic, limit_per_topic)
         if results:
             context_parts.append(f"\n## Context for '{topic}':")
             for r in results:
-                context_parts.append(f"- [{r['label']}] {r['item']} (via {r['relationship']})")
-    
+                context_parts.append(
+                    f"- [{r['label']}] {r['item']} (via {r['relationship']})"
+                )
+
     return "\n".join(context_parts) if context_parts else "No relevant context found."
 
 
 # Export all
 __all__ = [
     "get_driver",
-    "get_topic_graph", 
+    "get_topic_graph",
     "get_zoned_graph",
     "query",
     "query_by_topic",

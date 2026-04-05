@@ -87,11 +87,15 @@ async def test_generate_token_filters_sensitive_extra_claims(jwt_auth, auth_user
 
 
 @pytest.mark.asyncio
-async def test_generate_token_with_remember_me_issues_refresh_token(jwt_auth, auth_user):
+async def test_generate_token_with_remember_me_issues_refresh_token(
+    jwt_auth, auth_user
+):
     token = await jwt_auth.generate_token(auth_user, remember_me=True)
 
     assert token.refresh_token is not None
-    assert token.expires_in == jwt_auth.config.jwt.token_validity_seconds_for_remember_me
+    assert (
+        token.expires_in == jwt_auth.config.jwt.token_validity_seconds_for_remember_me
+    )
 
 
 @pytest.mark.asyncio
@@ -135,7 +139,9 @@ async def test_revoke_token_prevents_future_validation(jwt_auth, auth_user):
 
 
 @pytest.mark.asyncio
-async def test_refresh_token_rotates_refresh_token_and_revokes_prior_access(jwt_auth, auth_user):
+async def test_refresh_token_rotates_refresh_token_and_revokes_prior_access(
+    jwt_auth, auth_user
+):
     token = await jwt_auth.generate_token(auth_user, remember_me=True)
 
     refreshed = await jwt_auth.refresh_token(token.refresh_token)

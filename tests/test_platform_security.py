@@ -18,12 +18,22 @@ from agentic_brain.security.guards import SecurityViolation
 
 class TestPlatformSecurityProfiles:
     def test_profile_classifies_endpoints_by_access_level(self) -> None:
-        assert WOOCOMMERCE_PROFILE.access_level_for("GET /products") is AccessLevel.PUBLIC
-        assert WOOCOMMERCE_PROFILE.access_level_for("GET /orders") is AccessLevel.AUTHENTICATED
-        assert WOOCOMMERCE_PROFILE.access_level_for("DELETE /products") is AccessLevel.PRIVILEGED
+        assert (
+            WOOCOMMERCE_PROFILE.access_level_for("GET /products") is AccessLevel.PUBLIC
+        )
+        assert (
+            WOOCOMMERCE_PROFILE.access_level_for("GET /orders")
+            is AccessLevel.AUTHENTICATED
+        )
+        assert (
+            WOOCOMMERCE_PROFILE.access_level_for("DELETE /products")
+            is AccessLevel.PRIVILEGED
+        )
         assert WOOCOMMERCE_PROFILE.access_level_for("POST /unknown") is None
 
-    def test_profile_rate_limits_follow_generalized_guest_user_admin_pattern(self) -> None:
+    def test_profile_rate_limits_follow_generalized_guest_user_admin_pattern(
+        self,
+    ) -> None:
         assert WOOCOMMERCE_PROFILE.rate_limit_for(AccessLevel.PUBLIC) == 100
         assert WOOCOMMERCE_PROFILE.rate_limit_for(AccessLevel.AUTHENTICATED) == 1000
         assert WOOCOMMERCE_PROFILE.rate_limit_for(AccessLevel.PRIVILEGED) == 10000
@@ -49,8 +59,12 @@ class TestSecurityGuardPlatformAccess:
         assert guard.check_platform_endpoint("DELETE /products")[0] is False
         assert guard.check_platform_operation("heavy_llm")[0] is False
 
-    def test_full_admin_can_access_platform_admin_endpoints_and_operations(self) -> None:
-        guard = SecurityGuard(SecurityRole.FULL_ADMIN, platform_profile=WOOCOMMERCE_PROFILE)
+    def test_full_admin_can_access_platform_admin_endpoints_and_operations(
+        self,
+    ) -> None:
+        guard = SecurityGuard(
+            SecurityRole.FULL_ADMIN, platform_profile=WOOCOMMERCE_PROFILE
+        )
 
         assert guard.check_platform_endpoint("DELETE /products")[0] is True
         assert guard.check_platform_operation("web_search")[0] is True
@@ -76,7 +90,9 @@ class TestSecurityGuardPlatformAccess:
 class TestTaskAgentPlatformChecks:
     def test_task_agent_uses_platform_profile_for_endpoint_checks(self) -> None:
         agent = TaskAgent(security_role=SecurityRole.USER)
-        agent.guard = SecurityGuard(SecurityRole.USER, platform_profile=WOOCOMMERCE_PROFILE)
+        agent.guard = SecurityGuard(
+            SecurityRole.USER, platform_profile=WOOCOMMERCE_PROFILE
+        )
 
         result = agent.execute("call_api", api="woocommerce", endpoint="GET /orders")
         assert result["endpoint"] == "GET /orders"

@@ -70,7 +70,9 @@ class FewShotCollection:
     ) -> FewShotCollection:
         """Create a collection from input/output pairs."""
         return cls(
-            examples=[FewShotExample(input_text=inp, output_text=out) for inp, out in pairs],
+            examples=[
+                FewShotExample(input_text=inp, output_text=out) for inp, out in pairs
+            ],
             title=title,
         )
 
@@ -97,17 +99,19 @@ class FewShotCollection:
             return ""
 
         rendered = [
-            example.format(
-                input_label=input_label,
-                output_label=output_label,
-                explanation_label="Reasoning",
-            )
-            if include_explanations
-            else "\n".join(
-                [
-                    f"{input_label}: {example.input_text}",
-                    f"{output_label}: {example.output_text}",
-                ]
+            (
+                example.format(
+                    input_label=input_label,
+                    output_label=output_label,
+                    explanation_label="Reasoning",
+                )
+                if include_explanations
+                else "\n".join(
+                    [
+                        f"{input_label}: {example.input_text}",
+                        f"{output_label}: {example.output_text}",
+                    ]
+                )
             )
             for example in self.examples
         ]
@@ -136,4 +140,3 @@ class FewShotCollection:
                 for example in data.get("examples", [])
             ],
         )
-

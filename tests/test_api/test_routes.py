@@ -190,5 +190,7 @@ def test_sso_oidc_login_and_callback_errors(sso_client):
     assert unknown.status_code == 404
 
     # Callback requires a real HTTP client configured; this should return 400.
-    cb = sso_client.get("/auth/sso/oidc/callback", params={"code": "abc", "state": "xyz"})
+    cb = sso_client.get(
+        "/auth/sso/oidc/callback", params={"code": "abc", "state": "xyz"}
+    )
     assert cb.status_code == 400

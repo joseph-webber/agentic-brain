@@ -50,7 +50,9 @@ def test_security_context_anonymous_is_not_authenticated():
 def test_security_context_from_user_marks_context_authenticated(auth_user):
     token = Token(access_token="access", token_type="Bearer")
 
-    context = SecurityContext.from_user(auth_user, token=token, auth_method=AuthMethod.JWT)
+    context = SecurityContext.from_user(
+        auth_user, token=token, auth_method=AuthMethod.JWT
+    )
 
     assert context.authenticated is True
     assert context.user == auth_user

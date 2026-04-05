@@ -498,7 +498,9 @@ class TestMapPhase:
         assert responses == []
 
     @pytest.mark.asyncio
-    async def test_map_without_llm(self, mock_driver, default_config, sample_communities):
+    async def test_map_without_llm(
+        self, mock_driver, default_config, sample_communities
+    ):
         """Test map phase without LLM (keyword matching)."""
         search = GlobalSearch(mock_driver, config=default_config)
 
@@ -512,16 +514,20 @@ class TestMapPhase:
         assert responses[0].relevance_score > 0
 
     @pytest.mark.asyncio
-    async def test_map_with_llm(self, mock_driver, mock_llm, default_config, sample_communities):
+    async def test_map_with_llm(
+        self, mock_driver, mock_llm, default_config, sample_communities
+    ):
         """Test map phase with LLM."""
-        mock_llm.generate = AsyncMock(return_value="""
+        mock_llm.generate = AsyncMock(
+            return_value="""
 RELEVANCE: 0.9
 KEY_POINTS:
 - Point about machine learning
 - Another key insight
 THEMES: AI, neural networks, deep learning
 RESPONSE: This community covers machine learning topics extensively.
-""")
+"""
+        )
 
         search = GlobalSearch(mock_driver, llm=mock_llm, config=default_config)
 
@@ -576,7 +582,10 @@ class TestReducePhase:
                 summary="Summary 1",
                 response="Response about artificial intelligence",
                 relevance_score=0.8,
-                themes=["artificial intelligence", "machine learning"],  # Shared: machine learning
+                themes=[
+                    "artificial intelligence",
+                    "machine learning",
+                ],  # Shared: machine learning
             ),
             CommunityResponse(
                 community_id="comm_2",
@@ -584,7 +593,10 @@ class TestReducePhase:
                 summary="Summary 2",
                 response="Response about machine learning",
                 relevance_score=0.6,
-                themes=["machine learning", "deep learning"],  # machine learning appears in both
+                themes=[
+                    "machine learning",
+                    "deep learning",
+                ],  # machine learning appears in both
             ),
         ]
 
@@ -599,7 +611,9 @@ class TestReducePhase:
     @pytest.mark.asyncio
     async def test_reduce_with_llm(self, mock_driver, mock_llm, default_config):
         """Test reduce phase with LLM synthesis."""
-        mock_llm.generate = AsyncMock(return_value="Synthesized response about AI and ML")
+        mock_llm.generate = AsyncMock(
+            return_value="Synthesized response about AI and ML"
+        )
 
         search = GlobalSearch(mock_driver, llm=mock_llm, config=default_config)
 
@@ -635,12 +649,20 @@ class TestThemeExtraction:
 
         responses = [
             CommunityResponse(
-                community_id="c1", level=1, summary="", response="",
-                relevance_score=0.8, themes=["unique_theme"],
+                community_id="c1",
+                level=1,
+                summary="",
+                response="",
+                relevance_score=0.8,
+                themes=["unique_theme"],
             ),
             CommunityResponse(
-                community_id="c2", level=1, summary="", response="",
-                relevance_score=0.7, themes=["other_theme"],
+                community_id="c2",
+                level=1,
+                summary="",
+                response="",
+                relevance_score=0.7,
+                themes=["other_theme"],
             ),
         ]
 
@@ -655,12 +677,20 @@ class TestThemeExtraction:
 
         responses = [
             CommunityResponse(
-                community_id="c1", level=1, summary="", response="",
-                relevance_score=0.8, themes=["shared_theme", "unique1"],
+                community_id="c1",
+                level=1,
+                summary="",
+                response="",
+                relevance_score=0.8,
+                themes=["shared_theme", "unique1"],
             ),
             CommunityResponse(
-                community_id="c2", level=1, summary="", response="",
-                relevance_score=0.7, themes=["shared_theme", "unique2"],
+                community_id="c2",
+                level=1,
+                summary="",
+                response="",
+                relevance_score=0.7,
+                themes=["shared_theme", "unique2"],
             ),
         ]
 
@@ -676,16 +706,28 @@ class TestThemeExtraction:
 
         responses = [
             CommunityResponse(
-                community_id="c1", level=1, summary="", response="",
-                relevance_score=0.8, themes=["common", "rare"],
+                community_id="c1",
+                level=1,
+                summary="",
+                response="",
+                relevance_score=0.8,
+                themes=["common", "rare"],
             ),
             CommunityResponse(
-                community_id="c2", level=1, summary="", response="",
-                relevance_score=0.7, themes=["common"],
+                community_id="c2",
+                level=1,
+                summary="",
+                response="",
+                relevance_score=0.7,
+                themes=["common"],
             ),
             CommunityResponse(
-                community_id="c3", level=1, summary="", response="",
-                relevance_score=0.6, themes=["common", "rare"],
+                community_id="c3",
+                level=1,
+                summary="",
+                response="",
+                relevance_score=0.6,
+                themes=["common", "rare"],
             ),
         ]
 
@@ -740,10 +782,12 @@ class TestDynamicSearch:
         search = GlobalSearch(mock_driver, config=config)
 
         # Mock hierarchy queries
-        search._get_communities_at_level = AsyncMock(side_effect=[
-            [sample_communities[3]],  # Level 3 (global)
-            [sample_communities[2]],  # Level 2 (coarse)
-        ])
+        search._get_communities_at_level = AsyncMock(
+            side_effect=[
+                [sample_communities[3]],  # Level 3 (global)
+                [sample_communities[2]],  # Level 2 (coarse)
+            ]
+        )
         search._get_child_communities = AsyncMock(return_value=["comm_3"])
         search._get_communities_by_ids = AsyncMock(return_value=[sample_communities[2]])
 
@@ -758,7 +802,9 @@ class TestHierarchicalSearch:
     """Tests for hierarchical search mode."""
 
     @pytest.mark.asyncio
-    async def test_hierarchical_queries_all_levels(self, mock_driver, sample_communities):
+    async def test_hierarchical_queries_all_levels(
+        self, mock_driver, sample_communities
+    ):
         """Test hierarchical search queries all levels."""
         config = GlobalSearchConfig(
             mode=GlobalSearchMode.HIERARCHICAL,
@@ -888,14 +934,20 @@ class TestHelperMethods:
 
         responses = [
             CommunityResponse(
-                community_id="c1", level=1, summary="S1",
+                community_id="c1",
+                level=1,
+                summary="S1",
                 response="Response about topic A",
-                relevance_score=0.8, themes=["A"],
+                relevance_score=0.8,
+                themes=["A"],
             ),
             CommunityResponse(
-                community_id="c2", level=2, summary="S2",
+                community_id="c2",
+                level=2,
+                summary="S2",
                 response="Response about topic B",
-                relevance_score=0.6, themes=["B"],
+                relevance_score=0.6,
+                themes=["B"],
             ),
         ]
 
@@ -948,7 +1000,9 @@ class TestErrorHandling:
     """Tests for error handling."""
 
     @pytest.mark.asyncio
-    async def test_llm_error_graceful_degradation(self, mock_driver, mock_llm, default_config):
+    async def test_llm_error_graceful_degradation(
+        self, mock_driver, mock_llm, default_config
+    ):
         """Test graceful degradation when LLM fails."""
         mock_llm.generate = AsyncMock(side_effect=Exception("LLM Error"))
 
@@ -972,7 +1026,9 @@ class TestErrorHandling:
         assert communities == []
 
     @pytest.mark.asyncio
-    async def test_map_phase_handles_individual_failures(self, mock_driver, mock_llm, default_config, sample_communities):
+    async def test_map_phase_handles_individual_failures(
+        self, mock_driver, mock_llm, default_config, sample_communities
+    ):
         """Test map phase continues despite individual community failures."""
         call_count = 0
 
@@ -1007,9 +1063,9 @@ class TestNeo4jQueries:
         """Test query execution with execute_query method."""
         search = GlobalSearch(mock_driver)
 
-        mock_driver.execute_query = AsyncMock(return_value=[
-            {"community_id": "c1", "level": 1, "summary": "Test"}
-        ])
+        mock_driver.execute_query = AsyncMock(
+            return_value=[{"community_id": "c1", "level": 1, "summary": "Test"}]
+        )
 
         result = await search._execute_query("MATCH (c:Community) RETURN c")
 
@@ -1021,10 +1077,12 @@ class TestNeo4jQueries:
         """Test getting child communities."""
         search = GlobalSearch(mock_driver)
 
-        search._execute_query = AsyncMock(return_value=[
-            {"child_id": "child_1"},
-            {"child_id": "child_2"},
-        ])
+        search._execute_query = AsyncMock(
+            return_value=[
+                {"child_id": "child_1"},
+                {"child_id": "child_2"},
+            ]
+        )
 
         children = await search._get_child_communities("parent_1")
 
@@ -1071,7 +1129,9 @@ class TestPromptBuilding:
 
         responses = [
             CommunityResponse(
-                community_id="c1", level=1, summary="S1",
+                community_id="c1",
+                level=1,
+                summary="S1",
                 response="Response 1",
                 relevance_score=0.8,
                 key_points=["point1"],

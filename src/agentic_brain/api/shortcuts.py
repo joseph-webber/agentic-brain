@@ -160,9 +160,7 @@ def quick_graph(
                 try:
                     graph.link_topic(source, relation, target)
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to link {source} -> {target}: {e}"
-                    )
+                    logger.warning(f"Failed to link {source} -> {target}: {e}")
 
         return graph
 
@@ -286,13 +284,10 @@ def quick_eval(
 
         # Compute generation metrics
         if "generation" in metrics:
-            avg_answer_length = sum(
-                len(r.answer) for r in results
-            ) / len(results)
+            avg_answer_length = sum(len(r.answer) for r in results) / len(results)
             eval_results["generation"] = {
                 "avg_answer_length": int(avg_answer_length),
-                "avg_confidence": sum(r.confidence for r in results)
-                / len(results),
+                "avg_confidence": sum(r.confidence for r in results) / len(results),
                 "high_confidence": sum(1 for r in results if r.confidence >= 0.8),
                 "medium_confidence": sum(
                     1 for r in results if 0.5 <= r.confidence < 0.8
@@ -307,9 +302,7 @@ def quick_eval(
             eval_results["latency"] = {
                 "total_ms": total_time,
                 "avg_ms": avg_time,
-                "max_ms": max(
-                    (r.generation_time_ms for r in results), default=0
-                ),
+                "max_ms": max((r.generation_time_ms for r in results), default=0),
             }
 
         # Compute source metrics
@@ -354,10 +347,13 @@ def quick_eval(
                 "max": max(confidences) if confidences else 1,
                 "std_dev": (
                     (
-                        sum((c - (sum(confidences) / len(confidences))) ** 2
-                            for c in confidences)
+                        sum(
+                            (c - (sum(confidences) / len(confidences))) ** 2
+                            for c in confidences
+                        )
                         / len(confidences)
-                    ) ** 0.5
+                    )
+                    ** 0.5
                     if confidences
                     else 0
                 ),

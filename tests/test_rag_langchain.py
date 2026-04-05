@@ -43,7 +43,7 @@ from agentic_brain.rag.langchain_compat import (
 # Skip all tests if LangChain is not installed
 pytestmark = pytest.mark.skipif(
     not LANGCHAIN_AVAILABLE,
-    reason="LangChain not installed (pip install langchain-core)"
+    reason="LangChain not installed (pip install langchain-core)",
 )
 
 
@@ -56,7 +56,7 @@ class TestDocumentConversion:
             content="This is test content about RAG.",
             source="test.md",
             score=0.85,
-            metadata={"page": 1, "section": "intro"}
+            metadata={"page": 1, "section": "intro"},
         )
 
         doc = retrieved_chunk_to_langchain_document(chunk)
@@ -90,7 +90,7 @@ class TestDocumentConversion:
 
         lc_doc = LCDocument(
             page_content="LangChain document content.",
-            metadata={"id": "lc-456", "source": "langchain.py"}
+            metadata={"id": "lc-456", "source": "langchain.py"},
         )
 
         agentic_doc = langchain_document_to_agentic_document(lc_doc)
@@ -105,8 +105,7 @@ class TestDocumentConversion:
         from langchain_core.documents import Document as LCDocument
 
         lc_doc = LCDocument(
-            page_content="No ID provided here.",
-            metadata={"source": "test.txt"}
+            page_content="No ID provided here.", metadata={"source": "test.txt"}
         )
 
         agentic_doc = langchain_document_to_agentic_document(lc_doc)
@@ -119,7 +118,7 @@ class TestDocumentConversion:
         original = AgenticDocument(
             id="roundtrip-test",
             content="Content survives round trip.",
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
 
         # Convert to LangChain
@@ -156,7 +155,7 @@ class TestAgenticBrainRetriever:
         assert retriever._retriever_instance is mock_retriever
         assert retriever.k == 5
 
-    @patch.object(Retriever, 'search')
+    @patch.object(Retriever, "search")
     def test_invoke_returns_langchain_docs(self, mock_search):
         """Test that invoke() returns LangChain Documents."""
         from agentic_brain.rag.langchain_compat import AgenticBrainRetriever
@@ -174,7 +173,7 @@ class TestAgenticBrainRetriever:
         assert docs[0].metadata["source"] == "a.md"
         assert docs[1].page_content == "Result 2"
 
-    @patch.object(Retriever, 'search')
+    @patch.object(Retriever, "search")
     def test_min_score_filtering(self, mock_search):
         """Test that results below min_score are filtered."""
         from agentic_brain.rag.langchain_compat import AgenticBrainRetriever
@@ -190,7 +189,7 @@ class TestAgenticBrainRetriever:
         assert len(docs) == 1
         assert docs[0].page_content == "High score"
 
-    @patch.object(Retriever, 'search')
+    @patch.object(Retriever, "search")
     def test_with_config_creates_new_instance(self, mock_search):
         """Test with_config creates a new retriever with updated settings."""
         from agentic_brain.rag.langchain_compat import AgenticBrainRetriever
@@ -335,7 +334,7 @@ class TestFactoryFunction:
 class TestLCELChainIntegration:
     """Test integration with LangChain Expression Language chains."""
 
-    @patch.object(Retriever, 'search')
+    @patch.object(Retriever, "search")
     def test_retriever_in_dict_chain(self, mock_search):
         """Test retriever as part of a dict chain component."""
         from langchain_core.runnables import RunnablePassthrough
@@ -355,7 +354,7 @@ class TestLCELChainIntegration:
         assert len(result) == 1
         assert result[0].page_content == "Context here"
 
-    @patch.object(Retriever, 'search')
+    @patch.object(Retriever, "search")
     def test_retriever_pipe_operator(self, mock_search):
         """Test retriever works with pipe operator."""
         from langchain_core.runnables import RunnableLambda
@@ -368,9 +367,7 @@ class TestLCELChainIntegration:
         retriever = AgenticBrainRetriever(k=5)
 
         # Chain: retriever -> extract content
-        extract_content = RunnableLambda(
-            lambda docs: [d.page_content for d in docs]
-        )
+        extract_content = RunnableLambda(lambda docs: [d.page_content for d in docs])
         chain = retriever | extract_content
 
         result = chain.invoke("query")
@@ -382,7 +379,7 @@ class TestAsyncRetrieval:
     """Test async retrieval capabilities."""
 
     @pytest.mark.asyncio
-    @patch.object(Retriever, 'search')
+    @patch.object(Retriever, "search")
     async def test_async_invoke(self, mock_search):
         """Test async retrieval."""
         from agentic_brain.rag.langchain_compat import AgenticBrainRetriever
@@ -428,7 +425,7 @@ class TestErrorHandling:
         finally:
             langchain_compat.LANGCHAIN_AVAILABLE = original
 
-    @patch.object(Retriever, 'search')
+    @patch.object(Retriever, "search")
     def test_retrieval_error_propagates(self, mock_search):
         """Test that retrieval errors are properly propagated."""
         from agentic_brain.rag.langchain_compat import AgenticBrainRetriever
@@ -449,11 +446,11 @@ class TestGraphRAGRetriever:
         from agentic_brain.rag.langchain_compat import GraphRAGRetriever
 
         # Create with minimal config (no actual Neo4j connection)
-        with patch('agentic_brain.rag.langchain_compat.GraphRAGRetriever._graph_rag_instance'):
+        with patch(
+            "agentic_brain.rag.langchain_compat.GraphRAGRetriever._graph_rag_instance"
+        ):
             retriever = GraphRAGRetriever(
-                search_strategy="hybrid",
-                k=10,
-                include_communities=True
+                search_strategy="hybrid", k=10, include_communities=True
             )
 
             assert retriever.search_strategy == "hybrid"

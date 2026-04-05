@@ -42,7 +42,7 @@ class RAGSystem:
 
     def __init__(self, **config: Any) -> None:
         """Initialize RAG system.
-        
+
         Args:
             **config: Configuration options (chunk_size, top_k, model, etc.)
         """
@@ -52,10 +52,12 @@ class RAGSystem:
             "top_k": config.get("top_k", 5),
             "model": config.get("model", "gpt-4-turbo"),
             "temperature": config.get("temperature", 0.7),
-            "embeddings_model": config.get("embeddings_model", "text-embedding-3-large"),
+            "embeddings_model": config.get(
+                "embeddings_model", "text-embedding-3-large"
+            ),
             "max_results": config.get("max_results", 100),
         }
-        
+
         try:
             self.store = DocumentStore()
             self.retriever = Retriever()
@@ -72,27 +74,27 @@ class RAGSystem:
         filters: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Execute a RAG query.
-        
+
         Args:
             question: The question to ask
             top_k: Number of results to return (default: config top_k)
             filters: Optional filters for document selection
-            
+
         Returns:
             Dictionary with answer, sources, and relevance score
-            
+
         Raises:
             Exception: If system not initialized
         """
         if self.retriever is None:
             raise Exception("RAG system not initialized")
-        
+
         if top_k is None:
             top_k = self.config_data["top_k"]
-        
+
         if filters is None:
             filters = {}
-        
+
         try:
             # Retrieve relevant documents
             results = self.retriever.retrieve(
@@ -100,16 +102,16 @@ class RAGSystem:
                 top_k=top_k,
                 filters=filters,
             )
-            
+
             # Extract sources and calculate score
             sources = [r.get("source", "Unknown") for r in results]
             scores = [r.get("score", 0.0) for r in results]
             avg_score = sum(scores) / len(scores) if scores else 0.0
-            
+
             # Generate answer using LLM
             # This is simplified - in production would call actual LLM
             answer = self._generate_answer(question, results)
-            
+
             return {
                 "answer": answer,
                 "sources": sources,
@@ -126,41 +128,41 @@ class RAGSystem:
         overlap: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Index documents from a path.
-        
+
         Args:
             path: Path to documents directory or file
             recursive: Whether to index subdirectories
             chunk_size: Size of chunks (default: config chunk_size)
             overlap: Overlap between chunks (default: config overlap)
-            
+
         Returns:
             Dictionary with indexing statistics
-            
+
         Raises:
             Exception: If path doesn't exist or indexing fails
         """
         if self.store is None:
             raise Exception("RAG system not initialized")
-        
+
         path_obj = Path(path)
         if not path_obj.exists():
             raise Exception(f"Path does not exist: {path}")
-        
+
         if chunk_size is None:
             chunk_size = self.config_data["chunk_size"]
         if overlap is None:
             overlap = self.config_data["overlap"]
-        
+
         try:
             # Load documents
             documents = self._load_documents(path_obj, recursive)
-            
+
             # Chunk documents
             chunks = self._chunk_documents(documents, chunk_size, overlap)
-            
+
             # Store in vector database
             self.store.store_chunks(chunks)
-            
+
             return {
                 "count": len(documents),
                 "chunks": len(chunks),
@@ -170,13 +172,13 @@ class RAGSystem:
 
     def evaluate(self, results: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Evaluate RAG results.
-        
+
         Args:
             results: List of result dictionaries with expected and actual answers
-            
+
         Returns:
             Dictionary with evaluation metrics
-            
+
         Raises:
             Exception: If evaluation fails
         """
@@ -186,15 +188,17 @@ class RAGSystem:
                 "avg_relevance": 0.0,
                 "avg_score": 0.0,
             }
-            
+
             if not results:
                 return {"metrics": metrics}
-            
+
             # Calculate average relevance score
-            scores = [r.get("relevance_score", 0.0) for r in results if "relevance_score" in r]
+            scores = [
+                r.get("relevance_score", 0.0) for r in results if "relevance_score" in r
+            ]
             if scores:
                 metrics["avg_relevance"] = sum(scores) / len(scores)
-            
+
             # Use RAGAS evaluation if available
             if quick_evaluate is not None:
                 try:
@@ -204,20 +208,20 @@ class RAGSystem:
                 except Exception:
                     # Fallback to simple metrics
                     pass
-            
+
             return {"metrics": metrics}
         except Exception as e:
             raise Exception(f"Evaluation failed: {str(e)}")
 
     def health(self) -> Dict[str, Any]:
         """Check system health status.
-        
+
         Returns:
             Dictionary with system health status
         """
         components = {}
         all_healthy = True
-        
+
         # Check components
         try:
             # Check store
@@ -231,7 +235,7 @@ class RAGSystem:
         except Exception as e:
             components["store"] = {"status": "down", "error": str(e)}
             all_healthy = False
-        
+
         try:
             # Check retriever
             if self.retriever is not None:
@@ -242,9 +246,9 @@ class RAGSystem:
         except Exception as e:
             components["retriever"] = {"status": "down", "error": str(e)}
             all_healthy = False
-        
+
         status = "healthy" if all_healthy else "degraded"
-        
+
         return {
             "status": status,
             "components": components,
@@ -252,11 +256,11 @@ class RAGSystem:
 
     def config(self, key: Optional[str] = None, value: Optional[str] = None) -> Any:
         """Get or set configuration.
-        
+
         Args:
             key: Configuration key to get or set
             value: Value to set (if setting)
-            
+
         Returns:
             Configuration value or full config dict
         """
@@ -282,38 +286,46 @@ class RAGSystem:
 
     def _load_documents(self, path: Path, recursive: bool) -> List[Dict[str, Any]]:
         """Load documents from path.
-        
+
         Args:
             path: Path to load documents from
             recursive: Whether to search subdirectories
-            
+
         Returns:
             List of document dictionaries
         """
         documents = []
-        
+
         if path.is_file():
             # Single file
-            documents.append({
-                "source": str(path),
-                "content": path.read_text(),
-            })
+            documents.append(
+                {
+                    "source": str(path),
+                    "content": path.read_text(),
+                }
+            )
         else:
             # Directory
             pattern = "**/*" if recursive else "*"
             for file_path in path.glob(pattern):
                 if file_path.is_file() and file_path.suffix in [
-                    ".txt", ".md", ".pdf", ".docx", ".json"
+                    ".txt",
+                    ".md",
+                    ".pdf",
+                    ".docx",
+                    ".json",
                 ]:
                     try:
-                        documents.append({
-                            "source": str(file_path),
-                            "content": file_path.read_text(),
-                        })
+                        documents.append(
+                            {
+                                "source": str(file_path),
+                                "content": file_path.read_text(),
+                            }
+                        )
                     except Exception:
                         # Skip files that can't be read
                         pass
-        
+
         return documents
 
     def _chunk_documents(
@@ -323,35 +335,37 @@ class RAGSystem:
         overlap: int,
     ) -> List[Dict[str, Any]]:
         """Split documents into chunks.
-        
+
         Args:
             documents: List of documents
             chunk_size: Size of chunks
             overlap: Overlap between chunks
-            
+
         Returns:
             List of document chunks
         """
         chunks = []
-        
+
         for doc in documents:
             content = doc.get("content", "")
             source = doc.get("source", "")
-            
+
             # Simple chunking by token count (word approximation)
             words = content.split()
             chunk_words = chunk_size
             overlap_words = overlap
-            
+
             for i in range(0, len(words), chunk_words - overlap_words):
                 chunk_text = " ".join(words[i : i + chunk_words])
                 if chunk_text.strip():
-                    chunks.append({
-                        "source": source,
-                        "content": chunk_text,
-                        "chunk_index": len(chunks),
-                    })
-        
+                    chunks.append(
+                        {
+                            "source": source,
+                            "content": chunk_text,
+                            "chunk_index": len(chunks),
+                        }
+                    )
+
         return chunks
 
     def _generate_answer(
@@ -360,20 +374,20 @@ class RAGSystem:
         results: List[Dict[str, Any]],
     ) -> str:
         """Generate answer from retrieved results.
-        
+
         Args:
             question: Original question
             results: Retrieved documents
-            
+
         Returns:
             Generated answer
         """
         if not results:
             return "No information found."
-        
+
         # Combine results into context
         context = "\n".join([r.get("content", "") for r in results[:3]])
-        
+
         # Simple answer generation (in production would use LLM)
         if question.lower().startswith("what"):
             return f"Based on the retrieved documents, the answer relates to: {context[:200]}..."

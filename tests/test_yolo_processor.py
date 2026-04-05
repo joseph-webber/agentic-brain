@@ -14,7 +14,9 @@ class DummyProducer:
     def __init__(self) -> None:
         self.messages: list[tuple[str, dict, bytes | None]] = []
 
-    async def send_and_wait(self, topic: str, value: dict, key: bytes | None = None) -> None:
+    async def send_and_wait(
+        self, topic: str, value: dict, key: bytes | None = None
+    ) -> None:
         self.messages.append((topic, value, key))
 
 
@@ -25,7 +27,9 @@ class StubHandlers:
 
     async def run_tests(self, command_text: str) -> CommandExecutionResult:
         self.called.append(f"tests:{command_text}")
-        return CommandExecutionResult(True, "run_tests", command_text, output="tests ok")
+        return CommandExecutionResult(
+            True, "run_tests", command_text, output="tests ok"
+        )
 
     async def deploy(self, command_text: str) -> CommandExecutionResult:
         self.called.append(f"deploy:{command_text}")
@@ -33,7 +37,9 @@ class StubHandlers:
 
     async def check_status(self, command_text: str) -> CommandExecutionResult:
         self.called.append(f"status:{command_text}")
-        return CommandExecutionResult(True, "check_status", command_text, output="status ok")
+        return CommandExecutionResult(
+            True, "check_status", command_text, output="status ok"
+        )
 
     async def search(self, command_text: str) -> CommandExecutionResult:
         self.called.append(f"search:{command_text}")
@@ -61,7 +67,9 @@ async def test_processor_routes_known_commands_and_publishes_results() -> None:
     producer = DummyProducer()
     processor._producer = producer
 
-    envelope = await processor.process_message({"id": "cmd-1", "command": "run tests -q"})
+    envelope = await processor.process_message(
+        {"id": "cmd-1", "command": "run tests -q"}
+    )
 
     assert handlers.called == ["tests:run tests -q"]
     assert envelope["success"] is True
@@ -77,14 +85,18 @@ async def test_processor_uses_claude_interpretation_for_unknown_commands() -> No
     producer = DummyProducer()
     processor._producer = producer
 
-    envelope = await processor.process_message({"id": "cmd-2", "command": "find the processor class"})
+    envelope = await processor.process_message(
+        {"id": "cmd-2", "command": "find the processor class"}
+    )
 
     assert handlers.called == [
         "interpret:find the processor class",
         "search:search YOLOCommandProcessor",
     ]
     assert envelope["capability"] == "search"
-    assert envelope["interpreted"]["normalized_command"] == "search YOLOCommandProcessor"
+    assert (
+        envelope["interpreted"]["normalized_command"] == "search YOLOCommandProcessor"
+    )
 
 
 @pytest.mark.asyncio

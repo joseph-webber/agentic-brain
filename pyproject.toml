@@ -437,12 +437,12 @@ agentic = "agentic_brain.cli:main"
 ab = "agentic_brain.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/ecomlounge/brain"
-Repository = "https://github.com/ecomlounge/brain"
-Documentation = "https://github.com/ecomlounge/brain/blob/main/docs/INDEX.md"
-Changelog = "https://github.com/ecomlounge/brain/blob/main/CHANGELOG.md"
-"Bug Tracker" = "https://github.com/ecomlounge/brain/issues"
-"Source Code" = "https://github.com/ecomlounge/brain"
+Homepage = "https://github.com/joseph-webber/brain"
+Repository = "https://github.com/joseph-webber/brain"
+Documentation = "https://github.com/joseph-webber/brain/blob/main/docs/INDEX.md"
+Changelog = "https://github.com/joseph-webber/brain/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/joseph-webber/brain/issues"
+"Source Code" = "https://github.com/joseph-webber/brain"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

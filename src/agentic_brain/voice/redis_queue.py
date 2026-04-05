@@ -18,10 +18,10 @@ from agentic_brain.core.redis_pool import RedisConfig, RedisPoolManager
 
 def _json_compact(payload: Any) -> str:
     """Serialize payload to compact JSON string.
-    
+
     Args:
         payload: Data structure to serialize.
-        
+
     Returns:
         Compact JSON string with no whitespace.
     """
@@ -30,10 +30,10 @@ def _json_compact(payload: Any) -> str:
 
 def _json_load(raw: Any) -> Any:
     """Deserialize JSON from string or bytes.
-    
+
     Args:
         raw: JSON string, bytes, or None.
-        
+
     Returns:
         Deserialized Python object or None.
     """
@@ -102,13 +102,13 @@ class RedisVoiceQueue:
 
     def enqueue(self, job: VoiceJob) -> VoiceJob:
         """Add a voice job to the appropriate queue.
-        
+
         Jobs are routed by priority: normal jobs go to the main queue,
         high/urgent jobs go to the priority queue.
-        
+
         Args:
             job: Voice job to enqueue.
-            
+
         Returns:
             The same job instance for chaining.
         """
@@ -122,12 +122,12 @@ class RedisVoiceQueue:
 
     def dequeue(self) -> Optional[VoiceJob]:
         """Remove and return the next job from the queue.
-        
+
         Priority order:
         1. Urgent jobs (from priority queue)
         2. High priority jobs (from priority queue)
         3. Normal jobs (from main queue)
-        
+
         Returns:
             Next voice job to process, or None if queue is empty.
         """
@@ -141,7 +141,7 @@ class RedisVoiceQueue:
 
     def get_state(self) -> dict[str, Any]:
         """Get current voice queue state and speaking status.
-        
+
         Returns:
             Dictionary with keys:
                 - is_speaking: Whether voice is currently playing.
@@ -184,7 +184,7 @@ class RedisVoiceQueue:
 
     def set_speaking(self, lady: str, text: str) -> None:
         """Mark voice system as currently speaking.
-        
+
         Args:
             lady: Voice/lady identifier.
             text: Text being spoken.
@@ -218,7 +218,7 @@ class RedisVoiceQueue:
     @property
     def depth(self) -> int:
         """Get total number of jobs in all queues.
-        
+
         Returns:
             Sum of normal and priority queue depths.
         """
@@ -232,7 +232,7 @@ class RedisVoiceQueue:
 
     def _dequeue_priority(self) -> Optional[str]:
         """Dequeue from priority queue, preferring urgent jobs.
-        
+
         Returns:
             Serialized job JSON or None if priority queue is empty.
         """
@@ -259,10 +259,10 @@ class RedisVoiceQueue:
 
     def _dequeue_fifo(self, key: str) -> Optional[str]:
         """Dequeue from a specific queue in FIFO order.
-        
+
         Args:
             key: Redis queue key.
-            
+
         Returns:
             Serialized job JSON or None if queue is empty.
         """
@@ -283,11 +283,11 @@ class RedisVoiceQueue:
         predicate: Optional[Callable[[dict[str, Any]], bool]] = None,
     ) -> Optional[str]:
         """Select job with lowest sequence number from a list.
-        
+
         Args:
             items: List of serialized job JSONs.
             predicate: Optional filter function for jobs.
-            
+
         Returns:
             Serialized job with lowest sequence, or None.
         """
@@ -355,7 +355,7 @@ class VoiceAudioCache:
     @property
     def client(self):
         """Get the underlying Redis client instance.
-        
+
         Returns:
             Redis client from the connection pool.
         """
@@ -363,11 +363,11 @@ class VoiceAudioCache:
 
     def get(self, text: str, voice: str) -> Optional[bytes]:
         """Retrieve cached audio for text and voice.
-        
+
         Args:
             text: Text content.
             voice: Voice identifier.
-            
+
         Returns:
             Cached audio bytes or None if not found.
         """
@@ -383,12 +383,12 @@ class VoiceAudioCache:
 
     def set(self, text: str, voice: str, audio: bytes) -> str:
         """Cache audio bytes for text and voice combination.
-        
+
         Args:
             text: Text content.
             voice: Voice identifier.
             audio: Audio data to cache.
-            
+
         Returns:
             Redis key where audio was stored.
         """
@@ -417,11 +417,11 @@ class VoiceAudioCache:
 
     def _key(self, text: str, voice: str) -> str:
         """Generate cache key for text and voice.
-        
+
         Args:
             text: Text content.
             voice: Voice identifier.
-            
+
         Returns:
             Redis key with MD5 hash.
         """

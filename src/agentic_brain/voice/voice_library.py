@@ -64,7 +64,7 @@ SYSTEM_VOICE_BY_LADY = {
 
 def _utc_now_iso() -> str:
     """Get current UTC time as ISO 8601 string.
-    
+
     Returns:
         ISO 8601 formatted timestamp.
     """
@@ -73,10 +73,10 @@ def _utc_now_iso() -> str:
 
 def _slugify(value: str) -> str:
     """Convert string to URL-safe slug.
-    
+
     Args:
         value: String to slugify.
-        
+
     Returns:
         Lowercase alphanumeric string with hyphens.
     """
@@ -87,15 +87,15 @@ def _slugify(value: str) -> str:
 
 def resolve_voice_storage_dir(base_dir: str | Path | None = None) -> Path:
     """Resolve voice library storage directory.
-    
+
     Priority order:
     1. Explicit base_dir parameter
     2. AGENTIC_BRAIN_VOICE_CLONE_DIR environment variable
     3. Default: ~/.agentic-brain/voices
-    
+
     Args:
         base_dir: Optional explicit directory path.
-        
+
     Returns:
         Resolved storage directory path.
     """
@@ -125,7 +125,7 @@ class VoiceProfile:
     @property
     def reference_audio(self) -> Path:
         """Get reference audio file as Path object.
-        
+
         Returns:
             Path to reference audio file.
         """
@@ -133,7 +133,7 @@ class VoiceProfile:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert profile to dictionary.
-        
+
         Returns:
             Dictionary representation of profile.
         """
@@ -142,10 +142,10 @@ class VoiceProfile:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VoiceProfile:
         """Create profile from dictionary.
-        
+
         Args:
             data: Dictionary with profile fields.
-            
+
         Returns:
             VoiceProfile instance.
         """
@@ -165,14 +165,14 @@ class VoiceProfile:
 
 class VoiceLibrary:
     """Voice cloning library for managing custom voice profiles.
-    
+
     Stores voice clones with reference audio, metadata, and lady assignments.
     Supports export/import for sharing voice profiles.
     """
-    
+
     def __init__(self, base_dir: str | Path | None = None) -> None:
         """Initialize voice library.
-        
+
         Args:
             base_dir: Optional storage directory override.
         """
@@ -181,7 +181,7 @@ class VoiceLibrary:
 
     def available_ladies(self) -> tuple[str, ...]:
         """Get list of known lady voice identifiers.
-        
+
         Returns:
             Tuple of lady names (lowercase).
         """
@@ -189,10 +189,10 @@ class VoiceLibrary:
 
     def generate_voice_id(self, name: str) -> str:
         """Generate unique voice identifier from name.
-        
+
         Args:
             name: Voice display name.
-            
+
         Returns:
             Slugified name with random suffix.
         """
@@ -200,10 +200,10 @@ class VoiceLibrary:
 
     def voice_dir(self, voice_id: str) -> Path:
         """Get storage directory for a voice.
-        
+
         Args:
             voice_id: Voice identifier.
-            
+
         Returns:
             Path to voice directory.
         """
@@ -211,10 +211,10 @@ class VoiceLibrary:
 
     def profile_path(self, voice_id: str) -> Path:
         """Get path to voice profile JSON file.
-        
+
         Args:
             voice_id: Voice identifier.
-            
+
         Returns:
             Path to profile.json file.
         """
@@ -222,10 +222,10 @@ class VoiceLibrary:
 
     def save_profile(self, profile: VoiceProfile) -> VoiceProfile:
         """Save voice profile to disk.
-        
+
         Args:
             profile: Voice profile to save.
-            
+
         Returns:
             Updated profile with new timestamp.
         """
@@ -250,7 +250,7 @@ class VoiceLibrary:
         metadata: dict[str, Any] | None = None,
     ) -> VoiceProfile:
         """Register a new voice clone with reference audio.
-        
+
         Args:
             source_audio: Path to reference audio file.
             name: Display name for the voice.
@@ -259,10 +259,10 @@ class VoiceLibrary:
             backend: TTS backend identifier.
             validation: Validation metrics.
             metadata: Additional metadata.
-            
+
         Returns:
             Created voice profile.
-            
+
         Raises:
             ValueError: If assigned_lady is unknown.
         """
@@ -292,10 +292,10 @@ class VoiceLibrary:
 
     def get_voice(self, voice_id: str) -> VoiceProfile | None:
         """Load voice profile by ID.
-        
+
         Args:
             voice_id: Voice identifier.
-            
+
         Returns:
             Voice profile or None if not found.
         """
@@ -308,7 +308,7 @@ class VoiceLibrary:
 
     def list_voices(self) -> list[VoiceProfile]:
         """List all registered voices.
-        
+
         Returns:
             List of voice profiles, sorted by name.
         """
@@ -323,10 +323,10 @@ class VoiceLibrary:
 
     def delete_voice(self, voice_id: str) -> bool:
         """Delete a voice and all its data.
-        
+
         Args:
             voice_id: Voice identifier.
-            
+
         Returns:
             True if voice was deleted, False if not found.
         """
@@ -338,14 +338,14 @@ class VoiceLibrary:
 
     def assign_voice(self, voice_id: str, lady: str) -> VoiceProfile:
         """Assign voice to a lady identifier.
-        
+
         Args:
             voice_id: Voice identifier.
             lady: Lady name to assign to.
-            
+
         Returns:
             Updated voice profile.
-            
+
         Raises:
             ValueError: If lady is unknown.
             KeyError: If voice_id not found.
@@ -366,10 +366,10 @@ class VoiceLibrary:
 
     def find_by_lady(self, lady: str) -> list[VoiceProfile]:
         """Find all voices assigned to a lady.
-        
+
         Args:
             lady: Lady identifier.
-            
+
         Returns:
             List of matching voice profiles.
         """
@@ -382,14 +382,14 @@ class VoiceLibrary:
 
     def export_voice(self, voice_id: str, export_path: str | Path) -> Path:
         """Export voice to a portable ZIP archive.
-        
+
         Args:
             voice_id: Voice identifier.
             export_path: Target ZIP file path.
-            
+
         Returns:
             Path to created ZIP file.
-            
+
         Raises:
             KeyError: If voice_id not found.
         """
@@ -421,10 +421,10 @@ class VoiceLibrary:
 
     def import_voice(self, import_path: str | Path) -> VoiceProfile:
         """Import voice from a ZIP archive.
-        
+
         Args:
             import_path: Path to voice ZIP file.
-            
+
         Returns:
             Imported voice profile.
         """

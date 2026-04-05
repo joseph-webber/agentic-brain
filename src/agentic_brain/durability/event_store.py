@@ -105,7 +105,8 @@ class EventStoreConfig:
         """Create config from environment variables"""
         return cls(
             bootstrap_servers=os.getenv(
-                "KAFKA_BOOTSTRAP_SERVERS", os.getenv("REDPANDA_SERVERS", "localhost:9092")
+                "KAFKA_BOOTSTRAP_SERVERS",
+                os.getenv("REDPANDA_SERVERS", "localhost:9092"),
             ),
             topic_prefix=os.getenv("EVENT_TOPIC_PREFIX", "workflow"),
             consumer_group=os.getenv("EVENT_CONSUMER_GROUP", "agentic-brain-workers"),

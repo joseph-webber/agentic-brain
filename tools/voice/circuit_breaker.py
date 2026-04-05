@@ -29,7 +29,7 @@ class CircuitBreaker:
     name: str
     failure_threshold: int = 3
     recovery_timeout: float = 30.0  # seconds before half-open probe
-    half_open_max: int = 1           # probes allowed in half-open
+    half_open_max: int = 1  # probes allowed in half-open
 
     _state: BreakerState = field(default=BreakerState.CLOSED, init=False)
     _failures: int = field(default=0, init=False)
@@ -140,6 +140,5 @@ class CircuitBreakerRegistry:
 
     def healthy_providers(self) -> list[str]:
         return [
-            name for name, b in self._breakers.items()
-            if b.state != BreakerState.OPEN
+            name for name, b in self._breakers.items() if b.state != BreakerState.OPEN
         ]

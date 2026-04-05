@@ -265,7 +265,9 @@ class Retriever:
                             node = record["n"]
                             embedding = record["embedding"]
                             if embedding:
-                                score = self._cosine_similarity(query_embedding, embedding)
+                                score = self._cosine_similarity(
+                                    query_embedding, embedding
+                                )
                                 if score >= min_score:
                                     chunks.append(
                                         RetrievedChunk(
@@ -289,7 +291,9 @@ class Retriever:
             logger.info("No Neo4j results for query=%r labels=%s", query, labels)
         return chunks[:k]
 
-    def search_documents(self: "Retriever", query: str, k: int = 5) -> list[RetrievedChunk]:
+    def search_documents(
+        self: "Retriever", query: str, k: int = 5
+    ) -> list[RetrievedChunk]:
         """Search an attached document store using embedding similarity.
 
         Args:
@@ -421,7 +425,11 @@ class Retriever:
         return chunks[:k]
 
     def search(
-        self: "Retriever", query: str, k: int = 5, sources: Optional[list[str]] = None, **kwargs: Any
+        self: "Retriever",
+        query: str,
+        k: int = 5,
+        sources: Optional[list[str]] = None,
+        **kwargs: Any,
     ) -> list[RetrievedChunk]:
         """
         Search across all configured sources.
@@ -459,7 +467,9 @@ class Retriever:
             logger.info("No retrieval results for query=%r", query)
         return all_chunks[:k]
 
-    def retrieve(self: "Retriever", query: str, top_k: int = 5, **kwargs: Any) -> list[RetrievedChunk]:
+    def retrieve(
+        self: "Retriever", query: str, top_k: int = 5, **kwargs: Any
+    ) -> list[RetrievedChunk]:
         """Compatibility alias that forwards to :meth:`search`.
 
         Args:

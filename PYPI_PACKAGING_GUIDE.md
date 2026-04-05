@@ -188,8 +188,8 @@ Once published, the package will be available at:
 
 - **PyPI**: https://pypi.org/project/agentic-brain/
 - **Project page**: https://pypi.org/project/agentic-brain/3.1.1/
-- **Repository**: https://github.com/ecomlounge/brain
-- **Documentation**: https://github.com/ecomlounge/brain/blob/main/docs/INDEX.md
+- **Repository**: https://github.com/joseph-webber/brain
+- **Documentation**: https://github.com/joseph-webber/brain/blob/main/docs/INDEX.md
 
 ## Optional Dependencies Reference
 

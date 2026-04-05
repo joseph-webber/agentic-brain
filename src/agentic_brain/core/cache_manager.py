@@ -22,12 +22,12 @@ _LABEL_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 def _json_default(value: Any) -> str:
     """Serialize common non-JSON-native values safely.
-    
+
     Handles datetime, date, and Decimal types.
-    
+
     Args:
         value: Value to serialize.
-        
+
     Returns:
         String representation suitable for JSON.
     """
@@ -58,12 +58,12 @@ class CacheManager:
         database: str | None = None,
     ) -> None:
         """Initialize the cache manager.
-        
+
         Args:
             label: Neo4j node label for cache entries (default: ExternalApiCache).
                    Must be a valid Neo4j identifier (letters, numbers, underscores).
             database: Optional Neo4j database name. Uses default if None.
-            
+
         Raises:
             ValueError: If label contains invalid characters.
         """
@@ -78,10 +78,10 @@ class CacheManager:
 
     def get_cached(self, cache_key: str) -> Any | None:
         """Return cached data when present and not expired.
-        
+
         Args:
             cache_key: Unique cache key.
-            
+
         Returns:
             Cached data, or None if missing or expired. Logs warnings on JSON errors.
         """
@@ -115,7 +115,7 @@ class CacheManager:
         ttl_hours: float | None = None,
     ) -> None:
         """Store data in Neo4j, replacing any existing cache entry.
-        
+
         Args:
             cache_key: Unique cache key.
             value: Data to cache (must be JSON-serializable).
@@ -154,7 +154,7 @@ class CacheManager:
 
     def invalidate(self, cache_key: str) -> None:
         """Remove a cache entry so the next lookup falls through to the API.
-        
+
         Args:
             cache_key: Cache key to invalidate.
         """
@@ -169,7 +169,7 @@ class CacheManager:
 
     def _get_session(self) -> AbstractContextManager[Any]:
         """Get a Neo4j session context manager for this cache database.
-        
+
         Returns:
             Context manager yielding a session.
         """
@@ -177,11 +177,11 @@ class CacheManager:
 
     def _run_single(self, cypher: str, **params: Any) -> dict[str, Any] | None:
         """Execute a query and return the first record as a dict.
-        
+
         Args:
             cypher: Cypher query string.
             **params: Query parameters.
-            
+
         Returns:
             First record as dict, or None if no results.
         """
@@ -191,7 +191,7 @@ class CacheManager:
 
     def _execute(self, cypher: str, **params: Any) -> None:
         """Execute a query without returning results.
-        
+
         Args:
             cypher: Cypher query string.
             **params: Query parameters.

@@ -531,10 +531,19 @@ Answer:"""
 
         return result
 
-    async def aquery(self, query: str, k: int = 5, sources: Optional[list[str]] = None, use_cache: bool = True, min_score: float = 0.3) -> RAGResult:
+    async def aquery(
+        self,
+        query: str,
+        k: int = 5,
+        sources: Optional[list[str]] = None,
+        use_cache: bool = True,
+        min_score: float = 0.3,
+    ) -> RAGResult:
         """Async wrapper for query() to support asyncio codepaths."""
         # Run the synchronous query in a thread to avoid blocking the event loop
-        return await asyncio.to_thread(self.query, query, k, sources, use_cache, min_score)
+        return await asyncio.to_thread(
+            self.query, query, k, sources, use_cache, min_score
+        )
 
     async def __aenter__(self):
         return self

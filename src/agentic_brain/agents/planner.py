@@ -183,9 +183,7 @@ class Planner:
 
         return plan
 
-    async def _plan_linear(
-        self, plan: Plan, context: dict[str, Any]
-    ) -> Plan:
+    async def _plan_linear(self, plan: Plan, context: dict[str, Any]) -> Plan:
         """Linear planning (sequential steps)."""
         action = Action(
             type=ActionType.THINK,
@@ -215,9 +213,7 @@ class Planner:
 
         return plan
 
-    async def _plan_hierarchical(
-        self, plan: Plan, context: dict[str, Any]
-    ) -> Plan:
+    async def _plan_hierarchical(self, plan: Plan, context: dict[str, Any]) -> Plan:
         """Hierarchical planning (with sub-goals)."""
         action = Action(
             type=ActionType.THINK,
@@ -256,9 +252,7 @@ class Planner:
 
         return plan
 
-    async def _plan_reactive(
-        self, plan: Plan, context: dict[str, Any]
-    ) -> Plan:
+    async def _plan_reactive(self, plan: Plan, context: dict[str, Any]) -> Plan:
         """Reactive planning (adapt based on observations)."""
         action = Action(
             type=ActionType.OBSERVE,
@@ -288,9 +282,7 @@ class Planner:
 
         return plan
 
-    async def refine_plan(
-        self, plan: Plan, feedback: str
-    ) -> Plan:
+    async def refine_plan(self, plan: Plan, feedback: str) -> Plan:
         """
         Refine plan based on feedback.
 
@@ -356,9 +348,7 @@ class ReActAgent:
         Returns:
             Tuple of (plan, results)
         """
-        self.current_plan = await self.planner.create_plan(
-            task, context=context or {}
-        )
+        self.current_plan = await self.planner.create_plan(task, context=context or {})
         results = []
 
         while not self.current_plan.is_complete():

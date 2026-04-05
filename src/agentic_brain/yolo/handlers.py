@@ -68,9 +68,7 @@ class CommandHandlers:
         claude_model: str | None = None,
     ) -> None:
         self.working_directory = Path(
-            working_directory
-            or os.getenv("YOLO_WORKING_DIRECTORY")
-            or Path.cwd()
+            working_directory or os.getenv("YOLO_WORKING_DIRECTORY") or Path.cwd()
         ).resolve()
         self.test_command = test_command or os.getenv("YOLO_TEST_COMMAND", "pytest")
         self.deploy_command = deploy_command or os.getenv("YOLO_DEPLOY_COMMAND")
@@ -86,7 +84,9 @@ class CommandHandlers:
         """Execute the configured test runner."""
         arguments = self._extract_arguments(command_text, "run tests")
         command = self._build_test_command(arguments)
-        return await self._run_command(command, capability="run_tests", requested=command_text)
+        return await self._run_command(
+            command, capability="run_tests", requested=command_text
+        )
 
     async def deploy(self, command_text: str) -> CommandExecutionResult:
         """Execute a deployment command."""
@@ -106,7 +106,9 @@ class CommandHandlers:
                 ),
                 exit_code=64,
             )
-        return await self._run_command(command, capability="deploy", requested=command_text)
+        return await self._run_command(
+            command, capability="deploy", requested=command_text
+        )
 
     async def check_status(self, command_text: str) -> CommandExecutionResult:
         """Return processor/application status without shelling out."""
@@ -125,7 +127,9 @@ class CommandHandlers:
             command=command_text,
             output=json.dumps(payload, indent=2, sort_keys=True, default=str),
             duration_ms=int((time.perf_counter() - started) * 1000),
-            metadata={"keys": sorted(snapshot.keys()) if isinstance(snapshot, dict) else []},
+            metadata={
+                "keys": sorted(snapshot.keys()) if isinstance(snapshot, dict) else []
+            },
         )
 
     async def search(self, command_text: str) -> CommandExecutionResult:
@@ -160,7 +164,9 @@ class CommandHandlers:
             arguments,
             str(self.working_directory),
         ]
-        result = await self._run_command(command, capability="search", requested=command_text)
+        result = await self._run_command(
+            command, capability="search", requested=command_text
+        )
         if result.exit_code == 1 and not result.output.strip():
             result.success = True
             result.output = "No matches found."
@@ -193,7 +199,9 @@ class CommandHandlers:
         try:
             payload = json.loads(response.content)
         except json.JSONDecodeError as exc:  # pragma: no cover - depends on remote LLM
-            logger.warning("Claude interpretation returned non-JSON output: %s", response.content)
+            logger.warning(
+                "Claude interpretation returned non-JSON output: %s", response.content
+            )
             raise ValueError("Claude interpretation did not return valid JSON") from exc
 
         capability = str(payload.get("capability", "")).strip()

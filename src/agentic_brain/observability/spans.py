@@ -1,12 +1,18 @@
 """Span management for RAGTracer
 """
+
 from __future__ import annotations
 import time
 from typing import Any, Dict, List, Optional
 
 
 class Span:
-    def __init__(self, name: str, tracer: "RAGTracer" = None, attributes: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        name: str,
+        tracer: "RAGTracer" = None,
+        attributes: Optional[Dict[str, Any]] = None,
+    ):
         self.name = name
         self.tracer = tracer
         self.attributes: Dict[str, Any] = dict(attributes or {})

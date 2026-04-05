@@ -132,6 +132,7 @@ def _set_progress(status: str) -> None:
 # Conversation history (Redis-backed)
 # ---------------------------------------------------------------------------
 
+
 def push_history(role: str, content: str) -> None:
     try:
         r = _redis()
@@ -162,6 +163,7 @@ def get_context_messages() -> list[dict[str, str]]:
 # Redpanda REST transport (Pandaproxy on port 8082)
 # ---------------------------------------------------------------------------
 
+
 def _rest_post(
     path: str,
     body: Any,
@@ -182,9 +184,7 @@ def _rest_post(
         return json.loads(resp.read())
 
 
-def _rest_get(
-    path: str, accept: str = "application/vnd.kafka.v2+json"
-) -> Any:
+def _rest_get(path: str, accept: str = "application/vnd.kafka.v2+json") -> Any:
     url = f"{PANDAPROXY}{path}"
     req = urllib.request.Request(url, headers={"Accept": accept})
     with urllib.request.urlopen(req, timeout=10) as resp:
@@ -206,9 +206,7 @@ def _rest_delete(path: str) -> None:
             raise
 
 
-def rest_produce(
-    topic: str, value: dict, key: str | None = None
-) -> None:
+def rest_produce(topic: str, value: dict, key: str | None = None) -> None:
     record: dict[str, Any] = {"value": value}
     if key:
         record["key"] = key
@@ -251,14 +249,9 @@ class RestConsumer:
             content_type="application/vnd.kafka.v2+json",
         )
 
-    def poll(
-        self, max_bytes: int = 65536, timeout_ms: int = 1000
-    ) -> list[dict]:
+    def poll(self, max_bytes: int = 65536, timeout_ms: int = 1000) -> list[dict]:
         try:
-            url = (
-                f"{self._base}/records"
-                f"?max_bytes={max_bytes}&timeout={timeout_ms}"
-            )
+            url = f"{self._base}/records" f"?max_bytes={max_bytes}&timeout={timeout_ms}"
             return _rest_get(url)
         except Exception:
             return []
@@ -273,6 +266,7 @@ class RestConsumer:
 # ---------------------------------------------------------------------------
 # Copilot CLI integration
 # ---------------------------------------------------------------------------
+
 
 def _copilot_available() -> bool:
     """Check if the Copilot CLI binary exists and is executable."""
@@ -299,9 +293,7 @@ def _call_copilot(query: str) -> str | None:
         for msg in recent:
             role = "User" if msg["role"] == "user" else "Karen"
             lines.append(f"{role}: {msg['content']}")
-        context_block = (
-            "Recent conversation:\n" + "\n".join(lines) + "\n\n"
-        )
+        context_block = "Recent conversation:\n" + "\n".join(lines) + "\n\n"
 
     full_prompt = (
         f"{context_block}"
@@ -334,15 +326,11 @@ def _call_copilot(query: str) -> str | None:
             # Truncate very long responses for voice
             if len(response) > 1000:
                 response = response[:1000].rsplit(".", 1)[0] + "."
-            log.info(
-                "Copilot responded (%d chars)", len(response)
-            )
+            log.info("Copilot responded (%d chars)", len(response))
             return response
         else:
             stderr = result.stderr.strip()[:200] if result.stderr else ""
-            log.warning(
-                "Copilot exit=%d stderr=%s", result.returncode, stderr
-            )
+            log.warning("Copilot exit=%d stderr=%s", result.returncode, stderr)
             return None
     except subprocess.TimeoutExpired:
         log.warning("Copilot CLI timed out after %ds", COPILOT_TIMEOUT)
@@ -359,12 +347,11 @@ def _call_copilot(query: str) -> str | None:
 # Ollama fallback
 # ---------------------------------------------------------------------------
 
+
 def _ollama_available() -> bool:
     """Quick health check against Ollama /api/tags endpoint."""
     try:
-        req = urllib.request.Request(
-            f"{OLLAMA_URL}/api/tags", method="GET"
-        )
+        req = urllib.request.Request(f"{OLLAMA_URL}/api/tags", method="GET")
         with urllib.request.urlopen(req, timeout=3):
             return True
     except Exception:
@@ -411,9 +398,31 @@ def _call_ollama(query: str) -> str | None:
 # ---------------------------------------------------------------------------
 
 _SIMPLE_WORDS = {
-    "hi", "hello", "hey", "thanks", "thank", "you", "bye", "goodbye",
-    "yes", "no", "ok", "okay", "sure", "great", "cool", "nice", "good",
-    "cheers", "ta", "yep", "nope", "alright", "right", "got", "it",
+    "hi",
+    "hello",
+    "hey",
+    "thanks",
+    "thank",
+    "you",
+    "bye",
+    "goodbye",
+    "yes",
+    "no",
+    "ok",
+    "okay",
+    "sure",
+    "great",
+    "cool",
+    "nice",
+    "good",
+    "cheers",
+    "ta",
+    "yep",
+    "nope",
+    "alright",
+    "right",
+    "got",
+    "it",
 }
 
 
@@ -426,9 +435,24 @@ def classify_complexity(text: str) -> str:
     if len(words) <= 5 and set(words).issubset(_SIMPLE_WORDS):
         return "simple"
     complex_signals = [
-        "write", "code", "script", "explain", "how does", "why does",
-        "analyse", "analyze", "compare", "create", "build", "implement",
-        "generate", "refactor", "debug", "fix", "review", "deploy",
+        "write",
+        "code",
+        "script",
+        "explain",
+        "how does",
+        "why does",
+        "analyse",
+        "analyze",
+        "compare",
+        "create",
+        "build",
+        "implement",
+        "generate",
+        "refactor",
+        "debug",
+        "fix",
+        "review",
+        "deploy",
     ]
     for sig in complex_signals:
         if sig in lower:
@@ -442,8 +466,8 @@ def classify_complexity(text: str) -> str:
 # Simple/medium queries go to Ollama first (faster for voice latency).
 # Complex queries try Copilot first (more capable for code tasks).
 _ROUTING: dict[str, list[str]] = {
-    "simple":  ["ollama", "copilot"],
-    "medium":  ["ollama", "copilot"],
+    "simple": ["ollama", "copilot"],
+    "medium": ["ollama", "copilot"],
     "complex": ["copilot", "ollama"],
 }
 
@@ -491,6 +515,7 @@ def route_query(query: str) -> tuple[str, str]:
 # ---------------------------------------------------------------------------
 # Message processor
 # ---------------------------------------------------------------------------
+
 
 def process_input_message(msg_value: dict) -> None:
     """Handle one brain.voice.input message end-to-end."""
@@ -557,6 +582,7 @@ def process_input_message(msg_value: dict) -> None:
 # Coordination listener (background thread)
 # ---------------------------------------------------------------------------
 
+
 def _coordination_listener() -> None:
     """Listen to brain.voice.coordination for peer agent messages."""
     try:
@@ -583,6 +609,7 @@ def _coordination_listener() -> None:
 # Health checks
 # ---------------------------------------------------------------------------
 
+
 def check_health() -> dict[str, Any]:
     """Return health status of all bridge dependencies."""
     health: dict[str, Any] = {
@@ -603,9 +630,7 @@ def check_health() -> dict[str, Any]:
     try:
         topics = _rest_get("/topics")
         health["pandaproxy"]["available"] = True
-        health["pandaproxy"]["voice_topics"] = [
-            t for t in topics if "voice" in t
-        ]
+        health["pandaproxy"]["voice_topics"] = [t for t in topics if "voice" in t]
     except Exception as exc:
         health["pandaproxy"]["error"] = str(exc)
 
@@ -620,9 +645,8 @@ def check_health() -> dict[str, Any]:
         health["redis"]["error"] = str(exc)
 
     # Overall
-    health["ready"] = (
-        health["pandaproxy"]["available"]
-        and (health["copilot_cli"]["available"] or health["ollama"]["available"])
+    health["ready"] = health["pandaproxy"]["available"] and (
+        health["copilot_cli"]["available"] or health["ollama"]["available"]
     )
     return health
 
@@ -630,6 +654,7 @@ def check_health() -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Main daemon
 # ---------------------------------------------------------------------------
+
 
 def run_daemon() -> None:
     """Main event loop: consume voice input, route to Copilot, publish responses."""
@@ -650,9 +675,7 @@ def run_daemon() -> None:
     if _copilot_available():
         log.info("Copilot CLI: ✓ (%s)", COPILOT_BIN)
     else:
-        log.warning(
-            "Copilot CLI: ✗ — will use Ollama fallback exclusively"
-        )
+        log.warning("Copilot CLI: ✗ — will use Ollama fallback exclusively")
 
     if _ollama_available():
         log.info("Ollama: ✓ (%s @ %s)", OLLAMA_MODEL, OLLAMA_URL)
@@ -660,9 +683,7 @@ def run_daemon() -> None:
         log.warning("Ollama: ✗ — no fallback available")
 
     # Start coordination listener
-    coord_thread = threading.Thread(
-        target=_coordination_listener, daemon=True
-    )
+    coord_thread = threading.Thread(target=_coordination_listener, daemon=True)
     coord_thread.start()
 
     # Mark bridge ready
@@ -722,6 +743,7 @@ def run_daemon() -> None:
 # ---------------------------------------------------------------------------
 # CLI commands
 # ---------------------------------------------------------------------------
+
 
 def cmd_test() -> None:
     """Send a test query through the full pipeline."""

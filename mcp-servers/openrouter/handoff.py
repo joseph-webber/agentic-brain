@@ -16,16 +16,17 @@ HANDOFF_DIR = Path.home() / ".brain-continuity"
 HANDOFF_FILE = HANDOFF_DIR / "llm-handoff.json"
 INSTRUCTIONS_FILE = HANDOFF_DIR / "local-llm-instructions.md"
 
+
 def create_handoff(
     current_task: str,
     context: str,
     pending_actions: list,
     important_state: dict = None,
-    urgency: str = "normal"
+    urgency: str = "normal",
 ) -> str:
     """
     Create handoff package for local LLM when rate limited.
-    
+
     Args:
         current_task: What we were working on
         context: Relevant context local LLM needs
@@ -34,7 +35,7 @@ def create_handoff(
         urgency: "low", "normal", "high", "critical"
     """
     HANDOFF_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     handoff = {
         "created_at": datetime.now().isoformat(),
         "reason": "rate_limit_429",
@@ -70,17 +71,17 @@ def create_handoff(
 - Check ~/brain/CLAUDE.md for brain rules
 - Check ~/brain/ROM-* files for specific knowledge
 - Save partial progress and wait for Claude to return
-"""
+""",
     }
-    
+
     # Save JSON handoff
-    with open(HANDOFF_FILE, 'w') as f:
+    with open(HANDOFF_FILE, "w") as f:
         json.dump(handoff, f, indent=2)
-    
+
     # Save human-readable instructions
-    with open(INSTRUCTIONS_FILE, 'w') as f:
+    with open(INSTRUCTIONS_FILE, "w") as f:
         f.write(handoff["resume_instructions"])
-    
+
     return f"""✅ HANDOFF CREATED
 
 📄 Handoff file: {HANDOFF_FILE}
@@ -114,69 +115,81 @@ def complete_handoff(summary: str = "Completed by local LLM"):
         if handoff:
             handoff["completed_at"] = datetime.now().isoformat()
             handoff["completion_summary"] = summary
-            
+
             # Archive it
             archive = HANDOFF_DIR / "handoff-archive"
             archive.mkdir(exist_ok=True)
-            archive_file = archive / f"handoff-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
-            with open(archive_file, 'w') as f:
+            archive_file = (
+                archive / f"handoff-{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+            )
+            with open(archive_file, "w") as f:
                 json.dump(handoff, f, indent=2)
-        
+
         # Clear current handoff
         HANDOFF_FILE.unlink()
         if INSTRUCTIONS_FILE.exists():
             INSTRUCTIONS_FILE.unlink()
-    
+
     return "✅ Handoff completed and archived"
 
 
 def emergency_save(message: str = "Emergency save due to rate limiting"):
     """Quick emergency save when rate limiting detected"""
     import subprocess
-    
+
     HANDOFF_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     # Get current git status
     try:
         git_status = subprocess.run(
             ["git", "-C", os.path.expanduser("~/brain"), "status", "--short"],
-            capture_output=True, text=True, timeout=5
+            capture_output=True,
+            text=True,
+            timeout=5,
         ).stdout[:500]
     except:
         git_status = "Unable to get git status"
-    
+
     emergency = {
         "timestamp": datetime.now().isoformat(),
         "message": message,
         "git_status": git_status,
-        "action": "SAVE_AND_WAIT"
+        "action": "SAVE_AND_WAIT",
     }
-    
+
     emergency_file = HANDOFF_DIR / "emergency-save.json"
-    with open(emergency_file, 'w') as f:
+    with open(emergency_file, "w") as f:
         json.dump(emergency, f, indent=2)
-    
+
     # Try to commit
     try:
-        subprocess.run([
-            "git", "-C", os.path.expanduser("~/brain"),
-            "add", "-A"
-        ], timeout=10)
-        subprocess.run([
-            "git", "-C", os.path.expanduser("~/brain"),
-            "commit", "-m", f"🚨 Emergency save: {message}"
-        ], timeout=30)
+        subprocess.run(
+            ["git", "-C", os.path.expanduser("~/brain"), "add", "-A"], timeout=10
+        )
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                os.path.expanduser("~/brain"),
+                "commit",
+                "-m",
+                f"🚨 Emergency save: {message}",
+            ],
+            timeout=30,
+        )
     except:
         pass
-    
+
     return f"🚨 Emergency save complete: {emergency_file}"
 
 
 if __name__ == "__main__":
     # Test
-    print(create_handoff(
-        current_task="Testing handoff system",
-        context="This is a test of the seamless LLM handoff",
-        pending_actions=["Verify handoff works", "Test local LLM resume"],
-        important_state={"test": True}
-    ))
+    print(
+        create_handoff(
+            current_task="Testing handoff system",
+            context="This is a test of the seamless LLM handoff",
+            pending_actions=["Verify handoff works", "Test local LLM resume"],
+            important_state={"test": True},
+        )
+    )

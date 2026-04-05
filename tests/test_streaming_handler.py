@@ -38,7 +38,9 @@ def test_stream_token_defaults_metadata():
 
 
 def test_stream_token_to_dict():
-    token = StreamToken(token="hi", is_end=True, finish_reason="stop", metadata={"a": 1})
+    token = StreamToken(
+        token="hi", is_end=True, finish_reason="stop", metadata={"a": 1}
+    )
     assert token.to_dict()["metadata"]["a"] == 1
 
 
@@ -92,7 +94,7 @@ async def test_iter_sse_payloads_handles_done():
 
 @pytest.mark.asyncio
 async def test_iter_sse_payloads_joins_multiline_events():
-    chunks = DummyStream([b"data: {\"a\":1}\n", b"data: {\"b\":2}\n\n"])
+    chunks = DummyStream([b'data: {"a":1}\n', b'data: {"b":2}\n\n'])
     assert [item async for item in iter_sse_payloads(chunks)] == ['{"a":1}\n{"b":2}']
 
 
@@ -154,7 +156,10 @@ async def test_as_fastapi_response_body_iterator_yields_sse():
     streamer = DummyResponder(provider="ollama")
     response = streamer.as_fastapi_response("hello")
     body = [chunk async for chunk in response.body_iterator]
-    assert any(("hello" in chunk.decode() if isinstance(chunk, bytes) else "hello" in chunk) for chunk in body)
+    assert any(
+        ("hello" in chunk.decode() if isinstance(chunk, bytes) else "hello" in chunk)
+        for chunk in body
+    )
 
 
 @pytest.mark.asyncio

@@ -11,5 +11,5 @@ def test_answer_similarity_empty_both():
 
 
 def test_answer_similarity_partial_overlap():
-    v = answer_similarity("The cat sat on the mat","cat on mat")
+    v = answer_similarity("The cat sat on the mat", "cat on mat")
     assert 0.2 < v < 1.0

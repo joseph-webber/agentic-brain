@@ -234,7 +234,9 @@ async def speak_cartesia(text: str, voice_id: Optional[str] = None) -> bool:
                 return None
             cache_dir = Path.home() / ".cache" / "agentic-brain" / "cartesia-playback"
             cache_dir.mkdir(parents=True, exist_ok=True)
-            file_path = cache_dir / f"cartesia_{os.getpid()}_{int(time.time() * 1000)}.wav"
+            file_path = (
+                cache_dir / f"cartesia_{os.getpid()}_{int(time.time() * 1000)}.wav"
+            )
             file_path.write_bytes(audio_bytes)
             return str(file_path)
         except Exception as e:  # pragma: no cover - network/SDK errors

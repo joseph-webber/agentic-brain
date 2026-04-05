@@ -113,8 +113,10 @@ class CachedEmbeddingProvider:
     ) -> None:
         self.provider = provider
         self.cache = cache or LRUCache(max_size=2048, ttl_seconds=3600)
-        self.model_name = model_name or getattr(provider, "model_name", None) or getattr(
-            provider, "model", provider.__class__.__name__
+        self.model_name = (
+            model_name
+            or getattr(provider, "model_name", None)
+            or getattr(provider, "model", provider.__class__.__name__)
         )
         self.dimensions = dimensions or int(getattr(provider, "dimensions", 0) or 0)
 
@@ -187,7 +189,9 @@ class QueryResultCache:
         self.namespace = namespace
 
     def key(self, query: str, params: dict[str, Any] | None = None) -> str:
-        return _cache_key(self.namespace, _normalize_text(query), _stable_params(params))
+        return _cache_key(
+            self.namespace, _normalize_text(query), _stable_params(params)
+        )
 
     def get(self, query: str, params: dict[str, Any] | None = None) -> Any | None:
         return self.cache.get(self.key(query, params))

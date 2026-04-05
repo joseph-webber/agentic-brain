@@ -17,7 +17,9 @@ class RecursiveChunker(BaseChunker):
         separators: list[str] | None = None,
         separator: str = "\n\n",
     ) -> None:
-        super().__init__(chunk_size, overlap, deduplicate=deduplicate, separator=separator)
+        super().__init__(
+            chunk_size, overlap, deduplicate=deduplicate, separator=separator
+        )
         self.separators = separators or ["\n\n", "\n", ". ", " ", ""]
 
     def _split_by_separator(self, text: str, separator: str, kind: str) -> list[Span]:

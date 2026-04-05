@@ -13,14 +13,18 @@ pytestmark = [pytest.mark.integration, pytest.mark.graph]
 def make_graph_rag(fake_graph_driver, monkeypatch):
     from agentic_brain.rag import community_detection as community_detection_module
 
-    monkeypatch.setattr(community_detection_module, "resolve_entities", lambda session: 0)
+    monkeypatch.setattr(
+        community_detection_module, "resolve_entities", lambda session: 0
+    )
     rag = EnhancedGraphRAG(GraphRAGConfig(use_pool=True))
     rag._get_session = fake_graph_driver.session
     return rag
 
 
 @pytest.mark.asyncio
-async def test_index_document_persists_document_entities_and_chunks(fake_graph_driver, graph_store, monkeypatch):
+async def test_index_document_persists_document_entities_and_chunks(
+    fake_graph_driver, graph_store, monkeypatch
+):
     rag = make_graph_rag(fake_graph_driver, monkeypatch)
 
     doc_id = await rag.index_document(
@@ -35,7 +39,9 @@ async def test_index_document_persists_document_entities_and_chunks(fake_graph_d
 
 
 @pytest.mark.asyncio
-async def test_index_document_generates_stable_document_id(fake_graph_driver, monkeypatch):
+async def test_index_document_generates_stable_document_id(
+    fake_graph_driver, monkeypatch
+):
     rag = make_graph_rag(fake_graph_driver, monkeypatch)
 
     first = await rag.index_document("Ada Lovelace inspired modern computing.")
@@ -45,14 +51,21 @@ async def test_index_document_generates_stable_document_id(fake_graph_driver, mo
 
 
 @pytest.mark.asyncio
-async def test_index_document_accepts_precomputed_embedding(fake_graph_driver, graph_store, monkeypatch):
+async def test_index_document_accepts_precomputed_embedding(
+    fake_graph_driver, graph_store, monkeypatch
+):
     rag = make_graph_rag(fake_graph_driver, monkeypatch)
     embedding = [0.1] * rag.config.embedding_dimension
 
-    doc_id = await rag.index_document("Precomputed embeddings are supported.", embedding=embedding)
+    doc_id = await rag.index_document(
+        "Precomputed embeddings are supported.", embedding=embedding
+    )
 
     assert doc_id in graph_store.documents
-    assert all(len(chunk["embedding"]) == rag.config.embedding_dimension for chunk in graph_store.chunks.values())
+    assert all(
+        len(chunk["embedding"]) == rag.config.embedding_dimension
+        for chunk in graph_store.chunks.values()
+    )
 
 
 @pytest.mark.asyncio
@@ -121,6 +134,8 @@ async def test_unknown_graph_query_returns_no_results(fake_graph_driver, monkeyp
     rag = make_graph_rag(fake_graph_driver, monkeypatch)
     await rag.index_document("Neo4j powers graph retrieval for OpenAI teams.")
 
-    results = await rag.retrieve("completely unrelated topic", strategy="graph", top_k=5)
+    results = await rag.retrieve(
+        "completely unrelated topic", strategy="graph", top_k=5
+    )
 
     assert results == []

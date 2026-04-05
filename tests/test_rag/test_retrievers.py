@@ -138,7 +138,9 @@ class TestSearchDocuments:
         from agentic_brain.rag.loaders.base import LoadedDocument
 
         docs = [
-            LoadedDocument(id=f"d{i}", content=f"document about topic {i}", source="test")
+            LoadedDocument(
+                id=f"d{i}", content=f"document about topic {i}", source="test"
+            )
             for i in range(10)
         ]
         r = self._make_retriever(docs=docs)
@@ -156,7 +158,10 @@ class TestSearchDocuments:
     def test_score_is_float_between_neg1_and_1(self) -> None:
         from agentic_brain.rag.loaders.base import LoadedDocument
 
-        docs = [LoadedDocument(id=f"d{i}", content=f"text {i}", source="test") for i in range(3)]
+        docs = [
+            LoadedDocument(id=f"d{i}", content=f"text {i}", source="test")
+            for i in range(3)
+        ]
         r = self._make_retriever(docs=docs)
         for rc in r.search_documents("text", k=5):
             assert -1.0 <= rc.score <= 1.0
@@ -254,7 +259,10 @@ class TestRetrieverSearch:
     def test_results_are_retrieved_chunks(self) -> None:
         from agentic_brain.rag.loaders.base import LoadedDocument
 
-        docs = [LoadedDocument(id=f"d{i}", content=f"content {i}", source="test") for i in range(3)]
+        docs = [
+            LoadedDocument(id=f"d{i}", content=f"content {i}", source="test")
+            for i in range(3)
+        ]
         emb = MockEmbeddingProvider()
         store = InMemoryDocumentStore(docs)
         r = Retriever(embedding_provider=emb, document_store=store)
@@ -308,7 +316,9 @@ class TestSearchNeo4j:
         emb = MockEmbeddingProvider()
         r = Retriever(embedding_provider=emb)
 
-        with patch.object(r, "_get_driver", side_effect=Exception("connection refused")):
+        with patch.object(
+            r, "_get_driver", side_effect=Exception("connection refused")
+        ):
             try:
                 results = r.search_neo4j("query", k=3)
                 assert isinstance(results, list)

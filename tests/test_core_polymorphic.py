@@ -1,11 +1,19 @@
 import pytest
 
-from agentic_brain.core.polymorphic import PolymorphicBrain, UserType, ContextType, EnvironmentType, ComplianceMode
+from agentic_brain.core.polymorphic import (
+    PolymorphicBrain,
+    UserType,
+    ContextType,
+    EnvironmentType,
+    ComplianceMode,
+)
 
 
 def test_detect_user_type_developer():
     pb = PolymorphicBrain()
-    res = pb.detect_user_type("I am writing a python API and deploying docker containers")
+    res = pb.detect_user_type(
+        "I am writing a python API and deploying docker containers"
+    )
     assert res == UserType.DEVELOPER
 
 
@@ -29,7 +37,9 @@ def test_detect_user_type_defense():
 
 def test_adapt_accepts_string_values_and_updates_profile():
     pb = PolymorphicBrain()
-    prof = pb.adapt(user_type="developer", context="coding", environment="hybrid", compliance="soc2")
+    prof = pb.adapt(
+        user_type="developer", context="coding", environment="hybrid", compliance="soc2"
+    )
     assert "technical" in prof.technical_level or hasattr(prof, "technical_level")
 
 

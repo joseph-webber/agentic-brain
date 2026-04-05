@@ -318,7 +318,9 @@ class TestSimpleLLMJudge:
         judge = SimpleLLMJudge()
         score, verifications = judge.judge_faithfulness(
             answer="Python is a programming language used for data science.",
-            contexts=["Python is a versatile programming language widely used in data science and machine learning."],
+            contexts=[
+                "Python is a versatile programming language widely used in data science and machine learning."
+            ],
         )
         assert score > 0.5
         assert len(verifications) > 0
@@ -328,7 +330,10 @@ class TestSimpleLLMJudge:
         judge = SimpleLLMJudge()
         score, verifications = judge.judge_faithfulness(
             answer="The system uses Oracle database with enterprise features.",
-            contexts=["Neo4j graph database stores all data.", "PostgreSQL is not used."],
+            contexts=[
+                "Neo4j graph database stores all data.",
+                "PostgreSQL is not used.",
+            ],
         )
         # Score should be lower since Oracle is not mentioned in context
         assert score < 0.8

@@ -457,7 +457,9 @@ class Pipeline:
             )
 
         # Validate ports and types when metadata is available
-        self._validate_connection(sender_name, sender_output, receiver_name, receiver_input)
+        self._validate_connection(
+            sender_name, sender_output, receiver_name, receiver_input
+        )
 
         # Check for cycles
         if self._would_create_cycle(sender_name, receiver_name):
@@ -551,7 +553,10 @@ class Pipeline:
             pass
 
         if receiver_meta and receiver_meta.input_types:
-            if receiver_input not in receiver_meta.input_types and not accepts_var_kwargs:
+            if (
+                receiver_input not in receiver_meta.input_types
+                and not accepts_var_kwargs
+            ):
                 raise PipelineConnectionError(
                     f"Input '{receiver_input}' not declared by component '{receiver_name}'"
                 )
@@ -877,7 +882,9 @@ class Pipeline:
             sender = conn.get("sender")
             receiver = conn.get("receiver")
             if not sender or not receiver:
-                raise PipelineValidationError("Invalid connection entry in pipeline data")
+                raise PipelineValidationError(
+                    "Invalid connection entry in pipeline data"
+                )
             pipe.connect(sender, receiver)
 
         return pipe
@@ -1379,7 +1386,9 @@ class Neo4jDocumentStore:
         driver = retriever._get_driver()
 
         with driver.session(database=self.database) as session:
-            result = session.run(f"MATCH (n:{self.node_label}) RETURN count(n) as count")
+            result = session.run(
+                f"MATCH (n:{self.node_label}) RETURN count(n) as count"
+            )
             return result.single()["count"]
 
     def close(self) -> None:
@@ -2117,7 +2126,11 @@ class DocumentWriter:
         policy_to_use = policy or self.policy
         written = self.document_store.write_documents(
             documents=documents,
-            policy=policy_to_use.value if isinstance(policy_to_use, DuplicatePolicy) else policy_to_use,
+            policy=(
+                policy_to_use.value
+                if isinstance(policy_to_use, DuplicatePolicy)
+                else policy_to_use
+            ),
         )
         return {"documents_written": written}
 
@@ -2144,9 +2157,7 @@ class TextFileToDocument:
 
                 path = Path(source)
                 content = path.read_text(encoding=self.encoding)
-                documents.append(
-                    Document(content=content, meta={"source": str(path)})
-                )
+                documents.append(Document(content=content, meta={"source": str(path)}))
             elif isinstance(source, ByteStream):
                 content = source.to_string(self.encoding)
                 documents.append(Document(content=content, meta=source.meta))
@@ -2373,7 +2384,9 @@ Answer:"""
     pipe = Pipeline(metadata={"name": "RAG Pipeline", "version": "1.0"})
 
     # Add components
-    pipe.add_component("text_embedder", SentenceTransformersTextEmbedder(model=embedder_model))
+    pipe.add_component(
+        "text_embedder", SentenceTransformersTextEmbedder(model=embedder_model)
+    )
     pipe.add_component("retriever", EmbeddingRetriever(document_store=document_store))
     pipe.add_component("prompt_builder", PromptBuilder(template=prompt_template))
 
@@ -2403,8 +2416,12 @@ def create_indexing_pipeline(
 
     pipe = Pipeline(metadata={"name": "Indexing Pipeline", "version": "1.0"})
 
-    pipe.add_component("splitter", DocumentSplitter(split_by="sentence", split_length=5))
-    pipe.add_component("embedder", SentenceTransformersDocumentEmbedder(model=embedder_model))
+    pipe.add_component(
+        "splitter", DocumentSplitter(split_by="sentence", split_length=5)
+    )
+    pipe.add_component(
+        "embedder", SentenceTransformersDocumentEmbedder(model=embedder_model)
+    )
     pipe.add_component("writer", DocumentWriter(document_store=document_store))
 
     pipe.connect("splitter.documents", "embedder.documents")

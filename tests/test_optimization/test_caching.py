@@ -178,4 +178,3 @@ def test_cached_embedding_provider_clear():
     cached.clear()
 
     assert cached.cache.stats()["size"] == 0
-

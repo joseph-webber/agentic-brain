@@ -61,10 +61,10 @@ def _normalize_bootstrap_servers(
     bootstrap_servers: str | Sequence[str] | None,
 ) -> list[str]:
     """Normalize Kafka bootstrap servers to a list of strings.
-    
+
     Args:
         bootstrap_servers: Comma-separated string, sequence, or None.
-        
+
     Returns:
         List of server addresses. Defaults to localhost:9092 if None.
     """
@@ -79,11 +79,11 @@ def _normalize_bootstrap_servers(
 
 def _default_speaker(text: str, lady: str) -> bool:
     """Default speaker implementation using voice serializer.
-    
+
     Args:
         text: Text to speak.
         lady: Voice/lady identifier.
-        
+
     Returns:
         True if speech succeeded.
     """
@@ -94,10 +94,10 @@ def _default_speaker(text: str, lady: str) -> bool:
 
 async def _resolve_result(result: Any) -> Any:
     """Resolve potentially awaitable result.
-    
+
     Args:
         result: Value that may or may not be awaitable.
-        
+
     Returns:
         Awaited result if awaitable, otherwise the value itself.
     """
@@ -132,7 +132,7 @@ class VoiceEventProducer:
     @property
     def enabled(self) -> bool:
         """Check if producer is enabled and available.
-        
+
         Returns:
             True if producer can be used.
         """
@@ -140,7 +140,7 @@ class VoiceEventProducer:
 
     def _ensure_producer(self) -> bool:
         """Ensure Kafka producer is initialized.
-        
+
         Returns:
             True if producer is ready, False otherwise.
         """
@@ -169,10 +169,10 @@ class VoiceEventProducer:
 
     def ensure_topics(self) -> bool:
         """Ensure voice topics exist in Kafka.
-        
+
         Creates topics if they don't exist. Gracefully handles
         already-exists errors.
-        
+
         Returns:
             True if topics are ready.
         """
@@ -215,11 +215,11 @@ class VoiceEventProducer:
 
     def send(self, topic: str, event: VoiceEvent) -> bool:
         """Send event to a specific Kafka topic.
-        
+
         Args:
             topic: Kafka topic name.
             event: Voice event to send.
-            
+
         Returns:
             True if send succeeded.
         """
@@ -239,15 +239,15 @@ class VoiceEventProducer:
 
     def publish(self, event: VoiceEvent) -> bool:
         """Publish event to appropriate topic based on type.
-        
+
         Routes events to correct topics:
         - Requests → brain.voice.requests
         - Status updates → brain.voice.status
         - Failures → brain.voice.errors (and status)
-        
+
         Args:
             event: Voice event to publish.
-            
+
         Returns:
             True if publish succeeded.
         """
@@ -270,15 +270,15 @@ class VoiceEventProducer:
         source: str = "agentic_brain.voice.stream",
     ) -> bool:
         """Publish a speech request event.
-        
+
         Convenience method for publishing speech requests.
-        
+
         Args:
             text: Text to speak.
             lady: Voice/lady identifier.
             priority: Priority lane for this request.
             source: Source identifier.
-            
+
         Returns:
             True if publish succeeded.
         """
@@ -328,7 +328,7 @@ class VoiceEventConsumer:
 
     def _ensure_consumer(self) -> bool:
         """Ensure Kafka consumer is initialized.
-        
+
         Returns:
             True if consumer is ready, False otherwise.
         """
@@ -360,11 +360,11 @@ class VoiceEventConsumer:
         self, max_records: int = 100, timeout_ms: int = 1000
     ) -> list[VoiceSpeechRequested]:
         """Poll for speech request events from Kafka.
-        
+
         Args:
             max_records: Maximum events to fetch.
             timeout_ms: Poll timeout in milliseconds.
-            
+
         Returns:
             List of speech requests sorted by priority and timestamp.
         """
@@ -391,10 +391,10 @@ class VoiceEventConsumer:
         events: list[VoiceSpeechRequested],
     ) -> list[VoiceSpeechRequested]:
         """Sort events by priority and timestamp.
-        
+
         Args:
             events: List of speech request events.
-            
+
         Returns:
             Sorted list with highest priority first.
         """
@@ -407,14 +407,14 @@ class VoiceEventConsumer:
         timeout_ms: int = 1000,
     ) -> list[VoiceSpeechRequested]:
         """Poll and process a batch of speech requests.
-        
+
         Polls for events, executes them via the speaker,
         and publishes status updates.
-        
+
         Args:
             max_records: Maximum events to process.
             timeout_ms: Poll timeout in milliseconds.
-            
+
         Returns:
             List of processed speech requests.
         """
@@ -444,14 +444,14 @@ class VoiceEventConsumer:
         max_batches: int | None = None,
     ) -> int:
         """Continuously consume and process speech requests.
-        
+
         Runs until stopped or max_batches is reached.
-        
+
         Args:
             stop_event: Optional event to signal stop.
             poll_interval: Sleep duration when no events available.
             max_batches: Optional limit on batches to process.
-            
+
         Returns:
             Number of batches processed.
         """
@@ -485,13 +485,13 @@ def get_voice_event_producer(
     enabled: bool | None = None,
 ) -> VoiceEventProducer:
     """Get or create shared voice event producer.
-    
+
     Returns a singleton producer instance, creating it if necessary.
-    
+
     Args:
         bootstrap_servers: Kafka bootstrap servers.
         enabled: Whether to enable the producer.
-        
+
     Returns:
         Shared VoiceEventProducer instance.
     """
@@ -526,10 +526,10 @@ async def speak_async(
     fallback: Callable[[], bool | Awaitable[bool]] | None = None,
 ) -> bool:
     """Publish speech to Redpanda, or degrade to direct speech when unavailable.
-    
+
     Attempts to publish to event stream first, falls back to
     direct speech if stream is unavailable.
-    
+
     Args:
         text: Text to speak.
         lady: Voice/lady identifier.
@@ -537,7 +537,7 @@ async def speak_async(
         source: Source identifier.
         producer: Optional producer instance.
         fallback: Optional fallback speech function.
-        
+
     Returns:
         True if speech was published or executed.
     """

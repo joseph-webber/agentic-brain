@@ -60,7 +60,9 @@ class ChromaDBVectorStore(VectorStore):
             port=port,
             **settings,
         )
-        self.persist_directory = persist_directory or os.getenv("CHROMA_PERSIST_DIRECTORY")
+        self.persist_directory = persist_directory or os.getenv(
+            "CHROMA_PERSIST_DIRECTORY"
+        )
         self.host = host or os.getenv("CHROMA_HOST")
         self.port = port or int(os.getenv("CHROMA_PORT", "8000"))
         self._client: Any | None = None
@@ -81,7 +83,9 @@ class ChromaDBVectorStore(VectorStore):
                     )
                 self._mode = "remote"
             except Exception as exc:
-                logger.warning("ChromaDB connection failed, using memory fallback: %s", exc)
+                logger.warning(
+                    "ChromaDB connection failed, using memory fallback: %s", exc
+                )
                 self._client = None
                 self._mode = "memory"
         self._connected = True
@@ -175,7 +179,9 @@ class ChromaDBVectorStore(VectorStore):
                     )
                 except Exception as exc:
                     logger.warning("ChromaDB upsert failed, using memory only: %s", exc)
-        return self._memory_upsert(records, collection_name=collection_name, namespace=namespace)
+        return self._memory_upsert(
+            records, collection_name=collection_name, namespace=namespace
+        )
 
     def search(
         self,
@@ -206,7 +212,9 @@ class ChromaDBVectorStore(VectorStore):
                     documents = response.get("documents", [[]])[0]
                     distances = response.get("distances", [[]])[0]
                     for index, record_id in enumerate(ids):
-                        metadata = dict(metadatas[index] or {}) if include_metadata else {}
+                        metadata = (
+                            dict(metadatas[index] or {}) if include_metadata else {}
+                        )
                         distance = distances[index] if index < len(distances) else None
                         score = 1.0 / (1.0 + distance) if distance is not None else 0.0
                         if namespace and metadata.get("_namespace") != namespace:
@@ -218,7 +226,9 @@ class ChromaDBVectorStore(VectorStore):
                                 vector=embeddings[index] if include_vectors else None,
                                 metadata=metadata,
                                 distance=distance,
-                                text=documents[index] if index < len(documents) else None,
+                                text=(
+                                    documents[index] if index < len(documents) else None
+                                ),
                                 namespace=metadata.get("_namespace"),
                             )
                         )
@@ -272,7 +282,9 @@ class ChromaDBVectorStore(VectorStore):
         namespace: str | None = None,
     ) -> int:
         if self._client:
-            collection = self._get_collection(self._collection_name(collection_name), create=False)
+            collection = self._get_collection(
+                self._collection_name(collection_name), create=False
+            )
             if collection is not None:
                 try:
                     return int(collection.count())
@@ -282,5 +294,7 @@ class ChromaDBVectorStore(VectorStore):
 
     def stats(self) -> dict[str, Any]:
         stats = self._memory_stats()
-        stats.update({"available": self.available(), "persist_directory": self.persist_directory})
+        stats.update(
+            {"available": self.available(), "persist_directory": self.persist_directory}
+        )
         return stats

@@ -36,6 +36,7 @@ def _get_redis():
     global _redis
     if _redis is None:
         import redis as _r
+
         _redis = _r.from_url(REDIS_URL, decode_responses=True)
     return _redis
 
@@ -95,8 +96,10 @@ def _get_neo4j():
     if _neo4j_driver is None:
         try:
             from neo4j import GraphDatabase
+
             _neo4j_driver = GraphDatabase.driver(
-                NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD),
+                NEO4J_URI,
+                auth=(NEO4J_USER, NEO4J_PASSWORD),
             )
         except Exception:
             _neo4j_driver = None
@@ -242,6 +245,7 @@ def get_conversation_stats() -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # RAG: build context from memory
 # ---------------------------------------------------------------------------
+
 
 def build_rag_context(
     user_text: str,

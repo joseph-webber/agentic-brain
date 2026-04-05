@@ -33,8 +33,7 @@ from websockets.server import WebSocketServerProtocol, serve
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -85,7 +84,9 @@ class PTYSession:
 
             # Start reading from PTY
             self.read_task = asyncio.create_task(self._read_loop())
-            logger.info(f"PTY session {self.session_id} started (PID: {self.process.pid})")
+            logger.info(
+                f"PTY session {self.session_id} started (PID: {self.process.pid})"
+            )
 
         except Exception as e:
             logger.error(f"Failed to start PTY session {self.session_id}: {e}")
@@ -122,7 +123,9 @@ class PTYSession:
                 break
 
             except Exception as e:
-                logger.error(f"Unexpected error in PTY read loop {self.session_id}: {e}")
+                logger.error(
+                    f"Unexpected error in PTY read loop {self.session_id}: {e}"
+                )
                 self.closed = True
                 break
 
@@ -147,8 +150,7 @@ class PTYSession:
             # Use select-like behavior with asyncio
             loop = asyncio.get_event_loop()
             data = await asyncio.wait_for(
-                loop.run_in_executor(None, self._read_nonblock),
-                timeout=timeout
+                loop.run_in_executor(None, self._read_nonblock), timeout=timeout
             )
             return data
         except asyncio.TimeoutError:
@@ -165,7 +167,7 @@ class PTYSession:
         try:
             data = os.read(self.master_fd, 4096)
             if data:
-                return data.decode('utf-8', errors='replace')
+                return data.decode("utf-8", errors="replace")
             else:
                 self.closed = True
                 return None
@@ -191,7 +193,7 @@ class PTYSession:
     @staticmethod
     def _set_pty_size(fd: int, rows: int, cols: int) -> None:
         """Set PTY size using TIOCSWINSZ."""
-        fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack('HHHH', rows, cols, 0, 0))
+        fcntl.ioctl(fd, termios.TIOCSWINSZ, struct.pack("HHHH", rows, cols, 0, 0))
 
     @staticmethod
     def _set_nonblocking(fd: int) -> None:
@@ -257,7 +259,9 @@ class WebSocketTerminalServer:
         self.server = None
         self._shutdown = False
 
-    async def handle_client(self, websocket: WebSocketServerProtocol, path: str) -> None:
+    async def handle_client(
+        self, websocket: WebSocketServerProtocol, path: str
+    ) -> None:
         """Handle WebSocket client connection."""
         session_id = f"session_{id(websocket)}"
         pty_session = None
@@ -272,13 +276,19 @@ class WebSocketTerminalServer:
             logger.info(f"Client connected: {session_id}")
 
             # Send initial welcome message
-            await websocket.send(json.dumps({
-                "type": "output",
-                "data": f"Terminal session started. Type 'exit' to close.\n"
-            }))
+            await websocket.send(
+                json.dumps(
+                    {
+                        "type": "output",
+                        "data": f"Terminal session started. Type 'exit' to close.\n",
+                    }
+                )
+            )
 
             # Start output reader task
-            reader_task = asyncio.create_task(self._read_output_loop(websocket, pty_session))
+            reader_task = asyncio.create_task(
+                self._read_output_loop(websocket, pty_session)
+            )
 
             # Handle incoming messages
             async for message in websocket:
@@ -287,16 +297,12 @@ class WebSocketTerminalServer:
                     await self._handle_message(websocket, pty_session, msg_data)
                 except json.JSONDecodeError:
                     logger.warning(f"Invalid JSON from {session_id}")
-                    await websocket.send(json.dumps({
-                        "type": "error",
-                        "data": "Invalid JSON message"
-                    }))
+                    await websocket.send(
+                        json.dumps({"type": "error", "data": "Invalid JSON message"})
+                    )
                 except Exception as e:
                     logger.error(f"Error handling message from {session_id}: {e}")
-                    await websocket.send(json.dumps({
-                        "type": "error",
-                        "data": str(e)
-                    }))
+                    await websocket.send(json.dumps({"type": "error", "data": str(e)}))
 
         except websockets.exceptions.ConnectionClosed:
             logger.info(f"Client disconnected: {session_id}")
@@ -320,19 +326,14 @@ class WebSocketTerminalServer:
             logger.info(f"Session cleaned up: {session_id}")
 
     async def _read_output_loop(
-        self,
-        websocket: WebSocketServerProtocol,
-        pty_session: PTYSession
+        self, websocket: WebSocketServerProtocol, pty_session: PTYSession
     ) -> None:
         """Continuously read output from PTY and send to client."""
         while not pty_session.closed:
             try:
                 data = await pty_session.read_output(timeout=0.1)
                 if data:
-                    await websocket.send(json.dumps({
-                        "type": "output",
-                        "data": data
-                    }))
+                    await websocket.send(json.dumps({"type": "output", "data": data}))
                 else:
                     await asyncio.sleep(0.01)
 
@@ -348,7 +349,7 @@ class WebSocketTerminalServer:
         self,
         websocket: WebSocketServerProtocol,
         pty_session: PTYSession,
-        msg_data: dict
+        msg_data: dict,
     ) -> None:
         """Handle incoming message from client."""
         msg_type = msg_data.get("type")
@@ -364,10 +365,11 @@ class WebSocketTerminalServer:
 
         else:
             logger.warning(f"Unknown message type: {msg_type}")
-            await websocket.send(json.dumps({
-                "type": "error",
-                "data": f"Unknown message type: {msg_type}"
-            }))
+            await websocket.send(
+                json.dumps(
+                    {"type": "error", "data": f"Unknown message type: {msg_type}"}
+                )
+            )
 
     async def start(self) -> None:
         """Start the WebSocket server."""
@@ -380,7 +382,7 @@ class WebSocketTerminalServer:
                 self.port,
                 # Security settings
                 max_size=10_000,  # Max message size
-                max_queue=32,     # Max buffered messages
+                max_queue=32,  # Max buffered messages
                 compression=None,
                 close_timeout=10,
             )
@@ -420,7 +422,7 @@ async def run_server(host: str = "localhost", port: int = 8765):
 
     # Handle signals
     loop = asyncio.get_event_loop()
-    
+
     def handle_signal(signum):
         logger.info(f"Received signal {signum}")
         loop.create_task(server.shutdown())
@@ -443,21 +445,16 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="WebSocket PTY Bridge Server")
     parser.add_argument(
-        "--host",
-        default="0.0.0.0",
-        help="Host to bind to (default: 0.0.0.0)"
+        "--host", default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)"
     )
     parser.add_argument(
-        "--port",
-        type=int,
-        default=8765,
-        help="Port to bind to (default: 8765)"
+        "--port", type=int, default=8765, help="Port to bind to (default: 8765)"
     )
     parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        help="Logging level"
+        help="Logging level",
     )
 
     args = parser.parse_args()

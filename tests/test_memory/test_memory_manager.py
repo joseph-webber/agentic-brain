@@ -70,7 +70,9 @@ def _backdate(store: SQLiteMemoryStore, memory_id: str, days: int) -> None:
 
 class TestApplyDecay:
     def test_decay_reduces_importance_of_old_memory(self, store):
-        entry = store.store("old low-importance content", memory_type=MemoryType.LONG_TERM)
+        entry = store.store(
+            "old low-importance content", memory_type=MemoryType.LONG_TERM
+        )
         initial = entry.importance
         _backdate(store, entry.id, days=365)
         store.apply_decay(decay_rate=0.05)
@@ -81,7 +83,9 @@ class TestApplyDecay:
         assert row["importance"] < initial or row["importance"] == pytest.approx(0.1)
 
     def test_decay_does_not_go_below_min(self, store):
-        entry = store.store("very old", memory_type=MemoryType.LONG_TERM, importance=0.1)
+        entry = store.store(
+            "very old", memory_type=MemoryType.LONG_TERM, importance=0.1
+        )
         _backdate(store, entry.id, days=9999)
         store.apply_decay(decay_rate=1.0, min_importance=0.1)
         conn = store._get_conn()
@@ -228,7 +232,9 @@ class TestCondenseOldMemories:
         for i in range(5):
             e = store.store(f"old boring fact {i}", importance=0.1)
             _backdate(store, e.id, days=30)
-        result = store.condense_old_memories(older_than_days=7, importance_threshold=0.3)
+        result = store.condense_old_memories(
+            older_than_days=7, importance_threshold=0.3
+        )
         assert result["condensed"] >= 5
 
     def test_condense_does_not_remove_high_importance(self, store):

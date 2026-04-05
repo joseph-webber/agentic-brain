@@ -131,9 +131,9 @@ PROVIDER_ALIASES: dict[str, str] = {
 class LLMSecurityGuard:
     """Controls LLM access based on security role."""
 
-    _rate_limit_state: ClassVar[
-        dict[tuple[SecurityRole, str], deque[float]]
-    ] = defaultdict(deque)
+    _rate_limit_state: ClassVar[dict[tuple[SecurityRole, str], deque[float]]] = (
+        defaultdict(deque)
+    )
     _window_seconds: ClassVar[float] = 60.0
 
     def __init__(self, role: SecurityRole | str | None = None):

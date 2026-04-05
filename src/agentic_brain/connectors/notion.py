@@ -153,13 +153,19 @@ class NotionConnector(Connector):
                 headers=self._headers,
                 json=body,
             )
-            results = [item for item in response.get("results", []) if item.get("object") == "page"]
+            results = [
+                item
+                for item in response.get("results", [])
+                if item.get("object") == "page"
+            ]
             if since:
                 results = [
                     item
                     for item in results
-                    if (parse_datetime(item.get("last_edited_time"))
-                    or datetime.min.replace(tzinfo=UTC))
+                    if (
+                        parse_datetime(item.get("last_edited_time"))
+                        or datetime.min.replace(tzinfo=UTC)
+                    )
                     > since
                 ]
 
@@ -169,7 +175,11 @@ class NotionConnector(Connector):
             record = self._page_to_record(page)
             records.append(record)
             latest = max(
-                [d for d in [latest, record.updated_at, record.created_at] if d is not None],
+                [
+                    d
+                    for d in [latest, record.updated_at, record.created_at]
+                    if d is not None
+                ],
                 default=latest,
             )
 

@@ -162,9 +162,15 @@ class TestSemanticStorageRetrieval:
         assert any("Python" in c for c in contents)
 
     def test_semantic_search_ranks_similar_higher(self, store):
-        store.store("Python data science machine learning", memory_type=MemoryType.SEMANTIC)
-        store.store("French cuisine baguette croissant", memory_type=MemoryType.SEMANTIC)
-        results = store.search("machine learning algorithms", use_semantic=True, limit=5)
+        store.store(
+            "Python data science machine learning", memory_type=MemoryType.SEMANTIC
+        )
+        store.store(
+            "French cuisine baguette croissant", memory_type=MemoryType.SEMANTIC
+        )
+        results = store.search(
+            "machine learning algorithms", use_semantic=True, limit=5
+        )
         if len(results) >= 2:
             assert results[0].score >= results[1].score
 
@@ -182,6 +188,7 @@ class TestSemanticStorageRetrieval:
 
     def test_custom_embedding_provider(self, tmp_path):
         """Plugging in a custom EmbeddingProvider is respected."""
+
         class FixedEmbedder:
             dimension = 8
 
@@ -230,15 +237,22 @@ class TestUnifiedSemanticSearch:
         assert len(results) >= 1
 
     def test_importance_boosts_ranking(self, mem):
-        mem.store("low importance Python", memory_type=MemoryType.SEMANTIC, importance=0.1)
-        mem.store("high importance Python critical", memory_type=MemoryType.SEMANTIC, importance=0.9)
+        mem.store(
+            "low importance Python", memory_type=MemoryType.SEMANTIC, importance=0.1
+        )
+        mem.store(
+            "high importance Python critical",
+            memory_type=MemoryType.SEMANTIC,
+            importance=0.9,
+        )
         results = mem.search("Python", use_semantic=True, limit=10)
         if len(results) >= 2:
             high_idx = next(
                 (i for i, r in enumerate(results) if "high" in r.content), None
             )
             low_idx = next(
-                (i for i, r in enumerate(results) if "low importance" in r.content), None
+                (i for i, r in enumerate(results) if "low importance" in r.content),
+                None,
             )
             # High importance item should appear at or before low importance
             if high_idx is not None and low_idx is not None:

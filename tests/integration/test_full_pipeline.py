@@ -53,10 +53,14 @@ def test_add_document_updates_store_stats(llm_server, mock_embeddings):
         ("repeat queries", "cache"),
     ],
 )
-def test_query_returns_answer_and_sources(llm_server, mock_embeddings, query, expected_source):
+def test_query_returns_answer_and_sources(
+    llm_server, mock_embeddings, query, expected_source
+):
     pipeline = build_pipeline(llm_server, mock_embeddings)
     pipeline.add_document("Neo4j powers graph retrieval.", metadata={"source": "graph"})
-    pipeline.add_document("Caching keeps repeat queries fast.", metadata={"source": "cache"})
+    pipeline.add_document(
+        "Caching keeps repeat queries fast.", metadata={"source": "cache"}
+    )
 
     result = pipeline.query(query)
 
@@ -67,7 +71,9 @@ def test_query_returns_answer_and_sources(llm_server, mock_embeddings, query, ex
 
 def test_query_stream_returns_tokens(llm_server, mock_embeddings):
     pipeline = build_pipeline(llm_server, mock_embeddings)
-    pipeline.add_document("Streaming helps with long answers.", metadata={"source": "stream"})
+    pipeline.add_document(
+        "Streaming helps with long answers.", metadata={"source": "stream"}
+    )
 
     tokens = list(pipeline.query_stream("long answers"))
 
@@ -75,13 +81,17 @@ def test_query_stream_returns_tokens(llm_server, mock_embeddings):
     assert "".join(tokens).startswith("Mock answer:")
 
 
-def test_cached_query_avoids_second_llm_call(monkeypatch, llm_server, mock_embeddings, temp_cache_dir):
+def test_cached_query_avoids_second_llm_call(
+    monkeypatch, llm_server, mock_embeddings, temp_cache_dir
+):
     monkeypatch.setenv("RAG_CACHE_ENABLED", "true")
     monkeypatch.setattr("agentic_brain.rag.pipeline.CACHE_DIR", temp_cache_dir)
 
     pipeline = build_pipeline(llm_server, mock_embeddings)
     pipeline.cache_dir = temp_cache_dir
-    pipeline.add_document("Caching keeps repeat queries fast.", metadata={"source": "cache"})
+    pipeline.add_document(
+        "Caching keeps repeat queries fast.", metadata={"source": "cache"}
+    )
 
     first = pipeline.query("repeat queries")
     second = pipeline.query("repeat queries")
@@ -108,8 +118,16 @@ async def test_ingest_directory_loads_real_files(tmp_path, llm_server, mock_embe
 async def test_ingest_documents_objects(llm_server, mock_embeddings):
     pipeline = build_pipeline(llm_server, mock_embeddings)
     docs = [
-        Document(id="doc-1", content="Neo4j stores relationships.", metadata={"source": "graph"}),
-        Document(id="doc-2", content="Caches prevent repeated work.", metadata={"source": "cache"}),
+        Document(
+            id="doc-1",
+            content="Neo4j stores relationships.",
+            metadata={"source": "graph"},
+        ),
+        Document(
+            id="doc-2",
+            content="Caches prevent repeated work.",
+            metadata={"source": "cache"},
+        ),
     ]
 
     result = await pipeline.ingest_documents(docs)
@@ -122,7 +140,9 @@ async def test_ingest_documents_objects(llm_server, mock_embeddings):
 def test_evaluator_scores_relevant_sources(llm_server, mock_embeddings):
     pipeline = build_pipeline(llm_server, mock_embeddings)
     pipeline.add_document("Neo4j powers graph retrieval.", metadata={"source": "graph"})
-    pipeline.add_document("Caching keeps repeat queries fast.", metadata={"source": "cache"})
+    pipeline.add_document(
+        "Caching keeps repeat queries fast.", metadata={"source": "cache"}
+    )
 
     dataset = EvalDataset()
     dataset.add_query("graph retrieval", ["graph"])

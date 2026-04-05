@@ -137,7 +137,7 @@ def create_parser() -> argparse.ArgumentParser:
     register_voice_commands(subparsers)
     register_audio_commands(subparsers)
     register_greet_command(subparsers)
-    
+
     # RAG commands (retrieval-augmented generation)
     register_rag_commands(subparsers)
 
@@ -359,7 +359,13 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=ColoredFormatter,
         description="Run dependency security audit (pip-audit, safety), license checks, and produce reports.",
     )
-    audit_parser.add_argument("--output", "-o", type=str, default="dependency_audit.json", help="Output report path")
+    audit_parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        default="dependency_audit.json",
+        help="Output report path",
+    )
     audit_parser.set_defaults(func=commands.audit_deps_command)
 
     # Install command

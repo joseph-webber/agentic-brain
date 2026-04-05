@@ -18,16 +18,19 @@ import pytest
 def main():
     """Run the loader tests standalone."""
     test_file = Path(__file__).parent / "test_loaders.py"
-    
+
     # Run pytest on just this file
-    exit_code = pytest.main([
-        str(test_file),
-        "-v",
-        "--tb=short",
-        "--no-cov",
-        "-p", "no:warnings",
-    ])
-    
+    exit_code = pytest.main(
+        [
+            str(test_file),
+            "-v",
+            "--tb=short",
+            "--no-cov",
+            "-p",
+            "no:warnings",
+        ]
+    )
+
     return exit_code
 
 

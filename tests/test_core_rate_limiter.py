@@ -82,7 +82,9 @@ def test_reset_provider_resets_state():
 
 def test_calculate_safe_agent_count_respects_concurrent_limit():
     # Use a provider with small concurrent_limit
-    safe = calculate_safe_agent_count(provider="claude", task_duration_minutes=1, requests_per_agent=1)
+    safe = calculate_safe_agent_count(
+        provider="claude", task_duration_minutes=1, requests_per_agent=1
+    )
     assert isinstance(safe, int)
     assert safe >= 1
 

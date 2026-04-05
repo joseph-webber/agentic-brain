@@ -249,7 +249,9 @@ class TestPipeline:
             "components": {"lower": {"type": "custom.Lower"}},
             "connections": [],
         }
-        pipe = Pipeline.from_dict(data, callbacks={"custom.Lower": lambda: LowercaseComponent()})
+        pipe = Pipeline.from_dict(
+            data, callbacks={"custom.Lower": lambda: LowercaseComponent()}
+        )
         assert pipe.get_component_names() == ["lower"]
 
 
@@ -289,7 +291,9 @@ class TestInMemoryDocumentStore:
     def test_duplicate_policy_skip(self) -> None:
         store = InMemoryDocumentStore()
         store.write_documents([Document(content="x", id="same")])
-        written = store.write_documents([Document(content="y", id="same")], policy="skip")
+        written = store.write_documents(
+            [Document(content="y", id="same")], policy="skip"
+        )
         assert written == 0
         assert store.count_documents() == 1
 
@@ -351,7 +355,9 @@ class TestInMemoryDocumentStore:
 
     def test_embedding_retrieval_return_embedding(self) -> None:
         store = self._store_with_docs()
-        docs = store.embedding_retrieval([1.0, 0.0, 0.0], top_k=1, return_embedding=True)
+        docs = store.embedding_retrieval(
+            [1.0, 0.0, 0.0], top_k=1, return_embedding=True
+        )
         assert docs[0].embedding is not None
 
     def test_bm25_retrieval_top_k(self) -> None:

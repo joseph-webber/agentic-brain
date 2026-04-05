@@ -140,18 +140,28 @@ class AsyncRAGPipeline:
         # embedder when needed.
         embedder_src = getattr(self.pipeline.retriever, "embeddings", None)
         if embedder_src is None:
+
             class _FallbackEmbedder:
                 def embed(self, text: str):
                     return [float(len(text))]
+
                 def embed_batch(self, texts):
                     return [[float(len(t))] for t in texts]
+
             embedder_src = _FallbackEmbedder()
 
         self._embedder = AsyncEmbedder(embedder_src)
         self._llm = AsyncLLM(self.pipeline._generate)
         self.graph = AsyncGraphClient(self.pipeline.retriever)
 
-    async def aquery(self, query: str, k: int = 5, sources: Optional[List[str]] = None, use_cache: bool = True, min_score: float = 0.3) -> RAGResult:
+    async def aquery(
+        self,
+        query: str,
+        k: int = 5,
+        sources: Optional[List[str]] = None,
+        use_cache: bool = True,
+        min_score: float = 0.3,
+    ) -> RAGResult:
         """Async query that parallelises retrieval
 
         It performs two complementary retrieval calls in parallel (when available)
@@ -159,20 +169,34 @@ class AsyncRAGPipeline:
         concurrency improvement without touching blocking libraries directly.
         """
         # Schedule two retrieval strategies in parallel to reduce latency when both are available
-        retrieve_task = asyncio.to_thread(self.pipeline.retriever.retrieve, query, top_k=k, sources=sources or ["Document", "Memory", "Knowledge"]) 
-        search_task = asyncio.to_thread(self.pipeline.retriever.search, query, k=k, sources=sources or ["Document", "Memory", "Knowledge"]) 
+        retrieve_task = asyncio.to_thread(
+            self.pipeline.retriever.retrieve,
+            query,
+            top_k=k,
+            sources=sources or ["Document", "Memory", "Knowledge"],
+        )
+        search_task = asyncio.to_thread(
+            self.pipeline.retriever.search,
+            query,
+            k=k,
+            sources=sources or ["Document", "Memory", "Knowledge"],
+        )
         try:
             retrieved, searched = await asyncio.gather(retrieve_task, search_task)
         except Exception:
             # Fall back to single retrieval
-            retrieved = await asyncio.to_thread(self.pipeline.retriever.retrieve, query, top_k=k)
+            retrieved = await asyncio.to_thread(
+                self.pipeline.retriever.retrieve, query, top_k=k
+            )
             searched = []
 
         # Combine and de-duplicate by content
         chunks = []
         seen = set()
         for c in (retrieved or []) + (searched or []):
-            key = getattr(c, "content", None) or str(getattr(c, "source", "")) + str(getattr(c, "score", ""))
+            key = getattr(c, "content", None) or str(getattr(c, "source", "")) + str(
+                getattr(c, "score", "")
+            )
             if key in seen:
                 continue
             seen.add(key)
@@ -187,11 +211,23 @@ class AsyncRAGPipeline:
             confidence = 0.0
         else:
             answer = await self._llm.agenerate(query, context)
-            confidence = sum(getattr(c, "score", 0.0) for c in chunks) / len(chunks) if chunks else 0.0
+            confidence = (
+                sum(getattr(c, "score", 0.0) for c in chunks) / len(chunks)
+                if chunks
+                else 0.0
+            )
 
-        return RAGResult(query=query, answer=answer, sources=chunks, confidence=confidence, model=f"async/{self.pipeline.llm_provider}/{self.pipeline.llm_model}")
+        return RAGResult(
+            query=query,
+            answer=answer,
+            sources=chunks,
+            confidence=confidence,
+            model=f"async/{self.pipeline.llm_provider}/{self.pipeline.llm_model}",
+        )
 
-    async def aquery_stream(self, query: str, k: int = 5, min_score: float = 0.3) -> AsyncGenerator[str, None]:
+    async def aquery_stream(
+        self, query: str, k: int = 5, min_score: float = 0.3
+    ) -> AsyncGenerator[str, None]:
         """Async streaming generator that forwards tokens from the underlying pipeline."""
         # Use the pipeline's query_stream via AsyncLLM.stream wrapper where possible
         # Fall back to running the blocking generator in a thread.
@@ -233,9 +269,11 @@ class AsyncRAGPipeline:
             store = None
 
         if store is None:
+
             class _NoStore:
                 def add(self, doc):
                     raise RuntimeError("no document store configured")
+
             store = _NoStore()
 
         async def _add(doc):

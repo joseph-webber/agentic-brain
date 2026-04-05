@@ -55,6 +55,7 @@ async def test_hybrid_retrieve_merges_vector_and_graph(monkeypatch):
     monkeypatch.setattr(rag, "_vector_retrieve", fake_vector)
     monkeypatch.setattr(rag, "_graph_retrieve", fake_graph)
     import agentic_brain.rag.hybrid as hybrid
+
     monkeypatch.setattr(hybrid, "reciprocal_rank_fusion", fake_rrf)
 
     out = await rag._hybrid_retrieve("q", top_k=1)
@@ -78,6 +79,7 @@ async def test_hybrid_retrieve_handles_missing_merged(monkeypatch):
     monkeypatch.setattr(rag, "_vector_retrieve", fake_vector)
     monkeypatch.setattr(rag, "_graph_retrieve", fake_graph)
     import agentic_brain.rag.hybrid as hybrid
+
     monkeypatch.setattr(hybrid, "reciprocal_rank_fusion", fake_rrf)
 
     out = await rag._hybrid_retrieve("q", top_k=1)

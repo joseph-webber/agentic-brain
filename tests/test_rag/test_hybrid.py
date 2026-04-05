@@ -69,7 +69,9 @@ def retrieved_chunks() -> list[RetrievedChunk]:
 
 
 class TestReciprocalRankFusion:
-    def test_rrf_two_ranked_lists(self, vector_results: list, graph_results: list) -> None:
+    def test_rrf_two_ranked_lists(
+        self, vector_results: list, graph_results: list
+    ) -> None:
         """Test RRF with two input ranked lists."""
         fused = reciprocal_rank_fusion(vector_results, graph_results)
 
@@ -84,13 +86,13 @@ class TestReciprocalRankFusion:
         keyword_results: list,
     ) -> None:
         """Test RRF with three input ranked lists."""
-        fused = reciprocal_rank_fusion(
-            vector_results, graph_results, keyword_results
-        )
+        fused = reciprocal_rank_fusion(vector_results, graph_results, keyword_results)
         assert isinstance(fused, list)
         assert len(fused) > 0
 
-    def test_rrf_scores_are_positive(self, vector_results: list, graph_results: list) -> None:
+    def test_rrf_scores_are_positive(
+        self, vector_results: list, graph_results: list
+    ) -> None:
         """RRF scores should be positive."""
         fused = reciprocal_rank_fusion(vector_results, graph_results)
         assert all(item["rrf_score"] > 0 for item in fused)
@@ -117,7 +119,9 @@ class TestReciprocalRankFusion:
         # doc_1 appears in both lists, doc_3 only in vector
         assert doc_1_item["rrf_score"] > doc_3_item["rrf_score"]
 
-    def test_rrf_merges_item_data(self, vector_results: list, graph_results: list) -> None:
+    def test_rrf_merges_item_data(
+        self, vector_results: list, graph_results: list
+    ) -> None:
         """RRF should merge data from multiple sources."""
         fused = reciprocal_rank_fusion(vector_results, graph_results)
         # Items should have merged content from both searches
@@ -125,14 +129,12 @@ class TestReciprocalRankFusion:
             assert "id" in item
             assert "rrf_score" in item
 
-    def test_rrf_custom_k_parameter(self, vector_results: list, graph_results: list) -> None:
+    def test_rrf_custom_k_parameter(
+        self, vector_results: list, graph_results: list
+    ) -> None:
         """Test RRF with custom k parameter."""
-        fused_k60 = reciprocal_rank_fusion(
-            vector_results, graph_results, k=60
-        )
-        fused_k100 = reciprocal_rank_fusion(
-            vector_results, graph_results, k=100
-        )
+        fused_k60 = reciprocal_rank_fusion(vector_results, graph_results, k=60)
+        fused_k100 = reciprocal_rank_fusion(vector_results, graph_results, k=100)
 
         # Different k values should produce different scores
         assert isinstance(fused_k60, list)
@@ -336,7 +338,9 @@ class TestHybridSearchEdgeCases:
     def test_rrf_large_result_sets(self) -> None:
         """RRF should handle large result sets."""
         list1 = [{"id": f"doc_{i}", "score": 0.9 - i * 0.001} for i in range(1000)]
-        list2 = [{"id": f"doc_{i}", "score": 0.85 - i * 0.001} for i in range(500, 1500)]
+        list2 = [
+            {"id": f"doc_{i}", "score": 0.85 - i * 0.001} for i in range(500, 1500)
+        ]
 
         fused = reciprocal_rank_fusion(list1, list2)
         assert isinstance(fused, list)
@@ -354,7 +358,12 @@ class TestHybridSearchEdgeCases:
     def test_rrf_preserves_all_metadata(self) -> None:
         """RRF should preserve metadata from all sources."""
         list1 = [
-            {"id": "a", "score": 0.9, "source": "vector", "metadata": {"type": "entity"}},
+            {
+                "id": "a",
+                "score": 0.9,
+                "source": "vector",
+                "metadata": {"type": "entity"},
+            },
         ]
         list2 = [
             {"id": "a", "score": 0.8, "content": "text", "metadata": {"page": 1}},

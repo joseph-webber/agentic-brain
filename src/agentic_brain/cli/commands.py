@@ -170,7 +170,16 @@ def audit_deps_command(args: argparse.Namespace) -> int:
         print_error(f"Failed to run dependency audit: {exc}")
         # Provide fallback: try running the module as script
         try:
-            subprocess.run([sys.executable, "-m", "agentic_brain.security.dependency_audit", "--output", args.output], check=False)
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "agentic_brain.security.dependency_audit",
+                    "--output",
+                    args.output,
+                ],
+                check=False,
+            )
             print_warning("Ran dependency audit as a subprocess (fallback)")
             return 0
         except Exception as exc2:

@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class JinaEmbedder(Embedder):
     """
     Jina AI Embeddings Client.
-    
+
     Models:
     - jina-embeddings-v2-base-en (512 dimensions, English)
     - jina-embeddings-v2-small-en (384 dimensions, English, faster)
@@ -41,14 +41,16 @@ class JinaEmbedder(Embedder):
         self,
         api_key: Optional[str] = None,
         model: str = "jina-embeddings-v2-base-en",
-        task: Literal["retrieval.query", "retrieval.passage", "clustering", "classification"] = "retrieval.passage",
+        task: Literal[
+            "retrieval.query", "retrieval.passage", "clustering", "classification"
+        ] = "retrieval.passage",
         rate_limit: int = 5000,
         max_retries: int = 3,
         timeout: int = 30,
     ):
         """
         Initialize Jina Embedder.
-        
+
         Args:
             api_key: Jina API key (defaults to JINA_API_KEY env var)
             model: Model name to use
@@ -76,9 +78,12 @@ class JinaEmbedder(Embedder):
         try:
             from jinaai.embeddings import EmbeddingColbert as EmbeddingAPI
             from jinaai import JinaAI
+
             self.client = JinaAI(api_key=self.api_key)
         except ImportError:
-            raise ImportError("jinaai package required. Install with: pip install jinaai")
+            raise ImportError(
+                "jinaai package required. Install with: pip install jinaai"
+            )
 
     @property
     def provider(self) -> EmbeddingProvider:
@@ -135,7 +140,7 @@ class JinaEmbedder(Embedder):
             except Exception as e:
                 last_error = e
                 if attempt < self.max_retries - 1:
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     logger.warning(
                         f"Embedding attempt {attempt + 1} failed: {e}. "
                         f"Retrying in {wait_time}s..."
@@ -144,7 +149,9 @@ class JinaEmbedder(Embedder):
                 else:
                     logger.error(f"Embedding failed after {self.max_retries} attempts")
 
-        raise RuntimeError(f"Failed to embed text after {self.max_retries} attempts: {last_error}")
+        raise RuntimeError(
+            f"Failed to embed text after {self.max_retries} attempts: {last_error}"
+        )
 
     async def embed_async(self, text: str) -> EmbeddingResult:
         """Embed a single text asynchronously."""
@@ -169,10 +176,13 @@ class JinaEmbedder(Embedder):
 
         try:
             from tqdm import tqdm
+
             batches = [
                 texts[i : i + batch_size] for i in range(0, len(texts), batch_size)
             ]
-            iterator = tqdm(batches, disable=not show_progress, desc="Embedding batches")
+            iterator = tqdm(
+                batches, disable=not show_progress, desc="Embedding batches"
+            )
         except ImportError:
             batches = [
                 texts[i : i + batch_size] for i in range(0, len(texts), batch_size)
@@ -237,7 +247,7 @@ class JinaEmbedder(Embedder):
             except Exception as e:
                 last_error = e
                 if attempt < self.max_retries - 1:
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     logger.warning(f"Batch embedding attempt {attempt + 1} failed: {e}")
                     time.sleep(wait_time)
 
@@ -266,6 +276,7 @@ class JinaEmbedder(Embedder):
 
         try:
             from tqdm.asyncio import tqdm
+
             batch_results = await tqdm.gather(
                 *[process_batch(b) for b in batches], disable=not show_progress
             )

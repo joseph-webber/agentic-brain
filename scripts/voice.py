@@ -61,48 +61,62 @@ _load_env()
 
 # ── Constants ──────────────────────────────────────────────────────────────────
 
-AIRPODS_NATIVE_RATE = 24_000   # CoreAudio reports 24 kHz for AirPods Max
-WHISPER_TARGET_RATE = 16_000   # Whisper expects 16 kHz
-ENERGY_THRESHOLD = 0.001       # RMS below this = silence (skip transcription)
-NO_SPEECH_THRESHOLD = 0.6      # Whisper no_speech_prob above this = discard
-AVG_LOGPROB_THRESHOLD = -1.0   # Log-prob below this = likely hallucination
-POST_TTS_DELAY = 0.7           # Seconds to wait after TTS before mic opens
+AIRPODS_NATIVE_RATE = 24_000  # CoreAudio reports 24 kHz for AirPods Max
+WHISPER_TARGET_RATE = 16_000  # Whisper expects 16 kHz
+ENERGY_THRESHOLD = 0.001  # RMS below this = silence (skip transcription)
+NO_SPEECH_THRESHOLD = 0.6  # Whisper no_speech_prob above this = discard
+AVG_LOGPROB_THRESHOLD = -1.0  # Log-prob below this = likely hallucination
+POST_TTS_DELAY = 0.7  # Seconds to wait after TTS before mic opens
 
 HALLUCINATIONS = {
-    "you", "thank you", "thanks", "thank you.", "thanks.",
-    "thanks for watching", "thanks for watching.", "thank you for watching",
-    "bye", "bye bye", ".", "...",
+    "you",
+    "thank you",
+    "thanks",
+    "thank you.",
+    "thanks.",
+    "thanks for watching",
+    "thanks for watching.",
+    "thank you for watching",
+    "bye",
+    "bye bye",
+    ".",
+    "...",
 }
 
 STOP_PHRASES = {
-    "stop", "stop listening", "goodbye", "exit", "quit",
-    "thanks goodbye", "stop voice", "turn off",
+    "stop",
+    "stop listening",
+    "goodbye",
+    "exit",
+    "quit",
+    "thanks goodbye",
+    "stop voice",
+    "turn off",
 }
 
 # macOS system sounds used for state announcements
 _SOUNDS = {
-    "ready":    "/System/Library/Sounds/Tink.aiff",
+    "ready": "/System/Library/Sounds/Tink.aiff",
     "thinking": "/System/Library/Sounds/Pop.aiff",
-    "done":     "/System/Library/Sounds/Glass.aiff",
-    "error":    "/System/Library/Sounds/Basso.aiff",
-    "start":    "/System/Library/Sounds/Hero.aiff",
-    "bye":      "/System/Library/Sounds/Funk.aiff",
+    "done": "/System/Library/Sounds/Glass.aiff",
+    "error": "/System/Library/Sounds/Basso.aiff",
+    "start": "/System/Library/Sounds/Hero.aiff",
+    "bye": "/System/Library/Sounds/Funk.aiff",
 }
 
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class Config:
     """Runtime configuration — sensible defaults, all overridable via env/flags."""
 
-    mode: str = "standalone"           # "standalone" | "copilot"
+    mode: str = "standalone"  # "standalone" | "copilot"
     voice: str = field(
         default_factory=lambda: os.getenv("VOICE_TTS_VOICE", "Karen (Premium)")
     )
-    rate: int = field(
-        default_factory=lambda: int(os.getenv("VOICE_TTS_RATE", "160"))
-    )
+    rate: int = field(default_factory=lambda: int(os.getenv("VOICE_TTS_RATE", "160")))
     record_seconds: int = field(
         default_factory=lambda: int(os.getenv("VOICE_RECORD_SECONDS", "6"))
     )
@@ -124,6 +138,7 @@ class Config:
 
 
 # ── Audio helpers ──────────────────────────────────────────────────────────────
+
 
 def _play_sound(name: str) -> None:
     path = _SOUNDS.get(name)
@@ -148,7 +163,9 @@ def detect_airpods() -> bool:
     try:
         result = subprocess.run(
             ["system_profiler", "SPAudioDataType"],
-            capture_output=True, text=True, timeout=8,
+            capture_output=True,
+            text=True,
+            timeout=8,
         )
         lines = result.stdout.splitlines()
         airpods_section = False
@@ -165,13 +182,19 @@ def detect_airpods() -> bool:
 def _record_native(path: Path, duration: float) -> None:
     """Capture at AirPods Max native 24 kHz (avoids CoreAudio resampling noise)."""
     cmd = [
-        "sox", "-q",
-        "-d",                          # default input device
-        "-r", str(AIRPODS_NATIVE_RATE),
-        "-c", "1",
-        "-b", "32",                    # 32-bit float PCM as CoreAudio delivers
+        "sox",
+        "-q",
+        "-d",  # default input device
+        "-r",
+        str(AIRPODS_NATIVE_RATE),
+        "-c",
+        "1",
+        "-b",
+        "32",  # 32-bit float PCM as CoreAudio delivers
         str(path),
-        "trim", "0", str(duration),
+        "trim",
+        "0",
+        str(duration),
     ]
     r = subprocess.run(cmd, capture_output=True)
     if r.returncode != 0:
@@ -183,10 +206,19 @@ def _record_native(path: Path, duration: float) -> None:
 def _record_generic(path: Path, duration: float) -> None:
     """Fallback recording for non-AirPods devices (direct 16 kHz capture)."""
     cmd = [
-        "sox", "-q", "-d",
-        "-r", "16000", "-c", "1", "-b", "16",
+        "sox",
+        "-q",
+        "-d",
+        "-r",
+        "16000",
+        "-c",
+        "1",
+        "-b",
+        "16",
         str(path),
-        "trim", "0", str(duration),
+        "trim",
+        "0",
+        str(duration),
     ]
     r = subprocess.run(cmd, capture_output=True)
     if r.returncode != 0:
@@ -198,8 +230,15 @@ def _record_generic(path: Path, duration: float) -> None:
 def _resample(src: Path, dst: Path) -> None:
     """Convert native capture to 16 kHz 16-bit mono for Whisper."""
     cmd = [
-        "sox", "-q", str(src),
-        "-r", str(WHISPER_TARGET_RATE), "-b", "16", "-e", "signed-integer",
+        "sox",
+        "-q",
+        str(src),
+        "-r",
+        str(WHISPER_TARGET_RATE),
+        "-b",
+        "16",
+        "-e",
+        "signed-integer",
         str(dst),
     ]
     r = subprocess.run(cmd, capture_output=True)
@@ -237,6 +276,7 @@ def record_audio(duration: float, *, airpods: bool = False) -> Path:
 def check_energy(wav_path: Path) -> float:
     """Return RMS energy; raise RuntimeError if below silence threshold."""
     import numpy as np
+
     with wave.open(str(wav_path), "rb") as wf:
         raw = wf.readframes(wf.getnframes())
         sw = wf.getsampwidth()
@@ -286,6 +326,7 @@ def transcribe_local(wav_path: Path, model_name: str = "tiny.en") -> str:
 def transcribe_openai(wav_path: Path) -> str:
     """Fallback: transcribe via OpenAI Whisper API."""
     import requests
+
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY not set and faster-whisper unavailable.")
@@ -320,7 +361,7 @@ def transcribe(wav_path: Path, model_name: str = "tiny.en") -> str:
 
 # ── LLM backends ──────────────────────────────────────────────────────────────
 
-_CLAUDE_HISTORY: list[dict] = []   # module-level so it persists across turns
+_CLAUDE_HISTORY: list[dict] = []  # module-level so it persists across turns
 
 _CLAUDE_SYSTEM = (
     "You are Karen, a warm, concise voice assistant for a user with visual impairments. "
@@ -340,7 +381,7 @@ def generate_claude(text: str, cfg: Config) -> str:
         )
 
     _CLAUDE_HISTORY.append({"role": "user", "content": text})
-    messages = _CLAUDE_HISTORY[-10:]   # keep last 5 turns (10 messages)
+    messages = _CLAUDE_HISTORY[-10:]  # keep last 5 turns (10 messages)
 
     r = _req.post(
         "https://api.anthropic.com/v1/messages",
@@ -382,14 +423,23 @@ def generate_copilot(text: str, cfg: Config) -> str:
         "no emoji. Speak naturally."
     )
     cmd = [
-        "gh", "copilot", "-p", prompt,
-        "-s", "--screen-reader", "--allow-all-tools",
+        "gh",
+        "copilot",
+        "-p",
+        prompt,
+        "-s",
+        "--screen-reader",
+        "--allow-all-tools",
         "--no-ask-user",
-        "--add-dir", str(cfg.repo_path),
+        "--add-dir",
+        str(cfg.repo_path),
     ]
     result = subprocess.run(
-        cmd, cwd=cfg.repo_path,
-        capture_output=True, text=True, check=False,
+        cmd,
+        cwd=cfg.repo_path,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     output = (result.stdout or "").strip()
     if result.returncode != 0 and not output:
@@ -409,6 +459,7 @@ def generate_response(text: str, cfg: Config) -> str:
 
 
 # ── Main loop ──────────────────────────────────────────────────────────────────
+
 
 class VoiceLauncher:
     """
@@ -517,7 +568,10 @@ class VoiceLauncher:
         print(f"\n{'─'*55}", flush=True)
         print(f"  Voice Launcher — {mode_label} mode", flush=True)
         print(f"  Device  : {device_label}", flush=True)
-        print(f"  Model   : {self.cfg.claude_model if self.cfg.mode == 'standalone' else 'gh copilot'}", flush=True)
+        print(
+            f"  Model   : {self.cfg.claude_model if self.cfg.mode == 'standalone' else 'gh copilot'}",
+            flush=True,
+        )
         print(f"  Whisper : {self.cfg.whisper_model} (local)", flush=True)
         print(f"  Session : {self.session_id}", flush=True)
         print(f"{'─'*55}\n", flush=True)
@@ -531,6 +585,7 @@ class VoiceLauncher:
         Run the voice loop until a stop phrase or Ctrl-C.
         Returns exit code (0 = clean stop, 1 = fatal error).
         """
+
         # Graceful Ctrl-C
         def _sigint(sig, frame):  # noqa: ANN001
             self._running = False
@@ -569,6 +624,7 @@ class VoiceLauncher:
 
 # ── CLI ────────────────────────────────────────────────────────────────────────
 
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="voice.py",
@@ -580,55 +636,70 @@ def _build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument(
-        "--copilot", action="store_true",
+        "--copilot",
+        action="store_true",
         help="Use GitHub Copilot CLI as the LLM backend.",
     )
     p.add_argument(
-        "--mode", choices=["standalone", "copilot"],
+        "--mode",
+        choices=["standalone", "copilot"],
         help="Explicit mode (alternative to --copilot flag).",
     )
     p.add_argument(
-        "--once", action="store_true",
+        "--once",
+        action="store_true",
         help="Process one turn then exit.",
     )
     p.add_argument(
-        "--text", metavar="TEXT",
+        "--text",
+        metavar="TEXT",
         help="Skip microphone; use TEXT as input.",
     )
     p.add_argument(
-        "--voice", default=None,
+        "--voice",
+        default=None,
         help="macOS say voice (default: Karen (Premium)).",
     )
     p.add_argument(
-        "--rate", type=int, default=None,
+        "--rate",
+        type=int,
+        default=None,
         help="TTS speaking rate (default: 160).",
     )
     p.add_argument(
-        "--record-seconds", type=int, default=None,
+        "--record-seconds",
+        type=int,
+        default=None,
         help="Mic recording duration per turn in seconds (default: 6).",
     )
     p.add_argument(
-        "--whisper-model", default=None,
+        "--whisper-model",
+        default=None,
         help="faster-whisper model name (default: tiny.en).",
     )
     p.add_argument(
-        "--claude-model", default=None,
+        "--claude-model",
+        default=None,
         help="Anthropic model ID for standalone mode.",
     )
     p.add_argument(
-        "--no-speak", action="store_true",
+        "--no-speak",
+        action="store_true",
         help="Disable all speech output (text only).",
     )
     p.add_argument(
-        "--repo-path", default=None,
+        "--repo-path",
+        default=None,
         help="Working directory passed to gh copilot (default: agentic-brain/).",
     )
     p.add_argument(
-        "--keep-recordings", action="store_true",
+        "--keep-recordings",
+        action="store_true",
         help="Keep WAV files after transcription (debugging).",
     )
     p.add_argument(
-        "--diagnose", action="store_true",
+        "--diagnose",
+        action="store_true",
         help="Print audio diagnostics and exit.",
     )
     return p
@@ -648,11 +719,14 @@ def _run_diagnose() -> int:
         "post_tts_delay_s": POST_TTS_DELAY,
         "sox": bool(shutil.which("sox")),
         "gh": bool(shutil.which("gh")),
-        "CLAUDE_API_KEY": bool(os.getenv("CLAUDE_API_KEY") or os.getenv("ANTHROPIC_API_KEY")),
+        "CLAUDE_API_KEY": bool(
+            os.getenv("CLAUDE_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+        ),
         "OPENAI_API_KEY": bool(os.getenv("OPENAI_API_KEY")),
     }
     try:
         import faster_whisper
+
         info["faster_whisper"] = faster_whisper.__version__
     except ImportError:
         info["faster_whisper"] = "not installed"

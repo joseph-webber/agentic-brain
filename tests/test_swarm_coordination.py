@@ -49,6 +49,7 @@ from agentic_brain.swarm import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _fake_coordinator(swarm_id: str | None = None) -> tuple[SwarmCoordinator, str]:
     """Return (coordinator, swarm_id) backed by fakeredis."""
     r = fakeredis.FakeRedis(decode_responses=True)
@@ -57,7 +58,9 @@ def _fake_coordinator(swarm_id: str | None = None) -> tuple[SwarmCoordinator, st
     return coord, sid
 
 
-def _fake_registry(swarm_id: str | None = None) -> tuple[SwarmCoordinator, AgentRegistry, str]:
+def _fake_registry(
+    swarm_id: str | None = None,
+) -> tuple[SwarmCoordinator, AgentRegistry, str]:
     coord, sid = _fake_coordinator(swarm_id)
     registry = AgentRegistry(coord, sid)
     return coord, registry, sid
@@ -69,7 +72,9 @@ def _fake_queue(swarm_id: str | None = None) -> tuple[SwarmCoordinator, TaskQueu
     return coord, queue, sid
 
 
-def _fake_aggregator(swarm_id: str | None = None) -> tuple[SwarmCoordinator, FindingsAggregator, str]:
+def _fake_aggregator(
+    swarm_id: str | None = None,
+) -> tuple[SwarmCoordinator, FindingsAggregator, str]:
     coord, sid = _fake_coordinator(swarm_id)
     agg = FindingsAggregator(coord, sid)
     return coord, agg, sid
@@ -168,9 +173,10 @@ class TestSwarmCoordinator:
         thread = coord.listen_in_thread(sid, handle)
 
         time.sleep(0.05)
-        coord.publish(sid, CoordinationEvent(
-            event_type="test_event", swarm_id=sid, payload={"x": 1}
-        ))
+        coord.publish(
+            sid,
+            CoordinationEvent(event_type="test_event", swarm_id=sid, payload={"x": 1}),
+        )
         time.sleep(0.15)
         coord.shutdown()
         thread.join(timeout=2)
@@ -432,7 +438,9 @@ class TestTaskQueue:
 
 
 class TestFindingsAggregator:
-    def _push_results(self, coord: SwarmCoordinator, sid: str, results: List[Dict[str, Any]]) -> None:
+    def _push_results(
+        self, coord: SwarmCoordinator, sid: str, results: List[Dict[str, Any]]
+    ) -> None:
         for r in results:
             coord.push_result(sid, r)
 
@@ -444,10 +452,24 @@ class TestFindingsAggregator:
 
     def test_aggregate_basic(self):
         coord, agg, sid = _fake_aggregator()
-        self._push_results(coord, sid, [
-            {"task_id": "t1", "severity": "high", "category": "bug", "summary": "null ptr"},
-            {"task_id": "t2", "severity": "low", "category": "style", "summary": "whitespace"},
-        ])
+        self._push_results(
+            coord,
+            sid,
+            [
+                {
+                    "task_id": "t1",
+                    "severity": "high",
+                    "category": "bug",
+                    "summary": "null ptr",
+                },
+                {
+                    "task_id": "t2",
+                    "severity": "low",
+                    "category": "style",
+                    "summary": "whitespace",
+                },
+            ],
+        )
         summary = agg.aggregate()
         assert summary.total_results == 2
         assert len(summary.findings) == 2
@@ -456,10 +478,14 @@ class TestFindingsAggregator:
 
     def test_deduplication(self):
         coord, agg, sid = _fake_aggregator()
-        self._push_results(coord, sid, [
-            {"task_id": "t1", "summary": "dup"},
-            {"task_id": "t1", "summary": "dup again"},  # same task_id
-        ])
+        self._push_results(
+            coord,
+            sid,
+            [
+                {"task_id": "t1", "summary": "dup"},
+                {"task_id": "t1", "summary": "dup again"},  # same task_id
+            ],
+        )
         summary = agg.aggregate()
         assert summary.total_results == 2
         assert len(summary.findings) == 1  # deduplicated
@@ -467,22 +493,30 @@ class TestFindingsAggregator:
 
     def test_severity_grouping(self):
         coord, agg, sid = _fake_aggregator()
-        self._push_results(coord, sid, [
-            {"task_id": "t1", "severity": "critical", "category": "security"},
-            {"task_id": "t2", "severity": "critical", "category": "security"},
-            {"task_id": "t3", "severity": "info", "category": "style"},
-        ])
+        self._push_results(
+            coord,
+            sid,
+            [
+                {"task_id": "t1", "severity": "critical", "category": "security"},
+                {"task_id": "t2", "severity": "critical", "category": "security"},
+                {"task_id": "t3", "severity": "info", "category": "style"},
+            ],
+        )
         summary = agg.aggregate()
         assert summary.critical_count == 2
         assert len(summary.by_severity.get("info", [])) == 1
 
     def test_top_findings_sorted_by_severity(self):
         coord, agg, sid = _fake_aggregator()
-        self._push_results(coord, sid, [
-            {"task_id": "t1", "severity": "info"},
-            {"task_id": "t2", "severity": "critical"},
-            {"task_id": "t3", "severity": "high"},
-        ])
+        self._push_results(
+            coord,
+            sid,
+            [
+                {"task_id": "t1", "severity": "info"},
+                {"task_id": "t2", "severity": "critical"},
+                {"task_id": "t3", "severity": "high"},
+            ],
+        )
         summary = agg.aggregate()
         top = summary.top_findings(2)
         assert top[0].severity == "critical"
@@ -490,9 +524,13 @@ class TestFindingsAggregator:
 
     def test_human_summary(self):
         coord, agg, sid = _fake_aggregator()
-        self._push_results(coord, sid, [
-            {"task_id": "t1", "severity": "high", "category": "bug"},
-        ])
+        self._push_results(
+            coord,
+            sid,
+            [
+                {"task_id": "t1", "severity": "high", "category": "bug"},
+            ],
+        )
         summary = agg.aggregate()
         text = summary.human_summary()
         assert "high" in text
@@ -509,13 +547,17 @@ class TestFindingsAggregator:
 
     def test_merge_summaries(self):
         coord, agg, sid = _fake_aggregator()
-        s1 = agg.aggregate(raw_results=[
-            {"task_id": "t1", "severity": "high", "category": "bug"},
-        ])
-        s2 = agg.aggregate(raw_results=[
-            {"task_id": "t2", "severity": "low", "category": "style"},
-            {"task_id": "t1", "severity": "high", "category": "bug"},  # duplicate
-        ])
+        s1 = agg.aggregate(
+            raw_results=[
+                {"task_id": "t1", "severity": "high", "category": "bug"},
+            ]
+        )
+        s2 = agg.aggregate(
+            raw_results=[
+                {"task_id": "t2", "severity": "low", "category": "style"},
+                {"task_id": "t1", "severity": "high", "category": "bug"},  # duplicate
+            ]
+        )
         merged = agg.merge([s1, s2])
         assert len(merged.findings) == 2  # deduped
         assert merged.total_results == 3
@@ -545,9 +587,16 @@ class TestFindingsAggregator:
 
     def test_store_to_neo4j_with_mock_session(self):
         coord, agg, sid = _fake_aggregator()
-        summary = agg.aggregate(raw_results=[
-            {"task_id": "t1", "severity": "high", "category": "bug", "summary": "oops"},
-        ])
+        summary = agg.aggregate(
+            raw_results=[
+                {
+                    "task_id": "t1",
+                    "severity": "high",
+                    "category": "bug",
+                    "summary": "oops",
+                },
+            ]
+        )
         mock_session = MagicMock()
         mock_session.run = MagicMock()
         result = agg.store_to_neo4j(summary, neo4j_session=mock_session)
@@ -577,11 +626,13 @@ class TestSwarmLifecycle:
         registry.register("worker-2", capabilities=["review", "security"])
 
         # 3. Enqueue tasks
-        queue.enqueue_many([
-            {"action": "review", "file": "auth.py"},
-            {"action": "review", "file": "api.py"},
-            {"action": "security_scan", "file": "auth.py"},
-        ])
+        queue.enqueue_many(
+            [
+                {"action": "review", "file": "auth.py"},
+                {"action": "review", "file": "api.py"},
+                {"action": "security_scan", "file": "auth.py"},
+            ]
+        )
 
         # 4. Process all tasks
         while True:

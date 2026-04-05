@@ -78,9 +78,9 @@ class ConnectorSyncCursor:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "updated_after": self.updated_after.isoformat()
-            if self.updated_after
-            else None,
+            "updated_after": (
+                self.updated_after.isoformat() if self.updated_after else None
+            ),
             "page_token": self.page_token,
             "etag": self.etag,
             "state": self.state,

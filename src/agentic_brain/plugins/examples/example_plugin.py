@@ -14,7 +14,7 @@ class ExamplePlugin(Plugin):
     def on_load(self):
         self.inited = True
         # register a hook handler example
-        self.register_hook('echo', self._on_echo)
+        self.register_hook("echo", self._on_echo)
 
     def on_unload(self):
         self.stopped = True

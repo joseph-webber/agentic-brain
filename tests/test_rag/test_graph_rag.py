@@ -89,7 +89,9 @@ class TestGraphRAGConfig:
         assert config.cache_embeddings is True
         assert config.cache_ttl == 3600
 
-    def test_config_community_disabled(self, config_no_communities: GraphRAGConfig) -> None:
+    def test_config_community_disabled(
+        self, config_no_communities: GraphRAGConfig
+    ) -> None:
         assert config_no_communities.enable_communities is False
 
 
@@ -127,7 +129,9 @@ class TestSearchStrategy:
 class TestEmbeddingUtilities:
     def test_embed_text_with_fallback(self) -> None:
         # Test fallback embedding when MLX is unavailable
-        with patch("agentic_brain.rag.graph_rag._get_mlx_embeddings", return_value=None):
+        with patch(
+            "agentic_brain.rag.graph_rag._get_mlx_embeddings", return_value=None
+        ):
             embedding = _embed_text("test query", fallback_dim=8)
             assert isinstance(embedding, list)
             assert len(embedding) == 8
@@ -140,7 +144,9 @@ class TestEmbeddingUtilities:
         assert emb1 == emb2
 
     def test_get_embedding_dimension_default(self) -> None:
-        with patch("agentic_brain.rag.graph_rag._get_mlx_embeddings", return_value=None):
+        with patch(
+            "agentic_brain.rag.graph_rag._get_mlx_embeddings", return_value=None
+        ):
             dim = _get_embedding_dimension(default_dim=384)
             assert dim == 384
 
@@ -350,14 +356,18 @@ class TestSearchStrategyDispatch:
     async def test_search_community_strategy(self) -> None:
         with patch("agentic_brain.rag.graph_rag.AsyncGraphDatabase"):
             rag = GraphRAG()
-            results = await rag.search("test", strategy=SearchStrategy.COMMUNITY, top_k=5)
+            results = await rag.search(
+                "test", strategy=SearchStrategy.COMMUNITY, top_k=5
+            )
             assert isinstance(results, list)
 
     @pytest.mark.asyncio
     async def test_search_multi_hop_strategy_empty(self) -> None:
         with patch("agentic_brain.rag.graph_rag.AsyncGraphDatabase"):
             rag = GraphRAG()
-            results = await rag.search("test", strategy=SearchStrategy.MULTI_HOP, top_k=5)
+            results = await rag.search(
+                "test", strategy=SearchStrategy.MULTI_HOP, top_k=5
+            )
             assert isinstance(results, list)
 
 
@@ -436,7 +446,13 @@ class TestAnswerGeneration:
                 {
                     "entity_id": "e1",
                     "content": "Test context",
-                    "context": [{"relationship": "related_to", "id": "e2", "description": "Another entity"}],
+                    "context": [
+                        {
+                            "relationship": "related_to",
+                            "id": "e2",
+                            "description": "Another entity",
+                        }
+                    ],
                 }
             ]
             answer = await rag.generate_answer("test query", context)
@@ -469,7 +485,9 @@ class TestEdgeCases:
     async def test_search_very_large_top_k(self) -> None:
         with patch("agentic_brain.rag.graph_rag.AsyncGraphDatabase"):
             rag = GraphRAG()
-            results = await rag.search("test", strategy=SearchStrategy.VECTOR, top_k=1000)
+            results = await rag.search(
+                "test", strategy=SearchStrategy.VECTOR, top_k=1000
+            )
             assert isinstance(results, list)
 
     @pytest.mark.asyncio

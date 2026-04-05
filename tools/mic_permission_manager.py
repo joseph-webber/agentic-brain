@@ -46,15 +46,18 @@ import argparse
 
 
 REDIS_KEY = "swarm:mic_permission:findings"
-APP_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "PyMicPermission.app")
+APP_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "PyMicPermission.app"
+)
 SOX_CAPTURE = os.path.expanduser("~/brain/core/audio/sox_capture.py")
 
 
 def push_redis(msg):
     try:
         subprocess.run(
-            ['redis-cli', '-a', 'BrainRedis2026', 'RPUSH', REDIS_KEY, msg],
-            capture_output=True, timeout=3
+            ["redis-cli", "-a", "BrainRedis2026", "RPUSH", REDIS_KEY, msg],
+            capture_output=True,
+            timeout=3,
         )
     except Exception:
         pass
@@ -64,13 +67,16 @@ def get_av_status():
     """Return (raw_int, string) of AVFoundation mic auth status for current process."""
     try:
         import AVFoundation
+
         raw = AVFoundation.AVCaptureDevice.authorizationStatusForMediaType_(
-            AVFoundation.AVMediaTypeAudio)
-        label = {0: 'notDetermined', 1: 'restricted', 2: 'denied', 3: 'authorized'}.get(
-            raw, f'unknown({raw})')
+            AVFoundation.AVMediaTypeAudio
+        )
+        label = {0: "notDetermined", 1: "restricted", 2: "denied", 3: "authorized"}.get(
+            raw, f"unknown({raw})"
+        )
         return raw, label
     except ImportError:
-        return -1, 'AVFoundation not available'
+        return -1, "AVFoundation not available"
 
 
 def cmd_status():
@@ -79,13 +85,15 @@ def cmd_status():
     print(f"┌─ Microphone Permission Status ─────────────────────────────────────┐")
     print(f"│  AVFoundation status (current process): {label} (raw={raw})")
 
-    icons = {0: '⏳', 1: '🔒', 2: '❌', 3: '✅', -1: '⚠️'}
+    icons = {0: "⏳", 1: "🔒", 2: "❌", 3: "✅", -1: "⚠️"}
     print(f"│  {icons.get(raw, '?')} {label}")
     print(f"│")
 
     # Test sox capture (inherits Terminal TCC)
     sox_ok = _test_sox_quick()
-    print(f"│  sox capture test: {'✅ WORKING (Terminal TCC inherited)' if sox_ok else '❌ Failed'}")
+    print(
+        f"│  sox capture test: {'✅ WORKING (Terminal TCC inherited)' if sox_ok else '❌ Failed'}"
+    )
     print(f"│")
     print(f"│  PyMicPermission.app: {APP_PATH}")
     print(f"│  Bundle ID: com.josephbrain.pymicpermission")
@@ -100,7 +108,9 @@ def cmd_status():
     elif raw == 3:
         print("\n✅ Authorized! Use sounddevice or AVFoundation directly.")
     elif raw == 2:
-        print("\n→  Open: System Settings → Privacy & Security → Microphone → enable your app")
+        print(
+            "\n→  Open: System Settings → Privacy & Security → Microphone → enable your app"
+        )
 
 
 def _test_sox_quick():
@@ -111,9 +121,23 @@ def _test_sox_quick():
     try:
         # Capture 0.2s to /dev/null (just test if mic is accessible)
         r = subprocess.run(
-            [sox, '-r', '24000', '-c', '1', '-b', '16',
-             '-t', 'raw', '/dev/null', 'trim', '0', '0.2'],
-            capture_output=True, timeout=3
+            [
+                sox,
+                "-r",
+                "24000",
+                "-c",
+                "1",
+                "-b",
+                "16",
+                "-t",
+                "raw",
+                "/dev/null",
+                "trim",
+                "0",
+                "0.2",
+            ],
+            capture_output=True,
+            timeout=3,
         )
         return r.returncode == 0
     except Exception:
@@ -138,7 +162,7 @@ def cmd_request():
     print("→ If status is notDetermined, the macOS permission dialog will appear")
     print("→ Click 'Allow' to grant microphone access")
     push_redis("mic_permission_manager.py: opening PyMicPermission.app via --request")
-    subprocess.run(['open', APP_PATH])
+    subprocess.run(["open", APP_PATH])
     print("\nWatch Redis for result:")
     print(f"  redis-cli -a BrainRedis2026 LRANGE '{REDIS_KEY}' 0 -1")
 
@@ -161,21 +185,26 @@ def cmd_test():
         os.makedirs(os.path.dirname(outfile), exist_ok=True)
 
         r = subprocess.run(
-            [sox, '-r', '24000', '-c', '1', '-b', '16', outfile,
-             'trim', '0', '0.5'],
-            capture_output=True, timeout=8
+            [sox, "-r", "24000", "-c", "1", "-b", "16", outfile, "trim", "0", "0.5"],
+            capture_output=True,
+            timeout=8,
         )
 
         if r.returncode != 0 or not os.path.exists(outfile):
             print(f"❌ sox failed: {r.stderr.decode()}")
-            push_redis(f"mic_permission_manager.py: sox test FAILED: {r.stderr.decode()[:100]}")
+            push_redis(
+                f"mic_permission_manager.py: sox test FAILED: {r.stderr.decode()[:100]}"
+            )
             return False
 
-        with wave.open(outfile, 'rb') as w:
+        with wave.open(outfile, "rb") as w:
             frames = w.getnframes()
-            data = np.frombuffer(w.readframes(frames), dtype=np.int16).astype(np.float32) / 32768.0
+            data = (
+                np.frombuffer(w.readframes(frames), dtype=np.int16).astype(np.float32)
+                / 32768.0
+            )
 
-        rms = float(np.sqrt(np.mean(data ** 2)))
+        rms = float(np.sqrt(np.mean(data**2)))
         peak = float(np.abs(data).max())
 
         os.unlink(outfile)
@@ -185,11 +214,15 @@ def cmd_test():
 
         if rms < 1e-10:
             print("⚠️  All zeros — microphone permission blocked at driver level")
-            push_redis(f"mic_permission_manager.py: sox test captured all zeros - driver blocked")
+            push_redis(
+                f"mic_permission_manager.py: sox test captured all zeros - driver blocked"
+            )
             return False
         else:
             print("✅ REAL AUDIO DETECTED — microphone is working!")
-            push_redis(f"mic_permission_manager.py: sox test SUCCESS rms={rms:.5f} frames={frames}")
+            push_redis(
+                f"mic_permission_manager.py: sox test SUCCESS rms={rms:.5f} frames={frames}"
+            )
             return True
 
     except ImportError:
@@ -210,7 +243,7 @@ def cmd_privacy():
         "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone",
     ]
     for url in urls:
-        r = subprocess.run(['open', url], capture_output=True)
+        r = subprocess.run(["open", url], capture_output=True)
         if r.returncode == 0:
             print(f"✅ Opened Privacy settings: {url}")
             return
@@ -221,12 +254,22 @@ def main():
     parser = argparse.ArgumentParser(
         description="Brain AI microphone permission manager",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__.split('USAGE:')[1] if 'USAGE:' in __doc__ else ""
+        epilog=__doc__.split("USAGE:")[1] if "USAGE:" in __doc__ else "",
     )
-    parser.add_argument('--status', action='store_true', help='Check current permission status')
-    parser.add_argument('--request', action='store_true', help='Open PyMicPermission.app to request permission')
-    parser.add_argument('--test', action='store_true', help='Test actual mic capture via sox')
-    parser.add_argument('--privacy', action='store_true', help='Open Privacy & Security settings')
+    parser.add_argument(
+        "--status", action="store_true", help="Check current permission status"
+    )
+    parser.add_argument(
+        "--request",
+        action="store_true",
+        help="Open PyMicPermission.app to request permission",
+    )
+    parser.add_argument(
+        "--test", action="store_true", help="Test actual mic capture via sox"
+    )
+    parser.add_argument(
+        "--privacy", action="store_true", help="Open Privacy & Security settings"
+    )
 
     args = parser.parse_args()
 
@@ -240,5 +283,5 @@ def main():
         cmd_status()  # default
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

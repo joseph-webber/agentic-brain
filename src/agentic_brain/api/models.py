@@ -387,7 +387,12 @@ class ApiResponse(BaseModel):
                     "data": [{"id": "1"}, {"id": "2"}],
                     "message": "Items retrieved successfully",
                     "errors": [],
-                    "pagination": {"page": 0, "size": 20, "total_items": 2, "total_pages": 1},
+                    "pagination": {
+                        "page": 0,
+                        "size": 20,
+                        "total_items": 2,
+                        "total_pages": 1,
+                    },
                     "links": {"self": "/api/v1/items?page=0&size=20"},
                     "timestamp": "2026-01-01T12:10:00Z",
                 },
@@ -677,7 +682,10 @@ class SetupStatusResponse(BaseModel):
                             {"name": "groq", "reason": "GROQ_API_KEY is configured"}
                         ],
                         "unavailable": [
-                            {"name": "openai", "reason": "OPENAI_API_KEY not configured"}
+                            {
+                                "name": "openai",
+                                "reason": "OPENAI_API_KEY not configured",
+                            }
                         ],
                     },
                     "setup_guide": "Your system is ready to use Groq...",
@@ -689,7 +697,10 @@ class SetupStatusResponse(BaseModel):
                         "available": [],
                         "unavailable": [
                             {"name": "groq", "reason": "GROQ_API_KEY not configured"},
-                            {"name": "openai", "reason": "OPENAI_API_KEY not configured"},
+                            {
+                                "name": "openai",
+                                "reason": "OPENAI_API_KEY not configured",
+                            },
                         ],
                     },
                     "quick_start": {

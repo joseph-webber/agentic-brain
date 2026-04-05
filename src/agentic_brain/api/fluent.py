@@ -228,9 +228,7 @@ class AgenticBrain:
 
         return self
 
-    def ingest_folder(
-        self, folder_path: str, recursive: bool = True
-    ) -> AgenticBrain:
+    def ingest_folder(self, folder_path: str, recursive: bool = True) -> AgenticBrain:
         """Ingest all documents from a folder.
 
         Args:
@@ -289,9 +287,7 @@ class AgenticBrain:
                 try:
                     self._graph.link_topic(source, relation, target)
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to link {source} -> {target}: {e}"
-                    )
+                    logger.warning(f"Failed to link {source} -> {target}: {e}")
 
         return self
 
@@ -373,9 +369,7 @@ class AgenticBrain:
         Returns:
             List of (question, answer) tuples
         """
-        return [
-            (q, r.answer) for q, r in self._query_history[-limit:]
-        ]
+        return [(q, r.answer) for q, r in self._query_history[-limit:]]
 
     def evaluate_recent_queries(self) -> dict[str, Any]:
         """Evaluate recent queries.
@@ -390,11 +384,9 @@ class AgenticBrain:
 
         return {
             "total_queries": len(results),
-            "avg_confidence": sum(r.confidence for r in results)
-            / len(results),
+            "avg_confidence": sum(r.confidence for r in results) / len(results),
             "with_sources": sum(1 for r in results if r.has_sources),
-            "avg_answer_length": sum(len(r.answer) for r in results)
-            / len(results),
+            "avg_answer_length": sum(len(r.answer) for r in results) / len(results),
         }
 
     def clear_history(self) -> AgenticBrain:
@@ -422,9 +414,7 @@ class AgenticBrain:
             parts.append(f"  Graph: Neo4j ({self._graph_uri})")
 
         if self._rag:
-            parts.append(
-                f"  RAG: Enabled (cache TTL: {self._rag_cache_ttl}h)"
-            )
+            parts.append(f"  RAG: Enabled (cache TTL: {self._rag_cache_ttl}h)")
 
         if self._query_history:
             parts.append(f"  History: {len(self._query_history)} queries")

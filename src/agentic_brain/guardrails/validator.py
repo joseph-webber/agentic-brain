@@ -1,5 +1,6 @@
 """Input validation utilities for agentic-brain guardrails.
 """
+
 from .pii_detector import PiiDetector
 from .toxicity import ToxicityDetector
 
@@ -43,8 +44,7 @@ class InputValidator:
         return True, ""
 
     def validate(self, text: str):
-        """Run all validations. Returns dict with status and reasons.
-        """
+        """Run all validations. Returns dict with status and reasons."""
         ok, reason = self.validate_length(text)
         if not ok:
             return {"ok": False, "reason": reason}

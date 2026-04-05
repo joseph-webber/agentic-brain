@@ -19,30 +19,89 @@ SIMPLE_MAX_WORDS = 8
 COMPLEX_MIN_WORDS = 18
 
 # Greeting / short command signals
-SIMPLE_SIGNALS = frozenset({
-    "hi", "hello", "hey", "thanks", "thank you", "ok", "okay",
-    "yes", "no", "yep", "nope", "what time", "what's the time",
-    "how are you", "what day", "stop", "bye", "goodbye",
-    "good morning", "good afternoon", "good evening",
-    "cheers", "ta", "alright", "cool", "nice", "great",
-})
+SIMPLE_SIGNALS = frozenset(
+    {
+        "hi",
+        "hello",
+        "hey",
+        "thanks",
+        "thank you",
+        "ok",
+        "okay",
+        "yes",
+        "no",
+        "yep",
+        "nope",
+        "what time",
+        "what's the time",
+        "how are you",
+        "what day",
+        "stop",
+        "bye",
+        "goodbye",
+        "good morning",
+        "good afternoon",
+        "good evening",
+        "cheers",
+        "ta",
+        "alright",
+        "cool",
+        "nice",
+        "great",
+    }
+)
 
 # Signals that indicate a complex, multi-step query
-COMPLEX_SIGNALS = frozenset({
-    "explain", "how does", "why does", "compare", "difference between",
-    "pros and cons", "step by step", "walk me through", "in detail",
-    "summarise", "summarize", "what would happen", "analyse", "analyze",
-    "history of", "background on", "what are all", "list every",
-    "write code", "implement", "build", "create a", "design",
-    "write a", "generate", "refactor", "debug", "script",
-})
+COMPLEX_SIGNALS = frozenset(
+    {
+        "explain",
+        "how does",
+        "why does",
+        "compare",
+        "difference between",
+        "pros and cons",
+        "step by step",
+        "walk me through",
+        "in detail",
+        "summarise",
+        "summarize",
+        "what would happen",
+        "analyse",
+        "analyze",
+        "history of",
+        "background on",
+        "what are all",
+        "list every",
+        "write code",
+        "implement",
+        "build",
+        "create a",
+        "design",
+        "write a",
+        "generate",
+        "refactor",
+        "debug",
+        "script",
+    }
+)
 
 # GPT-preferred signals (coding tasks)
-GPT_SIGNALS = frozenset({
-    "use gpt", "use openai", "openai", "gpt",
-    "write code", "python", "javascript", "typescript",
-    "json", "regex", "refactor", "debug",
-})
+GPT_SIGNALS = frozenset(
+    {
+        "use gpt",
+        "use openai",
+        "openai",
+        "gpt",
+        "write code",
+        "python",
+        "javascript",
+        "typescript",
+        "json",
+        "regex",
+        "refactor",
+        "debug",
+    }
+)
 
 
 def classify_complexity(text: str) -> str:

@@ -53,7 +53,9 @@ class BatchEmbeddingProcessor:
 class BatchGraphQueryProcessor:
     """Execute graph queries in batches."""
 
-    def __init__(self, query_fn: Callable[[list[str]], Any], batch_size: int = 32) -> None:
+    def __init__(
+        self, query_fn: Callable[[list[str]], Any], batch_size: int = 32
+    ) -> None:
         self.query_fn = query_fn
         self.batch_size = batch_size
 

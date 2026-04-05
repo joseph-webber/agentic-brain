@@ -157,7 +157,9 @@ async def test_pre_authorize_allows_has_role_expression():
 
 @pytest.mark.asyncio
 async def test_pre_authorize_allows_complex_expression():
-    @pre_authorize("hasRole('MANAGER') or hasAuthority('USER_VIEW') and isAuthenticated()")
+    @pre_authorize(
+        "hasRole('MANAGER') or hasAuthority('USER_VIEW') and isAuthenticated()"
+    )
     async def endpoint():
         return "ok"
 
@@ -181,8 +183,13 @@ async def test_pre_authorize_denies_unknown_expression():
 def test_evaluate_security_expression_supports_any_role_and_any_authority():
     with SecurityContextManager(_admin_user()):
         assert _evaluate_security_expression("hasAnyRole('MANAGER', 'ADMIN')") is True
-        assert _evaluate_security_expression("hasAnyAuthority('AUDIT', 'USER_VIEW')") is True
-        assert _evaluate_security_expression("hasAnyAuthority('AUDIT', 'DELETE')") is False
+        assert (
+            _evaluate_security_expression("hasAnyAuthority('AUDIT', 'USER_VIEW')")
+            is True
+        )
+        assert (
+            _evaluate_security_expression("hasAnyAuthority('AUDIT', 'DELETE')") is False
+        )
 
 
 def test_split_expression_respects_parentheses():

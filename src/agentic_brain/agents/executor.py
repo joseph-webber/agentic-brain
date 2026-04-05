@@ -117,9 +117,7 @@ class ToolExecutor:
 
         for attempt in range(max_retries):
             try:
-                result = await self._execute_with_timeout(
-                    tool, context, **kwargs
-                )
+                result = await self._execute_with_timeout(tool, context, **kwargs)
 
                 if result.success:
                     self._logger.debug(
@@ -295,9 +293,7 @@ class ToolExecutor:
             if not validator(result):
                 result.success = False
                 result.error = "Result validation failed"
-                self._logger.warning(
-                    f"Tool result validation failed: {tool_name}"
-                )
+                self._logger.warning(f"Tool result validation failed: {tool_name}")
 
         return result
 
@@ -307,9 +303,7 @@ class ToolExecutor:
             "active_executions": len(self._active_executions),
             "max_concurrent": self.max_concurrent,
             "available_tools": (
-                len(self.tool_registry._tools)
-                if self.tool_registry
-                else 0
+                len(self.tool_registry._tools) if self.tool_registry else 0
             ),
         }
 

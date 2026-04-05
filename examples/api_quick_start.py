@@ -33,7 +33,7 @@ def example_shortcuts():
     print("\n2. Unified Search (across all sources):")
     print("   results = quick_search('neural networks', num_results=10)")
     print("   for r in results:")
-    print("       print(f'{r[\"source\"]}: {r[\"content\"][:100]}')")
+    print('       print(f\'{r["source"]}: {r["content"][:100]}\')')
 
     # Graph - instant knowledge graph
     print("\n3. Knowledge Graph (instant creation):")
@@ -49,7 +49,7 @@ def example_shortcuts():
     print("\n4. Evaluation (quality metrics):")
     print("   results = [quick_rag('Q1'), quick_rag('Q2')]")
     print("   metrics = quick_eval(results)")
-    print("   print(f'Avg confidence: {metrics[\"generation\"][\"avg_confidence\"]}')")
+    print('   print(f\'Avg confidence: {metrics["generation"]["avg_confidence"]}\')')
 
 
 def example_fluent_builder():
@@ -171,7 +171,9 @@ def example_advanced_workflows():
     print("   results = [brain.query(q) for q in queries]")
     print("   ")
     print("   metrics = quick_eval(results, golden_answers=golden_answers)")
-    print("   print(f'Accuracy: {metrics[\"generation\"][\"avg_similarity_to_golden\"]}')")
+    print(
+        '   print(f\'Accuracy: {metrics["generation"]["avg_similarity_to_golden"]}\')'
+    )
 
 
 def example_error_handling():
@@ -239,7 +241,8 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("QUICK REFERENCE")
     print("=" * 60)
-    print("""
+    print(
+        """
 SHORTCUTS (agentic_brain.api):
   • quick_rag()     - RAG query with documents
   • quick_graph()   - Knowledge graph creation
@@ -268,4 +271,5 @@ DESIGN PRINCIPLES:
   ✓ Lazy - components init on first use
   ✓ Explicit - clear method names
   ✓ Composable - mix and match components
-    """)
+    """
+    )

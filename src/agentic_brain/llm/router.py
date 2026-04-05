@@ -473,9 +473,7 @@ class LLMRouterCore(RetryStrategyMixin, ProviderDispatchMixin):
                 )
 
         normalized = guard.filter_messages(
-            self.normalize_messages(
-                message=message, system=system, messages=messages
-            )
+            self.normalize_messages(message=message, system=system, messages=messages)
         )
         return await self._chat_messages(
             normalized,

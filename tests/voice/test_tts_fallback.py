@@ -94,7 +94,9 @@ class TestTTSFallbackChain:
 
         # Cartesia should be unavailable (no API key)
         assert not health.cartesia.available
-        assert "No API key" in health.cartesia.reason or "API key" in str(health.cartesia.reason)
+        assert "No API key" in health.cartesia.reason or "API key" in str(
+            health.cartesia.reason
+        )
 
     @pytest.mark.asyncio
     async def test_fallback_to_macos_say(self, tts_chain):
@@ -163,7 +165,10 @@ class TestTTSFallbackChain:
         # Either it works or reports not available
         assert result.backend == TTSBackend.KOKORO
         if not result.success:
-            assert "not available" in result.error.lower() or "failed" in result.error.lower()
+            assert (
+                "not available" in result.error.lower()
+                or "failed" in result.error.lower()
+            )
 
 
 class TestTTSBackendEnum:
@@ -254,7 +259,9 @@ class TestHealthCheck:
 
         # Cartesia unavailable (no key)
         assert not health.cartesia.available
-        assert "API key" in str(health.cartesia.reason) or "No API key" in str(health.cartesia.reason)
+        assert "API key" in str(health.cartesia.reason) or "No API key" in str(
+            health.cartesia.reason
+        )
 
         # macOS say should be available on macOS (unless mocked)
         import platform

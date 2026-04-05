@@ -257,7 +257,9 @@ class PolymorphicBrain:
         if profile.technical_level == "simple":
             modifiers.append("Explain concepts simply and avoid unnecessary jargon.")
         elif profile.technical_level == "technical":
-            modifiers.append("Use precise technical language and implementation detail.")
+            modifiers.append(
+                "Use precise technical language and implementation detail."
+            )
         elif profile.technical_level == "expert":
             modifiers.append("Be precise and technical. Assume expert knowledge.")
 
@@ -275,9 +277,13 @@ class PolymorphicBrain:
         if profile.require_consensus:
             modifiers.append("For important claims, verify with multiple sources.")
         if profile.audit_logging:
-            modifiers.append("State assumptions and decisions clearly for auditability.")
+            modifiers.append(
+                "State assumptions and decisions clearly for auditability."
+            )
         if profile.prefer_local:
-            modifiers.append("Prefer local or offline-capable tools and models when possible.")
+            modifiers.append(
+                "Prefer local or offline-capable tools and models when possible."
+            )
 
         return " ".join(modifiers)
 
@@ -318,16 +324,12 @@ class PolymorphicBrain:
             profile.tone = "professional"
             profile.citation_required = True
             profile.require_consensus = True
-            profile.hallucination_threshold = min(
-                profile.hallucination_threshold, 0.02
-            )
+            profile.hallucination_threshold = min(profile.hallucination_threshold, 0.02)
         elif context == ContextType.LEGAL:
             profile.tone = "formal"
             profile.citation_required = True
             profile.require_consensus = True
-            profile.hallucination_threshold = min(
-                profile.hallucination_threshold, 0.02
-            )
+            profile.hallucination_threshold = min(profile.hallucination_threshold, 0.02)
         elif context == ContextType.CLASSIFIED:
             profile.prefer_local = True
             profile.require_consensus = True
@@ -384,7 +386,9 @@ class PolymorphicBrain:
             return value
         if isinstance(value, str):
             return enum_type(value.lower())
-        raise TypeError(f"Expected {enum_type.__name__} or str, got {type(value).__name__}")
+        raise TypeError(
+            f"Expected {enum_type.__name__} or str, got {type(value).__name__}"
+        )
 
     @staticmethod
     def _contains_any(text: str, indicators: tuple[str, ...]) -> bool:

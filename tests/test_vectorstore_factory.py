@@ -59,4 +59,3 @@ def test_factory_preserves_backend_specific_kwargs():
     assert store.environment == "dev"
     assert store.cloud == "gcp"
     assert store.region == "us-central1"
-

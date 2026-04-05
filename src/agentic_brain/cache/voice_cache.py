@@ -237,7 +237,7 @@ class VoiceCache:
         pipe = self.client.pipeline(transaction=False)
         pipe.setex(key, self.AUDIO_TTL, json.dumps(payload, ensure_ascii=False))
         pipe.execute()
-        
+
         return base64.b64decode(audio_base64)
 
     def get_audio_meta(self, text: str, voice: str) -> Optional[Dict[str, Any]]:
@@ -257,18 +257,20 @@ class VoiceCache:
     def evict_audio(self, text: str, voice: str) -> bool:
         return self.client.delete(self._audio_key(text, voice)) > 0
 
-    def get_cache_audio_batch(self, requests: List[Tuple[str, str]]) -> Dict[str, Optional[bytes]]:
+    def get_cache_audio_batch(
+        self, requests: List[Tuple[str, str]]
+    ) -> Dict[str, Optional[bytes]]:
         """Batch fetch multiple cached audio items. Returns dict keyed by (text:voice)."""
         if not requests:
             return {}
-        
+
         # Fetch all keys in parallel
         keys = [self._audio_key(text, voice) for text, voice in requests]
         pipe = self.client.pipeline(transaction=False)
         for key in keys:
             pipe.get(key)
         results_raw = pipe.execute()
-        
+
         # Decode all results
         output = {}
         for (text, voice), data in zip(requests, results_raw):
@@ -276,7 +278,7 @@ class VoiceCache:
             if data is None:
                 output[key_str] = None
                 continue
-            
+
             try:
                 if isinstance(data, (bytes, bytearray)):
                     decoded = data.decode("utf-8")
@@ -284,10 +286,12 @@ class VoiceCache:
                     decoded = str(data)
                 payload = json.loads(decoded)
                 audio_base64 = payload.get("audio_base64")
-                output[key_str] = base64.b64decode(audio_base64) if audio_base64 else None
+                output[key_str] = (
+                    base64.b64decode(audio_base64) if audio_base64 else None
+                )
             except (json.JSONDecodeError, ValueError):
                 output[key_str] = None
-        
+
         return output
 
     def cache_audio_batch(
@@ -298,10 +302,10 @@ class VoiceCache:
         """Batch cache multiple audio items. Returns dict of {key: redis_key} for tracking."""
         if not items:
             return {}
-        
+
         pipe = self.client.pipeline(transaction=False)
         results = {}
-        
+
         for text, voice, audio_bytes in items:
             key = self._audio_key(text, voice)
             payload = {
@@ -313,10 +317,12 @@ class VoiceCache:
                 "duration_ms": 0.0,
                 "hit_count": 0,
             }
-            pipe.setex(key, ttl or self.AUDIO_TTL, json.dumps(payload, ensure_ascii=False))
+            pipe.setex(
+                key, ttl or self.AUDIO_TTL, json.dumps(payload, ensure_ascii=False)
+            )
             self._track_phrase(text, voice)  # Track for metrics
             results[f"{text}:{voice}"] = key
-        
+
         pipe.execute()
         return results
 
@@ -330,26 +336,26 @@ class VoiceCache:
             "avg_hit_count": 0,
             "hot_phrases": [],
         }
-        
+
         # Get phrase metrics
         phrases = self.get_top_phrases(limit=100)
         stats["tracked_phrases"] = len(phrases)
-        
+
         if not phrases:
             return stats
-        
+
         # Analyze cache efficiency
         cached_count = 0
         total_size = 0
         total_hits = 0
         hot_phrases = []
-        
+
         for phrase_text, use_count in phrases[:20]:
             # Extract voice if present
             parts = str(phrase_text).split("::", 1)
             voice = parts[0] if len(parts) == 2 else ""
             text = parts[-1]
-            
+
             meta = self.get_audio_meta(text, voice) if voice else None
             if meta:
                 cached_count += 1
@@ -357,45 +363,49 @@ class VoiceCache:
                 hit_count = meta.get("hit_count", 0)
                 total_size += size
                 total_hits += hit_count
-                
+
                 if hit_count > 0 or use_count >= 3:
-                    hot_phrases.append({
-                        "phrase": text[:50],
-                        "voice": voice,
-                        "uses": int(use_count),
-                        "hits": hit_count,
-                        "size_kb": round(size / 1024, 2) if size else 0,
-                    })
-        
+                    hot_phrases.append(
+                        {
+                            "phrase": text[:50],
+                            "voice": voice,
+                            "uses": int(use_count),
+                            "hits": hit_count,
+                            "size_kb": round(size / 1024, 2) if size else 0,
+                        }
+                    )
+
         stats["cached_items"] = cached_count
         stats["total_size_bytes"] = total_size
-        stats["avg_hit_count"] = round(total_hits / cached_count, 2) if cached_count > 0 else 0
+        stats["avg_hit_count"] = (
+            round(total_hits / cached_count, 2) if cached_count > 0 else 0
+        )
         stats["hot_phrases"] = hot_phrases[:10]
-        
+
         return stats
 
     def cache_hit_ratio(self) -> Dict[str, Any]:
         """Compute hit/miss ratio from phrase metrics and cached items."""
         phrases = self.get_top_phrases(limit=50)
-        
+
         total_uses = 0
         total_cached = 0
         total_hits = 0
-        
+
         for phrase_text, use_count in phrases:
             parts = str(phrase_text).split("::", 1)
             voice = parts[0] if len(parts) == 2 else ""
             text = parts[-1]
-            
+
             total_uses += use_count
             meta = self.get_audio_meta(text, voice) if voice else None
             if meta:
                 total_cached += 1
                 total_hits += meta.get("hit_count", 0)
-        
+
         hit_rate = (total_hits / total_uses * 100) if total_uses > 0 else 0
         cache_rate = (total_cached / len(phrases) * 100) if phrases else 0
-        
+
         return {
             "total_phrase_uses": int(total_uses),
             "cache_hits": total_hits,

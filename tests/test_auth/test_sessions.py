@@ -37,7 +37,9 @@ async def test_validate_token_returns_none_for_unknown_session(session_auth):
 @pytest.mark.asyncio
 async def test_validate_token_removes_expired_session(session_auth, auth_user):
     session_id = await session_auth.create_session(auth_user)
-    session_auth._sessions[session_id]["expires_at"] = datetime.now(UTC) - timedelta(seconds=1)
+    session_auth._sessions[session_id]["expires_at"] = datetime.now(UTC) - timedelta(
+        seconds=1
+    )
 
     assert await session_auth.validate_token(session_id) is None
     assert session_id not in session_auth._sessions
@@ -77,7 +79,9 @@ async def test_authenticate_username_password_creates_session_token(session_auth
 
 
 @pytest.mark.asyncio
-async def test_authenticate_username_password_with_remember_me_adds_refresh_token(session_auth):
+async def test_authenticate_username_password_with_remember_me_adds_refresh_token(
+    session_auth,
+):
     result = await session_auth.authenticate(
         UsernamePasswordCredentials(
             username="remembered",
@@ -92,7 +96,9 @@ async def test_authenticate_username_password_with_remember_me_adds_refresh_toke
 
 
 @pytest.mark.asyncio
-async def test_authenticate_uses_valid_remember_me_token_to_reissue_session(session_auth):
+async def test_authenticate_uses_valid_remember_me_token_to_reissue_session(
+    session_auth,
+):
     original = await session_auth.authenticate(
         UsernamePasswordCredentials(
             username="remembered",
@@ -152,7 +158,9 @@ async def test_revoke_token_returns_false_for_missing_session(session_auth):
 async def test_cleanup_expired_removes_only_expired_sessions(session_auth, auth_user):
     active = await session_auth.create_session(auth_user)
     expired = await session_auth.create_session(auth_user)
-    session_auth._sessions[expired]["expires_at"] = datetime.now(UTC) - timedelta(seconds=1)
+    session_auth._sessions[expired]["expires_at"] = datetime.now(UTC) - timedelta(
+        seconds=1
+    )
 
     removed = await session_auth.cleanup_expired()
 

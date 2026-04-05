@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from agentic_brain.rag.embeddings import _fallback_embedding, detect_hardware, get_best_device
+from agentic_brain.rag.embeddings import (
+    _fallback_embedding,
+    detect_hardware,
+    get_best_device,
+)
 from agentic_brain.rag.retriever import Retriever
 from agentic_brain.rag.store import InMemoryDocumentStore
 
@@ -74,7 +78,9 @@ def test_retriever_search_documents_prioritizes_relevant_content(mock_embeddings
 
 def test_detect_hardware_returns_best_device(monkeypatch):
     monkeypatch.setattr("agentic_brain.rag.embeddings.platform.system", lambda: "Linux")
-    monkeypatch.setattr("agentic_brain.rag.embeddings.platform.machine", lambda: "x86_64")
+    monkeypatch.setattr(
+        "agentic_brain.rag.embeddings.platform.machine", lambda: "x86_64"
+    )
     result = detect_hardware()
 
     assert "best_device" in result
@@ -85,8 +91,9 @@ def test_get_best_device_caches_result(monkeypatch):
     import agentic_brain.rag.embeddings as embeddings_module
 
     monkeypatch.setattr(embeddings_module, "_HARDWARE_CACHE", None)
-    monkeypatch.setattr(embeddings_module, "detect_hardware", lambda: {"best_device": "cpu"})
+    monkeypatch.setattr(
+        embeddings_module, "detect_hardware", lambda: {"best_device": "cpu"}
+    )
 
     assert get_best_device() == "cpu"
     assert get_best_device() == "cpu"
-

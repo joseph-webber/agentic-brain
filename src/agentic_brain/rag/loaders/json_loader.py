@@ -163,7 +163,11 @@ class JSONLoader(BaseLoader):
             logger.exception("Encoding error while reading JSON")
             raise LoaderError(
                 "Encoding error",
-                context={"path": str(file_path), "encoding": self.encoding, "loader": self.source_name},
+                context={
+                    "path": str(file_path),
+                    "encoding": self.encoding,
+                    "loader": self.source_name,
+                },
             ) from exc
         except json.JSONDecodeError as exc:
             logger.exception("Invalid JSON file")

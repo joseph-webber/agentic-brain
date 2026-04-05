@@ -80,7 +80,11 @@ class FakeGateway(PaymentGateway):
         self.calls.append(
             GatewayCall(
                 "create_checkout",
-                {"request": request, "return_url": return_url, "cancel_url": cancel_url},
+                {
+                    "request": request,
+                    "return_url": return_url,
+                    "cancel_url": cancel_url,
+                },
             )
         )
         return PaymentResult(
@@ -101,7 +105,9 @@ def fake_gateway() -> FakeGateway:
 
 @pytest.fixture
 def payment_processor(fake_gateway: FakeGateway) -> PaymentProcessor:
-    return PaymentProcessor(gateways={fake_gateway.name: fake_gateway}, default_gateway="fake")
+    return PaymentProcessor(
+        gateways={fake_gateway.name: fake_gateway}, default_gateway="fake"
+    )
 
 
 @pytest.fixture
@@ -138,9 +144,15 @@ def refund_request() -> RefundRequest:
 def products() -> list[WooProduct]:
     cat = WooCategory(id=10, name="Accessories")
     return [
-        WooProduct(id=1, name="Cable", price=Decimal("10.00"), stock=100, categories=[cat]),
-        WooProduct(id=2, name="Adapter", price=Decimal("15.00"), stock=5, categories=[cat]),
-        WooProduct(id=3, name="Out of stock", price=Decimal("99.00"), stock=0, categories=[cat]),
+        WooProduct(
+            id=1, name="Cable", price=Decimal("10.00"), stock=100, categories=[cat]
+        ),
+        WooProduct(
+            id=2, name="Adapter", price=Decimal("15.00"), stock=5, categories=[cat]
+        ),
+        WooProduct(
+            id=3, name="Out of stock", price=Decimal("99.00"), stock=0, categories=[cat]
+        ),
     ]
 
 
@@ -151,14 +163,26 @@ def coupon_percent() -> WooCoupon:
 
 @pytest.fixture
 def coupon_fixed() -> WooCoupon:
-    return WooCoupon(id=2, code="FIVEOFF", amount=Decimal("5.00"), discount_type="fixed_cart")
+    return WooCoupon(
+        id=2, code="FIVEOFF", amount=Decimal("5.00"), discount_type="fixed_cart"
+    )
 
 
 @pytest.fixture
 def cart_lines(products: list[WooProduct]) -> list[CartLine]:
     return [
-        CartLine(product_id=products[0].id, name=products[0].name, quantity=2, unit_price=products[0].price),
-        CartLine(product_id=products[1].id, name=products[1].name, quantity=1, unit_price=products[1].price),
+        CartLine(
+            product_id=products[0].id,
+            name=products[0].name,
+            quantity=2,
+            unit_price=products[0].price,
+        ),
+        CartLine(
+            product_id=products[1].id,
+            name=products[1].name,
+            quantity=1,
+            unit_price=products[1].price,
+        ),
     ]
 
 
@@ -176,5 +200,7 @@ def cart_summary(cart_assistant: CartAssistant, cart_lines: list[CartLine]):
 def inventory_manager() -> InventoryManager:
     manager = InventoryManager(woo_agent=None)
     # preload local stock for checkout tests
-    manager.update_local_stock(product_id=1, quantity=10, sku="SKU-1", warehouse_id="default")
+    manager.update_local_stock(
+        product_id=1, quantity=10, sku="SKU-1", warehouse_id="default"
+    )
     return manager

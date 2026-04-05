@@ -216,7 +216,9 @@ class StereoPanner:
         except FileNotFoundError:
             return
 
-    def speak_panned(self, text: str, persona: str, voice: str, rate: int = 155) -> bool:
+    def speak_panned(
+        self, text: str, persona: str, voice: str, rate: int = 155
+    ) -> bool:
         """Speak text with stereo panning for the voice persona."""
         panned_audio = self.render_panned_speech(
             text=text, persona=persona, voice=voice, rate=rate

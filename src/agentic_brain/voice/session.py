@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 def _live_session_module():
     """Lazy import of live_session to avoid circular imports at load time."""
     import agentic_brain.voice.live_session as _ls
+
     return _ls
 
 
@@ -87,9 +88,7 @@ class LiveVoiceSession(AudioHandlersMixin):
                 self._ptt_controller = PushToTalkController(
                     config=PTTConfig(hotkey=hotkey)
                 )
-                self._ptt_controller.on(
-                    "transcription", self._handle_ptt_transcription
-                )
+                self._ptt_controller.on("transcription", self._handle_ptt_transcription)
             except Exception:
                 logger.debug("LiveVoice: PTT initialisation failed", exc_info=True)
 
@@ -333,7 +332,9 @@ class LiveVoiceSession(AudioHandlersMixin):
                             self._metrics.wake_word_detections += 1
                             self._last_voice_activity = time.monotonic()
                             self._set_state(SessionState.LISTENING)
-                            logger.info("LiveVoice: wake word detected via transcription (fallback)")
+                            logger.info(
+                                "LiveVoice: wake word detected via transcription (fallback)"
+                            )
                             if self._on_wake:
                                 try:
                                     self._on_wake()

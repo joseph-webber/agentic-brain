@@ -62,7 +62,9 @@ class TestVoicePersonaPositions:
 
     def test_no_duplicate_azimuths(self):
         azimuths = [p.azimuth for p in LADY_POSITIONS.values()]
-        assert len(azimuths) == len(set(azimuths)), "Two voice personas share the same azimuth"
+        assert len(azimuths) == len(
+            set(azimuths)
+        ), "Two voice personas share the same azimuth"
 
     def test_all_azimuths_in_valid_range(self):
         for name, pos in LADY_POSITIONS.items():

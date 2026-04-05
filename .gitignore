@@ -1,73 +1,62 @@
-*.pyc
-*.egg-info/
-__pycache__/
 
-# Environment files - SECURITY: Never commit secrets
+__pycache__/
+!.env.dev.example
+!.env.docker.example
+!.env.example
+!.env.prod.example
+!.env.test.example
+!brain-config.example.yaml
+.aws/
+.azure/
+.benchmarks/
+.cache/
+.coverage
 .env
-.env*
-.env.local
 .env.*.local
 .env.docker
-brain-config.yaml
-!.env.example
-!.env.docker.example
-!.env.dev.example
-!.env.test.example
-!.env.prod.example
-!brain-config.example.yaml
+.env.local
+.env.user
+.env*
+.gcp/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.user_data/
 .venv/
-
-# Cryptographic keys and certificates - SECURITY
-*.key
-*.pem
-*.p12
-*.pfx
 *.cer
 *.crt
 *.der
-id_rsa*
+*.egg-info/
+*.key
+*.p12
+*.pem
+*.pfx
+*.private
+*.private.json
+*.pyc
+*api_key*
+*apikey*
+*credentials*
+*password*
+*secret*
+# BrainChat generated E2E artifacts
+# Cache directories
+# Credentials and secrets - SECURITY
+# Cryptographic keys and certificates - SECURITY
+# Environment files - SECURITY: Never commit secrets
+# Private user data - NEVER commit
+# Security & Research (moved to private)
+# Security Reports
+# User-specific environment - NEVER commit
+apps/BrainChat/Tests/Artifacts/
+brain-config.yaml
+demo/react-printing
+findings/
 id_dsa*
 id_ecdsa*
 id_ed25519*
-
-# Credentials and secrets - SECURITY
-*credentials*
-*secret*
-*password*
-*apikey*
-*api_key*
-.aws/
-.gcp/
-.azure/
-
-# Cache directories
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-.benchmarks/
-.cache/
-
-# Security & Research (moved to private)
-findings/
+id_rsa*
 research/
-security-audit/
-
-# Security Reports
 security_report_*.md
-
-# Private user data - NEVER commit
-.user_data/
+security-audit/
 user_profile.json
-*.private.json
-
-# User-specific environment - NEVER commit
-.env.user
-.env.local
-*.private
-.env.user
-.env.local
-.env.*.local
-
-# BrainChat generated E2E artifacts
-apps/BrainChat/Tests/Artifacts/

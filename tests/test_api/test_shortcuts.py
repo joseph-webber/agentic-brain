@@ -67,10 +67,7 @@ class TestQuickRAG:
             )
             mock_instance.query.return_value = mock_result
 
-            result = quick_rag(
-                "How to deploy?",
-                docs=["deployment.md", "guide.md"]
-            )
+            result = quick_rag("How to deploy?", docs=["deployment.md", "guide.md"])
 
             assert mock_instance.ingest_document.call_count >= 2
             assert result.answer == "Deploy using..."
@@ -90,11 +87,7 @@ class TestQuickRAG:
             )
             mock_instance.query.return_value = mock_result
 
-            result = quick_rag(
-                "test",
-                llm_provider="openai",
-                llm_model="gpt-4"
-            )
+            result = quick_rag("test", llm_provider="openai", llm_model="gpt-4")
 
             mock_pipeline.assert_called_once()
             call_kwargs = mock_pipeline.call_args[1]
@@ -162,9 +155,7 @@ class TestQuickGraph:
 
             assert mock_instance.create_topic.call_count == 2
             assert mock_instance.link_topic.call_count == 1
-            mock_instance.link_topic.assert_called_with(
-                "User", "owns", "Project"
-            )
+            mock_instance.link_topic.assert_called_with("User", "owns", "Project")
 
     def test_quick_graph_multiple_relationships(self):
         """Test graph with multiple relationships."""
@@ -496,9 +487,7 @@ class TestAgenticBrainGraphConfig:
     def test_with_graph_custom_uri(self):
         """Test custom graph URI."""
         with patch("agentic_brain.api.fluent.TopicHub"):
-            brain = AgenticBrain().with_graph(
-                neo4j_uri="bolt://custom:7687"
-            )
+            brain = AgenticBrain().with_graph(neo4j_uri="bolt://custom:7687")
 
             assert brain._graph_uri == "bolt://custom:7687"
 
@@ -542,12 +531,7 @@ class TestAgenticBrainChaining:
         """Test that methods return self for chaining."""
         with patch("agentic_brain.api.fluent.TopicHub"):
             with patch("agentic_brain.api.fluent.RAGPipeline"):
-                brain = (
-                    AgenticBrain()
-                    .with_llm("ollama")
-                    .with_graph()
-                    .with_rag()
-                )
+                brain = AgenticBrain().with_llm("ollama").with_graph().with_rag()
 
                 assert isinstance(brain, AgenticBrain)
 

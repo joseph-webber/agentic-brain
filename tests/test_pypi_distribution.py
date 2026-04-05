@@ -60,9 +60,7 @@ class TestPackageDistributionReadiness:
 
         required_urls = ["Homepage", "Repository", "Documentation"]
         for url_name in required_urls:
-            assert (
-                url_name in urls
-            ), f"Missing URL: {url_name}"
+            assert url_name in urls, f"Missing URL: {url_name}"
             assert urls[url_name].startswith(
                 "https://"
             ), f"URL must be HTTPS: {url_name}"
@@ -91,9 +89,7 @@ class TestPackageDistributionReadiness:
 
         required_scripts = ["agentic-brain", "agentic", "ab"]
         for script_name in required_scripts:
-            assert (
-                script_name in scripts
-            ), f"Missing script: {script_name}"
+            assert script_name in scripts, f"Missing script: {script_name}"
             assert "agentic_brain.cli:main" == scripts[script_name]
 
     def test_dependencies_structure(self):
@@ -107,9 +103,7 @@ class TestPackageDistributionReadiness:
 
         # Check each is a valid version spec
         for dep in dependencies:
-            assert any(
-                spec in dep for spec in [">=", "==", ">", "<", "~=", "|"]
-            ) or (
+            assert any(spec in dep for spec in [">=", "==", ">", "<", "~=", "|"]) or (
                 "[" in dep
             ), f"Invalid dependency spec: {dep}"
 
@@ -120,15 +114,11 @@ class TestPackageDistributionReadiness:
 
         required_groups = ["dev", "test", "api", "docs"]
         for group in required_groups:
-            assert (
-                group in opt_deps
-            ), f"Missing optional dependency group: {group}"
+            assert group in opt_deps, f"Missing optional dependency group: {group}"
             assert isinstance(
                 opt_deps[group], list
             ), f"Dependency group must be a list: {group}"
-            assert (
-                len(opt_deps[group]) > 0
-            ), f"Empty dependency group: {group}"
+            assert len(opt_deps[group]) > 0, f"Empty dependency group: {group}"
 
     def test_build_system_configured(self):
         """Verify build system is properly configured."""
@@ -163,9 +153,7 @@ class TestPackageDistributionReadiness:
         project_dir = Path(__file__).parent.parent
         readme_file = project_dir / readme_path
         assert readme_file.exists(), f"README file not found: {readme_path}"
-        assert (
-            readme_file.stat().st_size > 500
-        ), "README file is too small or empty"
+        assert readme_file.stat().st_size > 500, "README file is too small or empty"
 
     def test_license_file_referenced(self):
         """Verify LICENSE file exists."""
@@ -173,9 +161,7 @@ class TestPackageDistributionReadiness:
         license_file = project_dir / "LICENSE"
 
         assert license_file.exists(), "LICENSE file not found"
-        assert (
-            license_file.stat().st_size > 100
-        ), "LICENSE file is too small or empty"
+        assert license_file.stat().st_size > 100, "LICENSE file is too small or empty"
 
     @pytest.mark.integration
     def test_can_import_all_exported_symbols(self):
@@ -195,9 +181,7 @@ class TestPackageDistributionReadiness:
         for export_name in test_exports:
             try:
                 obj = getattr(agentic_brain, export_name)
-                assert (
-                    obj is not None
-                ), f"Lazy export {export_name} returned None"
+                assert obj is not None, f"Lazy export {export_name} returned None"
             except AttributeError as e:
                 pytest.fail(f"Cannot import lazy export: {export_name} - {e}")
 
@@ -233,22 +217,26 @@ class TestPackageDistributionWorkflow:
         content = manifest.read_text()
 
         # Check for common MANIFEST.in directives
-        valid_directives = ["include", "exclude", "recursive-include", "prune", "global-include"]
-        has_directives = any(
-            directive in content for directive in valid_directives
-        )
-        assert (
-            has_directives
-        ), "MANIFEST.in should contain include/exclude directives"
+        valid_directives = [
+            "include",
+            "exclude",
+            "recursive-include",
+            "prune",
+            "global-include",
+        ]
+        has_directives = any(directive in content for directive in valid_directives)
+        assert has_directives, "MANIFEST.in should contain include/exclude directives"
 
         # Verify no syntax errors (basic check)
-        lines = [line.strip() for line in content.split("\n") if line.strip() and not line.startswith("#")]
+        lines = [
+            line.strip()
+            for line in content.split("\n")
+            if line.strip() and not line.startswith("#")
+        ]
         for line in lines:
             parts = line.split()
             assert len(parts) >= 2, f"Invalid MANIFEST.in line: {line}"
-            assert (
-                parts[0] in valid_directives
-            ), f"Unknown directive: {parts[0]}"
+            assert parts[0] in valid_directives, f"Unknown directive: {parts[0]}"
 
     def test_py_typed_marker_correct(self):
         """Verify py.typed is set up correctly for PEP 561."""
@@ -272,12 +260,10 @@ class TestPackageFileStructure:
         assert (
             src_dir.exists()
         ), "src/ directory not found - package should use src layout"
+        assert agentic_brain_dir.exists(), "src/agentic_brain/ directory not found"
         assert (
-            agentic_brain_dir.exists()
-        ), "src/agentic_brain/ directory not found"
-        assert (
-            (agentic_brain_dir / "__init__.py").exists()
-        ), "src/agentic_brain/__init__.py not found"
+            agentic_brain_dir / "__init__.py"
+        ).exists(), "src/agentic_brain/__init__.py not found"
 
     def test_subpackages_have_init_files(self):
         """Verify core subpackages have __init__.py files."""
@@ -298,9 +284,7 @@ class TestPackageFileStructure:
             init_file = pkg_dir / "__init__.py"
 
             if pkg_dir.exists():
-                assert (
-                    init_file.exists()
-                ), f"Missing __init__.py in {pkg_name}"
+                assert init_file.exists(), f"Missing __init__.py in {pkg_name}"
 
     def test_no_pycache_in_version_control(self):
         """Verify __pycache__ directories are not included."""

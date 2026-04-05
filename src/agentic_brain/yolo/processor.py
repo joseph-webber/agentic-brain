@@ -61,7 +61,9 @@ class YOLOCommand:
             raise ValueError("YOLO command payload missing command text")
 
         return cls(
-            command_id=str(payload.get("command_id") or payload.get("id") or uuid.uuid4()),
+            command_id=str(
+                payload.get("command_id") or payload.get("id") or uuid.uuid4()
+            ),
             text=str(text).strip(),
             correlation_id=(
                 str(payload["correlation_id"])
@@ -69,7 +71,9 @@ class YOLOCommand:
                 else None
             ),
             reply_topic=str(payload.get("reply_topic") or "brain.agent.results"),
-            received_at=str(payload.get("received_at") or datetime.now(UTC).isoformat()),
+            received_at=str(
+                payload.get("received_at") or datetime.now(UTC).isoformat()
+            ),
             metadata=dict(payload.get("metadata") or {}),
             source=str(payload.get("source") or "brain.yolo.commands"),
         )
@@ -160,13 +164,17 @@ class YOLOCommandProcessor:
                 try:
                     await self._consumer.stop()
                 except Exception:
-                    logger.debug("Failed stopping consumer after startup error", exc_info=True)
+                    logger.debug(
+                        "Failed stopping consumer after startup error", exc_info=True
+                    )
                 self._consumer = None
             if self._producer is not None:
                 try:
                     await self._producer.stop()
                 except Exception:
-                    logger.debug("Failed stopping producer after startup error", exc_info=True)
+                    logger.debug(
+                        "Failed stopping producer after startup error", exc_info=True
+                    )
                 self._producer = None
             raise
 
@@ -175,7 +183,9 @@ class YOLOCommandProcessor:
         self._ready = True
         self._shutdown_event.clear()
         self._install_signal_handlers()
-        self._consume_task = asyncio.create_task(self._consume_loop(), name="yolo-consume")
+        self._consume_task = asyncio.create_task(
+            self._consume_loop(), name="yolo-consume"
+        )
 
         if self.enable_health_server:
             self._health_task = asyncio.create_task(
@@ -242,9 +252,13 @@ class YOLOCommandProcessor:
 
     def status(self) -> dict[str, Any]:
         """Return current processor health and metrics."""
-        uptime = time.time() - self._metrics.started_at if self._metrics.started_at else 0
+        uptime = (
+            time.time() - self._metrics.started_at if self._metrics.started_at else 0
+        )
         return {
-            "status": "ready" if self._ready else ("running" if self._running else "stopped"),
+            "status": (
+                "ready" if self._ready else ("running" if self._running else "stopped")
+            ),
             "running": self._running,
             "ready": self._ready,
             "bootstrap_servers": self.bootstrap_servers,
@@ -263,7 +277,9 @@ class YOLOCommandProcessor:
                 "messages_failed": self._metrics.messages_failed,
                 "messages_published": self._metrics.messages_published,
                 "last_command_at": (
-                    datetime.fromtimestamp(self._metrics.last_command_at, tz=UTC).isoformat()
+                    datetime.fromtimestamp(
+                        self._metrics.last_command_at, tz=UTC
+                    ).isoformat()
                     if self._metrics.last_command_at
                     else None
                 ),
@@ -271,7 +287,9 @@ class YOLOCommandProcessor:
             },
         }
 
-    async def process_message(self, payload: str | bytes | dict[str, Any]) -> dict[str, Any]:
+    async def process_message(
+        self, payload: str | bytes | dict[str, Any]
+    ) -> dict[str, Any]:
         """Process one YOLO command payload and publish the result."""
         self._metrics.messages_received += 1
         self._metrics.last_command_at = time.time()
@@ -301,7 +319,9 @@ class YOLOCommandProcessor:
 
         try:
             result, interpreted = await self._execute_command(command)
-            envelope = self._build_result_envelope(command, result, interpreted=interpreted)
+            envelope = self._build_result_envelope(
+                command, result, interpreted=interpreted
+            )
             self._metrics.messages_processed += 1
         except Exception as exc:
             logger.exception("Failed to process YOLO command %s", command.command_id)
@@ -416,11 +436,19 @@ class YOLOCommandProcessor:
 
     def _infer_capability(self, command_text: str) -> str | None:
         lowered = command_text.strip().lower()
-        if lowered.startswith("run tests") or lowered.startswith("test ") or lowered == "test":
+        if (
+            lowered.startswith("run tests")
+            or lowered.startswith("test ")
+            or lowered == "test"
+        ):
             return "run_tests"
         if lowered.startswith("deploy"):
             return "deploy"
-        if lowered.startswith("check status") or lowered == "status" or lowered.startswith("status "):
+        if (
+            lowered.startswith("check status")
+            or lowered == "status"
+            or lowered.startswith("status ")
+        ):
             return "check_status"
         if lowered.startswith("search"):
             return "search"
@@ -434,7 +462,9 @@ class YOLOCommandProcessor:
 
         for sig in (signal.SIGINT, signal.SIGTERM):
             try:
-                loop.add_signal_handler(sig, lambda s=sig: asyncio.create_task(self._handle_signal(s)))
+                loop.add_signal_handler(
+                    sig, lambda s=sig: asyncio.create_task(self._handle_signal(s))
+                )
             except (NotImplementedError, RuntimeError):
                 logger.debug("Signal handlers unavailable for %s", sig.name)
 

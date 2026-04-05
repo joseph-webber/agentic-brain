@@ -80,7 +80,9 @@ def reset_module_state(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(voice_topics, "_producer", None)
 
 
-def test_ensure_voice_topics_creates_brain_chat_topics(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ensure_voice_topics_creates_brain_chat_topics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     reset_module_state(monkeypatch)
     admin = FakeAdminClient()
     monkeypatch.setattr(voice_topics, "KafkaAdminClient", lambda *args, **kwargs: admin)
@@ -133,7 +135,9 @@ def test_subscribe_voice_responses_normalizes_legacy_payload(
     )
     monkeypatch.setattr(voice_topics, "KafkaAdminClient", lambda *args, **kwargs: admin)
     monkeypatch.setattr(voice_topics, "NewTopic", FakeNewTopic)
-    monkeypatch.setattr(voice_topics, "_create_consumer", lambda *args, **kwargs: consumer)
+    monkeypatch.setattr(
+        voice_topics, "_create_consumer", lambda *args, **kwargs: consumer
+    )
 
     seen: list[dict] = []
     processed = voice_topics.subscribe_voice_responses(seen.append)
@@ -154,7 +158,9 @@ def test_subscribe_voice_responses_normalizes_legacy_payload(
     ]
 
 
-def test_get_voice_status_reports_healthy_topics(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_get_voice_status_reports_healthy_topics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     reset_module_state(monkeypatch)
     admin_for_ensure = FakeAdminClient()
     admin_for_status = FakeAdminClient(list(voice_topics.VOICE_TOPICS))
@@ -174,5 +180,8 @@ def test_get_voice_status_reports_healthy_topics(monkeypatch: pytest.MonkeyPatch
     assert status["status"] == "healthy"
     assert status["source"] == "brainchat"
     assert status["details"]["missing_topics"] == []
-    assert status["details"]["bootstrap_servers"] == voice_topics.REDPANDA_BOOTSTRAP_SERVERS
+    assert (
+        status["details"]["bootstrap_servers"]
+        == voice_topics.REDPANDA_BOOTSTRAP_SERVERS
+    )
     assert producer.messages[0][0] == voice_topics.VOICE_STATUS_TOPIC

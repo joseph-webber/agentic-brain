@@ -295,9 +295,7 @@ class CartesiaLiveMode:
             self._player = CartesiaStreamPlayer(sample_rate=self._sample_rate)
         return self._player
 
-    def _speak_cartesia(
-        self, text: str, voice: str = "Karen", rate: int = 160
-    ) -> bool:
+    def _speak_cartesia(self, text: str, voice: str = "Karen", rate: int = 160) -> bool:
         """Speak via Cartesia streaming, with fallback to macOS say.
 
         This is the speech function injected into LiveVoiceMode.
@@ -438,9 +436,9 @@ class CartesiaLiveMode:
             )
         base.update(
             {
-                "backend": "cartesia"
-                if self._cartesia_tts is not None
-                else "macOS_say",
+                "backend": (
+                    "cartesia" if self._cartesia_tts is not None else "macOS_say"
+                ),
                 "cartesia_calls": self._cartesia_calls,
                 "fallback_calls": self._fallback_calls,
                 "avg_latency_ms": round(avg_latency, 1),

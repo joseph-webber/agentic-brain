@@ -32,7 +32,9 @@ def test_build_summary_applies_shipping_and_tax(cart_assistant: CartAssistant):
     assert summary.total == Decimal("14.00")
 
 
-def test_build_summary_negative_discount_is_clamped_to_zero(cart_assistant: CartAssistant):
+def test_build_summary_negative_discount_is_clamped_to_zero(
+    cart_assistant: CartAssistant,
+):
     lines = [CartLine(product_id=1, name="A", quantity=1, unit_price=Decimal("10.00"))]
     summary = cart_assistant.build_summary(lines, discount_total=Decimal("-2.00"))
     assert summary.discount_total == Decimal("0")
@@ -45,20 +47,26 @@ def test_build_summary_total_never_goes_negative(cart_assistant: CartAssistant):
     assert summary.total == Decimal("0")
 
 
-def test_apply_coupon_percent_adds_discount(cart_assistant: CartAssistant, cart_summary, coupon_percent):
+def test_apply_coupon_percent_adds_discount(
+    cart_assistant: CartAssistant, cart_summary, coupon_percent
+):
     updated = cart_assistant.apply_coupon(cart_summary, coupon_percent)
     assert updated.discount_total == cart_summary.subtotal * Decimal("0.10")
     assert "SAVE10" in updated.applied_coupons
     assert updated.total == cart_summary.subtotal - updated.discount_total
 
 
-def test_apply_coupon_fixed_adds_discount(cart_assistant: CartAssistant, cart_summary, coupon_fixed):
+def test_apply_coupon_fixed_adds_discount(
+    cart_assistant: CartAssistant, cart_summary, coupon_fixed
+):
     updated = cart_assistant.apply_coupon(cart_summary, coupon_fixed)
     assert updated.discount_total == coupon_fixed.amount
     assert updated.total == cart_summary.subtotal - coupon_fixed.amount
 
 
-def test_apply_coupon_string_falls_back_to_ten_percent(cart_assistant: CartAssistant, cart_summary):
+def test_apply_coupon_string_falls_back_to_ten_percent(
+    cart_assistant: CartAssistant, cart_summary
+):
     updated = cart_assistant.apply_coupon(cart_summary, "SAVE")
     assert updated.discount_total == cart_summary.subtotal * Decimal("0.10")
     assert "SAVE" in updated.applied_coupons
@@ -99,14 +107,22 @@ def test_suggest_upsells_prefers_shared_categories():
     assert [p.id for p in suggestions] == [11]
 
 
-def test_build_checkout_prompt_includes_totals_and_url(cart_assistant: CartAssistant, cart_summary):
-    prompt = cart_assistant.build_checkout_prompt(cart_summary, checkout_url="https://x")
+def test_build_checkout_prompt_includes_totals_and_url(
+    cart_assistant: CartAssistant, cart_summary
+):
+    prompt = cart_assistant.build_checkout_prompt(
+        cart_summary, checkout_url="https://x"
+    )
     assert "Subtotal" in prompt
     assert "Checkout link" in prompt
 
 
-def test_plan_abandonment_recovery_includes_coupon_expiry(cart_assistant: CartAssistant, cart_summary, coupon_fixed):
-    plan = cart_assistant.plan_abandonment_recovery(cart_summary, 120, coupon=coupon_fixed)
+def test_plan_abandonment_recovery_includes_coupon_expiry(
+    cart_assistant: CartAssistant, cart_summary, coupon_fixed
+):
+    plan = cart_assistant.plan_abandonment_recovery(
+        cart_summary, 120, coupon=coupon_fixed
+    )
     assert plan.coupon_code == coupon_fixed.code
     assert plan.expires_at is not None
     assert plan.expires_at > datetime.now(UTC) + timedelta(hours=23)

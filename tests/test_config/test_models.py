@@ -111,6 +111,8 @@ def test_settings_validation_supports_production_secret_rules():
         Settings.model_validate(
             {
                 "profile": "production",
-                "security": {"jwt_secret": "change-me-in-production-use-a-strong-secret"},
+                "security": {
+                    "jwt_secret": "change-me-in-production-use-a-strong-secret"
+                },
             }
         )

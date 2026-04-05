@@ -21,10 +21,34 @@ from typing import Any
 COPILOT_PATH = "/Users/joe/.local/bin/copilot"
 COPILOT_CWD = "/Users/joe/brain"
 CODING_KEYWORDS = {
-    "code", "swift", "python", "javascript", "typescript", "java", "kotlin",
-    "rust", "golang", "go ", "fix", "debug", "refactor", "function", "class",
-    "method", "compile", "build", "test", "cli", "shell", "script", "api",
-    "endpoint", "regex", "sql", "database", "websocket",
+    "code",
+    "swift",
+    "python",
+    "javascript",
+    "typescript",
+    "java",
+    "kotlin",
+    "rust",
+    "golang",
+    "go ",
+    "fix",
+    "debug",
+    "refactor",
+    "function",
+    "class",
+    "method",
+    "compile",
+    "build",
+    "test",
+    "cli",
+    "shell",
+    "script",
+    "api",
+    "endpoint",
+    "regex",
+    "sql",
+    "database",
+    "websocket",
 }
 
 
@@ -52,7 +76,7 @@ def cleaned_prompt(message: str) -> str:
     trimmed = message.strip()
     for command in ("/yolo", "/copilot", "/claude", "/gpt", "/ollama"):
         if trimmed.lower().startswith(command):
-            remainder = trimmed[len(command):].strip()
+            remainder = trimmed[len(command) :].strip()
             return remainder or trimmed
     return trimmed
 
@@ -132,7 +156,9 @@ def call_copilot(prompt: str, yolo: bool) -> str:
     return output
 
 
-def http_json(url: str, headers: dict[str, str], body: dict[str, Any]) -> dict[str, Any]:
+def http_json(
+    url: str, headers: dict[str, str], body: dict[str, Any]
+) -> dict[str, Any]:
     payload = json.dumps(body).encode("utf-8")
     request = urllib.request.Request(url, data=payload, method="POST")
     for key, value in headers.items():
@@ -142,12 +168,16 @@ def http_json(url: str, headers: dict[str, str], body: dict[str, Any]) -> dict[s
         with urllib.request.urlopen(request, timeout=60) as response:
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
-        raise BridgeError(exc.read().decode("utf-8", errors="replace") or f"HTTP {exc.code}") from exc
+        raise BridgeError(
+            exc.read().decode("utf-8", errors="replace") or f"HTTP {exc.code}"
+        ) from exc
     except urllib.error.URLError as exc:
         raise BridgeError(str(exc.reason)) from exc
 
 
-def anthropic_messages(history: list[dict[str, Any]], fallback_prompt: str) -> list[dict[str, Any]]:
+def anthropic_messages(
+    history: list[dict[str, Any]], fallback_prompt: str
+) -> list[dict[str, Any]]:
     cleaned = [item for item in history if item.get("role") != "system"]
     if not cleaned:
         cleaned = [{"role": "user", "content": fallback_prompt}]
@@ -160,13 +190,14 @@ def anthropic_messages(history: list[dict[str, Any]], fallback_prompt: str) -> l
     ]
 
 
-def openai_messages(system_prompt: str, history: list[dict[str, Any]], fallback_prompt: str) -> list[dict[str, str]]:
+def openai_messages(
+    system_prompt: str, history: list[dict[str, Any]], fallback_prompt: str
+) -> list[dict[str, str]]:
     cleaned = [item for item in history if item.get("role") != "system"]
     if not cleaned:
         cleaned = [{"role": "user", "content": fallback_prompt}]
     return [{"role": "system", "content": system_prompt}] + [
-        {"role": item["role"], "content": item["content"]}
-        for item in cleaned
+        {"role": item["role"], "content": item["content"]} for item in cleaned
     ]
 
 
@@ -187,7 +218,11 @@ def call_claude(prompt: str, request: VoiceBridgeRequest) -> str:
             "messages": anthropic_messages(request.history, prompt),
         },
     )
-    text = "".join(item.get("text", "") for item in data.get("content", []) if isinstance(item, dict)).strip()
+    text = "".join(
+        item.get("text", "")
+        for item in data.get("content", [])
+        if isinstance(item, dict)
+    ).strip()
     if not text:
         raise BridgeError("Claude returned an empty response")
     return text
@@ -287,7 +322,9 @@ async def read_http_request(reader: asyncio.StreamReader) -> str:
     return data.decode("utf-8", errors="replace")
 
 
-async def send_frame(writer: asyncio.StreamWriter, payload: bytes, opcode: int = 0x1) -> None:
+async def send_frame(
+    writer: asyncio.StreamWriter, payload: bytes, opcode: int = 0x1
+) -> None:
     header = bytearray([0x80 | opcode])
     length = len(payload)
     if length < 126:
@@ -320,7 +357,9 @@ async def read_frame(reader: asyncio.StreamReader) -> tuple[int, bytes]:
     return opcode, bytes(payload)
 
 
-async def handle_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+async def handle_client(
+    reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+) -> None:
     try:
         request = await read_http_request(reader)
         key = None
@@ -372,7 +411,9 @@ async def run_server(host: str, port: int) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="BrainChat fallback voice bridge daemon")
+    parser = argparse.ArgumentParser(
+        description="BrainChat fallback voice bridge daemon"
+    )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()

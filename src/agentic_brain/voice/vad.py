@@ -1,4 +1,5 @@
 """Voice Activity Detection using Silero VAD."""
+
 from __future__ import annotations
 
 import logging

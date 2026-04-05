@@ -10,7 +10,9 @@ import pytest
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "talk_to_karen_sox.py"
 if not MODULE_PATH.exists():
-    pytest.skip("talk_to_karen_sox.py not found in project root", allow_module_level=True)
+    pytest.skip(
+        "talk_to_karen_sox.py not found in project root", allow_module_level=True
+    )
 spec = importlib.util.spec_from_file_location("talk_to_karen_sox", MODULE_PATH)
 talk_to_karen_sox = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = talk_to_karen_sox
@@ -60,25 +62,29 @@ def test_record_audio_uses_sox(monkeypatch) -> None:
 
     monkeypatch.setattr(talk_to_karen_sox.subprocess, "run", fake_run)
 
-    path, backend = talk_to_karen_sox.record_audio(duration=3, sample_rate=22050, backend="auto")
+    path, backend = talk_to_karen_sox.record_audio(
+        duration=3, sample_rate=22050, backend="auto"
+    )
 
     assert path == output_path
     assert backend == "sox"
-    assert seen == [[
-        "sox",
-        "-q",
-        "-d",
-        "-r",
-        "22050",
-        "-c",
-        "1",
-        "-b",
-        "16",
-        str(output_path),
-        "trim",
-        "0",
-        "3",
-    ]]
+    assert seen == [
+        [
+            "sox",
+            "-q",
+            "-d",
+            "-r",
+            "22050",
+            "-c",
+            "1",
+            "-b",
+            "16",
+            str(output_path),
+            "trim",
+            "0",
+            "3",
+        ]
+    ]
 
 
 def test_transcribe_audio_joins_segments(monkeypatch) -> None:

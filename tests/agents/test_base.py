@@ -97,10 +97,10 @@ class TestAgentBase:
         """Test state management."""
         config = AgentConfig(name="test_agent")
         agent = ConcreteAgent(config)
-        
+
         agent.set_state(AgentState.PLANNING)
         assert agent.state == AgentState.PLANNING
-        
+
         agent.set_state(AgentState.EXECUTING)
         assert agent.state == AgentState.EXECUTING
 
@@ -108,7 +108,7 @@ class TestAgentBase:
         """Test agent metadata."""
         config = AgentConfig(name="test_agent")
         agent = ConcreteAgent(config)
-        
+
         metadata = agent.get_metadata()
         assert metadata["name"] == "test_agent"
         assert metadata["role"] == "generalist"
@@ -119,7 +119,7 @@ class TestAgentBase:
         """Test agent execution."""
         config = AgentConfig(name="test_agent")
         agent = ConcreteAgent(config)
-        
+
         result = await agent.run("test task")
         assert result.success is True
         assert result.output == "Completed: test task"
@@ -130,7 +130,7 @@ class TestAgentBase:
         """Test agent thinking."""
         config = AgentConfig(name="test_agent")
         agent = ConcreteAgent(config)
-        
+
         thinking = await agent.think("test task")
         assert "Thinking about: test task" in thinking
 
@@ -139,7 +139,7 @@ class TestAgentBase:
         """Test agent observation."""
         config = AgentConfig(name="test_agent")
         agent = ConcreteAgent(config)
-        
+
         observation = await agent.observe()
         assert observation["status"] == "observing"
 
@@ -148,7 +148,7 @@ class TestAgentBase:
         """Test agent reset."""
         config = AgentConfig(name="test_agent")
         agent = ConcreteAgent(config)
-        
+
         agent.set_state(AgentState.EXECUTING)
         await agent.reset()
         assert agent.state == AgentState.IDLE
@@ -158,7 +158,7 @@ class TestAgentBase:
         """Test agent string representation."""
         config = AgentConfig(name="test_agent")
         agent = ConcreteAgent(config)
-        
+
         repr_str = repr(agent)
         assert "test_agent" in repr_str
         assert "generalist" in repr_str
@@ -166,19 +166,20 @@ class TestAgentBase:
     @pytest.mark.asyncio
     async def test_agent_error_handling(self):
         """Test error handling in agent."""
+
         class ErrorAgent(Agent):
             async def execute(self, task: str, **kwargs):
                 raise ValueError("Test error")
-            
+
             async def think(self, task: str, **kwargs):
                 return "thinking"
-            
+
             async def observe(self, **kwargs):
                 return {}
 
         config = AgentConfig(name="error_agent")
         agent = ErrorAgent(config)
-        
+
         result = await agent.run("test")
         assert result.success is False
         assert "Execution error" in result.error
@@ -187,7 +188,7 @@ class TestAgentBase:
         """Test agent timeout configuration."""
         config = AgentConfig(name="timeout_agent", timeout_seconds=60.0)
         agent = ConcreteAgent(config)
-        
+
         assert agent.config.timeout_seconds == 60.0
 
 

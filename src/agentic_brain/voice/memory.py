@@ -339,9 +339,7 @@ class VoiceMemory:
             utterance.embedding = self._compute_embedding(utterance.text)
 
         if self._neo4j_available:
-            return self._store_neo4j(
-                utterance, conversation_id, previous_utterance_id
-            )
+            return self._store_neo4j(utterance, conversation_id, previous_utterance_id)
         else:
             return self._store_memory(utterance, conversation_id)
 
@@ -463,9 +461,7 @@ class VoiceMemory:
             return []
 
         if self._neo4j_available:
-            return self._recall_neo4j(
-                query_embedding, limit, speaker_filter, min_score
-            )
+            return self._recall_neo4j(query_embedding, limit, speaker_filter, min_score)
         else:
             return self._recall_memory(
                 query_embedding, limit, speaker_filter, min_score
@@ -662,8 +658,7 @@ class VoiceMemory:
             results = neo4j_query(cypher, session_id=conversation_id, limit=limit)
 
             utterances = [
-                VoiceUtterance.from_record(dict(r.get("u", {})))
-                for r in results
+                VoiceUtterance.from_record(dict(r.get("u", {}))) for r in results
             ]
             # Reverse to get oldest-first order
             utterances.reverse()
@@ -774,7 +769,8 @@ class VoiceMemory:
         if not self._neo4j_available:
             with self._lock:
                 return [
-                    c for c in self._conversations.values()
+                    c
+                    for c in self._conversations.values()
                     if c.topic and topic.lower() in c.topic.lower()
                 ][:limit]
 

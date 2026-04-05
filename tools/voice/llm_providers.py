@@ -63,8 +63,10 @@ class LLMProvider:
         t0 = time.monotonic()
         try:
             result = self._do_call(
-                messages, model=model or self.default_model,
-                max_tokens=max_tokens, temperature=temperature,
+                messages,
+                model=model or self.default_model,
+                max_tokens=max_tokens,
+                temperature=temperature,
             )
             latency = (time.monotonic() - t0) * 1000
             self._breaker.record_success(latency)
@@ -118,8 +120,10 @@ class OllamaProvider(LLMProvider):
             "options": {"temperature": temperature, "num_predict": max_tokens},
         }
         data = _http_json(
-            f"{self.url}/api/chat", payload,
-            {"Content-Type": "application/json"}, timeout=30,
+            f"{self.url}/api/chat",
+            payload,
+            {"Content-Type": "application/json"},
+            timeout=30,
         )
         text = data.get("message", {}).get("content", "").strip()
         if not text:
@@ -158,7 +162,8 @@ class ClaudeProvider(LLMProvider):
             payload["system"] = system_msg
 
         data = _http_json(
-            "https://api.anthropic.com/v1/messages", payload,
+            "https://api.anthropic.com/v1/messages",
+            payload,
             {
                 "Content-Type": "application/json",
                 "x-api-key": self.api_key,
@@ -245,7 +250,9 @@ class GeminiProvider(LLMProvider):
             f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
             f":generateContent?key={self.api_key}"
         )
-        data = _http_json(url, payload, {"Content-Type": "application/json"}, timeout=20)
+        data = _http_json(
+            url, payload, {"Content-Type": "application/json"}, timeout=20
+        )
         candidates = data.get("candidates", [])
         if not candidates:
             raise RuntimeError("Gemini returned no candidates")
@@ -296,7 +303,11 @@ class GrokProvider(LLMProvider):
 # ---------------------------------------------------------------------------
 
 _ALL_PROVIDERS: list[type[LLMProvider]] = [
-    OllamaProvider, ClaudeProvider, GPTProvider, GeminiProvider, GrokProvider,
+    OllamaProvider,
+    ClaudeProvider,
+    GPTProvider,
+    GeminiProvider,
+    GrokProvider,
 ]
 
 _provider_instances: dict[str, LLMProvider] | None = None

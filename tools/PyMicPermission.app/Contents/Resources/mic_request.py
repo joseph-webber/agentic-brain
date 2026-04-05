@@ -20,9 +20,16 @@ if TOOLS_DIR not in sys.path:
 def push_redis(msg):
     try:
         subprocess.run(
-            ['redis-cli', '-a', 'BrainRedis2026', 'RPUSH',
-             'swarm:mic_permission:findings', msg],
-            capture_output=True, timeout=3
+            [
+                "redis-cli",
+                "-a",
+                "BrainRedis2026",
+                "RPUSH",
+                "swarm:mic_permission:findings",
+                msg,
+            ],
+            capture_output=True,
+            timeout=3,
         )
     except Exception:
         pass
@@ -36,15 +43,18 @@ import threading
 
 
 def get_status_str(status):
-    return {0: 'notDetermined', 1: 'restricted', 2: 'denied', 3: 'authorized'}.get(status, f'unknown({status})')
+    return {0: "notDetermined", 1: "restricted", 2: "denied", 3: "authorized"}.get(
+        status, f"unknown({status})"
+    )
 
 
 class AppDelegate(NSObject):
 
     def applicationDidFinishLaunching_(self, notification):
-        bundle_id = objc.lookUpClass('NSBundle').mainBundle().bundleIdentifier()
+        bundle_id = objc.lookUpClass("NSBundle").mainBundle().bundleIdentifier()
         status_raw = AVFoundation.AVCaptureDevice.authorizationStatusForMediaType_(
-            AVFoundation.AVMediaTypeAudio)
+            AVFoundation.AVMediaTypeAudio
+        )
         status = get_status_str(status_raw)
 
         push_redis(f"PYOBJC APP: Launch status={status} bundleID={bundle_id}")
@@ -57,8 +67,12 @@ class AppDelegate(NSObject):
             print("✅ Already authorized!")
             NSApp.terminate_(self)
         else:
-            push_redis(f"PYOBJC APP: Status={status} - cannot request, open Privacy settings")
-            print(f"Status: {status}. Open System Settings → Privacy & Security → Microphone")
+            push_redis(
+                f"PYOBJC APP: Status={status} - cannot request, open Privacy settings"
+            )
+            print(
+                f"Status: {status}. Open System Settings → Privacy & Security → Microphone"
+            )
             NSApp.terminate_(self)
 
     def _request(self):
@@ -70,10 +84,14 @@ class AppDelegate(NSObject):
         def handler(granted):
             final = get_status_str(
                 AVFoundation.AVCaptureDevice.authorizationStatusForMediaType_(
-                    AVFoundation.AVMediaTypeAudio))
+                    AVFoundation.AVMediaTypeAudio
+                )
+            )
             push_redis(f"PYOBJC APP RESULT: granted={granted} status={final}")
             if granted:
-                push_redis("🎉 PYOBJC APP: MICROPHONE PERMISSION GRANTED! PyObjC .app bundle approach WORKS!")
+                push_redis(
+                    "🎉 PYOBJC APP: MICROPHONE PERMISSION GRANTED! PyObjC .app bundle approach WORKS!"
+                )
                 print("✅ PERMISSION GRANTED!")
             else:
                 push_redis(f"PYOBJC APP: Not granted. Final status: {final}")
@@ -82,13 +100,14 @@ class AppDelegate(NSObject):
             NSApp.terminate_(self)
 
         AVFoundation.AVCaptureDevice.requestAccessForMediaType_completionHandler_(
-            AVFoundation.AVMediaTypeAudio, handler)
+            AVFoundation.AVMediaTypeAudio, handler
+        )
 
     def applicationShouldTerminateAfterLastWindowClosed_(self, sender):
         return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     push_redis("PYOBJC APP: Starting PyMicPermission.app")
     app = NSApplication.sharedApplication()
     app.setActivationPolicy_(0)  # Regular → shows in Dock (required for TCC dialog)

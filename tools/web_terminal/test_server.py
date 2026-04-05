@@ -68,20 +68,13 @@ async def test_message_format():
     print("\nTesting message formats...")
 
     # Input message
-    input_msg = {
-        "type": "input",
-        "data": "ls -la\n"
-    }
+    input_msg = {"type": "input", "data": "ls -la\n"}
     json_str = json.dumps(input_msg)
     parsed = json.loads(json_str)
     print(f"  ✓ Input message: {parsed}")
 
     # Resize message
-    resize_msg = {
-        "type": "resize",
-        "rows": 24,
-        "cols": 80
-    }
+    resize_msg = {"type": "resize", "rows": 24, "cols": 80}
     json_str = json.dumps(resize_msg)
     parsed = json.loads(json_str)
     print(f"  ✓ Resize message: {parsed}")
@@ -89,17 +82,14 @@ async def test_message_format():
     # Output message
     output_msg = {
         "type": "output",
-        "data": "total 64\n-rw-r--r--  1 user  staff  1024 Apr  1 12:00 file.txt\n"
+        "data": "total 64\n-rw-r--r--  1 user  staff  1024 Apr  1 12:00 file.txt\n",
     }
     json_str = json.dumps(output_msg)
     parsed = json.loads(json_str)
     print(f"  ✓ Output message ({len(parsed['data'])} bytes)")
 
     # Error message
-    error_msg = {
-        "type": "error",
-        "data": "Connection failed"
-    }
+    error_msg = {"type": "error", "data": "Connection failed"}
     json_str = json.dumps(error_msg)
     parsed = json.loads(json_str)
     print(f"  ✓ Error message: {parsed}")

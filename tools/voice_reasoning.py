@@ -82,8 +82,10 @@ except ModuleNotFoundError:
 # ---------------------------------------------------------------------------
 REDIS_URL = "redis://:BrainRedis2026@localhost:6379/0"
 
+
 def _get_redis():
     import redis  # type: ignore
+
     return redis.from_url(REDIS_URL, decode_responses=True)
 
 
@@ -99,10 +101,10 @@ COMPLETE_KEY = "voice:reasoning_complete"
 REASONING_KEY = "voice:current_reasoning"
 RESPONSE_KEY = "voice:current_response"
 
-HISTORY_MAX_PAIRS = 10          # store up to 10 user/assistant pairs
-HISTORY_CONTEXT_PAIRS = 5       # use last 5 pairs when building context
-DAEMON_POLL_SECONDS = 0.4       # how often to check for new input
-RECOMMENDATION_TTL = 30         # seconds before recommendation expires
+HISTORY_MAX_PAIRS = 10  # store up to 10 user/assistant pairs
+HISTORY_CONTEXT_PAIRS = 5  # use last 5 pairs when building context
+DAEMON_POLL_SECONDS = 0.4  # how often to check for new input
+RECOMMENDATION_TTL = 30  # seconds before recommendation expires
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 
 # Complexity thresholds (heuristic token count estimates)
@@ -151,19 +153,52 @@ KAREN_SYSTEM_PROMPT = (
 # ---------------------------------------------------------------------------
 
 # Keywords that signal a complex, multi-step query
-_COMPLEX_SIGNALS = frozenset({
-    "explain", "how does", "why does", "compare", "difference between",
-    "pros and cons", "step by step", "walk me through", "in detail",
-    "summarise", "summarize", "what would happen", "analyse", "analyze",
-    "history of", "background on", "what are all", "list every",
-})
+_COMPLEX_SIGNALS = frozenset(
+    {
+        "explain",
+        "how does",
+        "why does",
+        "compare",
+        "difference between",
+        "pros and cons",
+        "step by step",
+        "walk me through",
+        "in detail",
+        "summarise",
+        "summarize",
+        "what would happen",
+        "analyse",
+        "analyze",
+        "history of",
+        "background on",
+        "what are all",
+        "list every",
+    }
+)
 
 # Keywords that signal a simple greeting / status check
-_SIMPLE_SIGNALS = frozenset({
-    "hi", "hello", "hey", "thanks", "thank you", "ok", "okay",
-    "yes", "no", "yep", "nope", "what time", "what's the time",
-    "how are you", "what day", "stop", "bye", "goodbye",
-})
+_SIMPLE_SIGNALS = frozenset(
+    {
+        "hi",
+        "hello",
+        "hey",
+        "thanks",
+        "thank you",
+        "ok",
+        "okay",
+        "yes",
+        "no",
+        "yep",
+        "nope",
+        "what time",
+        "what's the time",
+        "how are you",
+        "what day",
+        "stop",
+        "bye",
+        "goodbye",
+    }
+)
 
 
 def classify_complexity(text: str) -> str:
@@ -195,6 +230,7 @@ def classify_complexity(text: str) -> str:
 # History helpers
 # ---------------------------------------------------------------------------
 
+
 def push_history(r: Any, role: str, content: str) -> None:
     """Append a single role/content entry to the Redis history list."""
     entry = json.dumps({"role": role, "content": content, "ts": time.time()})
@@ -219,6 +255,7 @@ def get_context_messages(r: Any) -> list[dict[str, str]]:
 # ---------------------------------------------------------------------------
 # Core recommendation builder
 # ---------------------------------------------------------------------------
+
 
 def build_recommendation(text: str, r: Any) -> dict[str, Any]:
     """Analyse *text* and return a full LLM recommendation dict."""
@@ -343,6 +380,7 @@ def process_voice_input_event(event: dict[str, Any], r: Any) -> dict[str, Any]:
 # Daemon loop
 # ---------------------------------------------------------------------------
 
+
 def _set_progress(r: Any, status: str) -> None:
     r.set(CLAUDE_PROGRESS_KEY, status)
 
@@ -399,6 +437,7 @@ def run_daemon() -> None:
 # ---------------------------------------------------------------------------
 # CLI helpers
 # ---------------------------------------------------------------------------
+
 
 def cmd_analyse(text: str) -> None:
     r = _get_redis()

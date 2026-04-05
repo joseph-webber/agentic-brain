@@ -43,7 +43,9 @@ def build_app(
     if oauth2_enabled:
         monkeypatch.setenv("OAUTH2_CLIENT_ID", "client-id")
         monkeypatch.setenv("OAUTH2_CLIENT_SECRET", "client-secret")
-        monkeypatch.setenv("OAUTH2_AUTHORIZATION_URI", "https://example.com/oauth/authorize")
+        monkeypatch.setenv(
+            "OAUTH2_AUTHORIZATION_URI", "https://example.com/oauth/authorize"
+        )
         monkeypatch.setenv("OAUTH2_TOKEN_URI", "https://example.com/oauth/token")
         monkeypatch.setenv("OAUTH2_ISSUER_URI", "https://example.com")
 

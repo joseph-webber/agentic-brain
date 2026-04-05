@@ -123,9 +123,9 @@ def test_query_with_valid_question(query_args_base, mock_rag_system, capsys):
         "sources": ["doc1.pdf", "doc2.pdf"],
         "relevance_score": 0.95,
     }
-    
+
     result = cmd_query(query_args_base)
-    
+
     assert result == 0
     mock_rag_system.query.assert_called_once_with(
         question="What is AI?",
@@ -144,9 +144,9 @@ def test_query_with_json_output(query_args_base, mock_rag_system, capsys):
         "sources": ["doc.pdf"],
         "relevance_score": 0.88,
     }
-    
+
     result = cmd_query(query_args_base)
-    
+
     assert result == 0
     captured = capsys.readouterr()
     output = json.loads(captured.out)
@@ -158,10 +158,14 @@ def test_query_with_json_output(query_args_base, mock_rag_system, capsys):
 def test_query_with_custom_top_k(query_args_base, mock_rag_system):
     """Test query command with custom top_k parameter."""
     query_args_base.top_k = 10
-    mock_rag_system.query.return_value = {"answer": "Test", "sources": [], "relevance_score": 0.5}
-    
+    mock_rag_system.query.return_value = {
+        "answer": "Test",
+        "sources": [],
+        "relevance_score": 0.5,
+    }
+
     result = cmd_query(query_args_base)
-    
+
     assert result == 0
     mock_rag_system.query.assert_called_once()
     call_kwargs = mock_rag_system.query.call_args.kwargs
@@ -172,10 +176,14 @@ def test_query_with_filters(query_args_base, mock_rag_system):
     """Test query command with document filters."""
     filters = {"source": "pdf", "date_from": "2024-01-01"}
     query_args_base.filters = filters
-    mock_rag_system.query.return_value = {"answer": "Test", "sources": [], "relevance_score": 0.6}
-    
+    mock_rag_system.query.return_value = {
+        "answer": "Test",
+        "sources": [],
+        "relevance_score": 0.6,
+    }
+
     result = cmd_query(query_args_base)
-    
+
     assert result == 0
     call_kwargs = mock_rag_system.query.call_args.kwargs
     assert call_kwargs["filters"] == filters
@@ -184,9 +192,9 @@ def test_query_with_filters(query_args_base, mock_rag_system):
 def test_query_error_handling(query_args_base, mock_rag_system, capsys):
     """Test query command error handling."""
     mock_rag_system.query.side_effect = Exception("Connection failed")
-    
+
     result = cmd_query(query_args_base)
-    
+
     assert result == 1
     captured = capsys.readouterr()
     assert "failed" in captured.out.lower() or "error" in captured.out.lower()
@@ -200,9 +208,9 @@ def test_query_empty_question(mock_rag_system, capsys):
         filters={},
         json=False,
     )
-    
+
     result = cmd_query(args)
-    
+
     assert result == 1
 
 
@@ -217,9 +225,9 @@ def test_index_valid_path(index_args_base, mock_rag_system, capsys):
             "count": 10,
             "chunks": 50,
         }
-        
+
         result = cmd_index(index_args_base)
-        
+
         assert result == 0
         mock_rag_system.index.assert_called_once()
         captured = capsys.readouterr()
@@ -235,9 +243,9 @@ def test_index_with_json_output(index_args_base, mock_rag_system, capsys):
             "count": 5,
             "chunks": 25,
         }
-        
+
         result = cmd_index(index_args_base)
-        
+
         assert result == 0
         captured = capsys.readouterr()
         output = json.loads(captured.out)
@@ -248,9 +256,9 @@ def test_index_with_json_output(index_args_base, mock_rag_system, capsys):
 def test_index_nonexistent_path(index_args_base, mock_rag_system, capsys):
     """Test index command with nonexistent path."""
     index_args_base.path = "/nonexistent/path/xyz"
-    
+
     result = cmd_index(index_args_base)
-    
+
     assert result == 1
     mock_rag_system.index.assert_not_called()
 
@@ -261,9 +269,9 @@ def test_index_with_recursive_flag(index_args_base, mock_rag_system):
         index_args_base.path = tmpdir
         index_args_base.recursive = True
         mock_rag_system.index.return_value = {"count": 3, "chunks": 15}
-        
+
         result = cmd_index(index_args_base)
-        
+
         assert result == 0
         call_kwargs = mock_rag_system.index.call_args.kwargs
         assert call_kwargs["recursive"] is True
@@ -275,9 +283,9 @@ def test_index_with_custom_chunk_size(index_args_base, mock_rag_system):
         index_args_base.path = tmpdir
         index_args_base.chunk_size = 1024
         mock_rag_system.index.return_value = {"count": 1, "chunks": 5}
-        
+
         result = cmd_index(index_args_base)
-        
+
         assert result == 0
         call_kwargs = mock_rag_system.index.call_args.kwargs
         assert call_kwargs["chunk_size"] == 1024
@@ -288,9 +296,9 @@ def test_index_error_handling(index_args_base, mock_rag_system, capsys):
     with tempfile.TemporaryDirectory() as tmpdir:
         index_args_base.path = tmpdir
         mock_rag_system.index.side_effect = Exception("Indexing failed")
-        
+
         result = cmd_index(index_args_base)
-        
+
         assert result == 1
 
 
@@ -303,11 +311,11 @@ def test_eval_with_valid_results_file(eval_args_base, mock_rag_system, capsys):
         {"question": "Q1", "answer": "A1", "score": 0.9},
         {"question": "Q2", "answer": "A2", "score": 0.8},
     ]
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(results_data, f)
         temp_file = f.name
-    
+
     try:
         eval_args_base.results = temp_file
         mock_rag_system.evaluate.return_value = {
@@ -316,9 +324,9 @@ def test_eval_with_valid_results_file(eval_args_base, mock_rag_system, capsys):
                 "num_results": 2,
             }
         }
-        
+
         result = cmd_eval(eval_args_base)
-        
+
         assert result == 0
         mock_rag_system.evaluate.assert_called_once()
     finally:
@@ -329,19 +337,17 @@ def test_eval_with_json_output(eval_args_base, mock_rag_system, capsys):
     """Test eval command with JSON output."""
     eval_args_base.json = True
     results_data = [{"question": "Q", "answer": "A"}]
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(results_data, f)
         temp_file = f.name
-    
+
     try:
         eval_args_base.results = temp_file
-        mock_rag_system.evaluate.return_value = {
-            "metrics": {"precision": 0.92}
-        }
-        
+        mock_rag_system.evaluate.return_value = {"metrics": {"precision": 0.92}}
+
         result = cmd_eval(eval_args_base)
-        
+
         assert result == 0
         captured = capsys.readouterr()
         output = json.loads(captured.out)
@@ -354,24 +360,24 @@ def test_eval_with_json_output(eval_args_base, mock_rag_system, capsys):
 def test_eval_nonexistent_file(eval_args_base, mock_rag_system, capsys):
     """Test eval command with nonexistent results file."""
     eval_args_base.results = "/nonexistent/results.json"
-    
+
     result = cmd_eval(eval_args_base)
-    
+
     assert result == 1
     mock_rag_system.evaluate.assert_not_called()
 
 
 def test_eval_invalid_json_file(eval_args_base, mock_rag_system):
     """Test eval command with invalid JSON file."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         f.write("invalid json {[")
         temp_file = f.name
-    
+
     try:
         eval_args_base.results = temp_file
-        
+
         result = cmd_eval(eval_args_base)
-        
+
         # Should fail when parsing JSON
         assert result == 1
     finally:
@@ -389,11 +395,11 @@ def test_health_check_success(health_args_base, mock_rag_system, capsys):
             "neo4j": {"status": "ok"},
             "redis": {"status": "ok"},
             "embeddings": {"status": "ok"},
-        }
+        },
     }
-    
+
     result = cmd_health(health_args_base)
-    
+
     assert result == 0
     mock_rag_system.health.assert_called_once()
     captured = capsys.readouterr()
@@ -407,9 +413,9 @@ def test_health_check_with_json_output(health_args_base, mock_rag_system, capsys
         "status": "healthy",
         "components": {"db": {"status": "ok"}},
     }
-    
+
     result = cmd_health(health_args_base)
-    
+
     assert result == 0
     captured = capsys.readouterr()
     output = json.loads(captured.out)
@@ -424,11 +430,11 @@ def test_health_check_degraded_status(health_args_base, mock_rag_system, capsys)
         "components": {
             "neo4j": {"status": "ok"},
             "redis": {"status": "down"},
-        }
+        },
     }
-    
+
     result = cmd_health(health_args_base)
-    
+
     assert result == 0
     captured = capsys.readouterr()
     assert "degraded" in captured.out.lower() or "down" in captured.out.lower()
@@ -437,9 +443,9 @@ def test_health_check_degraded_status(health_args_base, mock_rag_system, capsys)
 def test_health_check_error(health_args_base, mock_rag_system, capsys):
     """Test health check command error handling."""
     mock_rag_system.health.side_effect = Exception("Health check failed")
-    
+
     result = cmd_health(health_args_base)
-    
+
     assert result == 1
 
 
@@ -455,9 +461,9 @@ def test_config_show_all(config_args_base, mock_rag_system, capsys):
         "top_k": 5,
         "model": "gpt-4",
     }
-    
+
     result = cmd_config(config_args_base)
-    
+
     assert result == 0
     captured = capsys.readouterr()
     assert "Configuration" in captured.out
@@ -467,9 +473,9 @@ def test_config_get_specific_value(config_args_base, mock_rag_system, capsys):
     """Test config command getting specific value."""
     config_args_base.get = "chunk_size"
     mock_rag_system.config.return_value = 512
-    
+
     result = cmd_config(config_args_base)
-    
+
     assert result == 0
     captured = capsys.readouterr()
     assert "512" in captured.out or "chunk_size" in captured.out
@@ -478,9 +484,9 @@ def test_config_get_specific_value(config_args_base, mock_rag_system, capsys):
 def test_config_set_value(config_args_base, mock_rag_system, capsys):
     """Test config command setting value."""
     config_args_base.set = "top_k=10"
-    
+
     result = cmd_config(config_args_base)
-    
+
     assert result == 0
     captured = capsys.readouterr()
     assert "Set" in captured.out or "success" in captured.out.lower()
@@ -495,9 +501,9 @@ def test_config_with_json_output(config_args_base, mock_rag_system, capsys):
         "model": "claude-3",
         "temperature": 0.7,
     }
-    
+
     result = cmd_config(config_args_base)
-    
+
     assert result == 0
     captured = capsys.readouterr()
     output = json.loads(captured.out)
@@ -508,9 +514,9 @@ def test_config_error_handling(config_args_base, mock_rag_system, capsys):
     """Test config command error handling."""
     config_args_base.get = "invalid_key"
     mock_rag_system.config.side_effect = Exception("Config error")
-    
+
     result = cmd_config(config_args_base)
-    
+
     assert result == 1
 
 
@@ -521,9 +527,9 @@ def test_register_rag_commands():
     """Test that RAG commands are properly registered."""
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
-    
+
     register_rag_commands(subparsers)
-    
+
     # Should create subparsers for each command
     # We can't directly test the subparsers, but we can verify no errors occur
     assert True
@@ -533,9 +539,9 @@ def test_register_all_rag_subcommands():
     """Test all RAG subcommands are registered."""
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
-    
+
     register_rag_commands(subparsers)
-    
+
     # Test parsing each command
     commands_to_test = [
         ["query", "test question"],
@@ -544,7 +550,7 @@ def test_register_all_rag_subcommands():
         ["health"],
         ["config"],
     ]
-    
+
     for cmd_args in commands_to_test:
         try:
             parsed = parser.parse_args(cmd_args)
@@ -565,15 +571,15 @@ def test_query_end_to_end_flow(mock_rag_system, capsys):
         filters={},
         json=False,
     )
-    
+
     mock_rag_system.query.return_value = {
         "answer": "ML uses algorithms to learn from data.",
         "sources": ["ml_101.pdf", "data_science.pdf"],
         "relevance_score": 0.92,
     }
-    
+
     result = cmd_query(args)
-    
+
     assert result == 0
     captured = capsys.readouterr()
     assert "Answer" in captured.out
@@ -591,31 +597,29 @@ def test_index_eval_workflow(mock_rag_system, capsys):
         overlap=50,
         json=False,
     )
-    
+
     mock_rag_system.index.return_value = {
         "count": 10,
         "chunks": 50,
     }
-    
+
     result = cmd_index(index_args)
     assert result == 0
-    
+
     # Evaluate results
     results_data = [{"question": "Q", "answer": "A", "score": 0.9}]
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(results_data, f)
         temp_file = f.name
-    
+
     try:
         eval_args = argparse.Namespace(
             results=temp_file,
             json=False,
         )
-        
-        mock_rag_system.evaluate.return_value = {
-            "metrics": {"avg_score": 0.9}
-        }
-        
+
+        mock_rag_system.evaluate.return_value = {"metrics": {"avg_score": 0.9}}
+
         result = cmd_eval(eval_args)
         assert result == 0
     finally:
@@ -630,17 +634,17 @@ def test_health_then_config_workflow(mock_rag_system, capsys):
         "status": "healthy",
         "components": {"db": {"status": "ok"}},
     }
-    
+
     result = cmd_health(health_args)
     assert result == 0
-    
+
     # Show config
     config_args = argparse.Namespace(get=None, set=None, json=False)
     mock_rag_system.config.return_value = {
         "model": "gpt-4",
         "temperature": 0.7,
     }
-    
+
     result = cmd_config(config_args)
     assert result == 0
 
@@ -657,9 +661,9 @@ def test_query_with_very_long_question(query_args_base, mock_rag_system):
         "sources": [],
         "relevance_score": 0.5,
     }
-    
+
     result = cmd_query(query_args_base)
-    
+
     assert result == 0
 
 
@@ -669,9 +673,9 @@ def test_index_with_zero_chunk_size(index_args_base, mock_rag_system):
         index_args_base.path = tmpdir
         index_args_base.chunk_size = 1  # Minimum chunk size
         mock_rag_system.index.return_value = {"count": 0, "chunks": 0}
-        
+
         result = cmd_index(index_args_base)
-        
+
         # Should not error, RAG system will handle validation
         assert result == 0
 
@@ -679,19 +683,17 @@ def test_index_with_zero_chunk_size(index_args_base, mock_rag_system):
 def test_eval_with_empty_results_file(eval_args_base, mock_rag_system):
     """Test eval with empty results file."""
     results_data = []
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(results_data, f)
         temp_file = f.name
-    
+
     try:
         eval_args_base.results = temp_file
-        mock_rag_system.evaluate.return_value = {
-            "metrics": {"avg_score": 0}
-        }
-        
+        mock_rag_system.evaluate.return_value = {"metrics": {"avg_score": 0}}
+
         result = cmd_eval(eval_args_base)
-        
+
         assert result == 0
     finally:
         Path(temp_file).unlink()
@@ -700,9 +702,9 @@ def test_eval_with_empty_results_file(eval_args_base, mock_rag_system):
 def test_config_set_with_special_characters(config_args_base, mock_rag_system):
     """Test config set with special characters in value."""
     config_args_base.set = "api_key=sk-1234!@#$%^&*()"
-    
+
     result = cmd_config(config_args_base)
-    
+
     assert result == 0
 
 

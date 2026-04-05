@@ -493,9 +493,7 @@ class ToolRegistry:
         """
         return self._tools.get(tool_name)
 
-    def list_tools(
-        self, category: ToolCategory | None = None
-    ) -> list[dict[str, Any]]:
+    def list_tools(self, category: ToolCategory | None = None) -> list[dict[str, Any]]:
         """
         List available tools.
 

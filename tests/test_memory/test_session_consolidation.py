@@ -68,7 +68,7 @@ class TestUnifiedMemoryBasics:
         entry = memory.store(
             content="Python is great for ML",
             memory_type=MemoryType.LONG_TERM,
-            importance=0.8
+            importance=0.8,
         )
         assert entry is not None
         assert entry.content == "Python is great for ML"
@@ -153,9 +153,7 @@ class TestSessionHooks:
     def test_on_tool_use(self, hooks):
         """Test on_tool_use hook."""
         result = hooks.on_tool_use(
-            tool_name="bash",
-            tool_args={"command": "ls"},
-            phase="pre"
+            tool_name="bash", tool_args={"command": "ls"}, phase="pre"
         )
         assert result["success"] is True
         assert "event_id" in result
@@ -164,19 +162,14 @@ class TestSessionHooks:
     def test_on_tool_use_post(self, hooks):
         """Test post-tool hook."""
         result = hooks.on_tool_use(
-            tool_name="bash",
-            phase="post",
-            result="file1.txt\nfile2.txt"
+            tool_name="bash", phase="post", result="file1.txt\nfile2.txt"
         )
         assert result["success"] is True
         assert len(hooks.events) == 1
 
     def test_on_voice_input(self, hooks):
         """Test on_voice_input hook."""
-        result = hooks.on_voice_input(
-            text="Show me the source code",
-            lady="Karen"
-        )
+        result = hooks.on_voice_input(text="Show me the source code", lady="Karen")
         assert result["success"] is True
         assert len(hooks.events) == 1
 
@@ -268,9 +261,7 @@ class TestSessionStitcher:
 
     def test_extract_topics(self, stitcher):
         """Test topic extraction."""
-        topics = stitcher._extract_topics(
-            "Debugging the code and fixing the bug"
-        )
+        topics = stitcher._extract_topics("Debugging the code and fixing the bug")
         assert "coding" in topics
 
     def test_find_related_sessions_jira(self, stitcher):
@@ -336,7 +327,7 @@ class TestHookEventDataclass:
             timestamp="2026-04-01T10:00:00Z",
             session_id="session-001",
             content="Test content",
-            role="user"
+            role="user",
         )
         assert event.event_type == "userPrompt"
         assert event.source == "copilot-cli"
@@ -350,7 +341,7 @@ class TestHookEventDataclass:
             source="copilot-cli",
             timestamp="2026-04-01T10:00:00Z",
             session_id="session-001",
-            content="Test"
+            content="Test",
         )
         d = event.to_dict()
         assert d["event_type"] == "userPrompt"
@@ -369,7 +360,7 @@ class TestSessionLinkDataclass:
             link_type="jira_ticket",
             shared_items=["SD-1330"],
             strength=0.95,
-            timestamp="2026-04-01T10:00:00Z"
+            timestamp="2026-04-01T10:00:00Z",
         )
         assert link.from_session == "session-001"
         assert link.to_session == "session-002"
@@ -383,7 +374,7 @@ class TestSessionLinkDataclass:
             link_type="topic",
             shared_items=["deployment"],
             strength=0.8,
-            timestamp="2026-04-01T10:00:00Z"
+            timestamp="2026-04-01T10:00:00Z",
         )
         d = link.to_dict()
         assert d["link_type"] == "topic"
@@ -423,13 +414,13 @@ class TestShellCallableFunctions:
 
     def test_on_user_prompt_json(self):
         """Test on_user_prompt with JSON."""
-        result = on_user_prompt("Hello assistant", '{}')
+        result = on_user_prompt("Hello assistant", "{}")
         data = json.loads(result)
         assert data["success"] is True
 
     def test_on_assistant_response_json(self):
         """Test on_assistant_response with JSON."""
-        result = on_assistant_response("Hello user", '{}')
+        result = on_assistant_response("Hello user", "{}")
         data = json.loads(result)
         assert data["success"] is True
 
@@ -448,11 +439,13 @@ class TestDeprecationWrappers:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             import sys
+
             sys.path.insert(0, os.path.expanduser("~/brain"))
             from core.hooks.ultimate_memory_hooks import (
                 UltimateMemoryHooks,
                 get_hooks,
             )
+
             # Should warn about deprecation
             assert len(w) >= 1
             assert issubclass(w[-1].category, DeprecationWarning)
@@ -463,11 +456,13 @@ class TestDeprecationWrappers:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             import sys
+
             sys.path.insert(0, os.path.expanduser("~/brain"))
             from core.memory.session_stitcher import (
                 SessionStitcher as OldStitcher,
                 get_stitcher,
             )
+
             # Should warn about deprecation
             assert len(w) >= 1
             assert issubclass(w[-1].category, DeprecationWarning)

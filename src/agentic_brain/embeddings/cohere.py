@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class CohereEmbedder(Embedder):
     """
     Cohere Embeddings Client.
-    
+
     Models:
     - embed-english-v3.0 (1024 dimensions, 512 token window)
     - embed-english-light-v3.0 (384 dimensions, faster)
@@ -41,14 +41,16 @@ class CohereEmbedder(Embedder):
         self,
         api_key: Optional[str] = None,
         model: str = "embed-english-v3.0",
-        input_type: Literal["search_document", "search_query", "classification", "clustering"] = "search_document",
+        input_type: Literal[
+            "search_document", "search_query", "classification", "clustering"
+        ] = "search_document",
         rate_limit: int = 10000,
         max_retries: int = 3,
         timeout: int = 30,
     ):
         """
         Initialize Cohere Embedder.
-        
+
         Args:
             api_key: Cohere API key (defaults to COHERE_API_KEY env var)
             model: Model name to use
@@ -75,9 +77,12 @@ class CohereEmbedder(Embedder):
 
         try:
             import cohere
+
             self.client = cohere.ClientV2(api_key=self.api_key)
         except ImportError:
-            raise ImportError("cohere package required. Install with: pip install cohere")
+            raise ImportError(
+                "cohere package required. Install with: pip install cohere"
+            )
 
     @property
     def provider(self) -> EmbeddingProvider:
@@ -135,7 +140,7 @@ class CohereEmbedder(Embedder):
             except Exception as e:
                 last_error = e
                 if attempt < self.max_retries - 1:
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     logger.warning(
                         f"Embedding attempt {attempt + 1} failed: {e}. "
                         f"Retrying in {wait_time}s..."
@@ -144,7 +149,9 @@ class CohereEmbedder(Embedder):
                 else:
                     logger.error(f"Embedding failed after {self.max_retries} attempts")
 
-        raise RuntimeError(f"Failed to embed text after {self.max_retries} attempts: {last_error}")
+        raise RuntimeError(
+            f"Failed to embed text after {self.max_retries} attempts: {last_error}"
+        )
 
     async def embed_async(self, text: str) -> EmbeddingResult:
         """Embed a single text asynchronously."""
@@ -170,10 +177,13 @@ class CohereEmbedder(Embedder):
 
         try:
             from tqdm import tqdm
+
             batches = [
                 texts[i : i + batch_size] for i in range(0, len(texts), batch_size)
             ]
-            iterator = tqdm(batches, disable=not show_progress, desc="Embedding batches")
+            iterator = tqdm(
+                batches, disable=not show_progress, desc="Embedding batches"
+            )
         except ImportError:
             batches = [
                 texts[i : i + batch_size] for i in range(0, len(texts), batch_size)
@@ -239,7 +249,7 @@ class CohereEmbedder(Embedder):
             except Exception as e:
                 last_error = e
                 if attempt < self.max_retries - 1:
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     logger.warning(f"Batch embedding attempt {attempt + 1} failed: {e}")
                     time.sleep(wait_time)
 
@@ -268,6 +278,7 @@ class CohereEmbedder(Embedder):
 
         try:
             from tqdm.asyncio import tqdm
+
             batch_results = await tqdm.gather(
                 *[process_batch(b) for b in batches], disable=not show_progress
             )

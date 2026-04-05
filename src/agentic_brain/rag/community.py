@@ -105,7 +105,11 @@ class CommunityGraphRAG:
         self.n_iterations = n_iterations
         self.randomness = randomness
         self.resolution_multiplier = resolution_multiplier
-        self.detector = LeidenCommunityDetector() if LeidenCommunityDetector and enable_communities else None
+        self.detector = (
+            LeidenCommunityDetector()
+            if LeidenCommunityDetector and enable_communities
+            else None
+        )
         self._latest_hierarchy: CommunityHierarchy | None = None
 
     async def detect_communities(self) -> dict[int, list[str]]:
@@ -138,9 +142,13 @@ class CommunityGraphRAG:
                 continue
             for community in communities:
                 if not community.summary:
-                    community.summary = await self._generate_summary(community.members, llm=llm)
+                    community.summary = await self._generate_summary(
+                        community.members, llm=llm
+                    )
                 summaries[community.community_id] = community.summary
-                await self._store_summary(community.community_id, community.level, community.summary)
+                await self._store_summary(
+                    community.community_id, community.level, community.summary
+                )
         return summaries
 
     async def build_hierarchy(self) -> dict[int, list[dict[str, Any]]]:
@@ -172,7 +180,9 @@ class CommunityGraphRAG:
             return 0
 
         hierarchy_levels = await self._compose_hierarchy_levels()
-        selectable_levels = sorted(level for level in hierarchy_levels if level > 0 and hierarchy_levels[level])
+        selectable_levels = sorted(
+            level for level in hierarchy_levels if level > 0 and hierarchy_levels[level]
+        )
         if not selectable_levels:
             return 0
 
@@ -198,7 +208,9 @@ class CommunityGraphRAG:
             hierarchy_level = await self.select_optimal_level(query)
             return CommunityQueryResult(
                 strategy=strategy,
-                results=await self._search_community_summaries(query, top_k, hierarchy_level=hierarchy_level),
+                results=await self._search_community_summaries(
+                    query, top_k, hierarchy_level=hierarchy_level
+                ),
                 hierarchy_level=hierarchy_level,
                 query_complexity=complexity,
             )
@@ -213,7 +225,9 @@ class CommunityGraphRAG:
         hierarchy_level = await self.select_optimal_level(query)
         return CommunityQueryResult(
             strategy=strategy,
-            results=await self._hybrid_search(query, top_k, hierarchy_level=hierarchy_level),
+            results=await self._hybrid_search(
+                query, top_k, hierarchy_level=hierarchy_level
+            ),
             hierarchy_level=hierarchy_level if self.enable_communities else 0,
             query_complexity=complexity,
         )
@@ -360,7 +374,9 @@ class CommunityGraphRAG:
                 child_ids=[],
                 metadata={
                     "detection_method": hierarchy.detection_method,
-                    "detector": type(self.detector).__name__ if self.detector else "gds",
+                    "detector": (
+                        type(self.detector).__name__ if self.detector else "gds"
+                    ),
                     "modularity": community.modularity_score,
                     "coverage": community.coverage_score,
                     "cohesion": community.cohesion_score,
@@ -373,7 +389,9 @@ class CommunityGraphRAG:
         for community in communities:
             if not community.summary:
                 community.summary = self._fallback_summary(community.members)
-        communities.sort(key=lambda community: (-community.member_count, community.community_id))
+        communities.sort(
+            key=lambda community: (-community.member_count, community.community_id)
+        )
         return communities
 
     async def _compose_hierarchy_levels(self) -> dict[int, list[CommunityLevel]]:
@@ -397,7 +415,13 @@ class CommunityGraphRAG:
                     summary=member,
                     metadata={"kind": "entity"},
                 )
-                for member in sorted({member for community in leaf_communities for member in community.members})
+                for member in sorted(
+                    {
+                        member
+                        for community in leaf_communities
+                        for member in community.members
+                    }
+                )
             ],
             1: leaf_communities,
         }
@@ -407,7 +431,9 @@ class CommunityGraphRAG:
         current_groups = leaf_communities
 
         while current_level < target_levels and len(current_groups) > 1:
-            current_groups = await self._group_communities(current_groups, level=current_level)
+            current_groups = await self._group_communities(
+                current_groups, level=current_level
+            )
             hierarchy_levels[current_level] = current_groups
             current_level += 1
 
@@ -415,10 +441,14 @@ class CommunityGraphRAG:
         if len(current_groups) == 1:
             base = current_groups[0]
             global_members = list(base.members)
-            global_summary = base.summary or self._fallback_summary(global_members, label="Global themes")
+            global_summary = base.summary or self._fallback_summary(
+                global_members, label="Global themes"
+            )
             child_ids = list(base.child_ids) or [base.community_id]
         else:
-            global_members = sorted({member for community in current_groups for member in community.members})
+            global_members = sorted(
+                {member for community in current_groups for member in community.members}
+            )
             global_summary = self._combine_summaries(
                 [community.summary for community in current_groups],
                 global_members,
@@ -450,11 +480,14 @@ class CommunityGraphRAG:
                 "community_id": str(community.id),
                 "members": sorted(set(community.entities)),
                 "member_count": len(set(community.entities)),
-                "summary": community.summary or self._fallback_summary(community.entities),
+                "summary": community.summary
+                or self._fallback_summary(community.entities),
                 "level": 1,
                 "metadata": {
                     "detection_method": hierarchy.detection_method,
-                    "detector": type(self.detector).__name__ if self.detector else "gds",
+                    "detector": (
+                        type(self.detector).__name__ if self.detector else "gds"
+                    ),
                     "modularity": community.modularity_score,
                     "coverage": community.coverage_score,
                     "cohesion": community.cohesion_score,
@@ -530,7 +563,9 @@ class CommunityGraphRAG:
 
         for index in range(0, len(sorted_communities), bucket_size):
             bucket = sorted_communities[index : index + bucket_size]
-            members = sorted({member for community in bucket for member in community.members})
+            members = sorted(
+                {member for community in bucket for member in community.members}
+            )
             summary = self._combine_summaries(
                 [community.summary for community in bucket],
                 members,
@@ -543,12 +578,16 @@ class CommunityGraphRAG:
                     members=members,
                     summary=summary,
                     child_ids=[community.community_id for community in bucket],
-                    metadata=self._merge_metadata([community.metadata for community in bucket], level=level),
+                    metadata=self._merge_metadata(
+                        [community.metadata for community in bucket], level=level
+                    ),
                 )
             )
         return grouped
 
-    async def _persist_hierarchy_nodes(self, hierarchy_levels: dict[int, list[CommunityLevel]]) -> None:
+    async def _persist_hierarchy_nodes(
+        self, hierarchy_levels: dict[int, list[CommunityLevel]]
+    ) -> None:
         if not self.enable_communities:
             return
         payload = [
@@ -621,13 +660,19 @@ class CommunityGraphRAG:
             return results[:top_k]
 
         hierarchy_levels = await self._compose_hierarchy_levels()
-        candidate_levels = [hierarchy_level] if hierarchy_level is not None else sorted(hierarchy_levels)
+        candidate_levels = (
+            [hierarchy_level]
+            if hierarchy_level is not None
+            else sorted(hierarchy_levels)
+        )
         fallback: list[dict[str, Any]] = []
         for level in candidate_levels:
             for community in hierarchy_levels.get(level, []):
                 if level == 0:
                     continue
-                score = self._term_overlap(terms, [community.summary, *community.members])
+                score = self._term_overlap(
+                    terms, [community.summary, *community.members]
+                )
                 if score <= 0:
                     continue
                 fallback.append(
@@ -643,7 +688,14 @@ class CommunityGraphRAG:
                         "strategy": "community",
                     }
                 )
-        fallback.sort(key=lambda result: (result["score"], result["member_count"], result["level"]), reverse=True)
+        fallback.sort(
+            key=lambda result: (
+                result["score"],
+                result["member_count"],
+                result["level"],
+            ),
+            reverse=True,
+        )
         return fallback[:top_k]
 
     async def _search_entities(self, query: str, top_k: int) -> list[dict[str, Any]]:
@@ -707,7 +759,9 @@ class CommunityGraphRAG:
         from .rrf import DEFAULT_K, reciprocal_rank_fusion as rrf_unified
 
         summary_results = (
-            await self._search_community_summaries(query, top_k, hierarchy_level=hierarchy_level)
+            await self._search_community_summaries(
+                query, top_k, hierarchy_level=hierarchy_level
+            )
             if self.enable_communities
             else []
         )
@@ -776,11 +830,19 @@ class CommunityGraphRAG:
                     if text:
                         return text
                 except Exception as exc:  # pragma: no cover - defensive
-                    logger.warning("Community summary generation failed via %s: %s", method_name, exc)
+                    logger.warning(
+                        "Community summary generation failed via %s: %s",
+                        method_name,
+                        exc,
+                    )
         return self._fallback_summary(members)
 
-    async def _query_level(self, query: str, level: int, top_k: int = 5) -> list[dict[str, Any]]:
-        return await self._search_community_summaries(query, top_k, hierarchy_level=level)
+    async def _query_level(
+        self, query: str, level: int, top_k: int = 5
+    ) -> list[dict[str, Any]]:
+        return await self._search_community_summaries(
+            query, top_k, hierarchy_level=level
+        )
 
     async def _resolve_entity(self, entity_name: str) -> dict[str, Any]:
         records = await self._execute_query(
@@ -811,7 +873,11 @@ class CommunityGraphRAG:
                 flattened_aliases.append(alias_group)
         return {
             "canonical_id": record.get("canonical_id", entity_name),
-            "communities": [community for community in record.get("communities", []) if community is not None],
+            "communities": [
+                community
+                for community in record.get("communities", [])
+                if community is not None
+            ],
             "aliases": flattened_aliases,
         }
 
@@ -893,7 +959,9 @@ class CommunityGraphRAG:
             return {"value": record}
 
     def _query_terms(self, query: str) -> list[str]:
-        return [term for term in re.findall(r"[a-z0-9_]+", query.lower()) if len(term) > 1]
+        return [
+            term for term in re.findall(r"[a-z0-9_]+", query.lower()) if len(term) > 1
+        ]
 
     def _term_overlap(self, terms: list[str], texts: list[str]) -> int:
         haystack = " ".join(text.lower() for text in texts if text)
@@ -921,12 +989,16 @@ class CommunityGraphRAG:
             "overall",
             "themes",
         }
-        complexity += min(0.4, 0.1 * sum(1 for term in terms if term in reasoning_markers))
+        complexity += min(
+            0.4, 0.1 * sum(1 for term in terms if term in reasoning_markers)
+        )
         if self._is_global_question(query.lower()):
             complexity += 0.3
         return min(complexity, 1.0)
 
-    def _merge_metadata(self, metadata_items: list[dict[str, Any]], *, level: int) -> dict[str, Any]:
+    def _merge_metadata(
+        self, metadata_items: list[dict[str, Any]], *, level: int
+    ) -> dict[str, Any]:
         values: dict[str, list[float]] = defaultdict(list)
         for item in metadata_items:
             for key in ("modularity", "coverage", "cohesion"):
@@ -935,13 +1007,20 @@ class CommunityGraphRAG:
                     values[key].append(float(value))
         return {
             "level": level,
-            "modularity": sum(values.get("modularity", [0.0])) / max(len(values.get("modularity", [])), 1),
-            "coverage": sum(values.get("coverage", [0.0])) / max(len(values.get("coverage", [])), 1),
-            "cohesion": sum(values.get("cohesion", [0.0])) / max(len(values.get("cohesion", [])), 1),
+            "modularity": sum(values.get("modularity", [0.0]))
+            / max(len(values.get("modularity", [])), 1),
+            "coverage": sum(values.get("coverage", [0.0]))
+            / max(len(values.get("coverage", [])), 1),
+            "cohesion": sum(values.get("cohesion", [0.0]))
+            / max(len(values.get("cohesion", [])), 1),
         }
 
-    def _combine_summaries(self, summaries: list[str], members: list[str], *, label: str) -> str:
-        usable_summaries = [summary.strip() for summary in summaries if summary and summary.strip()]
+    def _combine_summaries(
+        self, summaries: list[str], members: list[str], *, label: str
+    ) -> str:
+        usable_summaries = [
+            summary.strip() for summary in summaries if summary and summary.strip()
+        ]
         if usable_summaries:
             return " ".join(usable_summaries[:3]).strip()
         return self._fallback_summary(members, label=label)
@@ -969,7 +1048,14 @@ class CommunityGraphRAG:
                     "strategy": "community",
                 }
             )
-        results.sort(key=lambda result: (result["score"], result["member_count"], result["level"]), reverse=True)
+        results.sort(
+            key=lambda result: (
+                result["score"],
+                result["member_count"],
+                result["level"],
+            ),
+            reverse=True,
+        )
         return results
 
     def _is_global_question(self, query: str) -> bool:
@@ -1004,7 +1090,9 @@ class CommunityGraphRAG:
             return True
         return len(self._query_terms(query)) <= 3 and query.endswith("?")
 
-    def _fallback_summary(self, members: list[str], label: str = "Knowledge cluster") -> str:
+    def _fallback_summary(
+        self, members: list[str], label: str = "Knowledge cluster"
+    ) -> str:
         preview = ", ".join(members[:6])
         if len(members) > 6:
             preview = f"{preview}, and {len(members) - 6} more"

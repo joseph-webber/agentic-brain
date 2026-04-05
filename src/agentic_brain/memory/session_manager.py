@@ -236,7 +236,11 @@ class SemanticSearchResult:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
-            "message": self.message.to_dict() if hasattr(self.message, "to_dict") else self.message,
+            "message": (
+                self.message.to_dict()
+                if hasattr(self.message, "to_dict")
+                else self.message
+            ),
             "score": self.score,
             "highlights": self.highlights,
             "session_context": self.session_context,
@@ -697,7 +701,11 @@ class Neo4jSessionBackend:
 
                 result = session.run(query, **params)
                 for record in result:
-                    ts = record["timestamp"].to_native() if hasattr(record["timestamp"], "to_native") else record["timestamp"]
+                    ts = (
+                        record["timestamp"].to_native()
+                        if hasattr(record["timestamp"], "to_native")
+                        else record["timestamp"]
+                    )
                     msg = SessionMessage(
                         id=record["id"],
                         role=MessageRole(record["role"]),
@@ -706,8 +714,16 @@ class Neo4jSessionBackend:
                         session_id=record["session_id"],
                         importance=record.get("importance", 0.5),
                         access_count=record.get("access_count", 0),
-                        metadata=json.loads(record.get("metadata") or "{}") if include_content else {},
-                        entities=json.loads(record.get("entities_json") or "[]") if include_content else [],
+                        metadata=(
+                            json.loads(record.get("metadata") or "{}")
+                            if include_content
+                            else {}
+                        ),
+                        entities=(
+                            json.loads(record.get("entities_json") or "[]")
+                            if include_content
+                            else []
+                        ),
                     )
                     messages.append(msg)
         except Exception as e:
@@ -1238,7 +1254,9 @@ class Session:
         )
 
         self.backend.store_summary(summary)
-        logger.info(f"Compressed {len(to_compress)} messages for session {self.session_id}")
+        logger.info(
+            f"Compressed {len(to_compress)} messages for session {self.session_id}"
+        )
 
     # =========================================================================
     # ADVANCED FEATURES: Tagging
@@ -1287,7 +1305,8 @@ class Session:
             ]
         else:
             self._session_metadata["tags"] = [
-                t for t in self._session_metadata["tags"]
+                t
+                for t in self._session_metadata["tags"]
                 if not (t["name"] == name and t["value"] == value)
             ]
         return initial_count - len(self._session_metadata["tags"])
@@ -1356,9 +1375,23 @@ class Session:
         analytics.entities = dict(entity_counts.most_common(20))
 
         # Top topics (filter common words)
-        common_words = {"this", "that", "with", "have", "from", "what", "your", "they", "will", "been", "when", "were"}
+        common_words = {
+            "this",
+            "that",
+            "with",
+            "have",
+            "from",
+            "what",
+            "your",
+            "they",
+            "will",
+            "been",
+            "when",
+            "were",
+        }
         analytics.topics = {
-            word: count for word, count in topic_words.most_common(30)
+            word: count
+            for word, count in topic_words.most_common(30)
             if word not in common_words
         }
 
@@ -1449,10 +1482,12 @@ class Session:
         current_conversation = {"messages": []}
 
         for msg in self._messages:
-            current_conversation["messages"].append({
-                "role": msg.role.value,
-                "content": msg.content,
-            })
+            current_conversation["messages"].append(
+                {
+                    "role": msg.role.value,
+                    "content": msg.content,
+                }
+            )
 
         if current_conversation["messages"]:
             conversations.append(current_conversation)
@@ -1496,8 +1531,16 @@ class Session:
         # Sort messages by importance (keep important ones)
         if keep_important:
             important_threshold = 0.7
-            important_msgs = [m for m in self._messages if m.effective_importance >= important_threshold]
-            compressible_msgs = [m for m in self._messages if m.effective_importance < important_threshold]
+            important_msgs = [
+                m
+                for m in self._messages
+                if m.effective_importance >= important_threshold
+            ]
+            compressible_msgs = [
+                m
+                for m in self._messages
+                if m.effective_importance < important_threshold
+            ]
         else:
             important_msgs = []
             compressible_msgs = list(self._messages)
@@ -1524,17 +1567,25 @@ class Session:
             id=f"summary_{uuid.uuid4().hex[:8]}",
             role=MessageRole.SYSTEM,
             content=f"[COMPRESSED CONTEXT]\n{summary_text}",
-            timestamp=compressible_msgs[0].timestamp if compressible_msgs else datetime.now(UTC),
+            timestamp=(
+                compressible_msgs[0].timestamp
+                if compressible_msgs
+                else datetime.now(UTC)
+            ),
             session_id=self.session_id,
             metadata={"compressed": True, "original_count": len(compressible_msgs)},
             importance=0.6,
         )
 
         # Rebuild messages: summary + important messages
-        self._messages = [summary_msg] + sorted(important_msgs, key=lambda m: m.timestamp)
+        self._messages = [summary_msg] + sorted(
+            important_msgs, key=lambda m: m.timestamp
+        )
         new_tokens = sum(m.token_count for m in self._messages)
 
-        logger.info(f"Compressed session {self.session_id}: {original_tokens} -> {new_tokens} tokens")
+        logger.info(
+            f"Compressed session {self.session_id}: {original_tokens} -> {new_tokens} tokens"
+        )
         return (original_tokens, new_tokens)
 
     def _default_summarize(self, messages: list[SessionMessage]) -> str:
@@ -1552,8 +1603,10 @@ class Session:
 
             # Extract potential key points (sentences with keywords)
             if msg.importance >= 0.6:
-                sentences = re.split(r'[.!?]+', msg.content)
-                for sentence in sentences[:2]:  # First 2 sentences of important messages
+                sentences = re.split(r"[.!?]+", msg.content)
+                for sentence in sentences[
+                    :2
+                ]:  # First 2 sentences of important messages
                     if len(sentence.strip()) > 20:
                         key_points.append(sentence.strip())
 
@@ -1575,7 +1628,9 @@ class Session:
     # ADVANCED FEATURES: Get Messages (for branching/replay)
     # =========================================================================
 
-    def get_messages(self, start_index: int = 0, end_index: int | None = None) -> list[SessionMessage]:
+    def get_messages(
+        self, start_index: int = 0, end_index: int | None = None
+    ) -> list[SessionMessage]:
         """
         Get messages from the session.
 
@@ -1610,7 +1665,9 @@ class Session:
                 entities.add(entity["text"])
 
         content = f"Session with {len(self._messages)} messages. "
-        content += f"Discussed: {', '.join(entities) if entities else 'general topics'}."
+        content += (
+            f"Discussed: {', '.join(entities) if entities else 'general topics'}."
+        )
 
         summary = SessionSummary(
             id=str(uuid.uuid4())[:16],
@@ -1628,7 +1685,9 @@ class Session:
         )
 
         self.backend.store_summary(summary)
-        logger.info(f"Session {self.session_id} ended with {len(self._messages)} messages")
+        logger.info(
+            f"Session {self.session_id} ended with {len(self._messages)} messages"
+        )
 
         return summary
 
@@ -1824,7 +1883,9 @@ class SessionManager:
         )
 
         self._sessions[new_session_id] = branched_session
-        logger.info(f"Branched session {source_session_id} at index {branch_at_index} -> {new_session_id}")
+        logger.info(
+            f"Branched session {source_session_id} at index {branch_at_index} -> {new_session_id}"
+        )
 
         return branched_session
 
@@ -1920,7 +1981,9 @@ class SessionManager:
         merged_session._session_metadata["tags"] = all_tags
 
         self._sessions[new_session_id] = merged_session
-        logger.info(f"Merged sessions {session_ids} -> {new_session_id} using strategy '{strategy}'")
+        logger.info(
+            f"Merged sessions {session_ids} -> {new_session_id} using strategy '{strategy}'"
+        )
 
         return merged_session
 
@@ -1982,7 +2045,10 @@ class SessionManager:
                 continue
 
             # Filter by role
-            if replay_config.filter_roles and msg.role.value not in replay_config.filter_roles:
+            if (
+                replay_config.filter_roles
+                and msg.role.value not in replay_config.filter_roles
+            ):
                 continue
 
             # Inject messages before this index
@@ -2112,18 +2178,24 @@ class SessionManager:
                     session = self._sessions.get(msg.session_id)
                     if session:
                         idx = next(
-                            (i for i, m in enumerate(session._messages) if m.id == msg.id),
-                            -1
+                            (
+                                i
+                                for i, m in enumerate(session._messages)
+                                if m.id == msg.id
+                            ),
+                            -1,
                         )
                         if idx > 0:
                             context = session._messages[idx - 1].content[:100] + "..."
 
-                results.append(SemanticSearchResult(
-                    message=msg,
-                    score=score,
-                    highlights=highlights[:5],
-                    session_context=context,
-                ))
+                results.append(
+                    SemanticSearchResult(
+                        message=msg,
+                        score=score,
+                        highlights=highlights[:5],
+                        session_context=context,
+                    )
+                )
 
         # Sort by score and limit
         results.sort(key=lambda r: r.score, reverse=True)
@@ -2174,15 +2246,16 @@ class SessionManager:
             "top_entities": dict(all_entities.most_common(20)),
             "avg_response_time_ms": (
                 sum(all_response_times) / len(all_response_times)
-                if all_response_times else 0.0
+                if all_response_times
+                else 0.0
             ),
             "p50_response_time_ms": (
-                statistics.median(all_response_times)
-                if all_response_times else 0.0
+                statistics.median(all_response_times) if all_response_times else 0.0
             ),
             "p95_response_time_ms": (
                 sorted(all_response_times)[int(len(all_response_times) * 0.95)]
-                if len(all_response_times) >= 2 else 0.0
+                if len(all_response_times) >= 2
+                else 0.0
             ),
         }
 

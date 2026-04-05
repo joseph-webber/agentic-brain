@@ -107,7 +107,7 @@ class TestAgentMemory:
         """Test adding message."""
         memory = AgentMemory()
         turn = memory.add_message("user", "Hello")
-        
+
         assert turn.role == "user"
         assert turn.content == "Hello"
         assert len(memory._conversation_history) == 1
@@ -118,7 +118,7 @@ class TestAgentMemory:
         memory.add_message("user", "Hello")
         memory.add_message("assistant", "Hi there")
         memory.add_message("user", "How are you?")
-        
+
         assert len(memory._conversation_history) == 3
 
     def test_recall_all(self):
@@ -126,7 +126,7 @@ class TestAgentMemory:
         memory = AgentMemory()
         memory.add_message("user", "First")
         memory.add_message("assistant", "Response")
-        
+
         messages = memory.recall()
         assert len(messages) == 2
 
@@ -136,7 +136,7 @@ class TestAgentMemory:
         memory.add_message("user", "First")
         memory.add_message("assistant", "Second")
         memory.add_message("user", "Third")
-        
+
         recent = memory.recall(limit=2)
         assert len(recent) == 2
         assert recent[-1].content == "Third"
@@ -145,10 +145,10 @@ class TestAgentMemory:
         """Test maximum items limit."""
         config = MemoryConfig(max_items=5)
         memory = AgentMemory(config)
-        
+
         for i in range(10):
             memory.add_message("user", f"Message {i}")
-        
+
         assert len(memory._conversation_history) <= 5
 
     def test_add_memory_item(self):
@@ -158,7 +158,7 @@ class TestAgentMemory:
             "Important fact",
             memory_type=MemoryType.SEMANTIC,
         )
-        
+
         assert item.content == "Important fact"
         assert item.id in memory._memories
 
@@ -168,7 +168,7 @@ class TestAgentMemory:
         memory.add_memory("Fact 1", importance=0.9)
         memory.add_memory("Fact 2", importance=0.5)
         memory.add_memory("Fact 3", importance=0.7)
-        
+
         memories = memory.recall_memories()
         assert len(memories) == 3
         assert memories[0].importance >= memories[1].importance
@@ -178,7 +178,7 @@ class TestAgentMemory:
         memory = AgentMemory()
         memory.add_memory("Semantic fact", MemoryType.SEMANTIC)
         memory.add_memory("Episodic event", MemoryType.EPISODIC)
-        
+
         semantic = memory.recall_memories(MemoryType.SEMANTIC)
         assert len(semantic) == 1
         assert semantic[0].memory_type == MemoryType.SEMANTIC
@@ -188,7 +188,7 @@ class TestAgentMemory:
         memory = AgentMemory()
         memory.add_memory("Important", importance=0.9)
         memory.add_memory("Less important", importance=0.3)
-        
+
         important = memory.recall_memories(min_importance=0.7)
         assert len(important) == 1
 
@@ -197,7 +197,7 @@ class TestAgentMemory:
         memory = AgentMemory()
         for i in range(5):
             memory.add_memory(f"Fact {i}")
-        
+
         limited = memory.recall_memories(limit=2)
         assert len(limited) == 2
 
@@ -205,7 +205,7 @@ class TestAgentMemory:
         """Test context management."""
         memory = AgentMemory()
         memory.set_context("user_id", "user123")
-        
+
         assert memory.get_context("user_id") == "user123"
         assert memory.get_context("nonexistent", "default") == "default"
 
@@ -214,7 +214,7 @@ class TestAgentMemory:
         memory = AgentMemory()
         memory.set_context("key1", "value1")
         memory.set_context("key2", "value2")
-        
+
         full_ctx = memory.get_full_context()
         assert full_ctx["key1"] == "value1"
         assert full_ctx["key2"] == "value2"
@@ -224,7 +224,7 @@ class TestAgentMemory:
         memory = AgentMemory()
         memory.set_context("key", "value")
         memory.clear_context()
-        
+
         assert memory.get_context("key") is None
 
     def test_context_window(self):
@@ -232,7 +232,7 @@ class TestAgentMemory:
         memory = AgentMemory()
         memory.add_message("user", "Hello" * 100)
         memory.add_message("assistant", "Hi" * 100)
-        
+
         window = memory.get_context_window()
         assert len(window) > 0
 
@@ -241,7 +241,7 @@ class TestAgentMemory:
         memory = AgentMemory()
         memory.add_message("user", "What is Python?")
         memory.add_message("assistant", "Python is a programming language")
-        
+
         summary = memory.summarize()
         assert "Python" in summary
 
@@ -251,7 +251,7 @@ class TestAgentMemory:
         memory.add_message("user", "Hello")
         memory.add_memory("Fact")
         memory.set_context("key", "value")
-        
+
         memory.clear()
         assert len(memory._conversation_history) == 0
         assert len(memory._memories) == 0
@@ -262,7 +262,7 @@ class TestAgentMemory:
         memory = AgentMemory()
         memory.add_message("user", "Hello")
         memory.add_memory("Fact", importance=0.8)
-        
+
         stats = memory.get_stats()
         assert stats["conversation_turns"] == 1
         assert stats["memories"] == 1
@@ -273,7 +273,7 @@ class TestAgentMemory:
         memory.add_message("user", "Hello")
         memory.add_memory("Fact")
         memory.set_context("key", "value")
-        
+
         data = memory.to_dict()
         assert "conversation" in data
         assert "memories" in data
@@ -284,10 +284,10 @@ class TestAgentMemory:
         memory = AgentMemory()
         memory.add_message("user", "Hello")
         original_data = memory.to_dict()
-        
+
         memory2 = AgentMemory()
         memory2.from_dict(original_data)
-        
+
         assert len(memory2._conversation_history) == 1
         assert memory2._conversation_history[0].content == "Hello"
 
@@ -295,7 +295,7 @@ class TestAgentMemory:
         """Test memory representation."""
         memory = AgentMemory()
         memory.add_message("user", "Hello")
-        
+
         repr_str = repr(memory)
         assert "AgentMemory" in repr_str
 

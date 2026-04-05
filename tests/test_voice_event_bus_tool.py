@@ -88,25 +88,35 @@ def test_publish_voice_event_flushes(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = FakeProducer()
     monkeypatch.setattr(voice_event_bus, "producer", fake)
 
-    voice_event_bus.publish_voice_event(voice_event_bus.VOICE_INPUT_TOPIC, {"text": "hello"})
+    voice_event_bus.publish_voice_event(
+        voice_event_bus.VOICE_INPUT_TOPIC, {"text": "hello"}
+    )
 
     assert fake.messages == [(voice_event_bus.VOICE_INPUT_TOPIC, {"text": "hello"})]
     assert fake.flushed is True
 
 
-def test_ensure_voice_topics_creates_all_topics(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ensure_voice_topics_creates_all_topics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     created_admin = FakeAdminClient()
-    monkeypatch.setattr(voice_event_bus, "KafkaAdminClient", lambda *args, **kwargs: created_admin)
+    monkeypatch.setattr(
+        voice_event_bus, "KafkaAdminClient", lambda *args, **kwargs: created_admin
+    )
     monkeypatch.setattr(voice_event_bus, "NewTopic", FakeNewTopic)
 
     topics = voice_event_bus.ensure_voice_topics()
 
     assert topics == voice_event_bus.VOICE_TOPICS
-    assert [topic.name for topic in created_admin.created] == list(voice_event_bus.VOICE_TOPICS)
+    assert [topic.name for topic in created_admin.created] == list(
+        voice_event_bus.VOICE_TOPICS
+    )
     assert created_admin.closed is True
 
 
-def test_wait_for_voice_event_matches_predicate(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_wait_for_voice_event_matches_predicate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     fake_consumer = FakeConsumer(
         [
             {"request_id": "ignore", "text": "old"},

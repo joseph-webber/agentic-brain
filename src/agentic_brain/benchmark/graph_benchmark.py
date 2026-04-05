@@ -45,7 +45,6 @@ DEFAULT_CONFIG = {
         os.environ.get("NEO4J_PASSWORD", "Brain2026"),
     ),
     "brain_name": os.environ.get("BRAIN_NAME", "AgenticBrain"),
-
     # ─── Node labels ──────────────────────────────────────────────────
     "n_task": "Task",
     "n_learning": "Learning",
@@ -59,7 +58,6 @@ DEFAULT_CONFIG = {
     "n_agent": "Agent",
     "n_friction": "FrictionEvent",
     "n_people": ["Person"],
-
     # ─── Relationship types ───────────────────────────────────────────
     "r_discusses": "DISCUSSES",
     "r_mentions": "MENTIONS",
@@ -67,21 +65,19 @@ DEFAULT_CONFIG = {
     "r_part_of": "PART_OF",
     "r_has_checkpoint": "HAS_CHECKPOINT",
     "r_tagged": ["RELATES_TO", "TAGGED", "ABOUT"],
-
     # ─── Structure targets (aspirational — set these high) ────────────
-    "t_ratio": 3.0,             # Rel/node ratio target
-    "t_node_types": 25,         # Variety of node types
-    "t_tasks": 30,              # Tasks tracked
-    "t_learnings": 50,          # Learnings captured
-    "t_memories": 100,          # Memories stored
-    "t_sessions": 50,           # Sessions recorded
-    "t_topics": 40,             # Topics defined
-    "t_people": 15,             # People tracked
-    "t_events": 500,            # Hook events captured
-    "t_entities": 100,          # Named entities extracted
-    "t_workflows": 10,          # Workflows defined
-    "t_agents": 10,             # Agents configured
-
+    "t_ratio": 3.0,  # Rel/node ratio target
+    "t_node_types": 25,  # Variety of node types
+    "t_tasks": 30,  # Tasks tracked
+    "t_learnings": 50,  # Learnings captured
+    "t_memories": 100,  # Memories stored
+    "t_sessions": 50,  # Sessions recorded
+    "t_topics": 40,  # Topics defined
+    "t_people": 15,  # People tracked
+    "t_events": 500,  # Hook events captured
+    "t_entities": 100,  # Named entities extracted
+    "t_workflows": 10,  # Workflows defined
+    "t_agents": 10,  # Agents configured
     # ─── Scoring weights (must sum to 1.0) ────────────────────────────
     "w_structure": 0.40,
     "w_reasoning": 0.40,
@@ -93,6 +89,7 @@ DEFAULT_CONFIG = {
 @dataclass
 class GraphBenchmarkResult:
     """Result of a graph benchmark run."""
+
     combined: float
     structure_score: float
     reasoning_score: float
@@ -107,7 +104,7 @@ class GraphBenchmarkResult:
 class GraphBenchmark:
     """
     Neo4j graph health benchmarking.
-    
+
     Measures how well-connected and useful the brain's knowledge graph is.
     """
 
@@ -115,21 +112,17 @@ class GraphBenchmark:
         """Initialize with optional config overrides."""
         self.config = {**DEFAULT_CONFIG, **(config or {})}
         self._driver = None
-        self._people_where = " OR ".join(
-            f"n:{l}" for l in self.config["n_people"]
-        )
-        self._tagged_rels = "|".join(
-            f":{r}" for r in self.config["r_tagged"]
-        )
+        self._people_where = " OR ".join(f"n:{l}" for l in self.config["n_people"])
+        self._tagged_rels = "|".join(f":{r}" for r in self.config["r_tagged"])
 
     def _get_driver(self):
         """Lazy-load Neo4j driver."""
         if self._driver is None:
             try:
                 from neo4j import GraphDatabase
+
                 self._driver = GraphDatabase.driver(
-                    self.config["bolt"],
-                    auth=self.config["auth"]
+                    self.config["bolt"], auth=self.config["auth"]
                 )
                 self._driver.verify_connectivity()
             except Exception as e:
@@ -150,10 +143,10 @@ class GraphBenchmark:
     def run(self, verbose: bool = True) -> GraphBenchmarkResult:
         """
         Run the full benchmark.
-        
+
         Args:
             verbose: If True, print detailed output
-            
+
         Returns:
             GraphBenchmarkResult with scores and details
         """
@@ -163,7 +156,7 @@ class GraphBenchmark:
         total_nodes = self._val("MATCH (n) RETURN count(n) as c")
         total_rels = self._val("MATCH ()-[r]->() RETURN count(r) as c")
         isolated = self._val("MATCH (n) WHERE NOT (n)--() RETURN count(n) as c")
-        
+
         # Ratio scoped to business nodes only (exclude session layer)
         biz_nodes = self._val(
             "MATCH (n) WHERE NOT (n:Session OR n:HookEvent OR n:Checkpoint) RETURN count(n) as c"
@@ -208,7 +201,9 @@ class GraphBenchmark:
             pct = min(round((current / target) * 100), 100) if target else 0
             struct_scores.append(pct)
 
-        struct_avg = round(sum(struct_scores) / len(struct_scores)) if struct_scores else 0
+        struct_avg = (
+            round(sum(struct_scores) / len(struct_scores)) if struct_scores else 0
+        )
 
         # ─── Reasoning tests ──────────────────────────────────────────
         reason_tests = []
@@ -218,22 +213,30 @@ class GraphBenchmark:
             f"MATCH (t:{C['n_topic']})<-[r]-() RETURN t.name, count(r) as c "
             f"ORDER BY c DESC LIMIT 1"
         )
-        reason_tests.append({
-            "name": "Most connected Topic?",
-            "passed": bool(result),
-            "value": f"{result[0]['t.name']} ({result[0]['c']} links)" if result else "No Topics",
-        })
+        reason_tests.append(
+            {
+                "name": "Most connected Topic?",
+                "passed": bool(result),
+                "value": (
+                    f"{result[0]['t.name']} ({result[0]['c']} links)"
+                    if result
+                    else "No Topics"
+                ),
+            }
+        )
 
         # Test 2: Node types linking into Topics
         result = self._query(
             f"MATCH (n)-[]->(t:{C['n_topic']}) RETURN count(DISTINCT labels(n)[0]) as c"
         )
         count = result[0]["c"] if result else 0
-        reason_tests.append({
-            "name": "Node types → Topic",
-            "passed": count >= 3,
-            "value": f"{count} types",
-        })
+        reason_tests.append(
+            {
+                "name": "Node types → Topic",
+                "passed": count >= 3,
+                "value": f"{count} types",
+            }
+        )
 
         # Test 3: Sessions have checkpoints
         result = self._query(
@@ -241,11 +244,13 @@ class GraphBenchmark:
             f"RETURN count(*) as c"
         )
         count = result[0]["c"] if result else 0
-        reason_tests.append({
-            "name": "Session → Checkpoint links",
-            "passed": count > 0,
-            "value": f"{count} links",
-        })
+        reason_tests.append(
+            {
+                "name": "Session → Checkpoint links",
+                "passed": count > 0,
+                "value": f"{count} links",
+            }
+        )
 
         # Test 4: Sessions discuss Topics
         result = self._query(
@@ -253,11 +258,13 @@ class GraphBenchmark:
             f"RETURN count(*) as c"
         )
         count = result[0]["c"] if result else 0
-        reason_tests.append({
-            "name": "Session → Topic (DISCUSSES)",
-            "passed": count >= 5,
-            "value": f"{count} links",
-        })
+        reason_tests.append(
+            {
+                "name": "Session → Topic (DISCUSSES)",
+                "passed": count >= 5,
+                "value": f"{count} links",
+            }
+        )
 
         # Test 5: Sessions continue from previous
         result = self._query(
@@ -265,11 +272,13 @@ class GraphBenchmark:
             f"RETURN count(*) as c"
         )
         count = result[0]["c"] if result else 0
-        reason_tests.append({
-            "name": "Session stitching (CONTINUES)",
-            "passed": count > 0,
-            "value": f"{count} links",
-        })
+        reason_tests.append(
+            {
+                "name": "Session stitching (CONTINUES)",
+                "passed": count > 0,
+                "value": f"{count} links",
+            }
+        )
 
         # Test 6: Entities mentioned in sessions
         result = self._query(
@@ -277,11 +286,13 @@ class GraphBenchmark:
             f"RETURN count(*) as c"
         )
         count = result[0]["c"] if result else 0
-        reason_tests.append({
-            "name": "Session → Entity (MENTIONS)",
-            "passed": count > 0,
-            "value": f"{count} links",
-        })
+        reason_tests.append(
+            {
+                "name": "Session → Entity (MENTIONS)",
+                "passed": count > 0,
+                "value": f"{count} links",
+            }
+        )
 
         # Test 7: Learnings linked to topics
         result = self._query(
@@ -289,11 +300,13 @@ class GraphBenchmark:
             f"RETURN count(*) as c"
         )
         count = result[0]["c"] if result else 0
-        reason_tests.append({
-            "name": "Learning → Topic links",
-            "passed": count > 0,
-            "value": f"{count} links",
-        })
+        reason_tests.append(
+            {
+                "name": "Learning → Topic links",
+                "passed": count > 0,
+                "value": f"{count} links",
+            }
+        )
 
         # Test 8: Memories linked to topics
         result = self._query(
@@ -301,14 +314,18 @@ class GraphBenchmark:
             f"RETURN count(*) as c"
         )
         count = result[0]["c"] if result else 0
-        reason_tests.append({
-            "name": "Memory → Topic links",
-            "passed": count > 0,
-            "value": f"{count} links",
-        })
+        reason_tests.append(
+            {
+                "name": "Memory → Topic links",
+                "passed": count > 0,
+                "value": f"{count} links",
+            }
+        )
 
         reason_pass = sum(1 for t in reason_tests if t["passed"])
-        reason_score = round(reason_pass / len(reason_tests) * 100) if reason_tests else 0
+        reason_score = (
+            round(reason_pass / len(reason_tests) * 100) if reason_tests else 0
+        )
 
         # ─── Friction score ───────────────────────────────────────────
         friction_recent = self._val(
@@ -318,7 +335,7 @@ class GraphBenchmark:
         )
         friction_all = self._val(f"MATCH (f:{C['n_friction']}) RETURN count(f) as c")
         friction_score = max(0, 100 - friction_recent * C["friction_cost"])
-        unproven = (friction_all == 0)
+        unproven = friction_all == 0
 
         # ─── Combined score ───────────────────────────────────────────
         w_struct = C["w_structure"]
@@ -334,16 +351,34 @@ class GraphBenchmark:
         # ─── Output ───────────────────────────────────────────────────
         if verbose:
             self._print_results(
-                total_nodes, total_rels, ratio, isolated,
-                struct_metrics, struct_scores, struct_avg,
-                reason_tests, reason_score,
-                friction_recent, friction_score, unproven,
-                combined, w_struct, w_reason, w_fric
+                total_nodes,
+                total_rels,
+                ratio,
+                isolated,
+                struct_metrics,
+                struct_scores,
+                struct_avg,
+                reason_tests,
+                reason_score,
+                friction_recent,
+                friction_score,
+                unproven,
+                combined,
+                w_struct,
+                w_reason,
+                w_fric,
             )
 
         # ─── Save to Neo4j ────────────────────────────────────────────
-        self._save_result(combined, struct_avg, reason_score, friction_score,
-                          total_nodes, total_rels, ratio)
+        self._save_result(
+            combined,
+            struct_avg,
+            reason_score,
+            friction_score,
+            total_nodes,
+            total_rels,
+            ratio,
+        )
 
         return GraphBenchmarkResult(
             combined=combined,
@@ -358,17 +393,30 @@ class GraphBenchmark:
                 "struct_metrics": struct_metrics,
                 "reason_tests": reason_tests,
                 "friction_events": friction_recent,
-            }
+            },
         )
 
     def _print_results(
-        self, total_nodes, total_rels, ratio, isolated,
-        struct_metrics, struct_scores, struct_avg,
-        reason_tests, reason_score,
-        friction_recent, friction_score, unproven,
-        combined, w_struct, w_reason, w_fric
+        self,
+        total_nodes,
+        total_rels,
+        ratio,
+        isolated,
+        struct_metrics,
+        struct_scores,
+        struct_avg,
+        reason_tests,
+        reason_score,
+        friction_recent,
+        friction_score,
+        unproven,
+        combined,
+        w_struct,
+        w_reason,
+        w_fric,
     ):
         """Print formatted benchmark results."""
+
         def bar(pct, w=20):
             f = round(pct / 100 * w)
             return "█" * f + "░" * (w - f)
@@ -378,14 +426,18 @@ class GraphBenchmark:
 
         SEP = "─" * 72
         DSEP = "═" * 72
-        now = datetime.now().strftime('%Y-%m-%d %H:%M')
+        now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
         print(f"\n🧠  {self.config['brain_name']} Graph Benchmark  —  {now}")
-        print(f"    Nodes: {total_nodes}  |  Rels: {total_rels}  |  Ratio: {ratio}  |  Isolated: {isolated}")
+        print(
+            f"    Nodes: {total_nodes}  |  Rels: {total_rels}  |  Ratio: {ratio}  |  Isolated: {isolated}"
+        )
 
         # Structure section
         print(f"\n{DSEP}")
-        print(f"  SECTION 1 — STRUCTURE                                         (weight: {int(w_struct*100)}%)")
+        print(
+            f"  SECTION 1 — STRUCTURE                                         (weight: {int(w_struct*100)}%)"
+        )
         print(DSEP)
         print(f"  {'Metric':<30}  {'Current':>8}  {'Target':>7}  {'Score':>5}  Bar")
         print(SEP)
@@ -396,14 +448,18 @@ class GraphBenchmark:
                 cur_group = group
                 print(f"  {group}")
             st = status(pct)
-            print(f"  {st} {name:<28}  {current:>8}  {target:>7}  {pct:>4}%  {bar(pct, 16)}")
+            print(
+                f"  {st} {name:<28}  {current:>8}  {target:>7}  {pct:>4}%  {bar(pct, 16)}"
+            )
 
         print(SEP)
         print(f"  STRUCTURE SCORE  {bar(struct_avg)}  {struct_avg}%")
 
         # Reasoning section
         print(f"\n{DSEP}")
-        print(f"  SECTION 2 — REASONING                                         (weight: {int(w_reason*100)}%)")
+        print(
+            f"  SECTION 2 — REASONING                                         (weight: {int(w_reason*100)}%)"
+        )
         print(DSEP)
         print(f"  {'Question':<40}  {'Result'}")
         print(SEP)
@@ -414,14 +470,20 @@ class GraphBenchmark:
 
         print(SEP)
         passed = sum(1 for t in reason_tests if t["passed"])
-        print(f"  REASONING SCORE  {bar(reason_score)}  {passed}/{len(reason_tests)} pass  ({reason_score}%)")
+        print(
+            f"  REASONING SCORE  {bar(reason_score)}  {passed}/{len(reason_tests)} pass  ({reason_score}%)"
+        )
 
         # Friction section
         print(f"\n{DSEP}")
-        print(f"  SECTION 3 — FRICTION LOG                                      (weight: {int(w_fric*100)}%)")
+        print(
+            f"  SECTION 3 — FRICTION LOG                                      (weight: {int(w_fric*100)}%)"
+        )
         print(DSEP)
         print(f"  Events last 30 days : {friction_recent}")
-        print(f"  Score               : 100 − ({friction_recent} × 10) = {friction_score}%")
+        print(
+            f"  Score               : 100 − ({friction_recent} × 10) = {friction_score}%"
+        )
         if unproven:
             print(f"\n  ⚠️  No friction events logged yet (unproven).")
         print(SEP)
@@ -431,9 +493,15 @@ class GraphBenchmark:
         print(f"\n{DSEP}")
         print(f"  FINAL SCORE")
         print(DSEP)
-        print(f"  Structure:  {int(w_struct*100)}% × {struct_avg}% = {round(struct_avg * w_struct, 1)} pts")
-        print(f"  Reasoning:  {int(w_reason*100)}% × {reason_score}% = {round(reason_score * w_reason, 1)} pts")
-        print(f"  Friction:   {int(w_fric*100)}% × {friction_score}% = {round(friction_score * w_fric, 1)} pts")
+        print(
+            f"  Structure:  {int(w_struct*100)}% × {struct_avg}% = {round(struct_avg * w_struct, 1)} pts"
+        )
+        print(
+            f"  Reasoning:  {int(w_reason*100)}% × {reason_score}% = {round(reason_score * w_reason, 1)} pts"
+        )
+        print(
+            f"  Friction:   {int(w_fric*100)}% × {friction_score}% = {round(friction_score * w_fric, 1)} pts"
+        )
         print(f"  {'─'*40}")
         print(f"  COMBINED    {bar(combined)}  {combined}/100")
         print(DSEP)
@@ -444,7 +512,8 @@ class GraphBenchmark:
         try:
             driver = self._get_driver()
             with driver.session() as session:
-                session.run("""
+                session.run(
+                    """
                     CREATE (b:GraphBenchmark {
                         score: $combined,
                         structure_score: $struct,
@@ -456,20 +525,30 @@ class GraphBenchmark:
                         ratio: $ratio,
                         version: 1
                     })
-                """, combined=combined, struct=struct, reason=reason,
-                     friction=friction, nodes=nodes, rels=rels, ratio=ratio)
+                """,
+                    combined=combined,
+                    struct=struct,
+                    reason=reason,
+                    friction=friction,
+                    nodes=nodes,
+                    rels=rels,
+                    ratio=ratio,
+                )
         except Exception as e:
             print(f"  ⚠️  Could not save to Neo4j: {e}")
 
     def get_trend(self, limit: int = 10) -> list[dict]:
         """Get historical benchmark scores."""
-        return self._query("""
+        return self._query(
+            """
             MATCH (b:GraphBenchmark)
             RETURN b.timestamp as timestamp, b.score as score,
                    b.structure_score as structure, b.reasoning_score as reasoning
             ORDER BY b.timestamp DESC
             LIMIT $limit
-        """, limit=limit)
+        """,
+            limit=limit,
+        )
 
     def close(self):
         """Close the Neo4j driver."""

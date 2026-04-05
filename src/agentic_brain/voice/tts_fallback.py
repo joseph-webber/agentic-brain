@@ -230,9 +230,7 @@ class TTSFallbackChain:
             try:
                 return await self._speak_via_serializer(text, voice, rate, wait)
             except Exception:
-                logger.debug(
-                    "VoiceSerializer unavailable, using direct fallback chain"
-                )
+                logger.debug("VoiceSerializer unavailable, using direct fallback chain")
 
         # Direct fallback chain
         return await self._run_fallback_chain(text, voice, rate)
@@ -247,17 +245,17 @@ class TTSFallbackChain:
         use_serializer: bool = True,
     ) -> TTSResult:
         """Speak text using the fallback chain (blocking).
-        
+
         Synchronous version of speak(). Handles running from both
         inside and outside an async event loop.
-        
+
         Args:
             text: Text to speak.
             voice: Voice/lady name (default: Karen).
             rate: Speech rate in words per minute.
             wait: If True, wait for speech to complete.
             use_serializer: If True, use VoiceSerializer for overlap prevention.
-            
+
         Returns:
             TTSResult with success status and used backend.
         """
@@ -295,14 +293,14 @@ class TTSFallbackChain:
         voice: Optional[str] = None,
     ) -> TTSResult:
         """Synthesize audio without playing it.
-        
+
         Useful for pre-generating audio that can be cached
         or played later.
-        
+
         Args:
             text: Text to synthesize.
             voice: Voice/lady name.
-            
+
         Returns:
             TTSResult with audio_bytes if successful.
         """
@@ -318,10 +316,10 @@ class TTSFallbackChain:
 
     async def health_check(self) -> TTSChainHealth:
         """Check health of all TTS backends.
-        
+
         Tests each backend for availability and measures latency.
         Determines the active (highest priority available) backend.
-        
+
         Returns:
             TTSChainHealth with status for all backends.
         """
@@ -346,7 +344,9 @@ class TTSFallbackChain:
         with self._lock:
             self._active_backend = active
 
-        chain_healthy = macos_health.available  # Chain is healthy if nuclear option works
+        chain_healthy = (
+            macos_health.available
+        )  # Chain is healthy if nuclear option works
 
         return TTSChainHealth(
             cartesia=cartesia_health,
@@ -359,10 +359,10 @@ class TTSFallbackChain:
     @property
     def active_backend(self) -> Optional[TTSBackend]:
         """Return the currently active backend.
-        
+
         The active backend is the highest priority backend
         that is currently available.
-        
+
         Returns:
             Currently active TTSBackend or None.
         """
@@ -372,9 +372,9 @@ class TTSFallbackChain:
     @property
     def metrics(self) -> Dict[str, Any]:
         """Return usage metrics for all backends.
-        
+
         Includes call counts, failure counts, and fallback statistics.
-        
+
         Returns:
             Dictionary of metrics for each backend.
         """
@@ -391,13 +391,13 @@ class TTSFallbackChain:
         wait: bool,
     ) -> TTSResult:
         """Route speech through VoiceSerializer for overlap prevention.
-        
+
         Args:
             text: Text to speak.
             voice: Voice identifier.
             rate: Speech rate.
             wait: Whether to wait for completion.
-            
+
         Returns:
             TTSResult from serialized speech.
         """
@@ -434,14 +434,14 @@ class TTSFallbackChain:
         rate: int,
     ) -> TTSResult:
         """Run the fallback chain directly without serializer.
-        
+
         Tries backends in priority order: Cartesia → Kokoro → macOS say.
-        
+
         Args:
             text: Text to speak.
             voice: Voice identifier.
             rate: Speech rate.
-            
+
         Returns:
             TTSResult from first successful backend.
         """
@@ -662,7 +662,9 @@ class TTSFallbackChain:
                 from agentic_brain.voice.kokoro_tts import KokoroVoice, kokoro_available
 
                 if not kokoro_available():
-                    logger.debug("Kokoro: No backend available (kokoro-onnx or kokoro not installed)")
+                    logger.debug(
+                        "Kokoro: No backend available (kokoro-onnx or kokoro not installed)"
+                    )
                     return None
 
                 self._kokoro = KokoroVoice(enable_cache=self._enable_cache)

@@ -42,9 +42,7 @@ class ReactComponentGenerator:
 
     # --- internal ---
 
-    def _generate_component(
-        self, cfg: ADLConfig, name: str, entity: EntityDef
-    ) -> str:
+    def _generate_component(self, cfg: ADLConfig, name: str, entity: EntityDef) -> str:
         snake = to_snake_case(name)
         plural = f"{snake}s"
         pagination = entity_has_pagination(cfg, name)
@@ -179,9 +177,7 @@ export const {name}Form: React.FC<{{ onSubmit: (data: Partial<I{name}>) => void 
                 input_type = "number"
             elif f.type == "Boolean":
                 input_type = "checkbox"
-            lines.append(
-                f"      <div>"
-            )
+            lines.append(f"      <div>")
             lines.append(
                 f'        <label htmlFor="{f.name}">{f.name}{req_star}</label>'
             )

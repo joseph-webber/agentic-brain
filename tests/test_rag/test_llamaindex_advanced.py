@@ -48,7 +48,12 @@ from agentic_brain.rag.llamaindex_compat import (
 def _reset_globals() -> None:
     """Reset global Settings + global ServiceContext between tests."""
     prev_ctx = lic.get_global_service_context()
-    prev_settings = (Settings.llm, Settings.embed_model, Settings.chunk_size, Settings.chunk_overlap)
+    prev_settings = (
+        Settings.llm,
+        Settings.embed_model,
+        Settings.chunk_size,
+        Settings.chunk_overlap,
+    )
     try:
         yield
     finally:
@@ -84,7 +89,9 @@ class TestServiceContext:
         assert ctx.chunk_overlap == 22
 
     def test_to_settings_applies_values(self) -> None:
-        ctx = ServiceContext.from_defaults(llm="llm-b", embed_model="embed-b", chunk_size=333, chunk_overlap=44)
+        ctx = ServiceContext.from_defaults(
+            llm="llm-b", embed_model="embed-b", chunk_size=333, chunk_overlap=44
+        )
         ctx.to_settings()
         assert Settings.llm == "llm-b"
         assert Settings.embed_model == "embed-b"
@@ -135,18 +142,24 @@ class TestNodeParsers:
 
     def test_sentence_splitter_metadata_contains_chunk_index(self) -> None:
         splitter = SentenceSplitter(chunk_size=10, chunk_overlap=0)
-        nodes = splitter.get_nodes_from_documents([lic.TextNode(text="A. B. C.", metadata={"source": "x"})])
+        nodes = splitter.get_nodes_from_documents(
+            [lic.TextNode(text="A. B. C.", metadata={"source": "x"})]
+        )
         assert all("chunk_index" in n.metadata for n in nodes)
         assert all(n.metadata.get("source") == "x" for n in nodes)
 
     def test_token_text_splitter_returns_nodes(self) -> None:
         splitter = TokenTextSplitter(chunk_size=5, chunk_overlap=1, separator=" ")
-        nodes = splitter.get_nodes_from_documents([lic.TextNode(text="one two three four five six seven")])
+        nodes = splitter.get_nodes_from_documents(
+            [lic.TextNode(text="one two three four five six seven")]
+        )
         assert len(nodes) >= 2
 
     def test_token_text_splitter_overlap(self) -> None:
         splitter = TokenTextSplitter(chunk_size=5, chunk_overlap=2, separator=" ")
-        nodes = splitter.get_nodes_from_documents([lic.TextNode(text="one two three four five six seven")])
+        nodes = splitter.get_nodes_from_documents(
+            [lic.TextNode(text="one two three four five six seven")]
+        )
         assert len(nodes) >= 2
         # Some word should be shared between adjacent nodes.
         first_words = set(nodes[0].text.split())
@@ -159,7 +172,9 @@ class TestSynthesizerModes:
         synth = get_response_synthesizer("compact")
         assert isinstance(synth, CompactSynthesizer)
 
-    def test_compact_mode_calls_generate_with_prompt_and_context(self, patch_generate: None) -> None:
+    def test_compact_mode_calls_generate_with_prompt_and_context(
+        self, patch_generate: None
+    ) -> None:
         synth = CompactSynthesizer()
         nodes = [lic.NodeWithScore(node=lic.TextNode(text="ctx"), score=0.5)]
         resp = synth.synthesize("Q?", nodes)
@@ -179,7 +194,10 @@ class TestSynthesizerModes:
 
     def test_tree_summarize_returns_levels(self, patch_generate: None) -> None:
         synth = TreeSummarizeSynthesizer(num_children=2)
-        nodes = [lic.NodeWithScore(node=lic.TextNode(text=f"ctx{i}"), score=0.1) for i in range(5)]
+        nodes = [
+            lic.NodeWithScore(node=lic.TextNode(text=f"ctx{i}"), score=0.1)
+            for i in range(5)
+        ]
         resp = synth.synthesize("Q?", nodes)
         assert resp.metadata["mode"] == "tree_summarize"
         assert resp.metadata["levels"] >= 1
@@ -192,14 +210,18 @@ class TestSynthesizerModes:
 
 
 class TestStreaming:
-    def test_streaming_synthesizer_returns_streaming_response(self, patch_generate: None) -> None:
+    def test_streaming_synthesizer_returns_streaming_response(
+        self, patch_generate: None
+    ) -> None:
         synth = StreamingSynthesizer()
         nodes = [lic.NodeWithScore(node=lic.TextNode(text="ctx"), score=0.5)]
         resp = synth.synthesize_stream("Q?", nodes)
         assert isinstance(resp, StreamingResponse)
         assert resp.metadata["streaming"] is True
 
-    def test_streaming_response_get_response_concatenates_tokens(self, patch_generate: None) -> None:
+    def test_streaming_response_get_response_concatenates_tokens(
+        self, patch_generate: None
+    ) -> None:
         synth = StreamingSynthesizer()
         nodes = [lic.NodeWithScore(node=lic.TextNode(text="ctx"), score=0.5)]
         resp = synth.synthesize_stream("Q?", nodes)
@@ -208,7 +230,9 @@ class TestStreaming:
         assert "PROMPT=Q?" in full
 
     @pytest.mark.asyncio
-    async def test_streaming_response_aget_response_uses_async_gen(self, patch_generate: None) -> None:
+    async def test_streaming_response_aget_response_uses_async_gen(
+        self, patch_generate: None
+    ) -> None:
         synth = StreamingSynthesizer()
         nodes = [lic.NodeWithScore(node=lic.TextNode(text="ctx"), score=0.5)]
         resp = synth.synthesize_stream("Q?", nodes)
@@ -227,7 +251,9 @@ class TestStreaming:
                 break
         assert tokens
 
-    def test_query_engine_streaming_returns_streaming_response(self, patch_generate: None) -> None:
+    def test_query_engine_streaming_returns_streaming_response(
+        self, patch_generate: None
+    ) -> None:
         engine = AgenticQueryEngine(
             retriever=lic.AgenticRetriever(similarity_top_k=1),
             synthesizer=AgenticSynthesizer(),
@@ -257,7 +283,11 @@ class TestMetadataExtractors:
         assert "section_summary" in metas[0]
 
     def test_summary_extractor_prev_next(self) -> None:
-        nodes = [lic.TextNode(text="alpha"), lic.TextNode(text="beta"), lic.TextNode(text="gamma")]
+        nodes = [
+            lic.TextNode(text="alpha"),
+            lic.TextNode(text="beta"),
+            lic.TextNode(text="gamma"),
+        ]
         metas = SummaryExtractor(summaries=["prev", "next"]).extract(nodes)
         assert "prev_section_summary" not in metas[0]
         assert "next_section_summary" in metas[0]
@@ -268,7 +298,9 @@ class TestMetadataExtractors:
 
 class TestIngestionAndIndexIntegration:
     def test_ingestion_pipeline_runs_split_and_title(self) -> None:
-        docs = [lic.TextNode(text="# DocTitle\n\nA. B. C. D.", metadata={"source": "x"})]
+        docs = [
+            lic.TextNode(text="# DocTitle\n\nA. B. C. D.", metadata={"source": "x"})
+        ]
         pipeline = IngestionPipeline(
             transformations=[
                 SentenceSplitter(chunk_size=10, chunk_overlap=0),
@@ -288,14 +320,18 @@ class TestIngestionAndIndexIntegration:
         )
         assert index._store.count() > 1
 
-    def test_agentic_index_from_documents_without_transformations_preserves_count(self) -> None:
+    def test_agentic_index_from_documents_without_transformations_preserves_count(
+        self,
+    ) -> None:
         docs = [lic.TextNode(text="A. B. C.")]
         index = AgenticIndex.from_documents(docs, show_progress=False)
         assert index._store.count() == 1
 
     def test_agentic_index_from_documents_chunk_size_convenience(self) -> None:
         docs = [lic.TextNode(text="A. B. C. D. E. F.")]
-        index = AgenticIndex.from_documents(docs, show_progress=False, chunk_size=10, chunk_overlap=0)
+        index = AgenticIndex.from_documents(
+            docs, show_progress=False, chunk_size=10, chunk_overlap=0
+        )
         assert index._store.count() > 1
 
 
@@ -337,8 +373,12 @@ class TestEdgeCases:
         assert "don't have enough information" in resp.get_response().lower()
 
     def test_sentence_splitter_include_metadata_false(self) -> None:
-        splitter = SentenceSplitter(chunk_size=10, chunk_overlap=0, include_metadata=False)
-        nodes = splitter.get_nodes_from_documents([lic.TextNode(text="A. B.", metadata={"x": 1})])
+        splitter = SentenceSplitter(
+            chunk_size=10, chunk_overlap=0, include_metadata=False
+        )
+        nodes = splitter.get_nodes_from_documents(
+            [lic.TextNode(text="A. B.", metadata={"x": 1})]
+        )
         assert all("x" not in n.metadata for n in nodes)
 
     def test_token_splitter_empty_text_returns_empty(self) -> None:
@@ -348,7 +388,9 @@ class TestEdgeCases:
     def test_service_context_without_global_returns_none(self) -> None:
         assert lic.get_global_service_context() is None
 
-    def test_agentic_query_engine_response_mode_override(self, patch_generate: None) -> None:
+    def test_agentic_query_engine_response_mode_override(
+        self, patch_generate: None
+    ) -> None:
         engine = AgenticQueryEngine(
             retriever=lic.AgenticRetriever(similarity_top_k=1),
             synthesizer=AgenticSynthesizer(response_mode=ResponseMode.COMPACT),

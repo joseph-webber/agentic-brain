@@ -29,14 +29,23 @@ from agentic_brain.security.guards import (
     reset_security_guard,
     set_security_guard,
 )
-from agentic_brain.security.roles import SecurityRole, get_permissions, is_dangerous_command
+from agentic_brain.security.roles import (
+    SecurityRole,
+    get_permissions,
+    is_dangerous_command,
+)
 from agentic_brain.yolo.executor import SecureYOLOExecutor
 from agentic_brain.yolo.handlers import CommandExecutionResult, InterpretedCommand
 
 
 class TestSecurityRoles:
     def test_role_ordering(self) -> None:
-        assert SecurityRole.GUEST < SecurityRole.USER < SecurityRole.SAFE_ADMIN < SecurityRole.FULL_ADMIN
+        assert (
+            SecurityRole.GUEST
+            < SecurityRole.USER
+            < SecurityRole.SAFE_ADMIN
+            < SecurityRole.FULL_ADMIN
+        )
 
     def test_primary_role_values_match_spec(self) -> None:
         assert SecurityRole.GUEST.value == "guest"
@@ -62,7 +71,9 @@ class TestRolePermissions:
         assert perms.can_manage_users is True
         assert perms.can_access_admin_api is True
         assert perms.rate_limit_per_minute == float("inf")
-        assert perms.allowed_api_scopes == frozenset({"read", "write", "delete", "admin"})
+        assert perms.allowed_api_scopes == frozenset(
+            {"read", "write", "delete", "admin"}
+        )
 
     def test_safe_admin_requires_guardrails(self) -> None:
         perms = get_permissions(SecurityRole.SAFE_ADMIN)
@@ -113,7 +124,9 @@ class TestSecurityGuard:
     def test_full_admin_can_run_dangerous_commands(self) -> None:
         guard = SecurityGuard(SecurityRole.FULL_ADMIN)
         assert guard.check_command("rm -rf /")[0] is True
-        assert guard.check_command("sudo launchctl unload /Library/Test.plist")[0] is True
+        assert (
+            guard.check_command("sudo launchctl unload /Library/Test.plist")[0] is True
+        )
 
     def test_safe_admin_blocks_dangerous_commands_pending_confirmation(self) -> None:
         guard = SecurityGuard(SecurityRole.SAFE_ADMIN)
@@ -175,7 +188,9 @@ class TestAuthentication:
         auth = AdminAuthenticator()
 
         assert auth.authenticate_key("super-secret-admin-key") is True
-        assert authenticate_api_key("super-secret-admin-key")[0] == SecurityRole.FULL_ADMIN
+        assert (
+            authenticate_api_key("super-secret-admin-key")[0] == SecurityRole.FULL_ADMIN
+        )
         assert authenticate_api_key("regular_api_key_123456")[0] == SecurityRole.USER
         assert authenticate_api_key("short")[0] == SecurityRole.GUEST
 
@@ -232,7 +247,9 @@ class DummyHandlers:
     def _extract_arguments(self, command_text: str, _prefix: str) -> str:
         return command_text
 
-    async def _run_command(self, _argv: list[str], *, capability: str, requested: str) -> CommandExecutionResult:
+    async def _run_command(
+        self, _argv: list[str], *, capability: str, requested: str
+    ) -> CommandExecutionResult:
         return CommandExecutionResult(True, capability, requested, output="ok")
 
 

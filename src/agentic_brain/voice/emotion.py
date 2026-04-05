@@ -127,11 +127,15 @@ class SpeechBrainEmotionDetector:
             first = out_prob[0]
             probs = first.tolist() if hasattr(first, "tolist") else list(first)
 
-            labels = list(getattr(self._classifier.hparams.label_encoder, "ind2lab", []))
+            labels = list(
+                getattr(self._classifier.hparams.label_encoder, "ind2lab", [])
+            )
             for k, v in zip(labels, probs):
                 probabilities[str(k)] = float(v)
         except Exception as exc:  # pragma: no cover - best-effort mapping
-            logger.warning("Failed to build probability map from SpeechBrain output: %s", exc)
+            logger.warning(
+                "Failed to build probability map from SpeechBrain output: %s", exc
+            )
 
         return {
             "emotion": label,

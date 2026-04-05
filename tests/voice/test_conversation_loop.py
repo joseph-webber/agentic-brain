@@ -70,7 +70,7 @@ class TestConversationMetrics:
         metrics.utterances = 5
         metrics.responses = 4
         metrics.record_latency(250.0)
-        
+
         data = metrics.to_dict()
         assert data["utterances"] == 5
         assert data["responses"] == 4
@@ -137,19 +137,19 @@ class TestVoiceConversationLoop:
 
     def test_callbacks_registered(self) -> None:
         loop = VoiceConversationLoop()
-        
+
         transcript_received: List[str] = []
         response_received: List[str] = []
-        
+
         loop.on_transcript(lambda t: transcript_received.append(t))
         loop.on_response(lambda r: response_received.append(r))
-        
+
         # Trigger callbacks directly
         if loop._on_transcript:
             loop._on_transcript("Hello")
         if loop._on_response:
             loop._on_response("Hi there!")
-        
+
         assert transcript_received == ["Hello"]
         assert response_received == ["Hi there!"]
 
@@ -160,8 +160,9 @@ class TestSingleton:
     def test_get_conversation_loop_returns_singleton(self) -> None:
         # Reset singleton for test
         import agentic_brain.voice.conversation_loop as module
+
         module._conversation_loop = None
-        
+
         loop1 = get_conversation_loop()
         loop2 = get_conversation_loop()
         assert loop1 is loop2
@@ -178,9 +179,7 @@ class TestAsyncMethods:
         assert result is None
 
     async def test_get_llm_response_with_callback(self) -> None:
-        config = ConversationConfig(
-            response_callback=lambda t: f"Echo: {t}"
-        )
+        config = ConversationConfig(response_callback=lambda t: f"Echo: {t}")
         loop = VoiceConversationLoop(config)
         response = await loop._get_llm_response("Hello")
         assert response == "Echo: Hello"

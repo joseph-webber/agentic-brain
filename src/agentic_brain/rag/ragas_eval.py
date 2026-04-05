@@ -74,12 +74,14 @@ logger = logging.getLogger(__name__)
 # Quality Thresholds
 # ---------------------------------------------------------------------------
 
+
 class QualityLevel(Enum):
     """RAGAS quality levels for production readiness."""
-    PRODUCTION = 0.8   # Ready for production deployment
-    STAGING = 0.7      # Acceptable for staging/testing
+
+    PRODUCTION = 0.8  # Ready for production deployment
+    STAGING = 0.7  # Acceptable for staging/testing
     DEVELOPMENT = 0.6  # Needs improvement
-    FAILING = 0.0      # Below acceptable quality
+    FAILING = 0.0  # Below acceptable quality
 
 
 QUALITY_BAR = 0.8  # Default production quality threshold
@@ -88,6 +90,7 @@ QUALITY_BAR = 0.8  # Default production quality threshold
 # ---------------------------------------------------------------------------
 # Data Structures
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class RAGASSample:
@@ -140,21 +143,23 @@ class SampleResult:
     def overall_score(self) -> float:
         """Weighted average of all metrics."""
         return (
-            self.faithfulness.score * 0.25 +
-            self.answer_relevancy.score * 0.25 +
-            self.context_precision.score * 0.25 +
-            self.context_recall.score * 0.25
+            self.faithfulness.score * 0.25
+            + self.answer_relevancy.score * 0.25
+            + self.context_precision.score * 0.25
+            + self.context_recall.score * 0.25
         )
 
     @property
     def meets_quality_bar(self) -> bool:
         """Check if all metrics meet quality threshold."""
-        return all([
-            self.faithfulness.meets_quality_bar,
-            self.answer_relevancy.meets_quality_bar,
-            self.context_precision.meets_quality_bar,
-            self.context_recall.meets_quality_bar,
-        ])
+        return all(
+            [
+                self.faithfulness.meets_quality_bar,
+                self.answer_relevancy.meets_quality_bar,
+                self.context_precision.meets_quality_bar,
+                self.context_recall.meets_quality_bar,
+            ]
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -230,6 +235,7 @@ class RAGASResults:
 # Dataset
 # ---------------------------------------------------------------------------
 
+
 class RAGASDataset:
     """Dataset for RAGAS evaluation with ground truth."""
 
@@ -297,6 +303,7 @@ class RAGASDataset:
 # LLM Judge Protocol
 # ---------------------------------------------------------------------------
 
+
 class LLMJudge(Protocol):
     """Protocol for LLM-based evaluation (for faithfulness/relevancy)."""
 
@@ -351,11 +358,13 @@ class SimpleLLMJudge:
             if supported:
                 supported_count += 1
 
-            verifications.append({
-                "claim": claim,
-                "supported": supported,
-                "overlap_ratio": overlap / len(key_terms) if key_terms else 1.0,
-            })
+            verifications.append(
+                {
+                    "claim": claim,
+                    "supported": supported,
+                    "overlap_ratio": overlap / len(key_terms) if key_terms else 1.0,
+                }
+            )
 
         score = supported_count / len(claims) if claims else 1.0
         return score, verifications
@@ -404,19 +413,55 @@ class SimpleLLMJudge:
         """Extract key terms (nouns, verbs) from text."""
         # Simple approach: words that are longer and not stopwords
         stopwords = {
-            "the", "a", "an", "is", "are", "was", "were", "be", "been",
-            "being", "have", "has", "had", "do", "does", "did", "will",
-            "would", "could", "should", "may", "might", "can", "this",
-            "that", "these", "those", "it", "its", "to", "of", "in",
-            "for", "on", "with", "at", "by", "from", "as", "or", "and",
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "can",
+            "this",
+            "that",
+            "these",
+            "those",
+            "it",
+            "its",
+            "to",
+            "of",
+            "in",
+            "for",
+            "on",
+            "with",
+            "at",
+            "by",
+            "from",
+            "as",
+            "or",
+            "and",
         }
-        words = re.findall(r'\b\w+\b', text.lower())
+        words = re.findall(r"\b\w+\b", text.lower())
         return [w for w in words if w not in stopwords and len(w) > 2]
 
     def _split_sentences(self, text: str) -> list[str]:
         """Split text into sentences."""
         # Simple sentence splitting
-        sentences = re.split(r'(?<=[.!?])\s+', text)
+        sentences = re.split(r"(?<=[.!?])\s+", text)
         return [s.strip() for s in sentences if s.strip()]
 
     def _extract_topic(self, sentence: str) -> str:
@@ -425,7 +470,7 @@ class SimpleLLMJudge:
         # Take first 3-5 significant words
         topic_words = []
         for word in words:
-            clean = re.sub(r'[^\w\s]', '', word)
+            clean = re.sub(r"[^\w\s]", "", word)
             if clean and len(clean) > 2:
                 topic_words.append(clean)
             if len(topic_words) >= 4:
@@ -436,6 +481,7 @@ class SimpleLLMJudge:
 # ---------------------------------------------------------------------------
 # Embedding Provider Protocol
 # ---------------------------------------------------------------------------
+
 
 class EmbeddingFunc(Protocol):
     """Protocol for embedding function."""
@@ -472,6 +518,7 @@ def _simple_embedding(text: str, dim: int = 128) -> list[float]:
 # ---------------------------------------------------------------------------
 # RAGAS Metric Calculators
 # ---------------------------------------------------------------------------
+
 
 class FaithfulnessCalculator:
     """
@@ -564,10 +611,12 @@ class AnswerRelevancyCalculator:
         for syn_q in synthetic_questions:
             syn_embed = self.embed_func(syn_q)
             sim = _cosine_similarity(q_embed, syn_embed)
-            similarities.append({
-                "synthetic_question": syn_q,
-                "similarity": sim,
-            })
+            similarities.append(
+                {
+                    "synthetic_question": syn_q,
+                    "similarity": sim,
+                }
+            )
 
         avg_similarity = statistics.mean(s["similarity"] for s in similarities)
         score = max(0.0, min(1.0, avg_similarity))
@@ -614,12 +663,16 @@ class ContextPrecisionCalculator:
         for i, context in enumerate(sample.contexts):
             ctx_embed = self.embed_func(context)
             similarity = _cosine_similarity(gt_embed, ctx_embed)
-            relevance_scores.append({
-                "rank": i + 1,
-                "context_preview": context[:100] + "..." if len(context) > 100 else context,
-                "relevance": similarity,
-                "is_relevant": similarity >= 0.3,  # Threshold for "relevant"
-            })
+            relevance_scores.append(
+                {
+                    "rank": i + 1,
+                    "context_preview": (
+                        context[:100] + "..." if len(context) > 100 else context
+                    ),
+                    "relevance": similarity,
+                    "is_relevant": similarity >= 0.3,  # Threshold for "relevant"
+                }
+            )
 
         # Calculate weighted precision (AP@K style)
         # Higher weight for relevant contexts appearing earlier
@@ -693,24 +746,28 @@ class ContextRecallCalculator:
 
         for statement in gt_statements:
             # Check if key terms from statement appear in context
-            terms = set(re.findall(r'\b\w{4,}\b', statement.lower()))
+            terms = set(re.findall(r"\b\w{4,}\b", statement.lower()))
             if not terms:
-                statement_coverage.append({
-                    "statement": statement,
-                    "covered": True,
-                    "coverage_ratio": 1.0,
-                })
+                statement_coverage.append(
+                    {
+                        "statement": statement,
+                        "covered": True,
+                        "coverage_ratio": 1.0,
+                    }
+                )
                 continue
 
             overlap = sum(1 for t in terms if t in context_text)
             coverage = overlap / len(terms)
             covered = coverage >= 0.5
 
-            statement_coverage.append({
-                "statement": statement,
-                "covered": covered,
-                "coverage_ratio": coverage,
-            })
+            statement_coverage.append(
+                {
+                    "statement": statement,
+                    "covered": covered,
+                    "coverage_ratio": coverage,
+                }
+            )
 
         covered_count = sum(1 for s in statement_coverage if s["covered"])
         score = covered_count / len(statement_coverage)
@@ -730,6 +787,7 @@ class ContextRecallCalculator:
 # ---------------------------------------------------------------------------
 # Main Evaluator
 # ---------------------------------------------------------------------------
+
 
 class RAGASEvaluator:
     """
@@ -820,15 +878,21 @@ class RAGASEvaluator:
 
         # Aggregate metrics
         avg_faithfulness = statistics.mean(r.faithfulness.score for r in sample_results)
-        avg_answer_relevancy = statistics.mean(r.answer_relevancy.score for r in sample_results)
-        avg_context_precision = statistics.mean(r.context_precision.score for r in sample_results)
-        avg_context_recall = statistics.mean(r.context_recall.score for r in sample_results)
+        avg_answer_relevancy = statistics.mean(
+            r.answer_relevancy.score for r in sample_results
+        )
+        avg_context_precision = statistics.mean(
+            r.context_precision.score for r in sample_results
+        )
+        avg_context_recall = statistics.mean(
+            r.context_recall.score for r in sample_results
+        )
 
         overall_score = (
-            avg_faithfulness * 0.25 +
-            avg_answer_relevancy * 0.25 +
-            avg_context_precision * 0.25 +
-            avg_context_recall * 0.25
+            avg_faithfulness * 0.25
+            + avg_answer_relevancy * 0.25
+            + avg_context_precision * 0.25
+            + avg_context_recall * 0.25
         )
 
         # Determine quality level
@@ -908,12 +972,19 @@ class RAGASEvaluator:
             names[1]: results_b.to_dict(),
             "improvements": {
                 "faithfulness": results_b.avg_faithfulness - results_a.avg_faithfulness,
-                "answer_relevancy": results_b.avg_answer_relevancy - results_a.avg_answer_relevancy,
-                "context_precision": results_b.avg_context_precision - results_a.avg_context_precision,
-                "context_recall": results_b.avg_context_recall - results_a.avg_context_recall,
+                "answer_relevancy": results_b.avg_answer_relevancy
+                - results_a.avg_answer_relevancy,
+                "context_precision": results_b.avg_context_precision
+                - results_a.avg_context_precision,
+                "context_recall": results_b.avg_context_recall
+                - results_a.avg_context_recall,
                 "overall": results_b.overall_score - results_a.overall_score,
             },
-            "winner": names[1] if results_b.overall_score > results_a.overall_score else names[0],
+            "winner": (
+                names[1]
+                if results_b.overall_score > results_a.overall_score
+                else names[0]
+            ),
         }
 
         return comparison
@@ -946,7 +1017,13 @@ class RAGASEvaluator:
             results = self.evaluate_rag_pipeline(rag_func, questions, ground_truths)
             all_results.append(results)
 
-        metrics = ["faithfulness", "answer_relevancy", "context_precision", "context_recall", "overall"]
+        metrics = [
+            "faithfulness",
+            "answer_relevancy",
+            "context_precision",
+            "context_recall",
+            "overall",
+        ]
         benchmark_stats = {}
 
         for metric in metrics:
@@ -972,6 +1049,7 @@ class RAGASEvaluator:
 # ---------------------------------------------------------------------------
 # Integration with GraphRAG
 # ---------------------------------------------------------------------------
+
 
 def create_graphrag_evaluator(
     graphrag,
@@ -1000,6 +1078,7 @@ def create_graphrag_evaluator(
             ground_truths=["Use kubectl apply"]
         )
     """
+
     def rag_wrapper(question: str) -> tuple[str, list[str]]:
         """Wrap GraphRAG search to return (answer, contexts) tuple."""
         results = graphrag.search(question)
@@ -1009,7 +1088,9 @@ def create_graphrag_evaluator(
         if hasattr(results, "chunks"):
             contexts = [chunk.content for chunk in results.chunks]
         elif hasattr(results, "results"):
-            contexts = [r.content if hasattr(r, "content") else str(r) for r in results.results]
+            contexts = [
+                r.content if hasattr(r, "content") else str(r) for r in results.results
+            ]
         elif isinstance(results, list):
             contexts = [r.content if hasattr(r, "content") else str(r) for r in results]
 
@@ -1031,6 +1112,7 @@ def create_graphrag_evaluator(
 # ---------------------------------------------------------------------------
 # Quick Evaluation Helpers
 # ---------------------------------------------------------------------------
+
 
 def quick_evaluate(
     question: str,
@@ -1060,7 +1142,9 @@ def quick_evaluate(
     return evaluator.evaluate_sample(sample)
 
 
-def check_quality_bar(results: RAGASResults | SampleResult, bar: float = QUALITY_BAR) -> bool:
+def check_quality_bar(
+    results: RAGASResults | SampleResult, bar: float = QUALITY_BAR
+) -> bool:
     """Check if results meet the quality bar."""
     score = results.overall_score
     return score >= bar
@@ -1073,6 +1157,7 @@ def check_quality_bar(results: RAGASResults | SampleResult, bar: float = QUALITY
 
 class AspectType(Enum):
     """Aspect types for critique evaluation."""
+
     HARMFULNESS = "harmfulness"
     COHERENCE = "coherence"
     CONCISENESS = "conciseness"
@@ -1084,6 +1169,7 @@ class AspectType(Enum):
 @dataclass
 class AspectCritiqueResult:
     """Result for aspect critique evaluation."""
+
     aspect: AspectType
     score: float  # 0.0 to 1.0
     verdict: bool  # True = passes aspect check
@@ -1106,15 +1192,15 @@ class AspectCritiqueCalculator:
 
     # Patterns indicating potential issues
     HARMFUL_PATTERNS = [
-        r'\b(kill|harm|hurt|destroy|attack|violence)\b',
-        r'\b(weapon|bomb|explosive|poison)\b',
-        r'\b(illegal|crime|criminal|hack)\b',
+        r"\b(kill|harm|hurt|destroy|attack|violence)\b",
+        r"\b(weapon|bomb|explosive|poison)\b",
+        r"\b(illegal|crime|criminal|hack)\b",
     ]
 
     MALICIOUS_PATTERNS = [
-        r'\b(steal|fraud|scam|phishing)\b',
-        r'\b(exploit|vulnerability|backdoor)\b',
-        r'\b(malware|virus|trojan|ransomware)\b',
+        r"\b(steal|fraud|scam|phishing)\b",
+        r"\b(exploit|vulnerability|backdoor)\b",
+        r"\b(malware|virus|trojan|ransomware)\b",
     ]
 
     def __init__(self, judge: Optional[LLMJudge] = None):
@@ -1182,12 +1268,21 @@ class AspectCritiqueCalculator:
 
     def _evaluate_coherence(self, answer: str, question: str) -> AspectCritiqueResult:
         """Check logical consistency and structure."""
-        sentences = re.split(r'[.!?]+', answer)
+        sentences = re.split(r"[.!?]+", answer)
         sentences = [s.strip() for s in sentences if s.strip()]
 
         # Check for logical connectors
-        connectors = ['therefore', 'however', 'because', 'thus', 'hence',
-                      'consequently', 'moreover', 'furthermore', 'additionally']
+        connectors = [
+            "therefore",
+            "however",
+            "because",
+            "thus",
+            "hence",
+            "consequently",
+            "moreover",
+            "furthermore",
+            "additionally",
+        ]
         has_connectors = any(c in answer.lower() for c in connectors)
 
         # Check sentence length variance (too much = incoherent)
@@ -1199,11 +1294,11 @@ class AspectCritiqueCalculator:
             length_score = 0.8
 
         # Check if answer relates to question
-        question_terms = set(re.findall(r'\b\w{4,}\b', question.lower()))
-        answer_terms = set(re.findall(r'\b\w{4,}\b', answer.lower()))
+        question_terms = set(re.findall(r"\b\w{4,}\b", question.lower()))
+        answer_terms = set(re.findall(r"\b\w{4,}\b", answer.lower()))
         relevance = len(question_terms & answer_terms) / max(len(question_terms), 1)
 
-        score = (length_score * 0.3 + relevance * 0.5 + (0.2 if has_connectors else 0.1))
+        score = length_score * 0.3 + relevance * 0.5 + (0.2 if has_connectors else 0.1)
         score = min(1.0, max(0.0, score))
 
         return AspectCritiqueResult(
@@ -1211,7 +1306,7 @@ class AspectCritiqueCalculator:
             score=score,
             verdict=score >= 0.6,
             reasoning=f"Coherence: {len(sentences)} sentences, "
-                      f"relevance={relevance:.2f}, connectors={has_connectors}",
+            f"relevance={relevance:.2f}, connectors={has_connectors}",
         )
 
     def _evaluate_conciseness(self, answer: str, question: str) -> AspectCritiqueResult:
@@ -1230,7 +1325,7 @@ class AspectCritiqueCalculator:
             score = max(0.2, 1.0 - (ratio - 10) / 20)  # Penalize verbosity
 
         # Check for redundancy
-        sentences = re.split(r'[.!?]+', answer)
+        sentences = re.split(r"[.!?]+", answer)
         unique_sentences = set(s.strip().lower() for s in sentences if s.strip())
         redundancy = 1.0 - len(unique_sentences) / max(len(sentences), 1)
 
@@ -1244,7 +1339,9 @@ class AspectCritiqueCalculator:
             reasoning=f"Word ratio={ratio:.1f}x, redundancy={redundancy:.2f}",
         )
 
-    def _evaluate_correctness(self, answer: str, contexts: list[str]) -> AspectCritiqueResult:
+    def _evaluate_correctness(
+        self, answer: str, contexts: list[str]
+    ) -> AspectCritiqueResult:
         """Check factual accuracy against contexts."""
         if not contexts:
             return AspectCritiqueResult(
@@ -1255,7 +1352,7 @@ class AspectCritiqueCalculator:
             )
 
         context_text = " ".join(contexts).lower()
-        answer_terms = set(re.findall(r'\b\w{4,}\b', answer.lower()))
+        answer_terms = set(re.findall(r"\b\w{4,}\b", answer.lower()))
 
         # Check how many answer terms appear in context
         verified_terms = [t for t in answer_terms if t in context_text]
@@ -1279,11 +1376,11 @@ class AspectCritiqueCalculator:
         # Check for repeated words
         words = answer.lower().split()
         for i in range(len(words) - 1):
-            if words[i] == words[i + 1] and words[i] not in ['the', 'a', 'an', 'to']:
+            if words[i] == words[i + 1] and words[i] not in ["the", "a", "an", "to"]:
                 issues.append(f"repeated: {words[i]}")
 
         # Check sentence structure (capitalization, punctuation)
-        sentences = re.split(r'[.!?]+', answer)
+        sentences = re.split(r"[.!?]+", answer)
         for s in sentences:
             s = s.strip()
             if s and not s[0].isupper():
@@ -1291,9 +1388,9 @@ class AspectCritiqueCalculator:
                 break
 
         # Check for common grammatical patterns
-        if re.search(r'\s{2,}', answer):
+        if re.search(r"\s{2,}", answer):
             issues.append("multiple spaces")
-        if re.search(r'[.!?]{2,}', answer):
+        if re.search(r"[.!?]{2,}", answer):
             issues.append("multiple punctuation")
 
         score = max(0.0, 1.0 - len(issues) * 0.15)
@@ -1335,22 +1432,30 @@ class AnswerCorrectnessCalculator:
     - Semantic similarity (embedding cosine similarity)
     """
 
-    def __init__(self, embed_func: Optional[EmbeddingFunc] = None, judge: Optional[LLMJudge] = None):
+    def __init__(
+        self,
+        embed_func: Optional[EmbeddingFunc] = None,
+        judge: Optional[LLMJudge] = None,
+    ):
         self.embed_func = embed_func or _simple_embedding
         self.judge = judge or SimpleLLMJudge()
 
     def calculate(self, answer: str, ground_truth: str) -> MetricResult:
         """Calculate answer correctness score."""
         # Factual overlap (F1 score)
-        answer_terms = set(re.findall(r'\b\w{3,}\b', answer.lower()))
-        gt_terms = set(re.findall(r'\b\w{3,}\b', ground_truth.lower()))
+        answer_terms = set(re.findall(r"\b\w{3,}\b", answer.lower()))
+        gt_terms = set(re.findall(r"\b\w{3,}\b", ground_truth.lower()))
 
         if not answer_terms or not gt_terms:
             factual_score = 0.0
         else:
             precision = len(answer_terms & gt_terms) / len(answer_terms)
             recall = len(answer_terms & gt_terms) / len(gt_terms)
-            factual_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+            factual_score = (
+                2 * precision * recall / (precision + recall)
+                if (precision + recall) > 0
+                else 0.0
+            )
 
         # Semantic similarity
         answer_embed = self.embed_func(answer)
@@ -1413,10 +1518,10 @@ class ContextEntityRecallCalculator:
 
     # Entity patterns
     ENTITY_PATTERNS = [
-        r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b',  # Proper nouns
-        r'\b[A-Z]{2,}\b',  # Acronyms
-        r'\b\d+(?:\.\d+)?(?:\s*(?:GB|MB|KB|ms|s|%))?\b',  # Numbers with units
-        r'\b(?:v\d+(?:\.\d+)*)\b',  # Version numbers
+        r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b",  # Proper nouns
+        r"\b[A-Z]{2,}\b",  # Acronyms
+        r"\b\d+(?:\.\d+)?(?:\s*(?:GB|MB|KB|ms|s|%))?\b",  # Numbers with units
+        r"\b(?:v\d+(?:\.\d+)*)\b",  # Version numbers
     ]
 
     def calculate(self, contexts: list[str], ground_truth: str) -> MetricResult:
@@ -1466,7 +1571,7 @@ class ContextEntityRecallCalculator:
             entities.update(matches)
 
         # Filter out common words that might match patterns
-        stopwords = {'The', 'This', 'That', 'These', 'Those', 'Some', 'Any', 'Each'}
+        stopwords = {"The", "This", "That", "These", "Those", "Some", "Any", "Each"}
         entities = [e for e in entities if e not in stopwords]
 
         return list(entities)
@@ -1588,7 +1693,7 @@ class NoiseRobustnessCalculator:
 
         for old, new in replacements.items():
             if old in text.lower():
-                text = re.sub(rf'\b{old}\b', new, text, flags=re.IGNORECASE, count=1)
+                text = re.sub(rf"\b{old}\b", new, text, flags=re.IGNORECASE, count=1)
                 break
 
         return text
@@ -1620,7 +1725,11 @@ class SummarizationScoreCalculator:
     this measures how well the summary captures key information.
     """
 
-    def __init__(self, judge: Optional[LLMJudge] = None, embed_func: Optional[EmbeddingFunc] = None):
+    def __init__(
+        self,
+        judge: Optional[LLMJudge] = None,
+        embed_func: Optional[EmbeddingFunc] = None,
+    ):
         self.judge = judge or SimpleLLMJudge()
         self.embed_func = embed_func or _simple_embedding
 
@@ -1650,8 +1759,12 @@ class SummarizationScoreCalculator:
         if source_statements:
             summary_lower = summary.lower()
             covered = sum(
-                1 for stmt in source_statements
-                if any(term in summary_lower for term in re.findall(r'\b\w{4,}\b', stmt.lower()))
+                1
+                for stmt in source_statements
+                if any(
+                    term in summary_lower
+                    for term in re.findall(r"\b\w{4,}\b", stmt.lower())
+                )
             )
             coverage_score = covered / len(source_statements)
         else:
@@ -1700,6 +1813,7 @@ class SummarizationScoreCalculator:
 @dataclass
 class ConversationTurn:
     """Single turn in a multi-turn conversation."""
+
     question: str
     answer: str
     contexts: list[str]
@@ -1710,6 +1824,7 @@ class ConversationTurn:
 @dataclass
 class ConversationSample:
     """Multi-turn conversation sample for evaluation."""
+
     turns: list[ConversationTurn]
     conversation_id: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -1718,6 +1833,7 @@ class ConversationSample:
 @dataclass
 class MultiTurnResult:
     """Results for multi-turn conversation evaluation."""
+
     conversation_id: str
     turn_results: list[SampleResult]
     avg_faithfulness: float
@@ -1760,7 +1876,9 @@ class MultiTurnEvaluator:
         self.embed_func = embed_func or _simple_embedding
         self.base_evaluator = RAGASEvaluator(judge=judge, embed_func=embed_func)
 
-    def evaluate_conversation(self, conversation: ConversationSample) -> MultiTurnResult:
+    def evaluate_conversation(
+        self, conversation: ConversationSample
+    ) -> MultiTurnResult:
         """
         Evaluate a multi-turn conversation.
 
@@ -1805,10 +1923,10 @@ class MultiTurnEvaluator:
 
         # Overall score
         overall = (
-            avg_faithfulness * 0.25 +
-            avg_relevancy * 0.25 +
-            coherence * 0.25 +
-            context_quality * 0.25
+            avg_faithfulness * 0.25
+            + avg_relevancy * 0.25
+            + coherence * 0.25
+            + context_quality * 0.25
         )
 
         return MultiTurnResult(
@@ -1869,7 +1987,11 @@ class MultiTurnEvaluator:
                 else:
                     accumulation_scores.append(0.5 + overlap)  # Low context reuse
 
-        return min(1.0, statistics.mean(accumulation_scores)) if accumulation_scores else 1.0
+        return (
+            min(1.0, statistics.mean(accumulation_scores))
+            if accumulation_scores
+            else 1.0
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1902,11 +2024,17 @@ class AdvancedRAGASEvaluator(RAGASEvaluator):
 
         # Advanced calculators
         self.aspect_critique_calc = AspectCritiqueCalculator(self.judge)
-        self.answer_correctness_calc = AnswerCorrectnessCalculator(self.embed_func, self.judge)
+        self.answer_correctness_calc = AnswerCorrectnessCalculator(
+            self.embed_func, self.judge
+        )
         self.answer_similarity_calc = AnswerSimilarityCalculator(self.embed_func)
         self.entity_recall_calc = ContextEntityRecallCalculator()
-        self.noise_robustness_calc = NoiseRobustnessCalculator(rag_func, self.embed_func)
-        self.summarization_calc = SummarizationScoreCalculator(self.judge, self.embed_func)
+        self.noise_robustness_calc = NoiseRobustnessCalculator(
+            rag_func, self.embed_func
+        )
+        self.summarization_calc = SummarizationScoreCalculator(
+            self.judge, self.embed_func
+        )
         self.multi_turn_evaluator = MultiTurnEvaluator(self.judge, self.embed_func)
 
     def evaluate_with_aspects(
@@ -1974,7 +2102,9 @@ class AdvancedRAGASEvaluator(RAGASEvaluator):
         noise_types: list[str] | None = None,
     ) -> MetricResult:
         """Evaluate robustness to query noise."""
-        return self.noise_robustness_calc.calculate(question, expected_answer, noise_types)
+        return self.noise_robustness_calc.calculate(
+            question, expected_answer, noise_types
+        )
 
     def evaluate_summarization(
         self,
@@ -2015,10 +2145,14 @@ class AdvancedRAGASEvaluator(RAGASEvaluator):
         results = {
             "core": self.evaluate_sample(sample).to_dict(),
             "answer_quality": {
-                k: v.to_dict() if hasattr(v, 'to_dict') else {
-                    "name": v.name, "score": v.score, "details": v.details
-                }
-                for k, v in self.evaluate_answer_quality(sample.answer, sample.ground_truth).items()
+                k: (
+                    v.to_dict()
+                    if hasattr(v, "to_dict")
+                    else {"name": v.name, "score": v.score, "details": v.details}
+                )
+                for k, v in self.evaluate_answer_quality(
+                    sample.answer, sample.ground_truth
+                ).items()
             },
         }
 
@@ -2036,7 +2170,9 @@ class AdvancedRAGASEvaluator(RAGASEvaluator):
             }
 
         if include_entity_recall:
-            entity_result = self.entity_recall_calc.calculate(sample.contexts, sample.ground_truth)
+            entity_result = self.entity_recall_calc.calculate(
+                sample.contexts, sample.ground_truth
+            )
             results["entity_recall"] = {
                 "score": entity_result.score,
                 "details": entity_result.details,
@@ -2062,6 +2198,7 @@ class AdvancedRAGASEvaluator(RAGASEvaluator):
 @dataclass
 class BenchmarkConfig:
     """Configuration for RAGAS benchmarks."""
+
     min_overall_score: float = 0.8
     min_faithfulness: float = 0.75
     min_relevancy: float = 0.75
@@ -2073,6 +2210,7 @@ class BenchmarkConfig:
 @dataclass
 class BenchmarkResult:
     """Result from CI/CD benchmark run."""
+
     passed: bool
     overall_score: float
     metrics: dict[str, float]
@@ -2130,19 +2268,29 @@ def run_ci_benchmark(
 
     # Check thresholds
     if results.overall_score < config.min_overall_score:
-        failures.append(f"Overall score {results.overall_score:.3f} < {config.min_overall_score}")
+        failures.append(
+            f"Overall score {results.overall_score:.3f} < {config.min_overall_score}"
+        )
 
     if results.avg_faithfulness < config.min_faithfulness:
-        failures.append(f"Faithfulness {results.avg_faithfulness:.3f} < {config.min_faithfulness}")
+        failures.append(
+            f"Faithfulness {results.avg_faithfulness:.3f} < {config.min_faithfulness}"
+        )
 
     if results.avg_answer_relevancy < config.min_relevancy:
-        failures.append(f"Relevancy {results.avg_answer_relevancy:.3f} < {config.min_relevancy}")
+        failures.append(
+            f"Relevancy {results.avg_answer_relevancy:.3f} < {config.min_relevancy}"
+        )
 
     if results.avg_context_precision < config.min_precision:
-        failures.append(f"Precision {results.avg_context_precision:.3f} < {config.min_precision}")
+        failures.append(
+            f"Precision {results.avg_context_precision:.3f} < {config.min_precision}"
+        )
 
     if results.avg_context_recall < config.min_recall:
-        failures.append(f"Recall {results.avg_context_recall:.3f} < {config.min_recall}")
+        failures.append(
+            f"Recall {results.avg_context_recall:.3f} < {config.min_recall}"
+        )
 
     # Check regression from baseline
     if baseline_scores:
@@ -2347,7 +2495,11 @@ def generate_html_report(
 """
 
     for name, value in metrics.items():
-        color = "var(--success)" if value >= 0.8 else "var(--primary)" if value >= 0.6 else "var(--failure)"
+        color = (
+            "var(--success)"
+            if value >= 0.8
+            else "var(--primary)" if value >= 0.6 else "var(--failure)"
+        )
         html += f"""
             <div class="metric">
                 <div class="metric-name">{name.replace('_', ' ').title()}</div>

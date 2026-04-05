@@ -3,10 +3,24 @@ from agentic_brain.evaluation.datasets import Dataset
 
 
 def test_evaluator_handles_missing_entries():
-    ds = Dataset.from_list([
-        {"id":"1","question":"q1","gold_answer":"a","gold_context_ids":["c1"]},
-        {"id":"2","question":"q2","gold_answer":"b","gold_context_ids":["c2"]},
-    ])
+    ds = Dataset.from_list(
+        [
+            {
+                "id": "1",
+                "question": "q1",
+                "gold_answer": "a",
+                "gold_context_ids": ["c1"],
+            },
+            {
+                "id": "2",
+                "question": "q2",
+                "gold_answer": "b",
+                "gold_context_ids": ["c2"],
+            },
+        ]
+    )
     ev = RAGEvaluator()
-    report = ev.evaluate(ds, retrievals=[["c1"]], retrieved_scores=None, generated_answers=None)
+    report = ev.evaluate(
+        ds, retrievals=[["c1"]], retrieved_scores=None, generated_answers=None
+    )
     assert len(report.per_item) == 2

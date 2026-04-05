@@ -48,7 +48,9 @@ def generate_report():
     plugin = ReportPlugin()
 
     # Run tests programmatically
-    ret_code = pytest.main(["tests/test_security/test_pentest.py", "-v"], plugins=[plugin])
+    ret_code = pytest.main(
+        ["tests/test_security/test_pentest.py", "-v"], plugins=[plugin]
+    )
 
     # Generate Markdown Report
     with open(report_file, "w") as f:

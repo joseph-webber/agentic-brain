@@ -50,7 +50,11 @@ def test_get_driver_uses_shared_pool_once():
         ) as get_shared_driver,
         patch.dict(
             "os.environ",
-            {"NEO4J_URI": "bolt://example", "NEO4J_USER": "neo4j", "NEO4J_PASSWORD": "secret"},
+            {
+                "NEO4J_URI": "bolt://example",
+                "NEO4J_USER": "neo4j",
+                "NEO4J_PASSWORD": "secret",
+            },
         ),
     ):
         first = brain_graph.get_driver()
@@ -76,7 +80,9 @@ def test_init_graph_uses_shared_driver():
     with (
         patch.object(brain_graph, "get_driver", return_value=fake_driver) as get_driver,
         patch.object(brain_graph, "setup_graph_constraints") as setup_graph_constraints,
-        patch.object(brain_graph, "ensure_topics_exist", return_value=3) as ensure_topics_exist,
+        patch.object(
+            brain_graph, "ensure_topics_exist", return_value=3
+        ) as ensure_topics_exist,
     ):
         assert brain_graph.init_graph() is True
 

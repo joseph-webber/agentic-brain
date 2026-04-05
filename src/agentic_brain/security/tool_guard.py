@@ -9,29 +9,35 @@ from typing import FrozenSet
 
 from .roles import ROLE_PERMISSIONS, SecurityRole
 
-EXPENSIVE_TOOLS: FrozenSet[str] = frozenset({
-    "web_search",
-    "web_fetch",
-    "browse_web",
-    "execute_code",
-    "bash",
-    "shell",
-    "file_write",
-    "file_read",
-    "heavy_llm",
-    "llm_call",
-})
+EXPENSIVE_TOOLS: FrozenSet[str] = frozenset(
+    {
+        "web_search",
+        "web_fetch",
+        "browse_web",
+        "execute_code",
+        "bash",
+        "shell",
+        "file_write",
+        "file_read",
+        "heavy_llm",
+        "llm_call",
+    }
+)
 
-WEB_SEARCH_TOOLS: FrozenSet[str] = frozenset({
-    "web_search",
-    "web_fetch",
-    "browse_web",
-})
+WEB_SEARCH_TOOLS: FrozenSet[str] = frozenset(
+    {
+        "web_search",
+        "web_fetch",
+        "browse_web",
+    }
+)
 
-HEAVY_LLM_TOOLS: FrozenSet[str] = frozenset({
-    "heavy_llm",
-    "llm_call",
-})
+HEAVY_LLM_TOOLS: FrozenSet[str] = frozenset(
+    {
+        "heavy_llm",
+        "llm_call",
+    }
+)
 
 
 def check_tool_access(role: SecurityRole, tool: str) -> bool:

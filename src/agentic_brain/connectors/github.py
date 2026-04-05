@@ -127,7 +127,9 @@ class GitHubConnector(Connector):
             content_text = self._request_text(
                 "GET", str(download_url), headers=self._headers
             )
-        updated_at = parse_datetime(payload.get("last_modified") or payload.get("updated_at"))
+        updated_at = parse_datetime(
+            payload.get("last_modified") or payload.get("updated_at")
+        )
         return ConnectorRecord(
             source=self.source_name,
             id=path,
@@ -151,7 +153,9 @@ class GitHubConnector(Connector):
     ) -> ConnectorSyncPage:
         limit = limit or self.page_size
         repo = self._request_json(
-            "GET", f"{self.base_url}/repos/{self.owner}/{self.repo}", headers=self._headers
+            "GET",
+            f"{self.base_url}/repos/{self.owner}/{self.repo}",
+            headers=self._headers,
         )
         branch = str(repo.get("default_branch") or self.branch)
         tree = self._request_json(

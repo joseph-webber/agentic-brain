@@ -60,8 +60,8 @@ class Finding:
 
     task_id: str
     swarm_id: str
-    category: str = "general"       # e.g. "bug", "security", "style", "perf"
-    severity: str = "info"          # "critical", "high", "medium", "low", "info"
+    category: str = "general"  # e.g. "bug", "security", "style", "perf"
+    severity: str = "info"  # "critical", "high", "medium", "low", "info"
     summary: str = ""
     detail: str = ""
     source_file: Optional[str] = None
@@ -121,10 +121,13 @@ class AggregatedSummary:
 
     def human_summary(self) -> str:
         """Return a concise human-readable summary string."""
-        sev_counts = {
-            sev: len(fs) for sev, fs in self.by_severity.items() if fs
-        }
-        parts = [f"{c} {s}" for s, c in sorted(sev_counts.items(), key=lambda x: _SEVERITY_ORDER.get(x[0], 99))]
+        sev_counts = {sev: len(fs) for sev, fs in self.by_severity.items() if fs}
+        parts = [
+            f"{c} {s}"
+            for s, c in sorted(
+                sev_counts.items(), key=lambda x: _SEVERITY_ORDER.get(x[0], 99)
+            )
+        ]
         cats = list(self.by_category.keys())
         return (
             f"Swarm {self.swarm_id}: {len(self.findings)} findings across "
@@ -259,7 +262,10 @@ class FindingsAggregator:
         try:
             session = neo4j_session or self._get_neo4j_session()
             if session is None:
-                logger.warning("Neo4j unavailable – skipping persistence for swarm %s", self.swarm_id)
+                logger.warning(
+                    "Neo4j unavailable – skipping persistence for swarm %s",
+                    self.swarm_id,
+                )
                 return False
 
             run_cypher = """
@@ -268,12 +274,15 @@ class FindingsAggregator:
                 sr.total_findings = $total_findings,
                 sr.human_summary = $human_summary
             """
-            session.run(run_cypher, {
-                "swarm_id": summary.swarm_id,
-                "stored_at": summary.aggregated_at,
-                "total_findings": len(summary.findings),
-                "human_summary": summary.human_summary(),
-            })
+            session.run(
+                run_cypher,
+                {
+                    "swarm_id": summary.swarm_id,
+                    "stored_at": summary.aggregated_at,
+                    "total_findings": len(summary.findings),
+                    "human_summary": summary.human_summary(),
+                },
+            )
 
             for finding in summary.findings:
                 finding_cypher = """
@@ -291,18 +300,23 @@ class FindingsAggregator:
                 session.run(finding_cypher, finding.to_dict())
 
             logger.info(
-                "Stored %d findings for swarm %s to Neo4j", len(summary.findings), self.swarm_id
+                "Stored %d findings for swarm %s to Neo4j",
+                len(summary.findings),
+                self.swarm_id,
             )
             return True
 
         except Exception:
-            logger.exception("Failed to store findings to Neo4j for swarm %s", self.swarm_id)
+            logger.exception(
+                "Failed to store findings to Neo4j for swarm %s", self.swarm_id
+            )
             return False
 
     def _get_neo4j_session(self) -> Any:
         """Lazy Neo4j session, returns None if unavailable."""
         try:
             from agentic_brain.core.neo4j_pool import get_session
+
             return get_session()
         except Exception:
             return None

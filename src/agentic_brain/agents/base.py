@@ -306,9 +306,7 @@ class MultiAgentOrchestrator(ABC):
         """
         pass
 
-    async def parallel_execute(
-        self, task: str, **kwargs: Any
-    ) -> list[AgentResult]:
+    async def parallel_execute(self, task: str, **kwargs: Any) -> list[AgentResult]:
         """
         Execute all agents in parallel.
 
@@ -327,9 +325,7 @@ class MultiAgentOrchestrator(ABC):
         processed_results = []
         for result in results:
             if isinstance(result, Exception):
-                processed_results.append(
-                    AgentResult(success=False, error=str(result))
-                )
+                processed_results.append(AgentResult(success=False, error=str(result)))
             else:
                 processed_results.append(result)
 

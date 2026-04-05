@@ -87,7 +87,8 @@ class QueryPlanner:
             confidence=classification.confidence,
             steps=tuple(steps),
             fallback_routes=classification.fallback_routes,
-            requires_decomposition=decomposition.is_multi_step or classification.needs_decomposition,
+            requires_decomposition=decomposition.is_multi_step
+            or classification.needs_decomposition,
             metadata=metadata,
         )
 

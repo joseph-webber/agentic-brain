@@ -345,7 +345,9 @@ class OllamaEmbeddings(EmbeddingProvider):
         if isinstance(embedding, list) and embedding:
             return embedding
 
-        logger.warning("Ollama response missing embedding; using deterministic fallback")
+        logger.warning(
+            "Ollama response missing embedding; using deterministic fallback"
+        )
         return _fallback_embedding(text, self._dimensions)
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
@@ -641,7 +643,11 @@ class SentenceTransformerEmbeddings(EmbeddingProvider):
             logger.exception("Failed to load sentence-transformers model")
             raise EmbeddingError(
                 "Failed to load sentence-transformers model",
-                context={"provider": "sentence_transformers", "model": self.model, "device": self.device},
+                context={
+                    "provider": "sentence_transformers",
+                    "model": self.model,
+                    "device": self.device,
+                },
             ) from exc
 
     def embed(self, text: str) -> list[float]:
@@ -656,7 +662,11 @@ class SentenceTransformerEmbeddings(EmbeddingProvider):
             logger.exception("SentenceTransformer embedding failed; using fallback")
             raise EmbeddingError(
                 "SentenceTransformer embedding failed",
-                context={"provider": "sentence_transformers", "model": self.model, "device": self.device},
+                context={
+                    "provider": "sentence_transformers",
+                    "model": self.model,
+                    "device": self.device,
+                },
             ) from exc
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
@@ -676,7 +686,11 @@ class SentenceTransformerEmbeddings(EmbeddingProvider):
             logger.exception("SentenceTransformer batch embedding failed")
             raise EmbeddingError(
                 "SentenceTransformer batch embedding failed",
-                context={"provider": "sentence_transformers", "model": self.model, "device": self.device},
+                context={
+                    "provider": "sentence_transformers",
+                    "model": self.model,
+                    "device": self.device,
+                },
             ) from exc
 
     def similarity(self, text1: str, text2: str) -> float:
@@ -1168,7 +1182,10 @@ class CachedEmbeddings(EmbeddingProvider):
             logger.exception("Failed to create embeddings cache directory")
             raise EmbeddingError(
                 "Failed to create embeddings cache directory",
-                context={"cache_dir": str(self.cache_dir), "provider": provider.model_name},
+                context={
+                    "cache_dir": str(self.cache_dir),
+                    "provider": provider.model_name,
+                },
             ) from exc
 
     def _cache_key(self, text: str) -> str:
@@ -1356,7 +1373,9 @@ def get_embeddings(
                     logger.info("Using OpenAI embeddings")
                     base = OpenAIEmbeddings()
                 except Exception as exc:
-                    logger.debug(f"OpenAI embeddings unavailable: {exc}, falling back to local")
+                    logger.debug(
+                        f"OpenAI embeddings unavailable: {exc}, falling back to local"
+                    )
                     base = SentenceTransformerEmbeddings(model=model)
 
     elif provider in ("sentence_transformers", "local"):

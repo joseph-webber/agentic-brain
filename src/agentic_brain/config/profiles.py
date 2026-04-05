@@ -1,4 +1,3 @@
-
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2024-2026 Agentic Brain Contributors
 
@@ -25,7 +24,11 @@ class ProfileName(StrEnum):
 def _deep_merge(base: dict[str, Any], override: Mapping[str, Any]) -> dict[str, Any]:
     merged = dict(base)
     for key, value in override.items():
-        if key in merged and isinstance(merged[key], dict) and isinstance(value, Mapping):
+        if (
+            key in merged
+            and isinstance(merged[key], dict)
+            and isinstance(value, Mapping)
+        ):
             merged[key] = _deep_merge(dict(merged[key]), value)
         else:
             merged[key] = deepcopy(value)

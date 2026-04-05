@@ -8,7 +8,9 @@ from agentic_brain.config import Settings
 
 
 def test_load_settings_uses_development_profile_by_default(tmp_path: Path):
-    settings = Settings.from_sources(base_path=tmp_path, env_file=tmp_path / "missing.env")
+    settings = Settings.from_sources(
+        base_path=tmp_path, env_file=tmp_path / "missing.env"
+    )
 
     assert settings.profile == "development"
     assert settings.is_dev is True
@@ -100,7 +102,9 @@ api:
     assert settings.server.cors_origins == ["https://api.example.com"]
 
 
-def test_load_settings_reads_dotenv_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_load_settings_reads_dotenv_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     env_file = tmp_path / ".env"
     env_file.write_text(
         """
@@ -124,7 +128,9 @@ CORS_ORIGINS=https://one.example,https://two.example
     ]
 
 
-def test_profile_specific_dotenv_file_is_loaded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_profile_specific_dotenv_file_is_loaded(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     env_file = tmp_path / ".env.testing"
     env_file.write_text("VOICE_ENABLED=false\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
@@ -135,7 +141,9 @@ def test_profile_specific_dotenv_file_is_loaded(tmp_path: Path, monkeypatch: pyt
     assert settings.voice.enabled is False
 
 
-def test_environment_variables_override_dotenv(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_environment_variables_override_dotenv(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     env_file = tmp_path / ".env"
     env_file.write_text("SERVER_PORT=9000\n", encoding="utf-8")
     monkeypatch.chdir(tmp_path)
@@ -149,7 +157,9 @@ def test_environment_variables_override_dotenv(tmp_path: Path, monkeypatch: pyte
     assert settings.server.port == 9300
 
 
-def test_environment_variables_override_yaml(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_environment_variables_override_yaml(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     config_file = tmp_path / "brain-config.yaml"
     config_file.write_text("llm:\n  default_model: yaml-model\n", encoding="utf-8")
     monkeypatch.setenv("LLM_DEFAULT_MODEL", "env-model")
@@ -195,4 +205,6 @@ def test_unsupported_config_file_extension_raises(tmp_path: Path):
     config_file.write_text("{}", encoding="utf-8")
 
     with pytest.raises(ValueError, match="Unsupported configuration file format"):
-        Settings.from_sources(config_file=config_file, env_file=tmp_path / "missing.env")
+        Settings.from_sources(
+            config_file=config_file, env_file=tmp_path / "missing.env"
+        )

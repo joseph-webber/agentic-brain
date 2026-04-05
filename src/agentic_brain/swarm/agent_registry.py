@@ -31,9 +31,16 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from .redis_coordinator import SwarmCoordinator, _loads, _key_agents_hash, _key_agents_set, _key_hb
+from .redis_coordinator import (
+    SwarmCoordinator,
+    _loads,
+    _key_agents_hash,
+    _key_agents_set,
+    _key_hb,
+)
 
 logger = logging.getLogger(__name__)
+
 
 # Increment / decrement key for agent workload tracking.
 def _key_workload(swarm_id: str, agent_id: str) -> str:
@@ -61,9 +68,19 @@ class AgentProfile:
             registered_at=float(d.get("registered_at", 0)),
             status=d.get("status", "ready"),
             active_tasks=int(d.get("active_tasks", 0)),
-            metadata={k: v for k, v in d.items()
-                      if k not in ("agent_id", "swarm_id", "capabilities",
-                                   "registered_at", "status", "active_tasks")},
+            metadata={
+                k: v
+                for k, v in d.items()
+                if k
+                not in (
+                    "agent_id",
+                    "swarm_id",
+                    "capabilities",
+                    "registered_at",
+                    "status",
+                    "active_tasks",
+                )
+            },
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -140,7 +157,9 @@ class AgentRegistry:
         if not raw:
             return None
         d = _loads(raw)
-        d["active_tasks"] = int(self._r.get(_key_workload(self.swarm_id, agent_id)) or 0)
+        d["active_tasks"] = int(
+            self._r.get(_key_workload(self.swarm_id, agent_id)) or 0
+        )
         return AgentProfile.from_dict(d)
 
     def all_active(self) -> List[AgentProfile]:
@@ -218,7 +237,11 @@ class AgentRegistry:
         """Return health status for a single agent."""
         hb = self._r.get(_key_hb(self.swarm_id, agent_id))
         if hb is None:
-            return {"agent_id": agent_id, "healthy": False, "reason": "heartbeat_expired"}
+            return {
+                "agent_id": agent_id,
+                "healthy": False,
+                "reason": "heartbeat_expired",
+            }
         last_beat = float(hb)
         age = time.time() - last_beat
         profile = self.get(agent_id)

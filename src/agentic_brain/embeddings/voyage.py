@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class VoyageEmbedder(Embedder):
     """
     Voyage AI Embeddings Client.
-    
+
     Models:
     - voyage-2 (1024 dimensions)
     - voyage-large-2 (1536 dimensions, higher quality)
@@ -50,7 +50,7 @@ class VoyageEmbedder(Embedder):
     ):
         """
         Initialize Voyage AI Embedder.
-        
+
         Args:
             api_key: Voyage API key (defaults to VOYAGE_API_KEY env var)
             model: Model name to use
@@ -77,9 +77,12 @@ class VoyageEmbedder(Embedder):
 
         try:
             import voyageai
+
             self.client = voyageai.Client(api_key=self.api_key)
         except ImportError:
-            raise ImportError("voyageai package required. Install with: pip install voyageai")
+            raise ImportError(
+                "voyageai package required. Install with: pip install voyageai"
+            )
 
     @property
     def provider(self) -> EmbeddingProvider:
@@ -136,7 +139,7 @@ class VoyageEmbedder(Embedder):
             except Exception as e:
                 last_error = e
                 if attempt < self.max_retries - 1:
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     logger.warning(
                         f"Embedding attempt {attempt + 1} failed: {e}. "
                         f"Retrying in {wait_time}s..."
@@ -145,7 +148,9 @@ class VoyageEmbedder(Embedder):
                 else:
                     logger.error(f"Embedding failed after {self.max_retries} attempts")
 
-        raise RuntimeError(f"Failed to embed text after {self.max_retries} attempts: {last_error}")
+        raise RuntimeError(
+            f"Failed to embed text after {self.max_retries} attempts: {last_error}"
+        )
 
     async def embed_async(self, text: str) -> EmbeddingResult:
         """Embed a single text asynchronously."""
@@ -170,10 +175,13 @@ class VoyageEmbedder(Embedder):
 
         try:
             from tqdm import tqdm
+
             batches = [
                 texts[i : i + batch_size] for i in range(0, len(texts), batch_size)
             ]
-            iterator = tqdm(batches, disable=not show_progress, desc="Embedding batches")
+            iterator = tqdm(
+                batches, disable=not show_progress, desc="Embedding batches"
+            )
         except ImportError:
             batches = [
                 texts[i : i + batch_size] for i in range(0, len(texts), batch_size)
@@ -238,7 +246,7 @@ class VoyageEmbedder(Embedder):
             except Exception as e:
                 last_error = e
                 if attempt < self.max_retries - 1:
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     logger.warning(f"Batch embedding attempt {attempt + 1} failed: {e}")
                     time.sleep(wait_time)
 
@@ -267,6 +275,7 @@ class VoyageEmbedder(Embedder):
 
         try:
             from tqdm.asyncio import tqdm
+
             batch_results = await tqdm.gather(
                 *[process_batch(b) for b in batches], disable=not show_progress
             )

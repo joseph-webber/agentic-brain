@@ -452,16 +452,18 @@ class FederatedRetriever(ParallelRetriever):
         for source_name, source_results in results_by_source.items():
             results_dicts = []
             for result in source_results:
-                results_dicts.append({
-                    "id": result.content_hash(),
-                    "content": result.content,
-                    "source_name": result.source_name,
-                    "source_type": result.source_type,
-                    "score": result.score,
-                    "metadata": result.metadata,
-                    "retrieval_time_ms": result.retrieval_time_ms,
-                    "_original": result,
-                })
+                results_dicts.append(
+                    {
+                        "id": result.content_hash(),
+                        "content": result.content,
+                        "source_name": result.source_name,
+                        "source_type": result.source_type,
+                        "score": result.score,
+                        "metadata": result.metadata,
+                        "retrieval_time_ms": result.retrieval_time_ms,
+                        "_original": result,
+                    }
+                )
             ranked_lists.append({"source": source_name, "results": results_dicts})
 
         fused = rrf_unified(ranked_lists, k=k)

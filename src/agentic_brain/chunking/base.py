@@ -116,7 +116,9 @@ class Chunker(ABC):
         if extra:
             metadata.update(extra)
 
-        kinds = [span.metadata.get("kind") for span in spans if span.metadata.get("kind")]
+        kinds = [
+            span.metadata.get("kind") for span in spans if span.metadata.get("kind")
+        ]
         if kinds:
             metadata["kinds"] = sorted(set(kinds))
         heading_paths = [
@@ -126,11 +128,19 @@ class Chunker(ABC):
         ]
         if heading_paths:
             metadata["heading_path"] = heading_paths[-1]
-        headings = [span.metadata.get("heading") for span in spans if span.metadata.get("heading")]
+        headings = [
+            span.metadata.get("heading")
+            for span in spans
+            if span.metadata.get("heading")
+        ]
         if headings:
             metadata["heading"] = headings[-1]
             metadata["last_header"] = headings[-1]
-        levels = [span.metadata.get("heading_level") for span in spans if span.metadata.get("heading_level")]
+        levels = [
+            span.metadata.get("heading_level")
+            for span in spans
+            if span.metadata.get("heading_level")
+        ]
         if levels:
             metadata["heading_level"] = levels[-1]
             metadata["header_level"] = levels[-1]
@@ -162,7 +172,9 @@ class Chunker(ABC):
 
         while start < len(usable):
             end = start
-            while end + 1 < len(usable) and span_size(start, end + 1) <= self.chunk_size:
+            while (
+                end + 1 < len(usable) and span_size(start, end + 1) <= self.chunk_size
+            ):
                 end += 1
 
             content = text[usable[start].start_char : usable[end].end_char].strip()
@@ -189,7 +201,9 @@ class Chunker(ABC):
                 start = end + 1
                 continue
 
-            boundary = max(usable[start].start_char, usable[end].end_char - self.overlap)
+            boundary = max(
+                usable[start].start_char, usable[end].end_char - self.overlap
+            )
             next_start = end
             while next_start > start and usable[next_start].start_char >= boundary:
                 next_start -= 1
@@ -200,7 +214,9 @@ class Chunker(ABC):
         return self._deduplicate_chunks(chunks)
 
     @abstractmethod
-    def chunk(self, text: str | bytes | None, metadata: dict[str, Any] | None = None) -> list[Chunk]:
+    def chunk(
+        self, text: str | bytes | None, metadata: dict[str, Any] | None = None
+    ) -> list[Chunk]:
         raise NotImplementedError
 
 
@@ -210,7 +226,9 @@ BaseChunker = Chunker
 class FixedChunker(Chunker):
     strategy_name = "fixed"
 
-    def chunk(self, text: str | bytes | None, metadata: dict[str, Any] | None = None) -> list[Chunk]:
+    def chunk(
+        self, text: str | bytes | None, metadata: dict[str, Any] | None = None
+    ) -> list[Chunk]:
         source = self._prepare_text(text)
         if not source:
             return []

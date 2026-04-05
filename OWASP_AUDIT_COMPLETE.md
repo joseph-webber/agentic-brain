@@ -356,4 +356,4 @@ secret = validate_jwt_secret()  # Raises ValueError if invalid
 **Audit Date**: 2026-04-05  
 **Next Audit**: 2026-07-05 (Quarterly)  
 **Last Updated**: 2026-04-05  
-**Repository**: https://github.com/ecomlounge/agentic-brain
+**Repository**: https://github.com/joseph-webber/agentic-brain

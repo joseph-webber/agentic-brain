@@ -211,7 +211,9 @@ class CausalChain:
     def describe(self) -> str:
         if not self.links:
             return "No causal chain found."
-        chain_text = " → ".join([self.links[0].cause] + [link.effect for link in self.links])
+        chain_text = " → ".join(
+            [self.links[0].cause] + [link.effect for link in self.links]
+        )
         return f"Causal chain: {chain_text}. Overall strength: {int(self.total_strength * 100)}%."
 
 
@@ -262,9 +264,7 @@ class CounterfactualResult:
             qualifier = (
                 "slightly"
                 if magnitude < 0.3
-                else "significantly"
-                if magnitude < 0.7
-                else "dramatically"
+                else "significantly" if magnitude < 0.7 else "dramatically"
             )
             changes.append(f"{outcome} would {qualifier} {direction}")
         return output + " Also, ".join(changes) + "."
@@ -425,7 +425,9 @@ class CausalReasoner:
         causes.sort(key=lambda item: item[1], reverse=True)
         return causes
 
-    def predict_effects(self, cause: str, max_depth: int = 3) -> list[tuple[str, float]]:
+    def predict_effects(
+        self, cause: str, max_depth: int = 3
+    ) -> list[tuple[str, float]]:
         del max_depth
         effects: list[tuple[str, float]] = []
         for (candidate_cause, _), link in self._memory_links.items():
@@ -451,7 +453,8 @@ class CausalReasoner:
                         CausalChain(
                             links=chain_links,
                             total_strength=probability * root_probability,
-                            confidence=sum(link.confidence for link in chain_links) / len(chain_links),
+                            confidence=sum(link.confidence for link in chain_links)
+                            / len(chain_links),
                         )
                     )
             else:
@@ -473,7 +476,9 @@ class CausalReasoner:
             confidence=overall_confidence,
         )
 
-    def _trace_ancestors(self, event: str, max_depth: int = 5) -> list[tuple[str, float]]:
+    def _trace_ancestors(
+        self, event: str, max_depth: int = 5
+    ) -> list[tuple[str, float]]:
         ancestors: list[tuple[str, float]] = []
         current = event
         depth = 0
@@ -512,13 +517,17 @@ class CausalReasoner:
 
         return chain
 
-    def _generate_recommendations(self, root_causes: list[tuple[str, float]]) -> list[str]:
+    def _generate_recommendations(
+        self, root_causes: list[tuple[str, float]]
+    ) -> list[str]:
         recommendations: list[str] = []
         for cause, probability in root_causes[:3]:
             if probability > 0.7:
                 recommendations.append(f"Address '{cause}' to prevent this symptom")
             elif probability > 0.4:
-                recommendations.append(f"Consider addressing '{cause}' as a contributing factor")
+                recommendations.append(
+                    f"Consider addressing '{cause}' as a contributing factor"
+                )
         return recommendations or ["Investigate further to identify root cause"]
 
     def counterfactual_analysis(
@@ -546,7 +555,8 @@ class CausalReasoner:
             )
 
         confidence = (
-            sum(probability for _, _, probability in affected_outcomes) / len(affected_outcomes)
+            sum(probability for _, _, probability in affected_outcomes)
+            / len(affected_outcomes)
             if affected_outcomes
             else 0.3
         )
@@ -561,7 +571,10 @@ class CausalReasoner:
     def intervention_analysis(self, action: str) -> dict[str, Any]:
         effects = self.predict_effects(action)
         summary = (
-            ", ".join(f"{effect} ({int(probability * 100)}%)" for effect, probability in effects[:3])
+            ", ".join(
+                f"{effect} ({int(probability * 100)}%)"
+                for effect, probability in effects[:3]
+            )
             if effects
             else "no direct effects"
         )
@@ -623,7 +636,9 @@ class CausalReasoner:
     def explain_why(self, event: str) -> str:
         causes = self.infer_causes(event)
         if not causes:
-            return f"No known causes for '{event}'. This might be spontaneous or unknown."
+            return (
+                f"No known causes for '{event}'. This might be spontaneous or unknown."
+            )
 
         top_cause, probability = causes[0]
         key = (top_cause.lower(), event.lower())
@@ -659,7 +674,9 @@ class CausalReasoner:
         relations_by_type: dict[str, int] = {}
         for link in links:
             relation_name = link.relation_type.value
-            relations_by_type[relation_name] = relations_by_type.get(relation_name, 0) + 1
+            relations_by_type[relation_name] = (
+                relations_by_type.get(relation_name, 0) + 1
+            )
 
         return {
             "total_links": len(links),

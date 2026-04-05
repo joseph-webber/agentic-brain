@@ -1,7 +1,12 @@
 import asyncio
 import pytest
 
-from agentic_brain.async_api import AsyncEmbedder, AsyncLLM, AsyncGraphClient, AsyncRAGPipeline
+from agentic_brain.async_api import (
+    AsyncEmbedder,
+    AsyncLLM,
+    AsyncGraphClient,
+    AsyncRAGPipeline,
+)
 from agentic_brain.rag.pipeline import RAGResult
 
 
@@ -127,7 +132,7 @@ async def test_parallel_retrieval_gather(dummy_pipeline):
 async def test_ingest_documents_parallel_no_store(dummy_pipeline):
     api = AsyncRAGPipeline(pipeline=dummy_pipeline)
     # pipeline has no document store; expect exceptions returned
-    res = await api.ingest_documents_parallel([1,2,3])
+    res = await api.ingest_documents_parallel([1, 2, 3])
     assert len(res) == 3
 
 
@@ -182,7 +187,7 @@ async def test_stream_generator_works(dummy_pipeline):
 @pytest.mark.asyncio
 async def test_multiple_embedder_calls(dummy_pipeline):
     api = AsyncRAGPipeline(pipeline=dummy_pipeline)
-    vecs = await api._embedder.aembed_batch(["a","bb","ccc"])
+    vecs = await api._embedder.aembed_batch(["a", "bb", "ccc"])
     assert len(vecs) == 3
 
 
@@ -209,7 +214,7 @@ async def test_graph_client_close(dummy_pipeline):
 @pytest.mark.asyncio
 async def test_ingest_documents_parallel_return_exceptions(dummy_pipeline):
     api = AsyncRAGPipeline(pipeline=dummy_pipeline)
-    results = await api.ingest_documents_parallel(["doc1","doc2"]) 
+    results = await api.ingest_documents_parallel(["doc1", "doc2"])
     # We expect either results or exceptions; both are acceptable for this smoke test
     assert len(results) == 2
 
@@ -217,11 +222,13 @@ async def test_ingest_documents_parallel_return_exceptions(dummy_pipeline):
 @pytest.mark.asyncio
 async def test_concurrent_streams(dummy_pipeline):
     api = AsyncRAGPipeline(pipeline=dummy_pipeline)
+
     async def collect(i):
         toks = []
         async for t in api.aquery_stream(f"q{i}"):
             toks.append(t)
         return toks
+
     tasks = [collect(i) for i in range(3)]
     res = await asyncio.gather(*tasks)
     assert len(res) == 3
@@ -280,6 +287,6 @@ async def test_additional_simple_query(dummy_pipeline):
 async def test_additional_stream_consistency(dummy_pipeline):
     api = AsyncRAGPipeline(pipeline=dummy_pipeline)
     # ensure streaming yields same tokens each call
-    s1 = [t async for t in api.aquery_stream("cons")] 
+    s1 = [t async for t in api.aquery_stream("cons")]
     s2 = [t async for t in api.aquery_stream("cons")]
     assert s1 == s2

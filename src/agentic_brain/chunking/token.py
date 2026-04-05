@@ -19,12 +19,19 @@ class TokenChunker(BaseChunker):
         deduplicate: bool = False,
         separator: str = "\n\n",
     ) -> None:
-        super().__init__(chunk_size, overlap, deduplicate=deduplicate, separator=separator)
+        super().__init__(
+            chunk_size, overlap, deduplicate=deduplicate, separator=separator
+        )
 
     def _token_spans(self, text: str) -> list[Span]:
-        return [Span(m.group(0), m.start(), m.end(), {"kind": "token"}) for m in _TOKEN_PATTERN.finditer(text)]
+        return [
+            Span(m.group(0), m.start(), m.end(), {"kind": "token"})
+            for m in _TOKEN_PATTERN.finditer(text)
+        ]
 
-    def chunk(self, text: str | bytes | None, metadata: dict[str, Any] | None = None) -> list[Chunk]:
+    def chunk(
+        self, text: str | bytes | None, metadata: dict[str, Any] | None = None
+    ) -> list[Chunk]:
         source = self._prepare_text(text)
         if not source:
             return []

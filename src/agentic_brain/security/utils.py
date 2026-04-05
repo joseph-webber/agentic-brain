@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import bcrypt
+
     HAS_BCRYPT = True
 except ImportError:
     HAS_BCRYPT = False
@@ -147,14 +148,14 @@ def validate_jwt_secret(secret: Optional[str] = None) -> str:
     if not secret:
         raise ValueError(
             "JWT_SECRET environment variable not set. "
-            "Generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+            'Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
         )
 
     if len(secret) < 32:
         raise ValueError(
             f"JWT_SECRET too short: {len(secret)} bytes. "
             "Minimum 32 bytes required for HS256. "
-            "Generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+            'Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
         )
 
     # Check for variety in secret (not just repeated characters)
@@ -182,10 +183,14 @@ def validate_api_key(key: str) -> None:
         raise ValueError("API key cannot be empty")
 
     if len(key) < 20:
-        raise ValueError(f"API key too short: {len(key)} bytes. Minimum 20 bytes required.")
+        raise ValueError(
+            f"API key too short: {len(key)} bytes. Minimum 20 bytes required."
+        )
 
     if not any(c.isupper() for c in key) or not any(c.isdigit() for c in key):
-        logger.warning("API key should contain uppercase letters and digits for better entropy")
+        logger.warning(
+            "API key should contain uppercase letters and digits for better entropy"
+        )
 
 
 def get_secret_from_vault(key_name: str) -> Optional[str]:

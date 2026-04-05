@@ -180,7 +180,10 @@ class TestConversationalVoice:
         assert conv.config.mode == VoiceMode.QUIET
         assert conv.get_available_voices() == []
 
-    @pytest.mark.xfail(reason="Threading issue in voice serializer - daemon not properly mocked", strict=False)
+    @pytest.mark.xfail(
+        reason="Threading issue in voice serializer - daemon not properly mocked",
+        strict=False,
+    )
     def test_voice_selection_for_topic(self):
         conv = ConversationalVoice()
         conv.set_mode(VoiceMode.LIFE)
@@ -288,7 +291,10 @@ class TestVoiceOverIntegration:
 class TestVoiceIntegration:
     """Integration tests across all voice systems."""
 
-    @pytest.mark.xfail(reason="Threading issue in voice serializer - daemon not properly mocked", strict=False)
+    @pytest.mark.xfail(
+        reason="Threading issue in voice serializer - daemon not properly mocked",
+        strict=False,
+    )
     def test_work_mode_flow(self):
         conv = ConversationalVoice()
         conv.set_mode(VoiceMode.WORK)

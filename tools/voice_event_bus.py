@@ -144,7 +144,9 @@ def get_voice_state(key: str) -> str | None:
     return client.get(key)
 
 
-def publish_progress(status: str, extra: dict[str, Any] | None = None) -> dict[str, Any]:
+def publish_progress(
+    status: str, extra: dict[str, Any] | None = None
+) -> dict[str, Any]:
     payload = {
         "status": status,
         "timestamp": time.time(),

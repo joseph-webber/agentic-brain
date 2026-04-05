@@ -112,7 +112,9 @@ class EmotionResult:
             "confidence": round(self.confidence, 3),
             "valence": round(self.valence, 3),
             "arousal": round(self.arousal, 3),
-            "secondary_emotion": self.secondary_emotion.value if self.secondary_emotion else None,
+            "secondary_emotion": (
+                self.secondary_emotion.value if self.secondary_emotion else None
+            ),
             "raw_scores": self.raw_scores,
         }
 
@@ -228,7 +230,9 @@ class VoiceEmotionDetector:
                 pymodule_file="custom_interface.py",
                 classname="CustomEncoderWav2vec2Classifier",
             )
-            logger.info("VoiceEmotionDetector: audio model loaded (%s)", self.AUDIO_MODEL)
+            logger.info(
+                "VoiceEmotionDetector: audio model loaded (%s)", self.AUDIO_MODEL
+            )
             return True
         except Exception as exc:
             logger.warning("Failed to load audio emotion model: %s", exc)
@@ -274,7 +278,9 @@ class VoiceEmotionDetector:
         }
         return mapping.get(label_lower, Emotion.NEUTRAL)
 
-    def detect_from_audio(self, audio: bytes, sample_rate: int = 16000) -> EmotionResult:
+    def detect_from_audio(
+        self, audio: bytes, sample_rate: int = 16000
+    ) -> EmotionResult:
         """Detect emotion from raw audio bytes.
 
         Uses SpeechBrain wav2vec2 model for high-accuracy emotion detection.
@@ -300,23 +306,31 @@ class VoiceEmotionDetector:
             import numpy as np
 
             # Convert bytes to float32 array for SpeechBrain
-            audio_array = np.frombuffer(audio, dtype=np.int16).astype(np.float32) / 32768.0
+            audio_array = (
+                np.frombuffer(audio, dtype=np.int16).astype(np.float32) / 32768.0
+            )
 
             # Resample if needed
             if sample_rate != 16000 and _HAS_LIBROSA:
                 import librosa
 
-                audio_array = librosa.resample(audio_array, orig_sr=sample_rate, target_sr=16000)
+                audio_array = librosa.resample(
+                    audio_array, orig_sr=sample_rate, target_sr=16000
+                )
 
             # Run inference
             import torch
 
             audio_tensor = torch.tensor(audio_array).unsqueeze(0)
-            out_prob, score, index, text_lab = self._audio_classifier.classify_batch(audio_tensor)
+            out_prob, score, index, text_lab = self._audio_classifier.classify_batch(
+                audio_tensor
+            )
 
             # Get top prediction
             label = text_lab[0] if isinstance(text_lab, list) else str(text_lab)
-            confidence = float(score[0]) if hasattr(score, "__getitem__") else float(score)
+            confidence = (
+                float(score[0]) if hasattr(score, "__getitem__") else float(score)
+            )
             emotion = self._map_audio_label_to_emotion(label)
 
             # Get dimensional values from lookup
@@ -326,7 +340,11 @@ class VoiceEmotionDetector:
             raw_scores = None
             if out_prob is not None:
                 try:
-                    probs = out_prob[0].tolist() if hasattr(out_prob[0], "tolist") else list(out_prob[0])
+                    probs = (
+                        out_prob[0].tolist()
+                        if hasattr(out_prob[0], "tolist")
+                        else list(out_prob[0])
+                    )
                     labels = ["neu", "hap", "sad", "ang"]  # IEMOCAP labels
                     raw_scores = dict(zip(labels, probs[: len(labels)]))
                 except Exception:
@@ -417,11 +435,33 @@ class VoiceEmotionDetector:
         text_lower = text.lower()
 
         # Quick keyword checks
-        happy_keywords = ("happy", "joy", "great", "wonderful", "love", "excited", "amazing")
-        sad_keywords = ("sad", "sorry", "unfortunately", "disappointing", "miss", "upset")
+        happy_keywords = (
+            "happy",
+            "joy",
+            "great",
+            "wonderful",
+            "love",
+            "excited",
+            "amazing",
+        )
+        sad_keywords = (
+            "sad",
+            "sorry",
+            "unfortunately",
+            "disappointing",
+            "miss",
+            "upset",
+        )
         angry_keywords = ("angry", "furious", "annoyed", "frustrated", "hate")
         fearful_keywords = ("afraid", "scared", "worried", "anxious", "nervous", "fear")
-        surprised_keywords = ("surprised", "wow", "unexpected", "shocking", "amazing", "omg")
+        surprised_keywords = (
+            "surprised",
+            "wow",
+            "unexpected",
+            "shocking",
+            "amazing",
+            "omg",
+        )
 
         if any(kw in text_lower for kw in angry_keywords):
             return EmotionResult(Emotion.ANGRY, 0.7, -0.5, 0.8)
@@ -442,7 +482,9 @@ class VoiceEmotionDetector:
 
         return EmotionResult(Emotion.NEUTRAL, 0.5, 0.0, 0.3)
 
-    def detect(self, audio: Optional[bytes] = None, text: Optional[str] = None) -> EmotionResult:
+    def detect(
+        self, audio: Optional[bytes] = None, text: Optional[str] = None
+    ) -> EmotionResult:
         """Detect emotion from audio and/or text.
 
         If both are provided, audio takes precedence as it's more accurate.

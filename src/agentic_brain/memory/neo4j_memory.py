@@ -480,7 +480,9 @@ class ConversationMemory:
             )
 
         self._message_count += len(payload)
-        logger.debug(f"Batched added {len(payload)} messages to session {self.session_id}")
+        logger.debug(
+            f"Batched added {len(payload)} messages to session {self.session_id}"
+        )
         return len(payload)
 
     # =========================================================================

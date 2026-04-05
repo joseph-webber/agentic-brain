@@ -26,7 +26,9 @@ from agentic_brain.connectors import (
 
 
 def client_with(handler):
-    return httpx.Client(transport=httpx.MockTransport(handler), base_url="https://api.test")
+    return httpx.Client(
+        transport=httpx.MockTransport(handler), base_url="https://api.test"
+    )
 
 
 class DummyConnector(Connector):
@@ -128,7 +130,10 @@ def test_dedupe_records():
 def test_merge_cursor_prefers_latest_timestamp():
     conn = DummyConnector()
     page = ConnectorSyncPage(
-        items=[record("2026-01-15T12:00:00+00:00"), record("2026-01-15T13:00:00+00:00")],
+        items=[
+            record("2026-01-15T12:00:00+00:00"),
+            record("2026-01-15T13:00:00+00:00"),
+        ],
         next_cursor=ConnectorSyncCursor(page_token="next", state={"x": 1}),
         state={"y": 2},
     )
@@ -144,7 +149,9 @@ def test_merge_cursor_prefers_latest_timestamp():
 
 def test_sync_uses_schedule_and_returns_result():
     page = ConnectorSyncPage(items=[record("2026-01-15T12:00:00+00:00")])
-    conn = DummyConnector(page=page, schedule=ConnectorSchedule(interval=timedelta(minutes=5)))
+    conn = DummyConnector(
+        page=page, schedule=ConnectorSchedule(interval=timedelta(minutes=5))
+    )
     result = conn.sync()
     assert result.source == "dummy"
     assert result.changed_count == 1
@@ -166,7 +173,9 @@ def test_next_run_at_with_disabled_schedule():
 
 
 def test_notion_headers_include_version():
-    connector = NotionConnector("secret", client=client_with(lambda request: httpx.Response(200, json={})))
+    connector = NotionConnector(
+        "secret", client=client_with(lambda request: httpx.Response(200, json={}))
+    )
     assert connector._headers["Authorization"] == "Bearer secret"
     assert connector._headers["Notion-Version"] == "2022-06-28"
 
@@ -184,7 +193,12 @@ def test_notion_list_changes_database_filters_since():
                     {
                         "object": "page",
                         "id": "page-1",
-                        "properties": {"Name": {"type": "title", "title": [{"plain_text": "Alpha"}]}},
+                        "properties": {
+                            "Name": {
+                                "type": "title",
+                                "title": [{"plain_text": "Alpha"}],
+                            }
+                        },
                         "last_edited_time": "2026-01-15T12:00:00+00:00",
                         "created_time": "2026-01-15T11:00:00+00:00",
                     }
@@ -215,7 +229,9 @@ def test_notion_search_fallback_filters_pages():
                     {
                         "object": "page",
                         "id": "page-2",
-                        "properties": {"Name": {"type": "title", "title": [{"plain_text": "Beta"}]}},
+                        "properties": {
+                            "Name": {"type": "title", "title": [{"plain_text": "Beta"}]}
+                        },
                         "last_edited_time": "2026-01-16T12:00:00+00:00",
                     },
                     {
@@ -284,7 +300,9 @@ def test_notion_fetch_item_loads_blocks():
 def test_notion_fetch_item_returns_none_on_error():
     connector = NotionConnector(
         "secret",
-        client=client_with(lambda request: httpx.Response(404, json={"error": "missing"})),
+        client=client_with(
+            lambda request: httpx.Response(404, json={"error": "missing"})
+        ),
     )
     assert connector.fetch_item("missing") is None
 
@@ -298,13 +316,17 @@ def test_notion_cursor_updates_latest_edited_time():
                     {
                         "object": "page",
                         "id": "page-1",
-                        "properties": {"Name": {"type": "title", "title": [{"plain_text": "One"}]}},
+                        "properties": {
+                            "Name": {"type": "title", "title": [{"plain_text": "One"}]}
+                        },
                         "last_edited_time": "2026-01-15T12:00:00+00:00",
                     },
                     {
                         "object": "page",
                         "id": "page-2",
-                        "properties": {"Name": {"type": "title", "title": [{"plain_text": "Two"}]}},
+                        "properties": {
+                            "Name": {"type": "title", "title": [{"plain_text": "Two"}]}
+                        },
                         "last_edited_time": "2026-01-15T13:00:00+00:00",
                     },
                 ],
@@ -371,7 +393,9 @@ def test_confluence_fetch_item_strips_html():
             json={
                 "id": "42",
                 "title": "Spec",
-                "body": {"storage": {"value": "<p>Hello <strong>Confluence</strong></p>"}},
+                "body": {
+                    "storage": {"value": "<p>Hello <strong>Confluence</strong></p>"}
+                },
                 "version": {"when": "2026-01-15T12:00:00+00:00", "number": 1},
                 "space": {"key": "ENG"},
             },
@@ -450,7 +474,12 @@ def test_confluence_next_cursor_tracks_latest_update():
 
 
 def test_github_headers_include_token():
-    connector = GitHubConnector("octo", "brain", token="secret", client=client_with(lambda request: httpx.Response(200, json={})))
+    connector = GitHubConnector(
+        "octo",
+        "brain",
+        token="secret",
+        client=client_with(lambda request: httpx.Response(200, json={})),
+    )
     assert connector._headers["Authorization"] == "Bearer secret"
 
 
@@ -582,14 +611,18 @@ def test_github_list_changes_respects_path_filter():
             )
         raise AssertionError(request.url.path)
 
-    connector = GitHubConnector("octo", "brain", path="src", client=client_with(handler))
+    connector = GitHubConnector(
+        "octo", "brain", path="src", client=client_with(handler)
+    )
     page = connector.list_changes()
     assert len(page.items) == 1
     assert page.items[0].id == "src/app.py"
 
 
 def test_slack_headers_include_bearer_token():
-    connector = SlackConnector("secret", client=client_with(lambda request: httpx.Response(200, json={})))
+    connector = SlackConnector(
+        "secret", client=client_with(lambda request: httpx.Response(200, json={}))
+    )
     assert connector._headers["Authorization"] == "Bearer secret"
 
 
@@ -687,12 +720,16 @@ def test_slack_search_returns_matches():
 
 
 def test_slack_fetch_item_invalid_id_returns_none():
-    connector = SlackConnector("secret", client=client_with(lambda request: httpx.Response(200, json={})))
+    connector = SlackConnector(
+        "secret", client=client_with(lambda request: httpx.Response(200, json={}))
+    )
     assert connector.fetch_item("broken") is None
 
 
 def test_google_drive_headers_include_bearer_token():
-    connector = GoogleDriveConnector("secret", client=client_with(lambda request: httpx.Response(200, json={})))
+    connector = GoogleDriveConnector(
+        "secret", client=client_with(lambda request: httpx.Response(200, json={}))
+    )
     assert connector._headers["Authorization"] == "Bearer secret"
 
 
@@ -812,6 +849,8 @@ def test_google_drive_fetch_item_uses_metadata():
 def test_google_drive_fetch_item_returns_none_on_error():
     connector = GoogleDriveConnector(
         "secret",
-        client=client_with(lambda request: httpx.Response(404, json={"error": "missing"})),
+        client=client_with(
+            lambda request: httpx.Response(404, json={"error": "missing"})
+        ),
     )
     assert connector.fetch_item("missing") is None

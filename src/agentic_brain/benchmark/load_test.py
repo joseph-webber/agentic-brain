@@ -3,6 +3,7 @@ Lightweight load testing utilities for the Agentic Brain.
 - Uses ThreadPoolExecutor + urllib to avoid external deps.
 - Provides concurrent, sustained, spike, stress and soak testing helpers.
 """
+
 from __future__ import annotations
 
 import time
@@ -52,14 +53,18 @@ def _run_workers(target: str, total_requests: int, max_workers: int) -> LoadResu
     return result
 
 
-def run_concurrent_queries(target: str, users: int = 10, queries_per_user: int = 1) -> Dict:
+def run_concurrent_queries(
+    target: str, users: int = 10, queries_per_user: int = 1
+) -> Dict:
     """Simulates `users` concurrent clients, each performing `queries_per_user` requests."""
     total = users * queries_per_user
     res = _run_workers(target, total, max_workers=users)
     return _summarize(res)
 
 
-def run_sustained_load(target: str, users: int = 50, duration_s: int = 60, ramp_up: int = 5) -> Dict:
+def run_sustained_load(
+    target: str, users: int = 50, duration_s: int = 60, ramp_up: int = 5
+) -> Dict:
     """Sustained load: maintain `users` concurrency for `duration_s` seconds."""
     end_time = time.monotonic() + duration_s
     result = LoadResult()
@@ -83,7 +88,13 @@ def run_sustained_load(target: str, users: int = 50, duration_s: int = 60, ramp_
     return _summarize(result)
 
 
-def run_spike_test(target: str, base_users: int = 5, spike_users: int = 200, spike_seconds: int = 10, duration_s: int = 60) -> Dict:
+def run_spike_test(
+    target: str,
+    base_users: int = 5,
+    spike_users: int = 200,
+    spike_seconds: int = 10,
+    duration_s: int = 60,
+) -> Dict:
     """Run base load, then a short spike, then back to base.
     duration_s is total duration; spike occurs in the middle.
     """
@@ -99,7 +110,14 @@ def run_spike_test(target: str, base_users: int = 5, spike_users: int = 200, spi
     return combined
 
 
-def run_stress_test(target: str, start_users: int = 10, max_users: int = 1000, step: int = 50, step_duration: int = 5, failure_threshold: Optional[float] = 0.2) -> Dict:
+def run_stress_test(
+    target: str,
+    start_users: int = 10,
+    max_users: int = 1000,
+    step: int = 50,
+    step_duration: int = 5,
+    failure_threshold: Optional[float] = 0.2,
+) -> Dict:
     """Increase load in steps until failure (fraction of failed requests > failure_threshold) or max reached."""
     summaries = []
     for u in range(start_users, max_users + 1, step):
@@ -116,7 +134,9 @@ def run_soak_test(target: str, users: int = 10, duration_s: int = 60 * 60) -> Di
     return run_sustained_load(target, users=users, duration_s=duration_s)
 
 
-def measure_memory_under_load(target: str, users: int = 50, duration_s: int = 10) -> Dict:
+def measure_memory_under_load(
+    target: str, users: int = 50, duration_s: int = 10
+) -> Dict:
     tracemalloc.start()
     snapshot1 = tracemalloc.take_snapshot()
     summary = run_sustained_load(target, users=users, duration_s=duration_s)
@@ -178,11 +198,23 @@ if __name__ == "__main__":
     # Simple demo when invoked directly
     import argparse
 
-    parser = argparse.ArgumentParser(description="Agentic Brain lightweight load tester")
-    parser.add_argument("--target", default="http://127.0.0.1:8000/", help="Target URL to hit")
+    parser = argparse.ArgumentParser(
+        description="Agentic Brain lightweight load tester"
+    )
+    parser.add_argument(
+        "--target", default="http://127.0.0.1:8000/", help="Target URL to hit"
+    )
     parser.add_argument("--users", type=int, default=10, help="Concurrent users")
-    parser.add_argument("--duration", type=int, default=10, help="Duration in seconds for sustained test")
+    parser.add_argument(
+        "--duration",
+        type=int,
+        default=10,
+        help="Duration in seconds for sustained test",
+    )
     args = parser.parse_args()
 
-    print("Running sustained load test: users=%s duration=%ss target=%s" % (args.users, args.duration, args.target))
+    print(
+        "Running sustained load test: users=%s duration=%ss target=%s"
+        % (args.users, args.duration, args.target)
+    )
     print(run_sustained_load(args.target, users=args.users, duration_s=args.duration))

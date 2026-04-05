@@ -175,7 +175,11 @@ class QueryClassifier:
         ordered_fallbacks = tuple(
             route_type
             for route_type, _ in sorted(
-                ((route_type, score) for route_type, score in scores.items() if route_type != route),
+                (
+                    (route_type, score)
+                    for route_type, score in scores.items()
+                    if route_type != route
+                ),
                 key=lambda item: item[1],
                 reverse=True,
             )
@@ -213,7 +217,9 @@ class QueryClassifier:
         score = 0.12 + min(0.46, hits * 0.12)
         if len(words) >= 10:
             score += 0.08
-        if any(term in normalized for term in ("summarize", "explain", "find", "retrieve")):
+        if any(
+            term in normalized for term in ("summarize", "explain", "find", "retrieve")
+        ):
             score += 0.08
         if any(term in normalized for term in ("document", "docs", "policy", "manual")):
             score += 0.05
@@ -224,7 +230,15 @@ class QueryClassifier:
         score = 0.18 + min(0.5, hits * 0.2)
         if any(
             term in normalized
-            for term in ("who", "related", "connect", "connection", "path", "traverse", "dependency")
+            for term in (
+                "who",
+                "related",
+                "connect",
+                "connection",
+                "path",
+                "traverse",
+                "dependency",
+            )
         ):
             score += 0.2
         if len(words) >= 8 and hits:
@@ -234,7 +248,10 @@ class QueryClassifier:
     def _score_web(self, normalized: str, words: list[str]) -> float:
         hits = self._count_hits(normalized, self.WEB_TERMS)
         score = 0.08 + min(0.54, hits * 0.13)
-        if any(term in normalized for term in ("latest", "current", "today", "now", "recent")):
+        if any(
+            term in normalized
+            for term in ("latest", "current", "today", "now", "recent")
+        ):
             score += 0.12
         if "?" in normalized:
             score += 0.03
@@ -278,16 +295,25 @@ class QueryClassifier:
             and (" and " in normalized or normalized.count(";") >= 1)
         ):
             return RouteType.HYBRID
-        if vector_score >= 0.7 and vector_score >= graph_score + 0.08 and vector_score >= web_score - 0.1:
-            return RouteType.VECTOR
-        if graph_score >= 0.7 and graph_score >= vector_score + 0.08 and graph_score >= web_score - 0.1:
-            return RouteType.GRAPH
         if (
-            hybrid_score >= max(vector_score, graph_score) - 0.03
-            and (vector_score >= 0.35 and graph_score >= 0.35)
+            vector_score >= 0.7
+            and vector_score >= graph_score + 0.08
+            and vector_score >= web_score - 0.1
+        ):
+            return RouteType.VECTOR
+        if (
+            graph_score >= 0.7
+            and graph_score >= vector_score + 0.08
+            and graph_score >= web_score - 0.1
+        ):
+            return RouteType.GRAPH
+        if hybrid_score >= max(vector_score, graph_score) - 0.03 and (
+            vector_score >= 0.35 and graph_score >= 0.35
         ):
             return RouteType.HYBRID
-        if top_score - runner_up < 0.1 and (vector_score >= 0.35 and graph_score >= 0.35):
+        if top_score - runner_up < 0.1 and (
+            vector_score >= 0.35 and graph_score >= 0.35
+        ):
             return RouteType.HYBRID
         if "current" in normalized or "latest" in normalized or "today" in normalized:
             if web_score >= 0.45:
@@ -353,7 +379,12 @@ class QueryClassifier:
     def _signal_count(self, normalized: str) -> int:
         return sum(
             self._count_hits(normalized, terms)
-            for terms in (self.VECTOR_TERMS, self.GRAPH_TERMS, self.HYBRID_TERMS, self.WEB_TERMS)
+            for terms in (
+                self.VECTOR_TERMS,
+                self.GRAPH_TERMS,
+                self.HYBRID_TERMS,
+                self.WEB_TERMS,
+            )
         )
 
     def _top_score_gap(self, scores: dict[RouteType, float]) -> float:

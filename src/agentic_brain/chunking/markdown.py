@@ -28,7 +28,9 @@ class MarkdownChunker(BaseChunker):
         include_metadata: bool = True,
         separator: str = "\n\n",
     ) -> None:
-        super().__init__(chunk_size, overlap, deduplicate=deduplicate, separator=separator)
+        super().__init__(
+            chunk_size, overlap, deduplicate=deduplicate, separator=separator
+        )
         self.include_metadata = include_metadata
 
     def _parse_blocks(self, text: str) -> list[MarkdownBlock]:
@@ -131,7 +133,11 @@ class MarkdownChunker(BaseChunker):
                 while index < len(lines):
                     next_line = lines[index]
                     next_stripped = next_line.strip()
-                    if not next_stripped or _HEADING_PATTERN.match(next_stripped) or _CODE_FENCE_PATTERN.match(next_stripped):
+                    if (
+                        not next_stripped
+                        or _HEADING_PATTERN.match(next_stripped)
+                        or _CODE_FENCE_PATTERN.match(next_stripped)
+                    ):
                         break
                     if _LIST_PATTERN.match(next_stripped):
                         list_lines.append(next_line)
@@ -164,13 +170,18 @@ class MarkdownChunker(BaseChunker):
         flush()
         return blocks
 
-    def chunk(self, text: str | bytes | None, metadata: dict[str, Any] | None = None) -> list[Chunk]:
+    def chunk(
+        self, text: str | bytes | None, metadata: dict[str, Any] | None = None
+    ) -> list[Chunk]:
         source = self._prepare_text(text)
         if not source:
             return []
 
         blocks = self._parse_blocks(source)
-        spans = [Span(block.text, block.start_char, block.end_char, dict(block.metadata)) for block in blocks]
+        spans = [
+            Span(block.text, block.start_char, block.end_char, dict(block.metadata))
+            for block in blocks
+        ]
         chunks = self._chunk_from_spans(
             source,
             spans,

@@ -174,7 +174,9 @@ class ResponseCache:
         key_parts = f"{query}|{config.mode.value}|{config.community_level}"
         return hashlib.sha256(key_parts.encode()).hexdigest()[:16]
 
-    def get(self, query: str, config: GlobalSearchConfig) -> Optional[GlobalSearchResult]:
+    def get(
+        self, query: str, config: GlobalSearchConfig
+    ) -> Optional[GlobalSearchResult]:
         """Get cached result if valid."""
         key = self._make_key(query, config)
         if key not in self._cache:
@@ -188,7 +190,9 @@ class ResponseCache:
         result.from_cache = True
         return result
 
-    def set(self, query: str, config: GlobalSearchConfig, result: GlobalSearchResult) -> None:
+    def set(
+        self, query: str, config: GlobalSearchConfig, result: GlobalSearchResult
+    ) -> None:
         """Cache a result."""
         key = self._make_key(query, config)
         self._cache[key] = (result, time.time())
@@ -343,7 +347,8 @@ class GlobalSearch:
 
         # Filter by relevance
         relevant = [
-            cr for cr in community_responses
+            cr
+            for cr in community_responses
             if cr.relevance_score >= config.min_relevance_score
         ]
 
@@ -390,14 +395,16 @@ class GlobalSearch:
 
         # Identify relevant branches to drill into
         relevant_global = [
-            cr for cr in global_responses
+            cr
+            for cr in global_responses
             if cr.relevance_score >= config.drill_down_threshold
         ]
 
         if not relevant_global:
             # No highly relevant global communities, use all with lower threshold
             relevant_global = [
-                cr for cr in global_responses
+                cr
+                for cr in global_responses
                 if cr.relevance_score >= config.min_relevance_score
             ]
 
@@ -413,10 +420,13 @@ class GlobalSearch:
 
             if child_ids:
                 coarse_communities = await self._get_communities_by_ids(child_ids)
-                coarse_responses = await self._map_phase(query, coarse_communities, config)
+                coarse_responses = await self._map_phase(
+                    query, coarse_communities, config
+                )
 
                 relevant_coarse = [
-                    cr for cr in coarse_responses
+                    cr
+                    for cr in coarse_responses
                     if cr.relevance_score >= config.min_relevance_score
                 ]
                 all_responses.extend(relevant_coarse)
@@ -428,14 +438,19 @@ class GlobalSearch:
                     leaf_ids = []
                     for cr in relevant_coarse:
                         if cr.relevance_score >= config.drill_down_threshold:
-                            children = await self._get_child_communities(cr.community_id)
+                            children = await self._get_child_communities(
+                                cr.community_id
+                            )
                             leaf_ids.extend(children)
 
                     if leaf_ids:
                         leaf_communities = await self._get_communities_by_ids(leaf_ids)
-                        leaf_responses = await self._map_phase(query, leaf_communities, config)
+                        leaf_responses = await self._map_phase(
+                            query, leaf_communities, config
+                        )
                         relevant_leaf = [
-                            cr for cr in leaf_responses
+                            cr
+                            for cr in leaf_responses
                             if cr.relevance_score >= config.min_relevance_score
                         ]
                         all_responses.extend(relevant_leaf)
@@ -484,7 +499,8 @@ class GlobalSearch:
 
             responses = await self._map_phase(query, communities, config)
             relevant = [
-                cr for cr in responses
+                cr
+                for cr in responses
                 if cr.relevance_score >= config.min_relevance_score
             ]
 
@@ -537,8 +553,7 @@ class GlobalSearch:
 
         for batch in batches:
             batch_tasks = [
-                self._query_community(query, community, config)
-                for community in batch
+                self._query_community(query, community, config) for community in batch
             ]
             batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
 
@@ -583,7 +598,9 @@ class GlobalSearch:
             response = await self._call_llm(prompt)
 
             # Parse structured response
-            relevance, key_points, themes = self._parse_map_response(response, query, summary)
+            relevance, key_points, themes = self._parse_map_response(
+                response, query, summary
+            )
 
             return CommunityResponse(
                 community_id=str(community_id),
@@ -657,7 +674,8 @@ class GlobalSearch:
 
         # Filter by minimum mentions
         cross_themes = [
-            theme for theme, count in theme_counts.items()
+            theme
+            for theme, count in theme_counts.items()
             if count >= config.min_theme_mentions
         ]
 
@@ -783,9 +801,7 @@ Guidelines:
 
         return relevance, key_points, themes
 
-    def _keyword_relevance(
-        self, query: str, summary: str, members: List[str]
-    ) -> float:
+    def _keyword_relevance(self, query: str, summary: str, members: List[str]) -> float:
         """Calculate relevance using keyword matching (no LLM fallback)."""
         query_terms = set(query.lower().split())
         query_terms = {t for t in query_terms if len(t) > 2}
@@ -818,10 +834,30 @@ Guidelines:
             word_lower = word.lower()
             # Skip common words
             if word_lower not in {
-                "this", "that", "with", "from", "have", "been",
-                "their", "which", "when", "where", "what", "about",
-                "into", "than", "them", "then", "some", "could",
-                "would", "there", "other", "more", "also", "these",
+                "this",
+                "that",
+                "with",
+                "from",
+                "have",
+                "been",
+                "their",
+                "which",
+                "when",
+                "where",
+                "what",
+                "about",
+                "into",
+                "than",
+                "them",
+                "then",
+                "some",
+                "could",
+                "would",
+                "there",
+                "other",
+                "more",
+                "also",
+                "these",
             }:
                 word_freq[word_lower] += 1
 
@@ -883,9 +919,7 @@ Guidelines:
             logger.error(f"LLM call failed: {e}")
             return ""
 
-    async def _get_communities_at_level(
-        self, level: int
-    ) -> List[Dict[str, Any]]:
+    async def _get_communities_at_level(self, level: int) -> List[Dict[str, Any]]:
         """Get all communities at a specific hierarchy level."""
         return await self._execute_query(
             """
@@ -901,9 +935,7 @@ Guidelines:
             level=level,
         )
 
-    async def _get_child_communities(
-        self, community_id: str
-    ) -> List[str]:
+    async def _get_child_communities(self, community_id: str) -> List[str]:
         """Get IDs of child communities."""
         records = await self._execute_query(
             """
@@ -935,9 +967,7 @@ Guidelines:
             ids=community_ids,
         )
 
-    async def _execute_query(
-        self, query: str, **params: Any
-    ) -> List[Dict[str, Any]]:
+    async def _execute_query(self, query: str, **params: Any) -> List[Dict[str, Any]]:
         """Execute a Cypher query against Neo4j."""
         if self.driver is None:
             return []

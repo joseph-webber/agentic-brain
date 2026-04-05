@@ -117,7 +117,9 @@ async def test_async_batch_processor_handles_sync_workers():
 
 @pytest.mark.asyncio
 async def test_async_batch_process_helper():
-    result = await async_batch_process([1, 2, 3], lambda value: value + 1, concurrency=2)
+    result = await async_batch_process(
+        [1, 2, 3], lambda value: value + 1, concurrency=2
+    )
 
     assert result == [2, 3, 4]
 
@@ -163,4 +165,3 @@ def test_batch_embedding_processor_empty_input():
     processor = BatchEmbeddingProcessor(provider)
 
     assert processor.embed([]) == []
-

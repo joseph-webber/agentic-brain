@@ -501,7 +501,9 @@ class LLMRouter(LLMRouterCore):
         ]
         if not filtered_candidates:
             role = security_guard.role.value if security_guard else "unknown"
-            raise PermissionError(f"No allowed LLM providers are available for role '{role}'.")
+            raise PermissionError(
+                f"No allowed LLM providers are available for role '{role}'."
+            )
 
         available_routes = self._available_routes(security_guard=security_guard)
         available = set(available_routes)
@@ -518,9 +520,7 @@ class LLMRouter(LLMRouterCore):
         security_guard: LLMSecurityGuard | None = None,
     ) -> str:
         """Return the model string for the first available route."""
-        return self._first_available_route(
-            candidates, security_guard=security_guard
-        )[1]
+        return self._first_available_route(candidates, security_guard=security_guard)[1]
 
     def _provider_is_configured(self, provider: Provider) -> bool:
         """Return whether a provider can be selected conceptually."""
@@ -559,7 +559,9 @@ class LLMRouter(LLMRouterCore):
         ]
         if not filtered_candidates:
             role = security_guard.role.value if security_guard else "unknown"
-            raise PermissionError(f"No allowed LLM providers are available for role '{role}'.")
+            raise PermissionError(
+                f"No allowed LLM providers are available for role '{role}'."
+            )
 
         for route in filtered_candidates:
             if self._provider_is_configured(route[0]):
@@ -841,9 +843,9 @@ class LLMRouter(LLMRouterCore):
 
         # Default -> Prefer configured default provider/model when available.
         preferred_route = (self.config.default_provider, self.config.default_model)
-        if self._provider_is_configured(self.config.default_provider) and self._route_allowed(
-            preferred_route, security_guard
-        ):
+        if self._provider_is_configured(
+            self.config.default_provider
+        ) and self._route_allowed(preferred_route, security_guard):
             route = preferred_route
         else:
             route = self._first_configured_route(
@@ -906,12 +908,14 @@ class LLMRouter(LLMRouterCore):
                 logger.warning(f"Persona '{persona}' not found")
 
         normalized_messages = guard.filter_messages(
-            self.normalize_messages(
-                message=message, system=system, messages=messages
-            )
+            self.normalize_messages(message=message, system=system, messages=messages)
         )
         filtered_system = next(
-            (item["content"] for item in normalized_messages if item["role"] == "system"),
+            (
+                item["content"]
+                for item in normalized_messages
+                if item["role"] == "system"
+            ),
             None,
         )
         filtered_message = next(

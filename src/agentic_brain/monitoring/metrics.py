@@ -3,10 +3,12 @@
 This module provides a lightweight in-process metrics registry and Prometheus
 text-format exposition endpoint to avoid an external dependency.
 """
+
 from collections import deque
 import threading
 import time
 import math
+
 
 class Metrics:
     """Simple thread-safe metrics collector.
@@ -17,6 +19,7 @@ class Metrics:
     - error counter
     - request throughput (recent window)
     """
+
     def __init__(self, throughput_window_seconds=60):
         # Use an RLock so methods that call each other while holding the lock won't deadlock
         self._lock = threading.RLock()
@@ -30,7 +33,20 @@ class Metrics:
         self.latency_sum = 0.0
         self.latency_count = 0
         # Exponential buckets similar to Prometheus defaults (seconds)
-        self.latency_buckets = [0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10,float("inf")]
+        self.latency_buckets = [
+            0.005,
+            0.01,
+            0.025,
+            0.05,
+            0.1,
+            0.25,
+            0.5,
+            1,
+            2.5,
+            5,
+            10,
+            float("inf"),
+        ]
         self.latency_bucket_counts = [0 for _ in self.latency_buckets]
         # Throughput: timestamps of recent requests
         self.throughput_window = throughput_window_seconds
@@ -48,18 +64,18 @@ class Metrics:
                     self.latency_bucket_counts[i] += 1
                     break
 
-    def increment_tokens(self, n: int=1):
+    def increment_tokens(self, n: int = 1):
         with self._lock:
             self.tokens_used += int(n)
 
-    def record_cache_hit(self, hit: bool=True):
+    def record_cache_hit(self, hit: bool = True):
         with self._lock:
             if hit:
                 self.cache_hits += 1
             else:
                 self.cache_misses += 1
 
-    def increment_error(self, n: int=1):
+    def increment_error(self, n: int = 1):
         with self._lock:
             self.errors += int(n)
 
@@ -90,7 +106,15 @@ class Metrics:
                 self._request_timestamps.popleft()
             if not self._request_timestamps:
                 return 0.0
-            span = min(self.throughput_window, self._request_timestamps[-1] - (self._request_timestamps[0] if len(self._request_timestamps)>1 else self._request_timestamps[0]))
+            span = min(
+                self.throughput_window,
+                self._request_timestamps[-1]
+                - (
+                    self._request_timestamps[0]
+                    if len(self._request_timestamps) > 1
+                    else self._request_timestamps[0]
+                ),
+            )
             span = max(span, 1e-6)
             return len(self._request_timestamps) / span
 
@@ -132,51 +156,54 @@ class Metrics:
         s = []
         snap = self.snapshot()
         # Counters
-        s.append('# HELP agentic_tokens_used_total Total tokens used by agentic-brain')
-        s.append('# TYPE agentic_tokens_used_total counter')
+        s.append("# HELP agentic_tokens_used_total Total tokens used by agentic-brain")
+        s.append("# TYPE agentic_tokens_used_total counter")
         s.append(f'agentic_tokens_used_total {snap["tokens_used"]}')
 
-        s.append('# HELP agentic_requests_total Total requests received')
-        s.append('# TYPE agentic_requests_total counter')
+        s.append("# HELP agentic_requests_total Total requests received")
+        s.append("# TYPE agentic_requests_total counter")
         s.append(f'agentic_requests_total {snap["requests"]}')
 
-        s.append('# HELP agentic_errors_total Total error events')
-        s.append('# TYPE agentic_errors_total counter')
+        s.append("# HELP agentic_errors_total Total error events")
+        s.append("# TYPE agentic_errors_total counter")
         s.append(f'agentic_errors_total {snap["errors"]}')
 
-        s.append('# HELP agentic_cache_hits_total Total cache hits')
-        s.append('# TYPE agentic_cache_hits_total counter')
+        s.append("# HELP agentic_cache_hits_total Total cache hits")
+        s.append("# TYPE agentic_cache_hits_total counter")
         s.append(f'agentic_cache_hits_total {snap["cache_hits"]}')
 
-        s.append('# HELP agentic_cache_misses_total Total cache misses')
-        s.append('# TYPE agentic_cache_misses_total counter')
+        s.append("# HELP agentic_cache_misses_total Total cache misses")
+        s.append("# TYPE agentic_cache_misses_total counter")
         s.append(f'agentic_cache_misses_total {snap["cache_misses"]}')
 
         # Gauges
-        s.append('# HELP agentic_cache_hit_rate Cache hit rate (0-1)')
-        s.append('# TYPE agentic_cache_hit_rate gauge')
-        s.append(f'agentic_cache_hit_rate {self.cache_hit_rate():.6f}')
+        s.append("# HELP agentic_cache_hit_rate Cache hit rate (0-1)")
+        s.append("# TYPE agentic_cache_hit_rate gauge")
+        s.append(f"agentic_cache_hit_rate {self.cache_hit_rate():.6f}")
 
-        s.append('# HELP agentic_error_rate Error rate (errors/requests)')
-        s.append('# TYPE agentic_error_rate gauge')
-        s.append(f'agentic_error_rate {self.error_rate():.6f}')
+        s.append("# HELP agentic_error_rate Error rate (errors/requests)")
+        s.append("# TYPE agentic_error_rate gauge")
+        s.append(f"agentic_error_rate {self.error_rate():.6f}")
 
-        s.append('# HELP agentic_throughput_rps Requests per second (recent window)')
-        s.append('# TYPE agentic_throughput_rps gauge')
+        s.append("# HELP agentic_throughput_rps Requests per second (recent window)")
+        s.append("# TYPE agentic_throughput_rps gauge")
         s.append(f'agentic_throughput_rps {snap["throughput_rps"]:.6f}')
 
         # Latency histogram: buckets, sum, count
-        s.append('# HELP agentic_query_latency_seconds Histogram of query latencies in seconds')
-        s.append('# TYPE agentic_query_latency_seconds histogram')
+        s.append(
+            "# HELP agentic_query_latency_seconds Histogram of query latencies in seconds"
+        )
+        s.append("# TYPE agentic_query_latency_seconds histogram")
         cumulative = 0
-        for b, count in zip(snap['latency_buckets'], snap['latency_bucket_counts']):
+        for b, count in zip(snap["latency_buckets"], snap["latency_bucket_counts"]):
             cumulative += count
-            le = '+Inf' if math.isinf(b) else f'{b}'
+            le = "+Inf" if math.isinf(b) else f"{b}"
             s.append(f'agentic_query_latency_seconds_bucket{{le="{le}"}} {cumulative}')
         s.append(f'agentic_query_latency_seconds_sum {snap["latency_sum"]:.6f}')
         s.append(f'agentic_query_latency_seconds_count {snap["latency_count"]}')
 
-        return "\n".join(s)+"\n"
+        return "\n".join(s) + "\n"
+
 
 # Global singleton for easy import
 global_metrics = Metrics()

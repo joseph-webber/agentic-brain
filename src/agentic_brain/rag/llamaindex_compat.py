@@ -529,7 +529,9 @@ class AgenticQueryEngine(BaseQueryEngine):
         similarity_top_k: int = 5,
         service_context: Optional[ServiceContext] = None,
     ):
-        self.retriever = retriever or AgenticRetriever(similarity_top_k=similarity_top_k)
+        self.retriever = retriever or AgenticRetriever(
+            similarity_top_k=similarity_top_k
+        )
         self.synthesizer = synthesizer or AgenticSynthesizer()
         self.similarity_top_k = similarity_top_k
         self.service_context = service_context
@@ -547,22 +549,28 @@ class AgenticQueryEngine(BaseQueryEngine):
             # Prefer a native streaming method if present.
             if hasattr(self.synthesizer, "synthesize_stream"):
                 return self.synthesizer.synthesize_stream(query, nodes, **kwargs)  # type: ignore[no-any-return]
-            return StreamingSynthesizer(llm_model=getattr(self.synthesizer, "llm_model", Settings.llm)).synthesize_stream(
-                query, nodes, **kwargs
-            )
+            return StreamingSynthesizer(
+                llm_model=getattr(self.synthesizer, "llm_model", Settings.llm)
+            ).synthesize_stream(query, nodes, **kwargs)
 
         # Optional per-call response_mode override.
-        if response_mode is not None and isinstance(self.synthesizer, AgenticSynthesizer):
+        if response_mode is not None and isinstance(
+            self.synthesizer, AgenticSynthesizer
+        ):
             return AgenticSynthesizer(
-                response_mode=ResponseMode(response_mode)
-                if isinstance(response_mode, str)
-                else response_mode,
+                response_mode=(
+                    ResponseMode(response_mode)
+                    if isinstance(response_mode, str)
+                    else response_mode
+                ),
                 llm_model=self.synthesizer.llm_model,
             ).synthesize(query, nodes, **kwargs)
 
         return self.synthesizer.synthesize(query, nodes, **kwargs)
 
-    async def aquery(self, query: str, **kwargs: Any) -> Union[Response, StreamingResponse]:
+    async def aquery(
+        self, query: str, **kwargs: Any
+    ) -> Union[Response, StreamingResponse]:
         streaming = bool(kwargs.pop("streaming", False))
         response_mode = kwargs.get("response_mode")
 
@@ -571,15 +579,19 @@ class AgenticQueryEngine(BaseQueryEngine):
         if streaming:
             if hasattr(self.synthesizer, "synthesize_stream"):
                 return self.synthesizer.synthesize_stream(query, nodes, **kwargs)  # type: ignore[no-any-return]
-            return StreamingSynthesizer(llm_model=getattr(self.synthesizer, "llm_model", Settings.llm)).synthesize_stream(
-                query, nodes, **kwargs
-            )
+            return StreamingSynthesizer(
+                llm_model=getattr(self.synthesizer, "llm_model", Settings.llm)
+            ).synthesize_stream(query, nodes, **kwargs)
 
-        if response_mode is not None and isinstance(self.synthesizer, AgenticSynthesizer):
+        if response_mode is not None and isinstance(
+            self.synthesizer, AgenticSynthesizer
+        ):
             return AgenticSynthesizer(
-                response_mode=ResponseMode(response_mode)
-                if isinstance(response_mode, str)
-                else response_mode,
+                response_mode=(
+                    ResponseMode(response_mode)
+                    if isinstance(response_mode, str)
+                    else response_mode
+                ),
                 llm_model=self.synthesizer.llm_model,
             ).synthesize(query, nodes, **kwargs)
 
@@ -772,12 +784,16 @@ class AgenticIndex(BaseIndex):
     def insert(self, document: Union[TextNode, Document, Dict[str, Any]]) -> None:
         """Insert a single document into the index."""
         if isinstance(document, TextNode):
-            self._store.add(document.text, metadata=document.metadata, doc_id=document.node_id)
+            self._store.add(
+                document.text, metadata=document.metadata, doc_id=document.node_id
+            )
         elif isinstance(document, Document):
             self._store.add(document)
         elif isinstance(document, dict):
             text = document.get("text", document.get("content", ""))
-            metadata = {k: v for k, v in document.items() if k not in ("text", "content")}
+            metadata = {
+                k: v for k, v in document.items() if k not in ("text", "content")
+            }
             self._store.add(text, metadata=metadata)
 
     def delete(self, doc_id: str) -> None:
@@ -863,7 +879,9 @@ class GraphRAGIndex(BaseIndex):
             if isinstance(doc, TextNode):
                 docs_to_ingest.append({"content": doc.text, "metadata": doc.metadata})
             elif isinstance(doc, Document):
-                docs_to_ingest.append({"content": doc.content, "metadata": doc.metadata})
+                docs_to_ingest.append(
+                    {"content": doc.content, "metadata": doc.metadata}
+                )
             elif isinstance(doc, dict):
                 text = doc.get("text", doc.get("content", doc.get("page_content", "")))
                 docs_to_ingest.append({"content": text, "metadata": doc})
@@ -1217,7 +1235,7 @@ class SentenceSplitter(BaseNodeParser):
         self.include_prev_next_rel = include_prev_next_rel
 
         # Sentence ending patterns
-        self._sentence_endings = re.compile(r'(?<=[.!?])\s+')
+        self._sentence_endings = re.compile(r"(?<=[.!?])\s+")
 
     def _split_text(self, text: str) -> List[str]:
         """Split text into sentences then combine into chunks."""
@@ -1495,19 +1513,21 @@ class RefineSynthesizer(BaseSynthesizer):
             if i == 0:
                 prompt = (
                     "You are answering a user query using the provided context. "
-                    "Provide an initial answer."\
+                    "Provide an initial answer."
                     f"\n\nQuery: {query}"
                 )
             else:
                 prompt = (
                     "Refine the existing answer using NEW context. "
-                    "If the new context is irrelevant, keep the answer unchanged."\
-                    f"\n\nQuery: {query}"\
+                    "If the new context is irrelevant, keep the answer unchanged."
+                    f"\n\nQuery: {query}"
                     f"\n\nExisting answer:\n{current_answer}"
                 )
 
             try:
-                current_answer = self._pipeline._generate(prompt=prompt, context=context)
+                current_answer = self._pipeline._generate(
+                    prompt=prompt, context=context
+                )
             except Exception as e:
                 logger.debug(f"Refinement step {i} failed: {e}")
                 if not current_answer:
@@ -1535,7 +1555,7 @@ class TreeSummarizeSynthesizer(BaseSynthesizer):
     def _summarize_group(self, query: str, texts: List[str]) -> str:
         combined = "\n\n---\n\n".join(texts)
         prompt = (
-            "Summarize the following context to help answer the user query."\
+            "Summarize the following context to help answer the user query."
             f"\n\nQuery: {query}"
         )
 
@@ -2297,24 +2317,102 @@ class KeywordExtractor(BaseExtractor):
         self.keywords = keywords
         self.prompt_template = prompt_template
         self._stopwords = {
-            "the", "a", "an", "is", "are", "was", "were", "be", "been",
-            "being", "have", "has", "had", "do", "does", "did", "will",
-            "would", "could", "should", "may", "might", "must", "shall",
-            "can", "need", "dare", "ought", "used", "to", "of", "in",
-            "for", "on", "with", "at", "by", "from", "as", "into",
-            "through", "during", "before", "after", "above", "below",
-            "between", "under", "again", "further", "then", "once",
-            "and", "but", "or", "nor", "so", "yet", "both", "either",
-            "neither", "not", "only", "same", "than", "too", "very",
-            "just", "also", "now", "here", "there", "when", "where",
-            "why", "how", "all", "each", "every", "both", "few", "more",
-            "most", "other", "some", "such", "no", "any", "this", "that",
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "must",
+            "shall",
+            "can",
+            "need",
+            "dare",
+            "ought",
+            "used",
+            "to",
+            "of",
+            "in",
+            "for",
+            "on",
+            "with",
+            "at",
+            "by",
+            "from",
+            "as",
+            "into",
+            "through",
+            "during",
+            "before",
+            "after",
+            "above",
+            "below",
+            "between",
+            "under",
+            "again",
+            "further",
+            "then",
+            "once",
+            "and",
+            "but",
+            "or",
+            "nor",
+            "so",
+            "yet",
+            "both",
+            "either",
+            "neither",
+            "not",
+            "only",
+            "same",
+            "than",
+            "too",
+            "very",
+            "just",
+            "also",
+            "now",
+            "here",
+            "there",
+            "when",
+            "where",
+            "why",
+            "how",
+            "all",
+            "each",
+            "every",
+            "both",
+            "few",
+            "more",
+            "most",
+            "other",
+            "some",
+            "such",
+            "no",
+            "any",
+            "this",
+            "that",
         }
 
     def _extract_keywords(self, text: str) -> List[str]:
         """Extract keywords from text using simple frequency analysis."""
         # Tokenize and clean
-        words = re.findall(r'\b[a-zA-Z]{3,}\b', text.lower())
+        words = re.findall(r"\b[a-zA-Z]{3,}\b", text.lower())
 
         # Filter stopwords and count
         word_counts: Dict[str, int] = {}
@@ -2461,7 +2559,7 @@ class ComposableGraph:
 
         for i, child_index in enumerate(children_indices):
             index_id = f"index_{i}"
-            summary = (index_summaries[i] if index_summaries else f"Index {i}")
+            summary = index_summaries[i] if index_summaries else f"Index {i}"
 
             # Create an IndexNode representing this child
             index_node = IndexNode(

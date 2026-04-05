@@ -173,7 +173,10 @@ class TestReasoningChain:
     def test_chain_creation(self, sample_chain: ReasoningChain) -> None:
         assert sample_chain.original_query == "Who is the current president of France?"
         assert len(sample_chain.hops) == 2
-        assert sample_chain.final_answer == "Emmanuel Macron is the current president of France"
+        assert (
+            sample_chain.final_answer
+            == "Emmanuel Macron is the current president of France"
+        )
         assert sample_chain.confidence == 0.93
 
     def test_chain_single_hop(self) -> None:
@@ -241,41 +244,63 @@ class TestReasoningChain:
 
 
 class TestMultiHopReasoner:
-    def test_reasoner_initialization(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    def test_reasoner_initialization(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever, max_hops=5)
         assert reasoner.max_hops == 5
 
-    def test_reasoner_default_max_hops(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    def test_reasoner_default_max_hops(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever)
         # Should have a default max_hops value
         assert reasoner.max_hops >= 1
 
     @pytest.mark.asyncio
-    async def test_reasoner_reason_basic(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    async def test_reasoner_reason_basic(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever)
-        
+
         # Mock the reasoning process
-        with patch.object(reasoner, '_decompose_query', return_value=['hop1', 'hop2']):
-            with patch.object(reasoner, '_reason_hop', return_value=ReasoningHop(
-                query='test', hop_type=HopType.ENTITY_LOOKUP, purpose='test'
-            )):
-                with patch.object(reasoner, '_synthesize_answer', return_value='final answer'):
+        with patch.object(reasoner, "_decompose_query", return_value=["hop1", "hop2"]):
+            with patch.object(
+                reasoner,
+                "_reason_hop",
+                return_value=ReasoningHop(
+                    query="test", hop_type=HopType.ENTITY_LOOKUP, purpose="test"
+                ),
+            ):
+                with patch.object(
+                    reasoner, "_synthesize_answer", return_value="final answer"
+                ):
                     chain = await reasoner.reason("test question")
-                    
+
         assert isinstance(chain, ReasoningChain)
 
     @pytest.mark.asyncio
-    async def test_reasoner_respects_max_hops(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    async def test_reasoner_respects_max_hops(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever, max_hops=2)
-        
+
         # Should never create more than max_hops hops
-        with patch.object(reasoner, '_decompose_query', return_value=['h1', 'h2', 'h3', 'h4']):
-            with patch.object(reasoner, '_reason_hop', return_value=ReasoningHop(
-                query='test', hop_type=HopType.ENTITY_LOOKUP, purpose='test'
-            )):
-                with patch.object(reasoner, '_synthesize_answer', return_value='answer'):
+        with patch.object(
+            reasoner, "_decompose_query", return_value=["h1", "h2", "h3", "h4"]
+        ):
+            with patch.object(
+                reasoner,
+                "_reason_hop",
+                return_value=ReasoningHop(
+                    query="test", hop_type=HopType.ENTITY_LOOKUP, purpose="test"
+                ),
+            ):
+                with patch.object(
+                    reasoner, "_synthesize_answer", return_value="answer"
+                ):
                     chain = await reasoner.reason("complex question")
-        
+
         assert len(chain.hops) <= 2
 
 
@@ -286,29 +311,33 @@ class TestMultiHopReasoner:
 
 class TestChainDecomposition:
     @pytest.mark.asyncio
-    async def test_decompose_multi_hop_question(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    async def test_decompose_multi_hop_question(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever)
-        
+
         question = "Who manages the project that fixed bug #123?"
         # Decomposition should produce multiple sub-queries
-        with patch.object(reasoner, '_decompose_query') as mock_decompose:
+        with patch.object(reasoner, "_decompose_query") as mock_decompose:
             mock_decompose.return_value = [
                 "What project fixed bug #123?",
-                "Who manages that project?"
+                "Who manages that project?",
             ]
             hops = await reasoner._decompose_query(question)
-        
+
         assert len(hops) == 2
 
     @pytest.mark.asyncio
-    async def test_decompose_simple_question(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    async def test_decompose_simple_question(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever)
-        
+
         question = "What is 2+2?"
-        with patch.object(reasoner, '_decompose_query') as mock_decompose:
+        with patch.object(reasoner, "_decompose_query") as mock_decompose:
             mock_decompose.return_value = [question]
             hops = await reasoner._decompose_query(question)
-        
+
         assert len(hops) == 1
 
 
@@ -319,9 +348,11 @@ class TestChainDecomposition:
 
 class TestAnswerSynthesis:
     @pytest.mark.asyncio
-    async def test_synthesize_single_hop_answer(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    async def test_synthesize_single_hop_answer(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever)
-        
+
         hop = ReasoningHop(
             query="test",
             hop_type=HopType.ENTITY_LOOKUP,
@@ -329,17 +360,19 @@ class TestAnswerSynthesis:
             answer="answer",
             confidence=0.95,
         )
-        
-        with patch.object(reasoner, '_synthesize_answer') as mock_synth:
+
+        with patch.object(reasoner, "_synthesize_answer") as mock_synth:
             mock_synth.return_value = "Synthesized: answer"
             result = await reasoner._synthesize_answer([hop])
-        
+
         assert "answer" in result.lower()
 
     @pytest.mark.asyncio
-    async def test_synthesize_multi_hop_answer(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    async def test_synthesize_multi_hop_answer(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever)
-        
+
         hops = [
             ReasoningHop(
                 query="q1",
@@ -354,11 +387,11 @@ class TestAnswerSynthesis:
                 answer="answer2",
             ),
         ]
-        
-        with patch.object(reasoner, '_synthesize_answer') as mock_synth:
+
+        with patch.object(reasoner, "_synthesize_answer") as mock_synth:
             mock_synth.return_value = "Combined answer from hops"
             result = await reasoner._synthesize_answer(hops)
-        
+
         assert isinstance(result, str)
 
 
@@ -389,7 +422,9 @@ class TestConfidenceCalculation:
 
     def test_chain_confidence_from_hops(self, sample_chain: ReasoningChain) -> None:
         # Chain confidence should reflect hop confidences
-        hop_confidences = [hop.confidence for hop in sample_chain.hops if hop.confidence > 0]
+        hop_confidences = [
+            hop.confidence for hop in sample_chain.hops if hop.confidence > 0
+        ]
         if hop_confidences:
             avg_confidence = sum(hop_confidences) / len(hop_confidences)
             # Chain confidence should be reasonable relative to hops
@@ -456,17 +491,21 @@ class TestDifferentHopTypes:
 
 class TestMultiHopEdgeCases:
     @pytest.mark.asyncio
-    async def test_empty_query(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    async def test_empty_query(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever)
-        
-        with patch.object(reasoner, '_decompose_query', return_value=[]):
-            with patch.object(reasoner, '_synthesize_answer', return_value=''):
+
+        with patch.object(reasoner, "_decompose_query", return_value=[]):
+            with patch.object(reasoner, "_synthesize_answer", return_value=""):
                 chain = await reasoner.reason("")
-        
+
         assert isinstance(chain, ReasoningChain)
 
     @pytest.mark.asyncio
-    async def test_max_hops_zero(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    async def test_max_hops_zero(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         # max_hops=0 should still work gracefully
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever, max_hops=0)
         assert reasoner.max_hops == 0
@@ -483,7 +522,7 @@ class TestMultiHopEdgeCases:
             )
             for i in range(100)
         ]
-        
+
         chain = ReasoningChain(
             original_query="Very complex question",
             hops=hops,
@@ -491,7 +530,7 @@ class TestMultiHopEdgeCases:
             confidence=0.75,
             explanation="100-hop chain",
         )
-        
+
         assert len(chain.hops) == 100
 
     def test_hop_with_no_sources(self) -> None:
@@ -514,7 +553,7 @@ class TestMultiHopEdgeCases:
             )
             for i in range(3)
         ]
-        
+
         chain = ReasoningChain(
             original_query="Uncertain question",
             hops=hops,
@@ -522,7 +561,7 @@ class TestMultiHopEdgeCases:
             confidence=0.1,  # Low overall confidence
             explanation="Uncertain chain",
         )
-        
+
         assert chain.confidence == 0.1
 
 
@@ -533,20 +572,26 @@ class TestMultiHopEdgeCases:
 
 class TestReasoningIntegration:
     @pytest.mark.asyncio
-    async def test_full_reasoning_pipeline(self, mock_llm: MagicMock, mock_retriever: MagicMock) -> None:
+    async def test_full_reasoning_pipeline(
+        self, mock_llm: MagicMock, mock_retriever: MagicMock
+    ) -> None:
         reasoner = MultiHopReasoner(llm=mock_llm, retriever=mock_retriever, max_hops=3)
-        
+
         # Create a complete mock pipeline
-        with patch.object(reasoner, '_decompose_query', return_value=['hop1', 'hop2']):
-            with patch.object(reasoner, '_reason_hop', return_value=ReasoningHop(
-                query='test',
-                hop_type=HopType.ENTITY_LOOKUP,
-                purpose='test',
-                answer='answer',
-                confidence=0.9,
-            )):
-                with patch.object(reasoner, '_synthesize_answer', return_value='final'):
+        with patch.object(reasoner, "_decompose_query", return_value=["hop1", "hop2"]):
+            with patch.object(
+                reasoner,
+                "_reason_hop",
+                return_value=ReasoningHop(
+                    query="test",
+                    hop_type=HopType.ENTITY_LOOKUP,
+                    purpose="test",
+                    answer="answer",
+                    confidence=0.9,
+                ),
+            ):
+                with patch.object(reasoner, "_synthesize_answer", return_value="final"):
                     chain = await reasoner.reason("Complex question")
-        
+
         assert isinstance(chain, ReasoningChain)
         assert chain.final_answer is not None

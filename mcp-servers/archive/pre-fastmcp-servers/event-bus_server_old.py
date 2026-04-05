@@ -27,7 +27,9 @@ from datetime import datetime
 from typing import Any
 
 # Add brain to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(
+    0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -40,26 +42,27 @@ from core.kafka_bus import BrainTopics
 
 class EventBusMCP:
     """MCP server for brain event bus."""
-    
+
     def __init__(self):
         self.server = Server("brain-event-bus")
         self._bus = None
-        self._provider = os.getenv('EVENT_BUS_PROVIDER', 'redpanda')
+        self._provider = os.getenv("EVENT_BUS_PROVIDER", "redpanda")
         self._recent_events = {}  # topic -> list of recent events
         self._setup_handlers()
-    
+
     def _get_bus(self):
         """Get or create event bus connection."""
         if self._bus is None:
             # Use direct import - more reliable than factory
             from core.kafka_bus import BrainEventBus
+
             self._bus = BrainEventBus()
             self._bus.connect()
         return self._bus
-    
+
     def _setup_handlers(self):
         """Setup MCP tool handlers."""
-        
+
         @self.server.list_tools()
         async def list_tools():
             return [
@@ -72,35 +75,29 @@ class EventBusMCP:
                             "topic": {
                                 "type": "string",
                                 "description": "Topic name (e.g., 'brain.tasks')",
-                                "enum": BrainTopics.all()
+                                "enum": BrainTopics.all(),
                             },
                             "event_type": {
                                 "type": "string",
-                                "description": "Type of event (e.g., 'task_created', 'health_check')"
+                                "description": "Type of event (e.g., 'task_created', 'health_check')",
                             },
                             "data": {
                                 "type": "object",
-                                "description": "Event payload data"
-                            }
+                                "description": "Event payload data",
+                            },
                         },
-                        "required": ["topic", "event_type", "data"]
-                    }
+                        "required": ["topic", "event_type", "data"],
+                    },
                 ),
                 Tool(
                     name="health",
                     description="Check event bus health and status. Shows provider (Redpanda/Kafka), topics, and connection status.",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {}
-                    }
+                    inputSchema={"type": "object", "properties": {}},
                 ),
                 Tool(
                     name="topics",
                     description="List all brain event bus topics with descriptions.",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {}
-                    }
+                    inputSchema={"type": "object", "properties": {}},
                 ),
                 Tool(
                     name="switch_provider",
@@ -111,11 +108,11 @@ class EventBusMCP:
                             "provider": {
                                 "type": "string",
                                 "enum": ["redpanda", "kafka"],
-                                "description": "Provider to switch to"
+                                "description": "Provider to switch to",
                             }
                         },
-                        "required": ["provider"]
-                    }
+                        "required": ["provider"],
+                    },
                 ),
                 Tool(
                     name="send_llm_request",
@@ -125,20 +122,20 @@ class EventBusMCP:
                         "properties": {
                             "prompt": {
                                 "type": "string",
-                                "description": "The prompt to send to LLM"
+                                "description": "The prompt to send to LLM",
                             },
                             "system": {
                                 "type": "string",
-                                "description": "Optional system prompt"
+                                "description": "Optional system prompt",
                             },
                             "priority": {
                                 "type": "string",
                                 "enum": ["low", "normal", "high"],
-                                "description": "Request priority"
-                            }
+                                "description": "Request priority",
+                            },
                         },
-                        "required": ["prompt"]
-                    }
+                        "required": ["prompt"],
+                    },
                 ),
                 Tool(
                     name="broadcast_alert",
@@ -149,19 +146,19 @@ class EventBusMCP:
                             "level": {
                                 "type": "string",
                                 "enum": ["info", "warning", "error", "critical"],
-                                "description": "Alert severity level"
+                                "description": "Alert severity level",
                             },
                             "message": {
                                 "type": "string",
-                                "description": "Alert message"
+                                "description": "Alert message",
                             },
                             "source": {
                                 "type": "string",
-                                "description": "Source of the alert"
-                            }
+                                "description": "Source of the alert",
+                            },
                         },
-                        "required": ["level", "message"]
-                    }
+                        "required": ["level", "message"],
+                    },
                 ),
                 Tool(
                     name="query_state",
@@ -171,13 +168,13 @@ class EventBusMCP:
                         "properties": {
                             "component": {
                                 "type": "string",
-                                "description": "Component to query (e.g., 'llm', 'bots', 'jhipster', 'all')"
+                                "description": "Component to query (e.g., 'llm', 'bots', 'jhipster', 'all')",
                             }
-                        }
-                    }
-                )
+                        },
+                    },
+                ),
             ]
-        
+
         @self.server.call_tool()
         async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             try:
@@ -199,37 +196,41 @@ class EventBusMCP:
                     return [TextContent(type="text", text=f"Unknown tool: {name}")]
             except Exception as e:
                 return [TextContent(type="text", text=f"❌ Error: {str(e)}")]
-    
+
     async def _emit(self, args: dict) -> list[TextContent]:
         """Emit an event to a topic."""
         bus = self._get_bus()
-        
+
         event = {
-            'type': args['event_type'],
-            'data': args['data'],
-            'timestamp': datetime.now().isoformat(),
-            'source': 'claude-mcp'
+            "type": args["event_type"],
+            "data": args["data"],
+            "timestamp": datetime.now().isoformat(),
+            "source": "claude-mcp",
         }
-        
-        success = bus.emit(args['topic'], event)
-        
+
+        success = bus.emit(args["topic"], event)
+
         if success:
-            return [TextContent(
-                type="text",
-                text=f"✅ Event emitted to {args['topic']}\n\n"
-                     f"Type: {args['event_type']}\n"
-                     f"Data: {json.dumps(args['data'], indent=2)}"
-            )]
+            return [
+                TextContent(
+                    type="text",
+                    text=f"✅ Event emitted to {args['topic']}\n\n"
+                    f"Type: {args['event_type']}\n"
+                    f"Data: {json.dumps(args['data'], indent=2)}",
+                )
+            ]
         else:
-            return [TextContent(type="text", text=f"❌ Failed to emit to {args['topic']}")]
-    
+            return [
+                TextContent(type="text", text=f"❌ Failed to emit to {args['topic']}")
+            ]
+
     async def _health(self) -> list[TextContent]:
         """Check event bus health."""
         bus = self._get_bus()
         health = bus.health_check()
-        
-        status_emoji = "✅" if health.get('status') == 'healthy' else "❌"
-        
+
+        status_emoji = "✅" if health.get("status") == "healthy" else "❌"
+
         result = f"""🧠 **Brain Event Bus Status**
 
 {status_emoji} Status: {health.get('status', 'unknown')}
@@ -250,7 +251,7 @@ Claude ──► MCP ──► Event Bus ({self._provider})
 ```
 """
         return [TextContent(type="text", text=result)]
-    
+
     async def _topics(self) -> list[TextContent]:
         """List all brain topics."""
         topics_info = """📬 **Brain Event Bus Topics**
@@ -275,128 +276,130 @@ emit brain.tasks task_created {\"action\": \"process_ticket\", \"id\": 123}
 ```
 """
         return [TextContent(type="text", text=topics_info)]
-    
+
     async def _switch_provider(self, args: dict) -> list[TextContent]:
         """Switch event bus provider."""
-        new_provider = args['provider']
+        new_provider = args["provider"]
         old_provider = self._provider
-        
+
         # Disconnect old bus
         if self._bus:
             self._bus.disconnect()
             self._bus = None
-        
+
         # Switch provider
         self._provider = new_provider
-        
+
         # Connect new bus
         bus = self._get_bus()
         health = bus.health_check()
-        
-        return [TextContent(
-            type="text",
-            text=f"🔄 **Provider Switched**\n\n"
-                 f"From: {old_provider}\n"
-                 f"To: {new_provider}\n"
-                 f"Status: {health.get('status', 'unknown')}\n\n"
-                 f"Same Kafka API - all services continue working!"
-        )]
-    
+
+        return [
+            TextContent(
+                type="text",
+                text=f"🔄 **Provider Switched**\n\n"
+                f"From: {old_provider}\n"
+                f"To: {new_provider}\n"
+                f"Status: {health.get('status', 'unknown')}\n\n"
+                f"Same Kafka API - all services continue working!",
+            )
+        ]
+
     async def _send_llm_request(self, args: dict) -> list[TextContent]:
         """Send LLM request via event bus."""
         bus = self._get_bus()
-        
+
         import uuid
+
         request_id = str(uuid.uuid4())
-        
+
         event = {
-            'type': 'llm_request',
-            'request_id': request_id,
-            'prompt': args['prompt'],
-            'system': args.get('system', ''),
-            'priority': args.get('priority', 'normal'),
-            'timestamp': datetime.now().isoformat(),
-            'source': 'claude-mcp',
-            'fallback_chain': ['claude', 'openrouter', 'emulator']
+            "type": "llm_request",
+            "request_id": request_id,
+            "prompt": args["prompt"],
+            "system": args.get("system", ""),
+            "priority": args.get("priority", "normal"),
+            "timestamp": datetime.now().isoformat(),
+            "source": "claude-mcp",
+            "fallback_chain": ["claude", "openrouter", "emulator"],
         }
-        
+
         bus.emit(BrainTopics.LLM_REQUEST, event)
-        
-        return [TextContent(
-            type="text",
-            text=f"📤 **LLM Request Sent**\n\n"
-                 f"Request ID: `{request_id}`\n"
-                 f"Prompt: {args['prompt'][:100]}...\n"
-                 f"Priority: {args.get('priority', 'normal')}\n\n"
-                 f"Fallback chain: Claude → OpenRouter → Emulator\n\n"
-                 f"Response will arrive on `brain.llm.response`"
-        )]
-    
+
+        return [
+            TextContent(
+                type="text",
+                text=f"📤 **LLM Request Sent**\n\n"
+                f"Request ID: `{request_id}`\n"
+                f"Prompt: {args['prompt'][:100]}...\n"
+                f"Priority: {args.get('priority', 'normal')}\n\n"
+                f"Fallback chain: Claude → OpenRouter → Emulator\n\n"
+                f"Response will arrive on `brain.llm.response`",
+            )
+        ]
+
     async def _broadcast_alert(self, args: dict) -> list[TextContent]:
         """Broadcast alert to all components."""
         bus = self._get_bus()
-        
-        level_emoji = {
-            'info': 'ℹ️',
-            'warning': '⚠️',
-            'error': '❌',
-            'critical': '🚨'
-        }
-        
+
+        level_emoji = {"info": "ℹ️", "warning": "⚠️", "error": "❌", "critical": "🚨"}
+
         event = {
-            'type': 'alert',
-            'level': args['level'],
-            'message': args['message'],
-            'source': args.get('source', 'claude-mcp'),
-            'timestamp': datetime.now().isoformat()
+            "type": "alert",
+            "level": args["level"],
+            "message": args["message"],
+            "source": args.get("source", "claude-mcp"),
+            "timestamp": datetime.now().isoformat(),
         }
-        
+
         bus.emit(BrainTopics.ALERTS, event)
-        
-        return [TextContent(
-            type="text",
-            text=f"{level_emoji.get(args['level'], '📢')} **Alert Broadcast**\n\n"
-                 f"Level: {args['level'].upper()}\n"
-                 f"Message: {args['message']}\n"
-                 f"Source: {args.get('source', 'claude-mcp')}\n\n"
-                 f"All brain components notified."
-        )]
-    
+
+        return [
+            TextContent(
+                type="text",
+                text=f"{level_emoji.get(args['level'], '📢')} **Alert Broadcast**\n\n"
+                f"Level: {args['level'].upper()}\n"
+                f"Message: {args['message']}\n"
+                f"Source: {args.get('source', 'claude-mcp')}\n\n"
+                f"All brain components notified.",
+            )
+        ]
+
     async def _query_state(self, args: dict) -> list[TextContent]:
         """Query brain component states."""
         bus = self._get_bus()
-        
-        component = args.get('component', 'all')
-        
+
+        component = args.get("component", "all")
+
         # Emit state query request
         event = {
-            'type': 'state_query',
-            'component': component,
-            'timestamp': datetime.now().isoformat(),
-            'source': 'claude-mcp'
+            "type": "state_query",
+            "component": component,
+            "timestamp": datetime.now().isoformat(),
+            "source": "claude-mcp",
         }
-        
+
         bus.emit(BrainTopics.STATE, event)
-        
+
         # Return immediate status (real responses come via events)
-        return [TextContent(
-            type="text",
-            text=f"🔍 **State Query Sent**\n\n"
-                 f"Component: {component}\n\n"
-                 f"Responses will arrive on `brain.state` topic.\n\n"
-                 f"**Current Bus State:**\n"
-                 f"- Provider: {self._provider}\n"
-                 f"- Connected: {self._bus is not None}\n"
-                 f"- Topics: {len(BrainTopics.all())} configured"
-        )]
-    
+        return [
+            TextContent(
+                type="text",
+                text=f"🔍 **State Query Sent**\n\n"
+                f"Component: {component}\n\n"
+                f"Responses will arrive on `brain.state` topic.\n\n"
+                f"**Current Bus State:**\n"
+                f"- Provider: {self._provider}\n"
+                f"- Connected: {self._bus is not None}\n"
+                f"- Topics: {len(BrainTopics.all())} configured",
+            )
+        ]
+
     async def run(self):
         """Run the MCP server."""
         async with stdio_server() as (read_stream, write_stream):
             await self.server.run(
-                read_stream,
-                write_stream,
-                self.server.create_initialization_options()
+                read_stream, write_stream, self.server.create_initialization_options()
             )
 
 
