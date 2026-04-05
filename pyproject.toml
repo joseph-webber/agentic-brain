@@ -281,7 +281,7 @@ explainability = [
 finetuning = [
     "peft>=0.7.0,<1.0.0",
     "transformers>=4.36.0,<5.0.0",
-    "datasets>=2.16.0,<3.0.0",
+    "datasets>=2.16.0,<5.0.0",
 ]
 # PDF Processing - Core
 pdf = [
