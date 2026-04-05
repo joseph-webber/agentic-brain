@@ -3364,7 +3364,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         llmProviderDropdown.setAccessibilityLabel("LLM Provider")
         llmProviderDropdown.setAccessibilityHelp("Select which AI model to use: Ollama, OpenRouter, or Claude Desktop")
         llmProviderDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
-        llmProviderDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(llmProviderDropdown)
         
         // LLM Mode dropdown (Single, Multi-Bot, Consensus)
@@ -3384,7 +3383,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         llmModeDropdown.setAccessibilityLabel("LLM Mode")
         llmModeDropdown.setAccessibilityHelp("Choose how AI responds: Single LLM, Multi-Bot, or Consensus mode")
         llmModeDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
-        llmModeDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(llmModeDropdown)
         
         // Chat Mode dropdown
@@ -3404,7 +3402,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         chatModeDropdown.setAccessibilityLabel("Chat Mode")
         chatModeDropdown.setAccessibilityHelp("Changes how Brain Chat responds: Chat, Iris Lumina, or YOLO mode")
         chatModeDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
-        chatModeDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(chatModeDropdown)
         
         // Security Role dropdown
@@ -3424,7 +3421,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         securityRoleDropdown.setAccessibilityLabel("Security Role")
         securityRoleDropdown.setAccessibilityHelp("Controls what actions are allowed: Guest, User, or Admin")
         securityRoleDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
-        securityRoleDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(securityRoleDropdown)
 
         // MARK: - Settings Row 2: Voice Engine, Voice, Dictation Engine
@@ -3447,7 +3443,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         voiceEngineDropdown.setAccessibilityLabel("Voice Engine")
         voiceEngineDropdown.setAccessibilityHelp("Select how responses are spoken: System speech, ElevenLabs, or other engines")
         voiceEngineDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
-        voiceEngineDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(voiceEngineDropdown)
         
         // Voice Option dropdown
@@ -3467,7 +3462,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         voiceOptionDropdown.setAccessibilityLabel("Voice")
         voiceOptionDropdown.setAccessibilityHelp("Select which voice speaks responses. Karen is the default for Joseph. Options include Moira, Samantha, and others.")
         voiceOptionDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
-        voiceOptionDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(voiceOptionDropdown)
         
         // Dictation Engine dropdown
@@ -3487,7 +3481,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dictationEngineDropdown.setAccessibilityLabel("Dictation Engine")
         dictationEngineDropdown.setAccessibilityHelp("Choose how your voice is transcribed: System Speech Recognition or third-party engines")
         dictationEngineDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
-        dictationEngineDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(dictationEngineDropdown)
 
         // MARK: - Main UI Elements (shifted down)
@@ -3507,7 +3500,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         listenButton.setAccessibilityLabel("Start listening")
         listenButton.setAccessibilityHelp("Double tap to toggle voice input. Press Enter or Cmd+M to start listening.")
         listenButton.setAccessibilityRole(NSAccessibility.Role.button)
-        listenButton.setAccessibilityTraits(.button)
         contentView.addSubview(listenButton)
 
         statusLabel.frame = NSRect(x: 40, y: 362, width: 820, height: 24)
