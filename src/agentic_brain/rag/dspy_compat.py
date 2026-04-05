@@ -61,6 +61,7 @@ DSPy Reference: https://github.com/stanfordnlp/dspy
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import inspect
 import json
@@ -282,11 +283,36 @@ class Signature(metaclass=SignatureMeta):
     def __init__(self, **kwargs: Any):
         """Initialize signature with field values."""
         self._values: Dict[str, Any] = {}
+        for name, info in self._input_fields.items():
+            if info.default is not None:
+                self._values[name] = info.default
+        for name, info in self._output_fields.items():
+            if info.default is not None:
+                self._values[name] = info.default
         for key, value in kwargs.items():
             if key in self._input_fields or key in self._output_fields:
                 self._values[key] = value
             else:
                 raise ValueError(f"Unknown field: {key}")
+        missing = [
+            name
+            for name, info in self._input_fields.items()
+            if info.required and name not in self._values
+        ]
+        if missing:
+            raise ValueError(f"Missing required fields: {', '.join(missing)}")
+
+    def __getattribute__(self, name: str) -> Any:
+        if name.startswith("_"):
+            return super().__getattribute__(name)
+        values = super().__getattribute__("_values")
+        if name in values:
+            return values[name]
+        input_fields = super().__getattribute__("_input_fields")
+        output_fields = super().__getattribute__("_output_fields")
+        if name in input_fields or name in output_fields:
+            return values.get(name)
+        return super().__getattribute__(name)
 
     def __getattr__(self, name: str) -> Any:
         if name.startswith("_"):
@@ -339,6 +365,8 @@ class Signature(metaclass=SignatureMeta):
         for name, info in self._input_fields.items():
             if name in self._values:
                 value = self._values[name]
+                if value is None:
+                    continue
                 if info.format == "list" and isinstance(value, list):
                     value = "\n".join(f"- {v}" for v in value)
                 elif info.format == "json":
@@ -632,6 +660,31 @@ class Retrieve(Module):
         self.set_parameter("k", k)
         self.set_parameter("strategy", strategy)
 
+    def _resolve_strategy(self) -> Any:
+        strategy: Any = self.strategy
+        if isinstance(strategy, str):
+            try:
+                from .graph_rag import SearchStrategy
+
+                for candidate in SearchStrategy:
+                    if candidate.value == strategy:
+                        return candidate
+            except Exception:
+                return strategy
+        return strategy
+
+    def _resolve_async(self, result: Any) -> Any:
+        if inspect.iscoroutine(result):
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                return asyncio.run(result)
+            raise RuntimeError(
+                "Async retriever used while an event loop is running. "
+                "Use an async wrapper or await the retriever directly."
+            )
+        return result
+
     def forward(self, query: str, k: Optional[int] = None) -> RetrievalResult:
         """
         Retrieve passages for the given query.
@@ -655,37 +708,62 @@ class Retrieve(Module):
         metadata: List[Dict[str, Any]] = []
 
         try:
+            def append_item(item: Any) -> None:
+                if isinstance(item, dict):
+                    content = (
+                        item.get("content")
+                        or item.get("text")
+                        or item.get("summary")
+                        or ""
+                    )
+                    passages.append(content if content else str(item))
+                    score = item.get("score", item.get("relevance_score", 0.0))
+                    scores.append(float(score) if score is not None else 0.0)
+                    metadata.append(item)
+                    return
+                if hasattr(item, "content"):
+                    passages.append(getattr(item, "content"))
+                    scores.append(float(getattr(item, "score", 0.0)))
+                    metadata.append(getattr(item, "metadata", {}))
+                    return
+                passages.append(str(item))
+                scores.append(0.0)
+                metadata.append({})
+
             # Check for GraphRAG
             if hasattr(self.retriever, "search"):
-                results = self.retriever.search(query, top_k=k)
+                search = self.retriever.search
+                search_kwargs: Dict[str, Any] = {}
+                try:
+                    params = inspect.signature(search).parameters
+                except (TypeError, ValueError):
+                    params = {}
+                if "strategy" in params:
+                    search_kwargs["strategy"] = self._resolve_strategy()
+                if "top_k" in params:
+                    search_kwargs["top_k"] = k
+                elif "k" in params:
+                    search_kwargs["k"] = k
+                results = self._resolve_async(search(query, **search_kwargs))
                 if hasattr(results, "chunks"):
                     for chunk in results.chunks:
-                        passages.append(chunk.content)
-                        scores.append(chunk.score)
-                        metadata.append(chunk.metadata)
+                        append_item(chunk)
                 elif isinstance(results, list):
                     for r in results:
-                        if hasattr(r, "content"):
-                            passages.append(r.content)
-                            scores.append(getattr(r, "score", 0.0))
-                            metadata.append(getattr(r, "metadata", {}))
+                        append_item(r)
 
             # Check for Retriever
             elif hasattr(self.retriever, "retrieve"):
                 results = self.retriever.retrieve(query, top_k=k)
                 for r in results:
-                    passages.append(r.content if hasattr(r, "content") else str(r))
-                    scores.append(getattr(r, "score", 0.0))
-                    metadata.append(getattr(r, "metadata", {}))
+                    append_item(r)
 
             # Check for RAGPipeline
             elif hasattr(self.retriever, "query"):
                 result = self.retriever.query(query)
                 if hasattr(result, "sources"):
                     for source in result.sources[:k]:
-                        passages.append(source.get("content", ""))
-                        scores.append(source.get("score", 0.0))
-                        metadata.append(source)
+                        append_item(source)
 
             # Callable retriever
             elif callable(self.retriever):
@@ -696,10 +774,8 @@ class Retrieve(Module):
                             passages.append(r)
                             scores.append(1.0)
                             metadata.append({})
-                        elif isinstance(r, dict):
-                            passages.append(r.get("content", r.get("text", str(r))))
-                            scores.append(r.get("score", 0.0))
-                            metadata.append(r)
+                        else:
+                            append_item(r)
 
         except Exception as e:
             logger.warning(f"Retrieval error: {e}")
@@ -785,8 +861,8 @@ class ChainOfThought(Module):
         """Extract reasoning from response."""
         # Look for reasoning section
         patterns = [
-            r"Reasoning:(.+?)(?=\n\n|\Z)",
-            r"Let's think step by step[.:](.+?)(?=\n\n|\Z)",
+            r"Reasoning:(.+?)(?=\n[A-Z][A-Za-z ]+:|\Z)",
+            r"Let's think step by step[.:](.+?)(?=\n[A-Z][A-Za-z ]+:|\Z)",
             r"Step \d+:(.+?)(?=Step \d+:|Answer:|$)",
         ]
 

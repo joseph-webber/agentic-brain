@@ -4,7 +4,7 @@
 
 ## Overview
 
-RAGAS evaluates RAG quality using 4 core metrics:
+RAGAS evaluates RAG quality using 4 core metrics plus advanced checks:
 
 | Metric | Description | What it Measures |
 |--------|-------------|------------------|
@@ -12,6 +12,16 @@ RAGAS evaluates RAG quality using 4 core metrics:
 | **Answer Relevancy** | Does the answer address the question? | Response quality |
 | **Context Precision** | Are relevant contexts ranked higher? | Retrieval ranking |
 | **Context Recall** | Does context cover required information? | Retrieval completeness |
+
+### Advanced Evaluation Suite
+
+| Metric | Description |
+|--------|-------------|
+| **Aspect Critique** | Harmfulness, coherence, and conciseness checks |
+| **Answer Correctness** | Compare answer against ground truth |
+| **Context Entity Recall** | Verify entities from ground truth appear in context |
+| **Noise Robustness** | Stress-test with typos, paraphrases, and adversarial queries |
+| **Multi-turn Evaluation** | Measure conversation quality over turns |
 
 ### Quality Bar
 
@@ -23,7 +33,12 @@ RAGAS evaluates RAG quality using 4 core metrics:
 ## Quick Start
 
 ```python
-from agentic_brain.rag.ragas_eval import RAGASEvaluator, RAGASDataset, quick_evaluate
+from agentic_brain.rag.ragas_eval import (
+    AdvancedRAGASEvaluator,
+    RAGASEvaluator,
+    RAGASDataset,
+    quick_evaluate,
+)
 
 # Quick single-sample evaluation
 result = quick_evaluate(
@@ -41,6 +56,16 @@ print(f"Faithfulness: {result.faithfulness.score:.2f}")
 print(f"Answer Relevancy: {result.answer_relevancy.score:.2f}")
 print(f"Context Precision: {result.context_precision.score:.2f}")
 print(f"Context Recall: {result.context_recall.score:.2f}")
+```
+
+```python
+# Advanced evaluation
+advanced = AdvancedRAGASEvaluator()
+report = advanced.full_evaluation(sample, include_noise=True)
+
+print(report["answer_quality"]["correctness"]["score"])
+print(report["entity_recall"]["score"])
+print(report["noise_robustness"]["score"])
 ```
 
 ## Full Evaluation Workflow
@@ -271,6 +296,39 @@ if result.context_recall.score < 0.7:
     for s in result.context_recall.details["statement_coverage"]:
         if not s["covered"]:
             print(f"  Missing: {s['statement']}")
+```
+
+### Advanced Metrics
+
+```python
+from agentic_brain.rag.ragas_eval import (
+    AdvancedRAGASEvaluator,
+    AspectType,
+    ConversationSample,
+    ConversationTurn,
+)
+
+advanced = AdvancedRAGASEvaluator()
+
+aspect_results = advanced.evaluate_with_aspects(
+    sample,
+    aspects=[AspectType.HARMFULNESS, AspectType.COHERENCE, AspectType.CONCISENESS],
+)
+
+conversation = ConversationSample(
+    conversation_id="demo",
+    turns=[
+        ConversationTurn(
+            question="What is Neo4j?",
+            answer="Neo4j is a graph database.",
+            contexts=["Neo4j stores relationships."],
+            ground_truth="Neo4j is a graph database.",
+            turn_number=1,
+        )
+    ],
+)
+
+multi_turn = advanced.evaluate_conversation(conversation)
 ```
 
 ## CI/CD Integration

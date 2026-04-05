@@ -587,7 +587,7 @@ class Neo4jSessionBackend:
             logger.warning(f"Failed to initialize Neo4j schema: {e}")
 
     def store_message(self, message: SessionMessage) -> None:
-        """Store a message in Neo4j."""
+        """Store a single message in Neo4j."""
         self.initialize()
         try:
             with self._get_session() as session:
@@ -616,38 +616,100 @@ class Neo4jSessionBackend:
         except Exception as e:
             logger.error(f"Failed to store message in Neo4j: {e}")
 
-    def get_messages(
-        self, session_id: str, limit: int | None = None
-    ) -> list[SessionMessage]:
-        """Get messages for a session."""
+    def store_messages_bulk(self, messages: list[SessionMessage]) -> int:
+        """Store multiple messages in a single batch UNWIND operation.
+
+        Returns the number of messages attempted to store.
+        """
+        if not messages:
+            return 0
         self.initialize()
-        messages = []
+        payload = [
+            {
+                "id": m.id,
+                "role": m.role.value,
+                "content": m.content,
+                "timestamp": m.timestamp.isoformat(),
+                "session_id": m.session_id,
+                "importance": m.importance,
+                "access_count": m.access_count,
+                "metadata": json.dumps(m.metadata),
+                "entities_json": json.dumps(m.entities),
+            }
+            for m in messages
+        ]
         try:
             with self._get_session() as session:
-                query = """
-                    MATCH (m:SessionMessage {session_id: $session_id})
-                    RETURN m
+                session.run(
+                    """
+                    UNWIND $rows AS r
+                    MERGE (m:SessionMessage {id: r.id})
+                    SET m.role = r.role,
+                        m.content = r.content,
+                        m.timestamp = datetime(r.timestamp),
+                        m.session_id = r.session_id,
+                        m.importance = r.importance,
+                        m.access_count = r.access_count,
+                        m.metadata = r.metadata,
+                        m.entities_json = r.entities_json
+                    """,
+                    rows=payload,
+                )
+            return len(payload)
+        except Exception as e:
+            logger.error(f"Failed to store messages bulk in Neo4j: {e}")
+            return 0
+
+    def get_messages(
+        self,
+        session_id: str,
+        page: int = 0,
+        page_size: int | None = None,
+        include_content: bool = True,
+    ) -> list[SessionMessage]:
+        """Get messages for a session with pagination and optional lazy content loading.
+
+        Args:
+            session_id: Session identifier
+            page: Zero-based page index
+            page_size: Number of messages per page (None => use limit param or return all)
+            include_content: If False only load metadata (id, role, timestamp)
+        """
+        self.initialize()
+        messages: list[SessionMessage] = []
+        try:
+            with self._get_session() as session:
+                fields = "m.id AS id, m.role AS role, m.timestamp AS timestamp, m.session_id AS session_id, m.importance AS importance, m.access_count AS access_count"
+                if include_content:
+                    fields += ", m.content AS content, m.metadata AS metadata, m.entities_json AS entities_json"
+
+                query = f"""
+                    MATCH (m:SessionMessage {{session_id: $session_id}})
+                    RETURN {fields}
                     ORDER BY m.timestamp DESC
                 """
-                if limit:
-                    query += f" LIMIT {limit}"
 
-                result = session.run(query, session_id=session_id)
+                params: dict = {"session_id": session_id}
+                if page_size:
+                    params["skip"] = page * page_size
+                    params["limit"] = page_size
+                    query += " SKIP $skip LIMIT $limit"
+
+                result = session.run(query, **params)
                 for record in result:
-                    node = record["m"]
-                    messages.append(
-                        SessionMessage(
-                            id=node["id"],
-                            role=MessageRole(node["role"]),
-                            content=node["content"],
-                            timestamp=node["timestamp"].to_native(),
-                            session_id=node["session_id"],
-                            importance=node.get("importance", 0.5),
-                            access_count=node.get("access_count", 0),
-                            metadata=json.loads(node.get("metadata", "{}")),
-                            entities=json.loads(node.get("entities_json", "[]")),
-                        )
+                    ts = record["timestamp"].to_native() if hasattr(record["timestamp"], "to_native") else record["timestamp"]
+                    msg = SessionMessage(
+                        id=record["id"],
+                        role=MessageRole(record["role"]),
+                        content=record.get("content", "") if include_content else "",
+                        timestamp=ts,
+                        session_id=record["session_id"],
+                        importance=record.get("importance", 0.5),
+                        access_count=record.get("access_count", 0),
+                        metadata=json.loads(record.get("metadata") or "{}") if include_content else {},
+                        entities=json.loads(record.get("entities_json") or "[]") if include_content else [],
                     )
+                    messages.append(msg)
         except Exception as e:
             logger.error(f"Failed to get messages from Neo4j: {e}")
         return messages
@@ -2193,14 +2255,23 @@ def reset_session_manager() -> None:
 
 
 __all__ = [
+    # Core classes
     "SessionManager",
     "Session",
     "SessionMessage",
     "SessionSummary",
     "SessionConfig",
     "MessageRole",
+    # Backends
     "Neo4jSessionBackend",
     "SQLiteSessionBackend",
+    # Advanced features
+    "SessionTag",
+    "SessionAnalytics",
+    "SemanticSearchResult",
+    "ExportFormat",
+    "ReplayConfig",
+    # Factory functions
     "get_session_manager",
     "reset_session_manager",
 ]

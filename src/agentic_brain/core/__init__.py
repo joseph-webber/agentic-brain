@@ -4,6 +4,14 @@
 """Core shared infrastructure for Agentic Brain."""
 
 from .cache_manager import CacheManager
+from .exceptions import (
+    AgenticBrainError,
+    EmbeddingError,
+    GraphConnectionError,
+    LLMError,
+    RateLimitError,
+    ValidationError,
+)
 from .neo4j_first import neo4j_first
 from .neo4j_pool import (
     Neo4jPoolConfig,
@@ -44,18 +52,26 @@ from .polymorphic import (
     UserType,
 )
 from .redis_pool import RedisConfig, RedisCoordination, RedisPoolManager, get_redis_pool
+from .retry import circuit_breaker, retry_with_backoff, timeout
 
 __all__ = [
     "CacheManager",
+    "AgenticBrainError",
     "BehaviorProfile",
     "ComplianceMode",
     "ContextType",
     "EnvironmentType",
+    "EmbeddingError",
+    "GraphConnectionError",
+    "LLMError",
     "PolymorphicBrain",
     "RedisConfig",
     "RedisCoordination",
     "RedisPoolManager",
+    "RateLimitError",
     "UserType",
+    "ValidationError",
+    "circuit_breaker",
     "get_redis_pool",
     "Neo4jPoolConfig",
     "configure_neo4j_pool",
@@ -68,6 +84,8 @@ __all__ = [
     "neo4j_write",
     "neo4j_pool_health",
     "neo4j_first",
+    "retry_with_backoff",
+    "timeout",
 ]
 
 # Rate limit management

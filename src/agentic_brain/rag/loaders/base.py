@@ -25,18 +25,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Optional, TypeVar
 
+from agentic_brain.core.exceptions import RateLimitError
+
 logger = logging.getLogger(__name__)
 
 # Type variable for retry decorator
 T = TypeVar("T")
-
-
-class RateLimitError(Exception):
-    """Raised when rate limit is hit."""
-
-    def __init__(self, retry_after: int = 60):
-        self.retry_after = retry_after
-        super().__init__(f"Rate limited. Retry after {retry_after}s")
 
 
 def with_rate_limit(
@@ -99,7 +93,12 @@ def with_rate_limit(
                     else:
                         raise
 
-            raise RateLimitError() from last_error
+            raise RateLimitError(
+                requests_per_minute,
+                "minute",
+                retry_after=int(backoff_factor**retry_count),
+                original_error=last_error,
+            ) from last_error
 
         return wrapper
 

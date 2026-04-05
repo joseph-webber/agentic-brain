@@ -30,6 +30,20 @@ class RateLimitStrategy(Enum):
     QUEUE = "queue"              # Queue requests for later
     FAILOVER = "failover"        # Switch to alternate provider
     REJECT = "reject"            # Reject immediately
+    PROTECT_ROYALTY = "protect_royalty"  # Use cheap/local LLMs to protect expensive ones
+
+
+class ProviderTier(Enum):
+    """
+    Provider tiers for the "Protect the Royalty" strategy.
+    
+    Like chess: protect the King (Claude) and Queen (GPT) with 
+    Knights (Groq/Gemini) and Pawns (local LLMs).
+    """
+    KING = "king"          # Claude - most capable, expensive, rate limited
+    QUEEN = "queen"        # GPT - powerful, costs money
+    KNIGHT = "knight"      # Groq/Gemini - fast, free/cheap, some limits
+    PAWN = "pawn"          # Local LLM (Ollama) - unlimited, slower, free
 
 
 @dataclass
@@ -43,6 +57,9 @@ class ProviderQuota:
     concurrent_limit: int = 10
     cooldown_seconds: int = 60
     priority: int = 1  # Lower = higher priority
+    tier: str = "knight"  # king, queen, knight, pawn
+    cost_per_1k_tokens: float = 0.0  # For cost tracking
+    is_local: bool = False  # Local LLMs can't be rate limited externally
 
 
 @dataclass 
@@ -111,41 +128,71 @@ class RateLimitManager:
     """
     
     # Default quotas for known providers
+    # PROTECT THE ROYALTY: Use pawns (local) and knights (fast cloud) to protect king (Claude) and queen (GPT)
     DEFAULT_QUOTAS = {
+        # KING - Most capable, expensive, protect at all costs
         "claude": ProviderQuota(
             name="claude",
             requests_per_minute=50,
             requests_per_hour=500,
             concurrent_limit=5,
-            priority=1
+            priority=10,  # HIGH priority number = use LAST (protect!)
+            tier="king",
+            cost_per_1k_tokens=0.015,
+            is_local=False
         ),
+        # QUEEN - Powerful, costs money, protect
         "gpt": ProviderQuota(
             name="gpt", 
             requests_per_minute=60,
             requests_per_hour=1000,
             concurrent_limit=10,
-            priority=2
+            priority=9,  # Use second-to-last
+            tier="queen",
+            cost_per_1k_tokens=0.01,
+            is_local=False
         ),
+        # KNIGHTS - Fast, free/cheap, use freely
         "groq": ProviderQuota(
             name="groq",
             requests_per_minute=30,
             requests_per_hour=1000,
             concurrent_limit=5,
-            priority=1  # Fast, use first
+            priority=2,  # Use early - it's fast and free!
+            tier="knight",
+            cost_per_1k_tokens=0.0,  # FREE
+            is_local=False
         ),
         "gemini": ProviderQuota(
             name="gemini",
             requests_per_minute=60,
             requests_per_hour=1500,
             concurrent_limit=10,
-            priority=3
+            priority=3,
+            tier="knight",
+            cost_per_1k_tokens=0.0,  # Free tier generous
+            is_local=False
         ),
+        "grok": ProviderQuota(
+            name="grok",
+            requests_per_minute=60,
+            requests_per_hour=1000,
+            concurrent_limit=8,
+            priority=3,
+            tier="knight",
+            cost_per_1k_tokens=0.0,
+            is_local=False
+        ),
+        # PAWNS - Local LLMs, unlimited, use as shields!
         "ollama": ProviderQuota(
             name="ollama",
-            requests_per_minute=1000,  # Local, no real limit
-            requests_per_hour=10000,
-            concurrent_limit=2,  # But limited by hardware
-            priority=4  # Slower, use as fallback
+            requests_per_minute=1000,  # Local, no external limit
+            requests_per_hour=100000,
+            concurrent_limit=4,  # Limited by hardware
+            priority=1,  # LOWEST = use FIRST (it's free & unlimited!)
+            tier="pawn",
+            cost_per_1k_tokens=0.0,
+            is_local=True  # Can't be rate limited externally!
         ),
     }
     

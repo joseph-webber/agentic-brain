@@ -134,6 +134,65 @@ ab mode switch government # FedRAMP, FIPS 140-2
 
 ## 💻 Usage
 
+### Quick-Start API (One-Liners!)
+
+Dead simple convenience functions for common tasks:
+
+```python
+# RAG - one-liner Q&A
+from agentic_brain.api import quick_rag
+result = quick_rag("How do I deploy?", docs=["deployment.md"])
+print(result.answer)
+
+# Search - unified across all sources
+from agentic_brain.api import quick_search
+results = quick_search("neural networks", num_results=10)
+
+# Graph - instant knowledge graph
+from agentic_brain.api import quick_graph
+graph = quick_graph(
+    entities=["User", "Project", "Task"],
+    relationships=[
+        ("User", "owns", "Project"),
+        ("Project", "contains", "Task"),
+    ]
+)
+
+# Evaluate - fast metrics on results
+from agentic_brain.api import quick_eval
+metrics = quick_eval(rag_results, metrics=["retrieval", "generation"])
+```
+
+### Fluent Builder (Chainable API)
+
+Build complex workflows with readable method chaining:
+
+```python
+from agentic_brain.api import AgenticBrain
+
+# Setup once, query many times
+brain = (
+    AgenticBrain()
+    .with_llm_openai("gpt-4")           # Fast provider switching
+    .with_graph()                        # Enable knowledge graph
+    .with_rag(cache_ttl_hours=24)       # Enable RAG with caching
+    .ingest_documents(["docs/", "wiki/"]) # Load documents
+    .add_entities(["User", "Project"])
+    .add_relationships([("User", "manages", "Project")])
+)
+
+# Query with automatic history tracking
+result = brain.query("What projects do we have?")
+print(result.answer)
+
+# Evaluate multiple queries
+metrics = brain.evaluate_recent_queries()
+print(f"Accuracy: {metrics['generation']['avg_confidence']}")
+
+# Check configuration
+print(brain.describe())
+```
+
 ### Python SDK
 
 ```python

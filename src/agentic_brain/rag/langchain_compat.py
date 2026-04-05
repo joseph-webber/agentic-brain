@@ -2505,7 +2505,7 @@ class CommaSeparatedListOutputParser(BaseOutputParser[List[str]]):
 # =============================================================================
 
 
-class BaseChain(ABC, Runnable[Dict[str, Any], Dict[str, Any]]):
+class BaseChain(Runnable[Dict[str, Any], Dict[str, Any]]):
     """Abstract base class for chains.
 
     Chains combine multiple components into a processing pipeline.

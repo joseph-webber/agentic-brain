@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import importlib
 import inspect
 import json
 import logging
@@ -438,14 +439,14 @@ class Pipeline:
             sender_name, sender_output = sender.split(".", 1)
         else:
             sender_name = sender
-            sender_output = "output"
+            sender_output = self._get_default_sender_output(sender_name)
 
         # Parse receiver
         if "." in receiver:
             receiver_name, receiver_input = receiver.split(".", 1)
         else:
             receiver_name = receiver
-            receiver_input = "input"
+            receiver_input = self._get_default_receiver_input(receiver_name)
 
         # Validate components exist
         if sender_name not in self._components:
@@ -454,6 +455,9 @@ class Pipeline:
             raise PipelineConnectionError(
                 f"Receiver component '{receiver_name}' not found"
             )
+
+        # Validate ports and types when metadata is available
+        self._validate_connection(sender_name, sender_output, receiver_name, receiver_input)
 
         # Check for cycles
         if self._would_create_cycle(sender_name, receiver_name):
@@ -473,6 +477,110 @@ class Pipeline:
         self._reverse_graph[receiver_name].add(sender_name)
 
         logger.debug(f"Connected {sender} -> {receiver}")
+
+    def _get_default_sender_output(self, component_name: str) -> str:
+        """Resolve default sender output name for simple connection syntax."""
+        component = self._components.get(component_name)
+        meta = getattr(component, "__haystack_component__", None)
+
+        if meta and meta.output_types:
+            if "output" in meta.output_types:
+                return "output"
+            if len(meta.output_types) == 1:
+                return next(iter(meta.output_types))
+        return "output"
+
+    def _get_default_receiver_input(self, component_name: str) -> str:
+        """Resolve default receiver input name for simple connection syntax."""
+        component = self._components.get(component_name)
+        meta = getattr(component, "__haystack_component__", None)
+
+        if meta and meta.input_types:
+            if "input" in meta.input_types:
+                return "input"
+            if len(meta.input_types) == 1:
+                return next(iter(meta.input_types))
+
+        # Fall back to first explicit run parameter
+        if component is not None:
+            try:
+                sig = inspect.signature(component.run)
+                params = [
+                    p
+                    for p in sig.parameters.values()
+                    if p.name != "self" and p.kind != inspect.Parameter.VAR_KEYWORD
+                ]
+                if len(params) == 1:
+                    return params[0].name
+            except (TypeError, ValueError):
+                pass
+
+        return "input"
+
+    def _validate_connection(
+        self,
+        sender_name: str,
+        sender_output: str,
+        receiver_name: str,
+        receiver_input: str,
+    ) -> None:
+        """Validate connection ports and basic type compatibility when declared."""
+        sender = self._components[sender_name]
+        receiver = self._components[receiver_name]
+        sender_meta = getattr(sender, "__haystack_component__", None)
+        receiver_meta = getattr(receiver, "__haystack_component__", None)
+
+        sender_type: Optional[Type] = None
+        receiver_type: Optional[Type] = None
+
+        if sender_meta and sender_meta.output_types:
+            if sender_output not in sender_meta.output_types:
+                raise PipelineConnectionError(
+                    f"Output '{sender_output}' not declared by component '{sender_name}'"
+                )
+            sender_type = sender_meta.output_types.get(sender_output)
+
+        accepts_var_kwargs = False
+        try:
+            receiver_sig = inspect.signature(receiver.run)
+            accepts_var_kwargs = any(
+                p.kind == inspect.Parameter.VAR_KEYWORD
+                for p in receiver_sig.parameters.values()
+            )
+        except (TypeError, ValueError):
+            pass
+
+        if receiver_meta and receiver_meta.input_types:
+            if receiver_input not in receiver_meta.input_types and not accepts_var_kwargs:
+                raise PipelineConnectionError(
+                    f"Input '{receiver_input}' not declared by component '{receiver_name}'"
+                )
+            receiver_type = receiver_meta.input_types.get(receiver_input)
+
+        if sender_type is not None and receiver_type is not None:
+            if not self._is_type_compatible(sender_type, receiver_type):
+                raise PipelineConnectionError(
+                    f"Type mismatch: '{sender_name}.{sender_output}' ({sender_type}) "
+                    f"cannot connect to '{receiver_name}.{receiver_input}' ({receiver_type})"
+                )
+
+    @staticmethod
+    def _is_type_compatible(sender_type: Type, receiver_type: Type) -> bool:
+        """Check relaxed compatibility for typing hints used by components."""
+        if sender_type is Any or receiver_type is Any:
+            return True
+        if sender_type == receiver_type:
+            return True
+
+        sender_origin = getattr(sender_type, "__origin__", None)
+        receiver_origin = getattr(receiver_type, "__origin__", None)
+        if sender_origin and receiver_origin and sender_origin == receiver_origin:
+            return True
+
+        try:
+            return issubclass(sender_type, receiver_type)
+        except TypeError:
+            return False
 
     def _would_create_cycle(self, sender: str, receiver: str) -> bool:
         """Check if adding an edge would create a cycle."""
@@ -605,8 +713,8 @@ class Pipeline:
         self._connections = [
             c for c in self._connections if c.sender != name and c.receiver != name
         ]
-        del self._graph[name]
-        del self._reverse_graph[name]
+        self._graph.pop(name, None)
+        self._reverse_graph.pop(name, None)
 
         for connections in self._graph.values():
             connections.discard(name)
@@ -722,12 +830,55 @@ class Pipeline:
             Reconstructed Pipeline
         """
         pipe = cls(metadata=data.get("metadata", {}))
+        callbacks = callbacks or {}
 
-        # Note: Full deserialization requires component registry
-        # This is a simplified version
-        logger.warning(
-            "Pipeline.from_dict requires component registry for full reconstruction"
-        )
+        components_data = data.get("components", {})
+        for name, comp_data in components_data.items():
+            component_type = comp_data.get("type")
+            if not component_type:
+                raise PipelineValidationError(
+                    f"Component '{name}' is missing required field 'type'"
+                )
+
+            init_parameters = copy.deepcopy(comp_data.get("init_parameters", {}))
+            if isinstance(init_parameters, dict):
+                init_parameters.pop("type", None)
+
+            # Prefer full path callback, then short class name callback.
+            factory = callbacks.get(component_type)
+            short_name = component_type.rsplit(".", 1)[-1]
+            if factory is None:
+                factory = callbacks.get(short_name)
+            if factory is None:
+                factory = _COMPONENT_REGISTRY.get(short_name)
+
+            if factory is None:
+                try:
+                    module_name, class_name = component_type.rsplit(".", 1)
+                    module = importlib.import_module(module_name)
+                    factory = getattr(module, class_name)
+                except (ImportError, AttributeError, ValueError) as exc:
+                    raise PipelineValidationError(
+                        f"Cannot resolve component type '{component_type}'"
+                    ) from exc
+
+            # Instantiate class/component
+            if inspect.isclass(factory):
+                instance = factory(**init_parameters)
+            else:
+                try:
+                    instance = factory(**init_parameters)
+                except TypeError:
+                    instance = factory(init_parameters)
+
+            pipe.add_component(name, instance)
+
+        for conn in data.get("connections", []):
+            sender = conn.get("sender")
+            receiver = conn.get("receiver")
+            if not sender or not receiver:
+                raise PipelineValidationError("Invalid connection entry in pipeline data")
+            pipe.connect(sender, receiver)
 
         return pipe
 

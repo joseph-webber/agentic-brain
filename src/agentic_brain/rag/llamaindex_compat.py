@@ -462,17 +462,10 @@ class BaseSynthesizer(ABC):
 
 
 class AgenticSynthesizer(BaseSynthesizer):
-    """
-    LlamaIndex-compatible response synthesizer using Agentic Brain.
+    """LlamaIndex-compatible response synthesizer.
 
-    Combines retrieved context with LLM generation to produce answers.
-
-    Example:
-        synthesizer = AgenticSynthesizer(response_mode=ResponseMode.COMPACT)
-        response = synthesizer.synthesize(
-            query="What is GraphRAG?",
-            nodes=retrieved_nodes,
-        )
+    This class is intentionally thin: it routes to a specific synthesis
+    strategy based on ``response_mode``.
     """
 
     def __init__(
@@ -484,7 +477,6 @@ class AgenticSynthesizer(BaseSynthesizer):
         self.response_mode = response_mode
         self.llm_model = llm_model
         self.streaming = streaming
-        self._pipeline = RAGPipeline()
 
     def synthesize(
         self,
@@ -492,74 +484,21 @@ class AgenticSynthesizer(BaseSynthesizer):
         nodes: List[NodeWithScore],
         **kwargs: Any,
     ) -> Response:
-        """
-        Synthesize response from query and nodes.
-
-        Args:
-            query: The original query
-            nodes: Retrieved nodes with scores
-            **kwargs: Additional synthesis parameters
-
-        Returns:
-            Response object with answer and source attribution
-        """
-        import time
-
-        start = time.time()
-
-        # Build context from nodes
-        context_chunks = []
-        for node in nodes:
-            chunk = RetrievedChunk(
-                content=node.node.text,
-                source=node.node.metadata.get("source", "unknown"),
-                score=node.score,
-                metadata=node.node.metadata,
-            )
-            context_chunks.append(chunk)
-
-        # Build context string and generate response
-        if not context_chunks:
-            answer = "I don't have enough information to answer that question."
-            confidence = 0.0
-        else:
-            context_parts = []
-            for i, chunk in enumerate(context_chunks, 1):
-                context_parts.append(
-                    f"[Source {i}: {chunk.source}]\n{chunk.content}"
-                )
-            context = "\n\n".join(context_parts)
-
-            # Try to generate response, fall back to context summary if LLM unavailable
-            try:
-                answer = self._pipeline._generate(query, context)
-            except Exception as e:
-                logger.debug(f"LLM generation failed, using context summary: {e}")
-                # Fallback: summarize context as the answer
-                answer = f"Based on the provided context:\n\n{context[:500]}"
-                if len(context) > 500:
-                    answer += "..."
-
-            confidence = (
-                sum(c.score for c in context_chunks) / len(context_chunks)
-                if context_chunks
-                else 0.0
-            )
-
-        generation_time = (time.time() - start) * 1000
-
-        # Build RAGResult
-        result = RAGResult(
-            query=query,
-            answer=answer,
-            sources=context_chunks,
-            confidence=confidence,
-            model=self.llm_model,
-            cached=False,
-            generation_time_ms=generation_time,
+        impl = get_response_synthesizer(
+            response_mode=kwargs.pop("response_mode", self.response_mode),
+            llm_model=self.llm_model,
         )
+        return impl.synthesize(query, nodes, **kwargs)
 
-        return Response.from_rag_result(result)
+    def synthesize_stream(
+        self,
+        query: str,
+        nodes: List[NodeWithScore],
+        **kwargs: Any,
+    ) -> "StreamingResponse":
+        """Streaming synthesis (token generator + async generator)."""
+        streamer = StreamingSynthesizer(llm_model=self.llm_model)
+        return streamer.synthesize_stream(query, nodes, **kwargs)
 
 
 # ============================================================================
@@ -581,52 +520,69 @@ class BaseQueryEngine(ABC):
 
 
 class AgenticQueryEngine(BaseQueryEngine):
-    """
-    LlamaIndex-compatible query engine using Agentic Brain RAG.
-
-    Combines retrieval and synthesis in a single query() call.
-
-    Example:
-        # Basic usage
-        engine = AgenticQueryEngine()
-        response = engine.query("What is the main topic?")
-        print(response)
-        print(response.source_nodes)
-
-        # With custom retriever
-        engine = AgenticQueryEngine(
-            retriever=LlamaIndexGraphRAGRetriever(strategy=SearchStrategy.COMMUNITY),
-            synthesizer=AgenticSynthesizer(response_mode=ResponseMode.REFINE),
-        )
-    """
+    """LlamaIndex-compatible query engine using Agentic Brain RAG."""
 
     def __init__(
         self,
         retriever: Optional[BaseRetriever] = None,
         synthesizer: Optional[BaseSynthesizer] = None,
         similarity_top_k: int = 5,
+        service_context: Optional[ServiceContext] = None,
     ):
         self.retriever = retriever or AgenticRetriever(similarity_top_k=similarity_top_k)
         self.synthesizer = synthesizer or AgenticSynthesizer()
         self.similarity_top_k = similarity_top_k
+        self.service_context = service_context
 
-    def query(self, query: str, **kwargs: Any) -> Response:
-        """
-        Execute query with retrieval and synthesis.
+        if self.service_context is not None:
+            self.service_context.to_settings()
 
-        Args:
-            query: The query string
-            **kwargs: Additional parameters for retrieval/synthesis
+    def query(self, query: str, **kwargs: Any) -> Union[Response, StreamingResponse]:
+        streaming = bool(kwargs.pop("streaming", False))
+        response_mode = kwargs.get("response_mode")
 
-        Returns:
-            Response with answer and source nodes
-        """
         nodes = self.retriever.retrieve(query, **kwargs)
+
+        if streaming:
+            # Prefer a native streaming method if present.
+            if hasattr(self.synthesizer, "synthesize_stream"):
+                return self.synthesizer.synthesize_stream(query, nodes, **kwargs)  # type: ignore[no-any-return]
+            return StreamingSynthesizer(llm_model=getattr(self.synthesizer, "llm_model", Settings.llm)).synthesize_stream(
+                query, nodes, **kwargs
+            )
+
+        # Optional per-call response_mode override.
+        if response_mode is not None and isinstance(self.synthesizer, AgenticSynthesizer):
+            return AgenticSynthesizer(
+                response_mode=ResponseMode(response_mode)
+                if isinstance(response_mode, str)
+                else response_mode,
+                llm_model=self.synthesizer.llm_model,
+            ).synthesize(query, nodes, **kwargs)
+
         return self.synthesizer.synthesize(query, nodes, **kwargs)
 
-    async def aquery(self, query: str, **kwargs: Any) -> Response:
-        """Async query execution."""
+    async def aquery(self, query: str, **kwargs: Any) -> Union[Response, StreamingResponse]:
+        streaming = bool(kwargs.pop("streaming", False))
+        response_mode = kwargs.get("response_mode")
+
         nodes = await self.retriever.aretrieve(query, **kwargs)
+
+        if streaming:
+            if hasattr(self.synthesizer, "synthesize_stream"):
+                return self.synthesizer.synthesize_stream(query, nodes, **kwargs)  # type: ignore[no-any-return]
+            return StreamingSynthesizer(llm_model=getattr(self.synthesizer, "llm_model", Settings.llm)).synthesize_stream(
+                query, nodes, **kwargs
+            )
+
+        if response_mode is not None and isinstance(self.synthesizer, AgenticSynthesizer):
+            return AgenticSynthesizer(
+                response_mode=ResponseMode(response_mode)
+                if isinstance(response_mode, str)
+                else response_mode,
+                llm_model=self.synthesizer.llm_model,
+            ).synthesize(query, nodes, **kwargs)
+
         return self.synthesizer.synthesize(query, nodes, **kwargs)
 
 
@@ -722,37 +678,79 @@ class AgenticIndex(BaseIndex):
         show_progress: bool = True,
         **kwargs: Any,
     ) -> "AgenticIndex":
-        """
-        Create index from documents.
+        """Create index from documents.
 
-        Args:
-            documents: List of documents (TextNode, Document, or dict)
-            show_progress: Show indexing progress
-            **kwargs: Additional index configuration
+        This preserves the existing behavior (one stored item per input document)
+        unless a node parser / transformations pipeline is explicitly provided.
 
-        Returns:
-            Configured AgenticIndex instance
+        Supported compatibility kwargs:
+        - service_context: ServiceContext (also supports global service context)
+        - transformations: list[BaseNodeParser | BaseExtractor]
+        - node_parser: BaseNodeParser
+        - chunk_size / chunk_overlap: convenience to create SentenceSplitter
         """
+
         store = kwargs.pop("document_store", None) or InMemoryDocumentStore()
         embedding_provider = kwargs.pop("embedding_provider", None)
+        service_context: Optional[ServiceContext] = kwargs.pop("service_context", None)
+        transformations = kwargs.pop("transformations", None)
+        node_parser = kwargs.pop("node_parser", None)
+        chunk_size = kwargs.pop("chunk_size", None)
+        chunk_overlap = kwargs.pop("chunk_overlap", None)
+
+        if service_context is None:
+            service_context = get_global_service_context()
+
+        if service_context is not None:
+            service_context.to_settings()
+            node_parser = node_parser or service_context.node_parser
+
+        if transformations is None:
+            if node_parser is not None:
+                transformations = [node_parser]
+            elif chunk_size is not None or chunk_overlap is not None:
+                transformations = [
+                    SentenceSplitter(
+                        chunk_size=int(chunk_size or Settings.chunk_size),
+                        chunk_overlap=int(chunk_overlap or Settings.chunk_overlap),
+                    )
+                ]
+
         index = cls(document_store=store, embedding_provider=embedding_provider)
 
-        for i, doc in enumerate(documents):
-            if show_progress and (i + 1) % 100 == 0:
-                logger.info(f"Indexed {i + 1}/{len(documents)} documents")
-
+        # Convert inputs into TextNodes for optional transformations.
+        input_nodes: List[TextNode] = []
+        for doc in documents:
             if isinstance(doc, TextNode):
-                index._store.add(doc.text, metadata=doc.metadata, doc_id=doc.node_id)
+                input_nodes.append(doc)
             elif isinstance(doc, Document):
-                index._store.add(doc)
+                input_nodes.append(TextNode.from_agentic_document(doc))
             elif isinstance(doc, dict):
                 text = doc.get("text", doc.get("content", doc.get("page_content", "")))
-                metadata = {k: v for k, v in doc.items() if k not in ("text", "content", "page_content")}
-                index._store.add(text, metadata=metadata)
+                metadata = {
+                    k: v
+                    for k, v in doc.items()
+                    if k not in ("text", "content", "page_content")
+                }
+                input_nodes.append(TextNode(text=text, metadata=metadata))
             else:
                 raise TypeError(f"Unsupported document type: {type(doc)}")
 
-        logger.info(f"Indexed {len(documents)} documents into AgenticIndex")
+        nodes_to_store: List[TextNode]
+        if transformations:
+            nodes_to_store = IngestionPipeline(transformations=transformations).run(
+                documents=input_nodes,
+                show_progress=show_progress,
+            )
+        else:
+            nodes_to_store = input_nodes
+
+        for i, node in enumerate(nodes_to_store):
+            if show_progress and (i + 1) % 100 == 0:
+                logger.info(f"Indexed {i + 1}/{len(nodes_to_store)} nodes")
+            index._store.add(node.text, metadata=node.metadata, doc_id=node.node_id)
+
+        logger.info(f"Indexed {len(nodes_to_store)} nodes into AgenticIndex")
         return index
 
     def as_query_engine(self, **kwargs: Any) -> BaseQueryEngine:
@@ -988,58 +986,68 @@ class SimpleDirectoryReader:
 # ============================================================================
 
 
-class Settings:
+class _SettingsMeta(type):
+    """Metaclass to keep underscore + non-underscore aliases in sync."""
+
+    _ALIASES = {
+        "llm": "_llm",
+        "embed_model": "_embed_model",
+        "chunk_size": "_chunk_size",
+        "chunk_overlap": "_chunk_overlap",
+    }
+
+    def __setattr__(cls, name: str, value: Any) -> None:  # noqa: ANN401
+        # Support both LlamaIndex-style Settings.llm and legacy Settings._llm.
+        if name in cls._ALIASES:
+            super().__setattr__(name, value)
+            super().__setattr__(cls._ALIASES[name], value)
+            return
+
+        # Inverse mapping (underscore assignment)
+        inverse = {v: k for k, v in cls._ALIASES.items()}
+        if name in inverse:
+            super().__setattr__(name, value)
+            super().__setattr__(inverse[name], value)
+            return
+
+        super().__setattr__(name, value)
+
+
+class Settings(metaclass=_SettingsMeta):
+    """Global settings matching the LlamaIndex ``Settings`` pattern.
+
+    Compatibility notes:
+        - Supports both ``Settings.llm`` and ``Settings._llm``.
+        - Direct assignment works and keeps aliases synchronized.
+        - ``set_*`` helpers remain for call-sites that prefer methods.
     """
-    Global settings matching LlamaIndex Settings pattern.
 
-    Example:
-        from agentic_brain.rag.llamaindex_compat import Settings
+    llm: str = "gpt-4o-mini"
+    embed_model: str = "all-MiniLM-L6-v2"
+    chunk_size: int = 512
+    chunk_overlap: int = 50
 
-        Settings.llm = "gpt-4o"
-        Settings.embed_model = "text-embedding-3-small"
-        Settings.chunk_size = 512
-    """
-
-    _llm: str = "gpt-4o-mini"
-    _embed_model: str = "all-MiniLM-L6-v2"
-    _chunk_size: int = 512
-    _chunk_overlap: int = 50
-
-    @classmethod
-    @property
-    def llm(cls) -> str:
-        return cls._llm
+    # Legacy aliases (kept in sync by metaclass)
+    _llm: str = llm
+    _embed_model: str = embed_model
+    _chunk_size: int = chunk_size
+    _chunk_overlap: int = chunk_overlap
 
     @classmethod
     def set_llm(cls, value: str) -> None:
-        cls._llm = value
-
-    @classmethod
-    @property
-    def embed_model(cls) -> str:
-        return cls._embed_model
+        cls.llm = value
 
     @classmethod
     def set_embed_model(cls, value: str) -> None:
-        cls._embed_model = value
-
-    @classmethod
-    @property
-    def chunk_size(cls) -> int:
-        return cls._chunk_size
+        cls.embed_model = value
 
     @classmethod
     def set_chunk_size(cls, value: int) -> None:
-        cls._chunk_size = value
-
-    @classmethod
-    @property
-    def chunk_overlap(cls) -> int:
-        return cls._chunk_overlap
+        cls.chunk_size = value
 
     @classmethod
     def set_chunk_overlap(cls, value: int) -> None:
-        cls._chunk_overlap = value
+        cls.chunk_overlap = value
 
 
 # ============================================================================
@@ -1106,10 +1114,10 @@ class ServiceContext:
             Configured ServiceContext instance
         """
         return cls(
-            llm=llm or Settings._llm,
-            embed_model=embed_model or Settings._embed_model,
-            chunk_size=chunk_size or Settings._chunk_size,
-            chunk_overlap=chunk_overlap or Settings._chunk_overlap,
+            llm=llm or Settings.llm,
+            embed_model=embed_model or Settings.embed_model,
+            chunk_size=chunk_size or Settings.chunk_size,
+            chunk_overlap=chunk_overlap or Settings.chunk_overlap,
             callback_manager=callback_manager,
             node_parser=node_parser,
         )
@@ -1124,17 +1132,34 @@ class ServiceContext:
         Settings.set_chunk_overlap(self.chunk_overlap)
 
 
+# ---------------------------------------------------------------------------
+# Global ServiceContext helpers (mirrors LlamaIndex's global pattern)
+# ---------------------------------------------------------------------------
+
+_GLOBAL_SERVICE_CONTEXT: ContextVar[Optional[ServiceContext]] = ContextVar(
+    "agentic_brain_llamaindex_service_context",
+    default=None,
+)
+
+
+def set_global_service_context(service_context: ServiceContext) -> None:
+    """Set the global ServiceContext and apply it to Settings."""
+    _GLOBAL_SERVICE_CONTEXT.set(service_context)
+    service_context.to_settings()
+
+
+def get_global_service_context() -> Optional[ServiceContext]:
+    """Get the global ServiceContext, if one has been set."""
+    return _GLOBAL_SERVICE_CONTEXT.get()
+
+
 # ============================================================================
 # Node Parsers (LlamaIndex-compatible)
 # ============================================================================
 
 
 class BaseNodeParser(ABC):
-    """
-    Abstract base node parser matching LlamaIndex interface.
-
-    Node parsers split documents into smaller chunks (nodes) for indexing.
-    """
+    """Abstract base node parser matching the LlamaIndex interface."""
 
     @abstractmethod
     def get_nodes_from_documents(
@@ -1152,6 +1177,10 @@ class BaseNodeParser(ABC):
     ) -> List[TextNode]:
         """Callable interface for parsing."""
         return self.get_nodes_from_documents(documents, **kwargs)
+
+
+# LlamaIndex compatibility: many integrations import ``NodeParser``.
+NodeParser = BaseNodeParser
 
 
 class SentenceSplitter(BaseNodeParser):
@@ -1405,15 +1434,11 @@ class TokenTextSplitter(BaseNodeParser):
 
 
 class CompactSynthesizer(BaseSynthesizer):
-    """
-    Compact response synthesizer - stuffs all context into one prompt.
-
-    This is the simplest and most token-efficient mode.
-    """
+    """Compact response synthesizer (stuff all context into one call)."""
 
     def __init__(self, llm_model: str = "gpt-4o-mini"):
         self.llm_model = llm_model
-        self._pipeline = RAGPipeline()
+        self._pipeline = RAGPipeline(llm_model=llm_model)
 
     def synthesize(
         self,
@@ -1421,7 +1446,6 @@ class CompactSynthesizer(BaseSynthesizer):
         nodes: List[NodeWithScore],
         **kwargs: Any,
     ) -> Response:
-        """Synthesize by combining all context into one prompt."""
         if not nodes:
             return Response(
                 response="I don't have enough information to answer that question.",
@@ -1429,15 +1453,10 @@ class CompactSynthesizer(BaseSynthesizer):
                 metadata={"mode": "compact", "nodes_used": 0},
             )
 
-        # Build compact context
-        context_parts = []
-        for i, node in enumerate(nodes, 1):
-            context_parts.append(f"[{i}] {node.node.text}")
-
-        context = "\n\n".join(context_parts)
+        context = "\n\n".join(f"[{i}] {n.node.text}" for i, n in enumerate(nodes, 1))
 
         try:
-            answer = self._pipeline._generate(query, context)
+            answer = self._pipeline._generate(prompt=query, context=context)
         except Exception as e:
             logger.debug(f"LLM failed, using context summary: {e}")
             answer = f"Based on the context:\n{context[:500]}..."
@@ -1450,15 +1469,11 @@ class CompactSynthesizer(BaseSynthesizer):
 
 
 class RefineSynthesizer(BaseSynthesizer):
-    """
-    Refine response synthesizer - iteratively refines answer with each context.
-
-    Produces higher quality answers but uses more tokens.
-    """
+    """Refine response synthesizer (iteratively incorporate more context)."""
 
     def __init__(self, llm_model: str = "gpt-4o-mini"):
         self.llm_model = llm_model
-        self._pipeline = RAGPipeline()
+        self._pipeline = RAGPipeline(llm_model=llm_model)
 
     def synthesize(
         self,
@@ -1466,7 +1481,6 @@ class RefineSynthesizer(BaseSynthesizer):
         nodes: List[NodeWithScore],
         **kwargs: Any,
     ) -> Response:
-        """Synthesize by iteratively refining the answer."""
         if not nodes:
             return Response(
                 response="I don't have enough information to answer that question.",
@@ -1474,30 +1488,30 @@ class RefineSynthesizer(BaseSynthesizer):
                 metadata={"mode": "refine", "refinement_steps": 0},
             )
 
-        # Start with first node
         current_answer = ""
 
         for i, node in enumerate(nodes):
+            context = node.node.text
             if i == 0:
-                # Initial answer
-                context = node.node.text
-                prompt = f"Query: {query}\n\nContext:\n{context}\n\nProvide an answer."
-            else:
-                # Refine existing answer
-                context = node.node.text
                 prompt = (
-                    f"Query: {query}\n\n"
-                    f"Existing Answer:\n{current_answer}\n\n"
-                    f"New Context:\n{context}\n\n"
-                    f"Refine the answer with this new information."
+                    "You are answering a user query using the provided context. "
+                    "Provide an initial answer."\
+                    f"\n\nQuery: {query}"
+                )
+            else:
+                prompt = (
+                    "Refine the existing answer using NEW context. "
+                    "If the new context is irrelevant, keep the answer unchanged."\
+                    f"\n\nQuery: {query}"\
+                    f"\n\nExisting answer:\n{current_answer}"
                 )
 
             try:
-                current_answer = self._pipeline._generate(query, prompt)
+                current_answer = self._pipeline._generate(prompt=prompt, context=context)
             except Exception as e:
                 logger.debug(f"Refinement step {i} failed: {e}")
                 if not current_answer:
-                    current_answer = node.node.text[:500]
+                    current_answer = context[:500]
 
         return Response(
             response=current_answer,
@@ -1507,11 +1521,7 @@ class RefineSynthesizer(BaseSynthesizer):
 
 
 class TreeSummarizeSynthesizer(BaseSynthesizer):
-    """
-    Tree summarize synthesizer - builds answer through hierarchical summarization.
-
-    Good for large numbers of nodes as it processes in a tree structure.
-    """
+    """Tree summarize synthesizer (hierarchical summarization)."""
 
     def __init__(
         self,
@@ -1520,15 +1530,17 @@ class TreeSummarizeSynthesizer(BaseSynthesizer):
     ):
         self.llm_model = llm_model
         self.num_children = num_children
-        self._pipeline = RAGPipeline()
+        self._pipeline = RAGPipeline(llm_model=llm_model)
 
     def _summarize_group(self, query: str, texts: List[str]) -> str:
-        """Summarize a group of texts."""
         combined = "\n\n---\n\n".join(texts)
-        prompt = f"Query: {query}\n\nTexts to summarize:\n{combined}"
+        prompt = (
+            "Summarize the following context to help answer the user query."\
+            f"\n\nQuery: {query}"
+        )
 
         try:
-            return self._pipeline._generate(query, prompt)
+            return self._pipeline._generate(prompt=prompt, context=combined)
         except Exception:
             return combined[:500]
 
@@ -1538,7 +1550,6 @@ class TreeSummarizeSynthesizer(BaseSynthesizer):
         nodes: List[NodeWithScore],
         **kwargs: Any,
     ) -> Response:
-        """Synthesize through tree summarization."""
         if not nodes:
             return Response(
                 response="I don't have enough information to answer that question.",
@@ -1546,17 +1557,14 @@ class TreeSummarizeSynthesizer(BaseSynthesizer):
                 metadata={"mode": "tree_summarize", "levels": 0},
             )
 
-        # Get all texts
         texts = [node.node.text for node in nodes]
         levels = 0
 
-        # Build tree bottom-up
         while len(texts) > 1:
             new_texts = []
             for i in range(0, len(texts), self.num_children):
                 group = texts[i : i + self.num_children]
-                summary = self._summarize_group(query, group)
-                new_texts.append(summary)
+                new_texts.append(self._summarize_group(query, group))
             texts = new_texts
             levels += 1
 
@@ -1568,15 +1576,11 @@ class TreeSummarizeSynthesizer(BaseSynthesizer):
 
 
 class SimpleSummarizeSynthesizer(BaseSynthesizer):
-    """
-    Simple summarize synthesizer - concatenates and summarizes.
-
-    Quick and simple, best for small numbers of nodes.
-    """
+    """Simple summarize synthesizer (single summarization call)."""
 
     def __init__(self, llm_model: str = "gpt-4o-mini"):
         self.llm_model = llm_model
-        self._pipeline = RAGPipeline()
+        self._pipeline = RAGPipeline(llm_model=llm_model)
 
     def synthesize(
         self,
@@ -1584,7 +1588,6 @@ class SimpleSummarizeSynthesizer(BaseSynthesizer):
         nodes: List[NodeWithScore],
         **kwargs: Any,
     ) -> Response:
-        """Simple concatenation and summarization."""
         if not nodes:
             return Response(
                 response="I don't have enough information to answer that question.",
@@ -1593,10 +1596,10 @@ class SimpleSummarizeSynthesizer(BaseSynthesizer):
             )
 
         combined = "\n\n".join(node.node.text for node in nodes)
-        prompt = f"Summarize the following to answer: {query}\n\n{combined}"
+        prompt = f"Summarize the context to answer the query. Query: {query}"
 
         try:
-            answer = self._pipeline._generate(query, combined)
+            answer = self._pipeline._generate(prompt=prompt, context=combined)
         except Exception:
             answer = combined[:500]
 
@@ -1652,91 +1655,102 @@ def get_response_synthesizer(
 
 @dataclass
 class StreamingResponse:
-    """
-    LlamaIndex-compatible streaming response.
+    """LlamaIndex-compatible streaming response.
 
-    Provides both sync and async iteration over response tokens.
-
-    Example:
-        response = query_engine.query("What is GraphRAG?", streaming=True)
-        for token in response.response_gen:
-            print(token, end="", flush=True)
-
-        # Async
-        async for token in response.async_response_gen():
-            print(token, end="", flush=True)
+    This mirrors the common LlamaIndex pattern where a response exposes a
+    token generator (sync) and an async generator.
     """
 
     response_gen: Generator[str, None, None]
     source_nodes: List[NodeWithScore] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    _async_gen: Optional[AsyncGenerator[str, None]] = field(default=None, repr=False)
     _response_txt: Optional[str] = field(default=None, repr=False)
 
     def __str__(self) -> str:
-        """Get full response text (consumes generator if not already done)."""
         if self._response_txt is None:
             self._response_txt = self.get_response()
         return self._response_txt
 
     def get_response(self) -> str:
-        """Consume generator and return full response."""
+        """Consume the sync generator and return full response text."""
         if self._response_txt is not None:
             return self._response_txt
 
-        tokens = []
+        tokens: List[str] = []
         for token in self.response_gen:
+            tokens.append(token)
+        self._response_txt = "".join(tokens)
+        return self._response_txt
+
+    async def aget_response(self) -> str:
+        """Consume the async generator (if present) and return full text."""
+        if self._response_txt is not None:
+            return self._response_txt
+
+        tokens: List[str] = []
+        async for token in self.async_response_gen():
             tokens.append(token)
         self._response_txt = "".join(tokens)
         return self._response_txt
 
     async def async_response_gen(self) -> AsyncGenerator[str, None]:
-        """Async generator wrapper."""
+        """Async token generator.
+
+        If a true async generator was provided, it is used. Otherwise the sync
+        generator is wrapped.
+        """
+        if self._async_gen is not None:
+            async for token in self._async_gen:
+                yield token
+            return
+
         for token in self.response_gen:
             yield token
-            await asyncio.sleep(0)  # Yield control
+            await asyncio.sleep(0)
 
     def print_response_stream(self) -> str:
         """Print tokens as they stream and return full response."""
-        tokens = []
+        tokens: List[str] = []
         for token in self.response_gen:
             print(token, end="", flush=True)
             tokens.append(token)
-        print()  # Newline at end
+        print()
         self._response_txt = "".join(tokens)
         return self._response_txt
 
 
 class StreamingSynthesizer(BaseSynthesizer):
-    """
-    Streaming response synthesizer.
+    """Streaming response synthesizer.
 
-    Yields tokens as they are generated for real-time display.
+    Agentic Brain's core RAG pipeline does not always expose a true network
+    stream, so this compatibility layer generates the full response first and
+    then yields it token-by-token.
     """
 
     def __init__(self, llm_model: str = "gpt-4o-mini"):
         self.llm_model = llm_model
+        self._pipeline = RAGPipeline(llm_model=llm_model)
 
-    def _stream_generate(
-        self,
-        query: str,
-        context: str,
-    ) -> Generator[str, None, None]:
-        """Generate response tokens (simulated streaming)."""
-        # Build response
-        response = f"Based on the context provided:\n\n"
-
-        # Simulate token-by-token streaming
-        words = context.split()[:50]  # Take first 50 words
-        summary = " ".join(words)
-        if len(context.split()) > 50:
-            summary += "..."
-
-        full_response = response + summary
-
-        # Yield word by word (simulates streaming)
-        for word in full_response.split():
+    def _token_stream(self, text: str) -> Generator[str, None, None]:
+        for word in text.split():
             yield word + " "
-            time.sleep(0.02)  # Small delay for streaming effect
+
+    async def _async_token_stream(self, text: str) -> AsyncGenerator[str, None]:
+        for word in text.split():
+            yield word + " "
+            await asyncio.sleep(0)
+
+    def _generate_answer(self, query: str, nodes: List[NodeWithScore]) -> str:
+        if not nodes:
+            return "I don't have enough information to answer that question."
+
+        context = "\n\n".join(node.node.text for node in nodes)
+        try:
+            return self._pipeline._generate(prompt=query, context=context)
+        except Exception as e:
+            logger.debug(f"LLM failed, using context summary: {e}")
+            return f"Based on the context:\n{context[:500]}..."
 
     def synthesize(
         self,
@@ -1744,13 +1758,9 @@ class StreamingSynthesizer(BaseSynthesizer):
         nodes: List[NodeWithScore],
         **kwargs: Any,
     ) -> Response:
-        """Non-streaming synthesis (for compatibility)."""
-        context = "\n\n".join(node.node.text for node in nodes)
-        tokens = list(self._stream_generate(query, context))
-        response_text = "".join(tokens)
-
+        answer = self._generate_answer(query, nodes)
         return Response(
-            response=response_text,
+            response=answer,
             source_nodes=nodes,
             metadata={"mode": "streaming", "streaming": False},
         )
@@ -1761,13 +1771,12 @@ class StreamingSynthesizer(BaseSynthesizer):
         nodes: List[NodeWithScore],
         **kwargs: Any,
     ) -> StreamingResponse:
-        """Streaming synthesis."""
-        context = "\n\n".join(node.node.text for node in nodes)
-
+        answer = self._generate_answer(query, nodes)
         return StreamingResponse(
-            response_gen=self._stream_generate(query, context),
+            response_gen=self._token_stream(answer),
             source_nodes=nodes,
             metadata={"mode": "streaming", "streaming": True},
+            _async_gen=self._async_token_stream(answer),
         )
 
 
@@ -2133,14 +2142,10 @@ class BaseExtractor(ABC):
 
 
 class TitleExtractor(BaseExtractor):
-    """
-    Extracts document titles from content.
+    """Extract a single document title and apply it to all nodes.
 
-    Useful for auto-generating titles for chunks.
-
-    Example:
-        extractor = TitleExtractor(nodes=5)
-        metadata_list = extractor.extract(nodes)
+    This follows the common LlamaIndex pattern: generate a representative title
+    from the first N nodes, then attach it across the node list.
     """
 
     def __init__(
@@ -2154,36 +2159,26 @@ class TitleExtractor(BaseExtractor):
         self.combine_template = combine_template
 
     def _extract_title(self, text: str) -> str:
-        """Extract/generate title from text."""
-        # Try to find existing title (first line or header)
         lines = text.strip().split("\n")
         first_line = lines[0].strip() if lines else ""
 
-        # Check for markdown header
         if first_line.startswith("#"):
             return first_line.lstrip("#").strip()
 
-        # Check if first line looks like a title (short, no period)
-        if len(first_line) < 100 and not first_line.endswith("."):
+        if len(first_line) < 100 and first_line and not first_line.endswith("."):
             return first_line
 
-        # Generate title from first few words
         words = text.split()[:10]
-        return " ".join(words) + "..."
+        return (" ".join(words) + "...") if words else "Untitled"
 
     def extract(self, nodes: List[TextNode]) -> List[Dict[str, Any]]:
-        """Extract titles for nodes."""
-        metadata_list = []
+        if not nodes:
+            return []
 
-        for i, node in enumerate(nodes[: self.nodes]):
-            title = self._extract_title(node.text)
-            metadata_list.append({"document_title": title, "node_index": i})
+        combined = "\n\n".join(n.text for n in nodes[: self.nodes] if n.text)
+        title = self._extract_title(combined)
 
-        # Pad remaining nodes with empty metadata
-        for _ in range(len(nodes) - len(metadata_list)):
-            metadata_list.append({})
-
-        return metadata_list
+        return [{"document_title": title} for _ in nodes]
 
 
 class QuestionsAnsweredExtractor(BaseExtractor):
@@ -2634,6 +2629,13 @@ __all__ = [
     "ResponseMode",
     "BaseSynthesizer",
     "AgenticSynthesizer",
+    "CompactSynthesizer",
+    "RefineSynthesizer",
+    "TreeSummarizeSynthesizer",
+    "SimpleSummarizeSynthesizer",
+    "StreamingSynthesizer",
+    "StreamingResponse",
+    "get_response_synthesizer",
     # Query engines
     "BaseQueryEngine",
     "AgenticQueryEngine",
@@ -2644,8 +2646,28 @@ __all__ = [
     "GraphRAGIndex",
     # Loaders
     "SimpleDirectoryReader",
-    # Settings
+    # Settings / ServiceContext
     "Settings",
+    "ServiceContext",
+    "set_global_service_context",
+    "get_global_service_context",
+    # Node parsers
+    "BaseNodeParser",
+    "NodeParser",
+    "SentenceSplitter",
+    "TokenTextSplitter",
+    # Ingestion / extractors
+    "IngestionPipeline",
+    "BaseExtractor",
+    "TitleExtractor",
+    "QuestionsAnsweredExtractor",
+    "SummaryExtractor",
+    "KeywordExtractor",
+    # Callbacks
+    "CBEventType",
+    "CallbackManager",
+    "TokenCountingHandler",
+    "LlamaDebugHandler",
     # Re-exports for convenience
     "GraphRAGConfig",
     "SearchStrategy",

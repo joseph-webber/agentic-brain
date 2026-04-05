@@ -189,17 +189,30 @@ from .evaluation import (
 
 # RAGAS Evaluation (2026 industry standard)
 from .ragas_eval import (
+    AdvancedRAGASEvaluator,
+    AnswerCorrectnessCalculator,
+    AnswerSimilarityCalculator,
     QUALITY_BAR,
+    AspectCritiqueCalculator,
+    AspectCritiqueResult,
+    AspectType,
     AnswerRelevancyCalculator,
     ContextPrecisionCalculator,
+    ContextEntityRecallCalculator,
     ContextRecallCalculator,
     FaithfulnessCalculator,
+    ConversationSample,
+    ConversationTurn,
     MetricResult,
+    MultiTurnEvaluator,
+    MultiTurnResult,
+    NoiseRobustnessCalculator,
     QualityLevel,
     RAGASDataset,
     RAGASEvaluator,
     RAGASResults,
     RAGASSample,
+    SummarizationScoreCalculator,
     SampleResult,
     check_quality_bar,
     create_graphrag_evaluator,
@@ -209,6 +222,18 @@ from .graph_rag import (
     GraphRAG,
     GraphRAGConfig,
     SearchStrategy,
+)
+
+# Global Search (Microsoft GraphRAG map-reduce pattern)
+from .global_search import (
+    GlobalSearch,
+    GlobalSearchConfig,
+    GlobalSearchMode,
+    GlobalSearchResult,
+    CommunityResponse,
+    ResponseType,
+    ResponseCache,
+    global_search,
 )
 
 # Enhanced Graph RAG (community-aware, hierarchical)
@@ -441,19 +466,25 @@ from .store import (
 )
 
 # LangChain compatibility layer (optional - requires langchain-core)
-from .langchain_compat import LANGCHAIN_AVAILABLE
+try:
+    from .langchain_compat import LANGCHAIN_AVAILABLE
+except Exception:
+    LANGCHAIN_AVAILABLE = False
 
 if LANGCHAIN_AVAILABLE:
-    from .langchain_compat import (
-        AgenticBrainCallbackAdapter,
-        AgenticBrainRetriever,
-        DocumentStoreRetriever,
-        GraphRAGRetriever,
-        agentic_document_to_langchain_document,
-        create_langchain_retriever,
-        langchain_document_to_agentic_document,
-        retrieved_chunk_to_langchain_document,
-    )
+    try:
+        from .langchain_compat import (
+            AgenticBrainCallbackAdapter,
+            AgenticBrainRetriever,
+            DocumentStoreRetriever,
+            GraphRAGRetriever,
+            agentic_document_to_langchain_document,
+            create_langchain_retriever,
+            langchain_document_to_agentic_document,
+            retrieved_chunk_to_langchain_document,
+        )
+    except Exception:
+        LANGCHAIN_AVAILABLE = False
 
 __all__ = [
     # Core
@@ -542,6 +573,19 @@ __all__ = [
     "AnswerRelevancyCalculator",
     "ContextPrecisionCalculator",
     "ContextRecallCalculator",
+    "AspectType",
+    "AspectCritiqueResult",
+    "AspectCritiqueCalculator",
+    "AnswerCorrectnessCalculator",
+    "AnswerSimilarityCalculator",
+    "ContextEntityRecallCalculator",
+    "NoiseRobustnessCalculator",
+    "SummarizationScoreCalculator",
+    "ConversationTurn",
+    "ConversationSample",
+    "MultiTurnResult",
+    "MultiTurnEvaluator",
+    "AdvancedRAGASEvaluator",
     "create_graphrag_evaluator",
     "quick_evaluate",
     "check_quality_bar",
@@ -652,6 +696,15 @@ __all__ = [
     "GraphRAG",
     "GraphRAGConfig",
     "SearchStrategy",
+    # Global Search (Microsoft GraphRAG)
+    "GlobalSearch",
+    "GlobalSearchConfig",
+    "GlobalSearchMode",
+    "GlobalSearchResult",
+    "CommunityResponse",
+    "ResponseType",
+    "ResponseCache",
+    "global_search",
     # Enhanced Graph RAG
     "EnhancedGraphRAG",
     "EnhancedGraphRAGConfig",

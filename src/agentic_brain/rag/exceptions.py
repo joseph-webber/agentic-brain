@@ -13,30 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""RAG-specific exception types.
-
-These wrap lower-level exceptions (I/O, network, model loading) with consistent
-error categories so callers can handle failures predictably.
-"""
+"""RAG-specific exception types."""
 
 from __future__ import annotations
 
 from typing import Any, Optional
 
+from agentic_brain.core.exceptions import (
+    AgenticBrainError,
+    EmbeddingError as CoreEmbeddingError,
+)
 
-class _BaseRAGError(Exception):
+
+class _BaseRAGError(AgenticBrainError):
     """Base class for RAG errors."""
 
     def __init__(self, message: str, *, context: Optional[dict[str, Any]] = None):
-        super().__init__(message)
-        self.context: dict[str, Any] = context or {}
+        super().__init__(message, context=context or {}, retryable=False)
 
 
 class ChunkingError(_BaseRAGError):
     """Raised when text chunking fails (empty input, encoding issues, oversize)."""
 
 
-class EmbeddingError(_BaseRAGError):
+class EmbeddingError(CoreEmbeddingError):
     """Raised when embedding generation fails (API failures, rate limits, load errors)."""
 
 

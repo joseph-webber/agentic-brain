@@ -36,7 +36,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
+from agentic_brain.acceleration import get_best_backend
+
 from .embeddings import EmbeddingProvider, get_embeddings
+from agentic_brain.core.exceptions import LLMError, ValidationError
 from .graph_traversal import (
     GraphContext,
     GraphNode,
@@ -44,6 +47,7 @@ from .graph_traversal import (
     TraversalStrategy,
 )
 from .retriever import RetrievedChunk, Retriever
+from .exceptions import LoaderError
 
 if TYPE_CHECKING:
     from .loaders.base import BaseLoader
@@ -199,7 +203,11 @@ class RAGPipeline:
         cache_ttl_hours: int = 4,
         document_store: Optional["DocumentStore"] = None,
     ):
-        embedding_provider = embedding_provider or get_embeddings()
+        if embedding_provider is None:
+            backend = get_best_backend()
+            embedding_provider = (
+                backend.embeddings_provider if backend.available else get_embeddings()
+            )
         self._document_store = document_store
         self.retriever = Retriever(
             neo4j_uri=neo4j_uri,
@@ -325,7 +333,12 @@ Answer:"""
 
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
-            raise ValueError("OPENAI_API_KEY required")
+            raise ValidationError(
+                "OPENAI_API_KEY",
+                "configured environment variable",
+                "missing",
+                reason="OpenAI provider requires credentials",
+            )
 
         response = requests.post(
             "https://api.openai.com/v1/chat/completions",
@@ -359,7 +372,11 @@ Answer:"""
         elif self.llm_provider == "openai":
             return self._generate_openai(prompt, context)
         else:
-            raise ValueError(f"Unknown LLM provider: {self.llm_provider}")
+            raise ValidationError(
+                "llm_provider",
+                "supported provider (ollama or openai)",
+                self.llm_provider,
+            )
 
     def _build_graph_retriever(self) -> GraphTraversalRetriever:
         """Construct a graph traversal retriever using pipeline settings."""
@@ -495,6 +512,46 @@ Answer:"""
             self._set_cached(cache_key, result)
 
         return result
+
+    async def aquery(self, query: str, k: int = 5, sources: Optional[list[str]] = None, use_cache: bool = True, min_score: float = 0.3) -> RAGResult:
+        """Async wrapper for query() to support asyncio codepaths."""
+        # Run the synchronous query in a thread to avoid blocking the event loop
+        return await asyncio.to_thread(self.query, query, k, sources, use_cache, min_score)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        # Ensure resources are closed asynchronously
+        await asyncio.to_thread(self.close)
+
+    async def aquery_stream(self, query: str, k: int = 5, min_score: float = 0.3):
+        """Async generator wrapper around query_stream().
+
+        This runs the blocking generator in a background thread and forwards
+        tokens to the async caller via an asyncio.Queue.
+        """
+        loop = asyncio.get_event_loop()
+        q: "asyncio.Queue[object]" = asyncio.Queue()
+
+        def _producer() -> None:
+            try:
+                for token in self.query_stream(query, k=k, min_score=min_score):
+                    loop.call_soon_threadsafe(q.put_nowait, token)
+            finally:
+                # Signal completion
+                loop.call_soon_threadsafe(q.put_nowait, None)
+
+        import threading
+
+        t = threading.Thread(target=_producer, daemon=True)
+        t.start()
+
+        while True:
+            item = await q.get()
+            if item is None:
+                break
+            yield item
 
     async def graph_search(self, query: str, **kwargs: Any) -> GraphSearchResult:
         """Search using knowledge graph relationships."""
@@ -849,9 +906,16 @@ Answer:"""
 
                 loader = HTMLLoader(base_path=base_dir)
             else:
-                raise ValueError(f"Unsupported loader: {loader_key}")
+                raise ValidationError(
+                    "loader",
+                    "supported loader key",
+                    loader_key,
+                )
         except ImportError as exc:  # pragma: no cover - optional deps
-            raise RuntimeError(f"Loader '{loader_key}' is unavailable: {exc}") from exc
+            raise LoaderError(
+                f"Loader '{loader_key}' is unavailable",
+                context={"loader": loader_key, "error": str(exc)},
+            ) from exc
 
         with suppress(Exception):
             loader.authenticate()

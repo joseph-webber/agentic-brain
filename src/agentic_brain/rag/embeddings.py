@@ -207,6 +207,20 @@ def get_hardware_info() -> dict[str, Any]:
     return dict(_HARDWARE_CACHE)
 
 
+def _get_mlx_backend() -> Any | None:
+    """Return the shared MLX backend when available."""
+    try:
+        from agentic_brain.acceleration import get_best_backend
+    except Exception:
+        return None
+
+    try:
+        return get_best_backend()
+    except Exception as exc:
+        logger.debug("MLX backend unavailable: %s", exc)
+        return None
+
+
 # Cache for embeddings
 CACHE_DIR = Path.home() / ".agentic_brain" / "embedding_cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -1301,6 +1315,7 @@ def get_embeddings(
         # Auto-detect best available hardware
         hardware_info = get_hardware_info()
         best_device = get_best_device()
+        backend = _get_mlx_backend()
 
         logger.debug(
             f"Auto-detecting best embedding provider: best_device={best_device}"
@@ -1308,7 +1323,10 @@ def get_embeddings(
         logger.debug(f"Hardware info: {hardware_info}")
 
         # Priority: MLX > CUDA > MPS > Ollama > OpenAI
-        if best_device == "mlx" and hardware_info.get("mlx"):
+        if backend is not None and getattr(backend, "backend_name", "cpu") == "mlx":
+            logger.info("Using MLX backend embeddings")
+            base = backend
+        elif best_device == "mlx" and hardware_info.get("mlx"):
             logger.info("Using MLX embeddings (Apple Silicon)")
             base = MLXEmbeddings(model=model)
         elif best_device == "cuda" and hardware_info.get("cuda"):
@@ -1342,9 +1360,13 @@ def get_embeddings(
         base = SentenceTransformerEmbeddings(model=model)
 
     elif provider == "mlx":
-        # Apple Silicon native - fastest local option
-        logger.info("Using MLX embeddings (Apple Silicon)")
-        base = MLXEmbeddings(model=model)
+        backend = _get_mlx_backend()
+        if backend is not None:
+            logger.info("Using MLX backend embeddings")
+            base = backend
+        else:
+            logger.info("Using MLX embeddings fallback (Apple Silicon unavailable)")
+            base = MLXEmbeddings(model=model)
 
     elif provider == "cuda":
         # NVIDIA GPU acceleration

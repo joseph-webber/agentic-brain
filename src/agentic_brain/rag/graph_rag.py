@@ -24,6 +24,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from agentic_brain.core.exceptions import ValidationError
+
 # Community detection is lazy-loaded to support simple mode (enable_communities=False)
 
 # Configure logging
@@ -86,9 +88,11 @@ def _validate_embedding(
     """Ensure embeddings stored in Neo4j match the configured vector dimension."""
     values = [float(value) for value in embedding]
     if len(values) != expected_dim:
-        raise ValueError(
-            f"{context} embedding dimension mismatch: "
-            f"expected {expected_dim}, got {len(values)}"
+        raise ValidationError(
+            field=f"{context}_embedding",
+            expected=f"{expected_dim} floats",
+            got=f"{len(values)} floats",
+            reason=f"{context} embedding dimension mismatch",
         )
     return values
 
@@ -296,8 +300,9 @@ class GraphRAG:
         - VECTOR: Fast embedding similarity
         - GRAPH: Traverse relationships
         - HYBRID: Best of both worlds
-        - COMMUNITY: Global understanding via community summaries (requires enable_communities=True)
+        - COMMUNITY: Local community-based search (requires enable_communities=True)
         - MULTI_HOP: Follow chains of reasoning
+        - GLOBAL: Microsoft GraphRAG global search (map-reduce over all communities)
         """
         if strategy == SearchStrategy.HYBRID:
             return await self._hybrid_search(query, top_k)
@@ -315,8 +320,64 @@ class GraphRAG:
                 )
                 return await self._hybrid_search(query, top_k)
             return await self._community_search(query, top_k)
+        elif strategy == SearchStrategy.GLOBAL:
+            if not self.config.enable_communities:
+                logger.warning(
+                    "GLOBAL search requested but enable_communities=False. "
+                    "Falling back to HYBRID search."
+                )
+                return await self._hybrid_search(query, top_k)
+            return await self._global_search(query, top_k)
 
         return []
+
+    async def _global_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
+        """
+        Execute Microsoft GraphRAG-style global search.
+        
+        Uses map-reduce pattern across community summaries for queries that
+        require understanding the entire knowledge graph.
+        """
+        if not self._driver:
+            return []
+
+        from .global_search import GlobalSearch, GlobalSearchConfig, GlobalSearchMode
+
+        config = GlobalSearchConfig(
+            mode=GlobalSearchMode.DYNAMIC,
+            max_communities=top_k * 10,  # Query more communities, return top_k
+            enable_cache=self.config.cache_embeddings,
+            cache_ttl_seconds=self.config.cache_ttl,
+        )
+
+        search = GlobalSearch(self._driver, llm=None, config=config)
+        result = await search.search(query)
+
+        # Convert GlobalSearchResult to standard result format
+        results = []
+        for cr in result.community_responses[:top_k]:
+            results.append({
+                "entity_id": f"community_{cr.community_id}",
+                "community_id": cr.community_id,
+                "level": cr.level,
+                "content": cr.response or cr.summary,
+                "summary": cr.summary,
+                "score": cr.relevance_score,
+                "themes": cr.themes,
+                "entities": cr.entities_mentioned,
+                "strategy": "global",
+            })
+
+        # Add metadata about the global search
+        if results:
+            results[0]["global_search_metadata"] = {
+                "total_communities_queried": result.total_communities_queried,
+                "hierarchy_levels_used": result.hierarchy_levels_used,
+                "cross_community_themes": result.themes,
+                "execution_time_ms": result.execution_time_ms,
+            }
+
+        return results
 
     async def _community_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """Search using community detection for broader context.

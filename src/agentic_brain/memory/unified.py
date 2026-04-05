@@ -1757,12 +1757,646 @@ class UnifiedMemory:
         self.close()
 
 
+@dataclass
+class HookEvent:
+    """Event captured from hooks (merged from ultimate_memory_hooks)."""
+
+    event_type: str  # userPromptSubmitted, toolUse, sessionStart, etc.
+    source: str  # copilot-cli, claude-code, mcp, voice
+    timestamp: str
+    session_id: str
+    content: str = ""
+    role: str = "user"  # user, assistant, tool, system
+    metadata: dict = field(default_factory=dict)
+    event_id: str = field(default_factory=lambda: str(hashlib.sha256(
+        f"{datetime.now(UTC).isoformat()}".encode()).hexdigest())[:16])
+
+    def to_dict(self) -> dict:
+        return {
+            "event_id": self.event_id,
+            "event_type": self.event_type,
+            "source": self.source,
+            "timestamp": self.timestamp,
+            "session_id": self.session_id,
+            "content": self.content,
+            "role": self.role,
+            "metadata": self.metadata,
+        }
+
+
+@dataclass
+class SessionLink:
+    """Link between two sessions (merged from session_stitcher)."""
+
+    from_session: str
+    to_session: str
+    link_type: str  # 'entity', 'topic', 'continuation'
+    shared_items: list[str]
+    strength: float  # 0-1
+    timestamp: str
+
+    def to_dict(self) -> dict:
+        return {
+            "from_session": self.from_session,
+            "to_session": self.to_session,
+            "link_type": self.link_type,
+            "shared_items": self.shared_items,
+            "strength": self.strength,
+            "timestamp": self.timestamp,
+        }
+
+
+class SessionHooks:
+    """
+    Multi-source hook capture system (consolidated from ultimate_memory_hooks).
+
+    Captures events from:
+    - GitHub Copilot CLI
+    - Claude Code extensions
+    - MCP tool calls
+    - Voice interactions
+
+    All events are stored in unified memory and optionally published to event bus.
+    """
+
+    def __init__(
+        self,
+        memory: UnifiedMemory,
+        enable_kafka: bool = False,
+        enable_neo4j: bool = False,
+        session_id: Optional[str] = None,
+    ):
+        """
+        Initialize session hooks.
+
+        Args:
+            memory: UnifiedMemory instance for storage
+            enable_kafka: Whether to publish to event bus
+            enable_neo4j: Whether to use Neo4j for session storage
+            session_id: Optional session ID (auto-generated if not provided)
+        """
+        self.memory = memory
+        timestamp_hash = hashlib.sha256(
+            datetime.now(UTC).isoformat().encode()).hexdigest()[:16]
+        self.session_id = session_id or f"session-{timestamp_hash}"
+        self.session_start = datetime.now(UTC)
+        self.turn_count = 0
+        self.events: list[HookEvent] = []
+        self.enable_kafka = enable_kafka
+        self.enable_neo4j = enable_neo4j
+        self._event_bus = None
+
+        if enable_kafka:
+            try:
+                # Try to import event bus - optional dependency
+                from event_bus import EventBus
+                self._event_bus = EventBus()
+            except ImportError:
+                logger.debug("Event bus not available")
+
+    def on_session_start(self, data: Optional[dict] = None) -> dict:
+        """Called when a new session starts."""
+        event = self._capture_event(
+            event_type="sessionStart",
+            source="copilot-cli",
+            content=f"Session started: {self.session_id}",
+            role="system",
+            metadata=data or {},
+        )
+
+        # Recall recent memories so we don't forget
+        recent_context = self._recall_recent_context()
+
+        return {
+            "success": True,
+            "event_id": event.event_id,
+            "session_id": self.session_id,
+            "recent_context": recent_context,
+        }
+
+    def on_session_end(self, data: Optional[dict] = None) -> dict:
+        """Called when session ends."""
+        summary = self._generate_session_summary()
+
+        event = self._capture_event(
+            event_type="sessionEnd",
+            source="copilot-cli",
+            content=f"Session ended. {summary}",
+            role="system",
+            metadata=data or {},
+        )
+
+        return {
+            "success": True,
+            "event_id": event.event_id,
+            "summary": summary,
+        }
+
+    def on_user_prompt(self, prompt: str, data: Optional[dict] = None) -> dict:
+        """Called when user submits a prompt."""
+        event = self._capture_event(
+            event_type="userPromptSubmitted",
+            source="copilot-cli",
+            content=prompt,
+            role="user",
+            metadata=data or {},
+        )
+        return {"success": True, "event_id": event.event_id}
+
+    def on_assistant_response(
+        self, response: str, data: Optional[dict] = None
+    ) -> dict:
+        """Called when assistant responds."""
+        event = self._capture_event(
+            event_type="assistantResponse",
+            source="copilot-cli",
+            content=response,
+            role="assistant",
+            metadata=data or {},
+        )
+        return {"success": True, "event_id": event.event_id}
+
+    def on_tool_use(
+        self,
+        tool_name: str,
+        tool_args: Optional[dict] = None,
+        phase: str = "pre",
+        result: Optional[str] = None,
+        data: Optional[dict] = None,
+    ) -> dict:
+        """Called before/after tool use."""
+        event_type = f"{'pre' if phase == 'pre' else 'post'}ToolUse"
+
+        content = f"Tool: {tool_name}"
+        if tool_args:
+            content += f", Args: {json.dumps(tool_args)[:200]}"
+        if result:
+            content += f", Result: {result[:500]}"
+
+        event = self._capture_event(
+            event_type=event_type,
+            source="copilot-cli",
+            content=content,
+            role="tool",
+            metadata={"tool_name": tool_name, "phase": phase, **(data or {})},
+        )
+        return {"success": True, "event_id": event.event_id}
+
+    def on_voice_input(
+        self, text: str, lady: Optional[str] = None, data: Optional[dict] = None
+    ) -> dict:
+        """Called when voice input is received."""
+        event = self._capture_event(
+            event_type="voiceInput",
+            source="voice",
+            content=text,
+            role="user",
+            metadata={"lady": lady, **(data or {})},
+        )
+        return {"success": True, "event_id": event.event_id}
+
+    def _capture_event(
+        self,
+        event_type: str,
+        source: str,
+        content: str,
+        role: str = "user",
+        metadata: Optional[dict] = None,
+    ) -> HookEvent:
+        """Capture an event and store it."""
+        event = HookEvent(
+            event_type=event_type,
+            source=source,
+            timestamp=datetime.now(UTC).isoformat(),
+            session_id=self.session_id,
+            content=content,
+            role=role,
+            metadata=metadata or {},
+        )
+
+        self.events.append(event)
+        self.turn_count += 1
+
+        # Store in unified memory
+        self.memory.store(
+            content=content,
+            memory_type=MemoryType.SESSION,
+            metadata={
+                "event_type": event_type,
+                "source": source,
+                "role": role,
+                **event.metadata,
+            },
+            session_id=self.session_id,
+            importance=0.7 if role != "tool" else 0.4,
+        )
+
+        # Publish to event bus if enabled
+        if self._event_bus:
+            try:
+                self._event_bus.publish(
+                    topic=f"memory.{event_type}",
+                    message=event.to_dict(),
+                )
+            except Exception as e:
+                logger.debug(f"Could not publish to event bus: {e}")
+
+        return event
+
+    def _recall_recent_context(self) -> dict:
+        """Recall what we were working on recently."""
+        # Search for recent memories from this session
+        recent = self.memory.search(
+            "recent work context",
+            memory_type=MemoryType.SESSION,
+            session_id=self.session_id,
+            limit=10,
+        )
+
+        # Find memories from past sessions
+        related_memories = self.memory.search(
+            "recent work context",
+            memory_type=MemoryType.LONG_TERM,
+            limit=5,
+        )
+
+        return {
+            "recent_memories": [
+                {"text": m.content[:300], "importance": m.importance}
+                for m in recent
+            ],
+            "related_context": [
+                {"text": m.content[:300], "session": m.session_id}
+                for m in related_memories
+            ],
+            "memory_count": len(recent),
+        }
+
+    def _generate_session_summary(self) -> str:
+        """Generate a summary of the session."""
+        if not self.events:
+            return "Empty session"
+
+        # Summarize key events
+        key_events = [e for e in self.events if e.role != "tool"][-5:]
+        summary_parts = [f"{len(self.events)} events across {self.turn_count} turns"]
+
+        if key_events:
+            topics = [e.event_type for e in key_events]
+            summary_parts.append(f"Topics: {', '.join(set(topics))}")
+
+        return "; ".join(summary_parts)
+
+
+class SessionStitcher:
+    """
+    Links related conversations across sessions (consolidated from session_stitcher).
+
+    Uses entity and topic extraction to automatically find related sessions
+    and provide cross-session context.
+    """
+
+    def __init__(self, memory: UnifiedMemory):
+        """
+        Initialize session stitcher.
+
+        Args:
+            memory: UnifiedMemory instance for querying
+        """
+        self.memory = memory
+        self._current_session: Optional[str] = None
+        self._session_entities: dict[str, set[str]] = {}
+        self._session_topics: set[str] = set()
+        self._message_count = 0
+
+    def start_session(self, session_id: str) -> str:
+        """Start tracking a new session."""
+        self._current_session = session_id
+        self._session_entities = {
+            "jira_tickets": set(),
+            "pr_numbers": set(),
+            "people": set(),
+            "file_paths": set(),
+        }
+        self._session_topics = set()
+        self._message_count = 0
+        return session_id
+
+    def process_message(
+        self, message: str, session_id: Optional[str] = None
+    ) -> dict:
+        """
+        Process a message - extract entities/topics and link to past sessions.
+
+        Args:
+            message: The message text
+            session_id: Optional session ID (uses current if not provided)
+
+        Returns:
+            Dict with extracted entities, topics, and related sessions
+        """
+        session_id = session_id or self._current_session
+        if not session_id:
+            session_id = self.start_session(
+                f"auto-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
+            )
+
+        # Simple entity extraction from message
+        entities = self._extract_entities(message)
+        topics = self._extract_topics(message)
+
+        # Track locally
+        self._session_entities["jira_tickets"].update(entities.get("jira_tickets", []))
+        self._session_entities["pr_numbers"].update(entities.get("pr_numbers", []))
+        self._session_entities["people"].update(entities.get("people", []))
+        self._session_entities["file_paths"].update(entities.get("file_paths", []))
+        self._session_topics.update(topics)
+        self._message_count += 1
+
+        # Find related sessions
+        related_sessions = self._find_related_sessions(entities, topics)
+
+        # Store in memory
+        self.memory.store(
+            content=message,
+            memory_type=MemoryType.SESSION,
+            metadata={
+                "entities": entities,
+                "topics": list(topics),  # Convert set to list for JSON serialization
+                "related_sessions": len(related_sessions),
+            },
+            session_id=session_id,
+            importance=0.6,
+        )
+
+        return {
+            "session_id": session_id,
+            "entities": entities,
+            "topics": list(topics),  # Also return as list
+            "related_sessions": related_sessions,
+            "message_count": self._message_count,
+        }
+
+    def find_related_sessions(
+        self,
+        entities: Optional[list[str]] = None,
+        topics: Optional[list[str]] = None,
+        limit: int = 10,
+    ) -> list[dict]:
+        """
+        Find sessions related to given entities or topics.
+
+        Args:
+            entities: List of entity values to search
+            topics: List of topics to search
+            limit: Max results to return
+
+        Returns:
+            List of related session dicts
+        """
+        related = []
+
+        # Search for memories containing entities
+        if entities:
+            for entity in entities[:5]:  # Limit search entities
+                results = self.memory.search(entity, limit=limit // 2)
+                for mem in results:
+                    if mem.session_id and mem.session_id != self._current_session:
+                        related.append(
+                            {
+                                "session_id": mem.session_id,
+                                "reason": f"Mentioned {entity}",
+                                "relevance": mem.score,
+                            }
+                        )
+
+        # Search for memories with topics
+        if topics:
+            for topic in topics[:5]:
+                results = self.memory.search(topic, limit=limit // 2)
+                for mem in results:
+                    if mem.session_id and mem.session_id != self._current_session:
+                        related.append(
+                            {
+                                "session_id": mem.session_id,
+                                "reason": f"Discussed {topic}",
+                                "relevance": mem.score,
+                            }
+                        )
+
+        # Deduplicate and sort by relevance
+        seen = set()
+        unique = []
+        for r in sorted(related, key=lambda x: x["relevance"], reverse=True):
+            key = r["session_id"]
+            if key not in seen:
+                seen.add(key)
+                unique.append(r)
+
+        return unique[:limit]
+
+    def get_session_context(self, session_id: Optional[str] = None) -> dict:
+        """
+        Get context for a session.
+
+        Args:
+            session_id: Session to get context for
+
+        Returns:
+            Session context dict
+        """
+        session_id = session_id or self._current_session
+
+        if not session_id:
+            return {
+                "session_id": None,
+                "entities": {},
+                "topics": [],
+                "related_sessions": [],
+                "message_count": 0,
+            }
+
+        # Get memories from this session
+        results = self.memory.search(
+            "*", memory_type=MemoryType.SESSION, session_id=session_id, limit=50
+        )
+
+        entities = {}
+        topics = set()
+        related_sessions = []
+
+        for mem in results:
+            if mem.metadata.get("entities"):
+                for k, v in mem.metadata["entities"].items():
+                    entities.setdefault(k, []).extend(v)
+            if mem.metadata.get("topics"):
+                topics.update(mem.metadata["topics"])
+            if mem.metadata.get("related_sessions"):
+                related_sessions.append(mem)
+
+        return {
+            "session_id": session_id,
+            "entities": {k: list(set(v)) for k, v in entities.items()},
+            "topics": list(topics),
+            "related_sessions": [
+                {
+                    "id": m.session_id,
+                    "timestamp": m.timestamp.isoformat() if m.timestamp else None,
+                }
+                for m in related_sessions[:5]
+            ],
+            "message_count": self._message_count,
+        }
+
+    def end_session(self, summary: Optional[str] = None) -> dict:
+        """End the current session."""
+        if not self._current_session:
+            return {"success": False, "message": "No active session"}
+
+        summary = summary or self._generate_session_summary()
+
+        # Store session summary as episodic memory
+        self.memory.record_event(
+            event_type="session_end",
+            data={
+                "session_id": self._current_session,
+                "summary": summary,
+                "message_count": self._message_count,
+                "entities": {
+                    k: list(v) for k, v in self._session_entities.items()
+                },
+                "topics": list(self._session_topics),
+            },
+        )
+
+        self._current_session = None
+        return {
+            "success": True,
+            "summary": summary,
+            "message_count": self._message_count,
+        }
+
+    def _extract_entities(self, message: str) -> dict:
+        """Extract entities from message using simple patterns."""
+        entities = {
+            "jira_tickets": [],
+            "pr_numbers": [],
+            "people": [],
+            "file_paths": [],
+        }
+
+        # JIRA tickets: SD-1330, ACME-999, etc.
+        jira_pattern = r"\b[A-Z]+-\d+\b"
+        entities["jira_tickets"] = re.findall(jira_pattern, message)
+
+        # PR numbers: #209, PR-123, etc.
+        pr_pattern = r"(?:#|PR[-\s]?)(\d+)"
+        entities["pr_numbers"] = re.findall(pr_pattern, message)
+
+        # Simple people detection (capitalized words that could be names)
+        words = message.split()
+        entities["people"] = [
+            w.rstrip(".:,;") for w in words if w and w[0].isupper() and len(w) > 1
+        ]
+
+        # File paths - match /path, ./path, ~/path patterns
+        path_pattern = r"(?:~/|\./?|(?<![/\w]))[\w\-./]{2,}(?:\.\w+)?"
+        paths = re.findall(path_pattern, message)
+        entities["file_paths"] = [p for p in paths if "/" in p]  # Only keep paths with /
+
+        return entities
+
+    def _extract_topics(self, message: str) -> set[str]:
+        """Extract potential topics from message."""
+        # Simple keyword-based topic detection
+        topic_keywords = {
+            "work": ["work", "working", "job", "task"],
+            "coding": ["code", "coding", "debug", "bug", "fix"],
+            "deployment": ["deploy", "release", "production"],
+            "review": ["review", "pr", "merge", "pull request"],
+            "meeting": ["meet", "meeting", "discuss", "sync"],
+        }
+
+        topics = set()
+        message_lower = message.lower()
+
+        for topic, keywords in topic_keywords.items():
+            if any(kw in message_lower for kw in keywords):
+                topics.add(topic)
+
+        return topics
+
+    def _find_related_sessions(
+        self, entities: dict, topics: set[str]
+    ) -> list[dict]:
+        """Find sessions related to entities and topics."""
+        related = []
+
+        # Search for JIRA tickets
+        for ticket in entities.get("jira_tickets", [])[:3]:
+            results = self.memory.search(ticket, limit=5)
+            for mem in results:
+                if mem.session_id != self._current_session:
+                    related.append(
+                        {
+                            "session_id": mem.session_id,
+                            "link_reason": f"Both mention {ticket}",
+                            "link_type": "jira_ticket",
+                        }
+                    )
+
+        # Search for topics
+        for topic in topics:
+            results = self.memory.search(topic, limit=3)
+            for mem in results:
+                if mem.session_id != self._current_session:
+                    related.append(
+                        {
+                            "session_id": mem.session_id,
+                            "link_reason": f"Both discuss {topic}",
+                            "link_type": "topic",
+                        }
+                    )
+
+        # Deduplicate
+        seen = set()
+        unique = []
+        for r in related:
+            key = r["session_id"]
+            if key not in seen:
+                seen.add(key)
+                unique.append(r)
+
+        return unique[:10]
+
+    def _generate_session_summary(self) -> str:
+        """Generate a summary of the session."""
+        parts = [f"{self._message_count} messages"]
+
+        if self._session_entities["jira_tickets"]:
+            parts.append(f"JIRA: {', '.join(list(self._session_entities['jira_tickets'])[:3])}")
+
+        if self._session_topics:
+            parts.append(f"Topics: {', '.join(list(self._session_topics)[:3])}")
+
+        return " | ".join(parts) if parts else "Session summary"
+
+
 # Convenience alias - allows `from agentic_brain.memory import Memory`
 # to get the new unified system
 Memory = UnifiedMemory
 
 
-# Factory function with same interface as original
+# ============================================================================
+# FACTORY FUNCTIONS & CONVENIENCE ACCESSORS
+# ============================================================================
+
+# Global instances (singletons for convenience)
+_unified_memory: Optional[UnifiedMemory] = None
+_session_hooks: Optional[SessionHooks] = None
+_session_stitcher: Optional[SessionStitcher] = None
+
+
 def get_unified_memory(**kwargs) -> UnifiedMemory:
     """
     Get a unified memory instance.
@@ -1773,4 +2407,114 @@ def get_unified_memory(**kwargs) -> UnifiedMemory:
     Returns:
         UnifiedMemory instance
     """
-    return UnifiedMemory(**kwargs)
+    global _unified_memory
+    if _unified_memory is None:
+        _unified_memory = UnifiedMemory(**kwargs)
+    return _unified_memory
+
+
+def get_session_hooks(
+    enable_kafka: bool = False, enable_neo4j: bool = False
+) -> SessionHooks:
+    """
+    Get or create the global session hooks instance.
+
+    Args:
+        enable_kafka: Enable event bus publishing
+        enable_neo4j: Enable Neo4j storage
+
+    Returns:
+        SessionHooks instance
+    """
+    global _session_hooks
+    if _session_hooks is None:
+        mem = get_unified_memory()
+        _session_hooks = SessionHooks(
+            memory=mem, enable_kafka=enable_kafka, enable_neo4j=enable_neo4j
+        )
+    return _session_hooks
+
+
+def get_session_stitcher() -> SessionStitcher:
+    """
+    Get or create the global session stitcher instance.
+
+    Returns:
+        SessionStitcher instance
+    """
+    global _session_stitcher
+    if _session_stitcher is None:
+        mem = get_unified_memory()
+        _session_stitcher = SessionStitcher(memory=mem)
+    return _session_stitcher
+
+
+# Shell-callable hook functions (for CLI integration)
+def on_session_start(data_json: str = "{}") -> str:
+    """Shell-callable session start hook."""
+    hooks = get_session_hooks()
+    data = json.loads(data_json) if data_json else {}
+    result = hooks.on_session_start(data)
+    return json.dumps(result)
+
+
+def on_session_end(data_json: str = "{}") -> str:
+    """Shell-callable session end hook."""
+    hooks = get_session_hooks()
+    data = json.loads(data_json) if data_json else {}
+    result = hooks.on_session_end(data)
+    return json.dumps(result)
+
+
+def on_user_prompt(prompt: str, data_json: str = "{}") -> str:
+    """Shell-callable user prompt hook."""
+    hooks = get_session_hooks()
+    data = json.loads(data_json) if data_json else {}
+    result = hooks.on_user_prompt(prompt, data)
+    return json.dumps(result)
+
+
+def on_assistant_response(response: str, data_json: str = "{}") -> str:
+    """Shell-callable assistant response hook."""
+    hooks = get_session_hooks()
+    data = json.loads(data_json) if data_json else {}
+    result = hooks.on_assistant_response(response, data)
+    return json.dumps(result)
+
+
+def on_tool_use(
+    tool_name: str, phase: str = "pre", args_json: str = "{}", result: str = ""
+) -> str:
+    """Shell-callable tool use hook."""
+    hooks = get_session_hooks()
+    args = json.loads(args_json) if args_json else {}
+    result_obj = hooks.on_tool_use(tool_name, args, phase, result)
+    return json.dumps(result_obj)
+
+
+def on_voice_input(text: str, lady: Optional[str] = None) -> str:
+    """Shell-callable voice input hook."""
+    hooks = get_session_hooks()
+    result = hooks.on_voice_input(text, lady)
+    return json.dumps(result)
+
+
+# Session stitching convenience functions
+def stitch_message(message: str, session_id: Optional[str] = None) -> dict:
+    """Process a message and return related sessions."""
+    stitcher = get_session_stitcher()
+    return stitcher.process_message(message, session_id)
+
+
+def find_related_sessions(
+    entities: Optional[list[str]] = None, topics: Optional[list[str]] = None
+) -> list[dict]:
+    """Find sessions related to entities or topics."""
+    stitcher = get_session_stitcher()
+    return stitcher.find_related_sessions(entities=entities, topics=topics)
+
+
+def get_session_context(session_id: Optional[str] = None) -> dict:
+    """Get context for current or specified session."""
+    stitcher = get_session_stitcher()
+    return stitcher.get_session_context(session_id)

@@ -16,11 +16,16 @@
 """
 RAGAS (Retrieval-Augmented Generation Assessment) Evaluation Module.
 
-Implements the 4 core RAGAS metrics (2026 industry standard):
+Implements the 4 core RAGAS metrics plus advanced evaluation helpers:
 1. Faithfulness - Are claims in the answer supported by retrieved context?
 2. Answer Relevancy - Does the answer address the question?
 3. Context Precision - Are the top-ranked retrieved chunks the most relevant?
 4. Context Recall - Does the retrieved context cover the required information?
+5. Aspect Critique - Harmfulness, coherence, and conciseness checks
+6. Answer Correctness - Compare answer to ground truth
+7. Context Entity Recall - Verify entities appear in context
+8. Noise Robustness - Stress test with adversarial query noise
+9. Multi-turn Evaluation - Conversation quality over turns
 
 Integration with GraphRAG:
     from agentic_brain.rag.ragas_eval import RAGASEvaluator, RAGASDataset
@@ -2402,6 +2407,19 @@ __all__ = [
     "AnswerRelevancyCalculator",
     "ContextPrecisionCalculator",
     "ContextRecallCalculator",
+    "AspectType",
+    "AspectCritiqueResult",
+    "AspectCritiqueCalculator",
+    "AnswerCorrectnessCalculator",
+    "AnswerSimilarityCalculator",
+    "ContextEntityRecallCalculator",
+    "NoiseRobustnessCalculator",
+    "SummarizationScoreCalculator",
+    "ConversationTurn",
+    "ConversationSample",
+    "MultiTurnResult",
+    "MultiTurnEvaluator",
+    "AdvancedRAGASEvaluator",
     # Protocols
     "LLMJudge",
     "SimpleLLMJudge",

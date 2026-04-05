@@ -25,6 +25,7 @@ from .auth import (
     require_current_user,
     require_role,
 )
+from .fluent import AgenticBrain
 from .middleware import setup_cors, setup_exception_handlers
 from .models import ChatRequest, ChatResponse, ErrorResponse, SessionInfo
 from .routes import register_routes
@@ -39,6 +40,7 @@ from .sessions import (
     get_session_backend,
     reset_session_backend,
 )
+from .shortcuts import quick_eval, quick_graph, quick_rag, quick_search
 from .websocket import register_websocket_routes
 
 __all__ = [
@@ -76,4 +78,11 @@ __all__ = [
     "reset_session_backend",
     "generate_session_id",
     "generate_message_id",
+    # Fluent API
+    "AgenticBrain",
+    # Shortcuts
+    "quick_rag",
+    "quick_graph",
+    "quick_search",
+    "quick_eval",
 ]

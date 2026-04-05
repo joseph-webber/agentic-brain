@@ -257,6 +257,16 @@ class ConversationMemory:
                 "CREATE INDEX entity_type IF NOT EXISTS FOR (e:Entity) ON (e.type)",
             )
 
+            # Create a content index for faster searches (if supported)
+            try:
+                self._run_query(
+                    session,
+                    "CREATE INDEX message_content IF NOT EXISTS FOR (m:Message) ON (m.content)",
+                )
+            except Exception:
+                # Some older Neo4j versions may not support IF NOT EXISTS on content indices
+                pass
+
             # Create session node if doesn't exist
             self._run_query(
                 session,
@@ -403,6 +413,75 @@ class ConversationMemory:
 
         logger.debug(f"Added message {msg_id} to session {self.session_id}")
         return msg_id
+
+    async def add_messages_batch(self, messages: list[Dict[str, Any]]) -> int:
+        """
+        Add multiple messages in a single batched UNWIND operation.
+
+        Args:
+            messages: List of dicts with keys: role, content, metadata (optional)
+
+        Returns:
+            Number of messages inserted/processed
+        """
+        if not self._initialized:
+            await self.initialize()
+
+        if not messages:
+            return 0
+
+        payload = []
+        for item in messages:
+            content = item.get("content", "")
+            role = item.get("role", "user")
+            metadata = item.get("metadata", {}) or {}
+            msg_id = hashlib.sha256(
+                f"{self.session_id}_{content}_{datetime.now(UTC)}".encode()
+            ).hexdigest()[:16]
+            timestamp = datetime.now(UTC).isoformat()
+            importance = self._score_importance(content, role, metadata)
+            payload.append(
+                {
+                    "id": msg_id,
+                    "role": role,
+                    "content": content,
+                    "timestamp": timestamp,
+                    "session_id": self.session_id,
+                    "metadata": metadata,
+                    "importance": importance,
+                    "access_count": 0,
+                }
+            )
+
+        with self._get_session() as session:
+            self._run_query(
+                session,
+                """
+                UNWIND $rows AS r
+                CREATE (m:Message {
+                    id: r.id,
+                    role: r.role,
+                    content: r.content,
+                    timestamp: r.timestamp,
+                    session_id: r.session_id,
+                    metadata: r.metadata,
+                    importance: r.importance,
+                    access_count: r.access_count,
+                    last_accessed: r.timestamp
+                })
+                WITH m
+                MATCH (s:Session {id: $session_id})
+                MERGE (s)-[:CONTAINS]->(m)
+                SET s.message_count = coalesce(s.message_count, 0) + 1,
+                    s.last_updated = datetime()
+                """,
+                rows=payload,
+                session_id=self.session_id,
+            )
+
+        self._message_count += len(payload)
+        logger.debug(f"Batched added {len(payload)} messages to session {self.session_id}")
+        return len(payload)
 
     # =========================================================================
     # IMPORTANCE SCORING (Mem0-inspired)
@@ -983,14 +1062,18 @@ class ConversationMemory:
         limit: Optional[int] = None,
         since: Optional[datetime] = None,
         include_entities: bool = False,
+        page: int = 0,
+        page_size: Optional[int] = None,
     ) -> List[Message]:
         """
-        Get conversation history.
+        Get conversation history with optional pagination.
 
         Args:
-            limit: Maximum number of messages (None for all)
+            limit: Maximum number of messages (deprecated if page_size used)
             since: Only messages after this timestamp
             include_entities: Whether to include extracted entities
+            page: Zero-based page index
+            page_size: Number of messages per page (overrides limit when set)
 
         Returns:
             List of Message objects in chronological order
@@ -998,16 +1081,23 @@ class ConversationMemory:
         if not self._initialized:
             await self.initialize()
 
-        limit = limit or self.config.max_history
-        messages = []
+        # Default limit
+        if page_size:
+            limit = page_size
+        else:
+            limit = limit or self.config.max_history
+
+        messages: List[Message] = []
 
         with self._get_session() as session:
             query = """
                 MATCH (s:Session {id: $session_id})-[:CONTAINS]->(m:Message)
             """
 
+            params: Dict[str, Any] = {"session_id": self.session_id}
             if since:
                 query += " WHERE m.timestamp >= $since"
+                params["since"] = since.isoformat()
 
             query += """
                 OPTIONAL MATCH (m)-[:MENTIONS]->(e:Entity)
@@ -1024,12 +1114,12 @@ class ConversationMemory:
 
             if limit:
                 query += " LIMIT $limit"
-
-            params = {"session_id": self.session_id}
-            if since:
-                params["since"] = since.isoformat()
-            if limit:
                 params["limit"] = limit
+
+            if page_size:
+                # Calculate skip and add SKIP/LIMIT to query
+                params["skip"] = page * page_size
+                query += " SKIP $skip"
 
             result = self._run_query(session, query, **params)
 
@@ -1040,8 +1130,8 @@ class ConversationMemory:
                     content=record["content"],
                     timestamp=datetime.fromisoformat(record["timestamp"]),
                     session_id=record["session_id"],
-                    metadata=record["metadata"] or {},
-                    entities=record["entities"] if include_entities else [],
+                    metadata=record.get("metadata") or {},
+                    entities=record.get("entities") if include_entities else [],
                 )
                 messages.append(msg)
 

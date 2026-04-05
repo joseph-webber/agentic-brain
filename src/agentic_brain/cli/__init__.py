@@ -45,6 +45,7 @@ from . import commands
 from .audio_commands import register_audio_commands
 from .greet_command import register_greet_command
 from .voice_commands import register_voice_commands
+from .rag_commands import register_rag_commands
 
 # Lazy import temporal_commands to avoid requiring temporalio
 try:
@@ -136,6 +137,9 @@ def create_parser() -> argparse.ArgumentParser:
     register_voice_commands(subparsers)
     register_audio_commands(subparsers)
     register_greet_command(subparsers)
+    
+    # RAG commands (retrieval-augmented generation)
+    register_rag_commands(subparsers)
 
     # Register Temporal commands (if available)
     if HAS_TEMPORAL:

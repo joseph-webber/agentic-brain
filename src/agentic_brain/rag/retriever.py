@@ -37,6 +37,7 @@ from agentic_brain.core.neo4j_pool import (
 from agentic_brain.core.neo4j_pool import (
     get_driver as get_shared_neo4j_driver,
 )
+from agentic_brain.core.exceptions import GraphConnectionError
 
 from .embeddings import EmbeddingProvider, get_embeddings
 from .exceptions import EmbeddingError, RetrievalError
@@ -146,9 +147,11 @@ class Retriever:
                 raise ImportError("neo4j package required: pip install neo4j") from exc
             except Exception as exc:
                 logger.exception("Failed to initialize Neo4j driver")
-                raise RetrievalError(
-                    "Failed to initialize Neo4j driver",
-                    context={"uri": self.neo4j_uri, "user": self.neo4j_user},
+                raise GraphConnectionError(
+                    "Neo4j",
+                    self.neo4j_uri,
+                    operation="initialize driver",
+                    original_error=exc,
                 ) from exc
         return self._driver
 
@@ -190,9 +193,11 @@ class Retriever:
             session_obj = driver.session()
         except Exception as exc:
             logger.exception("Failed to open Neo4j session")
-            raise RetrievalError(
-                "Failed to open Neo4j session",
-                context={"uri": self.neo4j_uri, "labels": labels},
+            raise GraphConnectionError(
+                "Neo4j",
+                self.neo4j_uri,
+                operation="open session",
+                original_error=exc,
             ) from exc
 
         try:
@@ -249,7 +254,12 @@ class Retriever:
                                 label,
                                 inner_exc,
                             )
-                            continue
+                            raise GraphConnectionError(
+                                "Neo4j",
+                                self.neo4j_uri,
+                                operation="fallback query",
+                                original_error=inner_exc,
+                            ) from inner_exc
 
                         for record in result:
                             node = record["n"]
