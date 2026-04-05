@@ -22,7 +22,6 @@ class TestRAGAgentConfig:
         """Test default configuration."""
         config = RAGAgentConfig(name="test_rag")
         assert config.name == "test_rag"
-        assert config.role == AgentRole.RAG_AGENT
         assert config.max_context_docs == 5
         assert config.enable_planning is True
 

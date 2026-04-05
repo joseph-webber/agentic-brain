@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 from .base import Agent, AgentConfig, AgentRole, AgentResult, AgentState
@@ -27,6 +28,7 @@ from .executor import ToolExecutor
 logger = logging.getLogger(__name__)
 
 
+@dataclass
 class RAGAgentConfig(AgentConfig):
     """Configuration for RAG-enabled agent."""
 
@@ -59,14 +61,20 @@ class RAGAgent(Agent):
             tool_registry: Tool registry (uses default if not provided)
         """
         if config is None:
-            config = RAGAgentConfig(name="rag_agent", role=AgentRole.RAG_AGENT)
+            config = RAGAgentConfig(
+                name="rag_agent",
+                role=AgentRole.RAG_AGENT,
+            )
+        elif not isinstance(config, RAGAgentConfig):
+            config = RAGAgentConfig(
+                name=config.name,
+                role=config.role or AgentRole.RAG_AGENT,
+            )
+        elif config.role == AgentRole.GENERALIST:
+            config.role = AgentRole.RAG_AGENT
         
         super().__init__(config)
-        
-        self.rag_config = config if isinstance(config, RAGAgentConfig) else RAGAgentConfig(
-            name=config.name,
-            role=config.role,
-        )
+        self.rag_config = config
         
         self.memory = AgentMemory(MemoryConfig(max_items=1000))
         self.tool_registry = tool_registry or create_default_registry()

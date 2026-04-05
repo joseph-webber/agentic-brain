@@ -3,10 +3,10 @@ from __future__ import annotations
 
 """Heuristic query classification for intelligent routing."""
 
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import Enum
-import re
 from typing import Any
 
 
@@ -272,6 +272,12 @@ class QueryClassifier:
 
         if web_score >= 0.65 and web_score >= top_score - 0.08:
             return RouteType.WEB
+        if (
+            vector_score >= 0.25
+            and graph_score >= 0.35
+            and (" and " in normalized or normalized.count(";") >= 1)
+        ):
+            return RouteType.HYBRID
         if vector_score >= 0.7 and vector_score >= graph_score + 0.08 and vector_score >= web_score - 0.1:
             return RouteType.VECTOR
         if graph_score >= 0.7 and graph_score >= vector_score + 0.08 and graph_score >= web_score - 0.1:
@@ -279,12 +285,6 @@ class QueryClassifier:
         if (
             hybrid_score >= max(vector_score, graph_score) - 0.03
             and (vector_score >= 0.35 and graph_score >= 0.35)
-        ):
-            return RouteType.HYBRID
-        if (
-            vector_score >= 0.25
-            and graph_score >= 0.35
-            and (" and " in normalized or normalized.count(";") >= 1)
         ):
             return RouteType.HYBRID
         if top_score - runner_up < 0.1 and (vector_score >= 0.35 and graph_score >= 0.35):
@@ -333,9 +333,7 @@ class QueryClassifier:
             return True
         if route == RouteType.HYBRID:
             return True
-        if self._count_hits(normalized, self.HYBRID_TERMS) >= 2:
-            return True
-        return False
+        return self._count_hits(normalized, self.HYBRID_TERMS) >= 2
 
     def _estimate_complexity(
         self,

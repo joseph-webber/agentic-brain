@@ -1,0 +1,257 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.14.3, pytest-8.4.2, pluggy-1.6.0 -- /Users/joe/brain/agentic-brain/.venv_agentic/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/joe/brain/agentic-brain
+configfile: pyproject.toml
+plugins: cov-4.1.0, asyncio-0.26.0, anyio-4.13.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 134 items
+
+tests/agents/test_base.py::TestAgentConfig::test_agent_config_defaults PASSED [  0%]
+tests/agents/test_base.py::TestAgentConfig::test_agent_config_custom PASSED [  1%]
+tests/agents/test_base.py::TestAgentContext::test_context_creation PASSED [  2%]
+tests/agents/test_base.py::TestAgentContext::test_context_with_data PASSED [  2%]
+tests/agents/test_base.py::TestAgentBase::test_agent_initialization PASSED [  3%]
+tests/agents/test_base.py::TestAgentBase::test_agent_state_management PASSED [  4%]
+tests/agents/test_base.py::TestAgentBase::test_agent_metadata PASSED     [  5%]
+tests/agents/test_base.py::TestAgentBase::test_agent_execute PASSED      [  5%]
+tests/agents/test_base.py::TestAgentBase::test_agent_think PASSED        [  6%]
+tests/agents/test_base.py::TestAgentBase::test_agent_observe PASSED      [  7%]
+tests/agents/test_base.py::TestAgentBase::test_agent_reset PASSED        [  8%]
+tests/agents/test_base.py::TestAgentBase::test_agent_repr PASSED         [  8%]
+tests/agents/test_base.py::TestAgentBase::test_agent_error_handling PASSED [  9%]
+tests/agents/test_base.py::TestAgentBase::test_agent_timeout FAILED      [ 10%]
+tests/agents/test_base.py::TestAgentResult::test_result_creation PASSED  [ 11%]
+tests/agents/test_base.py::TestAgentResult::test_result_with_error PASSED [ 11%]
+tests/agents/test_base.py::TestAgentResult::test_result_repr PASSED      [ 12%]
+tests/agents/test_memory.py::TestMemoryConfig::test_config_defaults PASSED [ 13%]
+tests/agents/test_memory.py::TestMemoryConfig::test_config_custom PASSED [ 14%]
+tests/agents/test_memory.py::TestConversationTurn::test_turn_creation PASSED [ 14%]
+tests/agents/test_memory.py::TestConversationTurn::test_turn_to_dict PASSED [ 15%]
+tests/agents/test_memory.py::TestMemoryItem::test_memory_item_creation PASSED [ 16%]
+tests/agents/test_memory.py::TestMemoryItem::test_memory_item_importance PASSED [ 17%]
+tests/agents/test_memory.py::TestMemoryItem::test_memory_item_to_dict PASSED [ 17%]
+tests/agents/test_memory.py::TestAgentMemory::test_memory_creation PASSED [ 18%]
+tests/agents/test_memory.py::TestAgentMemory::test_add_message PASSED    [ 19%]
+tests/agents/test_memory.py::TestAgentMemory::test_add_multiple_messages PASSED [ 20%]
+tests/agents/test_memory.py::TestAgentMemory::test_recall_all PASSED     [ 20%]
+tests/agents/test_memory.py::TestAgentMemory::test_recall_limit PASSED   [ 21%]
+tests/agents/test_memory.py::TestAgentMemory::test_max_items_limit PASSED [ 22%]
+tests/agents/test_memory.py::TestAgentMemory::test_add_memory_item PASSED [ 23%]
+tests/agents/test_memory.py::TestAgentMemory::test_recall_memories PASSED [ 23%]
+tests/agents/test_memory.py::TestAgentMemory::test_recall_memories_by_type PASSED [ 24%]
+tests/agents/test_memory.py::TestAgentMemory::test_recall_memories_by_importance PASSED [ 25%]
+tests/agents/test_memory.py::TestAgentMemory::test_recall_memories_limit PASSED [ 26%]
+tests/agents/test_memory.py::TestAgentMemory::test_context_management PASSED [ 26%]
+tests/agents/test_memory.py::TestAgentMemory::test_full_context PASSED   [ 27%]
+tests/agents/test_memory.py::TestAgentMemory::test_clear_context PASSED  [ 28%]
+tests/agents/test_memory.py::TestAgentMemory::test_context_window PASSED [ 29%]
+tests/agents/test_memory.py::TestAgentMemory::test_summarize PASSED      [ 29%]
+tests/agents/test_memory.py::TestAgentMemory::test_clear_all PASSED      [ 30%]
+tests/agents/test_memory.py::TestAgentMemory::test_get_stats PASSED      [ 31%]
+tests/agents/test_memory.py::TestAgentMemory::test_to_dict PASSED        [ 32%]
+tests/agents/test_memory.py::TestAgentMemory::test_from_dict PASSED      [ 32%]
+tests/agents/test_memory.py::TestAgentMemory::test_repr PASSED           [ 33%]
+tests/agents/test_planning.py::TestActionAndPlan::test_action_creation PASSED [ 34%]
+tests/agents/test_planning.py::TestActionAndPlan::test_action_to_dict PASSED [ 35%]
+tests/agents/test_planning.py::TestActionAndPlan::test_plan_creation PASSED [ 35%]
+tests/agents/test_planning.py::TestActionAndPlan::test_plan_add_action PASSED [ 36%]
+tests/agents/test_planning.py::TestActionAndPlan::test_plan_get_next_action PASSED [ 37%]
+tests/agents/test_planning.py::TestActionAndPlan::test_plan_mark_complete PASSED [ 38%]
+tests/agents/test_planning.py::TestActionAndPlan::test_plan_is_complete PASSED [ 38%]
+tests/agents/test_planning.py::TestActionAndPlan::test_plan_to_dict PASSED [ 39%]
+tests/agents/test_planning.py::TestPlanner::test_planner_creation PASSED [ 40%]
+tests/agents/test_planning.py::TestPlanner::test_create_linear_plan PASSED [ 41%]
+tests/agents/test_planning.py::TestPlanner::test_create_hierarchical_plan PASSED [ 41%]
+tests/agents/test_planning.py::TestPlanner::test_create_reactive_plan PASSED [ 42%]
+tests/agents/test_planning.py::TestPlanner::test_refine_plan PASSED      [ 43%]
+tests/agents/test_planning.py::TestReActAgent::test_react_agent_creation PASSED [ 44%]
+tests/agents/test_planning.py::TestReActAgent::test_react_think_and_act PASSED [ 44%]
+tests/agents/test_planning.py::TestReActAgent::test_react_plan_execution PASSED [ 45%]
+tests/agents/test_planning.py::TestToolExecutor::test_executor_creation PASSED [ 46%]
+tests/agents/test_planning.py::TestToolExecutor::test_execute_tool_success PASSED [ 47%]
+tests/agents/test_planning.py::TestToolExecutor::test_execute_tool_not_found PASSED [ 47%]
+tests/agents/test_planning.py::TestToolExecutor::test_execute_batch PASSED [ 48%]
+tests/agents/test_planning.py::TestToolExecutor::test_execute_batch_stop_on_error PASSED [ 49%]
+tests/agents/test_planning.py::TestToolExecutor::test_execute_with_fallback PASSED [ 50%]
+tests/agents/test_planning.py::TestToolExecutor::test_execute_with_validation PASSED [ 50%]
+tests/agents/test_planning.py::TestToolExecutor::test_executor_stats PASSED [ 51%]
+tests/agents/test_planning.py::TestToolExecutor::test_executor_repr PASSED [ 52%]
+tests/agents/test_planning.py::TestExecutionContext::test_context_creation PASSED [ 52%]
+tests/agents/test_planning.py::TestExecutionContext::test_context_timeout PASSED [ 53%]
+tests/agents/test_planning.py::TestExecutionErrors::test_execution_error PASSED [ 54%]
+tests/agents/test_planning.py::TestExecutionErrors::test_execution_timeout FAILED [ 55%]
+tests/agents/test_rag_agent.py::TestRAGAgentConfig::test_config_defaults FAILED [ 55%]
+tests/agents/test_rag_agent.py::TestRAGAgentConfig::test_config_custom FAILED [ 56%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_creation PASSED [ 57%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_with_custom_registry PASSED [ 58%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_execute_task PASSED [ 58%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_think PASSED    [ 59%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_observe PASSED  [ 60%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_add_document PASSED [ 61%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_add_multiple_documents PASSED [ 61%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_get_tools PASSED      [ 62%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_call_tool PASSED      [ 63%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_get_conversation_history PASSED [ 64%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_with_context PASSED [ 64%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_memory_persistence PASSED [ 65%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_with_planning_disabled FAILED [ 66%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_with_reflection_disabled FAILED [ 67%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_cleanup PASSED  [ 67%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_metadata FAILED [ 68%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_multiple_sequential_tasks PASSED [ 69%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_document_retrieval FAILED [ 70%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_execution_time PASSED [ 70%]
+tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_tool_list PASSED [ 71%]
+tests/agents/test_rag_agent.py::TestRAGAgentIntegration::test_full_rag_workflow FAILED [ 72%]
+tests/agents/test_rag_agent.py::TestRAGAgentIntegration::test_rag_with_tool_usage PASSED [ 73%]
+tests/agents/test_tools.py::TestToolParameter::test_parameter_creation PASSED [ 73%]
+tests/agents/test_tools.py::TestToolParameter::test_parameter_validation_required PASSED [ 74%]
+tests/agents/test_tools.py::TestToolParameter::test_parameter_validation_type PASSED [ 75%]
+tests/agents/test_tools.py::TestToolParameter::test_parameter_validation_choices PASSED [ 76%]
+tests/agents/test_tools.py::TestToolParameter::test_parameter_validation_success PASSED [ 76%]
+tests/agents/test_tools.py::TestToolBase::test_tool_creation PASSED      [ 77%]
+tests/agents/test_tools.py::TestToolBase::test_tool_schema PASSED        [ 78%]
+tests/agents/test_tools.py::TestToolBase::test_tool_repr PASSED          [ 79%]
+tests/agents/test_tools.py::TestToolBase::test_tool_execution PASSED     [ 79%]
+tests/agents/test_tools.py::TestSearchTool::test_search_basic PASSED     [ 80%]
+tests/agents/test_tools.py::TestSearchTool::test_search_with_max_results PASSED [ 81%]
+tests/agents/test_tools.py::TestSearchTool::test_search_missing_query PASSED [ 82%]
+tests/agents/test_tools.py::TestCalculatorTool::test_calculator_simple PASSED [ 82%]
+tests/agents/test_tools.py::TestCalculatorTool::test_calculator_complex PASSED [ 83%]
+tests/agents/test_tools.py::TestCalculatorTool::test_calculator_division PASSED [ 84%]
+tests/agents/test_tools.py::TestCalculatorTool::test_calculator_invalid_expression PASSED [ 85%]
+tests/agents/test_tools.py::TestCodeExecutionTool::test_code_execution_simple PASSED [ 85%]
+tests/agents/test_tools.py::TestCodeExecutionTool::test_code_execution_with_result PASSED [ 86%]
+tests/agents/test_tools.py::TestWebLookupTool::test_web_lookup PASSED    [ 87%]
+tests/agents/test_tools.py::TestWebLookupTool::test_web_lookup_max_length PASSED [ 88%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_creation PASSED [ 88%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_register PASSED [ 89%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_register_duplicate PASSED [ 90%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_get_tool PASSED [ 91%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_get_nonexistent PASSED [ 91%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_list_tools PASSED [ 92%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_list_by_category PASSED [ 93%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_unregister PASSED [ 94%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_call_tool PASSED [ 94%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_call_nonexistent PASSED [ 95%]
+tests/agents/test_tools.py::TestToolRegistry::test_registry_repr PASSED  [ 96%]
+tests/agents/test_tools.py::TestDefaultRegistry::test_create_default_registry PASSED [ 97%]
+tests/agents/test_tools.py::TestDefaultRegistry::test_default_registry_tools_work PASSED [ 97%]
+tests/agents/test_tools.py::TestToolResult::test_result_success PASSED   [ 98%]
+tests/agents/test_tools.py::TestToolResult::test_result_failure PASSED   [ 99%]
+tests/agents/test_tools.py::TestToolResult::test_result_repr PASSED      [100%]
+
+=================================== FAILURES ===================================
+_______________________ TestAgentBase.test_agent_timeout _______________________
+tests/agents/test_base.py:204: in test_agent_timeout
+    assert result.success is False
+E   assert True is False
+E    +  where True = AgentResult(\u2713, time=10006ms).success
+----------------------------- Captured stderr call -----------------------------
+INFO:agentic_brain.agents.base.slow_agent:State transition: planning
+INFO:agentic_brain.agents.base.slow_agent:State transition: complete
+------------------------------ Captured log call -------------------------------
+INFO     agentic_brain.agents.base.slow_agent:base.py:152 State transition: planning
+INFO     agentic_brain.agents.base.slow_agent:base.py:152 State transition: complete
+--------------------------- Captured stderr teardown ---------------------------
+INFO:agentic_brain.voice.queue:VoiceQueue reset
+---------------------------- Captured log teardown -----------------------------
+INFO     agentic_brain.voice.queue:queue.py:185 VoiceQueue reset
+__________________ TestExecutionErrors.test_execution_timeout __________________
+tests/agents/test_planning.py:324: in test_execution_timeout
+    timeout = ExecutionTimeout("Timed out")
+              ^^^^^^^^^^^^^^^^
+E   NameError: name 'ExecutionTimeout' is not defined
+--------------------------- Captured stderr teardown ---------------------------
+INFO:agentic_brain.voice.queue:VoiceQueue reset
+---------------------------- Captured log teardown -----------------------------
+INFO     agentic_brain.voice.queue:queue.py:185 VoiceQueue reset
+___________________ TestRAGAgentConfig.test_config_defaults ____________________
+tests/agents/test_rag_agent.py:25: in test_config_defaults
+    assert config.role == AgentRole.RAG_AGENT
+E   AssertionError: assert <AgentRole.GENERALIST: 'generalist'> == <AgentRole.RAG_AGENT: 'rag_agent'>
+E     
+E     - rag_agent
+E     + generalist
+--------------------------- Captured stderr teardown ---------------------------
+INFO:agentic_brain.voice.queue:VoiceQueue reset
+---------------------------- Captured log teardown -----------------------------
+INFO     agentic_brain.voice.queue:queue.py:185 VoiceQueue reset
+____________________ TestRAGAgentConfig.test_config_custom _____________________
+tests/agents/test_rag_agent.py:31: in test_config_custom
+    config = RAGAgentConfig(
+E   TypeError: AgentConfig.__init__() got an unexpected keyword argument 'max_context_docs'
+--------------------------- Captured stderr teardown ---------------------------
+INFO:agentic_brain.voice.queue:VoiceQueue reset
+---------------------------- Captured log teardown -----------------------------
+INFO     agentic_brain.voice.queue:queue.py:185 VoiceQueue reset
+________________ TestRAGAgent.test_agent_with_planning_disabled ________________
+tests/agents/test_rag_agent.py:170: in test_agent_with_planning_disabled
+    config = RAGAgentConfig(
+E   TypeError: AgentConfig.__init__() got an unexpected keyword argument 'enable_planning'
+--------------------------- Captured stderr teardown ---------------------------
+INFO:agentic_brain.voice.queue:VoiceQueue reset
+---------------------------- Captured log teardown -----------------------------
+INFO     agentic_brain.voice.queue:queue.py:185 VoiceQueue reset
+_______________ TestRAGAgent.test_agent_with_reflection_disabled _______________
+tests/agents/test_rag_agent.py:182: in test_agent_with_reflection_disabled
+    config = RAGAgentConfig(
+E   TypeError: AgentConfig.__init__() got an unexpected keyword argument 'enable_reflection'
+--------------------------- Captured stderr teardown ---------------------------
+INFO:agentic_brain.voice.queue:VoiceQueue reset
+---------------------------- Captured log teardown -----------------------------
+INFO     agentic_brain.voice.queue:queue.py:185 VoiceQueue reset
+_______________________ TestRAGAgent.test_agent_metadata _______________________
+tests/agents/test_rag_agent.py:208: in test_agent_metadata
+    assert metadata["role"] == "rag_agent"
+E   AssertionError: assert 'generalist' == 'rag_agent'
+E     
+E     - rag_agent
+E     + generalist
+--------------------------- Captured stderr teardown ---------------------------
+INFO:agentic_brain.voice.queue:VoiceQueue reset
+---------------------------- Captured log teardown -----------------------------
+INFO     agentic_brain.voice.queue:queue.py:185 VoiceQueue reset
+__________________ TestRAGAgent.test_agent_document_retrieval __________________
+tests/agents/test_rag_agent.py:227: in test_agent_document_retrieval
+    config = RAGAgentConfig(name="test_rag", max_context_docs=3)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: AgentConfig.__init__() got an unexpected keyword argument 'max_context_docs'
+--------------------------- Captured stderr teardown ---------------------------
+INFO:agentic_brain.voice.queue:VoiceQueue reset
+---------------------------- Captured log teardown -----------------------------
+INFO     agentic_brain.voice.queue:queue.py:185 VoiceQueue reset
+________________ TestRAGAgentIntegration.test_full_rag_workflow ________________
+tests/agents/test_rag_agent.py:264: in test_full_rag_workflow
+    config = RAGAgentConfig(
+E   TypeError: AgentConfig.__init__() got an unexpected keyword argument 'enable_planning'
+--------------------------- Captured stderr teardown ---------------------------
+INFO:agentic_brain.voice.queue:VoiceQueue reset
+---------------------------- Captured log teardown -----------------------------
+INFO     agentic_brain.voice.queue:queue.py:185 VoiceQueue reset
+=============================== warnings summary ===============================
+.venv_agentic/lib/python3.14/site-packages/_pytest/config/__init__.py:1474
+  /Users/joe/brain/agentic-brain/.venv_agentic/lib/python3.14/site-packages/_pytest/config/__init__.py:1474: PytestConfigWarning: Unknown config option: timeout
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/agents/test_base.py::TestAgentBase::test_agent_timeout - assert True is False
+ +  where True = AgentResult(\u2713, time=10006ms).success
+FAILED tests/agents/test_planning.py::TestExecutionErrors::test_execution_timeout - NameError: name 'ExecutionTimeout' is not defined
+FAILED tests/agents/test_rag_agent.py::TestRAGAgentConfig::test_config_defaults - AssertionError: assert <AgentRole.GENERALIST: 'generalist'> == <AgentRole.RAG_AGENT: 'rag_agent'>
+  
+  - rag_agent
+  + generalist
+FAILED tests/agents/test_rag_agent.py::TestRAGAgentConfig::test_config_custom - TypeError: AgentConfig.__init__() got an unexpected keyword argument 'max_context_docs'
+FAILED tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_with_planning_disabled - TypeError: AgentConfig.__init__() got an unexpected keyword argument 'enable_planning'
+FAILED tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_with_reflection_disabled - TypeError: AgentConfig.__init__() got an unexpected keyword argument 'enable_reflection'
+FAILED tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_metadata - AssertionError: assert 'generalist' == 'rag_agent'
+  
+  - rag_agent
+  + generalist
+FAILED tests/agents/test_rag_agent.py::TestRAGAgent::test_agent_document_retrieval - TypeError: AgentConfig.__init__() got an unexpected keyword argument 'max_context_docs'
+FAILED tests/agents/test_rag_agent.py::TestRAGAgentIntegration::test_full_rag_workflow - TypeError: AgentConfig.__init__() got an unexpected keyword argument 'enable_planning'
+================== 9 failed, 125 passed, 1 warning in 12.79s ===================

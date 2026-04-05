@@ -96,7 +96,7 @@ class PromptTemplate:
             return errors
 
         merged = dict(self.variables)
-        if context:
+        if context is not None:
             merged.update(context)
 
         missing = [name for name in required if name not in merged]
@@ -146,4 +146,3 @@ class PromptTemplate:
             variables=dict(data.get("variables", {})),
             tags=tuple(data.get("tags", ())),
         )
-

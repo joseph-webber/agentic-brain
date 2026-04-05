@@ -22,4 +22,4 @@ def test_enforce_output_masks():
 def test_enforce_output_reports_reasons():
     p = PolicyEnforcer()
     out = p.enforce_output("I think there were 1234 cases and you are an idiot")
-    assert any(r["type"].startswith("toxicity") or r["type"].startswith("hallucination") for r in out["reasons"]) }
+    assert any(r["type"].startswith("toxicity") or r["type"].startswith("hallucination") for r in out["reasons"])

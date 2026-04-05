@@ -3,14 +3,14 @@ from __future__ import annotations
 import pytest
 
 from agentic_brain.routing import (
-    QueryClassifier,
-    QueryDecomposer,
-    QueryPlanner,
-    QueryRouter,
     QueryClassification,
+    QueryClassifier,
     QueryDecision,
+    QueryDecomposer,
     QueryExecutionResult,
     QueryPlan,
+    QueryPlanner,
+    QueryRouter,
     QueryStep,
     RouteType,
 )

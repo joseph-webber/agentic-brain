@@ -3,9 +3,9 @@ from __future__ import annotations
 
 """Intelligent query routing with confidence scoring and fallback."""
 
+import inspect
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
-import inspect
 from typing import Any
 
 from .classifier import QueryClassification, QueryClassifier, RouteType

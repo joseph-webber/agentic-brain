@@ -3,8 +3,8 @@ from __future__ import annotations
 
 """Query decomposition helpers for multi-step routing."""
 
-from dataclasses import dataclass, field
 import re
+from dataclasses import dataclass, field
 from typing import Any
 
 
