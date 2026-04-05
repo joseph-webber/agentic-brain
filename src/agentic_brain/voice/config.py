@@ -7,6 +7,16 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 
+"""Core voice configuration and language packs.
+
+This module centralises configuration for the voice stack.  ``VoiceConfig``
+reads environment variables into a strongly‑typed object, while
+``LANGUAGE_PACKS`` defines default and fallback voices for supported
+languages.  Helper functions such as :func:`stereo_pan_enabled` and
+:func:`use_redpanda_voice` expose feature flags used across the
+``agentic_brain.voice`` package.
+"""
+
 import os
 from dataclasses import dataclass, field
 from enum import Enum

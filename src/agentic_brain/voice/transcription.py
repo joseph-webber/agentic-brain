@@ -38,7 +38,7 @@ import wave
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Generator, Optional
+from typing import Any, Callable, Generator, Iterable, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +70,22 @@ except ImportError:
 
 
 # ── Shared types ─────────────────────────────────────────────────────
+
+
+class TranscriptionError(Exception):
+    """Base error for audio transcription operations."""
+
+
+class AudioFormatError(TranscriptionError):
+    """Raised when audio input cannot be decoded or validated."""
+
+
+class ModelLoadError(TranscriptionError):
+    """Raised when a transcription model fails to initialise."""
+
+
+class TimeoutError(TranscriptionError):
+    """Raised when a transcription operation exceeds its timeout."""
 
 
 @dataclass
@@ -203,44 +219,57 @@ class StreamingBuffer:
             numpy array of float32 audio if window is ready, None otherwise.
         """
         with self._lock:
-            if not _HAS_NUMPY:
-                n_samples = len(chunk) // 2
-                fmt = f"<{n_samples}h"
-                try:
+            try:
+                if not chunk:
+                    return None
+                if len(chunk) % 2 != 0:
+                    raise AudioFormatError(
+                        "Streaming audio chunk must contain 16-bit aligned samples"
+                    )
+
+                if not _HAS_NUMPY:
+                    n_samples = len(chunk) // 2
+                    fmt = f"<{n_samples}h"
                     samples = struct.unpack(fmt, chunk)
                     self._buffer.extend(samples)
-                except struct.error:
-                    return None
-            else:
-                samples = np.frombuffer(chunk, dtype=np.int16)
-                self._buffer.extend(samples.tolist())
+                else:
+                    samples = np.frombuffer(chunk, dtype=np.int16)
+                    self._buffer.extend(samples.tolist())
 
-            if len(self._buffer) >= self.window_samples:
-                segment = self._buffer[: self.window_samples]
-                self._buffer = self._buffer[
-                    self.window_samples - self.overlap_samples :
-                ]
+                if len(self._buffer) >= self.window_samples:
+                    segment = self._buffer[: self.window_samples]
+                    self._buffer = self._buffer[
+                        self.window_samples - self.overlap_samples :
+                    ]
+                    self._segment_index += 1
+
+                    if _HAS_NUMPY:
+                        arr = np.array(segment, dtype=np.float32) / 32768.0
+                        return arr
+                    return [s / 32768.0 for s in segment]
+                return None
+            except (AudioFormatError, struct.error, ValueError, TypeError) as exc:
+                logger.warning("StreamingBuffer: failed to add audio chunk: %s", exc)
+                return None
+
+    def flush(self) -> Optional[Any]:
+        """Flush remaining buffer as final segment."""
+        with self._lock:
+            try:
+                if not self._buffer:
+                    return None
+                segment = self._buffer
+                self._buffer = []
                 self._segment_index += 1
 
                 if _HAS_NUMPY:
                     arr = np.array(segment, dtype=np.float32) / 32768.0
                     return arr
                 return [s / 32768.0 for s in segment]
-            return None
-
-    def flush(self) -> Optional[Any]:
-        """Flush remaining buffer as final segment."""
-        with self._lock:
-            if not self._buffer:
+            except (ValueError, TypeError) as exc:
+                logger.warning("StreamingBuffer: failed to flush audio buffer: %s", exc)
+                self._buffer = []
                 return None
-            segment = self._buffer
-            self._buffer = []
-            self._segment_index += 1
-
-            if _HAS_NUMPY:
-                arr = np.array(segment, dtype=np.float32) / 32768.0
-                return arr
-            return [s / 32768.0 for s in segment]
 
     @property
     def segment_index(self) -> int:
@@ -354,6 +383,186 @@ class BaseTranscriber(ABC):
         """Return True if this backend can be used."""
         ...
 
+    def load_audio(
+        self,
+        audio_source: bytes | bytearray | str | Path,
+        sample_rate: int = 16_000,
+    ) -> tuple[bytes, int]:
+        """Load PCM audio from raw bytes or a WAV file path."""
+        file_handle: Any | None = None
+        wav_reader: wave.Wave_read | None = None
+
+        try:
+            if isinstance(audio_source, (bytes, bytearray)):
+                audio_bytes = bytes(audio_source)
+                if not audio_bytes:
+                    raise AudioFormatError("Audio buffer is empty")
+                if len(audio_bytes) % 2 != 0:
+                    raise AudioFormatError(
+                        "Raw PCM audio must contain 16-bit aligned samples"
+                    )
+                return audio_bytes, sample_rate
+
+            path = Path(audio_source).expanduser()
+            if not path.exists():
+                raise FileNotFoundError(f"Audio file not found: {path}")
+            if not path.is_file():
+                raise AudioFormatError(f"Audio source is not a file: {path}")
+            if path.suffix.lower() != ".wav":
+                raise AudioFormatError(
+                    f"Unsupported audio format '{path.suffix or '<none>'}'. "
+                    "Only WAV files are currently supported."
+                )
+
+            file_handle = path.open("rb")
+            wav_reader = wave.open(file_handle, "rb")
+
+            channels = wav_reader.getnchannels()
+            sample_width = wav_reader.getsampwidth()
+            resolved_sample_rate = wav_reader.getframerate()
+            if channels != 1:
+                raise AudioFormatError(
+                    f"Unsupported channel count {channels}; expected mono audio"
+                )
+            if sample_width != 2:
+                raise AudioFormatError(
+                    f"Unsupported sample width {sample_width * 8} bits; expected 16-bit PCM"
+                )
+            if resolved_sample_rate <= 0:
+                raise AudioFormatError("WAV file has invalid sample rate")
+
+            frames = wav_reader.readframes(wav_reader.getnframes())
+            if not frames:
+                raise AudioFormatError("Audio file contains no PCM frames")
+            if len(frames) % 2 != 0:
+                raise AudioFormatError(
+                    "Decoded WAV audio must contain 16-bit aligned samples"
+                )
+            return frames, resolved_sample_rate
+        except (AudioFormatError, FileNotFoundError):
+            raise
+        except wave.Error as exc:
+            raise AudioFormatError(f"Invalid WAV audio data: {exc}") from exc
+        except OSError as exc:
+            raise TranscriptionError(f"Failed to read audio source: {exc}") from exc
+        finally:
+            if wav_reader is not None:
+                try:
+                    wav_reader.close()
+                except Exception:
+                    logger.debug("Failed to close WAV reader", exc_info=True)
+            if file_handle is not None and not file_handle.closed:
+                try:
+                    file_handle.close()
+                except Exception:
+                    logger.debug("Failed to close audio file handle", exc_info=True)
+
+    def transcribe(
+        self,
+        audio_source: bytes | bytearray | str | Path,
+        sample_rate: int = 16_000,
+        timeout_seconds: float | None = None,
+    ) -> Optional[TranscriptionResult]:
+        """Load and transcribe audio with defensive error handling."""
+        audio_data: bytes | None = None
+        effective_sample_rate = sample_rate
+        started_at = time.monotonic()
+
+        try:
+            if timeout_seconds is not None and timeout_seconds <= 0:
+                raise TimeoutError("Transcription timeout must be greater than zero")
+
+            audio_data, effective_sample_rate = self.load_audio(
+                audio_source,
+                sample_rate=sample_rate,
+            )
+            if timeout_seconds is not None and (
+                time.monotonic() - started_at
+            ) > timeout_seconds:
+                raise TimeoutError("Audio loading timed out before transcription")
+
+            result = self.transcribe_bytes(audio_data, sample_rate=effective_sample_rate)
+
+            if timeout_seconds is not None and (
+                time.monotonic() - started_at
+            ) > timeout_seconds:
+                raise TimeoutError("Transcription timed out")
+            return result
+        except FileNotFoundError as exc:
+            self.metrics.record_error()
+            logger.warning("%s: audio file missing: %s", self.name, exc)
+            return None
+        except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+            self.metrics.record_error()
+            logger.warning("%s: transcription failed: %s", self.name, exc)
+            return None
+        except Exception as exc:
+            self.metrics.record_error()
+            logger.exception("%s: unexpected transcription failure", self.name)
+            logger.debug("Unexpected transcription error: %s", exc)
+            return None
+        finally:
+            audio_data = None
+
+    def stream_transcribe(
+        self,
+        audio_source: bytes | bytearray | str | Path | Iterable[bytes],
+        sample_rate: int = 16_000,
+        chunk_size: int = 32_000,
+    ) -> Generator[StreamingTranscriptionResult, None, None]:
+        """Transcribe audio input as a streaming sequence."""
+        audio_data: bytes | None = None
+        buffered_chunks: list[bytes] | None = None
+        effective_sample_rate = sample_rate
+
+        try:
+            if chunk_size <= 0:
+                raise AudioFormatError("Streaming chunk size must be greater than zero")
+
+            if isinstance(audio_source, (bytes, bytearray, str, Path)):
+                audio_data, effective_sample_rate = self.load_audio(
+                    audio_source,
+                    sample_rate=sample_rate,
+                )
+                buffered_chunks = [
+                    audio_data[i : i + chunk_size]
+                    for i in range(0, len(audio_data), chunk_size)
+                ]
+            else:
+                buffered_chunks = []
+                for chunk in audio_source:
+                    if not chunk:
+                        continue
+                    if len(chunk) % 2 != 0:
+                        raise AudioFormatError(
+                            "Streaming PCM chunks must contain 16-bit aligned samples"
+                        )
+                    buffered_chunks.append(bytes(chunk))
+
+            for chunk in buffered_chunks:
+                yield from self.transcribe_streaming(
+                    chunk,
+                    sample_rate=effective_sample_rate,
+                )
+
+            final_result = self.flush_streaming()
+            if final_result is not None:
+                yield final_result
+        except FileNotFoundError as exc:
+            self.metrics.record_error()
+            logger.warning("%s: streaming audio file missing: %s", self.name, exc)
+        except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+            self.metrics.record_error()
+            logger.warning("%s: streaming transcription failed: %s", self.name, exc)
+        except Exception as exc:
+            self.metrics.record_error()
+            logger.exception("%s: unexpected streaming transcription failure", self.name)
+            logger.debug("Unexpected streaming error: %s", exc)
+        finally:
+            buffered_chunks = None
+            audio_data = None
+            self.reset_streaming()
+
     def configure_streaming(
         self,
         window_secs: float = 2.0,
@@ -369,22 +578,28 @@ class BaseTranscriber(ABC):
             sample_rate: Audio sample rate (default 16000).
             enabled: Enable streaming mode.
         """
-        self._streaming_config = StreamingConfig(
-            window_secs=window_secs,
-            overlap_secs=overlap_secs,
-            sample_rate=sample_rate,
-            enabled=enabled,
-        )
-        if enabled:
-            self._streaming_buffer = StreamingBuffer(
+        try:
+            self._streaming_config = StreamingConfig(
                 window_secs=window_secs,
                 overlap_secs=overlap_secs,
                 sample_rate=sample_rate,
+                enabled=enabled,
             )
-            self._streaming_stitcher = StreamingStitcher()
-        else:
+            if enabled:
+                self._streaming_buffer = StreamingBuffer(
+                    window_secs=window_secs,
+                    overlap_secs=overlap_secs,
+                    sample_rate=sample_rate,
+                )
+                self._streaming_stitcher = StreamingStitcher()
+            else:
+                self._streaming_buffer = None
+                self._streaming_stitcher = None
+        except Exception as exc:
             self._streaming_buffer = None
             self._streaming_stitcher = None
+            self._streaming_config = StreamingConfig(sample_rate=sample_rate, enabled=False)
+            logger.warning("%s: failed to configure streaming: %s", self.name, exc)
 
     def transcribe_streaming(
         self,
@@ -403,18 +618,31 @@ class BaseTranscriber(ABC):
         Yields:
             StreamingTranscriptionResult with partial/stable transcription.
         """
-        if self._streaming_buffer is None:
-            self.configure_streaming(sample_rate=sample_rate, enabled=True)
+        segment: Any | None = None
+        try:
+            if self._streaming_buffer is None:
+                self.configure_streaming(sample_rate=sample_rate, enabled=True)
+            if self._streaming_buffer is None:
+                raise TranscriptionError("Streaming buffer is unavailable")
 
-        segment = self._streaming_buffer.add_chunk(audio_chunk)
-        if segment is not None:
-            result = self._transcribe_segment(
-                segment,
-                sample_rate,
-                self._streaming_buffer.segment_index,
-            )
-            if result and self._streaming_stitcher:
-                yield self._streaming_stitcher.add_result(result)
+            segment = self._streaming_buffer.add_chunk(audio_chunk)
+            if segment is not None:
+                result = self._transcribe_segment(
+                    segment,
+                    sample_rate,
+                    self._streaming_buffer.segment_index,
+                )
+                if result and self._streaming_stitcher:
+                    yield self._streaming_stitcher.add_result(result)
+        except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+            self.metrics.record_error()
+            logger.warning("%s: streaming chunk failed: %s", self.name, exc)
+        except Exception as exc:
+            self.metrics.record_error()
+            logger.exception("%s: unexpected streaming chunk failure", self.name)
+            logger.debug("Unexpected streaming chunk error: %s", exc)
+        finally:
+            segment = None
 
     def _transcribe_segment(
         self,
@@ -426,23 +654,33 @@ class BaseTranscriber(ABC):
 
         Subclasses can override for optimised streaming transcription.
         """
-        if _HAS_NUMPY:
-            audio_bytes = (np.array(audio_float) * 32768).astype(np.int16).tobytes()
-        else:
-            samples = [int(s * 32768) for s in audio_float]
-            audio_bytes = struct.pack(f"<{len(samples)}h", *samples)
+        audio_bytes: bytes | None = None
+        try:
+            if _HAS_NUMPY:
+                audio_bytes = (np.array(audio_float) * 32768).astype(np.int16).tobytes()
+            else:
+                samples = [int(s * 32768) for s in audio_float]
+                audio_bytes = struct.pack(f"<{len(samples)}h", *samples)
 
-        result = self.transcribe_bytes(audio_bytes, sample_rate)
-        if result:
-            return StreamingTranscriptionResult(
-                text=result.text,
-                is_partial=True,
-                is_final=False,
-                confidence=result.confidence,
-                segment_index=segment_index,
-                timestamp_ms=time.monotonic() * 1000,
-            )
-        return None
+            result = self.transcribe_bytes(audio_bytes, sample_rate)
+            if result:
+                return StreamingTranscriptionResult(
+                    text=result.text,
+                    is_partial=True,
+                    is_final=False,
+                    confidence=result.confidence,
+                    segment_index=segment_index,
+                    timestamp_ms=time.monotonic() * 1000,
+                )
+            return None
+        except struct.error as exc:
+            logger.warning("%s: failed to pack streaming audio: %s", self.name, exc)
+            return None
+        except Exception as exc:
+            logger.warning("%s: failed to transcribe streaming segment: %s", self.name, exc)
+            return None
+        finally:
+            audio_bytes = None
 
     def flush_streaming(self) -> Optional[StreamingTranscriptionResult]:
         """Flush remaining audio and finalize transcription.
@@ -450,36 +688,43 @@ class BaseTranscriber(ABC):
         Returns:
             Final transcription result with complete stable text.
         """
-        if self._streaming_buffer is None:
-            return None
-
-        segment = self._streaming_buffer.flush()
+        segment: Any | None = None
         result: Optional[StreamingTranscriptionResult] = None
+        try:
+            if self._streaming_buffer is None:
+                return None
 
-        if segment is not None:
-            result = self._transcribe_segment(
-                segment,
-                self._streaming_config.sample_rate,
-                self._streaming_buffer.segment_index,
-            )
-
-        if self._streaming_stitcher:
-            final_text = self._streaming_stitcher.finalize()
-            if result:
-                result.is_final = True
-                result.is_partial = False
-                result.stable_text = final_text
-            elif final_text:
-                result = StreamingTranscriptionResult(
-                    text=final_text,
-                    is_partial=False,
-                    is_final=True,
-                    stable_text=final_text,
-                    segment_index=self._streaming_buffer.segment_index,
+            segment = self._streaming_buffer.flush()
+            if segment is not None:
+                result = self._transcribe_segment(
+                    segment,
+                    self._streaming_config.sample_rate,
+                    self._streaming_buffer.segment_index,
                 )
 
-        self.reset_streaming()
-        return result
+            if self._streaming_stitcher:
+                final_text = self._streaming_stitcher.finalize()
+                if result:
+                    result.is_final = True
+                    result.is_partial = False
+                    result.stable_text = final_text
+                elif final_text:
+                    result = StreamingTranscriptionResult(
+                        text=final_text,
+                        is_partial=False,
+                        is_final=True,
+                        stable_text=final_text,
+                        segment_index=self._streaming_buffer.segment_index,
+                    )
+
+            return result
+        except Exception as exc:
+            self.metrics.record_error()
+            logger.warning("%s: failed to flush streaming state: %s", self.name, exc)
+            return None
+        finally:
+            segment = None
+            self.reset_streaming()
 
     def reset_streaming(self) -> None:
         """Reset streaming state for a new transcription session."""
@@ -568,81 +813,109 @@ class VADStreamingTranscriber:
 
     def process_chunk(self, audio_chunk: bytes) -> VADStreamingUpdate:
         """Process one PCM chunk and emit VAD/transcription updates."""
-        samples = self._chunk_to_samples(audio_chunk)
+        samples: list[int] = []
         update = VADStreamingUpdate(is_speech=self._speech_active)
-        if not samples:
-            return update
-
-        self._append_vad_samples(samples)
-        is_speech_now = self._detect_speech()
-        update.is_speech = self._speech_active or is_speech_now
-
-        if is_speech_now:
-            self._silence_samples = 0
-            if not self._speech_active:
-                self._speech_active = True
-                update.speech_started = True
-                self._transcriber.reset_streaming()
-                seed_audio = self._samples_to_bytes(self._vad_window)
-                self._utterance_chunks = [seed_audio] if seed_audio else []
-                if seed_audio:
-                    update.partials.extend(
-                        self._transcriber.transcribe_streaming(
-                            seed_audio,
-                            sample_rate=self.sample_rate,
-                        )
-                    )
+        try:
+            samples = self._chunk_to_samples(audio_chunk)
+            if not samples:
                 return update
 
-        if not self._speech_active:
-            return update
+            self._append_vad_samples(samples)
+            is_speech_now = self._detect_speech()
+            update.is_speech = self._speech_active or is_speech_now
 
-        if not update.speech_started:
-            self._utterance_chunks.append(audio_chunk)
-            update.partials.extend(
-                self._transcriber.transcribe_streaming(
-                    audio_chunk,
-                    sample_rate=self.sample_rate,
+            if is_speech_now:
+                self._silence_samples = 0
+                if not self._speech_active:
+                    self._speech_active = True
+                    update.speech_started = True
+                    self._transcriber.reset_streaming()
+                    seed_audio = self._samples_to_bytes(self._vad_window)
+                    self._utterance_chunks = [seed_audio] if seed_audio else []
+                    if seed_audio:
+                        update.partials.extend(
+                            self._transcriber.transcribe_streaming(
+                                seed_audio,
+                                sample_rate=self.sample_rate,
+                            )
+                        )
+                    return update
+
+            if not self._speech_active:
+                return update
+
+            if not update.speech_started:
+                self._utterance_chunks.append(audio_chunk)
+                update.partials.extend(
+                    self._transcriber.transcribe_streaming(
+                        audio_chunk,
+                        sample_rate=self.sample_rate,
+                    )
                 )
-            )
 
-        if is_speech_now:
+            if is_speech_now:
+                return update
+
+            self._silence_samples += len(samples)
+            if self._silence_samples >= self._speech_end_samples:
+                update.speech_ended = True
+                update.final = self._build_final_result()
+                self.reset()
+                update.is_speech = False
+
             return update
-
-        self._silence_samples += len(samples)
-        if self._silence_samples >= self._speech_end_samples:
-            update.speech_ended = True
-            update.final = self._build_final_result()
+        except (AudioFormatError, TranscriptionError) as exc:
+            logger.warning("VADStreamingTranscriber: failed to process chunk: %s", exc)
             self.reset()
-            update.is_speech = False
-
-        return update
+            return update
+        except Exception as exc:
+            logger.warning(
+                "VADStreamingTranscriber: unexpected chunk processing failure: %s",
+                exc,
+            )
+            self.reset()
+            return update
+        finally:
+            samples = []
 
     def finalize(self) -> Optional[StreamingTranscriptionResult]:
         """Force completion of the current utterance."""
-        if not self._speech_active:
+        try:
+            if not self._speech_active:
+                return None
+            return self._build_final_result()
+        except Exception as exc:
+            logger.warning("VADStreamingTranscriber: finalize failed: %s", exc)
             return None
-        result = self._build_final_result()
-        self.reset()
-        return result
+        finally:
+            self.reset()
 
     def reset(self) -> None:
         """Reset VAD and streaming state for a new utterance."""
-        self._speech_active = False
-        self._silence_samples = 0
-        self._vad_window = []
-        self._utterance_chunks = []
-        self._transcriber.reset_streaming()
+        try:
+            self._speech_active = False
+            self._silence_samples = 0
+            self._vad_window = []
+            self._utterance_chunks = []
+            self._transcriber.reset_streaming()
+        except Exception as exc:
+            logger.warning("VADStreamingTranscriber: reset failed: %s", exc)
 
     @property
     def _speech_end_samples(self) -> int:
         return int(self.sample_rate * self._vad.config.min_silence_duration_ms / 1000)
 
     def _detect_speech(self) -> bool:
-        if not _HAS_NUMPY or len(self._vad_window) < self._min_detection_samples:
+        try:
+            if not _HAS_NUMPY or len(self._vad_window) < self._min_detection_samples:
+                return False
+            audio = self._samples_to_ndarray(self._vad_window)
+            if audio is None:
+                return False
+            return any(True for _ in self._vad.detect_speech(audio))
+        except Exception as exc:
+            logger.warning("VADStreamingTranscriber: VAD detection failed: %s", exc)
             return False
-        audio = self._samples_to_ndarray(self._vad_window)
-        return any(True for _ in self._vad.detect_speech(audio))
 
     def _append_vad_samples(self, samples: list[int]) -> None:
         self._vad_window.extend(samples)
@@ -650,46 +923,66 @@ class VADStreamingTranscriber:
             self._vad_window = self._vad_window[-self._vad_window_samples :]
 
     def _build_final_result(self) -> Optional[StreamingTranscriptionResult]:
-        audio_data = b"".join(self._utterance_chunks)
-        if not audio_data:
+        audio_data: bytes | None = None
+        try:
+            audio_data = b"".join(self._utterance_chunks)
+            if not audio_data:
+                return None
+            result = self._transcriber.transcribe_bytes(
+                audio_data,
+                sample_rate=self.sample_rate,
+            )
+            if not result or not result.text.strip():
+                return None
+            return StreamingTranscriptionResult(
+                text=result.text.strip(),
+                is_partial=False,
+                is_final=True,
+                confidence=result.confidence,
+                stable_text=result.text.strip(),
+                timestamp_ms=time.monotonic() * 1000,
+            )
+        except Exception as exc:
+            logger.warning("VADStreamingTranscriber: final transcription failed: %s", exc)
             return None
-        result = self._transcriber.transcribe_bytes(
-            audio_data,
-            sample_rate=self.sample_rate,
-        )
-        if not result or not result.text.strip():
-            return None
-        return StreamingTranscriptionResult(
-            text=result.text.strip(),
-            is_partial=False,
-            is_final=True,
-            confidence=result.confidence,
-            stable_text=result.text.strip(),
-            timestamp_ms=time.monotonic() * 1000,
-        )
+        finally:
+            audio_data = None
 
     def _chunk_to_samples(self, audio_chunk: bytes) -> list[int]:
-        if not audio_chunk:
-            return []
-        if _HAS_NUMPY:
-            return np.frombuffer(audio_chunk, dtype=np.int16).tolist()
-        n_samples = len(audio_chunk) // 2
-        if n_samples <= 0:
-            return []
         try:
+            if not audio_chunk:
+                return []
+            if len(audio_chunk) % 2 != 0:
+                raise AudioFormatError(
+                    "VAD audio chunk must contain 16-bit aligned samples"
+                )
+            if _HAS_NUMPY:
+                return np.frombuffer(audio_chunk, dtype=np.int16).tolist()
+            n_samples = len(audio_chunk) // 2
+            if n_samples <= 0:
+                return []
             return list(struct.unpack(f"<{n_samples}h", audio_chunk))
-        except struct.error:
+        except (AudioFormatError, struct.error, ValueError, TypeError) as exc:
+            logger.warning("VADStreamingTranscriber: invalid PCM chunk: %s", exc)
             return []
 
     def _samples_to_bytes(self, samples: list[int]) -> bytes:
-        if not samples:
+        try:
+            if not samples:
+                return b""
+            if _HAS_NUMPY:
+                return np.array(samples, dtype=np.int16).tobytes()
+            return struct.pack(f"<{len(samples)}h", *samples)
+        except (struct.error, ValueError, TypeError) as exc:
+            logger.warning("VADStreamingTranscriber: failed to pack samples: %s", exc)
             return b""
-        if _HAS_NUMPY:
-            return np.array(samples, dtype=np.int16).tobytes()
-        return struct.pack(f"<{len(samples)}h", *samples)
 
     def _samples_to_ndarray(self, samples: list[int]) -> Any:
-        return np.array(samples, dtype=np.int16)
+        try:
+            return np.array(samples, dtype=np.int16)
+        except Exception as exc:
+            logger.warning("VADStreamingTranscriber: failed to build ndarray: %s", exc)
+            return None
 
 
 # ── Whisper.cpp Transcriber ──────────────────────────────────────────
@@ -750,8 +1043,11 @@ class WhisperTranscriber(BaseTranscriber):
             )
             return True
         except Exception as exc:
-            self._init_error = str(exc)
-            logger.warning("WhisperTranscriber: model load failed: %s", exc)
+            model_error = ModelLoadError(
+                f"Failed to load whisper.cpp model '{self._model_name}': {exc}"
+            )
+            self._init_error = str(model_error)
+            logger.warning("WhisperTranscriber: model load failed: %s", model_error)
             return False
 
     def is_available(self) -> bool:
@@ -763,6 +1059,8 @@ class WhisperTranscriber(BaseTranscriber):
         sample_rate: int = 16_000,
     ) -> Optional[TranscriptionResult]:
         """Transcribe raw PCM int16 audio."""
+        audio_float: Any = None
+        segments: Any = None
         with self._lock:
             if not self._ensure_model():
                 self.metrics.record_error()
@@ -796,10 +1094,17 @@ class WhisperTranscriber(BaseTranscriber):
                 self.metrics.record(result, processing_ms)
                 return result
 
+            except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+                self.metrics.record_error()
+                logger.warning("WhisperTranscriber: transcription error: %s", exc)
+                return None
             except Exception as exc:
                 self.metrics.record_error()
                 logger.warning("WhisperTranscriber: transcription error: %s", exc)
                 return None
+            finally:
+                segments = None
+                audio_float = None
 
 
 # ── Faster-Whisper Transcriber (CTranslate2) ─────────────────────────
@@ -891,8 +1196,14 @@ class FasterWhisperTranscriber(BaseTranscriber):
             )
             return True
         except Exception as exc:
-            self._init_error = str(exc)
-            logger.warning("FasterWhisperTranscriber: model load failed: %s", exc)
+            model_error = ModelLoadError(
+                f"Failed to load faster-whisper model '{self._model_name}': {exc}"
+            )
+            self._init_error = str(model_error)
+            logger.warning(
+                "FasterWhisperTranscriber: model load failed: %s",
+                model_error,
+            )
             return False
 
     def is_available(self) -> bool:
@@ -904,6 +1215,9 @@ class FasterWhisperTranscriber(BaseTranscriber):
         sample_rate: int = 16_000,
     ) -> Optional[TranscriptionResult]:
         """Transcribe raw PCM int16 audio with faster-whisper."""
+        audio_float: Any = None
+        segments: Any = None
+        info: Any = None
         with self._lock:
             if not self._ensure_model():
                 self.metrics.record_error()
@@ -956,10 +1270,18 @@ class FasterWhisperTranscriber(BaseTranscriber):
                 self.metrics.record(result, processing_ms)
                 return result
 
+            except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+                self.metrics.record_error()
+                logger.warning("FasterWhisperTranscriber: transcription error: %s", exc)
+                return None
             except Exception as exc:
                 self.metrics.record_error()
                 logger.warning("FasterWhisperTranscriber: transcription error: %s", exc)
                 return None
+            finally:
+                info = None
+                segments = None
+                audio_float = None
 
     def _transcribe_segment(
         self,
@@ -977,6 +1299,8 @@ class FasterWhisperTranscriber(BaseTranscriber):
                 return None
 
             t0 = time.monotonic()
+            segments: Any = None
+            info: Any = None
             try:
                 segments, info = self._model.transcribe(
                     audio_float,
@@ -1018,9 +1342,15 @@ class FasterWhisperTranscriber(BaseTranscriber):
                     timestamp_ms=time.monotonic() * 1000,
                 )
 
+            except (AudioFormatError, ModelLoadError, TimeoutError, TranscriptionError) as exc:
+                logger.warning("FasterWhisperTranscriber: segment error: %s", exc)
+                return None
             except Exception as exc:
                 logger.warning("FasterWhisperTranscriber: segment error: %s", exc)
                 return None
+            finally:
+                info = None
+                segments = None
 
 
 # ── macOS Dictation fallback ─────────────────────────────────────────
@@ -1046,13 +1376,12 @@ class MacOSDictationTranscriber(BaseTranscriber):
         sample_rate: int = 16_000,
     ) -> Optional[TranscriptionResult]:
         """Transcribe via macOS speech framework."""
+        wav_path: Optional[str] = None
         with self._lock:
             t0 = time.monotonic()
             try:
                 wav_path = self._write_wav(audio_data, sample_rate)
                 text = self._recognise_with_sf(wav_path)
-                if wav_path and os.path.exists(wav_path):
-                    os.unlink(wav_path)
 
                 if not text:
                     return None
@@ -1070,14 +1399,29 @@ class MacOSDictationTranscriber(BaseTranscriber):
                 self.metrics.record(result, processing_ms)
                 return result
 
+            except (AudioFormatError, TimeoutError, TranscriptionError) as exc:
+                self.metrics.record_error()
+                logger.warning("MacOSDictation: error: %s", exc)
+                return None
             except Exception as exc:
                 self.metrics.record_error()
                 logger.warning("MacOSDictation: error: %s", exc)
                 return None
+            finally:
+                if wav_path and os.path.exists(wav_path):
+                    try:
+                        os.unlink(wav_path)
+                    except OSError:
+                        logger.debug("MacOSDictation: failed to remove temp WAV", exc_info=True)
+                wav_path = None
 
     def _write_wav(self, audio_data: bytes, sample_rate: int) -> Optional[str]:
         """Write PCM data to a temporary WAV file."""
         try:
+            if not audio_data:
+                raise AudioFormatError("Cannot write empty audio buffer to WAV")
+            if len(audio_data) % 2 != 0:
+                raise AudioFormatError("PCM audio must contain 16-bit aligned samples")
             fd, path = tempfile.mkstemp(suffix=".wav")
             os.close(fd)
             with wave.open(path, "wb") as wf:
@@ -1086,9 +1430,10 @@ class MacOSDictationTranscriber(BaseTranscriber):
                 wf.setframerate(sample_rate)
                 wf.writeframes(audio_data)
             return path
+        except AudioFormatError:
+            raise
         except Exception as exc:
-            logger.warning("MacOSDictation: WAV write failed: %s", exc)
-            return None
+            raise TranscriptionError(f"MacOSDictation: WAV write failed: {exc}") from exc
 
     def _recognise_with_sf(self, wav_path: Optional[str]) -> Optional[str]:
         """Attempt speech recognition via macOS SFSpeechRecognizer.
@@ -1139,11 +1484,14 @@ print(resultText)
             )
             text = result.stdout.strip()
             return text if text else None
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            return None
+        except subprocess.TimeoutExpired as exc:
+            raise TimeoutError("macOS speech recognition timed out") from exc
+        except FileNotFoundError as exc:
+            raise TranscriptionError("Swift runtime not available for dictation") from exc
         except Exception as exc:
-            logger.debug("MacOSDictation: Swift recognition failed: %s", exc)
-            return None
+            raise TranscriptionError(
+                f"MacOSDictation: Swift recognition failed: {exc}"
+            ) from exc
 
 
 # ── RealtimeSTT Transcriber (optional backend) ───────────────────────────
@@ -1177,6 +1525,8 @@ class RealtimeSTTTranscriber:
                 "RealtimeSTTTranscriber: RealtimeSTT not installed. "
                 "Install with: pip install realtimestt",
             )
+        except TimeoutError as exc:  # pragma: no cover - defensive
+            logger.warning("RealtimeSTTTranscriber: init timed out: %s", exc)
         except Exception as exc:  # pragma: no cover - defensive
             logger.warning("RealtimeSTTTranscriber: init failed: %s", exc)
         return False
@@ -1191,6 +1541,8 @@ class RealtimeSTTTranscriber:
         try:
             # RealtimeSTT handles microphone capture and VAD internally.
             self._recorder.text(callback)
+        except TimeoutError as exc:  # pragma: no cover - defensive
+            logger.warning("RealtimeSTTTranscriber: streaming timeout: %s", exc)
         except Exception as exc:  # pragma: no cover - runtime safety
             logger.warning("RealtimeSTTTranscriber: streaming error: %s", exc)
 
@@ -1214,18 +1566,25 @@ def _pcm_to_float32(audio_data: bytes) -> Any:
 
     Whisper expects float32 audio normalised to [-1, 1].
     """
-    if _HAS_NUMPY:
-        arr = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32)
-        return arr / 32768.0
-
-    # Pure-Python fallback (slower but works without numpy)
-    n_samples = len(audio_data) // 2
-    fmt = f"<{n_samples}h"
     try:
+        if not audio_data:
+            return np.array([], dtype=np.float32) if _HAS_NUMPY else []
+        if len(audio_data) % 2 != 0:
+            raise AudioFormatError("PCM audio must contain 16-bit aligned samples")
+
+        if _HAS_NUMPY:
+            arr = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32)
+            return arr / 32768.0
+
+        # Pure-Python fallback (slower but works without numpy)
+        n_samples = len(audio_data) // 2
+        fmt = f"<{n_samples}h"
         samples = struct.unpack(fmt, audio_data)
         return [s / 32768.0 for s in samples]
-    except struct.error:
-        return []
+    except AudioFormatError:
+        raise
+    except (struct.error, ValueError, TypeError) as exc:
+        raise AudioFormatError(f"Invalid PCM audio data: {exc}") from exc
 
 
 # ── Factory ──────────────────────────────────────────────────────────

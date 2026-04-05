@@ -12,12 +12,15 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from agentic_brain.voice.transcription import (
+    AudioFormatError,
     BaseTranscriber,
     FasterWhisperTranscriber,
+    MacOSDictationTranscriber,
     StreamingBuffer,
     StreamingConfig,
     StreamingStitcher,
     StreamingTranscriptionResult,
+    TimeoutError as TranscriptionTimeoutError,
     TranscriptionResult,
     WhisperTranscriber,
     faster_whisper_available,
@@ -260,6 +263,50 @@ class TestBaseTranscriberStreaming:
 
         assert transcriber._streaming_buffer.segment_index == 0
         assert transcriber._streaming_buffer.buffer_duration_ms == 0
+
+    def test_load_audio_rejects_unaligned_pcm(self) -> None:
+        transcriber = WhisperTranscriber()
+
+        with pytest.raises(AudioFormatError):
+            transcriber.load_audio(b"\x00")
+
+    def test_transcribe_handles_missing_file(self) -> None:
+        transcriber = WhisperTranscriber()
+
+        result = transcriber.transcribe("missing-audio-file.wav")
+
+        assert result is None
+        assert transcriber.metrics.errors == 1
+
+    def test_stream_transcribe_handles_invalid_chunk_iterable(self) -> None:
+        transcriber = WhisperTranscriber()
+
+        results = list(transcriber.stream_transcribe([b"\x00"], chunk_size=2))
+
+        assert results == []
+        assert transcriber.metrics.errors == 1
+
+
+class TestMacOSDictationErrorHandling:
+    """Tests for dictation-specific cleanup paths."""
+
+    def test_transcribe_bytes_cleans_up_temp_file_on_timeout(self) -> None:
+        transcriber = MacOSDictationTranscriber()
+
+        with (
+            patch.object(transcriber, "_write_wav", return_value="fake.wav"),
+            patch.object(
+                transcriber,
+                "_recognise_with_sf",
+                side_effect=TranscriptionTimeoutError("timed out"),
+            ),
+            patch("agentic_brain.voice.transcription.os.path.exists", return_value=True),
+            patch("agentic_brain.voice.transcription.os.unlink") as mock_unlink,
+        ):
+            result = transcriber.transcribe_bytes(_make_pcm_bytes(4_000))
+
+        assert result is None
+        mock_unlink.assert_called_once_with("fake.wav")
 
 
 class TestFasterWhisperTranscriber:

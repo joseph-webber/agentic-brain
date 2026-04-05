@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """
-Brain Voice Event System
-========================
+Brain Voice Event System - ENHANCED
+===================================
 
-Comprehensive voice event system for multi-lady conversations and mood management.
+Comprehensive voice event system for multi-lady conversations with:
+- Conversation lifecycle events (started, turn, ended)
+- Cross-lady communication and reactions
+- Mood synchronization
+- Turn-taking management
+- Graceful fallback handling
+- Voice queue management
 
 Provides:
-- VoiceTopics: Central registry of all voice-related topics
-- VoiceEventPublisher: Publish voice events to the event bus
-- VoiceEventSubscriber: Subscribe to voice events with callbacks
-- VoiceEvent schemas: Validated event structures with timestamps
+- VoiceTopics: Complete registry of all voice event topics
+- VoiceEventPublisher: Enhanced publisher with conversation & turn-taking
+- VoiceEventSubscriber: Subscribe with callbacks
+- VoiceEvent schemas: Validated event structures
 
 Voice Ladies:
   karen (Australia), kyoko (Japan), tingting (China), sinji (Hong Kong),
@@ -20,18 +26,27 @@ Voice Ladies:
 Example:
   publisher = VoiceEventPublisher(bus)
   
-  # Mood changes
-  publisher.publish_mood_change("working")
+  # Start conversation
+  publisher.publish_conversation_started(["karen", "moira"], "standup")
   
-  # Lady speaking
-  publisher.publish_lady_speaking("karen", "Hello there!")
+  # Lady takes turn
+  publisher.publish_conversation_turn("karen", "Let's discuss the sprint...")
   
-  # Multi-lady conversation
-  publisher.publish_conversation_event({
-    "ladies": ["karen", "moira"],
-    "topic": "standup",
-    "participants": 2
-  })
+  # Lady responds to another
+  publisher.publish_lady_reaction("moira", "karen", "That sounds good!")
+  
+  # Mood sync
+  publisher.publish_mood_changed("calm", reason="spa_time")
+  
+  # Turn-taking
+  publisher.publish_turn_requested("kyoko")
+  publisher.publish_turn_granted("kyoko")
+  
+  # Fallback
+  publisher.publish_fallback_local("Rate limit hit")
+  
+  # Queue
+  publisher.publish_queue_event("added", lady="tingting", text="Hello!")
 """
 
 import json
@@ -47,27 +62,77 @@ from enum import Enum
 # ============================================================================
 
 class VoiceTopics:
-    """Standard brain voice event topics"""
+    """Enhanced brain voice event topics"""
     
-    # Core voice topics
-    MOOD = 'brain.voice.mood'                    # Mood changes: calm, working, party
-    LADY_SPEAKING = 'brain.voice.lady.speaking' # Which lady is currently speaking
-    LADY_FINISHED = 'brain.voice.lady.finished' # Lady finished speaking
+    # =========================================================================
+    # CONVERSATION LIFECYCLE EVENTS
+    # =========================================================================
+    CONVERSATION_STARTED = 'brain.voice.conversation.started'
+    CONVERSATION_TURN = 'brain.voice.conversation.turn'
+    CONVERSATION_ENDED = 'brain.voice.conversation.ended'
     
-    # Queue and status
-    QUEUE_STATUS = 'brain.voice.queue.status'    # Voice queue state updates
-    CONVERSATION = 'brain.voice.conversation'    # Multi-lady conversation events
-    FLEET_STATUS = 'brain.voice.fleet.status'    # Agent announcements and fleet status
+    # =========================================================================
+    # LADY INTRODUCTION AND REACTIONS
+    # =========================================================================
+    LADY_INTRODUCED = 'brain.voice.ladies.introduced'  # New lady joins
+    LADY_REACTION = 'brain.voice.ladies.reaction'       # Lady reacts to another
     
-    # Legacy (kept for compatibility)
-    INPUT = 'brain.voice.input'                  # User voice input events
-    RESPONSE = 'brain.voice.response'            # Lady voice responses
-    LLM = 'brain.voice.llm'                      # LLM requests for voice responses
+    # =========================================================================
+    # MOOD SYNCHRONIZATION
+    # =========================================================================
+    MOOD_CHANGED = 'brain.voice.mood.changed'           # All ladies sync mood
+    
+    # =========================================================================
+    # TURN-TAKING EVENTS
+    # =========================================================================
+    TURN_REQUESTED = 'brain.voice.turn.requested'       # Request to speak
+    TURN_GRANTED = 'brain.voice.turn.granted'           # Granted turn
+    TURN_RELEASED = 'brain.voice.turn.released'         # Release turn
+    
+    # =========================================================================
+    # ERROR HANDLING AND FALLBACK
+    # =========================================================================
+    FALLBACK_LOCAL = 'brain.voice.fallback.local'       # Switch to local LLM
+    
+    # =========================================================================
+    # VOICE QUEUE MANAGEMENT
+    # =========================================================================
+    QUEUE_ADDED = 'brain.voice.queue.added'             # Item added to queue
+    QUEUE_SPEAKING = 'brain.voice.queue.speaking'       # Lady is speaking
+    QUEUE_EMPTY = 'brain.voice.queue.empty'             # Queue is empty
+    
+    # =========================================================================
+    # LEGACY TOPICS (kept for compatibility)
+    # =========================================================================
+    MOOD = 'brain.voice.mood'
+    LADY_SPEAKING = 'brain.voice.lady.speaking'
+    LADY_FINISHED = 'brain.voice.lady.finished'
+    QUEUE_STATUS = 'brain.voice.queue.status'
+    CONVERSATION = 'brain.voice.conversation'
+    FLEET_STATUS = 'brain.voice.fleet.status'
+    INPUT = 'brain.voice.input'
+    RESPONSE = 'brain.voice.response'
+    LLM = 'brain.voice.llm'
     
     @classmethod
     def all(cls) -> List[str]:
         """Get all voice topics"""
         return [
+            # New v2 topics
+            cls.CONVERSATION_STARTED,
+            cls.CONVERSATION_TURN,
+            cls.CONVERSATION_ENDED,
+            cls.LADY_INTRODUCED,
+            cls.LADY_REACTION,
+            cls.MOOD_CHANGED,
+            cls.TURN_REQUESTED,
+            cls.TURN_GRANTED,
+            cls.TURN_RELEASED,
+            cls.FALLBACK_LOCAL,
+            cls.QUEUE_ADDED,
+            cls.QUEUE_SPEAKING,
+            cls.QUEUE_EMPTY,
+            # Legacy topics
             cls.MOOD,
             cls.LADY_SPEAKING,
             cls.LADY_FINISHED,
@@ -83,6 +148,21 @@ class VoiceTopics:
     def get_description(cls, topic: str) -> str:
         """Get human-readable description of a topic"""
         descriptions = {
+            # New v2 topics
+            cls.CONVERSATION_STARTED: "Multi-lady conversation started",
+            cls.CONVERSATION_TURN: "Lady takes turn in conversation",
+            cls.CONVERSATION_ENDED: "Conversation ended",
+            cls.LADY_INTRODUCED: "New lady joins the team",
+            cls.LADY_REACTION: "Lady reacts to what another said",
+            cls.MOOD_CHANGED: "All ladies sync to same mood",
+            cls.TURN_REQUESTED: "Lady requests speaking turn",
+            cls.TURN_GRANTED: "Speaking turn granted to lady",
+            cls.TURN_RELEASED: "Lady releases speaking turn",
+            cls.FALLBACK_LOCAL: "Switch to local LLM (rate limit)",
+            cls.QUEUE_ADDED: "Voice item added to queue",
+            cls.QUEUE_SPEAKING: "Lady currently speaking",
+            cls.QUEUE_EMPTY: "Voice queue is empty",
+            # Legacy
             cls.MOOD: "Current mood state (calm, working, party)",
             cls.LADY_SPEAKING: "Which lady is currently speaking",
             cls.LADY_FINISHED: "Lady finished speaking notification",
@@ -104,642 +184,623 @@ class VoiceTopics:
 class VoiceEventBase:
     """Base class for all voice events"""
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-    source: str = "voice-system"
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    source: str = "voice-system"
     
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for JSON serialization"""
+    def to_dict(self) -> dict:
+        """Convert to dictionary"""
         return asdict(self)
-    
-    def to_json(self) -> str:
-        """Convert to JSON string"""
-        return json.dumps(self.to_dict())
+
+
+# =========================================================================
+# CONVERSATION LIFECYCLE EVENTS
+# =========================================================================
+
+@dataclass
+class ConversationStartedEvent(VoiceEventBase):
+    """Conversation started event"""
+    ladies: List[str] = field(default_factory=list)
+    conversation_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    topic: str = ""
+    speaker_order: List[str] = field(default_factory=list)
+    context: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
-class MoodChangeEvent(VoiceEventBase):
-    """Event when mood changes"""
-    mood: str = "calm"  # calm, working, party
-    reason: str = ""
-    previous_mood: Optional[str] = None
-    
-    def validate(self) -> bool:
-        """Validate mood is valid"""
-        valid_moods = ["calm", "working", "party"]
-        return self.mood in valid_moods
-
-
-@dataclass
-class LadySpeakingEvent(VoiceEventBase):
-    """Event when lady starts speaking"""
+class ConversationTurnEvent(VoiceEventBase):
+    """Lady takes a turn in conversation"""
+    conversation_id: str = ""
     lady: str = ""
     text: str = ""
     voice_name: str = ""
     region: str = ""
-    duration_ms: Optional[int] = None
-    
-    def validate(self) -> bool:
-        """Validate lady and text are present"""
-        return bool(self.lady and self.text)
+    turn_number: int = 0
+    duration_ms: int = 0
 
 
 @dataclass
-class LadyFinishedEvent(VoiceEventBase):
-    """Event when lady finishes speaking"""
-    lady: str = ""
-    duration_ms: Optional[int] = None
-    success: bool = True
-    error_message: Optional[str] = None
-    
-    def validate(self) -> bool:
-        """Validate lady is present"""
-        return bool(self.lady)
-
-
-@dataclass
-class QueueStatusEvent(VoiceEventBase):
-    """Event for queue state updates"""
-    queue_length: int = 0
-    pending_ladies: List[str] = field(default_factory=list)
-    current_lady: Optional[str] = None
-    processing: bool = False
-    queue_items: List[Dict[str, Any]] = field(default_factory=list)
-
-
-@dataclass
-class ConversationEvent(VoiceEventBase):
-    """Event for multi-lady conversations"""
-    conversation_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+class ConversationEndedEvent(VoiceEventBase):
+    """Conversation ended"""
+    conversation_id: str = ""
     ladies: List[str] = field(default_factory=list)
-    topic: str = ""
-    participants: int = 0
-    speaker_order: List[str] = field(default_factory=list)
-    context: Dict[str, Any] = field(default_factory=dict)
-    
-    def validate(self) -> bool:
-        """Validate conversation has ladies and topic"""
-        return bool(self.ladies and self.topic)
+    total_turns: int = 0
+    duration_seconds: float = 0.0
+    reason: str = ""  # "completed", "interrupted", "error"
 
 
-@dataclass
-class FleetStatusEvent(VoiceEventBase):
-    """Event for agent fleet announcements"""
-    message: str = ""
-    agent_name: Optional[str] = None
-    fleet_status: str = ""  # active, paused, error
-    announcement_type: str = "info"  # info, warning, error, critical
-    affected_agents: List[str] = field(default_factory=list)
-    
-    def validate(self) -> bool:
-        """Validate message is present"""
-        return bool(self.message)
-
+# =========================================================================
+# LADY INTRODUCTION AND REACTIONS
+# =========================================================================
 
 @dataclass
-class VoiceResponseEvent(VoiceEventBase):
-    """Legacy voice response event"""
+class LadyIntroducedEvent(VoiceEventBase):
+    """New lady joins the team"""
     lady: str = ""
-    message: str = ""
     voice_name: str = ""
     region: str = ""
-    request_id: Optional[str] = None
-    
-    def validate(self) -> bool:
-        """Validate lady and message are present"""
-        return bool(self.lady and self.message)
+    greeting: str = ""
+    personality: Dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class LadyReactionEvent(VoiceEventBase):
+    """Lady reacts to what another lady said"""
+    from_lady: str = ""
+    to_lady: str = ""
+    original_text: str = ""
+    reaction_text: str = ""
+    emotion: str = ""  # "agreement", "disagreement", "question", "excitement"
+    reaction_duration_ms: int = 0
+
+
+# =========================================================================
+# MOOD SYNCHRONIZATION
+# =========================================================================
+
+@dataclass
+class MoodChangedEvent(VoiceEventBase):
+    """All ladies sync to same mood"""
+    mood: str = ""  # "calm", "working", "party", "focused", "bali_spa"
+    reason: str = ""
+    previous_mood: str = ""
+    ladies_synced: List[str] = field(default_factory=list)
+    sync_timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+
+
+# =========================================================================
+# TURN-TAKING EVENTS
+# =========================================================================
+
+@dataclass
+class TurnRequestedEvent(VoiceEventBase):
+    """Lady requests speaking turn"""
+    lady: str = ""
+    request_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    priority: int = 0  # 0=normal, 1=high, 2=critical
+    reason: str = ""
+
+
+@dataclass
+class TurnGrantedEvent(VoiceEventBase):
+    """Speaking turn granted to lady"""
+    lady: str = ""
+    request_id: str = ""
+    granted_by: str = ""
+    duration_seconds: float = 30.0
+
+
+@dataclass
+class TurnReleasedEvent(VoiceEventBase):
+    """Lady releases speaking turn"""
+    lady: str = ""
+    request_id: str = ""
+    reason: str = ""  # "finished", "interrupted", "timeout"
+    duration_held_seconds: float = 0.0
+
+
+# =========================================================================
+# ERROR HANDLING AND FALLBACK
+# =========================================================================
+
+@dataclass
+class FallbackLocalEvent(VoiceEventBase):
+    """Switch to local LLM (rate limited)"""
+    reason: str = ""
+    lady: str = "karen"
+    voice_name: str = "Karen"
+    announcement: str = ""
+    error_code: str = ""
+    retry_after_seconds: int = 0
+
+
+# =========================================================================
+# VOICE QUEUE MANAGEMENT
+# =========================================================================
+
+@dataclass
+class QueueAddedEvent(VoiceEventBase):
+    """Voice item added to queue"""
+    lady: str = ""
+    text: str = ""
+    voice_name: str = ""
+    region: str = ""
+    queue_position: int = 0
+    queue_length_after: int = 0
+
+
+@dataclass
+class QueueSpeakingEvent(VoiceEventBase):
+    """Lady is currently speaking"""
+    lady: str = ""
+    text: str = ""
+    voice_name: str = ""
+    region: str = ""
+    queue_remaining: int = 0
+    started_at: str = field(default_factory=lambda: datetime.now().isoformat())
+
+
+@dataclass
+class QueueEmptyEvent(VoiceEventBase):
+    """Voice queue is empty"""
+    total_processed: int = 0
+    total_duration_seconds: float = 0.0
 
 
 # ============================================================================
-# Voice Event Publisher
+# Voice Event Publisher v2
 # ============================================================================
 
 class VoiceEventPublisher:
-    """
-    Publish voice events to the event bus.
-    
-    Handles all voice-related event publishing with validation and timestamps.
-    """
+    """Enhanced voice event publisher with all v2 events"""
     
     def __init__(self, bus):
-        """
-        Initialize publisher with event bus connection.
-        
-        Args:
-            bus: BrainEventBus instance
-        """
+        """Initialize publisher with event bus"""
         self.bus = bus
-        self.event_count = 0
+        self.current_conversation_id = None
+        self.current_mood = "calm"
     
-    def publish_mood_change(self, mood: str, reason: str = "", previous_mood: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Publish mood change event.
+    # =====================================================================
+    # CONVERSATION LIFECYCLE EVENTS
+    # =====================================================================
+    
+    def publish_conversation_started(
+        self,
+        ladies: List[str],
+        topic: str = "",
+        speaker_order: Optional[List[str]] = None,
+        context: Optional[Dict[str, Any]] = None
+    ) -> dict:
+        """Publish conversation started event"""
+        conversation_id = str(uuid.uuid4())
+        self.current_conversation_id = conversation_id
         
-        Args:
-            mood: New mood (calm, working, party)
-            reason: Optional reason for mood change
-            previous_mood: Optional previous mood
-            
-        Returns:
-            Event details
-        """
-        event = MoodChangeEvent(
-            mood=mood,
-            reason=reason,
-            previous_mood=previous_mood
+        event = ConversationStartedEvent(
+            ladies=ladies,
+            conversation_id=conversation_id,
+            topic=topic,
+            speaker_order=speaker_order or ladies,
+            context=context or {}
         )
         
-        if not event.validate():
-            return {
-                "success": False,
-                "error": f"Invalid mood: {mood}. Must be one of: calm, working, party"
-            }
+        success = self.bus.emit(VoiceTopics.CONVERSATION_STARTED, event.to_dict())
         
-        success = self.bus.emit(VoiceTopics.MOOD, event.to_dict())
-        self.event_count += 1
+        return {
+            "success": success,
+            "event_id": event.event_id,
+            "conversation_id": conversation_id,
+            "ladies": ladies,
+            "topic": topic
+        }
+    
+    def publish_conversation_turn(
+        self,
+        lady: str,
+        text: str,
+        voice_name: str = "",
+        region: str = "",
+        turn_number: int = 0,
+        duration_ms: int = 0
+    ) -> dict:
+        """Publish conversation turn event"""
+        event = ConversationTurnEvent(
+            conversation_id=self.current_conversation_id or str(uuid.uuid4()),
+            lady=lady,
+            text=text,
+            voice_name=voice_name,
+            region=region,
+            turn_number=turn_number,
+            duration_ms=duration_ms
+        )
+        
+        success = self.bus.emit(VoiceTopics.CONVERSATION_TURN, event.to_dict())
+        
+        return {
+            "success": success,
+            "event_id": event.event_id,
+            "lady": lady,
+            "text_preview": text[:50] + "..." if len(text) > 50 else text
+        }
+    
+    def publish_conversation_ended(
+        self,
+        ladies: List[str],
+        total_turns: int = 0,
+        duration_seconds: float = 0.0,
+        reason: str = "completed"
+    ) -> dict:
+        """Publish conversation ended event"""
+        event = ConversationEndedEvent(
+            conversation_id=self.current_conversation_id or str(uuid.uuid4()),
+            ladies=ladies,
+            total_turns=total_turns,
+            duration_seconds=duration_seconds,
+            reason=reason
+        )
+        
+        success = self.bus.emit(VoiceTopics.CONVERSATION_ENDED, event.to_dict())
+        self.current_conversation_id = None
+        
+        return {
+            "success": success,
+            "event_id": event.event_id,
+            "ladies": ladies,
+            "total_turns": total_turns,
+            "duration_seconds": duration_seconds
+        }
+    
+    # =====================================================================
+    # LADY INTRODUCTION AND REACTIONS
+    # =====================================================================
+    
+    def publish_lady_introduced(
+        self,
+        lady: str,
+        voice_name: str = "",
+        region: str = "",
+        greeting: str = "",
+        personality: Optional[Dict[str, Any]] = None
+    ) -> dict:
+        """Publish lady introduced event"""
+        event = LadyIntroducedEvent(
+            lady=lady,
+            voice_name=voice_name,
+            region=region,
+            greeting=greeting,
+            personality=personality or {}
+        )
+        
+        success = self.bus.emit(VoiceTopics.LADY_INTRODUCED, event.to_dict())
+        
+        return {
+            "success": success,
+            "event_id": event.event_id,
+            "lady": lady,
+            "region": region
+        }
+    
+    def publish_lady_reaction(
+        self,
+        from_lady: str,
+        to_lady: str,
+        original_text: str = "",
+        reaction_text: str = "",
+        emotion: str = "",
+        reaction_duration_ms: int = 0
+    ) -> dict:
+        """Publish lady reaction event"""
+        event = LadyReactionEvent(
+            from_lady=from_lady,
+            to_lady=to_lady,
+            original_text=original_text,
+            reaction_text=reaction_text,
+            emotion=emotion,
+            reaction_duration_ms=reaction_duration_ms
+        )
+        
+        success = self.bus.emit(VoiceTopics.LADY_REACTION, event.to_dict())
+        
+        return {
+            "success": success,
+            "event_id": event.event_id,
+            "from_lady": from_lady,
+            "to_lady": to_lady,
+            "emotion": emotion
+        }
+    
+    # =====================================================================
+    # MOOD SYNCHRONIZATION
+    # =====================================================================
+    
+    def publish_mood_changed(
+        self,
+        mood: str,
+        reason: str = "",
+        ladies: Optional[List[str]] = None
+    ) -> dict:
+        """Publish mood changed event - all ladies sync!"""
+        event = MoodChangedEvent(
+            mood=mood,
+            reason=reason,
+            previous_mood=self.current_mood,
+            ladies_synced=ladies or [],
+            sync_timestamp=datetime.now().isoformat()
+        )
+        
+        self.current_mood = mood
+        success = self.bus.emit(VoiceTopics.MOOD_CHANGED, event.to_dict())
         
         return {
             "success": success,
             "event_id": event.event_id,
             "mood": mood,
-            "topic": VoiceTopics.MOOD,
-            "timestamp": event.timestamp
+            "previous_mood": event.previous_mood,
+            "ladies_synced": event.ladies_synced
         }
     
-    def publish_lady_speaking(self, lady: str, text: str, voice_name: str = "", region: str = "", duration_ms: Optional[int] = None) -> Dict[str, Any]:
-        """
-        Publish lady speaking event.
+    # =====================================================================
+    # TURN-TAKING EVENTS
+    # =====================================================================
+    
+    def publish_turn_requested(
+        self,
+        lady: str,
+        priority: int = 0,
+        reason: str = ""
+    ) -> dict:
+        """Publish turn requested event"""
+        request_id = str(uuid.uuid4())
+        event = TurnRequestedEvent(
+            lady=lady,
+            request_id=request_id,
+            priority=priority,
+            reason=reason
+        )
         
-        Args:
-            lady: Lady identifier (karen, moira, etc.)
-            text: The text being spoken
-            voice_name: Full voice name
-            region: Voice region
-            duration_ms: Optional duration in milliseconds
-            
-        Returns:
-            Event details
-        """
-        event = LadySpeakingEvent(
+        success = self.bus.emit(VoiceTopics.TURN_REQUESTED, event.to_dict())
+        
+        return {
+            "success": success,
+            "event_id": event.event_id,
+            "request_id": request_id,
+            "lady": lady,
+            "priority": priority
+        }
+    
+    def publish_turn_granted(
+        self,
+        lady: str,
+        request_id: str = "",
+        granted_by: str = "moderator",
+        duration_seconds: float = 30.0
+    ) -> dict:
+        """Publish turn granted event"""
+        event = TurnGrantedEvent(
+            lady=lady,
+            request_id=request_id or str(uuid.uuid4()),
+            granted_by=granted_by,
+            duration_seconds=duration_seconds
+        )
+        
+        success = self.bus.emit(VoiceTopics.TURN_GRANTED, event.to_dict())
+        
+        return {
+            "success": success,
+            "event_id": event.event_id,
+            "lady": lady,
+            "request_id": event.request_id,
+            "duration_seconds": duration_seconds
+        }
+    
+    def publish_turn_released(
+        self,
+        lady: str,
+        request_id: str = "",
+        reason: str = "finished",
+        duration_held_seconds: float = 0.0
+    ) -> dict:
+        """Publish turn released event"""
+        event = TurnReleasedEvent(
+            lady=lady,
+            request_id=request_id or str(uuid.uuid4()),
+            reason=reason,
+            duration_held_seconds=duration_held_seconds
+        )
+        
+        success = self.bus.emit(VoiceTopics.TURN_RELEASED, event.to_dict())
+        
+        return {
+            "success": success,
+            "event_id": event.event_id,
+            "lady": lady,
+            "reason": reason
+        }
+    
+    # =====================================================================
+    # ERROR HANDLING AND FALLBACK
+    # =====================================================================
+    
+    def publish_fallback_local(
+        self,
+        reason: str = "",
+        lady: str = "karen",
+        voice_name: str = "Karen",
+        error_code: str = "429",
+        retry_after_seconds: int = 60
+    ) -> dict:
+        """Publish fallback to local LLM event"""
+        announcement = f"I'm switching to local mode - be right back!"
+        
+        event = FallbackLocalEvent(
+            reason=reason,
+            lady=lady,
+            voice_name=voice_name,
+            announcement=announcement,
+            error_code=error_code,
+            retry_after_seconds=retry_after_seconds
+        )
+        
+        success = self.bus.emit(VoiceTopics.FALLBACK_LOCAL, event.to_dict())
+        
+        return {
+            "success": success,
+            "event_id": event.event_id,
+            "lady": lady,
+            "reason": reason,
+            "error_code": error_code,
+            "retry_after_seconds": retry_after_seconds
+        }
+    
+    # =====================================================================
+    # VOICE QUEUE MANAGEMENT
+    # =====================================================================
+    
+    def publish_queue_added(
+        self,
+        lady: str,
+        text: str,
+        voice_name: str = "",
+        region: str = "",
+        queue_position: int = 0,
+        queue_length_after: int = 0
+    ) -> dict:
+        """Publish queue added event"""
+        event = QueueAddedEvent(
             lady=lady,
             text=text,
             voice_name=voice_name,
             region=region,
-            duration_ms=duration_ms
+            queue_position=queue_position,
+            queue_length_after=queue_length_after
         )
         
-        if not event.validate():
-            return {
-                "success": False,
-                "error": f"Lady and text are required"
-            }
-        
-        success = self.bus.emit(VoiceTopics.LADY_SPEAKING, event.to_dict())
-        self.event_count += 1
+        success = self.bus.emit(VoiceTopics.QUEUE_ADDED, event.to_dict())
         
         return {
             "success": success,
             "event_id": event.event_id,
             "lady": lady,
-            "text_length": len(text),
-            "topic": VoiceTopics.LADY_SPEAKING,
-            "timestamp": event.timestamp
+            "queue_position": queue_position,
+            "queue_length_after": queue_length_after
         }
     
-    def publish_lady_finished(self, lady: str, duration_ms: Optional[int] = None, success: bool = True, error_message: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Publish lady finished speaking event.
-        
-        Args:
-            lady: Lady identifier
-            duration_ms: Optional duration in milliseconds
-            success: Whether speaking was successful
-            error_message: Optional error message if failed
-            
-        Returns:
-            Event details
-        """
-        event = LadyFinishedEvent(
+    def publish_queue_speaking(
+        self,
+        lady: str,
+        text: str,
+        voice_name: str = "",
+        region: str = "",
+        queue_remaining: int = 0
+    ) -> dict:
+        """Publish queue speaking event"""
+        event = QueueSpeakingEvent(
             lady=lady,
-            duration_ms=duration_ms,
-            success=success,
-            error_message=error_message
+            text=text,
+            voice_name=voice_name,
+            region=region,
+            queue_remaining=queue_remaining,
+            started_at=datetime.now().isoformat()
         )
         
-        if not event.validate():
-            return {
-                "success": False,
-                "error": f"Lady is required"
-            }
-        
-        success_result = self.bus.emit(VoiceTopics.LADY_FINISHED, event.to_dict())
-        self.event_count += 1
+        success = self.bus.emit(VoiceTopics.QUEUE_SPEAKING, event.to_dict())
         
         return {
-            "success": success_result,
+            "success": success,
             "event_id": event.event_id,
             "lady": lady,
-            "success": success,
-            "topic": VoiceTopics.LADY_FINISHED,
-            "timestamp": event.timestamp
+            "queue_remaining": queue_remaining
         }
     
-    def publish_queue_update(self, queue_length: int = 0, pending_ladies: List[str] = None, current_lady: Optional[str] = None, processing: bool = False, queue_items: List[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        Publish queue status update.
-        
-        Args:
-            queue_length: Number of items in queue
-            pending_ladies: List of ladies waiting to speak
-            current_lady: Currently speaking lady
-            processing: Whether queue is being processed
-            queue_items: Detailed queue items
-            
-        Returns:
-            Event details
-        """
-        event = QueueStatusEvent(
-            queue_length=queue_length,
-            pending_ladies=pending_ladies or [],
-            current_lady=current_lady,
-            processing=processing,
-            queue_items=queue_items or []
+    def publish_queue_empty(
+        self,
+        total_processed: int = 0,
+        total_duration_seconds: float = 0.0
+    ) -> dict:
+        """Publish queue empty event"""
+        event = QueueEmptyEvent(
+            total_processed=total_processed,
+            total_duration_seconds=total_duration_seconds
         )
         
-        success = self.bus.emit(VoiceTopics.QUEUE_STATUS, event.to_dict())
-        self.event_count += 1
+        success = self.bus.emit(VoiceTopics.QUEUE_EMPTY, event.to_dict())
         
         return {
             "success": success,
             "event_id": event.event_id,
-            "queue_length": queue_length,
-            "current_lady": current_lady,
-            "processing": processing,
-            "topic": VoiceTopics.QUEUE_STATUS,
-            "timestamp": event.timestamp
-        }
-    
-    def publish_conversation_event(self, ladies: List[str], topic: str, speaker_order: List[str] = None, context: Dict[str, Any] = None, conversation_id: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Publish multi-lady conversation event.
-        
-        Args:
-            ladies: List of lady identifiers
-            topic: Conversation topic
-            speaker_order: Optional order of speakers
-            context: Optional conversation context
-            conversation_id: Optional existing conversation ID
-            
-        Returns:
-            Event details
-        """
-        event = ConversationEvent(
-            conversation_id=conversation_id or str(uuid.uuid4()),
-            ladies=ladies,
-            topic=topic,
-            participants=len(ladies),
-            speaker_order=speaker_order or ladies,
-            context=context or {}
-        )
-        
-        if not event.validate():
-            return {
-                "success": False,
-                "error": f"Ladies and topic are required"
-            }
-        
-        success = self.bus.emit(VoiceTopics.CONVERSATION, event.to_dict())
-        self.event_count += 1
-        
-        return {
-            "success": success,
-            "event_id": event.event_id,
-            "conversation_id": event.conversation_id,
-            "ladies": ladies,
-            "topic": topic,
-            "participants": len(ladies),
-            "topic": VoiceTopics.CONVERSATION,
-            "timestamp": event.timestamp
-        }
-    
-    def publish_fleet_announcement(self, message: str, announcement_type: str = "info", agent_name: Optional[str] = None, fleet_status: str = "", affected_agents: List[str] = None) -> Dict[str, Any]:
-        """
-        Publish fleet/agent announcement.
-        
-        Args:
-            message: Announcement message
-            announcement_type: Type of announcement (info, warning, error, critical)
-            agent_name: Optional specific agent
-            fleet_status: Fleet status (active, paused, error)
-            affected_agents: Optional list of affected agents
-            
-        Returns:
-            Event details
-        """
-        event = FleetStatusEvent(
-            message=message,
-            agent_name=agent_name,
-            fleet_status=fleet_status,
-            announcement_type=announcement_type,
-            affected_agents=affected_agents or []
-        )
-        
-        if not event.validate():
-            return {
-                "success": False,
-                "error": f"Message is required"
-            }
-        
-        success = self.bus.emit(VoiceTopics.FLEET_STATUS, event.to_dict())
-        self.event_count += 1
-        
-        return {
-            "success": success,
-            "event_id": event.event_id,
-            "message_length": len(message),
-            "type": announcement_type,
-            "topic": VoiceTopics.FLEET_STATUS,
-            "timestamp": event.timestamp
-        }
-    
-    def get_stats(self) -> Dict[str, Any]:
-        """Get publisher statistics"""
-        return {
-            "events_published": self.event_count,
-            "bus_connected": self.bus is not None
+            "total_processed": total_processed,
+            "total_duration_seconds": total_duration_seconds
         }
 
 
 # ============================================================================
-# Voice Event Subscriber
+# Voice Event Subscriber v2
 # ============================================================================
 
 class VoiceEventSubscriber:
-    """
-    Subscribe to voice events with callbacks.
-    
-    Handles subscribing to voice topics and executing callbacks when events arrive.
-    """
+    """Subscribe to voice events with callbacks"""
     
     def __init__(self, bus):
-        """
-        Initialize subscriber with event bus connection.
-        
-        Args:
-            bus: BrainEventBus instance
-        """
+        """Initialize subscriber with event bus"""
         self.bus = bus
-        self.callbacks = {}
-        self.event_count = 0
+        self.handlers = {}
     
-    def on_mood_change(self, callback: Callable) -> None:
-        """
-        Register callback for mood change events.
+    def subscribe(self, topic: str, callback: Callable):
+        """Subscribe to a topic"""
+        if topic not in self.handlers:
+            self.handlers[topic] = []
         
-        Args:
-            callback: Function to call when mood changes
-        """
-        if VoiceTopics.MOOD not in self.callbacks:
-            self.callbacks[VoiceTopics.MOOD] = []
-        self.callbacks[VoiceTopics.MOOD].append(callback)
+        self.handlers[topic].append(callback)
+        self.bus.subscribe(topic, callback)
         
-        # Register with bus
-        if hasattr(self.bus, 'on'):
-            self.bus.on(VoiceTopics.MOOD, self._make_handler(callback, VoiceTopics.MOOD))
+        return {"success": True, "topic": topic, "handlers": len(self.handlers[topic])}
     
-    def on_lady_speaking(self, callback: Callable) -> None:
-        """
-        Register callback for lady speaking events.
+    def unsubscribe(self, topic: str, callback: Callable):
+        """Unsubscribe from a topic"""
+        if topic in self.handlers and callback in self.handlers[topic]:
+            self.handlers[topic].remove(callback)
+            return {"success": True, "topic": topic}
         
-        Args:
-            callback: Function to call when lady speaks
-        """
-        if VoiceTopics.LADY_SPEAKING not in self.callbacks:
-            self.callbacks[VoiceTopics.LADY_SPEAKING] = []
-        self.callbacks[VoiceTopics.LADY_SPEAKING].append(callback)
-        
-        if hasattr(self.bus, 'on'):
-            self.bus.on(VoiceTopics.LADY_SPEAKING, self._make_handler(callback, VoiceTopics.LADY_SPEAKING))
-    
-    def on_lady_finished(self, callback: Callable) -> None:
-        """
-        Register callback for lady finished events.
-        
-        Args:
-            callback: Function to call when lady finishes
-        """
-        if VoiceTopics.LADY_FINISHED not in self.callbacks:
-            self.callbacks[VoiceTopics.LADY_FINISHED] = []
-        self.callbacks[VoiceTopics.LADY_FINISHED].append(callback)
-        
-        if hasattr(self.bus, 'on'):
-            self.bus.on(VoiceTopics.LADY_FINISHED, self._make_handler(callback, VoiceTopics.LADY_FINISHED))
-    
-    def on_queue_status(self, callback: Callable) -> None:
-        """
-        Register callback for queue status events.
-        
-        Args:
-            callback: Function to call on queue updates
-        """
-        if VoiceTopics.QUEUE_STATUS not in self.callbacks:
-            self.callbacks[VoiceTopics.QUEUE_STATUS] = []
-        self.callbacks[VoiceTopics.QUEUE_STATUS].append(callback)
-        
-        if hasattr(self.bus, 'on'):
-            self.bus.on(VoiceTopics.QUEUE_STATUS, self._make_handler(callback, VoiceTopics.QUEUE_STATUS))
-    
-    def on_conversation(self, callback: Callable) -> None:
-        """
-        Register callback for conversation events.
-        
-        Args:
-            callback: Function to call on conversation events
-        """
-        if VoiceTopics.CONVERSATION not in self.callbacks:
-            self.callbacks[VoiceTopics.CONVERSATION] = []
-        self.callbacks[VoiceTopics.CONVERSATION].append(callback)
-        
-        if hasattr(self.bus, 'on'):
-            self.bus.on(VoiceTopics.CONVERSATION, self._make_handler(callback, VoiceTopics.CONVERSATION))
-    
-    def on_fleet_status(self, callback: Callable) -> None:
-        """
-        Register callback for fleet status events.
-        
-        Args:
-            callback: Function to call on fleet announcements
-        """
-        if VoiceTopics.FLEET_STATUS not in self.callbacks:
-            self.callbacks[VoiceTopics.FLEET_STATUS] = []
-        self.callbacks[VoiceTopics.FLEET_STATUS].append(callback)
-        
-        if hasattr(self.bus, 'on'):
-            self.bus.on(VoiceTopics.FLEET_STATUS, self._make_handler(callback, VoiceTopics.FLEET_STATUS))
-    
-    def on_any_voice_event(self, callback: Callable) -> None:
-        """
-        Register callback for any voice event.
-        
-        Args:
-            callback: Function to call for any voice event
-        """
-        for topic in VoiceTopics.all():
-            if topic not in self.callbacks:
-                self.callbacks[topic] = []
-            self.callbacks[topic].append(callback)
-            
-            if hasattr(self.bus, 'on'):
-                self.bus.on(topic, self._make_handler(callback, topic))
-    
-    def subscribe_all(self) -> Dict[str, Any]:
-        """
-        Subscribe to all voice topics.
-        
-        Returns:
-            Subscription summary
-        """
-        topics = VoiceTopics.all()
-        for topic in topics:
-            if hasattr(self.bus, 'subscribe'):
-                self.bus.subscribe(topic)
-        
-        return {
-            "subscribed_topics": len(topics),
-            "topics": topics,
-            "status": "subscribed"
-        }
-    
-    def _make_handler(self, callback: Callable, topic: str) -> Callable:
-        """Create a handler that wraps the callback"""
-        def handler(event):
-            self.event_count += 1
-            try:
-                callback(event)
-            except Exception as e:
-                print(f"Error in voice event callback for {topic}: {e}")
-        
-        return handler
-    
-    def get_stats(self) -> Dict[str, Any]:
-        """Get subscriber statistics"""
-        return {
-            "events_received": self.event_count,
-            "callbacks_registered": len(self.callbacks),
-            "topics_subscribed": list(self.callbacks.keys()),
-            "bus_connected": self.bus is not None
-        }
+        return {"success": False, "error": "Handler not found"}
 
 
 # ============================================================================
-# Voice Event Schemas (for validation and documentation)
+# Event Validation
 # ============================================================================
 
-VOICE_EVENT_SCHEMAS = {
-    "mood_change": {
-        "type": "object",
-        "properties": {
-            "timestamp": {"type": "string", "format": "date-time"},
-            "source": {"type": "string"},
-            "event_id": {"type": "string", "format": "uuid"},
-            "mood": {"type": "string", "enum": ["calm", "working", "party"]},
-            "reason": {"type": "string"},
-            "previous_mood": {"type": ["string", "null"]}
-        },
-        "required": ["timestamp", "source", "event_id", "mood"]
-    },
-    "lady_speaking": {
-        "type": "object",
-        "properties": {
-            "timestamp": {"type": "string", "format": "date-time"},
-            "source": {"type": "string"},
-            "event_id": {"type": "string", "format": "uuid"},
-            "lady": {"type": "string"},
-            "text": {"type": "string"},
-            "voice_name": {"type": "string"},
-            "region": {"type": "string"},
-            "duration_ms": {"type": ["integer", "null"]}
-        },
-        "required": ["timestamp", "source", "event_id", "lady", "text"]
-    },
-    "lady_finished": {
-        "type": "object",
-        "properties": {
-            "timestamp": {"type": "string", "format": "date-time"},
-            "source": {"type": "string"},
-            "event_id": {"type": "string", "format": "uuid"},
-            "lady": {"type": "string"},
-            "duration_ms": {"type": ["integer", "null"]},
-            "success": {"type": "boolean"},
-            "error_message": {"type": ["string", "null"]}
-        },
-        "required": ["timestamp", "source", "event_id", "lady"]
-    },
-    "queue_status": {
-        "type": "object",
-        "properties": {
-            "timestamp": {"type": "string", "format": "date-time"},
-            "source": {"type": "string"},
-            "event_id": {"type": "string", "format": "uuid"},
-            "queue_length": {"type": "integer"},
-            "pending_ladies": {"type": "array", "items": {"type": "string"}},
-            "current_lady": {"type": ["string", "null"]},
-            "processing": {"type": "boolean"},
-            "queue_items": {"type": "array"}
-        },
-        "required": ["timestamp", "source", "event_id", "queue_length"]
-    },
-    "conversation": {
-        "type": "object",
-        "properties": {
-            "timestamp": {"type": "string", "format": "date-time"},
-            "source": {"type": "string"},
-            "event_id": {"type": "string", "format": "uuid"},
-            "conversation_id": {"type": "string", "format": "uuid"},
-            "ladies": {"type": "array", "items": {"type": "string"}},
-            "topic": {"type": "string"},
-            "participants": {"type": "integer"},
-            "speaker_order": {"type": "array", "items": {"type": "string"}},
-            "context": {"type": "object"}
-        },
-        "required": ["timestamp", "source", "event_id", "conversation_id", "ladies", "topic"]
-    },
-    "fleet_status": {
-        "type": "object",
-        "properties": {
-            "timestamp": {"type": "string", "format": "date-time"},
-            "source": {"type": "string"},
-            "event_id": {"type": "string", "format": "uuid"},
-            "message": {"type": "string"},
-            "agent_name": {"type": ["string", "null"]},
-            "fleet_status": {"type": "string"},
-            "announcement_type": {"type": "string", "enum": ["info", "warning", "error", "critical"]},
-            "affected_agents": {"type": "array", "items": {"type": "string"}}
-        },
-        "required": ["timestamp", "source", "event_id", "message"]
-    }
-}
-
-
-def get_event_schema(event_type: str) -> Dict[str, Any]:
-    """Get JSON schema for a voice event type"""
-    return VOICE_EVENT_SCHEMAS.get(event_type, {})
-
-
-def validate_voice_event(event_type: str, event_data: Dict[str, Any]) -> tuple[bool, str]:
-    """
-    Validate voice event data against schema.
+def validate_voice_event(event: dict, topic: str) -> tuple[bool, str]:
+    """Validate a voice event against its schema"""
+    try:
+        required_fields = ["timestamp", "event_id", "source"]
+        for field in required_fields:
+            if field not in event:
+                return False, f"Missing required field: {field}"
+        
+        # Topic-specific validation
+        if topic == VoiceTopics.CONVERSATION_STARTED:
+            if "ladies" not in event or not isinstance(event["ladies"], list):
+                return False, "ladies must be a non-empty list"
+        
+        elif topic == VoiceTopics.CONVERSATION_TURN:
+            if not event.get("lady"):
+                return False, "lady field required"
+            if not event.get("text"):
+                return False, "text field required"
+        
+        elif topic == VoiceTopics.TURN_REQUESTED:
+            if not event.get("lady"):
+                return False, "lady field required"
+        
+        return True, "Valid"
     
-    Returns:
-        (is_valid, error_message)
-    """
-    schema = get_event_schema(event_type)
-    if not schema:
-        return False, f"Unknown event type: {event_type}"
+    except Exception as e:
+        return False, f"Validation error: {str(e)}"
+
+
+if __name__ == "__main__":
+    # Print all topics and their descriptions
+    print("🎤 Voice Topics v2 - Complete Registry")
+    print("=" * 60)
     
-    # Check required fields
-    required = schema.get("required", [])
-    for field in required:
-        if field not in event_data:
-            return False, f"Missing required field: {field}"
-    
-    return True, ""
+    for topic in VoiceTopics.all():
+        description = VoiceTopics.get_description(topic)
+        print(f"\n📌 {topic}")
+        print(f"   {description}")
