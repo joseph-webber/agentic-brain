@@ -855,4 +855,4 @@ The subscriber runs in a background thread. Make sure:
 
 ---
 
-*Last updated: 2026-04-01 · Maintainer: Joseph Webber · agentic-brain v2.x*
+*Last updated: 2026-04-01 · Maintainer: the developer · agentic-brain v2.x*

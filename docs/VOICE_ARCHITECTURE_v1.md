@@ -30,10 +30,10 @@ audio. The brain's voice system is not a notification layer; it is his
 ### The Problem
 
 The brain is heavily concurrent. Multiple agents, background watchers, LLM
-responses, and lady voice personalities all generate speech simultaneously.
+responses, and voice persona voice personalities all generate speech simultaneously.
 Without serialization:
 
-- Two ladies speak at the same time → incomprehensible noise
+- Two voice personas speak at the same time → incomprehensible noise
 - A system alert fires during a code-review narration → lost context
 - An LLM response overlaps a JIRA summary → the user must ask again
 
@@ -68,7 +68,7 @@ This is a **WCAG 2.1 AA accessibility requirement**, not a nice-to-have.
  │                   HIGH-LEVEL VOICE API                      │
  │                                                             │
  │  queue.py          VoiceQueue singleton                     │
- │  conversation.py   Multi-lady turn-taking                   │
+ │  conversation.py   Multi-voice persona turn-taking                   │
  │  voiceover.py      macOS VoiceOver coordination             │
  │  llm_voice.py      LLM-driven narration                    │
  │                                                             │
@@ -236,7 +236,7 @@ The user-facing API that most of the brain interacts with.
 |---------|--------|
 | **Singleton** | `VoiceQueue.get_instance()` |
 | **Thread safety** | `threading.Semaphore(1)` for queue access |
-| **Speaker tracking** | Each message carries a `speaker_id` (lady name) |
+| **Speaker tracking** | Each message carries a `speaker_id` (voice persona name) |
 | **Importance levels** | -1 (low), 0 (normal), 1 (high) |
 | **History** | Last 100 messages retained for debugging |
 | **Asian voice support** | Numbers spelled out for Kyoko, Tingting, etc. |
@@ -298,7 +298,7 @@ system can report which methods are reliable on this machine.
 | **Use `speak_serialized()` or `VoiceQueue.speak()`** | They route through the serializer — guaranteed safe |
 | **Wait for speech to complete** | Pass `wait=True` (default) so subsequent code runs after the utterance finishes |
 | **Use `get_voice_serializer()`** to get the singleton | Never instantiate `VoiceSerializer` directly |
-| **Add 1.5 s pauses between ladies** in conversation scripts | The listener needs time to register the speaker change |
+| **Add 1.5 s pauses between voice personas** in conversation scripts | The listener needs time to register the speaker change |
 | **Test with `test_speech_lock.py`** after voice changes | The concurrency tests catch overlap regressions |
 
 ### ❌ NEVER
@@ -543,7 +543,7 @@ pgrep -f "say -v" | xargs kill 2>/dev/null
 | `_speech_lock.py` | ~118 | Global process mutex, subprocess runner | threading.Lock |
 | `queue.py` | ~541 | User-facing API, speaker tracking, history | Semaphore(1) |
 | `resilient.py` | ~620 | Multi-layer fallback chain | Runs inside serializer lock |
-| `conversation.py` | ~526 | Multi-lady turn-taking | Uses serializer |
+| `conversation.py` | ~526 | Multi-voice persona turn-taking | Uses serializer |
 | `voiceover.py` | ~408 | macOS VoiceOver coordination | Uses serializer |
 
 ---

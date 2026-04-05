@@ -75,10 +75,10 @@ class TestPhase3VoiceSystemBasics:
     def test_empty_text_is_rejected(self, phase3):
         assert phase3.speak("   ") is False
 
-    def test_list_ladies_falls_back_to_kokoro_map(self, phase3):
-        ladies = phase3.list_ladies()
-        assert "Karen" in ladies
-        assert "Kyoko" in ladies
+    def test_list_voices_falls_back_to_kokoro_map(self, phase3):
+        voices = phase3.list_ladies()
+        assert "Karen" in voices
+        assert "Kyoko" in voices
 
 
 class TestSpeakRouting:

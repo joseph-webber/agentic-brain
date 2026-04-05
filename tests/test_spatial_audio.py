@@ -45,13 +45,13 @@ from agentic_brain.audio.spatial_audio import (
 # ── Position data integrity ──────────────────────────────────────────
 
 
-class TestLadyPositions:
-    """Verify the 14 ladies are correctly placed around the circle."""
+class TestVoicePersonaPositions:
+    """Verify the 14 voice personas are correctly placed around the circle."""
 
-    def test_all_14_ladies_defined(self):
+    def test_all_14_voice_personas_defined(self):
         assert len(LADY_POSITIONS) == 14
 
-    def test_all_ladies_tuple_matches_positions(self):
+    def test_all_voice_personas_tuple_matches_positions(self):
         assert set(ALL_LADIES) == set(LADY_POSITIONS.keys())
 
     def test_karen_is_center_front(self):
@@ -62,7 +62,7 @@ class TestLadyPositions:
 
     def test_no_duplicate_azimuths(self):
         azimuths = [p.azimuth for p in LADY_POSITIONS.values()]
-        assert len(azimuths) == len(set(azimuths)), "Two ladies share the same azimuth"
+        assert len(azimuths) == len(set(azimuths)), "Two voice personas share the same azimuth"
 
     def test_all_azimuths_in_valid_range(self):
         for name, pos in LADY_POSITIONS.items():
@@ -85,12 +85,12 @@ class TestLadyPositions:
 # ── Voice map ────────────────────────────────────────────────────────
 
 
-class TestVoiceMap:
-    """All 14 ladies must map to a valid macOS voice."""
+class TestVoicePersonaMap:
+    """All 14 voice personas must map to a valid macOS voice."""
 
-    def test_all_ladies_have_voice_mapping(self):
-        for lady in LADY_POSITIONS:
-            assert lady in LADY_VOICE_MAP, f"{lady} missing from LADY_VOICE_MAP"
+    def test_all_voice_personas_have_voice_mapping(self):
+        for voice in LADY_POSITIONS:
+            assert voice in LADY_VOICE_MAP, f"{voice} missing from LADY_VOICE_MAP"
 
     def test_karen_is_premium(self):
         assert LADY_VOICE_MAP["Karen"] == "Karen (Premium)"
@@ -240,10 +240,10 @@ class TestRouterQueries:
     def test_status_contains_expected_keys(self, router):
         s = router.status()
         assert "backend" in s
-        assert "ladies" in s
-        assert "lady_count" in s
-        assert s["lady_count"] == 14
-        assert "Karen" in s["ladies"]
+        assert "voices" in s
+        assert "voice_count" in s
+        assert s["voice_count"] == 14
+        assert "Karen" in s["voices"]
 
 
 # ── Sox rendering path ───────────────────────────────────────────────
@@ -358,7 +358,7 @@ class TestNarrateSequence:
 
 
 class TestBuildFullScene:
-    def test_build_full_scene_all_ladies(self):
+    def test_build_full_scene_all_voice_personas(self):
         router = SpatialAudioRouter(force_backend="mono")
         scene = router.build_full_scene()
         assert len(scene.voices) == 14

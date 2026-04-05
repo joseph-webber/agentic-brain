@@ -1,6 +1,6 @@
-# Kokoro-82M ladies voice map
+# Kokoro-82M voice personas map
 
-This document maps the 14 Adelaide ladies onto the best available Kokoro-82M voices.
+This document maps the 14 voice personas onto the best available Kokoro-82M voices.
 
 ## Research summary
 
@@ -19,7 +19,7 @@ For Vietnamese, Korean, Thai, Indonesian, Javanese, Balinese, Polish, and Irish 
 
 ## Voice selection table
 
-| Lady | Primary Kokoro voice | Language | Style | Rate | Why this works |
+| Voice Persona | Primary Kokoro voice | Language | Style | Rate | Why this works |
 | --- | --- | --- | --- | --- | --- |
 | Karen | `bf_emma` | `en-gb` | Confident, direct, polished host | `0.98` | Strong Commonwealth feel; closest fit for Australian lead-host energy |
 | Kyoko | `jf_alpha` | `ja` | Precise, calm, meticulous | `0.94` | Best Japanese female base in the official set |
@@ -40,7 +40,7 @@ For Vietnamese, Korean, Thai, Indonesian, Javanese, Balinese, Polish, and Irish 
 
 These blends are metadata for blend-capable backends or future Kokoro post-processing. They are not required for basic synthesis.
 
-| Lady | Blend | Intent |
+| Voice Persona | Blend | Intent |
 | --- | --- | --- |
 | Karen | `bf_emma 70% + af_bella 30%` | Commonwealth authority plus extra drive |
 | Kyoko | `jf_alpha 80% + jf_tebukuro 20%` | Precision with a softer finish |

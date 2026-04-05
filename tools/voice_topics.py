@@ -244,7 +244,7 @@ def normalize_voice_response_event(payload: dict[str, Any]) -> dict[str, Any]:
     )
     normalized["text"] = _require_text("text", normalized.get("text"))
     normalized["voice"] = _require_text(
-        "voice", normalized.get("voice") or normalized.get("lady") or DEFAULT_VOICE
+        "voice", normalized.get("voice") or normalized.get("voice_persona") or DEFAULT_VOICE
     )
     normalized["priority"] = _normalize_priority(normalized.get("priority"))
     normalized.setdefault("source", normalized.get("provider") or DEFAULT_SOURCE)

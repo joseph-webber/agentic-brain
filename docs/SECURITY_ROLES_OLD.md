@@ -281,7 +281,7 @@ allowed, reason = guard.check_command("git commit -m 'feature'")
 guard = SecurityGuard(SecurityRole.USER)
 allowed, reason = guard.check_command("ls -la")
 
-# For full power (Joseph only)
+# For full power (Platform Administrator)
 guard = SecurityGuard(SecurityRole.ADMIN)
 allowed, reason = guard.check_command("git push --force")
 ```
@@ -462,7 +462,7 @@ BrainChat currently exposes backend authentication settings and a YOLO toggle. I
 | **GUEST** | Anonymous users, demos, public help desk | "How do I install this?", "What does this error mean?" |
 | **USER** | Safe coding assistance without modification | Customer coding help, read-only code review, learn-to-code scenarios |
 | **DEVELOPER** | Active development with safety nets | Building features, refactoring, testing, most day-to-day work |
-| **ADMIN** | Full system control, trusted operators | Infrastructure work, debugging production, emergency fixes, Joseph |
+| **ADMIN** | Full system control, trusted operators | Infrastructure work, debugging production, emergency fixes, authorized administrator |
 
 ## Security Best Practices
 
@@ -470,7 +470,7 @@ BrainChat currently exposes backend authentication settings and a YOLO toggle. I
 2. **Use DEVELOPER for day-to-day development** - it has guardrails to prevent accidents.
 3. **Use USER for customer/client assistance** - safe coding help without modification rights.
 4. **Use GUEST for demos and anonymous access** - documentation and basic troubleshooting only.
-5. **Keep ADMIN for trusted operators only** - Joseph, emergency fixes, infrastructure work.
+5. **Keep ADMIN for trusted operators only** - authorized administrators, emergency fixes, infrastructure work.
 6. **Review blocked-command logs and audit events regularly.**
 7. **Pass roles explicitly in code when behavior must be deterministic.**
 8. **Start with lower privilege and escalate only when needed.**
@@ -478,7 +478,7 @@ BrainChat currently exposes backend authentication settings and a YOLO toggle. I
 ## Choosing the Right Role
 
 **Use ADMIN when:**
-- You are Joseph or another system owner
+- You are an authorized administrator or another system owner
 - You need to modify system configuration
 - You need to access secrets/API keys
 - You need to perform infrastructure work

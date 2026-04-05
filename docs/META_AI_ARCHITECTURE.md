@@ -110,7 +110,7 @@ Reference: `src/agentic_brain/smart_router/posture.py`
 
 #### Domain-level polymorphism
 
-Joseph's description captures the design intent well:
+The following description captures the design intent well:
 
 > "a META AI chatbot with polymorphic behaviors, self-healing, self-configuring"
 

@@ -2,7 +2,7 @@
 
 ## Summary
 
-We implemented Joseph's key insight: **customer chatbots should ONLY access APIs**, by converting the **USER** role to API-only mode.
+We implemented a key security insight: **customer chatbots should ONLY access APIs**, by converting the **USER** role to API-only mode.
 
 ## What Changed
 
@@ -40,7 +40,7 @@ FAILED tests/security/test_user_mode.py::TestUserMode::test_user_has_standard_ll
 Update existing tests:
 - Tests for "coding assistant" behavior → Test **DEVELOPER** role instead
 - Tests for API-only customer behavior → Test **USER** role
-- This matches Joseph's vision: USER = customer chatbots (API-only)
+- This matches the security model: USER = customer chatbots (API-only)
 
 ### Option 2: Add CUSTOMER Role (Keep USER as-is)
 
@@ -62,7 +62,7 @@ Keep USER as "safe coding assistant" and add new CUSTOMER role:
    - DEVELOPER = developer building with the brain (machine access)
    - ADMIN = system administrator (full access)
 
-2. **Matches Joseph's vision**: 
+2. **Matches the security model**: 
    > "Customer/User chatbots should ONLY access external APIs"
 
 3. **Simpler architecture**: 4 roles instead of 5
@@ -129,7 +129,7 @@ def test_user_cannot_write_files(self, user):
 ## Conclusion
 
 The **USER → API-only** change is the right architectural decision. It aligns with:
-- Joseph's security insight
+- Security architecture insight
 - Industry best practices (principle of least privilege)
 - Clear separation of concerns (customer vs developer vs admin)
 

@@ -307,7 +307,7 @@ let inSafeDir = safeDirectories.contains { root in
 **Recommendation:** 
 - For HIGH security, implement argument array execution instead of shell wrapper
 - Add shell metacharacter escaping for USER role
-- Not critical for ADMIN role as it's intended for trusted users (Joseph)
+- Not critical for FULL_ADMIN role as it's intended for trusted administrators
 
 ---
 
@@ -719,4 +719,4 @@ Restrict YOLO mode to:
 **Next Review:** After Phase 3 (Testing) completion  
 **Severity:** 🔴 CRITICAL - Immediate action required
 
-**Joseph's Approval Required:** YES (ADMIN privileges affected)
+**Administrator Approval Required:** YES (FULL_ADMIN privileges affected)

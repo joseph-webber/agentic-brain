@@ -1,7 +1,7 @@
 # WCAG 3.0 AAA Compliance Checklist for BrainChat
 
 **Project:** BrainChat Voice Assistant  
-**Owner:** Joseph Webber (blind user)  
+**Owner:** Platform Owner (authorized user)  
 **Standard:** WCAG 3.0 (W3C Accessibility Guidelines) AAA  
 **Date:** 2026-04-02  
 **Status:** ✅ COMPLIANT
@@ -13,7 +13,7 @@
 BrainChat achieves **WCAG 3.0 AAA compliance** - the highest accessibility standard.
 This checklist documents all requirements and their implementation status.
 
-**Joseph is blind. This isn't optional - it's essential.**
+**Accessibility for authorized users is blind. This isn't optional - it's essential.**
 
 ---
 

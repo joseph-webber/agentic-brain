@@ -5,7 +5,7 @@
 Tests for KokoroVoice and NeuralVoiceRouter.
 
 Covers:
-- Voice mapping for all 14 ladies
+- Voice mapping for all 14 voice personas
 - Synthesis produces audio
 - M2 acceleration detection
 - Fallback when Kokoro unavailable
@@ -98,46 +98,46 @@ class TestLadyVoices:
         "Shelley",
     ]
 
-    def test_all_14_ladies_are_mapped(self):
-        """Every lady must have a voice config."""
+    def test_all_14_voice_personas_are_mapped(self):
+        """Every voice persona must have a voice config."""
         assert len(LADY_VOICES) == 14
-        for lady in self.ALL_LADIES:
-            assert lady in LADY_VOICES, f"{lady} missing from LADY_VOICES"
+        for voice in self.ALL_LADIES:
+            assert voice in LADY_VOICES, f"{voice} missing from LADY_VOICES"
 
-    def test_each_lady_has_required_keys(self):
+    def test_each_voice_persona_has_required_keys(self):
         """Every voice config must have voice_id, lang_code, description."""
-        for lady, config in LADY_VOICES.items():
-            assert "voice_id" in config, f"{lady} missing voice_id"
-            assert "lang_code" in config, f"{lady} missing lang_code"
-            assert "description" in config, f"{lady} missing description"
+        for voice, config in LADY_VOICES.items():
+            assert "voice_id" in config, f"{voice} missing voice_id"
+            assert "lang_code" in config, f"{voice} missing lang_code"
+            assert "description" in config, f"{voice} missing description"
 
     def test_all_voice_ids_are_unique(self):
-        """No two ladies share the same Kokoro voice ID."""
+        """No two voice personas share the same Kokoro voice ID."""
         voice_ids = [cfg["voice_id"] for cfg in LADY_VOICES.values()]
         assert len(voice_ids) == len(set(voice_ids)), "Duplicate voice IDs found"
 
-    def test_all_ladies_have_apple_fallback(self):
-        """Every lady must have an Apple say fallback voice."""
-        for lady in self.ALL_LADIES:
-            assert lady in _APPLE_FALLBACKS, f"{lady} missing Apple fallback"
+    def test_all_voice_personas_have_apple_fallback(self):
+        """Every voice persona must have an Apple say fallback voice."""
+        for voice in self.ALL_LADIES:
+            assert voice in _APPLE_FALLBACKS, f"{voice} missing Apple fallback"
 
-    def test_japanese_lady_uses_japanese_voice(self):
+    def test_japanese_voice_persona_uses_japanese_voice(self):
         assert LADY_VOICES["Kyoko"]["lang_code"] == "j"
         assert LADY_VOICES["Kyoko"]["voice_id"].startswith("jf_")
 
-    def test_chinese_lady_uses_chinese_voice(self):
+    def test_chinese_voice_persona_uses_chinese_voice(self):
         assert LADY_VOICES["Tingting"]["lang_code"] == "z"
         assert LADY_VOICES["Tingting"]["voice_id"].startswith("zf_")
 
-    def test_italian_lady_uses_italian_voice(self):
+    def test_italian_voice_persona_uses_italian_voice(self):
         assert LADY_VOICES["Alice"]["lang_code"] == "i"
         assert LADY_VOICES["Alice"]["voice_id"].startswith("if_")
 
-    def test_french_lady_uses_french_voice(self):
+    def test_french_voice_persona_uses_french_voice(self):
         assert LADY_VOICES["Flo"]["lang_code"] == "f"
         assert LADY_VOICES["Flo"]["voice_id"].startswith("ff_")
 
-    def test_british_ladies_use_british_voices(self):
+    def test_british_voice_personas_use_british_voices(self):
         assert LADY_VOICES["Shelley"]["lang_code"] == "b"
         assert LADY_VOICES["Shelley"]["voice_id"].startswith("bf_")
 
@@ -161,14 +161,14 @@ class TestKokoroVoice:
         assert info["lang_code"] == "j"
 
     def test_resolve_voice_defaults_to_karen(self, kokoro):
-        info = kokoro.get_voice_info("UnknownLady")
+        info = kokoro.get_voice_info("UnknownVoice")
         assert info["voice_id"] == LADY_VOICES["Karen"]["voice_id"]
 
-    def test_list_ladies_returns_all_14(self, kokoro):
-        ladies = kokoro.list_ladies()
-        assert len(ladies) == 14
-        assert "Karen" in ladies
-        assert "Kyoko" in ladies
+    def test_list_voices_returns_all_14(self, kokoro):
+        voices = kokoro.list_ladies()
+        assert len(voices) == 14
+        assert "Karen" in voices
+        assert "Kyoko" in voices
 
     def test_synthesize_rejects_empty_text(self, kokoro):
         with pytest.raises(ValueError, match="empty"):

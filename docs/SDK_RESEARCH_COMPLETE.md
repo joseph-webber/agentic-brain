@@ -352,7 +352,7 @@ audio_engine.startAndReturnError_(None)
 from AVFoundation import AVSpeechSynthesizer, AVSpeechUtterance, AVSpeechSynthesisVoice
 
 synth = AVSpeechSynthesizer.alloc().init()
-utterance = AVSpeechUtterance.speechUtteranceWithString_("Hello Joseph, I'm ready.")
+utterance = AVSpeechUtterance.speechUtteranceWithString_("Hello, I'm ready.")
 utterance.setVoice_(AVSpeechSynthesisVoice.voiceWithLanguage_("en-AU"))
 utterance.setRate_(0.48)
 synth.speakUtterance_(utterance)
@@ -539,7 +539,7 @@ with client.tts.websocket_connect() as connection:
             "sample_rate": 44100,
         },
     )
-    ctx.push("Hello Joseph, this is Cartesia streaming audio.")
+    ctx.push("Hello, this is Cartesia streaming audio.")
     ctx.no_more_inputs()
 
     for response in ctx.receive():
@@ -603,7 +603,7 @@ import os
 
 client = ElevenLabs(api_key=os.environ["ELEVENLABS_API_KEY"])
 audio_stream = client.text_to_speech.stream(
-    text="Hello Joseph, this is ElevenLabs streaming audio.",
+    text="Hello, this is ElevenLabs streaming audio.",
     voice_id=os.environ["ELEVENLABS_VOICE_ID"],
     model_id="eleven_flash_v2_5",
 )

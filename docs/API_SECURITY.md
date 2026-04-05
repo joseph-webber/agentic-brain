@@ -1,10 +1,10 @@
 # API-Based Security Architecture
 
 **Created**: 2026-04-02  
-**Author**: Joseph Webber  
+**Author**: Security Team  
 **Status**: Implemented
 
-## Joseph's Key Insight
+## Security Architecture Principle
 
 Customer/User chatbots should **NOT** have direct machine access. Instead:
 
@@ -17,7 +17,7 @@ Customer/User chatbots should **NOT** have direct machine access. Instead:
 
 ### Four Access Modes
 
-#### 1. FULL_ADMIN (Joseph's Default)
+#### 1. FULL_ADMIN (Platform Owner/Administrator Default)
 - ✅ Full machine access (YOLO, file system, shell)
 - ✅ Can configure API integrations
 - ✅ Can manage API keys and secrets

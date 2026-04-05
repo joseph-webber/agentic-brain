@@ -122,7 +122,7 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 
 - **Voice Phase 3** - Enhanced voice system with quality improvements
   - `src/agentic_brain/voice/serializer.py` - Queue-based non-overlapping speech
-  - `src/agentic_brain/voice/lady_voices.py` - Lady personalities module
+  - `src/agentic_brain/voice/lady_voices.py` - Voice persona personalities module
   - `src/agentic_brain/voice/quality_gate.py` - CI/CD voice validation
   - `src/agentic_brain/voice/emotions.py` - Expressive speech support
   - `src/agentic_brain/voice/voice_cloning.py` - Voice cloning foundation

@@ -17,7 +17,7 @@ This isn't just for chatbots—it applies to ALL agent types:
 
 | Role | Level | Use Case | Permissions |
 |------|-------|----------|-------------|
-| **FULL_ADMIN** | 3 | Joseph only | Complete unrestricted access. No guardrails. Can execute any command, access any file, modify any config. |
+| **FULL_ADMIN** | 3 | Platform owner/administrator | Complete unrestricted access. No guardrails. Can execute any command, access any file, modify any config. |
 | **SAFE_ADMIN** | 2 | Developers, Trusted admins | Full access with safety guardrails. Can do everything except dangerous commands (rm -rf /, DROP DATABASE, etc.). |
 | **USER** | 1 | Customers, Employees | **API-only access**. Can call WordPress/WooCommerce APIs but CANNOT access machine/filesystem/shell. |
 | **GUEST** | 0 | Anonymous visitors | Very restricted. Read-only access to FAQ/help docs. No APIs except public WordPress content. |
@@ -533,6 +533,6 @@ def test_full_admin_unrestricted():
 - GUEST = FAQ/help only
 - USER = API-only (no machine access)
 - SAFE_ADMIN = Full access with guardrails
-- FULL_ADMIN = Unrestricted (Joseph only)
+- FULL_ADMIN = Unrestricted (platform owner/administrator)
 
 The security model applies to ALL agent types—chatbots, workers, processors, everything.

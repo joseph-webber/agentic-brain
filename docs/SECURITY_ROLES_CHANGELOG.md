@@ -224,7 +224,7 @@ A: GitHub Copilot with full power, plus system access and secrets.
 
 ## Author
 
-Enhancement requested by **Joseph Webber** and implemented by **Iris Lumina** 💜
+Enhancement requested by security team and implemented by development team 💜
 
 ---
 

@@ -317,9 +317,9 @@ Select the appropriate engine based on your use case:
    - Use for premium experiences
    - Best for marketing/professional content
 
-### Voice Selection for Joseph (Australian)
+### Voice Selection (Australian)
 
-Joseph uses VoiceOver with Australian English. Recommended voice configuration:
+Users with VoiceOver on Australian English systems. Recommended voice configuration:
 
 - **Karen** (macOS native)
   - Fastest response (leverages system acceleration)

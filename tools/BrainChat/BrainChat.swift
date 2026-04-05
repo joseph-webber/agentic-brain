@@ -3210,6 +3210,37 @@ final class BrainChatDescribeUICommand: BrainChatScriptCommand {
     }
 }
 
+// MARK: - Keyboard-Aware Content View for Accessibility
+final class KeyboardAwareContentView: NSView {
+    weak var appDelegate: AppDelegate?
+    
+    override func keyDown(with event: NSEvent) {
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let isCmd = modifiers.contains(.command)
+        let isShift = modifiers.contains(.shift)
+        
+        // Cmd+M: Toggle microphone/listening
+        if isCmd && event.charactersIgnoringModifiers == "m" {
+            appDelegate?.toggleListening()
+            return
+        }
+        
+        // Cmd+.: Stop listening
+        if isCmd && event.charactersIgnoringModifiers == "." {
+            appDelegate?.stopListeningIfActive()
+            return
+        }
+        
+        // Cmd+Return: Send message (alternative to just pressing Return)
+        if isCmd && event.keyCode == 36 { // 36 is Return key
+            appDelegate?.sendCurrentInput()
+            return
+        }
+        
+        super.keyDown(with: event)
+    }
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow!
     private let listenButton = NSButton(title: "Press Enter to Talk", target: nil, action: nil)
@@ -3292,8 +3323,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.minSize = NSSize(width: 800, height: 600)
         window.center()
 
-        let contentView = NSView(frame: window.contentView?.bounds ?? .zero)
+        let contentView = KeyboardAwareContentView(frame: window.contentView?.bounds ?? .zero)
         contentView.autoresizingMask = [.width, .height]
+        contentView.appDelegate = self
         window.contentView = contentView
 
         let titleLabel = NSTextField(labelWithString: "Brain Chat")
@@ -3329,7 +3361,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         llmProviderDropdown.selectItem(withTitle: LLMProvider.ollama.displayName) // Default to Ollama (local)
         llmProviderDropdown.target = self
         llmProviderDropdown.action = #selector(llmProviderChanged)
-        llmProviderDropdown.setAccessibilityLabel("LLM Provider. Select which AI model to use.")
+        llmProviderDropdown.setAccessibilityLabel("LLM Provider")
+        llmProviderDropdown.setAccessibilityHelp("Select which AI model to use: Ollama, OpenRouter, or Claude Desktop")
+        llmProviderDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
+        llmProviderDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(llmProviderDropdown)
         
         // LLM Mode dropdown (Single, Multi-Bot, Consensus)
@@ -3346,7 +3381,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         llmModeDropdown.selectItem(at: 0) // Single LLM
         llmModeDropdown.target = self
         llmModeDropdown.action = #selector(llmModeChanged)
-        llmModeDropdown.setAccessibilityLabel("LLM Mode. Single, Multi-Bot, or Consensus.")
+        llmModeDropdown.setAccessibilityLabel("LLM Mode")
+        llmModeDropdown.setAccessibilityHelp("Choose how AI responds: Single LLM, Multi-Bot, or Consensus mode")
+        llmModeDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
+        llmModeDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(llmModeDropdown)
         
         // Chat Mode dropdown
@@ -3363,7 +3401,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         chatModeDropdown.selectItem(withTitle: currentMode.displayName)
         chatModeDropdown.target = self
         chatModeDropdown.action = #selector(chatModeChanged)
-        chatModeDropdown.setAccessibilityLabel("Chat Mode. Changes how Brain Chat responds.")
+        chatModeDropdown.setAccessibilityLabel("Chat Mode")
+        chatModeDropdown.setAccessibilityHelp("Changes how Brain Chat responds: Chat, Iris Lumina, or YOLO mode")
+        chatModeDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
+        chatModeDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(chatModeDropdown)
         
         // Security Role dropdown
@@ -3380,7 +3421,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         securityRoleDropdown.selectItem(withTitle: SecuritySettings.currentRole.displayName)
         securityRoleDropdown.target = self
         securityRoleDropdown.action = #selector(securityRoleChanged)
-        securityRoleDropdown.setAccessibilityLabel("Security Role. Controls what actions are allowed.")
+        securityRoleDropdown.setAccessibilityLabel("Security Role")
+        securityRoleDropdown.setAccessibilityHelp("Controls what actions are allowed: Guest, User, or Admin")
+        securityRoleDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
+        securityRoleDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(securityRoleDropdown)
 
         // MARK: - Settings Row 2: Voice Engine, Voice, Dictation Engine
@@ -3400,7 +3444,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         voiceEngineDropdown.selectItem(withTitle: VoiceSettings.currentEngine.displayName)
         voiceEngineDropdown.target = self
         voiceEngineDropdown.action = #selector(voiceEngineChanged)
-        voiceEngineDropdown.setAccessibilityLabel("Voice Engine. How responses are spoken.")
+        voiceEngineDropdown.setAccessibilityLabel("Voice Engine")
+        voiceEngineDropdown.setAccessibilityHelp("Select how responses are spoken: System speech, ElevenLabs, or other engines")
+        voiceEngineDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
+        voiceEngineDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(voiceEngineDropdown)
         
         // Voice Option dropdown
@@ -3417,7 +3464,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         voiceOptionDropdown.selectItem(withTitle: VoiceSettings.currentVoice.displayName)
         voiceOptionDropdown.target = self
         voiceOptionDropdown.action = #selector(voiceOptionChanged)
-        voiceOptionDropdown.setAccessibilityLabel("Voice. Select which voice speaks responses. Karen is the default for Joseph.")
+        voiceOptionDropdown.setAccessibilityLabel("Voice")
+        voiceOptionDropdown.setAccessibilityHelp("Select which voice speaks responses. Karen is the default for Joseph. Options include Moira, Samantha, and others.")
+        voiceOptionDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
+        voiceOptionDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(voiceOptionDropdown)
         
         // Dictation Engine dropdown
@@ -3434,7 +3484,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         dictationEngineDropdown.selectItem(withTitle: DictationSettings.currentEngine.displayName)
         dictationEngineDropdown.target = self
         dictationEngineDropdown.action = #selector(dictationEngineChanged)
-        dictationEngineDropdown.setAccessibilityLabel("Dictation Engine. How your voice is transcribed.")
+        dictationEngineDropdown.setAccessibilityLabel("Dictation Engine")
+        dictationEngineDropdown.setAccessibilityHelp("Choose how your voice is transcribed: System Speech Recognition or third-party engines")
+        dictationEngineDropdown.setAccessibilityRole(NSAccessibility.Role.popUpButton)
+        dictationEngineDropdown.setAccessibilityTraits(.button)
         contentView.addSubview(dictationEngineDropdown)
 
         // MARK: - Main UI Elements (shifted down)
@@ -3451,8 +3504,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         listenButton.action = #selector(toggleListening)
         listenButton.keyEquivalent = "\r"
         listenButton.keyEquivalentModifierMask = []
-        listenButton.setAccessibilityLabel("Press Enter to talk")
-        listenButton.setAccessibilityHelp("Starts and stops voice capture")
+        listenButton.setAccessibilityLabel("Start listening")
+        listenButton.setAccessibilityHelp("Double tap to toggle voice input. Press Enter or Cmd+M to start listening.")
+        listenButton.setAccessibilityRole(NSAccessibility.Role.button)
+        listenButton.setAccessibilityTraits(.button)
         contentView.addSubview(listenButton)
 
         statusLabel.frame = NSRect(x: 40, y: 362, width: 820, height: 24)
@@ -3595,7 +3650,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    @objc private func toggleListening() {
+    @objc func toggleListening() {
         if isListening {
             let text = lastHeardText.trimmingCharacters(in: .whitespacesAndNewlines)
             if !text.isEmpty && !didProcessFinalResult {
@@ -3628,6 +3683,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         lastHeardText = ""
         isListening = true
         listenButton.title = "Listening… Press Enter to Stop"
+        listenButton.setAccessibilityLabel("Stop listening")
         updateStatus("Listening…")
 
         let request = SFSpeechAudioBufferRecognitionRequest()
@@ -3700,6 +3756,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if updateButton {
             listenButton.title = "Press Enter to Talk"
+            listenButton.setAccessibilityLabel("Start listening")
+        }
+    }
+    
+    /// Stops listening if currently active (called via Cmd+.)
+    @objc func stopListeningIfActive() {
+        guard isListening else {
+            speakAndLog("Not currently listening.", speaker: "Brain")
+            return
+        }
+        stopListeningSession(cancelRecognition: true)
+        speakAndLog("Stopped listening.", speaker: "Brain")
+    }
+    
+    /// Sends the current input if any text was heard (called via Cmd+Return)
+    @objc func sendCurrentInput() {
+        guard isListening else {
+            speakAndLog("Not currently listening. Press Enter to start.", speaker: "Brain")
+            return
+        }
+        let text = lastHeardText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !text.isEmpty && !didProcessFinalResult {
+            didProcessFinalResult = true
+            finishListening(with: text)
+        } else if text.isEmpty {
+            speakAndLog("I didn't hear anything. Please try again.", speaker: "Brain")
         }
     }
 

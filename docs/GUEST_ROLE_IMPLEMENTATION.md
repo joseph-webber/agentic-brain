@@ -4,7 +4,7 @@
 
 The GUEST security role has been redesigned to be **context-aware** - it mirrors what guest/unauthenticated users can actually do on the connected platform, rather than being hardcoded to "no API access".
 
-**Key Insight (Joseph)**: GUEST should have access to API endpoints that the platform allows for unauthenticated users. This is not a hardcoded restriction but a context-dependent mapping.
+**Key Insight**: GUEST should have access to API endpoints that the platform allows for unauthenticated users. This is not a hardcoded restriction but a context-dependent mapping.
 
 ## Philosophy
 
@@ -452,5 +452,5 @@ else:
 
 **Last Updated**: 2026-04-02  
 **Status**: ✅ Implemented  
-**Author**: Joseph Webber  
+**Author**: Security Team  
 **Key Insight**: GUEST = Public/Unauthenticated Access (Context-Dependent)

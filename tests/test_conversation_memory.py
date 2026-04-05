@@ -100,7 +100,7 @@ class TestConversationMemoryRecord:
         assert utt.lady == "karen"
         assert utt.text == "Good morning"
 
-    def test_record_multiple_ladies(self, mem: ConversationMemory):
+    def test_record_multiple_voices(self, mem: ConversationMemory):
         mem.record("karen", "Hello")
         mem.record("moira", "Hi there")
         mem.record("kyoko", "Konnichiwa")
@@ -204,16 +204,16 @@ class TestConversationMemorySearch:
 
 
 class TestConversationMemoryManagement:
-    """Test count, clear, ladies list."""
+    """Test count, clear, voice personas list."""
 
-    def test_get_ladies(self, mem: ConversationMemory):
+    def test_get_voices(self, mem: ConversationMemory):
         mem.record("karen", "Hi")
         mem.record("moira", "Hey")
         mem.record("kyoko", "Konnichi wa")
-        ladies = mem.get_ladies()
-        assert ladies == ["karen", "kyoko", "moira"]
+        voices = mem.get_ladies()
+        assert voices == ["karen", "kyoko", "moira"]
 
-    def test_clear_by_lady(self, mem: ConversationMemory):
+    def test_clear_by_voice(self, mem: ConversationMemory):
         mem.record("karen", "A")
         mem.record("moira", "B")
         removed = mem.clear("karen")
@@ -233,7 +233,7 @@ class TestConversationMemoryManagement:
         h = mem.health()
         assert h["redis_available"] is False
         assert h["in_memory_count"] == 1
-        assert "karen" in h["ladies"]
+        assert "karen" in h["voices"]  # Note: "ladies" key kept for API compat
 
 
 class TestConversationMemoryThreadSafety:

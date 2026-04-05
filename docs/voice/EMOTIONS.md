@@ -1,6 +1,6 @@
 # Voice emotions
 
-The ladies can now add simple emotional expression to serialized speech.
+Voice personas can now add simple emotional expression to serialized speech.
 
 ## Supported emotions
 

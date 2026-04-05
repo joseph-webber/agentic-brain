@@ -200,4 +200,4 @@ Two modes: **Standalone** and **Copilot-Integrated**.
 
 ---
 
-*Built for Joseph with ❤️ - Making coding accessible*
+*Built for administrators with ❤️ - Making coding accessible*

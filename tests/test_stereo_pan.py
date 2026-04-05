@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
-# Tests for stereo panning of lady voices.
+# Tests for stereo panning of voice personas.
 
 from pathlib import Path
 from types import SimpleNamespace

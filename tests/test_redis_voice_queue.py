@@ -76,7 +76,7 @@ def test_voice_state_is_visible_across_processes():
 
     state = queue_b.get_state()
     assert state["is_speaking"] is True
-    assert state["current_lady"] == "Karen"
+    assert state["current_voice"] == "Karen"
     assert state["current_text"] == "Speaking now"
     assert state["queue_depth"] == 1
 

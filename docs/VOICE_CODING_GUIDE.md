@@ -1,6 +1,6 @@
 # Voice Coding Guide — BrainChat Swift
 
-**For Joseph Webber** — Code with your voice using BrainChat and Karen.
+**For Voice Users** — Code with your voice using BrainChat and Karen.
 
 ---
 
@@ -262,4 +262,4 @@ swift test --filter "VoiceCoding|CodeSpeaker"
 ---
 
 *Last updated: April 2026*
-*Built with ♿️ for Joseph — accessibility is not optional*
+*Built with ♿️ for users with accessibility needs — accessibility is not optional*

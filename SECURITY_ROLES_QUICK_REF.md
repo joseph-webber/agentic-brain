@@ -4,7 +4,7 @@
 
 Agentic Brain implements a 4-tier security model for all autonomous agents and chatbots.
 
-### Tier 1: FULL_ADMIN (Joseph only)
+### Tier 1: FULL_ADMIN (Platform Owner/Administrator)
 
 **Complete unrestricted access**
 
@@ -16,7 +16,7 @@ Agentic Brain implements a 4-tier security model for all autonomous agents and c
 - ✅ Infinite rate limit
 
 **Use cases:**
-- Joseph's personal development
+- Platform owner/administrator personal development
 - System administration
 - Emergency fixes
 - Full control over all systems
@@ -197,7 +197,7 @@ Old Role → New Role:
 ## Security Considerations
 
 ### For FULL_ADMIN
-- Use only for Joseph's personal access
+- Use only for platform owner/administrator access
 - Never expose admin keys in code
 - Store admin key in environment variable: `AGENTIC_BRAIN_ADMIN_KEY`
 

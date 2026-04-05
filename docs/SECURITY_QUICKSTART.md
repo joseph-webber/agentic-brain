@@ -13,7 +13,7 @@ Use this guide to choose the correct role quickly and apply the canonical four-t
 
 ### FULL_ADMIN
 
-Use for Joseph-level ownership tasks:
+Use for platform owner/administrator-level ownership tasks:
 
 - infrastructure work
 - secret rotation

@@ -21,7 +21,7 @@ Location: `src/agentic_brain/voice/registry.py`
 ### ✅ 2. Conversational Voice System
 - **Multi-voice conversations** - Karen + Moira + Tingting discuss things!
 - **Natural turn-taking** with pauses between speakers
-- **Intelligent voice selection** - right lady for the topic
+- **Intelligent voice selection** - right voice persona for the topic
 - **Emphasis & pauses** - natural speech rhythm
 - **Work/Life/Quiet modes**
 

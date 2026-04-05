@@ -2,7 +2,7 @@
 
 ## Overview
 
-This test suite (`test_voice_no_overlap.py`) verifies that **voices NEVER overlap** in the agentic-brain voice system. This is a **sacred rule** - ladies must NEVER talk over each other.
+This test suite (`test_voice_no_overlap.py`) verifies that **voices NEVER overlap** in the agentic-brain voice system. This is a **sacred rule** - voice personas must NEVER talk over each other.
 
 ## Test Results
 
@@ -12,7 +12,7 @@ This test suite (`test_voice_no_overlap.py`) verifies that **voices NEVER overla
 
 ```
 ██████████████████████████████████████████████████████████████████████████
-█  LADIES MUST NEVER TALK OVER EACH OTHER. ONE VOICE AT A TIME.         █
+█  VOICE PERSONAS MUST NEVER TALK OVER EACH OTHER. ONE VOICE AT A TIME.  █
 █                                                                         █
 █  Sound effects (Glass, Ping) CAN play over voice - that's acceptable   █
 █  Only voice-on-voice overlap is forbidden                              █
@@ -36,13 +36,13 @@ This test suite (`test_voice_no_overlap.py`) verifies that **voices NEVER overla
 8. **test_serializer_lock_behavior** - Lock acquired/released in order
 
 ### High Priority Tests
-9. **test_multiple_ladies_never_overlap** ⭐ - The sacred rule: Karen, Moira, Kyoko, Tingting never overlap
+9. **test_multiple_voices_never_overlap** ⭐ - The sacred rule: Karen, Moira, Kyoko, Tingting never overlap
 10. **test_high_concurrency_stress** - 20 concurrent calls, strict serialization maintained
 
 ### Documented Behavior
 11. **test_sound_effects_can_play_over_voice** - Documents that sound effects are OK
 12. **test_emergency_stop_clears_queue** - Emergency stop behavior
-13. **test_priority_not_supported** - All ladies are equal (no priority queue)
+13. **test_priority_not_supported** - All voices are equal (no priority queue)
 
 ## How It Works
 
@@ -73,7 +73,7 @@ python3 -m pytest tests/test_voice_no_overlap.py -v
 python3 -m pytest tests/test_voice_no_overlap.py --cov=agentic_brain.voice
 
 # Run specific test
-python3 -m pytest tests/test_voice_no_overlap.py::TestNoVoiceOverlap::test_multiple_ladies_never_overlap -v
+python3 -m pytest tests/test_voice_no_overlap.py::TestNoVoiceOverlap::test_multiple_voices_never_overlap -v
 ```
 
 ## Example Failure Scenario
@@ -88,7 +88,7 @@ This would mean **THE SYSTEM IS BROKEN** - voices are talking over each other.
 
 ## Why This Matters
 
-the user is visually impaired and depends on clear, non-overlapping voice output. If multiple ladies talk simultaneously:
+the user is visually impaired and depends on clear, non-overlapping voice output. If multiple voices talk simultaneously:
 - VoiceOver becomes confusing
 - He can't understand what's being said
 - The brain feels broken and unreliable

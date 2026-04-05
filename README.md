@@ -93,7 +93,7 @@ Phase 2 strengthened the stack with:
 
 - **serialized speech** so voices do not overlap
 - **distributed speech locking** across processes with Redis fallback
-- **spatial and stereo positioning** so each lady has a stable place
+- **spatial and stereo positioning** so each voice persona has a stable position
 - **durable queueing and event streaming** through Redpanda, Redis, and memory fallback
 - **watchdog recovery** for stalled voice workers
 
@@ -109,14 +109,14 @@ python demo_voice_system.py
 
 ### Voice Copilot integration
 
-Joseph can now speak to either a direct Claude voice agent or GitHub Copilot CLI:
+Users can speak to either a direct Claude voice agent or GitHub Copilot CLI:
 
 ```bash
 # Standalone Claude voice agent
 python voice_launcher.py --mode standalone
 
 # One-turn smoke test without microphone input
-python voice_launcher.py --mode standalone --once --text "Say hello to Joseph in one sentence." --no-speak
+python voice_launcher.py --mode standalone --once --text "Say hello in one sentence." --no-speak
 
 # Route voice into GitHub Copilot CLI
 python voice_launcher.py --mode copilot --repo-path /Users/joe/brain
@@ -177,7 +177,7 @@ Key guides:
 - **[Architecture](./docs/architecture.md)** - Learn how the Agentic Brain works
 - **[Voice Integration](./docs/VOICE_INTEGRATION_GUIDE.md)** - Add speech capabilities
 - **[Voice System Overview](./docs/voice/README.md)** - Phase 2 voice architecture and configuration
-- **[Spatial Audio](./docs/voice/SPATIAL_AUDIO.md)** - 14-lady positioning and backend behavior
+- **[Spatial Audio](./docs/voice/SPATIAL_AUDIO.md)** - multi-voice positioning and backend behavior
 - **[Streaming](./docs/voice/STREAMING.md)** - Voice events, queues, and priorities
 - **[Voice Troubleshooting](./docs/voice/TROUBLESHOOTING.md)** - Fix overlap, lock, and Redis issues
 - **[GraphRAG Guide](./docs/GRAPHRAG.md)** - Hybrid vector + graph retrieval, community detection, and Neo4j patterns
@@ -203,7 +203,7 @@ Documentation hubs:
 
 Agentic Brain uses a **four-tier security role model**:
 
-- **FULL_ADMIN** - Unrestricted access for Joseph
+- **FULL_ADMIN** - Unrestricted platform access for administrators
 - **SAFE_ADMIN** - Full development power with guardrails
 - **USER** - API-only access for authenticated customers
 - **GUEST** - Help-only access for anonymous visitors

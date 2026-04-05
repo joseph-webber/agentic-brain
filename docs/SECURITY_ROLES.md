@@ -20,7 +20,7 @@ The model is intentionally simple:
 
 | Role | Primary audience | Access model | Summary |
 | --- | --- | --- | --- |
-| `FULL_ADMIN` | Joseph | Unrestricted machine + platform access | No guardrails, no rate limit |
+| `FULL_ADMIN` | Platform owner/administrator | Unrestricted machine + platform access | No guardrails, no rate limit |
 | `SAFE_ADMIN` | Developers and trusted operators | Machine access with confirmations | Powerful, but protected from risky mistakes |
 | `USER` | Authenticated customers | API-only | Can use approved business APIs, but cannot touch the machine |
 | `GUEST` | Anonymous visitors | Context-aware public access | Mirrors what guests can do on the connected platform without gaining machine or privileged API access |
@@ -55,7 +55,7 @@ FULL_ADMIN can:
 - access secrets, configuration, and infrastructure controls
 - use all LLM features, including YOLO flows
 
-**Typical examples:** Joseph debugging production, emergency recovery, system-wide maintenance.
+**Typical examples:** Administrator debugging production, emergency recovery, system-wide maintenance.
 
 ### SAFE_ADMIN
 
@@ -211,7 +211,7 @@ If the connected platform does not expose a guest capability, **GUEST** cannot p
 
 ## Operational Guidance
 
-- Use **FULL_ADMIN** only for Joseph-level ownership tasks.
+- Use **FULL_ADMIN** only for platform owner/administrator-level tasks.
 - Use **SAFE_ADMIN** for day-to-day development and maintenance.
 - Use **USER** for authenticated customer workflows.
 - Use **GUEST** for anonymous chat widgets, storefront visitors, marketing pages, and public support.

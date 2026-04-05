@@ -918,3 +918,14 @@ etermined
 [2026-04-04T16:11:23Z] [DEBUG] Initial speech auth status: 0
 [2026-04-04T16:11:23Z] [DEBUG] Requesting speech authorization on init
 [2026-04-04T16:11:23Z] [DEBUG] SpeechManager init complete
+[2026-04-04T23:38:27Z] [INFO] === SpeechManager INIT ===
+[2026-04-04T23:38:27Z] [INFO] Initial microphone status: notDetermined
+[2026-04-04T23:38:27Z] [DEBUG] Initial speech auth status: 0
+[2026-04-04T23:38:27Z] [DEBUG] Requesting speech authorization on init
+[2026-04-04T23:38:28Z] [DEBUG] SpeechManager init complete
+[2026-04-04T23:38:58Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T23:38:58Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T23:38:59Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T23:38:59Z] [DEBUG] Not determined, requesting access...
+[2026-04-04T23:39:01Z] [INFO] requestMicrophonePermissionWithCompletion - current status: notDetermined
+[2026-04-04T23:39:01Z] [DEBUG] Not determined, requesting access...

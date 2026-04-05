@@ -296,20 +296,20 @@ class TestNoVoiceOverlap:
         assert events[0] == "start:slow message"
 
     @pytest.mark.asyncio
-    async def test_multiple_ladies_never_overlap(self):
-        """Multiple ladies speaking should never overlap - the sacred rule."""
-        ladies_timeline = []
+    async def test_multiple_voices_never_overlap(self):
+        """Multiple voices speaking should never overlap - the sacred rule."""
+        voices_timeline = []
 
         async def mock_speak_with_fallbacks(text, voice, rate):
-            ladies_timeline.append(("start", voice, text, time.time()))
+            voices_timeline.append(("start", voice, text, time.time()))
             await asyncio.sleep(0.08)  # Simulate speech
-            ladies_timeline.append(("end", voice, text, time.time()))
+            voices_timeline.append(("end", voice, text, time.time()))
             return True
 
         with patch.object(
             ResilientVoice, "_speak_with_fallbacks", mock_speak_with_fallbacks
         ):
-            # Multiple ladies trying to speak
+            # Multiple voices trying to speak
             await asyncio.gather(
                 ResilientVoice.speak("Hello Joseph", voice="Karen"),
                 ResilientVoice.speak("Good morning", voice="Moira"),
@@ -317,27 +317,27 @@ class TestNoVoiceOverlap:
                 ResilientVoice.speak("Let me help", voice="Tingting"),
             )
 
-        # Verify strict serialization - no lady speaks over another
-        active_lady = None
+        # Verify strict serialization - no voice speaks over another
+        active_voice = None
 
-        for event_type, lady, text, timestamp in ladies_timeline:
+        for event_type, voice, text, timestamp in voices_timeline:
             if event_type == "start":
                 assert (
-                    active_lady is None
-                ), f"{lady} started speaking while {active_lady} was still talking! FORBIDDEN!"
-                active_lady = lady
+                    active_voice is None
+                ), f"{voice} started speaking while {active_voice} was still talking! FORBIDDEN!"
+                active_voice = voice
             else:
                 assert (
-                    active_lady == lady
-                ), f"End event for {lady} but {active_lady} was speaking"
-                active_lady = None
+                    active_voice == voice
+                ), f"End event for {voice} but {active_voice} was speaking"
+                active_voice = None
 
-        # All ladies should have spoken
-        ladies_spoken = {event[1] for event in ladies_timeline}
-        assert "Karen" in ladies_spoken
-        assert "Moira" in ladies_spoken
-        assert "Kyoko" in ladies_spoken
-        assert "Tingting" in ladies_spoken
+        # All voices should have spoken
+        voices_spoken = {event[1] for event in voices_timeline}
+        assert "Karen" in voices_spoken
+        assert "Moira" in voices_spoken
+        assert "Kyoko" in voices_spoken
+        assert "Tingting" in voices_spoken
 
     @pytest.mark.asyncio
     async def test_emergency_stop_clears_queue(self):
@@ -424,7 +424,7 @@ class TestVoiceQueueBehavior:
     async def test_priority_not_supported(self):
         """No priority queue - all voices equal."""
         # This documents that we don't support priority
-        # All ladies are equal, first-come first-served
+        # All voices are equal, first-come first-served
         pass
 
 

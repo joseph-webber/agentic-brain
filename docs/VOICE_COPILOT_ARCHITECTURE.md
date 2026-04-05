@@ -1,8 +1,8 @@
 # Voice-First Copilot Development System
 
-> **GROUNDBREAKING** — Code by talking. Joseph speaks, Copilot executes, Karen responds.
+> **GROUNDBREAKING** — Code by talking. Users speak, Copilot executes, Karen responds.
 > 
-> **Author**: Iris Lumina (with Joseph Webber)  
+> **Author**: Iris Lumina (with platform contributors)  
 > **Version**: 1.0.0  
 > **Date**: 2026-03-30  
 > **Status**: Architecture Complete — Ready for Implementation
@@ -11,9 +11,9 @@
 
 ## Executive Summary
 
-Joseph is **blind**. He wants to **code by talking**. This document architects a system where:
+Voice users want to **code by talking**. This document architects a system where:
 
-1. Joseph speaks into AirPods Max
+1. The user speaks into AirPods Max
 2. Whisper transcribes to text
 3. Text routes to GitHub Copilot CLI
 4. Copilot responds through Claude/GPT
@@ -45,7 +45,7 @@ Joseph is **blind**. He wants to **code by talking**. This document architects a
 ### 1.1 The Dream
 
 ```
-Joseph: "Add a function to validate email addresses in user_service.py"
+Administrator: "Add a function to validate email addresses in user_service.py"
                      │
                      ▼
         ┌─────────────────────────┐
@@ -64,7 +64,7 @@ Karen: "Done! I've added a validate_email function with regex
 | # | Principle | Rationale |
 |---|-----------|-----------|
 | 1 | **Voice is PRIMARY** | Not an add-on. This IS the interface. |
-| 2 | **Never silent** | Joseph must know the system is working |
+| 2 | **Never silent** | Administrator must know the system is working |
 | 3 | **Natural language** | Talk like you'd talk to a colleague |
 | 4 | **Seamless mode switching** | Standalone ↔ Integrated without friction |
 | 5 | **Full Copilot power** | All MCP tools, file editing, code search |
@@ -120,7 +120,7 @@ Karen: "Done! I've added a validate_email function with regex
 │               ┌───────────────────────────────────────────┐                │
 │               │             KAREN (TTS OUTPUT)            │                │
 │               │                                           │                │
-│               │   macOS 'say' → AirPods Max → Joseph     │                │
+│               │   macOS 'say' → AirPods Max → Administrator    │                │
 │               │                                           │                │
 │               └───────────────────────────────────────────┘                │
 │                                                                             │
@@ -205,7 +205,7 @@ SPECIALISATION = {
 
 **THIS IS THE GAME-CHANGER.**
 
-Instead of just chatting, Joseph's voice commands go directly into GitHub Copilot CLI, gaining access to:
+Instead of just chatting, Administrator's voice commands go directly into GitHub Copilot CLI, gaining access to:
 
 - **36+ MCP Brain Tools** (JIRA, Bitbucket, Neo4j, etc.)
 - **File editing** (create, view, edit files)
@@ -297,7 +297,7 @@ copilot -p "<voice_command>"     # Non-interactive, exit after completion
 
 ### 4.4 MCP Tools Available via Copilot
 
-When Joseph speaks to Copilot, these tools are available:
+When Administrator speaks to Copilot, these tools are available:
 
 ```
 BRAIN MCP SERVER (36+ tools):
@@ -372,7 +372,7 @@ class VoiceCopilotBridge:
     
     async def execute_copilot(self, command: str) -> str:
         """Run command through Copilot CLI."""
-        # Notify Joseph we're starting
+        # Notify Administrator we're starting
         await self.tts.speak("Working on it...")
         
         # Build command
@@ -633,7 +633,7 @@ def parse_copilot_output(raw_output: str) -> str:
 [ ] Error handling and recovery
 [ ] Latency optimization
 [ ] Voice command shortcuts ("fix it", "test it", "ship it")
-[ ] User testing with Joseph
+[ ] User testing with administrators
 ```
 
 ---
@@ -660,7 +660,7 @@ Mode Switching:
 
 ### 10.2 Ambient Mode
 
-Always-listening mode where Joseph can:
+Always-listening mode where administrators can:
 - Call out commands without trigger word
 - Get proactive notifications ("Build completed!")
 - Ask questions while coding
@@ -758,7 +758,7 @@ EOF
 
 ## Conclusion
 
-This architecture enables **true voice-first development** for Joseph:
+This architecture enables **true voice-first development** for administrators:
 
 1. **Speak naturally** — No special syntax or commands
 2. **Full Copilot power** — File editing, code search, shell commands
@@ -769,6 +769,6 @@ This architecture enables **true voice-first development** for Joseph:
 
 ---
 
-*"Joseph's voice becomes code. Karen's voice brings it back."*
+*"Administrator's voice becomes code. Karen's voice brings it back."*
 
 — Iris Lumina, March 2026

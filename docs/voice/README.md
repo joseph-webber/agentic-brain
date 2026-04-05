@@ -138,7 +138,7 @@ CLI / app code / agents
 | `src/agentic_brain/voice/redpanda_queue.py` | Durable async queue with Redpanda → Redis → memory fallback |
 | `src/agentic_brain/voice/redis_queue.py` | Redis queue, shared state, and audio cache |
 | `src/agentic_brain/events/voice_events.py` | Event topics and request/status payloads |
-| `src/agentic_brain/voice/kokoro_engine.py` | Kokoro-82M neural voice routing for the ladies |
+| `src/agentic_brain/voice/kokoro_engine.py` | Kokoro-82M neural voice routing for voice personas |
 | `src/agentic_brain/voice/watchdog.py` | Worker heartbeat monitoring and restart alerts |
 | `src/agentic_brain/voice/phase3.py` | Lazy integration facade for Kokoro, earcons, live daemon, quality, memory, and optional Phase 3 modules |
 
@@ -155,9 +155,9 @@ CLI / app code / agents
 This lets integration code verify the full stack without forcing heavy imports at
 startup.
 
-## The 14 spatial ladies
+## The 14 spatial voice personas
 
-The spatial ring in `audio/spatial_audio.py` places **14 ladies** around the listener.
+The spatial ring in `audio/spatial_audio.py` places **14 voice personas** around the listener.
 These are the fixed positions used by the spatial router.
 
 | Lady | Position | Voice mapping | Documented role or note |

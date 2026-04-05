@@ -181,7 +181,7 @@ Important requirement: anonymous traffic must never resolve to API-capable or ma
 | Anonymous visitor | `GUEST` | Help docs, setup, FAQ, product information |
 | Logged-in customer | `USER` | Approved WordPress/WooCommerce API calls |
 | Developer / maintainer | `SAFE_ADMIN` | Maintenance and integration work with guardrails |
-| Owner / Joseph | `FULL_ADMIN` | Unrestricted platform control |
+| Platform owner / administrator | `FULL_ADMIN` | Unrestricted platform control |
 
 ## Audit Expectations
 

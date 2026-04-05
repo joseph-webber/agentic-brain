@@ -62,7 +62,7 @@ Role resolution should be:
 - anonymous visitor → `GUEST`
 - authenticated customer → `USER`
 - trusted developer → `SAFE_ADMIN`
-- owner / Joseph → `FULL_ADMIN`
+- platform owner/administrator → `FULL_ADMIN`
 
 ## USER Examples
 

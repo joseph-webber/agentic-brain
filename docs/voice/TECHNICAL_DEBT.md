@@ -36,7 +36,7 @@ when they interact, especially during state transitions.
 
 - ❌ Voice-on-voice overlap during mode switching
 - ❌ Overlap during daemon startup sequence
-- ❌ Multiple ladies speaking simultaneously in edge cases
+- ❌ Multiple voices speaking simultaneously in edge cases
 
 ## Future Solution: Voice Engine Rebuild
 

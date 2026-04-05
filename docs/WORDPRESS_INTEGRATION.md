@@ -15,7 +15,7 @@ This keeps storefront support useful without exposing machine access or privileg
 
 | WordPress audience | Canonical role | Allowed behavior |
 | --- | --- | --- |
-| Joseph / platform owner | `FULL_ADMIN` | Unrestricted platform control |
+| Platform owner/administrator | `FULL_ADMIN` | Unrestricted platform control |
 | Developer or trusted maintainer | `SAFE_ADMIN` | Integration work, diagnostics, and maintenance |
 | Logged-in customer | `USER` | Approved authenticated WordPress and WooCommerce API calls |
 | Anonymous visitor or WooCommerce guest shopper | `GUEST` | Public WordPress content plus guest-scoped WooCommerce Store API actions |

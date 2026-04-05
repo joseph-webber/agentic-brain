@@ -49,7 +49,7 @@ class TestKokoroCatalogue:
         filtered = get_official_kokoro_voice_ids("ja")
         assert filtered == {"ja": OFFICIAL_KOKORO_VOICES["ja"]}
 
-    def test_ladies_have_unique_voice_routes(self):
+    def test_voices_have_unique_voice_routes(self):
         conversational_voices = {
             name: config.voice
             for name, config in LADY_VOICE_MAP.items()
@@ -139,7 +139,7 @@ class TestHybridVoiceRouter:
                 assert router.speak("Hello", lady="Karen") is True
                 apple_mock.assert_called_once_with("Hello", "Karen (Premium)", 155)
 
-    def test_speak_uses_kokoro_for_supported_lady(self, tmp_path):
+    def test_speak_uses_kokoro_for_supported_voice(self, tmp_path):
         serializer = SimpleNamespace(
             run_serialized=lambda message, executor, wait: executor(message)
         )

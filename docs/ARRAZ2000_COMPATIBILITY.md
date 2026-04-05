@@ -2,7 +2,7 @@
 
 > **Status**: Framework Ready — awaiting Arraz2000's public Graph RAG repositories
 > **Last Updated**: 2026-07-22
-> **Author**: Joseph Webber (contributor to Arraz2000's work)
+> **Author**: the developer (contributor to Arraz2000's work)
 
 ---
 
@@ -207,7 +207,7 @@ communities = detect_communities(session)
 ### What We Know
 
 - GitHub: [github.com/Arraz2000](https://github.com/Arraz2000)
-- Joseph is a contributor to Arraz2000's work
+- The user is a contributor to Arraz2000's work
 - Graph RAG repos may be private or in development
 
 ### When Repos Are Published, Update This Section With:
@@ -250,5 +250,5 @@ Tests verify:
 
 ## Contact
 
-- **Joseph Webber** — user@example.com
+- **the developer** — user@example.com
 - **Repository** — [github.com/ecomlounge/brain](https://github.com/ecomlounge/brain)

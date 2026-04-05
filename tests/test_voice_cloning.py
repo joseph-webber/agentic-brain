@@ -159,7 +159,7 @@ class TestVoiceLibraryManagement:
         assert library.delete_voice(profile.voice_id) is True
         assert library.get_voice(profile.voice_id) is None
 
-    def test_assign_voice_to_lady_updates_profile(
+    def test_assign_voice_to_voice_persona_updates_profile(
         self, configured_env, voice_workspace
     ):
         library = VoiceLibrary(base_dir=configured_env)
@@ -169,7 +169,7 @@ class TestVoiceLibraryManagement:
         assert updated.assigned_lady == "karen"
         assert updated.metadata["fallback_voice"] == "Karen (Premium)"
 
-    def test_find_by_lady_filters_profiles(self, configured_env, voice_workspace):
+    def test_find_by_voice_persona_filters_profiles(self, configured_env, voice_workspace):
         library = VoiceLibrary(base_dir=configured_env)
         one = _create_test_wav(voice_workspace / "one.wav")
         two = _create_test_wav(voice_workspace / "two.wav")
@@ -326,7 +326,7 @@ class TestVoiceCloneCLI:
         assert result == 0
         assert library.get_voice(profile.voice_id) is None
 
-    def test_cli_clone_assign_updates_lady(
+    def test_cli_clone_assign_updates_voice_persona(
         self, configured_env, voice_workspace, capsys
     ):
         library = VoiceLibrary(base_dir=configured_env)
@@ -348,7 +348,7 @@ class TestVoiceCloneCLI:
         assert "Assigned" in output
         assert updated is not None and updated.assigned_lady == "karen"
 
-    def test_cli_clone_assign_requires_lady(
+    def test_cli_clone_assign_requires_voice_persona(
         self, configured_env, voice_workspace, capsys
     ):
         library = VoiceLibrary(base_dir=configured_env)
@@ -366,4 +366,4 @@ class TestVoiceCloneCLI:
         result = voice_clone_command(args)
         output = capsys.readouterr().out
         assert result == 1
-        assert "--lady is required" in output
+        assert "--lady is required" in output  # Note: internal parameter name kept for API compat

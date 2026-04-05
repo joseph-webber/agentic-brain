@@ -1,7 +1,7 @@
 # World-Class Voice AI Architecture
 
 > **Version 2.0** — Multi-LLM, Event-Driven, Fault-Tolerant
-> **User**: Joseph Webber (blind) — voice is the PRIMARY interface, not a feature.
+> **Users**: Voice-first interface for accessibility — voice is the PRIMARY interface, not a feature.
 > **Principle**: Silence = failure. Karen ALWAYS speaks.
 
 ---
@@ -30,14 +30,14 @@ optimises for **spoken audio output** — not text, not visual UI, not logs.
 ### Core Flow
 
 ```
- Joseph speaks → AirPods mic → Whisper STT → Classifier → Multi-LLM Engine → Karen (Cartesia TTS) → AirPods
+ User speaks → AirPods mic → Whisper STT → Classifier → Multi-LLM Engine → Karen (Cartesia TTS) → AirPods
 ```
 
 ### Design Principles
 
 | # | Principle | Why |
 |---|-----------|-----|
-| 1 | **Never silent** | Silence = "did the brain crash?" for a blind user |
+| 1 | **Never silent** | Silence = "did the brain crash?" for the user |
 | 2 | **Fastest viable answer** | Local LLM responds in <1s while cloud refines |
 | 3 | **Always a fallback** | Ollama is local and free — it NEVER goes down |
 | 4 | **2-3 sentences max** | Audio responses must be concise and natural |
@@ -310,7 +310,7 @@ brain.voice.metrics        ◄── Latency, usage, quality metrics
 ### 7.2 Event Flow
 
 ```
-  Joseph speaks
+  User speaks
       │
       ▼
   brain.voice.input ──────────────────────────────────────────┐
@@ -322,7 +322,7 @@ brain.voice.metrics        ◄── Latency, usage, quality metrics
   [Multi-LLM Engine] ── brain.voice.metrics ──────────────────┤
       │                                                        │
       ▼                                                        │
-  brain.voice.response ──► Cartesia TTS ──► Joseph hears       │
+  brain.voice.response ──► Cartesia TTS ──► User hears    │
       │                                                        │
       ▼                                                        │
   brain.voice.memory ──► Neo4j (stored for future recall)      │
@@ -517,5 +517,5 @@ Every component communicates through events. This means:
 
 ---
 
-*Architecture designed for Joseph. Built with heart.*
-*Every component exists to make his voice assistant the best in the world.*
+*Architecture designed for accessibility. Built with heart.*
+*Every component exists to make the voice assistant the best in the world.*
