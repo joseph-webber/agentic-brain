@@ -74,7 +74,7 @@ dependencies = [
     "firebase-admin>=6.0.0,<7.0.0",  # Firebase auth, Firestore, RTDB, and Storage
     "temporalio>=1.4.0,<2.0.0",  # Durable workflow execution
     "kafka-python>=2.0.2,<3.0.0",  # Redpanda/Kafka voice coordination
-    "redis>=5.0.0,<6.0.0",  # Redis client for caching and message queuing
+    "redis>=5.0.0,<8.0.0",  # Redis client for caching and message queuing
     "fastapi>=0.104.0,<1.0.0",  # Modern async web framework
     "uvicorn[standard]>=0.27.0",  # ASGI server for FastAPI (with standard extras)
     "httpx>=0.25.0,<1.0.0",  # Async HTTP client for API calls
@@ -206,7 +206,7 @@ test = [
     "mongomock>=4.1.0,<5.0.0",  # For MongoDB mocking
     "responses>=0.25.0,<1.0.0",  # For HTTP mocking
     "neo4j>=5.14.0,<6.0.0",  # For Neo4j pool and CI connectivity tests
-    "redis>=5.0.0,<6.0.0",  # Tests import redis directly
+    "redis>=5.0.0,<8.0.0",  # Tests import redis directly
     "requests>=2.28.0,<3.0.0",  # RAG/LLM tests import requests directly
     "PyYAML>=6.0.0,<7.0.0",  # Loader and governance tests import yaml directly
 ]
@@ -237,7 +237,7 @@ enterprise = [
     "pyotp>=2.9.0,<3.0.0",
 ]
 redis = [
-    "redis>=5.0.0,<6.0.0",
+    "redis>=5.0.0,<8.0.0",
 ]
 observability = [
     "opentelemetry-api>=1.20.0,<2.0.0",
@@ -383,7 +383,7 @@ all = [
     "websockets>=12.0.0,<14.0.0",
     "firebase-admin>=6.0.0,<7.0.0",
     "python-jose[cryptography]>=3.3.0,<4.0.0",
-    "redis>=5.0.0,<6.0.0",
+    "redis>=5.0.0,<8.0.0",
     "pytest>=8.0.0,<9.0.0",
     "pytest-cov>=4.1.0,<5.0.0",
     "pytest-asyncio>=0.23.0,<1.0.0",
