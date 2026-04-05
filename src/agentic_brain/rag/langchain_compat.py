@@ -907,9 +907,7 @@ class Runnable(ABC, Generic[Input, Output]):
         """
         yield self.invoke(input, config)
 
-    def __or__(
-        self, other: Runnable[Output, Other]
-    ) -> RunnableSequence[Input, Other]:
+    def __or__(self, other: Runnable[Output, Other]) -> RunnableSequence[Input, Other]:
         """Compose with another runnable using pipe operator.
 
         Args:
@@ -1253,7 +1251,8 @@ class RunnableBranch(Runnable[Input, Output]):
 
     def __init__(
         self,
-        *branches: tuple[Callable[[Input], bool], Runnable[Input, Output]] | Runnable[Input, Output],
+        *branches: tuple[Callable[[Input], bool], Runnable[Input, Output]]
+        | Runnable[Input, Output],
     ):
         """Initialize with condition-runnable pairs and optional default.
 

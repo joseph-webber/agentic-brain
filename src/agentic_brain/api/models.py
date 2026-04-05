@@ -560,7 +560,6 @@ class HealthResponse(BaseModel):
 # =============================================================================
 
 
-
 class MessageListResponse(RootModel[list[dict]]):
     """Response model for message list endpoint.
 

@@ -263,7 +263,10 @@ class RateLimitManager:
                 return False
 
             # Check token limit
-            return not (tokens > 0 and state.tokens_this_minute + tokens > quota.tokens_per_minute)
+            return not (
+                tokens > 0
+                and state.tokens_this_minute + tokens > quota.tokens_per_minute
+            )
 
     def get_available_provider(
         self, exclude: Optional[List[str]] = None

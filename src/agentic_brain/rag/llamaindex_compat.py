@@ -568,9 +568,7 @@ class AgenticQueryEngine(BaseQueryEngine):
 
         return self.synthesizer.synthesize(query, nodes, **kwargs)
 
-    async def aquery(
-        self, query: str, **kwargs: Any
-    ) -> Response | StreamingResponse:
+    async def aquery(self, query: str, **kwargs: Any) -> Response | StreamingResponse:
         streaming = bool(kwargs.pop("streaming", False))
         response_mode = kwargs.get("response_mode")
 

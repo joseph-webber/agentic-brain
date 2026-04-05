@@ -443,7 +443,9 @@ class GraphBenchmark:
         print(SEP)
 
         cur_group = None
-        for (name, current, target, group), pct in zip(struct_metrics, struct_scores, strict=False):
+        for (name, current, target, group), pct in zip(
+            struct_metrics, struct_scores, strict=False
+        ):
             if group != cur_group:
                 cur_group = group
                 print(f"  {group}")

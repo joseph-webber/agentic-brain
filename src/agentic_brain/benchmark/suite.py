@@ -134,9 +134,7 @@ class BenchmarkMetric:
 
 @dataclass
 class BenchmarkSuiteResult:
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(UTC).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     hardware: dict[str, Any] = field(default_factory=dict)
     metrics: dict[str, BenchmarkMetric] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
