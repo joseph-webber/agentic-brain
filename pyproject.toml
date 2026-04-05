@@ -167,7 +167,7 @@ dev = [
     "pytest-timeout>=2.1.0,<3.0.0",  # Prevent hanging tests
     "pytest-xdist>=3.5.0,<4.0.0",  # Parallel test execution
     "aioredis>=2.0.1,<3.0.0",
-    "black==24.10.0",
+    "black==26.3.1",
     "build>=1.0.0,<2.0.0",
     "mypy>=1.8.0,<2.0.0",
     "ruff>=0.3.0,<1.0.0",
