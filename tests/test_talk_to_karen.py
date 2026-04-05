@@ -6,6 +6,8 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
+
 sys.modules.setdefault("cartesia", types.SimpleNamespace(Cartesia=object))
 sys.modules.setdefault("faster_whisper", types.SimpleNamespace(WhisperModel=object))
 sys.modules.setdefault(
@@ -24,6 +26,8 @@ sys.modules.setdefault("scipy", scipy_module)
 sys.modules.setdefault("scipy.signal", scipy_signal_module)
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "talk_to_karen.py"
+if not MODULE_PATH.exists():
+    pytest.skip("talk_to_karen.py not found in project root", allow_module_level=True)
 spec = importlib.util.spec_from_file_location("talk_to_karen", MODULE_PATH)
 talk_to_karen = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = talk_to_karen

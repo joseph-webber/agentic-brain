@@ -21,11 +21,10 @@ Provides real-time bidirectional streaming chat over WebSocket connections.
 
 import json
 import logging
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-from ..streaming import StreamingResponse
 from .routes import (
     _ensure_session_exists,
     _generate_message_id,

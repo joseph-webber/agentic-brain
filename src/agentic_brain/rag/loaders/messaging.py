@@ -21,10 +21,8 @@ Supports:
 - Microsoft Teams (chat messages)
 """
 
-import json
 import logging
 import os
-from datetime import datetime
 from typing import Any, Optional
 
 from .base import BaseLoader, LoadedDocument, with_rate_limit

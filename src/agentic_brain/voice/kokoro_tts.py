@@ -27,7 +27,6 @@ import hashlib
 import logging
 import platform
 import subprocess
-import time
 import wave
 from io import BytesIO
 from pathlib import Path

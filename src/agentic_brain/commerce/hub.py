@@ -46,8 +46,7 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass, field
-from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -280,7 +279,6 @@ class CommerceHub:
             from .payments import (
                 PaymentProcessor,
                 PayPalGateway,
-                SquareGateway,
                 StripeGateway,
             )
 

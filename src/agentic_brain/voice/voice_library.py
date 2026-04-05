@@ -63,16 +63,42 @@ SYSTEM_VOICE_BY_LADY = {
 
 
 def _utc_now_iso() -> str:
+    """Get current UTC time as ISO 8601 string.
+    
+    Returns:
+        ISO 8601 formatted timestamp.
+    """
     return datetime.now(UTC).isoformat()
 
 
 def _slugify(value: str) -> str:
+    """Convert string to URL-safe slug.
+    
+    Args:
+        value: String to slugify.
+        
+    Returns:
+        Lowercase alphanumeric string with hyphens.
+    """
     cleaned = "".join(ch.lower() if ch.isalnum() else "-" for ch in value.strip())
     parts = [part for part in cleaned.split("-") if part]
     return "-".join(parts) or "voice"
 
 
 def resolve_voice_storage_dir(base_dir: str | Path | None = None) -> Path:
+    """Resolve voice library storage directory.
+    
+    Priority order:
+    1. Explicit base_dir parameter
+    2. AGENTIC_BRAIN_VOICE_CLONE_DIR environment variable
+    3. Default: ~/.agentic-brain/voices
+    
+    Args:
+        base_dir: Optional explicit directory path.
+        
+    Returns:
+        Resolved storage directory path.
+    """
     if base_dir is not None:
         return Path(base_dir).expanduser()
 
@@ -98,13 +124,31 @@ class VoiceProfile:
 
     @property
     def reference_audio(self) -> Path:
+        """Get reference audio file as Path object.
+        
+        Returns:
+            Path to reference audio file.
+        """
         return Path(self.reference_audio_path)
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert profile to dictionary.
+        
+        Returns:
+            Dictionary representation of profile.
+        """
         return asdict(self)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> VoiceProfile:
+        """Create profile from dictionary.
+        
+        Args:
+            data: Dictionary with profile fields.
+            
+        Returns:
+            VoiceProfile instance.
+        """
         return cls(
             voice_id=data["voice_id"],
             name=data["name"],
@@ -120,23 +164,71 @@ class VoiceProfile:
 
 
 class VoiceLibrary:
+    """Voice cloning library for managing custom voice profiles.
+    
+    Stores voice clones with reference audio, metadata, and lady assignments.
+    Supports export/import for sharing voice profiles.
+    """
+    
     def __init__(self, base_dir: str | Path | None = None) -> None:
+        """Initialize voice library.
+        
+        Args:
+            base_dir: Optional storage directory override.
+        """
         self.base_dir = resolve_voice_storage_dir(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
     def available_ladies(self) -> tuple[str, ...]:
+        """Get list of known lady voice identifiers.
+        
+        Returns:
+            Tuple of lady names (lowercase).
+        """
         return KNOWN_LADIES
 
     def generate_voice_id(self, name: str) -> str:
+        """Generate unique voice identifier from name.
+        
+        Args:
+            name: Voice display name.
+            
+        Returns:
+            Slugified name with random suffix.
+        """
         return f"{_slugify(name)}-{uuid4().hex[:8]}"
 
     def voice_dir(self, voice_id: str) -> Path:
+        """Get storage directory for a voice.
+        
+        Args:
+            voice_id: Voice identifier.
+            
+        Returns:
+            Path to voice directory.
+        """
         return self.base_dir / voice_id
 
     def profile_path(self, voice_id: str) -> Path:
+        """Get path to voice profile JSON file.
+        
+        Args:
+            voice_id: Voice identifier.
+            
+        Returns:
+            Path to profile.json file.
+        """
         return self.voice_dir(voice_id) / "profile.json"
 
     def save_profile(self, profile: VoiceProfile) -> VoiceProfile:
+        """Save voice profile to disk.
+        
+        Args:
+            profile: Voice profile to save.
+            
+        Returns:
+            Updated profile with new timestamp.
+        """
         profile.updated_at = _utc_now_iso()
         target_dir = self.voice_dir(profile.voice_id)
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -157,6 +249,23 @@ class VoiceLibrary:
         validation: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> VoiceProfile:
+        """Register a new voice clone with reference audio.
+        
+        Args:
+            source_audio: Path to reference audio file.
+            name: Display name for the voice.
+            reference_text: Transcript of reference audio.
+            assigned_lady: Lady identifier to assign to.
+            backend: TTS backend identifier.
+            validation: Validation metrics.
+            metadata: Additional metadata.
+            
+        Returns:
+            Created voice profile.
+            
+        Raises:
+            ValueError: If assigned_lady is unknown.
+        """
         source = Path(source_audio).expanduser()
         voice_id = self.generate_voice_id(name)
         voice_dir = self.voice_dir(voice_id)
@@ -182,6 +291,14 @@ class VoiceLibrary:
         return self.save_profile(profile)
 
     def get_voice(self, voice_id: str) -> VoiceProfile | None:
+        """Load voice profile by ID.
+        
+        Args:
+            voice_id: Voice identifier.
+            
+        Returns:
+            Voice profile or None if not found.
+        """
         profile_file = self.profile_path(voice_id)
         if not profile_file.exists():
             return None
@@ -190,6 +307,11 @@ class VoiceLibrary:
         )
 
     def list_voices(self) -> list[VoiceProfile]:
+        """List all registered voices.
+        
+        Returns:
+            List of voice profiles, sorted by name.
+        """
         profiles: list[VoiceProfile] = []
         for profile_file in sorted(self.base_dir.glob("*/profile.json")):
             profiles.append(
@@ -200,6 +322,14 @@ class VoiceLibrary:
         return sorted(profiles, key=lambda item: (item.name.lower(), item.voice_id))
 
     def delete_voice(self, voice_id: str) -> bool:
+        """Delete a voice and all its data.
+        
+        Args:
+            voice_id: Voice identifier.
+            
+        Returns:
+            True if voice was deleted, False if not found.
+        """
         voice_dir = self.voice_dir(voice_id)
         if not voice_dir.exists():
             return False
@@ -207,6 +337,19 @@ class VoiceLibrary:
         return True
 
     def assign_voice(self, voice_id: str, lady: str) -> VoiceProfile:
+        """Assign voice to a lady identifier.
+        
+        Args:
+            voice_id: Voice identifier.
+            lady: Lady name to assign to.
+            
+        Returns:
+            Updated voice profile.
+            
+        Raises:
+            ValueError: If lady is unknown.
+            KeyError: If voice_id not found.
+        """
         normalized_lady = lady.strip().lower()
         if normalized_lady not in KNOWN_LADIES:
             raise ValueError(f"Unknown lady '{lady}'")
@@ -222,6 +365,14 @@ class VoiceLibrary:
         return self.save_profile(profile)
 
     def find_by_lady(self, lady: str) -> list[VoiceProfile]:
+        """Find all voices assigned to a lady.
+        
+        Args:
+            lady: Lady identifier.
+            
+        Returns:
+            List of matching voice profiles.
+        """
         normalized_lady = lady.strip().lower()
         return [
             profile
@@ -230,6 +381,18 @@ class VoiceLibrary:
         ]
 
     def export_voice(self, voice_id: str, export_path: str | Path) -> Path:
+        """Export voice to a portable ZIP archive.
+        
+        Args:
+            voice_id: Voice identifier.
+            export_path: Target ZIP file path.
+            
+        Returns:
+            Path to created ZIP file.
+            
+        Raises:
+            KeyError: If voice_id not found.
+        """
         profile = self.get_voice(voice_id)
         if profile is None:
             raise KeyError(voice_id)
@@ -257,6 +420,14 @@ class VoiceLibrary:
         return export_target
 
     def import_voice(self, import_path: str | Path) -> VoiceProfile:
+        """Import voice from a ZIP archive.
+        
+        Args:
+            import_path: Path to voice ZIP file.
+            
+        Returns:
+            Imported voice profile.
+        """
         source = Path(import_path).expanduser()
         with zipfile.ZipFile(source, "r") as archive:
             profile_data = json.loads(archive.read("profile.json").decode("utf-8"))

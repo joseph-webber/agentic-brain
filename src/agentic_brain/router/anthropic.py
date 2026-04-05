@@ -20,7 +20,6 @@ Anthropic provider implementation.
 """
 
 
-import asyncio
 import json
 import logging
 import os

@@ -18,8 +18,8 @@ import hashlib
 import logging
 import secrets
 from abc import ABC, abstractmethod
-from datetime import UTC, datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field

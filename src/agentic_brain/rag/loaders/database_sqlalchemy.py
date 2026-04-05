@@ -36,7 +36,7 @@ Benefits over raw SQL:
 import logging
 import os
 from contextlib import contextmanager
-from typing import Any, Generator, Optional
+from typing import Generator, Optional
 from urllib.parse import quote_plus
 
 from .base import BaseLoader, LoadedDocument

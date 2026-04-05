@@ -4,10 +4,9 @@
 """WooCommerce API Agent implementation."""
 
 import asyncio
-import json
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from requests.adapters import HTTPAdapter
 from requests.auth import HTTPBasicAuth

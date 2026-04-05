@@ -17,9 +17,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, Optional
+from typing import Optional
 
 from agentic_brain.voice.config import VoiceConfig
 from agentic_brain.voice.emotions import EmotionDetector, VoiceEmotion, apply_emotion

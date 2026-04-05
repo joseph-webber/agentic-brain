@@ -61,7 +61,7 @@ License: Apache-2.0
 
 import logging
 import os
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Optional
 
 from fastapi import APIRouter
@@ -649,7 +649,6 @@ def _get_memory_usage_mb() -> float:
         process = psutil.Process(os.getpid())
         return process.memory_info().rss / 1024 / 1024
     except ImportError:
-        import sys
 
         return 50.0  # Base estimate
     except (OSError, AttributeError, RuntimeError) as e:

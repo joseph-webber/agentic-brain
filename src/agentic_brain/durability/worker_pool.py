@@ -30,17 +30,11 @@ Features:
 import asyncio
 import inspect
 import logging
-import os
-import signal
-import threading
-import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from multiprocessing import Process
-from multiprocessing import Queue as MPQueue
-from typing import Any, Callable, Dict, List, Optional, Set, Type
+from typing import Any, Callable, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -293,7 +287,6 @@ class ActivityWorker:
 
     async def _execute_with_heartbeat(self, handler: Callable, task) -> Any:
         """Execute handler with periodic heartbeats"""
-        from .heartbeats import HeartbeatContext
 
         async def heartbeat_sender():
             """Send heartbeats periodically"""

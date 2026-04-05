@@ -55,13 +55,12 @@ from __future__ import annotations
 
 import json
 import logging
-import signal
 import threading
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

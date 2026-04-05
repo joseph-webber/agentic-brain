@@ -19,7 +19,6 @@ from __future__ import annotations
 Together.ai provider implementation - FREE tier with generous credits.
 """
 
-import asyncio
 import json
 import logging
 import os

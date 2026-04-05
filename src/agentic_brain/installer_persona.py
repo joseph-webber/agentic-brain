@@ -17,10 +17,9 @@ Simple and clean - no backward compatibility needed.
 """
 
 import os
-import shutil
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from .adl.generator import generate_config_from_adl
 from .adl.parser import parse_adl_string
@@ -28,7 +27,6 @@ from .adl.personas import (
     PERSONA_TEMPLATES,
     generate_adl_from_persona,
     get_persona_mode,
-    list_personas,
 )
 
 

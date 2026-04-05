@@ -54,16 +54,15 @@ Usage:
 
 from __future__ import annotations
 
-import asyncio
 import gzip
 import json
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from typing import AsyncIterator
 
-from .events import EVENT_TYPE_MAP, BaseEvent, EventType
+from .events import BaseEvent
 
 logger = logging.getLogger(__name__)
 

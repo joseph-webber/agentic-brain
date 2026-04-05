@@ -30,7 +30,7 @@ from __future__ import annotations
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from enum import Enum, StrEnum
+from enum import StrEnum
 from threading import RLock
 from typing import Any, Callable, Protocol
 

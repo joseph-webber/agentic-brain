@@ -16,8 +16,6 @@ Auto-learns from corrections and usage patterns.
 """
 
 import json
-import os
-import statistics
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path

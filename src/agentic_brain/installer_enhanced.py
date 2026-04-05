@@ -39,7 +39,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 __version__ = "2.0.0"
 

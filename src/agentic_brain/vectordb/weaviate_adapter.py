@@ -31,7 +31,7 @@ import contextlib
 import logging
 import os
 import uuid as uuid_lib
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from agentic_brain.vectordb import (
     VectorDBAdapter,

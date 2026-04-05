@@ -35,10 +35,9 @@ Usage:
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Callable
 
 from .event_store import EventStore, get_event_store
@@ -46,10 +45,8 @@ from .events import (
     ActivityCompleted,
     ActivityFailed,
     ActivityScheduled,
-    ActivityStarted,
     BaseEvent,
     CheckpointCreated,
-    CheckpointLoaded,
     EventType,
     SignalReceived,
     WorkflowCompleted,

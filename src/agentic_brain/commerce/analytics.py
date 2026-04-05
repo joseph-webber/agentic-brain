@@ -33,7 +33,7 @@ import json
 import logging
 import os
 from dataclasses import asdict, dataclass
-from datetime import UTC, date, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any, Iterable, Optional, Protocol
 

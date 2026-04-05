@@ -2,7 +2,6 @@
 # Copyright 2024-2026 Agentic Brain Contributors
 
 from dataclasses import asdict
-from typing import Any, Optional
 
 from agentic_brain.db import BrainRedis
 from agentic_brain.rag import RAGPipeline

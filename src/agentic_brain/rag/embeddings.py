@@ -45,10 +45,12 @@ import json
 import logging
 import os
 import platform
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
+
+from .exceptions import EmbeddingError
 
 logger = logging.getLogger(__name__)
 
@@ -281,18 +283,55 @@ class OllamaEmbeddings(EmbeddingProvider):
         """Generate embedding using Ollama."""
         import requests
 
-        response = requests.post(
-            f"{self.base_url}/api/embeddings",
-            json={"model": self.model, "prompt": text},
-            timeout=30,
-        )
-        response.raise_for_status()
-        data = response.json()
-        if "embedding" in data:
-            return data["embedding"]
-        logger.warning(
-            "Ollama response missing embedding; using deterministic fallback"
-        )
+        url = f"{self.base_url}/api/embeddings"
+        try:
+            response = requests.post(
+                url,
+                json={"model": self.model, "prompt": text},
+                timeout=30,
+            )
+
+            if response.status_code == 429:
+                retry_after = response.headers.get("Retry-After")
+                raise EmbeddingError(
+                    "Ollama rate limit exceeded",
+                    context={
+                        "provider": "ollama",
+                        "model": self.model,
+                        "url": url,
+                        "retry_after": retry_after,
+                        "status_code": response.status_code,
+                    },
+                )
+
+            response.raise_for_status()
+            data = response.json()
+        except EmbeddingError:
+            raise
+        except requests.exceptions.Timeout as exc:
+            logger.exception("Ollama embeddings request timed out")
+            raise EmbeddingError(
+                "Ollama embeddings request timed out",
+                context={"provider": "ollama", "model": self.model, "url": url},
+            ) from exc
+        except requests.exceptions.RequestException as exc:
+            logger.exception("Ollama embeddings request failed")
+            raise EmbeddingError(
+                "Ollama embeddings request failed",
+                context={"provider": "ollama", "model": self.model, "url": url},
+            ) from exc
+        except ValueError as exc:
+            logger.exception("Invalid JSON from Ollama embeddings endpoint")
+            raise EmbeddingError(
+                "Invalid JSON from Ollama embeddings endpoint",
+                context={"provider": "ollama", "model": self.model, "url": url},
+            ) from exc
+
+        embedding = data.get("embedding") if isinstance(data, dict) else None
+        if isinstance(embedding, list) and embedding:
+            return embedding
+
+        logger.warning("Ollama response missing embedding; using deterministic fallback")
         return _fallback_embedding(text, self._dimensions)
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
@@ -301,10 +340,36 @@ class OllamaEmbeddings(EmbeddingProvider):
 
     @property
     def dimensions(self) -> int:
+        """Return embedding vector dimensionality for the Ollama model.
+
+        Returns:
+            int: Number of float values in each embedding vector.
+
+        Raises:
+            RuntimeError: If provider state has been corrupted unexpectedly.
+
+        Example:
+            >>> provider = OllamaEmbeddings()
+            >>> provider.dimensions > 0
+            True
+        """
         return self._dimensions
 
     @property
     def model_name(self) -> str:
+        """Return a normalized provider/model identifier.
+
+        Returns:
+            str: Identifier in ``provider/model`` format.
+
+        Raises:
+            RuntimeError: If model metadata is unavailable unexpectedly.
+
+        Example:
+            >>> provider = OllamaEmbeddings(model="nomic-embed-text")
+            >>> provider.model_name.startswith("ollama/")
+            True
+        """
         return f"ollama/{self.model}"
 
 
@@ -329,42 +394,141 @@ class OpenAIEmbeddings(EmbeddingProvider):
         """Generate embedding using OpenAI."""
         import requests
 
-        response = requests.post(
-            "https://api.openai.com/v1/embeddings",
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
-            json={"model": self.model, "input": text},
-            timeout=30,
-        )
-        response.raise_for_status()
-        result: list[float] = response.json()["data"][0]["embedding"]
-        return result
+        url = "https://api.openai.com/v1/embeddings"
+        try:
+            response = requests.post(
+                url,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={"model": self.model, "input": text},
+                timeout=30,
+            )
+
+            if response.status_code == 429:
+                retry_after = response.headers.get("Retry-After")
+                raise EmbeddingError(
+                    "OpenAI rate limit exceeded",
+                    context={
+                        "provider": "openai",
+                        "model": self.model,
+                        "retry_after": retry_after,
+                        "status_code": response.status_code,
+                    },
+                )
+
+            response.raise_for_status()
+            payload = response.json()
+            result: list[float] = payload["data"][0]["embedding"]
+            return result
+        except EmbeddingError:
+            raise
+        except requests.exceptions.Timeout as exc:
+            logger.exception("OpenAI embeddings request timed out")
+            raise EmbeddingError(
+                "OpenAI embeddings request timed out",
+                context={"provider": "openai", "model": self.model, "url": url},
+            ) from exc
+        except requests.exceptions.RequestException as exc:
+            logger.exception("OpenAI embeddings request failed")
+            raise EmbeddingError(
+                "OpenAI embeddings request failed",
+                context={"provider": "openai", "model": self.model, "url": url},
+            ) from exc
+        except (KeyError, IndexError, TypeError, ValueError) as exc:
+            logger.exception("Unexpected OpenAI embeddings response")
+            raise EmbeddingError(
+                "Unexpected OpenAI embeddings response",
+                context={"provider": "openai", "model": self.model, "url": url},
+            ) from exc
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for batch."""
         import requests
 
-        response = requests.post(
-            "https://api.openai.com/v1/embeddings",
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
-            json={"model": self.model, "input": texts},
-            timeout=60,
-        )
-        response.raise_for_status()
-        data = response.json()["data"]
-        return [item["embedding"] for item in sorted(data, key=lambda x: x["index"])]
+        url = "https://api.openai.com/v1/embeddings"
+        try:
+            response = requests.post(
+                url,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={"model": self.model, "input": texts},
+                timeout=60,
+            )
+
+            if response.status_code == 429:
+                retry_after = response.headers.get("Retry-After")
+                raise EmbeddingError(
+                    "OpenAI rate limit exceeded",
+                    context={
+                        "provider": "openai",
+                        "model": self.model,
+                        "retry_after": retry_after,
+                        "status_code": response.status_code,
+                    },
+                )
+
+            response.raise_for_status()
+            data = response.json()["data"]
+            return [
+                item["embedding"] for item in sorted(data, key=lambda x: x["index"])
+            ]
+        except EmbeddingError:
+            raise
+        except requests.exceptions.Timeout as exc:
+            logger.exception("OpenAI embeddings request timed out")
+            raise EmbeddingError(
+                "OpenAI embeddings request timed out",
+                context={"provider": "openai", "model": self.model, "url": url},
+            ) from exc
+        except requests.exceptions.RequestException as exc:
+            logger.exception("OpenAI embeddings request failed")
+            raise EmbeddingError(
+                "OpenAI embeddings request failed",
+                context={"provider": "openai", "model": self.model, "url": url},
+            ) from exc
+        except (KeyError, TypeError, ValueError) as exc:
+            logger.exception("Unexpected OpenAI embeddings response")
+            raise EmbeddingError(
+                "Unexpected OpenAI embeddings response",
+                context={"provider": "openai", "model": self.model, "url": url},
+            ) from exc
 
     @property
     def dimensions(self) -> int:
+        """Return embedding vector dimensionality for the configured OpenAI model.
+
+        Returns:
+            int: Number of float values in each embedding vector.
+
+        Raises:
+            RuntimeError: If provider state has been corrupted unexpectedly.
+
+        Example:
+            >>> provider = OpenAIEmbeddings(api_key="test-key")
+            >>> provider.dimensions in {512, 1536}
+            True
+        """
         return self._dimensions
 
     @property
     def model_name(self) -> str:
+        """Return a normalized provider/model identifier.
+
+        Returns:
+            str: Identifier in ``provider/model`` format.
+
+        Raises:
+            RuntimeError: If model metadata is unavailable unexpectedly.
+
+        Example:
+            >>> provider = OpenAIEmbeddings(api_key="test-key")
+            >>> provider.model_name.startswith("openai/")
+            True
+        """
         return f"openai/{self.model}"
 
 
@@ -459,27 +623,47 @@ class SentenceTransformerEmbeddings(EmbeddingProvider):
                 "sentence-transformers not available; using deterministic fallback embeddings"
             )
             self._model = None
+        except Exception as exc:
+            logger.exception("Failed to load sentence-transformers model")
+            raise EmbeddingError(
+                "Failed to load sentence-transformers model",
+                context={"provider": "sentence_transformers", "model": self.model, "device": self.device},
+            ) from exc
 
     def embed(self, text: str) -> list[float]:
         """Generate embedding with hardware acceleration."""
         self._load_model()
         if self._model is None:
             return _fallback_embedding(text, self._dimensions)
-        embedding = self._model.encode(text, convert_to_numpy=True)
-        return list(embedding.tolist())
+        try:
+            embedding = self._model.encode(text, convert_to_numpy=True)
+            return list(embedding.tolist())
+        except Exception as exc:
+            logger.exception("SentenceTransformer embedding failed; using fallback")
+            raise EmbeddingError(
+                "SentenceTransformer embedding failed",
+                context={"provider": "sentence_transformers", "model": self.model, "device": self.device},
+            ) from exc
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for batch with GPU batching."""
         self._load_model()
         if self._model is None:
             return [_fallback_embedding(text, self._dimensions) for text in texts]
-        embeddings = self._model.encode(
-            texts,
-            batch_size=self.batch_size,
-            convert_to_numpy=True,
-            show_progress_bar=False,
-        )
-        return [list(e) for e in embeddings.tolist()]
+        try:
+            embeddings = self._model.encode(
+                texts,
+                batch_size=self.batch_size,
+                convert_to_numpy=True,
+                show_progress_bar=False,
+            )
+            return [list(e) for e in embeddings.tolist()]
+        except Exception as exc:
+            logger.exception("SentenceTransformer batch embedding failed")
+            raise EmbeddingError(
+                "SentenceTransformer batch embedding failed",
+                context={"provider": "sentence_transformers", "model": self.model, "device": self.device},
+            ) from exc
 
     def similarity(self, text1: str, text2: str) -> float:
         """Calculate cosine similarity between two texts."""
@@ -560,10 +744,36 @@ class SentenceTransformerEmbeddings(EmbeddingProvider):
 
     @property
     def dimensions(self) -> int:
+        """Return embedding vector dimensionality for the loaded model.
+
+        Returns:
+            int: Number of float values in each embedding vector.
+
+        Raises:
+            RuntimeError: If the provider has not been initialized correctly.
+
+        Example:
+            >>> provider = SentenceTransformerEmbeddings()
+            >>> provider.dimensions > 0
+            True
+        """
         return self._dimensions
 
     @property
     def model_name(self) -> str:
+        """Return a normalized identifier including selected runtime device.
+
+        Returns:
+            str: Identifier in ``provider/model@device`` format.
+
+        Raises:
+            RuntimeError: If provider runtime metadata is unavailable.
+
+        Example:
+            >>> provider = SentenceTransformerEmbeddings(device="cpu")
+            >>> "@cpu" in provider.model_name
+            True
+        """
         return f"sentence_transformers/{self.model}@{self.device}"
 
 
@@ -651,10 +861,36 @@ class MLXEmbeddings(EmbeddingProvider):
 
     @property
     def dimensions(self) -> int:
+        """Return embedding vector dimensionality for the MLX-backed model.
+
+        Returns:
+            int: Number of float values in each embedding vector.
+
+        Raises:
+            RuntimeError: If provider state has been corrupted unexpectedly.
+
+        Example:
+            >>> provider = MLXEmbeddings(allow_fallback=True)
+            >>> provider.dimensions > 0
+            True
+        """
         return self._dimensions
 
     @property
     def model_name(self) -> str:
+        """Return a normalized provider/model identifier.
+
+        Returns:
+            str: Identifier in ``provider/model`` format.
+
+        Raises:
+            RuntimeError: If model metadata is unavailable unexpectedly.
+
+        Example:
+            >>> provider = MLXEmbeddings(allow_fallback=True)
+            >>> provider.model_name.startswith("mlx/")
+            True
+        """
         return f"mlx/{self.model}"
 
 
@@ -760,10 +996,36 @@ class CUDAEmbeddings(EmbeddingProvider):
 
     @property
     def dimensions(self) -> int:
+        """Return embedding vector dimensionality for the CUDA-backed model.
+
+        Returns:
+            int: Number of float values in each embedding vector.
+
+        Raises:
+            RuntimeError: If provider state has been corrupted unexpectedly.
+
+        Example:
+            >>> provider = CUDAEmbeddings(model="all-MiniLM-L6-v2")
+            >>> provider.dimensions > 0
+            True
+        """
         return self._dimensions
 
     @property
     def model_name(self) -> str:
+        """Return a normalized identifier including selected CUDA device.
+
+        Returns:
+            str: Identifier in ``provider/model@device`` format.
+
+        Raises:
+            RuntimeError: If provider runtime metadata is unavailable.
+
+        Example:
+            >>> provider = CUDAEmbeddings(model="all-MiniLM-L6-v2")
+            >>> provider.model_name.startswith("cuda/")
+            True
+        """
         return f"cuda/{self.model}@{self.device}"
 
 
@@ -843,10 +1105,36 @@ class ROCmEmbeddings(EmbeddingProvider):
 
     @property
     def dimensions(self) -> int:
+        """Return embedding vector dimensionality for the ROCm-backed model.
+
+        Returns:
+            int: Number of float values in each embedding vector.
+
+        Raises:
+            RuntimeError: If provider state has been corrupted unexpectedly.
+
+        Example:
+            >>> provider = ROCmEmbeddings(model="all-MiniLM-L6-v2")
+            >>> provider.dimensions > 0
+            True
+        """
         return self._dimensions
 
     @property
     def model_name(self) -> str:
+        """Return a normalized identifier including selected ROCm device.
+
+        Returns:
+            str: Identifier in ``provider/model@device`` format.
+
+        Raises:
+            RuntimeError: If provider runtime metadata is unavailable.
+
+        Example:
+            >>> provider = ROCmEmbeddings(model="all-MiniLM-L6-v2")
+            >>> provider.model_name.startswith("rocm/")
+            True
+        """
         return f"rocm/{self.model}@{self.device}"
 
 
@@ -860,7 +1148,14 @@ class CachedEmbeddings(EmbeddingProvider):
     def __init__(self, provider: EmbeddingProvider, cache_dir: Optional[Path] = None):
         self.provider = provider
         self.cache_dir = cache_dir or CACHE_DIR / provider.model_name.replace("/", "_")
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            logger.exception("Failed to create embeddings cache directory")
+            raise EmbeddingError(
+                "Failed to create embeddings cache directory",
+                context={"cache_dir": str(self.cache_dir), "provider": provider.model_name},
+            ) from exc
 
     def _cache_key(self, text: str) -> str:
         """Generate cache key for text."""
@@ -884,7 +1179,10 @@ class CachedEmbeddings(EmbeddingProvider):
     def _set_cached(self, text: str, embedding: list[float]) -> None:
         """Cache embedding."""
         cache_file = self.cache_dir / f"{self._cache_key(text)}.json"
-        cache_file.write_text(json.dumps(embedding))
+        try:
+            cache_file.write_text(json.dumps(embedding))
+        except OSError as exc:
+            logger.debug("Cache write failed for %s: %s", cache_file, exc)
 
     def embed(self, text: str) -> list[float]:
         """Get embedding (from cache or generate)."""
@@ -924,10 +1222,38 @@ class CachedEmbeddings(EmbeddingProvider):
 
     @property
     def dimensions(self) -> int:
+        """Return embedding dimensionality exposed by the wrapped provider.
+
+        Returns:
+            int: Number of float values in each embedding vector.
+
+        Raises:
+            RuntimeError: If the wrapped provider cannot expose dimensions.
+
+        Example:
+            >>> base = OllamaEmbeddings()
+            >>> cached = CachedEmbeddings(base)
+            >>> cached.dimensions == base.dimensions
+            True
+        """
         return self.provider.dimensions
 
     @property
     def model_name(self) -> str:
+        """Return a normalized identifier for the cache wrapper and provider.
+
+        Returns:
+            str: Identifier in ``cached/provider-model`` format.
+
+        Raises:
+            RuntimeError: If wrapped provider metadata is unavailable.
+
+        Example:
+            >>> base = OllamaEmbeddings()
+            >>> cached = CachedEmbeddings(base)
+            >>> cached.model_name.startswith("cached/")
+            True
+        """
         return f"cached/{self.provider.model_name}"
 
 
@@ -998,15 +1324,17 @@ def get_embeddings(
                 import requests
 
                 response = requests.get("http://localhost:11434/api/tags", timeout=2)
-                if response.ok:
-                    logger.info("Using Ollama embeddings")
-                    base = OllamaEmbeddings()
-                else:
-                    raise ConnectionError("Ollama not responding")
-            except (ConnectionError, TimeoutError, OSError) as e:
-                logger.debug(f"Ollama not available: {e}, falling back to OpenAI")
-                logger.info("Using OpenAI embeddings")
-                base = OpenAIEmbeddings()
+                response.raise_for_status()
+                logger.info("Using Ollama embeddings")
+                base = OllamaEmbeddings()
+            except Exception as e:
+                logger.debug(f"Ollama not available: {e}, trying OpenAI")
+                try:
+                    logger.info("Using OpenAI embeddings")
+                    base = OpenAIEmbeddings()
+                except Exception as exc:
+                    logger.debug(f"OpenAI embeddings unavailable: {exc}, falling back to local")
+                    base = SentenceTransformerEmbeddings(model=model)
 
     elif provider in ("sentence_transformers", "local"):
         # Use SentenceTransformerEmbeddings with auto device detection
@@ -1050,7 +1378,10 @@ def get_embeddings(
         )
 
     if base is None:
-        raise RuntimeError(f"Failed to initialize embedding provider: {provider}")
+        raise EmbeddingError(
+            "Failed to initialize embedding provider",
+            context={"provider": provider, "model": model, "cache": cache},
+        )
 
     if cache:
         return CachedEmbeddings(base)
@@ -1189,5 +1520,4 @@ def get_embedding(
         vector = get_embedding("Some text", provider="openai")
     """
     embedder = get_embeddings(provider=provider, model=model)
-    result = embedder.embed(text)
-    return result.embedding
+    return embedder.embed(text)

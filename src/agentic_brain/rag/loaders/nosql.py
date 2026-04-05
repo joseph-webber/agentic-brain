@@ -28,7 +28,7 @@ import os
 import queue
 import threading
 from collections.abc import Generator
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Optional
 
 from .base import BaseLoader, LoadedDocument

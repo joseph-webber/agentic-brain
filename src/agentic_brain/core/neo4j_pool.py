@@ -97,7 +97,14 @@ def configure_pool(
 
 
 def _create_driver() -> Driver:
-    """Create the global driver using the current config."""
+    """Create the global driver using the current config.
+    
+    Returns:
+        neo4j.GraphDatabase.driver instance.
+        
+    Raises:
+        ImportError: If neo4j package is not installed.
+    """
 
     if not NEO4J_AVAILABLE:
         raise ImportError("neo4j package is required. Install with: pip install neo4j")
@@ -146,7 +153,14 @@ def get_driver(
 
 @contextmanager
 def get_session(database: Optional[str] = None):
-    """Context manager that yields a Neo4j session."""
+    """Context manager that yields a Neo4j session.
+    
+    Args:
+        database: Optional database name. Uses configured default if None.
+        
+    Yields:
+        neo4j.Session instance. Automatically closed on exit.
+    """
 
     driver = get_driver(database=database)
     session = (
@@ -161,7 +175,10 @@ def get_session(database: Optional[str] = None):
 
 
 def close_pool() -> None:
-    """Close the global driver."""
+    """Close the global driver.
+    
+    Called automatically on program exit via atexit hooks.
+    """
 
     global _driver
     if _driver:
@@ -170,7 +187,18 @@ def close_pool() -> None:
 
 
 def query(cypher: str, **params) -> List[Dict[str, Any]]:
-    """Execute a Cypher query and return rows as dictionaries."""
+    """Execute a Cypher query and return rows as dictionaries.
+    
+    Args:
+        cypher: Cypher query string.
+        **params: Query parameters.
+        
+    Returns:
+        List of result rows as dictionaries.
+        
+    Raises:
+        ServiceUnavailable: If Neo4j is unreachable.
+    """
 
     with get_session() as session:
         result = session.run(cypher, **params)
@@ -178,7 +206,18 @@ def query(cypher: str, **params) -> List[Dict[str, Any]]:
 
 
 def query_single(cypher: str, **params) -> Optional[Dict[str, Any]]:
-    """Execute a Cypher query and return the first record."""
+    """Execute a Cypher query and return the first record.
+    
+    Args:
+        cypher: Cypher query string.
+        **params: Query parameters.
+        
+    Returns:
+        First result row as dictionary, or None if no results.
+        
+    Raises:
+        ServiceUnavailable: If Neo4j is unreachable.
+    """
 
     with get_session() as session:
         result = session.run(cypher, **params)
@@ -187,7 +226,20 @@ def query_single(cypher: str, **params) -> Optional[Dict[str, Any]]:
 
 
 def query_value(cypher: str, **params) -> Any:
-    """Execute a query and return the first scalar value."""
+    """Execute a query and return the first scalar value.
+    
+    Useful for count(), aggregates, and single-value returns.
+    
+    Args:
+        cypher: Cypher query string.
+        **params: Query parameters.
+        
+    Returns:
+        First column of first row, or None if no results.
+        
+    Raises:
+        ServiceUnavailable: If Neo4j is unreachable.
+    """
 
     record = query_single(cypher, **params)
     if record:
@@ -196,7 +248,20 @@ def query_value(cypher: str, **params) -> Any:
 
 
 def write(cypher: str, **params) -> int:
-    """Execute a write query and return the number of affected entities."""
+    """Execute a write query and return the number of affected entities.
+    
+    Counts nodes created/deleted and relationships created/deleted and properties set.
+    
+    Args:
+        cypher: Cypher write query (CREATE, DELETE, SET, MERGE, etc).
+        **params: Query parameters.
+        
+    Returns:
+        Total count of affected nodes, relationships, and properties.
+        
+    Raises:
+        ServiceUnavailable: If Neo4j is unreachable.
+    """
 
     with get_session() as session:
         result = session.run(cypher, **params)
@@ -212,7 +277,19 @@ def write(cypher: str, **params) -> int:
 
 
 def health_check() -> Dict[str, Any]:
-    """Return a health payload for the pool."""
+    """Return a health payload for the pool.
+    
+    Never raises exceptions. Returns error details on failure.
+    
+    Returns:
+        Dictionary with status and diagnostics:
+            status (str): 'healthy', 'unavailable', or 'error'
+            uri (str): Neo4j connection URI
+            database (str): Database name
+            total_nodes (int): Node count (if healthy)
+            pool_size (int): Connection pool size
+            error (str): Error message (if not healthy)
+    """
 
     try:
         driver = get_driver()
@@ -248,7 +325,14 @@ def health_check() -> Dict[str, Any]:
 
 
 def _create_async_driver() -> Any:
-    """Create the global async driver using the current config."""
+    """Create the global async driver using the current config.
+    
+    Returns:
+        neo4j.AsyncGraphDatabase.driver instance.
+        
+    Raises:
+        ImportError: If neo4j async driver is not available.
+    """
 
     if not ASYNC_NEO4J_AVAILABLE or AsyncGraphDatabase is None:
         raise ImportError(
@@ -289,7 +373,14 @@ async def async_get_driver(
 
 @asynccontextmanager
 async def async_get_session(database: Optional[str] = None):
-    """Async context manager that yields a Neo4j async session."""
+    """Async context manager that yields a Neo4j async session.
+    
+    Args:
+        database: Optional database name. Uses configured default if None.
+        
+    Yields:
+        neo4j.AsyncSession instance. Automatically closed on exit.
+    """
 
     driver = await async_get_driver()
     db = database or _config.database
@@ -301,7 +392,10 @@ async def async_get_session(database: Optional[str] = None):
 
 
 async def async_close_pool() -> None:
-    """Close the global async driver."""
+    """Close the global async driver.
+    
+    Intended to be called during application shutdown.
+    """
 
     global _async_driver
     if _async_driver:
@@ -310,7 +404,18 @@ async def async_close_pool() -> None:
 
 
 async def async_query(cypher: str, **params) -> List[Dict[str, Any]]:
-    """Execute a Cypher query asynchronously and return rows as dicts."""
+    """Execute a Cypher query asynchronously and return rows as dicts.
+    
+    Args:
+        cypher: Cypher query string.
+        **params: Query parameters.
+        
+    Returns:
+        List of result rows as dictionaries.
+        
+    Raises:
+        ServiceUnavailable: If Neo4j is unreachable.
+    """
 
     async with async_get_session() as session:
         result = await session.run(cypher, **params)
@@ -318,7 +423,18 @@ async def async_query(cypher: str, **params) -> List[Dict[str, Any]]:
 
 
 async def async_query_single(cypher: str, **params) -> Optional[Dict[str, Any]]:
-    """Execute a Cypher query asynchronously and return the first record."""
+    """Execute a Cypher query asynchronously and return the first record.
+    
+    Args:
+        cypher: Cypher query string.
+        **params: Query parameters.
+        
+    Returns:
+        First result row as dictionary, or None if no results.
+        
+    Raises:
+        ServiceUnavailable: If Neo4j is unreachable.
+    """
 
     async with async_get_session() as session:
         result = await session.run(cypher, **params)
@@ -327,7 +443,18 @@ async def async_query_single(cypher: str, **params) -> Optional[Dict[str, Any]]:
 
 
 async def async_query_value(cypher: str, **params) -> Any:
-    """Execute a query asynchronously and return the first scalar value."""
+    """Execute a query asynchronously and return the first scalar value.
+    
+    Args:
+        cypher: Cypher query string.
+        **params: Query parameters.
+        
+    Returns:
+        First column of first row, or None if no results.
+        
+    Raises:
+        ServiceUnavailable: If Neo4j is unreachable.
+    """
 
     record = await async_query_single(cypher, **params)
     if record:
@@ -336,7 +463,18 @@ async def async_query_value(cypher: str, **params) -> Any:
 
 
 async def async_write(cypher: str, **params) -> int:
-    """Execute a write query asynchronously and return affected entity count."""
+    """Execute a write query asynchronously and return affected entity count.
+    
+    Args:
+        cypher: Cypher write query (CREATE, DELETE, SET, MERGE, etc).
+        **params: Query parameters.
+        
+    Returns:
+        Total count of affected nodes, relationships, and properties.
+        
+    Raises:
+        ServiceUnavailable: If Neo4j is unreachable.
+    """
 
     async with async_get_session() as session:
         result = await session.run(cypher, **params)
@@ -352,7 +490,13 @@ async def async_write(cypher: str, **params) -> int:
 
 
 async def async_health_check() -> Dict[str, Any]:
-    """Return an async health payload for the pool."""
+    """Return an async health payload for the pool.
+    
+    Never raises exceptions. Returns error details on failure.
+    
+    Returns:
+        Dictionary with status and diagnostics (see health_check).
+    """
 
     try:
         driver = await async_get_driver()

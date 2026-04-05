@@ -19,7 +19,6 @@ SECURITY: Uses _validate_salesforce_object() to prevent injection attacks
 in SOQL/SOSL queries.
 """
 
-import json
 import logging
 import os
 from datetime import datetime

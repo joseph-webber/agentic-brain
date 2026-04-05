@@ -31,7 +31,7 @@ Features:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from math import atan2, cos, radians, sin, sqrt
 from typing import Any, Dict, List, Optional, Tuple

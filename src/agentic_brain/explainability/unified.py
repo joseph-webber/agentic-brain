@@ -23,7 +23,7 @@ based on model type and data characteristics.
 import json
 import logging
 from dataclasses import dataclass
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from . import (
     LIME_AVAILABLE,

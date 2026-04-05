@@ -32,8 +32,8 @@ import functools
 import inspect
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from datetime import UTC, datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional
 
 from .event_store import EventStore, get_event_store
 from .events import BaseEvent, EventType

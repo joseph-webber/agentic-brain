@@ -28,9 +28,9 @@ import os
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any, Iterable, Protocol
 
 from .models import WooAddress

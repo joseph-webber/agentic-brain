@@ -46,11 +46,10 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, TypeVar

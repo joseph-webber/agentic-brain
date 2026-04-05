@@ -19,7 +19,6 @@ from __future__ import annotations
 Google AI Studio provider implementation - Gemini models FREE.
 """
 
-import asyncio
 import json
 import logging
 import os

@@ -12,17 +12,14 @@ loader factory and provides format-specific loaders with intelligent chunking.
 """
 
 import logging
-from dataclasses import dataclass, field
-from io import BytesIO
 from pathlib import Path
-from typing import Any, Iterator, Optional
+from typing import Any, Optional
 
-from ....rag.chunking import BaseChunker, ChunkingStrategy, create_chunker
+from ....rag.chunking import ChunkingStrategy, create_chunker
 from ....rag.loaders.base import BaseLoader, LoadedDocument
 from .apple_keynote import KeynoteProcessor
 from .apple_numbers import NumbersProcessor
 from .apple_pages import PagesProcessor
-from .converter import OfficeConverter
 from .excel import ExcelProcessor
 from .models import DocumentContent, OfficeFormat, Paragraph, Slide, Table, Worksheet
 from .opendocument import OpenDocumentProcessor

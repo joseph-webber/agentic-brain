@@ -30,7 +30,7 @@ import logging
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Optional
 
 from .base import BaseTransport, TransportConfig, TransportMessage, TransportType

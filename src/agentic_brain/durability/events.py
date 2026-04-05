@@ -47,7 +47,7 @@ import uuid
 from abc import ABC
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any
 
 

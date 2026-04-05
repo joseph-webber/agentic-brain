@@ -27,11 +27,11 @@ from __future__ import annotations
 import asyncio
 import inspect
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 from unittest.mock import AsyncMock, MagicMock
 
-from .client import Client, WorkflowHandle
+from .client import Client
 from .worker import Worker
 
 T = TypeVar("T")

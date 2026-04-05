@@ -12,7 +12,7 @@ import posixpath
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 from xml.etree import ElementTree as ET
 
 from .exceptions import UnsupportedOfficeFormatError

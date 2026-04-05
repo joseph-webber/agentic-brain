@@ -27,7 +27,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Mapping, MutableMapping, Optional
+from typing import Any, Mapping, Optional
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import Response

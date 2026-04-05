@@ -19,7 +19,6 @@ These templates are designed to be mobile responsive and accessible:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping
 
 
 @dataclass(slots=True)

@@ -24,10 +24,8 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import subprocess
 from dataclasses import dataclass
 
-import aiohttp
 
 from .config import Provider
 

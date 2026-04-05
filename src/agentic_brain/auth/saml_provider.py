@@ -15,7 +15,7 @@ from __future__ import annotations
 import uuid
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Dict
 
 # XML namespaces used for SAML 2.0

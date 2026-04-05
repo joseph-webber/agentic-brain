@@ -31,7 +31,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from .redis_coordinator import SwarmCoordinator, _dumps, _loads, _key_agents_hash, _key_agents_set, _key_hb
+from .redis_coordinator import SwarmCoordinator, _loads, _key_agents_hash, _key_agents_set, _key_hb
 
 logger = logging.getLogger(__name__)
 

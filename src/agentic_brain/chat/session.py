@@ -31,7 +31,7 @@ import hashlib
 import json
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 

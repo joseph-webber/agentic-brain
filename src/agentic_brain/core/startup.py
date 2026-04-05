@@ -68,7 +68,16 @@ class StartupSnapshot:
 
 
 def _to_datetime(value: Any) -> datetime:
-    """Normalize Neo4j or Python datetime values."""
+    """Normalize Neo4j or Python datetime values to UTC.
+    
+    Handles Neo4j datetime objects with .to_native() method.
+    
+    Args:
+        value: Any datetime-like value or string ISO format.
+        
+    Returns:
+        datetime in UTC timezone.
+    """
     if value is None:
         return datetime.now(UTC)
     if hasattr(value, "to_native"):
@@ -86,7 +95,16 @@ def _to_datetime(value: Any) -> datetime:
 
 
 def _parse_metadata(raw_metadata: Any) -> dict[str, Any]:
-    """Best-effort parsing for stored metadata strings."""
+    """Best-effort parsing for stored metadata strings.
+    
+    Handles dict, string representations, and malformed data gracefully.
+    
+    Args:
+        raw_metadata: Metadata from Neo4j (often stored as string).
+        
+    Returns:
+        Parsed dictionary, or empty dict if parsing fails.
+    """
     if isinstance(raw_metadata, dict):
         return raw_metadata
     if not raw_metadata or not isinstance(raw_metadata, str):
@@ -99,7 +117,15 @@ def _parse_metadata(raw_metadata: Any) -> dict[str, Any]:
 
 
 def _clean_text(text: str | None, *, max_length: int = 96) -> str:
-    """Collapse whitespace and trim for user-facing output."""
+    """Collapse whitespace and trim for user-facing output.
+    
+    Args:
+        text: Text to clean, or None.
+        max_length: Maximum output length (default: 96).
+        
+    Returns:
+        Cleaned text, trimmed with ellipsis if needed.
+    """
     if not text:
         return "No stored details"
     cleaned = " ".join(text.split())
@@ -109,7 +135,16 @@ def _clean_text(text: str | None, *, max_length: int = 96) -> str:
 
 
 def _format_time(value: Any) -> str:
-    """Format timestamps in the local timezone."""
+    """Format timestamps in the local timezone.
+    
+    Returns today/date-based human-friendly format.
+    
+    Args:
+        value: Any datetime-like value.
+        
+    Returns:
+        Formatted string like "today at 3:42 PM" or "Dec 25 at 10:30 AM".
+    """
     timestamp = _to_datetime(value).astimezone()
     now = datetime.now(timestamp.tzinfo)
     if timestamp.date() == now.date():
@@ -120,7 +155,17 @@ def _format_time(value: Any) -> str:
 
 
 def _extract_topic(row: Mapping[str, Any]) -> str:
-    """Infer a human-friendly topic from metadata or content."""
+    """Infer a human-friendly topic from metadata or content.
+    
+    Searches metadata keys: topic, session_topic, title, category, summary.
+    Falls back to content if no metadata topic found.
+    
+    Args:
+        row: Memory record from Neo4j.
+        
+    Returns:
+        Topic string, cleaned and trimmed to 72 chars.
+    """
     metadata = _parse_metadata(row.get("metadata"))
     for key in ("topic", "session_topic", "title", "category", "summary"):
         value = metadata.get(key)
@@ -130,7 +175,16 @@ def _extract_topic(row: Mapping[str, Any]) -> str:
 
 
 def _build_recent_summary(rows: Sequence[Mapping[str, Any]]) -> str:
-    """Build a short summary from the most recent context entries."""
+    """Build a short summary from the most recent context entries.
+    
+    Takes up to 3 recent snippets and joins them with semicolons.
+    
+    Args:
+        rows: Sequence of memory records.
+        
+    Returns:
+        Summary string like "Item 1; Item 2; Item 3".
+    """
     if not rows:
         return "No recent context stored yet."
     snippets: list[str] = []
@@ -142,7 +196,16 @@ def _build_recent_summary(rows: Sequence[Mapping[str, Any]]) -> str:
 
 
 def _build_proof_lines(rows: Sequence[Mapping[str, Any]]) -> tuple[str, ...]:
-    """Build proof lines showing the memories behind the greeting."""
+    """Build proof lines showing the memories behind the greeting.
+    
+    Each line shows timestamp and truncated content for source attribution.
+    
+    Args:
+        rows: Sequence of memory records.
+        
+    Returns:
+        Tuple of proof lines, up to 3 entries.
+    """
     proof: list[str] = []
     for row in rows[:3]:
         proof.append(
@@ -154,7 +217,15 @@ def _build_proof_lines(rows: Sequence[Mapping[str, Any]]) -> tuple[str, ...]:
 def build_startup_snapshot(
     rows: Sequence[Mapping[str, Any]], pending_count: int = 0
 ) -> StartupSnapshot:
-    """Convert recent memory rows into a greeting snapshot."""
+    """Convert recent memory rows into a greeting snapshot.
+    
+    Args:
+        rows: Sequence of memory records (ordered by timestamp DESC).
+        pending_count: Number of pending items.
+        
+    Returns:
+        StartupSnapshot with greeting, proof lines, and metadata.
+    """
     last_row = rows[0] if rows else {}
     last_session_topic = (
         _extract_topic(last_row) if last_row else "No recent context found"
@@ -185,7 +256,15 @@ def build_startup_snapshot(
 def _fetch_recent_context(
     *, limit: int = 5, scopes: Sequence[str] = ("private", "public")
 ) -> list[dict[str, Any]]:
-    """Fetch recent memories from Neo4j."""
+    """Fetch recent memories from Neo4j.
+    
+    Args:
+        limit: Maximum number of memories to return (default: 5).
+        scopes: Memory scopes to include (default: private, public).
+        
+    Returns:
+        List of memory records ordered by timestamp DESC.
+    """
     with get_session() as session:
         result = session.run(RECENT_CONTEXT_CYPHER, scopes=list(scopes), limit=limit)
         return [dict(record) for record in result]
@@ -194,7 +273,17 @@ def _fetch_recent_context(
 def _count_pending_items(
     *, scopes: Sequence[str] = ("private", "public"), window_days: int = 7
 ) -> int:
-    """Estimate pending items from recent memory content."""
+    """Estimate pending items from recent memory content.
+    
+    Counts memories containing "pending", "todo", "follow up", etc.
+    
+    Args:
+        scopes: Memory scopes to search (default: private, public).
+        window_days: Look back N days (default: 7).
+        
+    Returns:
+        Estimated count of pending items.
+    """
     with get_session() as session:
         result = session.run(
             PENDING_CONTEXT_CYPHER,
@@ -210,7 +299,17 @@ def _count_pending_items(
 def get_startup_snapshot(
     *, limit: int = 5, scopes: Sequence[str] = ("private", "public")
 ) -> StartupSnapshot:
-    """Load recent context from Neo4j and build a startup snapshot."""
+    """Load recent context from Neo4j and build a startup snapshot.
+    
+    Fails gracefully: on Neo4j errors, returns empty snapshot with basic greeting.
+    
+    Args:
+        limit: Maximum recent memories to load (default: 5).
+        scopes: Memory scopes to include (default: private, public).
+        
+    Returns:
+        StartupSnapshot with greeting and metadata.
+    """
     try:
         rows = _fetch_recent_context(limit=limit, scopes=scopes)
         pending_count = _count_pending_items(scopes=scopes)
@@ -223,7 +322,17 @@ def get_startup_snapshot(
 def startup_greeting(
     *, limit: int = 5, scopes: Sequence[str] = ("private", "public")
 ) -> str:
-    """Return a friendly startup greeting with context from Neo4j."""
+    """Return a friendly startup greeting with context from Neo4j.
+    
+    Convenience function that calls get_startup_snapshot().greeting.
+    
+    Args:
+        limit: Maximum recent memories to load (default: 5).
+        scopes: Memory scopes to include (default: private, public).
+        
+    Returns:
+        Greeting string ready for display or voice output.
+    """
     return get_startup_snapshot(limit=limit, scopes=scopes).greeting
 
 

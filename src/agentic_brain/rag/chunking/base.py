@@ -34,11 +34,16 @@ Usage:
     chunks = md_chunker.chunk("# Title\n\nContent...")
 """
 
+import logging
 import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
+
+from ..exceptions import ChunkingError
+
+logger = logging.getLogger(__name__)
 
 # Default chunking parameters
 DEFAULT_CHUNK_SIZE = 512
@@ -103,6 +108,90 @@ class BaseChunker(ABC):
         self.overlap = overlap
         self.separator = separator
 
+    def _prepare_text(self, text: Any) -> str:
+        """Normalize and validate input text.
+
+        Handles:
+        - Empty documents
+        - Byte inputs (UTF-8 decode)
+        - Encoding errors
+        """
+
+        if text is None:
+            logger.warning("Chunking requested for None document")
+            return ""
+
+        if isinstance(text, bytes):
+            try:
+                text = text.decode("utf-8")
+            except UnicodeDecodeError as exc:
+                raise ChunkingError(
+                    "Failed to decode document bytes as UTF-8",
+                    context={"error": str(exc)},
+                ) from exc
+
+        if not isinstance(text, str):
+            raise ChunkingError(
+                "Chunker expected str or bytes input",
+                context={"type": type(text).__name__},
+            )
+
+        if not text.strip():
+            logger.warning("Chunking requested for empty/whitespace document")
+            return ""
+
+        return text
+
+    def _enforce_max_chunk_size(self, chunks: list[Chunk]) -> list[Chunk]:
+        """Split oversized chunks defensively."""
+
+        if not chunks:
+            return chunks
+
+        max_len = max(self.chunk_size + 200, self.chunk_size * 2)
+        updated: list[Chunk] = []
+
+        for chunk in chunks:
+            if len(chunk.content) <= max_len:
+                updated.append(chunk)
+                continue
+
+            logger.warning(
+                "Oversized chunk detected (len=%s, max=%s). Splitting.",
+                len(chunk.content),
+                max_len,
+            )
+
+            content = chunk.content
+            base_start = chunk.start_char
+            pos = 0
+            while pos < len(content):
+                end = min(pos + self.chunk_size, len(content))
+                sub_text = content[pos:end].strip()
+                if sub_text:
+                    updated.append(
+                        Chunk(
+                            content=sub_text,
+                            start_char=base_start + pos,
+                            end_char=base_start + end,
+                            chunk_index=0,  # reindexed below
+                            metadata={
+                                **dict(chunk.metadata or {}),
+                                "oversized_split": True,
+                            },
+                        )
+                    )
+
+                if end >= len(content):
+                    break
+
+                next_pos = end - min(self.overlap, end)
+                pos = next_pos if next_pos > pos else end
+
+        for idx, chunk in enumerate(updated):
+            chunk.chunk_index = idx
+        return updated
+
     @abstractmethod
     def chunk(
         self, text: str, metadata: Optional[dict[str, Any]] = None
@@ -147,6 +236,7 @@ class FixedChunker(BaseChunker):
         self, text: str, metadata: Optional[dict[str, Any]] = None
     ) -> list[Chunk]:
         """Split text into fixed-size chunks."""
+        text = self._prepare_text(text)
         if not text:
             return []
 
@@ -186,7 +276,7 @@ class FixedChunker(BaseChunker):
             char_pos = new_char_pos
 
         self._add_metadata(chunks, metadata)
-        return chunks
+        return self._enforce_max_chunk_size(chunks)
 
 
 class SemanticChunker(BaseChunker):
@@ -235,6 +325,7 @@ class SemanticChunker(BaseChunker):
         self, text: str, metadata: Optional[dict[str, Any]] = None
     ) -> list[Chunk]:
         """Split text into semantic chunks."""
+        text = self._prepare_text(text)
         if not text:
             return []
 
@@ -257,7 +348,7 @@ class SemanticChunker(BaseChunker):
                 )
                 cursor = end
             self._add_metadata(chunks, metadata)
-            return chunks
+            return self._enforce_max_chunk_size(chunks)
 
         sentences = self._split_sentences(text)
         if not sentences:
@@ -319,7 +410,7 @@ class SemanticChunker(BaseChunker):
                 chunks.append(chunk)
 
         self._add_metadata(chunks, metadata)
-        return chunks
+        return self._enforce_max_chunk_size(chunks)
 
 
 class RecursiveChunker(BaseChunker):
@@ -384,6 +475,7 @@ class RecursiveChunker(BaseChunker):
         self, text: str, metadata: Optional[dict[str, Any]] = None
     ) -> list[Chunk]:
         """Split text recursively using multiple separators."""
+        text = self._prepare_text(text)
         if not text:
             return []
 
@@ -432,7 +524,7 @@ class RecursiveChunker(BaseChunker):
             chunks.append(chunk)
 
         self._add_metadata(chunks, metadata)
-        return chunks
+        return self._enforce_max_chunk_size(chunks)
 
 
 class MarkdownChunker(BaseChunker):
@@ -485,6 +577,7 @@ class MarkdownChunker(BaseChunker):
         self, text: str, metadata: Optional[dict[str, Any]] = None
     ) -> list[Chunk]:
         """Split markdown respecting structure."""
+        text = self._prepare_text(text)
         if not text:
             return []
 
@@ -548,7 +641,7 @@ class MarkdownChunker(BaseChunker):
             chunks.append(chunk)
 
         self._add_metadata(chunks, metadata)
-        return chunks
+        return self._enforce_max_chunk_size(chunks)
 
 
 def create_chunker(
@@ -563,6 +656,9 @@ def create_chunker(
 
     Returns:
         BaseChunker instance
+
+    Raises:
+        ValueError: If ``strategy`` is not a supported chunking strategy.
 
     Example:
         chunker = create_chunker(ChunkingStrategy.MARKDOWN)

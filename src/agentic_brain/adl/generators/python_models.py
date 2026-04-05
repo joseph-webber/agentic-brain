@@ -5,17 +5,15 @@
 
 from __future__ import annotations
 
-from typing import List, Set
+from typing import List
 
 from ..parser import ADLConfig, EntityDef, EnumDef, FieldDef
 from .base import (
     entity_has_dto,
     entity_has_pagination,
-    get_relationships_for_entity,
     get_validator_arg,
     has_validator,
     python_type,
-    to_snake_case,
 )
 
 

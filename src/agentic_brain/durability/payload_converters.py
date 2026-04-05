@@ -57,12 +57,11 @@ import base64
 import gzip
 import json
 import logging
-import zlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar
 
 logger = logging.getLogger(__name__)
 

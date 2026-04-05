@@ -27,17 +27,16 @@ Features:
 - UUID/timestamp generation
 """
 
-import asyncio
 import functools
 import inspect
 import random
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from datetime import UTC, datetime
+from typing import Any, Callable, Dict, List, Optional
 
 from .event_store import EventStore, get_event_store
-from .events import BaseEvent, EventType, WorkflowEvent
+from .events import EventType, WorkflowEvent
 
 
 @dataclass

@@ -17,11 +17,10 @@
 
 from __future__ import annotations
 
-import asyncio
 import ssl
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 # Optional dependency - graceful fallback if not installed
 try:

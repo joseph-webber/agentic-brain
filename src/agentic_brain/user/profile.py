@@ -13,14 +13,12 @@ Privacy-first: Users choose what to share.
 """
 
 import json
-import os
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
 from .location_service import (
-    LocationInfo,
     detect_location,
     get_system_timezone,
     request_location_permission,

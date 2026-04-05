@@ -19,8 +19,8 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
-from enum import Enum, StrEnum
+from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Protocol
 from uuid import uuid4
 

@@ -27,6 +27,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any, Optional
 
+from ..exceptions import LoaderError
 from .base import BaseLoader, LoadedDocument
 
 logger = logging.getLogger(__name__)
@@ -216,14 +217,16 @@ class DocxLoader(BaseLoader):
 
     def load_document(self, doc_id: str) -> Optional[LoadedDocument]:
         """Load a single DOCX document."""
-        try:
-            path = Path(doc_id)
-            if not path.is_absolute():
-                path = self.base_path / path
+        path = Path(doc_id)
+        if not path.is_absolute():
+            path = self.base_path / path
 
+        try:
             if not path.exists():
-                logger.error(f"File not found: {path}")
-                return None
+                raise LoaderError(
+                    "File not found",
+                    context={"path": str(path), "loader": self.source_name},
+                )
 
             if path.suffix.lower() not in (".docx", ".doc"):
                 logger.warning(f"Not a Word document: {path}")
@@ -239,6 +242,12 @@ class DocxLoader(BaseLoader):
                 content = result
                 extra_meta = getattr(self, "_last_metadata", {})
 
+            if not content.strip():
+                raise LoaderError(
+                    "Corrupt Word document (no extractable text)",
+                    context={"path": str(path), "loader": self.source_name},
+                )
+
             metadata: dict[str, Any] = {"path": str(path)}
             metadata.update(extra_meta)
 
@@ -251,9 +260,32 @@ class DocxLoader(BaseLoader):
                 size_bytes=len(docx_bytes),
                 metadata=metadata,
             )
-        except Exception as e:
-            logger.error(f"Failed to load DOCX {doc_id}: {e}")
-            return None
+        except LoaderError:
+            raise
+        except FileNotFoundError as exc:
+            logger.exception("DOCX file not found")
+            raise LoaderError(
+                "File not found",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
+        except PermissionError as exc:
+            logger.exception("Permission denied reading DOCX")
+            raise LoaderError(
+                "Permission denied",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
+        except OSError as exc:
+            logger.exception("I/O error reading DOCX")
+            raise LoaderError(
+                "I/O error reading DOCX",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
+        except Exception as exc:
+            logger.exception("Failed to load DOCX")
+            raise LoaderError(
+                "Failed to load DOCX",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
 
     def load_folder(
         self, folder_path: str, recursive: bool = True
@@ -271,7 +303,12 @@ class DocxLoader(BaseLoader):
         pattern = "**/*.docx" if recursive else "*.docx"
 
         for docx_path in path.glob(pattern):
-            doc = self.load_document(str(docx_path))
+            try:
+                doc = self.load_document(str(docx_path))
+            except LoaderError as exc:
+                logger.error("Failed to load %s: %s", docx_path, exc)
+                continue
+
             if doc:
                 docs.append(doc)
 

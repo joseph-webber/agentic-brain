@@ -35,17 +35,16 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import wraps
 from random import Random
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, TypeVar
 
 from ..durability import (
     ChildWorkflowManager,
     ChildWorkflowOptions,
     DurableWorkflow,
     ParentClosePolicy,
-    Timer,
     TimerManager,
     query_handler,
     signal_handler,

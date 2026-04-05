@@ -32,9 +32,8 @@ CRITICAL for accessibility - voice output is required for users with visual impa
 
 import argparse
 import platform
-import sys
 
-from agentic_brain.voice import LANGUAGE_PACKS, VoiceConfig
+from agentic_brain.voice import LANGUAGE_PACKS
 from agentic_brain.voice import speak as quick_speak
 from agentic_brain.voice.llm_voice import smart_voice_response
 from agentic_brain.voice.regional import (

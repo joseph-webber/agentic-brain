@@ -59,6 +59,7 @@ from typing import Any, Optional
 
 from .base import BaseChunker, Chunk
 from .base import SemanticChunker as BuiltinSemanticChunker
+from ..exceptions import ChunkingError
 
 logger = logging.getLogger(__name__)
 
@@ -273,7 +274,13 @@ class ChonkieChunker(BaseChunker):
         Returns:
             List of Chunk objects compatible with the RAG pipeline.
         """
-        if not text or not text.strip():
+        try:
+            text = self._prepare_text(text)
+        except ChunkingError:
+            logger.exception("Chonkie input normalization failed")
+            return []
+
+        if not text:
             return []
 
         try:
@@ -292,7 +299,7 @@ class ChonkieChunker(BaseChunker):
         chunks = [self._convert_chunk(c, idx, text) for idx, c in enumerate(raw_chunks)]
 
         self._add_metadata(chunks, metadata)
-        return chunks
+        return self._enforce_max_chunk_size(chunks)
 
     def chunk_batch(
         self,

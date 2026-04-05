@@ -29,7 +29,6 @@ from pydantic import (
     Field,
     SecretStr,
     TypeAdapter,
-    ValidationError,
     field_validator,
     model_validator,
 )

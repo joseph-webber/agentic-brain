@@ -5,9 +5,8 @@
 
 import logging
 import re
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 from .base import BaseLoader, LoadedDocument
 

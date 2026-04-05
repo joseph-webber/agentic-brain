@@ -20,11 +20,9 @@ Ollama provider implementation.
 """
 
 
-import asyncio
 import json
 import logging
 import shutil
-import time
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Any, Callable
 

@@ -96,11 +96,11 @@ class GuestCheckoutInfo:
     billing_email: str
     billing_phone: str
     billing_address_1: str
-    billing_address_2: Optional[str] = None
     billing_city: str
     billing_state: str
     billing_postcode: str
     billing_country: str
+    billing_address_2: Optional[str] = None
     
     # Shipping (optional - can use billing)
     shipping_first_name: Optional[str] = None

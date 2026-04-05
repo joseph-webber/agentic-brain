@@ -26,12 +26,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import timedelta
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Type
 
 from ..durability import (
-    ActivityWorker,
     TaskQueue,
     TaskQueueManager,
     WorkerPool,

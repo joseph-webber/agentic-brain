@@ -37,9 +37,9 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
-from urllib.parse import quote, urljoin
+from urllib.parse import quote
 
-from .base import BaseLoader, LoadedDocument, _validate_sql_identifier
+from .base import BaseLoader, LoadedDocument
 
 logger = logging.getLogger(__name__)
 

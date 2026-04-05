@@ -48,8 +48,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
-import struct
 import threading
 import time
 from dataclasses import dataclass, field
@@ -736,7 +734,6 @@ async def start_conversation(
 
 async def _cli_main() -> None:
     """Simple CLI for testing the conversation loop."""
-    import sys
 
     logging.basicConfig(
         level=logging.INFO,

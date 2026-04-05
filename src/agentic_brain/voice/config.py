@@ -20,7 +20,7 @@ languages.  Helper functions such as :func:`stereo_pan_enabled` and
 import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 def _env_flag(name: str, default: str) -> bool:

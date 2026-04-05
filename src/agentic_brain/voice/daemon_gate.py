@@ -28,9 +28,7 @@ from __future__ import annotations
 import atexit
 import logging
 import os
-import signal
 import threading
-import time
 from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)

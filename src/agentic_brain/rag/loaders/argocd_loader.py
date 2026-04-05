@@ -19,11 +19,10 @@ Load applications, deployments, and sync status from ArgoCD.
 Supports GitOps workflow documentation and deployment history.
 """
 
-import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from .base import BaseLoader, LoadedDocument, with_rate_limit
 

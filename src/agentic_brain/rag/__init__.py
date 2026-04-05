@@ -87,6 +87,7 @@ Usage:
 import contextlib
 
 from .embeddings import EmbeddingProvider, get_embedding, get_embeddings
+from .exceptions import ChunkingError, EmbeddingError, LoaderError, RetrievalError
 from .pipeline import (
     GraphQueryResult,
     GraphSearchResult,

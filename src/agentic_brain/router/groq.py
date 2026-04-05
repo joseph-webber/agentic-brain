@@ -19,7 +19,6 @@ from __future__ import annotations
 Groq provider implementation - Fast FREE inference.
 """
 
-import asyncio
 import json
 import logging
 import os

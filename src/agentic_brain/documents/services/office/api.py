@@ -13,13 +13,13 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, is_dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Any, Callable, Dict, Iterable, Optional
+from typing import Any, Callable, Iterable
 
 from ...rag.store import Document as RagDocument
 from ...rag.store import InMemoryDocumentStore
 from ..accessibility.api import make_accessible, validate_accessibility
 from ..accessibility.models import AccessibilityReport, RemediationResult
-from .converter import ConversionError, OfficeConverter
+from .converter import OfficeConverter
 from .images import Image as ExtractedImage
 from .images import ImageExtractor
 from .security import OfficePIIMatch, OfficeSecurityService

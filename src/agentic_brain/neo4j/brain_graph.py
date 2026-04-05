@@ -6,7 +6,7 @@ It automatically uses the TopicGraph pattern for semantic queries.
 """
 
 import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from neo4j import GraphDatabase
 from .patterns import TopicGraph, ZonedGraph, CORE_TOPICS, setup_graph_constraints
 

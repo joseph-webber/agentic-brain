@@ -18,7 +18,7 @@ needed when multiple processes are smashing the same task.
 
 import asyncio
 import time
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 from .core import SmashMode, SmashResult, get_router

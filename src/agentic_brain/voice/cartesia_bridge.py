@@ -43,7 +43,11 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import TYPE_CHECKING, Iterator, Optional
+
+if TYPE_CHECKING:
+    from agentic_brain.voice.live_mode import LiveVoiceMode
+    from agentic_brain.voice.cartesia_tts import CartesiaTTS
 
 logger = logging.getLogger(__name__)
 

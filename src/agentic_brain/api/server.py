@@ -41,7 +41,6 @@ import logging
 import os
 import threading
 from datetime import UTC
-from typing import Optional
 
 import uvicorn
 from fastapi import FastAPI
@@ -167,7 +166,7 @@ def create_app(
 
     # Store version and start time for health check endpoint
     app.version = version
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     app._start_time = datetime.now(UTC)
 

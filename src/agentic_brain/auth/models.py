@@ -19,8 +19,8 @@ Authentication models following JHipster's domain patterns.
 Provides User, Token, and Credentials classes with Pydantic validation.
 """
 
-from datetime import UTC, datetime, timezone
-from enum import Enum, StrEnum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field

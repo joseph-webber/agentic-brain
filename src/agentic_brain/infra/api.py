@@ -43,7 +43,7 @@ def setup_health_endpoints(app: FastAPI):
     Args:
         app: FastAPI application instance
     """
-    from agentic_brain.infra.health_monitor import HealthMonitor, ServiceStatus
+    from agentic_brain.infra.health_monitor import HealthMonitor
 
     # Initialize monitor
     monitor = HealthMonitor()

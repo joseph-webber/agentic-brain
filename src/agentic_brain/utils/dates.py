@@ -20,8 +20,7 @@ AI models have stale training data (typically 2 years old).
 This module ensures we always get the REAL current date from the system.
 """
 
-from datetime import UTC, date, datetime, timezone
-from typing import Optional
+from datetime import UTC, date, datetime
 
 
 def now() -> datetime:

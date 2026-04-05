@@ -20,7 +20,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-from typing import Optional
 
 # Lazy imports - only fail when actually using temporal commands
 TEMPORAL_AVAILABLE = False

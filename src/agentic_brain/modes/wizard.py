@@ -31,9 +31,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
-from .base import Mode, ModeCategory, SecurityLevel
-from .manager import ModeManager, get_manager
-from .registry import MODE_REGISTRY, MODES_BY_CATEGORY, list_modes
+from .base import Mode
+from .manager import get_manager
+from .registry import MODE_REGISTRY
 
 
 class WizardStep(Enum):

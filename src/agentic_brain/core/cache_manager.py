@@ -21,7 +21,16 @@ _LABEL_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 def _json_default(value: Any) -> str:
-    """Serialize common non-JSON-native values safely."""
+    """Serialize common non-JSON-native values safely.
+    
+    Handles datetime, date, and Decimal types.
+    
+    Args:
+        value: Value to serialize.
+        
+    Returns:
+        String representation suitable for JSON.
+    """
 
     if isinstance(value, datetime):
         if value.tzinfo is None:
@@ -48,6 +57,16 @@ class CacheManager:
         label: str = "ExternalApiCache",
         database: str | None = None,
     ) -> None:
+        """Initialize the cache manager.
+        
+        Args:
+            label: Neo4j node label for cache entries (default: ExternalApiCache).
+                   Must be a valid Neo4j identifier (letters, numbers, underscores).
+            database: Optional Neo4j database name. Uses default if None.
+            
+        Raises:
+            ValueError: If label contains invalid characters.
+        """
         if not _LABEL_PATTERN.match(label):
             raise ValueError(
                 "label must be a valid Neo4j label containing only letters, "
@@ -58,7 +77,14 @@ class CacheManager:
         self.database = database
 
     def get_cached(self, cache_key: str) -> Any | None:
-        """Return cached data when present and not expired."""
+        """Return cached data when present and not expired.
+        
+        Args:
+            cache_key: Unique cache key.
+            
+        Returns:
+            Cached data, or None if missing or expired. Logs warnings on JSON errors.
+        """
 
         record = self._run_single(
             f"""
@@ -88,7 +114,13 @@ class CacheManager:
         *,
         ttl_hours: float | None = None,
     ) -> None:
-        """Store data in Neo4j, replacing any existing cache entry."""
+        """Store data in Neo4j, replacing any existing cache entry.
+        
+        Args:
+            cache_key: Unique cache key.
+            value: Data to cache (must be JSON-serializable).
+            ttl_hours: Optional cache lifetime in hours. None = no expiry.
+        """
 
         cached_at = datetime.now(UTC)
         expires_at = (
@@ -121,7 +153,11 @@ class CacheManager:
         )
 
     def invalidate(self, cache_key: str) -> None:
-        """Remove a cache entry so the next lookup falls through to the API."""
+        """Remove a cache entry so the next lookup falls through to the API.
+        
+        Args:
+            cache_key: Cache key to invalidate.
+        """
 
         self._execute(
             f"""
@@ -132,13 +168,33 @@ class CacheManager:
         )
 
     def _get_session(self) -> AbstractContextManager[Any]:
+        """Get a Neo4j session context manager for this cache database.
+        
+        Returns:
+            Context manager yielding a session.
+        """
         return get_session(database=self.database)
 
     def _run_single(self, cypher: str, **params: Any) -> dict[str, Any] | None:
+        """Execute a query and return the first record as a dict.
+        
+        Args:
+            cypher: Cypher query string.
+            **params: Query parameters.
+            
+        Returns:
+            First record as dict, or None if no results.
+        """
         with self._get_session() as session:
             record = session.run(cypher, **params).single()
             return dict(record) if record else None
 
     def _execute(self, cypher: str, **params: Any) -> None:
+        """Execute a query without returning results.
+        
+        Args:
+            cypher: Cypher query string.
+            **params: Query parameters.
+        """
         with self._get_session() as session:
             session.run(cypher, **params).consume()

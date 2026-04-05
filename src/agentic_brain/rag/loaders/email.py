@@ -23,7 +23,7 @@ Supports:
 import base64
 import logging
 import os
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Optional
 
 from .base import BaseLoader, LoadedDocument

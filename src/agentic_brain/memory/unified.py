@@ -45,10 +45,10 @@ import re
 import sqlite3
 import threading
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional, Protocol, Union
+from typing import Optional, Protocol
 
 logger = logging.getLogger(__name__)
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from .guards import SecurityGuard, SecurityViolation, set_security_guard
 from .roles import SecurityRole

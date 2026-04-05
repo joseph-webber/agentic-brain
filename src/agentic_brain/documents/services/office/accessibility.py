@@ -42,7 +42,6 @@ from xml.etree import ElementTree as ET
 
 from ..accessibility.alttext import AltTextGenerator
 from ..accessibility.contrast import (
-    Color,
     ContrastChecker,
     TextSize,
     suggest_accessible_color,

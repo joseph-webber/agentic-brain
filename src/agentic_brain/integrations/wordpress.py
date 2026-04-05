@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-import httpx
 
 from ..security.api_access import (
     APIAccessController,

@@ -34,7 +34,7 @@ from typing import Callable, List, Optional
 from ._speech_lock import get_global_lock
 from .cloud_tts import speak_cloud
 from .linux import speak_linux
-from .platform import VoicePlatform, check_voice_available, detect_platform
+from .platform import VoicePlatform
 from .serializer import VoiceMessage as SerializedVoiceMessage
 from .serializer import get_voice_serializer
 from .windows import speak_windows

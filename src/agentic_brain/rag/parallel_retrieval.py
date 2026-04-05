@@ -46,9 +46,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
-from ..exceptions import RetrieverError
 
 logger = logging.getLogger(__name__)
 

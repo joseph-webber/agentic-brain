@@ -50,7 +50,7 @@ Example:
 
 import logging
 import os
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Optional
 
 from fastapi import Depends, HTTPException, Security, status

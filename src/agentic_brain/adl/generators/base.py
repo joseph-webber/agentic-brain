@@ -6,18 +6,12 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from ..parser import (
     ADLConfig,
-    DtoDef,
-    EntityDef,
-    EnumDef,
     FieldDef,
-    PaginationDef,
     RelationshipDef,
-    ServiceDef,
-    Validator,
 )
 
 

@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from agentic_brain.rag.exceptions import LoaderError
 from agentic_brain.rag.loaders.base import (
     BaseLoader,
     LoadedDocument,
@@ -178,10 +179,10 @@ class TestTextLoader:
         assert isinstance(doc, LoadedDocument)
         assert "readme" in doc.content.lower() or len(doc.content) > 0
 
-    def test_load_document_missing_file_returns_none(self, tmp_path: Path) -> None:
+    def test_load_document_missing_file_raises_error(self, tmp_path: Path) -> None:
         loader = TextLoader(base_path=str(tmp_path))
-        doc = loader.load_document("nonexistent.txt")
-        assert doc is None
+        with pytest.raises(LoaderError):
+            loader.load_document("nonexistent.txt")
 
     def test_load_folder_finds_txt_files(self, temp_text_dir: Path) -> None:
         loader = TextLoader(base_path=str(temp_text_dir))
@@ -234,10 +235,10 @@ class TestMarkdownLoader:
         assert doc is not None
         assert "Title" in doc.content or len(doc.content) > 0
 
-    def test_missing_md_file_returns_none(self, tmp_path: Path) -> None:
+    def test_missing_md_file_raises_error(self, tmp_path: Path) -> None:
         loader = MarkdownLoader(base_path=str(tmp_path))
-        doc = loader.load_document("missing.md")
-        assert doc is None
+        with pytest.raises(LoaderError):
+            loader.load_document("missing.md")
 
     def test_source_name(self) -> None:
         loader = MarkdownLoader()
@@ -263,10 +264,10 @@ class TestJSONLoader:
         assert doc is not None
         assert "Machine learning" in doc.content or len(doc.content) > 0
 
-    def test_missing_json_returns_none(self, tmp_path: Path) -> None:
+    def test_missing_json_raises_error(self, tmp_path: Path) -> None:
         loader = JSONLoader(base_path=str(tmp_path))
-        doc = loader.load_document("missing.json")
-        assert doc is None
+        with pytest.raises(LoaderError):
+            loader.load_document("missing.json")
 
     def test_content_key_extraction(self, tmp_path: Path) -> None:
         """content_key should extract the specified field as content."""
@@ -290,11 +291,11 @@ class TestJSONLoader:
         loader = JSONLoader()
         assert loader.authenticate() is True
 
-    def test_invalid_json_handled_gracefully(self, tmp_path: Path) -> None:
+    def test_invalid_json_raises_error(self, tmp_path: Path) -> None:
         (tmp_path / "bad.json").write_text("{ invalid json }")
         loader = JSONLoader(base_path=str(tmp_path))
-        doc = loader.load_document("bad.json")
-        assert doc is None or isinstance(doc, LoadedDocument)
+        with pytest.raises(LoaderError):
+            loader.load_document("bad.json")
 
 
 # ---------------------------------------------------------------------------

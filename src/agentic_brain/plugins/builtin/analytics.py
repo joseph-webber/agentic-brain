@@ -17,7 +17,7 @@
 
 import logging
 from collections import defaultdict
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Optional
 
 from agentic_brain.plugins.base import Plugin, PluginConfig

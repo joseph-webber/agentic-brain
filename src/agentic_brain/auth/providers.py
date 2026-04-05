@@ -46,7 +46,7 @@ import os
 import secrets
 import uuid
 from abc import ABC, abstractmethod
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import wraps
 from typing import Any, Callable, Optional, TypeVar
 
@@ -63,11 +63,8 @@ from agentic_brain.auth.constants import (
     CLAIM_ISSUER,
     CLAIM_JWT_ID,
     CLAIM_SUBJECT,
-    OAUTH2_NONCE_EXPIRY_SECONDS,
     OAUTH2_STATE_EXPIRY_SECONDS,
-    ROLE_ANONYMOUS,
 )
-from agentic_brain.auth.context import set_security_context
 from agentic_brain.auth.models import (
     ApiKeyCredentials,
     AuthenticationResult,
@@ -75,7 +72,6 @@ from agentic_brain.auth.models import (
     Credentials,
     OAuth2AuthorizationCode,
     RefreshTokenCredentials,
-    SecurityContext,
     SessionCredentials,
     Token,
     TokenCredentials,
@@ -696,10 +692,11 @@ class JWTAuth(AuthProvider):
 
         if extra_claims:
             # Filter out sensitive claims that shouldn't be added
+            sensitive_keys = ("password", "secret", "key", "credential")
             safe_claims = {
                 k: v
                 for k, v in extra_claims.items()
-                if k not in ("password", "secret", "key", "credential")
+                if not any(sensitive in k.lower() for sensitive in sensitive_keys)
             }
             payload.update(safe_claims)
 
@@ -998,7 +995,6 @@ class OAuth2Auth(AuthProvider):
                 from jose import JWTError, jwt
             except ImportError:
                 import jwt as pyjwt
-                from jwt import PyJWTError as JWTError
 
                 jwt = pyjwt
 
@@ -1435,13 +1431,12 @@ class SessionAuth(AuthProvider):
     async def create_session(self, user: User) -> str:
         """Create a new session for a user."""
         session_id = secrets.token_urlsafe(32)
-        expires_at = datetime.now(UTC) + timedelta(
-            seconds=self.config.session.timeout_seconds
-        )
+        now = datetime.now(UTC)
+        expires_at = now + timedelta(seconds=self.config.session.timeout_seconds)
 
         self._sessions[session_id] = {
             "user": user.model_dump(),
-            "created_at": datetime.now(UTC),
+            "created_at": now,
             "expires_at": expires_at,
         }
 

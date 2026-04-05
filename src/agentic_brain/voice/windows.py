@@ -12,7 +12,6 @@ Provides speech synthesis on Windows using:
 
 import asyncio
 import logging
-import subprocess
 from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)

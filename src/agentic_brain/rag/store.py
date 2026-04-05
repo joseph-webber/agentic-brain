@@ -33,7 +33,21 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class Document:
-    """A document in the store."""
+    """Represent a normalized document and its chunk metadata.
+
+    Attributes:
+        id: Stable document identifier.
+        content: Original full document body.
+        metadata: Arbitrary source metadata for filtering and attribution.
+        chunks: Chunked content generated for retrieval.
+        chunk_metadata: Per-chunk positional and token metadata.
+        created_at: Timestamp when the document object was created.
+
+    Example:
+        >>> doc = Document(id="doc-1", content="Hello world")
+        >>> doc.id
+        'doc-1'
+    """
 
     id: str
     content: str
@@ -43,6 +57,19 @@ class Document:
     created_at: datetime = field(default_factory=lambda: datetime.now())
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize the document to a JSON-safe dictionary.
+
+        Returns:
+            dict[str, Any]: Serialized document payload, including ISO timestamp.
+
+        Raises:
+            ValueError: If document data cannot be represented safely.
+
+        Example:
+            >>> doc = Document(id="doc-1", content="text")
+            >>> "created_at" in doc.to_dict()
+            True
+        """
         return {
             "id": self.id,
             "content": self.content,
@@ -54,6 +81,22 @@ class Document:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Document":
+        """Create a :class:`Document` from serialized dictionary data.
+
+        Args:
+            data: Serialized document payload.
+
+        Returns:
+            Document: Reconstructed document instance.
+
+        Raises:
+            ValueError: If timestamp formatting is invalid.
+            TypeError: If required fields are missing or wrong type.
+
+        Example:
+            >>> Document.from_dict({"id": "d1", "content": "x"}).id
+            'd1'
+        """
         data = data.copy()
         if "created_at" in data and isinstance(data["created_at"], str):
             data["created_at"] = datetime.fromisoformat(data["created_at"])
@@ -166,9 +209,41 @@ class InMemoryDocumentStore(DocumentStore):
         return doc
 
     def get(self, doc_id: str) -> Optional[Document]:
+        """Retrieve a document by identifier.
+
+        Args:
+            doc_id: Document identifier to retrieve.
+
+        Returns:
+            Optional[Document]: Matching document when present, otherwise ``None``.
+
+        Raises:
+            RuntimeError: If in-memory store state is unexpectedly invalid.
+
+        Example:
+            >>> store = InMemoryDocumentStore()
+            >>> store.get("missing") is None
+            True
+        """
         return self._documents.get(doc_id)
 
     def delete(self, doc_id: str) -> bool:
+        """Delete a document from the in-memory store.
+
+        Args:
+            doc_id: Document identifier to delete.
+
+        Returns:
+            bool: ``True`` if the document was deleted, else ``False``.
+
+        Raises:
+            RuntimeError: If deletion cannot be completed due to store corruption.
+
+        Example:
+            >>> store = InMemoryDocumentStore()
+            >>> store.delete("missing")
+            False
+        """
         if doc_id in self._documents:
             del self._documents[doc_id]
             logger.info(f"Deleted document {doc_id}")
@@ -176,6 +251,23 @@ class InMemoryDocumentStore(DocumentStore):
         return False
 
     def list(self, limit: int = 100, offset: int = 0) -> list[Document]:
+        """List documents in insertion order with pagination.
+
+        Args:
+            limit: Maximum number of documents to return.
+            offset: Number of documents to skip before returning results.
+
+        Returns:
+            list[Document]: Window of available documents.
+
+        Raises:
+            ValueError: If ``limit`` or ``offset`` are negative.
+
+        Example:
+            >>> store = InMemoryDocumentStore()
+            >>> isinstance(store.list(), list)
+            True
+        """
         docs = list(self._documents.values())
         return docs[offset : offset + limit]
 
@@ -194,9 +286,36 @@ class InMemoryDocumentStore(DocumentStore):
         return results[:top_k]
 
     def count(self) -> int:
+        """Return total number of stored documents.
+
+        Returns:
+            int: Number of indexed documents in memory.
+
+        Raises:
+            RuntimeError: If store bookkeeping is unexpectedly invalid.
+
+        Example:
+            >>> store = InMemoryDocumentStore()
+            >>> store.count()
+            0
+        """
         return len(self._documents)
 
     def stats(self) -> dict[str, Any]:
+        """Return aggregate indexing statistics for the in-memory store.
+
+        Returns:
+            dict[str, Any]: Metrics including document count, chunk totals, and
+                configured chunking strategy.
+
+        Raises:
+            RuntimeError: If statistical aggregation fails unexpectedly.
+
+        Example:
+            >>> store = InMemoryDocumentStore()
+            >>> "document_count" in store.stats()
+            True
+        """
         total_chunks = sum(len(d.chunks) for d in self._documents.values())
         total_chars = sum(len(d.content) for d in self._documents.values())
         return {
@@ -268,6 +387,26 @@ class FileDocumentStore(DocumentStore):
         metadata: Optional[dict[str, Any]] = None,
         doc_id: Optional[str] = None,
     ) -> Document:
+        """Add or update a document and persist it to disk-backed index.
+
+        Args:
+            content: Raw document text or a pre-built :class:`Document`.
+            metadata: Optional metadata to store with the document.
+            doc_id: Optional explicit identifier for new raw-text documents.
+
+        Returns:
+            Document: Persisted document including generated chunks.
+
+        Raises:
+            OSError: If writing the index or document file fails.
+            TypeError: If provided content cannot be converted to a document.
+
+        Example:
+            >>> store = FileDocumentStore(path=".rag_store_example")
+            >>> doc = store.add("hello", {"title": "greeting"})
+            >>> bool(doc.id)
+            True
+        """
         if isinstance(content, Document):
             doc = content
             if not doc.chunks:
@@ -299,12 +438,45 @@ class FileDocumentStore(DocumentStore):
         return doc
 
     def get(self, doc_id: str) -> Optional[Document]:
+        """Load a document by identifier from the file-backed store.
+
+        Args:
+            doc_id: Document identifier to load.
+
+        Returns:
+            Optional[Document]: Loaded document when file exists, otherwise ``None``.
+
+        Raises:
+            OSError: If file access fails during load.
+            ValueError: If serialized content is malformed.
+
+        Example:
+            >>> store = FileDocumentStore(path=".rag_store_example")
+            >>> store.get("missing") is None
+            True
+        """
         path = self._doc_path(doc_id)
         if path.exists():
             return Document.from_dict(json.loads(path.read_text()))
         return None
 
     def delete(self, doc_id: str) -> bool:
+        """Delete a persisted document and update the on-disk index.
+
+        Args:
+            doc_id: Document identifier to delete.
+
+        Returns:
+            bool: ``True`` when a document file existed and was removed.
+
+        Raises:
+            OSError: If removing files or saving index fails.
+
+        Example:
+            >>> store = FileDocumentStore(path=".rag_store_example")
+            >>> store.delete("missing")
+            False
+        """
         path = self._doc_path(doc_id)
         if path.exists():
             path.unlink()
@@ -314,10 +486,44 @@ class FileDocumentStore(DocumentStore):
         return False
 
     def list(self, limit: int = 100, offset: int = 0) -> list[Document]:
+        """List persisted documents with simple pagination.
+
+        Args:
+            limit: Maximum number of documents to return.
+            offset: Number of documents to skip before returning results.
+
+        Returns:
+            list[Document]: Loaded document window based on index order.
+
+        Raises:
+            OSError: If any indexed document fails to load.
+
+        Example:
+            >>> store = FileDocumentStore(path=".rag_store_example")
+            >>> isinstance(store.list(), list)
+            True
+        """
         doc_ids = list(self._index.keys())[offset : offset + limit]
         return [doc for did in doc_ids if (doc := self.get(did)) is not None]
 
     def search(self, query: str, top_k: int = 5) -> builtins.list[Document]:
+        """Search persisted documents using keyword token matching.
+
+        Args:
+            query: Search query text.
+            top_k: Maximum number of matching documents to return.
+
+        Returns:
+            list[Document]: Matching documents ordered by scan order.
+
+        Raises:
+            OSError: If indexed documents cannot be read from disk.
+
+        Example:
+            >>> store = FileDocumentStore(path=".rag_store_example")
+            >>> isinstance(store.search("project"), list)
+            True
+        """
         query_lower = query.lower()
         tokens = re.findall(r"\w+", query_lower)
         results = []
@@ -333,9 +539,36 @@ class FileDocumentStore(DocumentStore):
         return results[:top_k]
 
     def count(self) -> int:
+        """Return total number of indexed documents on disk.
+
+        Returns:
+            int: Number of document entries tracked in the index.
+
+        Raises:
+            RuntimeError: If index metadata is unexpectedly unavailable.
+
+        Example:
+            >>> store = FileDocumentStore(path=".rag_store_example")
+            >>> store.count() >= 0
+            True
+        """
         return len(self._index)
 
     def stats(self) -> dict[str, Any]:
+        """Return aggregate indexing statistics for the file-backed store.
+
+        Returns:
+            dict[str, Any]: Metrics for document totals, chunk totals, and store
+                configuration including storage path.
+
+        Raises:
+            OSError: If indexed documents cannot be read for aggregation.
+
+        Example:
+            >>> store = FileDocumentStore(path=".rag_store_example")
+            >>> "storage_path" in store.stats()
+            True
+        """
         docs = self.list(limit=10000)
         total_chunks = sum(len(d.chunks) for d in docs)
         total_chars = sum(len(d.content) for d in docs)

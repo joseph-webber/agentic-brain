@@ -43,7 +43,7 @@ import logging
 import os
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from agentic_brain.core.neo4j_pool import (

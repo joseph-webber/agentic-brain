@@ -247,7 +247,7 @@ class CommandHandlers:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-        except FileNotFoundError as exc:
+        except FileNotFoundError:
             return CommandExecutionResult(
                 success=False,
                 capability=capability,

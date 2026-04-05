@@ -1,4 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
+"""Neo4j query resilience utilities with automatic retry logic.
+
+This module provides sync and async query execution with exponential backoff
+retry for transient failures (ServiceUnavailable, TransientError).
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -12,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def _materialize_sync_result(result: Any) -> list[dict[str, Any]]:
+    """Materialize sync Neo4j result into list of dictionaries."""
     if hasattr(result, "data"):
         return result.data()
     if result is None:
@@ -20,6 +27,7 @@ def _materialize_sync_result(result: Any) -> list[dict[str, Any]]:
 
 
 async def _materialize_async_result(result: Any) -> list[dict[str, Any]]:
+    """Materialize async Neo4j result into list of dictionaries."""
     if hasattr(result, "data"):
         return await result.data()
     if result is None:
@@ -33,7 +41,24 @@ async def resilient_query(
     params: dict[str, Any] | None = None,
     max_retries: int = 3,
 ) -> list[dict[str, Any]]:
-    """Execute query with exponential backoff retry."""
+    """Execute query with exponential backoff retry on transient errors.
+    
+    Retries automatically on ServiceUnavailable and TransientError with
+    backoff delays: 1s, 2s, 4s, etc. Fails immediately on ClientError.
+    
+    Args:
+        session: Async Neo4j session.
+        query: Cypher query string.
+        params: Optional query parameters.
+        max_retries: Maximum retry attempts (default: 3).
+        
+    Returns:
+        List of result rows as dictionaries.
+        
+    Raises:
+        ClientError: Query syntax or semantic errors (not retried).
+        ServiceUnavailable: Raised after max retries exhausted.
+    """
     query_params = params or {}
 
     for attempt in range(max_retries):
@@ -65,7 +90,25 @@ def resilient_query_sync(
     params: dict[str, Any] | None = None,
     max_retries: int = 3,
 ) -> list[dict[str, Any]]:
-    """Sync version for legacy code."""
+    """Execute query synchronously with exponential backoff retry.
+    
+    Synchronous version of resilient_query for blocking contexts.
+    Retries automatically on ServiceUnavailable and TransientError with
+    backoff delays: 1s, 2s, 4s, etc. Fails immediately on ClientError.
+    
+    Args:
+        session: Sync Neo4j session.
+        query: Cypher query string.
+        params: Optional query parameters.
+        max_retries: Maximum retry attempts (default: 3).
+        
+    Returns:
+        List of result rows as dictionaries.
+        
+    Raises:
+        ClientError: Query syntax or semantic errors (not retried).
+        ServiceUnavailable: Raised after max retries exhausted.
+    """
     query_params = params or {}
 
     for attempt in range(max_retries):

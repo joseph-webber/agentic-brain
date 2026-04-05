@@ -44,7 +44,7 @@ import logging
 import os
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Optional
 
 from starlette.middleware.base import BaseHTTPMiddleware

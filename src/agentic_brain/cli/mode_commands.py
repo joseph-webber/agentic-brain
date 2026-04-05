@@ -27,7 +27,6 @@ Commands for managing the 42 operational modes:
 
 import argparse
 import sys
-from typing import Optional
 
 
 # Colors for terminal output
@@ -348,7 +347,6 @@ def mode_wizard_command(args: argparse.Namespace) -> int:
     their use case, industry, and requirements.
     """
     try:
-        from agentic_brain.modes.base import ModeCategory
         from agentic_brain.modes.manager import get_manager
 
         manager = get_manager()

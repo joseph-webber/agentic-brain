@@ -40,9 +40,9 @@ import inspect
 import logging
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import wraps
-from typing import Any, Callable, ParamSpec, TypeVar
+from typing import Callable, ParamSpec, TypeVar
 
 from .event_store import EventStore, get_event_store
 from .events import ActivityHeartbeat

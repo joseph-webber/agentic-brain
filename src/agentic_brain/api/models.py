@@ -16,7 +16,7 @@
 """Pydantic models for agentic-brain chatbot API."""
 
 import re
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator

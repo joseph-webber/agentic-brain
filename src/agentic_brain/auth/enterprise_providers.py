@@ -26,22 +26,19 @@ These providers follow JHipster patterns and integrate with
 existing auth infrastructure.
 """
 
-import base64
 import hashlib
-import hmac
 import os
 import secrets
 import time
 import uuid
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
-from enum import Enum, StrEnum
+from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from agentic_brain.auth.config import AuthConfig, get_auth_config
+from agentic_brain.auth.config import AuthConfig
 from agentic_brain.auth.models import (
     AuthenticationResult,
     AuthMethod,

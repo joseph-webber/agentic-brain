@@ -24,7 +24,6 @@ CORS configuration, and security headers.
 
 import logging
 import os
-from typing import Optional
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import HTTPException

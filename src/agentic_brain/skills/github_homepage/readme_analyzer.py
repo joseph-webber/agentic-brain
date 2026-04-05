@@ -8,7 +8,6 @@ README Analyzer - Analyze GitHub READMEs for quality and SEO.
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass

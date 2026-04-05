@@ -15,7 +15,6 @@ import platform
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 
@@ -73,7 +72,6 @@ def get_system_timezone() -> str:
                 return result.stdout.strip()
 
         # Method 4: Python's time module
-        import time
 
         # This gives offset but not timezone name
 

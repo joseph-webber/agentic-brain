@@ -25,7 +25,7 @@ import zipfile
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable
 
 from .accessibility import AccessibilityReport, OfficeAccessibilityProcessor
 from .apple_keynote import KeynoteProcessor
@@ -34,14 +34,8 @@ from .apple_pages import PagesProcessor
 from .excel import ExcelProcessor
 from .exceptions import UnsupportedOfficeFormatError
 from .models import (
-    Chart,
-    Image,
     OfficeFormat,
-    Paragraph,
-    Slide,
-    Table,
     TableCell,
-    Worksheet,
 )
 from .opendocument import OpenDocumentProcessor
 from .powerpoint import PowerPointProcessor

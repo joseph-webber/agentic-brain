@@ -52,7 +52,7 @@ import threading
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

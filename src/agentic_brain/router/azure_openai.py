@@ -19,7 +19,6 @@ from __future__ import annotations
 Azure OpenAI provider implementation.
 """
 
-import asyncio
 import json
 import logging
 import os

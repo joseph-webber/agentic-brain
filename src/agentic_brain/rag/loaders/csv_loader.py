@@ -21,6 +21,7 @@ from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Optional
 
+from ..exceptions import LoaderError
 from .base import BaseLoader, LoadedDocument
 
 logger = logging.getLogger(__name__)
@@ -90,32 +91,58 @@ class CSVLoader(BaseLoader):
 
     def load_document(self, doc_id: str) -> Optional[LoadedDocument]:
         """Load a single CSV file."""
-        try:
-            path = Path(doc_id)
-            if not path.is_absolute():
-                path = self.base_path / path
+        path = Path(doc_id)
+        if not path.is_absolute():
+            path = self.base_path / path
 
+        try:
             if not path.exists():
-                logger.error(f"File not found: {path}")
-                return None
+                raise LoaderError(
+                    "File not found",
+                    context={"path": str(path), "loader": self.source_name},
+                )
 
             with open(path, encoding=self.encoding, errors="replace") as f:
                 raw_content = f.read()
+        except LoaderError:
+            raise
+        except FileNotFoundError as exc:
+            logger.exception("CSV file not found")
+            raise LoaderError(
+                "File not found",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
+        except PermissionError as exc:
+            logger.exception("Permission denied reading CSV")
+            raise LoaderError(
+                "Permission denied",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
+        except OSError as exc:
+            logger.exception("I/O error reading CSV")
+            raise LoaderError(
+                "I/O error reading CSV",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
 
+        try:
             content = self._csv_to_text(raw_content)
+        except Exception as exc:
+            logger.exception("CSV parsing failed")
+            raise LoaderError(
+                "Corrupt CSV file",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
 
-            return LoadedDocument(
-                content=content,
-                source=self.source_name,
-                source_id=str(path),
-                filename=path.name,
-                mime_type="text/csv",
-                size_bytes=len(raw_content.encode()),
-                metadata={"path": str(path), "delimiter": self.delimiter},
-            )
-        except Exception as e:
-            logger.error(f"Failed to load CSV {doc_id}: {e}")
-            return None
+        return LoadedDocument(
+            content=content,
+            source=self.source_name,
+            source_id=str(path),
+            filename=path.name,
+            mime_type="text/csv",
+            size_bytes=len(raw_content.encode()),
+            metadata={"path": str(path), "delimiter": self.delimiter},
+        )
 
     def load_folder(
         self, folder_path: str, recursive: bool = True
@@ -132,7 +159,12 @@ class CSVLoader(BaseLoader):
         pattern = "**/*.csv" if recursive else "*.csv"
 
         for csv_path in path.glob(pattern):
-            doc = self.load_document(str(csv_path))
+            try:
+                doc = self.load_document(str(csv_path))
+            except LoaderError as exc:
+                logger.error("Failed to load %s: %s", csv_path, exc)
+                continue
+
             if doc:
                 docs.append(doc)
 
@@ -221,14 +253,16 @@ class ExcelLoader(BaseLoader):
 
     def load_document(self, doc_id: str) -> Optional[LoadedDocument]:
         """Load a single Excel file."""
-        try:
-            path = Path(doc_id)
-            if not path.is_absolute():
-                path = self.base_path / path
+        path = Path(doc_id)
+        if not path.is_absolute():
+            path = self.base_path / path
 
+        try:
             if not path.exists():
-                logger.error(f"File not found: {path}")
-                return None
+                raise LoaderError(
+                    "File not found",
+                    context={"path": str(path), "loader": self.source_name},
+                )
 
             if path.suffix.lower() not in (".xlsx", ".xls", ".xlsm"):
                 logger.warning(f"Not an Excel file: {path}")
@@ -248,9 +282,32 @@ class ExcelLoader(BaseLoader):
                 size_bytes=len(excel_bytes),
                 metadata={"path": str(path)},
             )
-        except Exception as e:
-            logger.error(f"Failed to load Excel {doc_id}: {e}")
-            return None
+        except LoaderError:
+            raise
+        except FileNotFoundError as exc:
+            logger.exception("Excel file not found")
+            raise LoaderError(
+                "File not found",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
+        except PermissionError as exc:
+            logger.exception("Permission denied reading Excel")
+            raise LoaderError(
+                "Permission denied",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
+        except OSError as exc:
+            logger.exception("I/O error reading Excel")
+            raise LoaderError(
+                "I/O error reading Excel",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
+        except Exception as exc:
+            logger.exception("Excel parsing failed")
+            raise LoaderError(
+                "Corrupt Excel file",
+                context={"path": str(path), "loader": self.source_name},
+            ) from exc
 
     def load_folder(
         self, folder_path: str, recursive: bool = True
@@ -268,7 +325,12 @@ class ExcelLoader(BaseLoader):
 
         for pattern in patterns:
             for excel_path in path.glob(pattern):
-                doc = self.load_document(str(excel_path))
+                try:
+                    doc = self.load_document(str(excel_path))
+                except LoaderError as exc:
+                    logger.error("Failed to load %s: %s", excel_path, exc)
+                    continue
+
                 if doc:
                     docs.append(doc)
 

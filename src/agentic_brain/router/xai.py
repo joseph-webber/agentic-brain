@@ -21,7 +21,6 @@ xAI Grok provider implementation - OpenAI-compatible API.
 Grok requires X Premium subscription and provides access to Grok models.
 """
 
-import asyncio
 import json
 import logging
 import os

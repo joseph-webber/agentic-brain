@@ -9,10 +9,8 @@
 
 """Bot Coordinator - manages inter-LLM communication."""
 
-import asyncio
-import json
 from datetime import datetime
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 from ..router.redis_cache import RedisRouterCache
 from .protocol import CHANNELS, BotMessage, MessageType, Priority

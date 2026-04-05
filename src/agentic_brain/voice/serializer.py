@@ -839,7 +839,7 @@ class VoiceSerializer:
             router = get_spatial_router()
             return router.speak_spatial(
                 message.text,
-                persona=persona,
+                persona=lady,
                 rate=message.rate,
                 wait=True,
             )

@@ -48,23 +48,16 @@ import random
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
-from functools import wraps
+from datetime import UTC, datetime, timedelta
 from typing import Any, Callable, ParamSpec, TypeVar
 
 from .event_store import EventStore, get_event_store
 from .events import (
     ActivityCompleted,
     ActivityFailed,
-    ActivityHeartbeat,
     ActivityScheduled,
     ActivityStarted,
-    BaseEvent,
     CheckpointCreated,
-    EventType,
-    LLMFallbackTriggered,
-    LLMRequestCompleted,
-    LLMRequestStarted,
     SignalProcessed,
     SignalReceived,
     TimerFired,

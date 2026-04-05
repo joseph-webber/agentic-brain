@@ -7,12 +7,10 @@ from __future__ import annotations
 
 from typing import List
 
-from ..parser import ADLConfig, EntityDef, FieldDef
+from ..parser import ADLConfig, EntityDef
 from .base import (
     entity_has_pagination,
     entity_has_service,
-    has_validator,
-    python_type,
     to_snake_case,
 )
 
@@ -57,7 +55,7 @@ class ApiRouteGenerator:
         tag = name
 
         pagination = entity_has_pagination(cfg, name)
-        service_impl = entity_has_service(cfg, name)
+        entity_has_service(cfg, name)
 
         lines: List[str] = [
             f"# --- {name} Routes ---",

@@ -15,7 +15,7 @@ This module provides tools to check content before sending to external channels.
 
 import re
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 
 
 @dataclass

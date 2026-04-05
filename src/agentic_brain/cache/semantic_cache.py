@@ -35,11 +35,11 @@ import sqlite3
 import time
 from abc import ABC, abstractmethod
 from collections import OrderedDict
-from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from threading import Lock
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 

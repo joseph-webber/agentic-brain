@@ -36,7 +36,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Mapping, Optional, Sequence
+from typing import Any, Iterable, Iterator, Mapping, Sequence
 from xml.etree import ElementTree as ET
 
 from .accessibility import OfficeAccessibilityProcessor, WCAGReport

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import List
 
-from ..parser import ADLConfig, EntityDef, FieldDef
+from ..parser import ADLConfig, EntityDef
 from .base import (
     entity_has_pagination,
     has_validator,

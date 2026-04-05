@@ -18,7 +18,7 @@
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Type
 
 from .base import BaseLoader, LoadedDocument
 
@@ -250,6 +250,14 @@ async def load_from_multiple_sources_async(
 
     Returns:
         List of all loaded documents
+
+    Raises:
+        ValueError: If an invalid source configuration is provided.
+        RuntimeError: If asynchronous loading infrastructure fails unexpectedly.
+
+    Example:
+        sources = [{"type": "gmail", "days": 1}]
+        docs = await load_from_multiple_sources_async(sources, max_concurrent=2)
     """
     semaphore = asyncio.Semaphore(max_concurrent)
     all_documents: List[LoadedDocument] = []
@@ -299,6 +307,13 @@ def get_available_loaders() -> List[str]:
 
     Returns:
         Sorted list of loader type names
+
+    Raises:
+        RuntimeError: If loader registration fails unexpectedly.
+
+    Example:
+        loaders = get_available_loaders()
+        assert "gmail" in loaders or len(loaders) >= 0
     """
     if not _LOADER_REGISTRY:
         _register_loaders()

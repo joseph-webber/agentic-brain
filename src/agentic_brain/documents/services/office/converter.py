@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 from enum import StrEnum
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from .models import (
     DocumentContent,

@@ -1,7 +1,11 @@
-"""Shared Neo4j schema helpers for indexes used across GraphRAG modules."""
+"""Shared Neo4j schema helpers for indexes used across GraphRAG modules.
+
+Maintains a canonical set of indexes for fulltext search, range filtering,
+and vector similarity matching used by RAG and entity extraction.
+"""
 
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber
+# Copyright 2024-2026 Agentic Brain Contributors
 
 from __future__ import annotations
 
@@ -25,14 +29,34 @@ INDEXES = [
 
 
 async def ensure_indexes(session) -> None:
-    """Create the shared Neo4j indexes using an async session."""
+    """Create the shared Neo4j indexes using an async session.
+    
+    Idempotent: safe to call multiple times. Uses IF NOT EXISTS clauses
+    to avoid errors if indexes already exist.
+    
+    Args:
+        session: Async Neo4j session from async_get_session().
+        
+    Raises:
+        ServiceUnavailable: If Neo4j connection is unavailable.
+    """
 
     for idx in INDEXES:
         await session.run(idx)
 
 
 def ensure_indexes_sync(session) -> None:
-    """Create the shared Neo4j indexes using a synchronous session."""
+    """Create the shared Neo4j indexes using a synchronous session.
+    
+    Synchronous version of ensure_indexes for blocking contexts.
+    Idempotent: safe to call multiple times.
+    
+    Args:
+        session: Sync Neo4j session from get_session().
+        
+    Raises:
+        ServiceUnavailable: If Neo4j connection is unavailable.
+    """
 
     for idx in INDEXES:
         session.run(idx)

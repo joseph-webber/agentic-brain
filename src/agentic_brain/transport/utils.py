@@ -18,7 +18,7 @@
 Shared helper functions used across transport modules to avoid duplication.
 """
 
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 
 
 def utc_now() -> datetime:

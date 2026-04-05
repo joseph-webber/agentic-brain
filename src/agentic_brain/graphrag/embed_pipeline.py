@@ -19,7 +19,6 @@ import argparse
 import json
 import os
 import subprocess
-import sys
 import urllib.error
 import urllib.request
 from enum import Enum

@@ -9,7 +9,7 @@ This implements the bipartite overlay pattern where:
 Aligned with: Microsoft GraphRAG, Neo4j GDS best practices
 """
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)

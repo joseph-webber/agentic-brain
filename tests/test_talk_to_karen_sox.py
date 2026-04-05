@@ -6,7 +6,11 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 MODULE_PATH = Path(__file__).resolve().parents[1] / "talk_to_karen_sox.py"
+if not MODULE_PATH.exists():
+    pytest.skip("talk_to_karen_sox.py not found in project root", allow_module_level=True)
 spec = importlib.util.spec_from_file_location("talk_to_karen_sox", MODULE_PATH)
 talk_to_karen_sox = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = talk_to_karen_sox

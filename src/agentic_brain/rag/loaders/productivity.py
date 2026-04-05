@@ -19,7 +19,6 @@ Supports:
 - Airtable (collaborative database)
 """
 
-import json
 import logging
 import os
 from datetime import datetime

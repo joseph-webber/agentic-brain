@@ -26,14 +26,13 @@ Features:
 - State serialization/deserialization
 """
 
-import asyncio
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
-from typing import Any, Callable, Dict, Optional, Type, TypeVar
+from datetime import UTC, datetime
+from typing import Any, Callable, Dict, Optional
 
 from .event_store import EventStore, get_event_store
-from .events import BaseEvent, EventType, WorkflowEvent
+from .events import EventType, WorkflowEvent
 
 
 class ContinueAsNewError(Exception):

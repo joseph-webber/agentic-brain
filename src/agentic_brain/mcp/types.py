@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import builtins
 import inspect
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any, Callable
 
 try:
@@ -253,7 +253,6 @@ class MCPTool(BaseModel):
         Returns:
             Tool result
         """
-        import asyncio
 
         if self.handler is None:
             raise ValueError(f"Tool '{self.name}' has no handler")

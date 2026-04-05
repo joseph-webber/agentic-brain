@@ -47,10 +47,9 @@ With Memory:
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
-from typing import Any, Callable, Optional
+from datetime import UTC, datetime
+from typing import Any, Callable
 
-import aiohttp
 
 from ..model_aliases import MODEL_ALIASES
 from ..router import get_router

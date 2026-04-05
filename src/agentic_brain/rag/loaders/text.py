@@ -16,11 +16,11 @@
 """Text and Markdown file loaders."""
 
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from ..exceptions import LoaderError
 from .base import BaseLoader, LoadedDocument
 
 logger = logging.getLogger(__name__)
@@ -73,45 +73,79 @@ class TextLoader(BaseLoader):
         """Load a text file by path."""
         file_path = self._resolve_path(doc_id)
 
-        if not file_path.exists():
-            logger.error(f"File not found: {file_path}")
-            return None
-
-        if not file_path.is_file():
-            logger.error(f"Not a file: {file_path}")
-            return None
-
-        # Check file size
-        file_size = file_path.stat().st_size
-        if file_size > self.max_file_size:
-            logger.warning(f"File too large: {file_path} ({file_size} bytes)")
-            return None
-
         try:
+            if not file_path.exists():
+                raise LoaderError(
+                    "File not found",
+                    context={"path": str(file_path), "loader": self.source_name},
+                )
+
+            if not file_path.is_file():
+                raise LoaderError(
+                    "Not a file",
+                    context={"path": str(file_path), "loader": self.source_name},
+                )
+
+            file_size = file_path.stat().st_size
+            if file_size > self.max_file_size:
+                raise LoaderError(
+                    "File too large",
+                    context={
+                        "path": str(file_path),
+                        "size_bytes": file_size,
+                        "max_size_bytes": self.max_file_size,
+                        "loader": self.source_name,
+                    },
+                )
+
             content = file_path.read_text(encoding=self.encoding)
             stat = file_path.stat()
-
-            return LoadedDocument(
-                content=content,
-                source=self.source_name,
-                source_id=str(file_path.absolute()),
-                filename=file_path.name,
-                mime_type="text/plain",
-                created_at=datetime.fromtimestamp(stat.st_ctime),
-                modified_at=datetime.fromtimestamp(stat.st_mtime),
-                size_bytes=file_size,
-                metadata={
-                    "source": str(file_path.absolute()),
-                    "extension": file_path.suffix,
+        except LoaderError:
+            raise
+        except FileNotFoundError as exc:
+            logger.exception("File not found while loading text")
+            raise LoaderError(
+                "File not found",
+                context={"path": str(file_path), "loader": self.source_name},
+            ) from exc
+        except PermissionError as exc:
+            logger.exception("Permission denied while reading text")
+            raise LoaderError(
+                "Permission denied",
+                context={"path": str(file_path), "loader": self.source_name},
+            ) from exc
+        except UnicodeDecodeError as exc:
+            logger.exception("Encoding error while reading text")
+            raise LoaderError(
+                "Encoding error",
+                context={
+                    "path": str(file_path),
                     "encoding": self.encoding,
+                    "loader": self.source_name,
                 },
-            )
-        except UnicodeDecodeError as e:
-            logger.error(f"Encoding error reading {file_path}: {e}")
-            return None
-        except Exception as e:
-            logger.error(f"Error reading {file_path}: {e}")
-            return None
+            ) from exc
+        except OSError as exc:
+            logger.exception("I/O error while reading text")
+            raise LoaderError(
+                "I/O error while reading text",
+                context={"path": str(file_path), "loader": self.source_name},
+            ) from exc
+
+        return LoadedDocument(
+            content=content,
+            source=self.source_name,
+            source_id=str(file_path.absolute()),
+            filename=file_path.name,
+            mime_type="text/plain",
+            created_at=datetime.fromtimestamp(stat.st_ctime),
+            modified_at=datetime.fromtimestamp(stat.st_mtime),
+            size_bytes=file_size,
+            metadata={
+                "source": str(file_path.absolute()),
+                "extension": file_path.suffix,
+                "encoding": self.encoding,
+            },
+        )
 
     def load_folder(
         self, folder_path: str, recursive: bool = True
@@ -135,7 +169,12 @@ class TextLoader(BaseLoader):
                 file_path.is_file()
                 and file_path.suffix.lower() in self.SUPPORTED_EXTENSIONS
             ):
-                doc = self.load_document(str(file_path))
+                try:
+                    doc = self.load_document(str(file_path))
+                except LoaderError as exc:
+                    logger.error("Failed to load %s: %s", file_path, exc)
+                    continue
+
                 if doc:
                     documents.append(doc)
 
@@ -158,15 +197,28 @@ class TextLoader(BaseLoader):
                 try:
                     # First check filename
                     if query_lower in file_path.name.lower():
-                        doc = self.load_document(str(file_path))
+                        try:
+                            doc = self.load_document(str(file_path))
+                        except LoaderError as exc:
+                            logger.debug("Skipping %s: %s", file_path, exc)
+                            continue
                         if doc:
                             results.append(doc)
                             continue
 
                     # Then check content
-                    content = file_path.read_text(encoding=self.encoding)
+                    try:
+                        content = file_path.read_text(encoding=self.encoding)
+                    except (OSError, UnicodeDecodeError) as exc:
+                        logger.debug("Failed to read %s for search: %s", file_path, exc)
+                        continue
+
                     if query_lower in content.lower():
-                        doc = self.load_document(str(file_path))
+                        try:
+                            doc = self.load_document(str(file_path))
+                        except LoaderError as exc:
+                            logger.debug("Skipping %s: %s", file_path, exc)
+                            continue
                         if doc:
                             results.append(doc)
                 except Exception:
@@ -255,46 +307,84 @@ class MarkdownLoader(BaseLoader):
         """Load a markdown file by path."""
         file_path = self._resolve_path(doc_id)
 
-        if not file_path.exists():
-            logger.error(f"File not found: {file_path}")
-            return None
-
-        if not file_path.is_file():
-            logger.error(f"Not a file: {file_path}")
-            return None
-
-        file_size = file_path.stat().st_size
-        if file_size > self.max_file_size:
-            logger.warning(f"File too large: {file_path} ({file_size} bytes)")
-            return None
-
         try:
+            if not file_path.exists():
+                raise LoaderError(
+                    "File not found",
+                    context={"path": str(file_path), "loader": self.source_name},
+                )
+
+            if not file_path.is_file():
+                raise LoaderError(
+                    "Not a file",
+                    context={"path": str(file_path), "loader": self.source_name},
+                )
+
+            file_size = file_path.stat().st_size
+            if file_size > self.max_file_size:
+                raise LoaderError(
+                    "File too large",
+                    context={
+                        "path": str(file_path),
+                        "size_bytes": file_size,
+                        "max_size_bytes": self.max_file_size,
+                        "loader": self.source_name,
+                    },
+                )
+
             raw_content = file_path.read_text(encoding=self.encoding)
             content, frontmatter = self._parse_frontmatter(raw_content)
             stat = file_path.stat()
+        except LoaderError:
+            raise
+        except FileNotFoundError as exc:
+            logger.exception("File not found while loading markdown")
+            raise LoaderError(
+                "File not found",
+                context={"path": str(file_path), "loader": self.source_name},
+            ) from exc
+        except PermissionError as exc:
+            logger.exception("Permission denied while reading markdown")
+            raise LoaderError(
+                "Permission denied",
+                context={"path": str(file_path), "loader": self.source_name},
+            ) from exc
+        except UnicodeDecodeError as exc:
+            logger.exception("Encoding error while reading markdown")
+            raise LoaderError(
+                "Encoding error",
+                context={
+                    "path": str(file_path),
+                    "encoding": self.encoding,
+                    "loader": self.source_name,
+                },
+            ) from exc
+        except OSError as exc:
+            logger.exception("I/O error while reading markdown")
+            raise LoaderError(
+                "I/O error while reading markdown",
+                context={"path": str(file_path), "loader": self.source_name},
+            ) from exc
 
-            metadata = {
-                "source": str(file_path.absolute()),
-                "extension": file_path.suffix,
-                "encoding": self.encoding,
-            }
-            if frontmatter:
-                metadata["frontmatter"] = frontmatter
+        metadata = {
+            "source": str(file_path.absolute()),
+            "extension": file_path.suffix,
+            "encoding": self.encoding,
+        }
+        if frontmatter:
+            metadata["frontmatter"] = frontmatter
 
-            return LoadedDocument(
-                content=content,
-                source=self.source_name,
-                source_id=str(file_path.absolute()),
-                filename=file_path.name,
-                mime_type="text/markdown",
-                created_at=datetime.fromtimestamp(stat.st_ctime),
-                modified_at=datetime.fromtimestamp(stat.st_mtime),
-                size_bytes=file_size,
-                metadata=metadata,
-            )
-        except Exception as e:
-            logger.error(f"Error reading {file_path}: {e}")
-            return None
+        return LoadedDocument(
+            content=content,
+            source=self.source_name,
+            source_id=str(file_path.absolute()),
+            filename=file_path.name,
+            mime_type="text/markdown",
+            created_at=datetime.fromtimestamp(stat.st_ctime),
+            modified_at=datetime.fromtimestamp(stat.st_mtime),
+            size_bytes=file_size,
+            metadata=metadata,
+        )
 
     def load_folder(
         self, folder_path: str, recursive: bool = True
@@ -318,7 +408,12 @@ class MarkdownLoader(BaseLoader):
                 file_path.is_file()
                 and file_path.suffix.lower() in self.SUPPORTED_EXTENSIONS
             ):
-                doc = self.load_document(str(file_path))
+                try:
+                    doc = self.load_document(str(file_path))
+                except LoaderError as exc:
+                    logger.error("Failed to load %s: %s", file_path, exc)
+                    continue
+
                 if doc:
                     documents.append(doc)
 
@@ -340,14 +435,27 @@ class MarkdownLoader(BaseLoader):
             ):
                 try:
                     if query_lower in file_path.name.lower():
-                        doc = self.load_document(str(file_path))
+                        try:
+                            doc = self.load_document(str(file_path))
+                        except LoaderError as exc:
+                            logger.debug("Skipping %s: %s", file_path, exc)
+                            continue
                         if doc:
                             results.append(doc)
                             continue
 
-                    content = file_path.read_text(encoding=self.encoding)
+                    try:
+                        content = file_path.read_text(encoding=self.encoding)
+                    except (OSError, UnicodeDecodeError) as exc:
+                        logger.debug("Failed to read %s for search: %s", file_path, exc)
+                        continue
+
                     if query_lower in content.lower():
-                        doc = self.load_document(str(file_path))
+                        try:
+                            doc = self.load_document(str(file_path))
+                        except LoaderError as exc:
+                            logger.debug("Skipping %s: %s", file_path, exc)
+                            continue
                         if doc:
                             results.append(doc)
                 except Exception:

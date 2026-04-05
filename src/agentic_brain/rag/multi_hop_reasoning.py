@@ -39,7 +39,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Protocol
 
-from ..exceptions import RAGError
 
 logger = logging.getLogger(__name__)
 

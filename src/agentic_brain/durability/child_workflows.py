@@ -30,12 +30,12 @@ Features:
 import asyncio
 import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, TypeVar
+from typing import Any, Callable, Dict, List, Optional
 
 from .event_store import EventStore, get_event_store
-from .events import BaseEvent, EventType, WorkflowEvent
+from .events import EventType, WorkflowEvent
 
 
 class ChildWorkflowPolicy(Enum):

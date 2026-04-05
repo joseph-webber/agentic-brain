@@ -34,7 +34,7 @@ from __future__ import annotations
 import csv
 import json
 import logging
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -525,6 +525,7 @@ class MetricsExporter:
         import schedule
 
         def export_daily():
+            """Export the current day's analytics in the configured format."""
             date_str = datetime.now(UTC).strftime("%Y-%m-%d")
             output_path = Path(output_dir) / f"analytics-{date_str}.{format_type}"
 

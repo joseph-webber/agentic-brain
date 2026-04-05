@@ -30,14 +30,10 @@ import asyncio
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
 from ..durability import (
     DurableWorkflow,
-    EventStore,
-    QueryDispatcher,
-    SignalDispatcher,
-    UpdateDispatcher,
     get_event_store,
     get_query_dispatcher,
     get_signal_dispatcher,

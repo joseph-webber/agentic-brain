@@ -20,7 +20,7 @@ Supports both DAO (relationships, CRUD) and RAG (semantic search) patterns.
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 
 class ADLParseError(Exception):

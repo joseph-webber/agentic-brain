@@ -43,7 +43,6 @@ from agentic_brain.audio.audio_normalizer import AudioNormalizer
 from agentic_brain.audio.quality_analyzer import (
     MIN_ACCEPTABLE_DB,
     QualityReport,
-    Severity,
     VoiceQualityAnalyzer,
 )
 

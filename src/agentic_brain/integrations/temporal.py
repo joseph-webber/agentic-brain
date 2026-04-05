@@ -44,8 +44,8 @@ import asyncio
 import inspect
 import logging
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
-from enum import Enum, StrEnum
+from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 from functools import wraps
 from typing import Any, Callable, ParamSpec, TypeVar
 
@@ -281,7 +281,6 @@ class TemporalOrchestrator:
         try:
             if self._connected and self._client:
                 # Use Temporal for durable execution
-                from temporalio.client import Client
 
                 workflow_class = self._workflows.get(workflow_name)
                 if not workflow_class:

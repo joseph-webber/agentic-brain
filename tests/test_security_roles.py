@@ -13,8 +13,6 @@ from agentic_brain.security.auth import (
     SessionManager,
     authenticate_api_key,
     authenticate_request,
-    check_command_allowed,
-    check_file_access,
     create_admin_session,
     get_current_role,
     is_admin,
@@ -22,9 +20,12 @@ from agentic_brain.security.auth import (
     is_user,
     setup_admin_from_env,
 )
+from agentic_brain.security.guards import check_file_access
 from agentic_brain.security.guards import (
     SecurityGuard,
     SecurityViolation,
+    check_command_allowed,
+    check_file_access,
     reset_security_guard,
     set_security_guard,
 )

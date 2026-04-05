@@ -65,8 +65,8 @@ import asyncio
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
-from enum import Enum, StrEnum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 
 import aiohttp

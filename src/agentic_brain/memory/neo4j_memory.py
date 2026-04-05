@@ -34,7 +34,7 @@ import logging
 import math
 import re
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from agentic_brain.core.neo4j_utils import resilient_query_sync

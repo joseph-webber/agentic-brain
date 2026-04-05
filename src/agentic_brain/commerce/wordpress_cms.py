@@ -35,8 +35,8 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timezone
-from typing import Any, Iterable, Mapping, MutableMapping, Sequence
+from datetime import UTC, datetime
+from typing import Any, Mapping, MutableMapping, Sequence
 
 import aiohttp
 

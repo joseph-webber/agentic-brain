@@ -22,7 +22,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from .base import BaseLoader, LoadedDocument, with_rate_limit
 

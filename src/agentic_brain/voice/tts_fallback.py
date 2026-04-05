@@ -54,7 +54,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -247,8 +247,19 @@ class TTSFallbackChain:
         use_serializer: bool = True,
     ) -> TTSResult:
         """Speak text using the fallback chain (blocking).
-
-        Same as speak() but runs synchronously.
+        
+        Synchronous version of speak(). Handles running from both
+        inside and outside an async event loop.
+        
+        Args:
+            text: Text to speak.
+            voice: Voice/lady name (default: Karen).
+            rate: Speech rate in words per minute.
+            wait: If True, wait for speech to complete.
+            use_serializer: If True, use VoiceSerializer for overlap prevention.
+            
+        Returns:
+            TTSResult with success status and used backend.
         """
         try:
             loop = asyncio.get_running_loop()
@@ -284,8 +295,16 @@ class TTSFallbackChain:
         voice: Optional[str] = None,
     ) -> TTSResult:
         """Synthesize audio without playing it.
-
-        Returns audio bytes that can be cached or played later.
+        
+        Useful for pre-generating audio that can be cached
+        or played later.
+        
+        Args:
+            text: Text to synthesize.
+            voice: Voice/lady name.
+            
+        Returns:
+            TTSResult with audio_bytes if successful.
         """
         if not text or not text.strip():
             return TTSResult(
@@ -299,9 +318,12 @@ class TTSFallbackChain:
 
     async def health_check(self) -> TTSChainHealth:
         """Check health of all TTS backends.
-
-        Returns detailed status for each backend including whether
-        it's available, any error reasons, and test latency.
+        
+        Tests each backend for availability and measures latency.
+        Determines the active (highest priority available) backend.
+        
+        Returns:
+            TTSChainHealth with status for all backends.
         """
         # Check Cartesia
         cartesia_health = await self._check_cartesia_health()
@@ -336,13 +358,26 @@ class TTSFallbackChain:
 
     @property
     def active_backend(self) -> Optional[TTSBackend]:
-        """Return the currently active (highest priority available) backend."""
+        """Return the currently active backend.
+        
+        The active backend is the highest priority backend
+        that is currently available.
+        
+        Returns:
+            Currently active TTSBackend or None.
+        """
         with self._lock:
             return self._active_backend
 
     @property
     def metrics(self) -> Dict[str, Any]:
-        """Return usage metrics for all backends."""
+        """Return usage metrics for all backends.
+        
+        Includes call counts, failure counts, and fallback statistics.
+        
+        Returns:
+            Dictionary of metrics for each backend.
+        """
         with self._lock:
             return dict(self._metrics)
 
@@ -355,7 +390,17 @@ class TTSFallbackChain:
         rate: int,
         wait: bool,
     ) -> TTSResult:
-        """Route speech through VoiceSerializer for overlap prevention."""
+        """Route speech through VoiceSerializer for overlap prevention.
+        
+        Args:
+            text: Text to speak.
+            voice: Voice identifier.
+            rate: Speech rate.
+            wait: Whether to wait for completion.
+            
+        Returns:
+            TTSResult from serialized speech.
+        """
         from agentic_brain.voice.serializer import get_voice_serializer
 
         serializer = get_voice_serializer()
@@ -388,7 +433,18 @@ class TTSFallbackChain:
         voice: str,
         rate: int,
     ) -> TTSResult:
-        """Run the fallback chain directly (no serializer)."""
+        """Run the fallback chain directly without serializer.
+        
+        Tries backends in priority order: Cartesia → Kokoro → macOS say.
+        
+        Args:
+            text: Text to speak.
+            voice: Voice identifier.
+            rate: Speech rate.
+            
+        Returns:
+            TTSResult from first successful backend.
+        """
         # Try Cartesia first (fastest, paid)
         result = await self._try_cartesia(text, voice)
         if result.success:

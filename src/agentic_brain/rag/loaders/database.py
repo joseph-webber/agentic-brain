@@ -26,7 +26,7 @@ All table and column names are validated using _validate_sql_identifier() from b
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Optional
 
 from .base import BaseLoader, LoadedDocument, _validate_sql_identifier
 

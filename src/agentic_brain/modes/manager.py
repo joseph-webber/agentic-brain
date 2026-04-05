@@ -42,7 +42,6 @@ from agentic_brain.voice.serializer import speak_serialized
 
 from .base import Mode, ModeCategory
 from .registry import (
-    CODE_TO_NAME,
     MODE_REGISTRY,
     MODES_BY_CATEGORY,
     get_mode,

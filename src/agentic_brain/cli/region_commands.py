@@ -15,7 +15,6 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 from agentic_brain.voice.user_regions import (
     get_region_stats,

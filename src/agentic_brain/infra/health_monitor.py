@@ -18,9 +18,9 @@ Exposes health status via /infra/health endpoint.
 import asyncio
 import logging
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum, StrEnum
+from enum import StrEnum
 from typing import Any, Callable, Dict, Optional
 
 import redis.asyncio as aioredis

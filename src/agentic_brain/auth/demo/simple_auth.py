@@ -24,7 +24,7 @@ import os
 import secrets
 import sqlite3
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Optional
 
 from jose import JWTError, jwt

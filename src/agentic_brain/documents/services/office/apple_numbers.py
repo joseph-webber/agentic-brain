@@ -34,13 +34,11 @@ import re
 import shutil
 import struct
 import subprocess
-import tempfile
-import warnings
 import zipfile
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable, Iterator, Optional
+from typing import Any, Iterable
 
 try:
     import pandas as pd

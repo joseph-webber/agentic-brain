@@ -26,7 +26,6 @@ duration, and error counts for observability.
 
 from __future__ import annotations
 
-import io
 import logging
 import os
 import struct
@@ -111,7 +110,7 @@ class TranscriptionMetrics:
     avg_confidence: float = 0.0
     _confidence_samples: list[float] = field(default_factory=list)
 
-    def record(self, result: TranscriptionResult, processing_ms: float) -> None:
+    def record(self: "TranscriptionMetrics", result: TranscriptionResult, processing_ms: float) -> None:
         self.total_requests += 1
         self.successful += 1
         self.total_audio_ms += result.duration_ms
@@ -121,24 +120,24 @@ class TranscriptionMetrics:
             self._confidence_samples
         )
 
-    def record_error(self) -> None:
+    def record_error(self: "TranscriptionMetrics") -> None:
         self.total_requests += 1
         self.errors += 1
 
     @property
-    def accuracy_rate(self) -> float:
+    def accuracy_rate(self: "TranscriptionMetrics") -> float:
         if self.total_requests == 0:
             return 0.0
         return self.successful / self.total_requests
 
     @property
-    def realtime_factor(self) -> float:
+    def realtime_factor(self: "TranscriptionMetrics") -> float:
         """Processing time / audio time.  < 1.0 means faster-than-realtime."""
         if self.total_audio_ms == 0:
             return 0.0
         return self.total_processing_ms / self.total_audio_ms
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self: "TranscriptionMetrics") -> dict[str, Any]:
         return {
             "total_requests": self.total_requests,
             "successful": self.successful,
@@ -197,7 +196,7 @@ class StreamingBuffer:
     """
 
     def __init__(
-        self,
+        self: "StreamingBuffer",
         window_secs: float = 2.0,
         overlap_secs: float = 0.5,
         sample_rate: int = 16_000,
@@ -209,7 +208,7 @@ class StreamingBuffer:
         self._segment_index = 0
         self._lock = threading.Lock()
 
-    def add_chunk(self, chunk: bytes) -> Optional[Any]:
+    def add_chunk(self: "StreamingBuffer", chunk: bytes) -> Optional[Any]:
         """Add audio chunk and return segment if window is full.
 
         Args:
@@ -252,7 +251,7 @@ class StreamingBuffer:
                 logger.warning("StreamingBuffer: failed to add audio chunk: %s", exc)
                 return None
 
-    def flush(self) -> Optional[Any]:
+    def flush(self: "StreamingBuffer") -> Optional[Any]:
         """Flush remaining buffer as final segment."""
         with self._lock:
             try:
@@ -272,14 +271,14 @@ class StreamingBuffer:
                 return None
 
     @property
-    def segment_index(self) -> int:
+    def segment_index(self: "StreamingBuffer") -> int:
         return self._segment_index
 
     @property
-    def buffer_duration_ms(self) -> float:
+    def buffer_duration_ms(self: "StreamingBuffer") -> float:
         return (len(self._buffer) / self.sample_rate) * 1000
 
-    def reset(self) -> None:
+    def reset(self: "StreamingBuffer") -> None:
         """Clear buffer and reset segment counter."""
         with self._lock:
             self._buffer = []
@@ -336,14 +335,26 @@ class StreamingStitcher:
     def _merge_overlapping(
         self, last_words: list[str], new_words: list[str]
     ) -> Optional[list[str]]:
-        """Find overlap point and merge word lists."""
+        """Find overlap point and merge word lists.
+        
+        Args:
+            last_words: Words from previous segment.
+            new_words: Words from new segment.
+            
+        Returns:
+            Merged word list or None if no overlap found.
+        """
         for i in range(min(len(last_words), len(new_words))):
             if last_words[-(i + 1) :] == new_words[: i + 1]:
                 return new_words[i + 1 :]
         return None
 
     def finalize(self) -> str:
-        """Finalize and return complete transcription."""
+        """Finalize and return complete transcription.
+        
+        Returns:
+            Complete transcribed text with all partials merged.
+        """
         if self._last_partial:
             self._stable_text = (self._stable_text + " " + self._last_partial).strip()
         result = self._stable_text
@@ -351,7 +362,7 @@ class StreamingStitcher:
         return result
 
     def reset(self) -> None:
-        """Reset stitcher state."""
+        """Reset stitcher state for new transcription."""
         self._stable_text = ""
         self._last_partial = ""
 
@@ -375,12 +386,24 @@ class BaseTranscriber(ABC):
         audio_data: bytes,
         sample_rate: int = 16_000,
     ) -> Optional[TranscriptionResult]:
-        """Transcribe raw PCM int16 audio bytes."""
+        """Transcribe raw PCM int16 audio bytes.
+        
+        Args:
+            audio_data: Raw PCM audio bytes (int16 format).
+            sample_rate: Audio sample rate in Hz.
+            
+        Returns:
+            Transcription result or None on failure.
+        """
         ...
 
     @abstractmethod
     def is_available(self) -> bool:
-        """Return True if this backend can be used."""
+        """Return True if this backend can be used.
+        
+        Returns:
+            True if backend is initialized and ready.
+        """
         ...
 
     def load_audio(
@@ -388,7 +411,18 @@ class BaseTranscriber(ABC):
         audio_source: bytes | bytearray | str | Path,
         sample_rate: int = 16_000,
     ) -> tuple[bytes, int]:
-        """Load PCM audio from raw bytes or a WAV file path."""
+        """Load PCM audio from raw bytes or a WAV file path.
+        
+        Args:
+            audio_source: Raw PCM bytes or path to WAV file.
+            sample_rate: Target sample rate in Hz.
+            
+        Returns:
+            Tuple of (audio_bytes, actual_sample_rate).
+            
+        Raises:
+            AudioFormatError: If audio format is invalid.
+        """
         file_handle: Any | None = None
         wav_reader: wave.Wave_read | None = None
 
@@ -1349,7 +1383,6 @@ class FasterWhisperTranscriber(BaseTranscriber):
                 logger.warning("FasterWhisperTranscriber: segment error: %s", exc)
                 return None
             finally:
-                info = None
                 segments = None
 
 

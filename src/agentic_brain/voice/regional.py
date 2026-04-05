@@ -19,7 +19,6 @@ import os
 import random
 import subprocess
 from dataclasses import asdict, dataclass, field
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
@@ -49,7 +48,6 @@ class RegionalProfile:
 from .australian_regions import (
     AUSTRALIAN_CITIES,
     convert_australian_cities_to_profiles,
-    get_local_greeting,
 )
 
 # Convert Australian cities to RegionalProfile objects

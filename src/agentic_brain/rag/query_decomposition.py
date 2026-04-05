@@ -37,9 +37,8 @@ Patterns supported:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
-from ..exceptions import RAGError
 
 
 class LLMClient(Protocol):

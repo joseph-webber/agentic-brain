@@ -29,8 +29,7 @@ import threading
 from collections import defaultdict, deque
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
-from datetime import UTC, datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from fastapi import Body, Depends, HTTPException, Query, Request, Response, status
 

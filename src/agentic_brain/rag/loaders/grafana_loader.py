@@ -18,11 +18,10 @@
 Load dashboards, panels, alerts, and data sources from Grafana.
 """
 
-import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from .base import BaseLoader, LoadedDocument, with_rate_limit
 

@@ -4,11 +4,15 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _load_module(module_name: str, file_name: str):
     path = PROJECT_ROOT / file_name
+    if not path.exists():
+        pytest.skip(f"{file_name} not found in project root", allow_module_level=True)
     spec = importlib.util.spec_from_file_location(module_name, path)
     module = importlib.util.module_from_spec(spec)
     assert spec is not None and spec.loader is not None

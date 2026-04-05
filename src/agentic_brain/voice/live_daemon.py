@@ -38,7 +38,7 @@ import subprocess
 import sys
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional
 

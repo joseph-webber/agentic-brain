@@ -35,7 +35,7 @@ Usage:
 """
 import os
 import ssl
-from typing import Optional, Union
+from typing import Union
 
 
 def should_verify_ssl() -> bool:

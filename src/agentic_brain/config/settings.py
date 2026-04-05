@@ -32,7 +32,7 @@ Configuration hierarchy (highest priority first):
 from __future__ import annotations
 
 import os
-from enum import Enum, StrEnum
+from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 from typing import Any

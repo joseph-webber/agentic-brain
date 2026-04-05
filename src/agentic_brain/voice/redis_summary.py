@@ -11,7 +11,6 @@ Provides voice summaries of what's happening in Redis/Redpanda:
 Perfect for accessibility - Joseph can hear what the brain is doing!
 """
 
-import asyncio
 import json
 import os
 from dataclasses import dataclass

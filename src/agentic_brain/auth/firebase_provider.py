@@ -7,6 +7,15 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 
+"""Firebase authentication provider integration.
+
+This module adapts Firebase ID token verification to the generic
+:class:`AuthProvider` interface used by the authentication subsystem.
+
+It is intended for server-side validation of Firebase tokens issued to
+web, mobile, or desktop clients, mapping Firebase user data into the
+shared :class:`User` model and authentication result types.
+"""
 
 import logging
 import os

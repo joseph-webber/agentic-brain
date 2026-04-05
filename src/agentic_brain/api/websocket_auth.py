@@ -21,11 +21,11 @@ Security Features:
 
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
 import jwt
-from fastapi import WebSocket, WebSocketDisconnect, status
+from fastapi import WebSocket, status
 
 logger = logging.getLogger(__name__)
 

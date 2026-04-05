@@ -22,7 +22,6 @@ Supports:
 - HubSpot (CRM + support)
 """
 
-import json
 import logging
 import os
 from datetime import datetime

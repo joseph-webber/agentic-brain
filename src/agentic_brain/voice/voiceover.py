@@ -23,7 +23,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Optional
+from typing import Optional
 
 from agentic_brain.events.voice_events import (
     VoiceRequest,

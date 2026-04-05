@@ -11,7 +11,7 @@
 Comprehensive database of Australian regional language differences and slang.
 """
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, List, cast
 
 if TYPE_CHECKING:
     from .regional import RegionalProfile

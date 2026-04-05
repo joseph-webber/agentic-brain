@@ -30,7 +30,7 @@ License: Apache-2.0
 import contextlib
 import logging
 import os
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from agentic_brain.vectordb import (
     VectorDBAdapter,

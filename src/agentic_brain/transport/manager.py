@@ -20,9 +20,8 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
 
 from fastapi import WebSocket
 

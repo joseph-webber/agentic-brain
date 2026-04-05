@@ -18,12 +18,10 @@
 Load Jenkins jobs, builds, and pipeline configurations.
 """
 
-import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, List, Optional
-from urllib.parse import urljoin
+from typing import List, Optional
 
 from .base import BaseLoader, LoadedDocument, with_rate_limit
 

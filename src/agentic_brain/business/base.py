@@ -18,7 +18,7 @@
 import contextlib
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field, fields
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Generic, Optional, TypeVar
 from uuid import uuid4
 

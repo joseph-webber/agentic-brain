@@ -18,11 +18,10 @@
 Load searches, dashboards, and data from Splunk Enterprise/Cloud.
 """
 
-import json
 import logging
 import os
-from datetime import datetime, timedelta
-from typing import Any, List, Optional
+from datetime import datetime
+from typing import List, Optional
 from xml.etree import ElementTree as ET
 
 from .base import BaseLoader, LoadedDocument, with_rate_limit
