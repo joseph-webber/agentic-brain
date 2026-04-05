@@ -75,16 +75,12 @@ let package = Package(
                 "BenchmarkResults.swift",
                 "PerformanceOptimizations.swift",
                 "STTBenchmark.swift",
-                // Source-specific excludes
+                // Source-specific excludes (use root-level versions in sources list)
                 "Sources/BrainChat/BrainChat.sdef",
                 "Sources/BrainChat/BrainChatLib.swift",
                 "Sources/BrainChat/EventTypes.swift",
                 "Sources/BrainChat/PandaproxyClient.swift",
                 "Sources/BrainChat/RedpandaBridge.swift",
-                // Root-level duplicates excluded (use Sources/ versions)
-                "EventTypes.swift",
-                "PandaproxyClient.swift",
-                "RedpandaBridge.swift",
                 // App bundles
                 "BrainChat.entitlements",
                 "Brain Chat.app",
@@ -114,7 +110,7 @@ let package = Package(
                 "CopilotBridge.swift",
                 "CopilotClient.swift",
                 "CopilotVoiceRouter.swift",
-                // EventTypes.swift - using Sources/BrainChat/ version
+                "EventTypes.swift",
                 "FasterWhisperBridge.swift",
                 "GeminiClient.swift",
                 "GroqClient.swift",
@@ -128,8 +124,8 @@ let package = Package(
                 "Models.swift",
                 "OllamaAPI.swift",
                 "OpenAIAPI.swift",
-                // PandaproxyClient.swift - using Sources/BrainChat/ version
-                // RedpandaBridge.swift - using Sources/BrainChat/ version
+                "PandaproxyClient.swift",
+                "RedpandaBridge.swift",
                 "ResponseWeavingCoordinator.swift",
                 "ResponseWeavingTypes.swift",
                 "ResponseWeavingView.swift",
