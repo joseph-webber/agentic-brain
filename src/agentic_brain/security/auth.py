@@ -16,6 +16,7 @@ import hmac
 import logging
 import os
 import secrets
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -34,6 +35,162 @@ logger = logging.getLogger(__name__)
 ADMIN_KEY_ENV = "AGENTIC_BRAIN_ADMIN_KEY"
 ADMIN_USER_ENV = "AGENTIC_BRAIN_ADMIN_USER"
 DEFAULT_ADMIN_USER = "joseph"  # Joseph is always admin by default
+
+
+class RateLimitError(Exception):
+    """Raised when rate limit is exceeded."""
+    pass
+
+
+@dataclass(slots=True)
+class RateLimitConfig:
+    """Configuration for rate limiting."""
+    max_requests: int = 100
+    window_seconds: int = 60
+    burst_limit: int = 10
+    burst_window_seconds: int = 1
+    enabled: bool = True
+
+
+@dataclass(slots=True)
+class RateLimitStatus:
+    """Status of a user's rate limit."""
+    user_id: str
+    requests_in_window: int
+    requests_in_burst: int
+    next_reset: datetime
+    is_limited: bool
+    limit_until: datetime | None
+
+
+class RateLimiter:
+    """
+    Token bucket rate limiter with burst protection.
+    
+    Tracks requests per user and enforces rate limits.
+    """
+    
+    def __init__(self, config: RateLimitConfig | None = None):
+        self.config = config or RateLimitConfig()
+        self._request_history: dict[str, list[datetime]] = defaultdict(list)
+        self._burst_history: dict[str, list[datetime]] = defaultdict(list)
+        self._blocked_until: dict[str, datetime] = {}
+    
+    def check_limit(self, user_id: str, strict: bool = True) -> bool:
+        """
+        Check if user is within rate limits.
+        
+        Args:
+            user_id: User identifier
+            strict: If True, raise on limit exceeded; if False, return bool
+            
+        Returns:
+            True if within limits, False if limited
+            
+        Raises:
+            RateLimitError: If strict=True and limit exceeded
+        """
+        if not self.config.enabled:
+            return True
+        
+        now = datetime.now(UTC)
+        
+        # Check if user is temporarily blocked
+        if user_id in self._blocked_until:
+            if now < self._blocked_until[user_id]:
+                if strict:
+                    raise RateLimitError(
+                        f"Rate limit exceeded. Try again at "
+                        f"{self._blocked_until[user_id]}"
+                    )
+                return False
+            else:
+                # Block period expired
+                del self._blocked_until[user_id]
+                self._request_history[user_id].clear()
+                self._burst_history[user_id].clear()
+        
+        # Check burst limit (requests per second)
+        self._burst_history[user_id] = [
+            t for t in self._burst_history[user_id]
+            if now - t < timedelta(seconds=self.config.burst_window_seconds)
+        ]
+        
+        if len(self._burst_history[user_id]) >= self.config.burst_limit:
+            # Block for burst window
+            self._blocked_until[user_id] = now + timedelta(
+                seconds=self.config.burst_window_seconds
+            )
+            if strict:
+                raise RateLimitError(
+                    f"Burst limit exceeded ({self.config.burst_limit} "
+                    f"requests per second)"
+                )
+            return False
+        
+        self._burst_history[user_id].append(now)
+        
+        # Check per-window limit
+        window_start = now - timedelta(seconds=self.config.window_seconds)
+        self._request_history[user_id] = [
+            t for t in self._request_history[user_id]
+            if t > window_start
+        ]
+        
+        if len(self._request_history[user_id]) >= self.config.max_requests:
+            # Block for full window
+            self._blocked_until[user_id] = now + timedelta(
+                seconds=self.config.window_seconds
+            )
+            if strict:
+                raise RateLimitError(
+                    f"Rate limit exceeded ({self.config.max_requests} "
+                    f"requests per {self.config.window_seconds}s)"
+                )
+            return False
+        
+        self._request_history[user_id].append(now)
+        return True
+    
+    def get_status(self, user_id: str) -> RateLimitStatus:
+        """Get current rate limit status for a user."""
+        now = datetime.now(UTC)
+        
+        window_start = now - timedelta(seconds=self.config.window_seconds)
+        requests_in_window = len([
+            t for t in self._request_history.get(user_id, [])
+            if t > window_start
+        ])
+        
+        requests_in_burst = len([
+            t for t in self._burst_history.get(user_id, [])
+            if now - t < timedelta(seconds=self.config.burst_window_seconds)
+        ])
+        
+        is_limited = user_id in self._blocked_until
+        limit_until = self._blocked_until.get(user_id)
+        
+        next_reset = now + timedelta(seconds=self.config.window_seconds)
+        
+        return RateLimitStatus(
+            user_id=user_id,
+            requests_in_window=requests_in_window,
+            requests_in_burst=requests_in_burst,
+            next_reset=next_reset,
+            is_limited=is_limited,
+            limit_until=limit_until,
+        )
+    
+    def reset(self, user_id: str | None = None) -> None:
+        """Reset rate limit for a user or all users."""
+        if user_id:
+            self._request_history.pop(user_id, None)
+            self._burst_history.pop(user_id, None)
+            self._blocked_until.pop(user_id, None)
+        else:
+            self._request_history.clear()
+            self._burst_history.clear()
+            self._blocked_until.clear()
 
 
 @dataclass(slots=True)
@@ -279,6 +436,7 @@ class AdminAuthenticator:
 # Global instances
 _session_manager = SessionManager()
 _admin_auth = AdminAuthenticator()
+_rate_limiter = RateLimiter()
 
 
 def get_session_manager() -> SessionManager:
@@ -289,6 +447,11 @@ def get_session_manager() -> SessionManager:
 def get_admin_authenticator() -> AdminAuthenticator:
     """Get the global admin authenticator."""
     return _admin_auth
+
+
+def get_rate_limiter() -> RateLimiter:
+    """Get the global rate limiter."""
+    return _rate_limiter
 
 
 def authenticate_api_key(api_key: str) -> tuple[SecurityRole, str | None]:

@@ -1,14 +1,17 @@
-"""
-Brain Graph - Unified interface to the topic-centric Neo4j graph.
+"""Brain Graph - Unified interface to the topic-centric Neo4j graph."""
 
-This is the main entry point for all Neo4j operations in the brain.
-It automatically uses the TopicGraph pattern for semantic queries.
-"""
+from __future__ import annotations
 
 import os
-from typing import List, Dict, Any
-from neo4j import GraphDatabase
-from .patterns import TopicGraph, ZonedGraph, CORE_TOPICS, setup_graph_constraints
+from typing import Any, Dict, List
+
+from agentic_brain.core.neo4j_pool import (
+    configure_pool,
+    get_driver as get_shared_driver,
+)
+
+from ..security.sanitization import sanitize_cypher, SanitizationError
+from .patterns import CORE_TOPICS, TopicGraph, ZonedGraph, setup_graph_constraints
 
 # Singleton driver
 _driver = None
@@ -22,8 +25,9 @@ def get_driver():
     if _driver is None:
         uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
         user = os.getenv("NEO4J_USER", "neo4j")
-        password = os.getenv("NEO4J_PASSWORD", "Brain2026")
-        _driver = GraphDatabase.driver(uri, auth=(user, password))
+        password = os.getenv("NEO4J_PASSWORD", "")
+        configure_pool(uri=uri, user=user, password=password)
+        _driver = get_shared_driver()
     return _driver
 
 
@@ -44,7 +48,14 @@ def get_zoned_graph() -> ZonedGraph:
 
 
 def query(cypher: str, params: Dict = None) -> List[Dict[str, Any]]:
-    """Run a raw Cypher query."""
+    """Run a raw Cypher query with sanitization."""
+    # Sanitize the query to prevent injection
+    result = sanitize_cypher(cypher, strict=True)
+    if not result.is_clean and result.threat_level in ("high", "critical"):
+        raise SanitizationError(
+            f"Cypher query failed sanitization: {result.violations}"
+        )
+    
     with get_driver().session() as session:
         result = session.run(cypher, params or {})
         return [dict(r) for r in result]
