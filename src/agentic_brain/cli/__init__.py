@@ -352,6 +352,16 @@ def create_parser() -> argparse.ArgumentParser:
     )
     persona_parser.set_defaults(func=commands.persona_install_command)
 
+    # Dependency audit command
+    audit_parser = subparsers.add_parser(
+        "audit-deps",
+        help="Audit and secure Python dependencies",
+        formatter_class=ColoredFormatter,
+        description="Run dependency security audit (pip-audit, safety), license checks, and produce reports.",
+    )
+    audit_parser.add_argument("--output", "-o", type=str, default="dependency_audit.json", help="Output report path")
+    audit_parser.set_defaults(func=commands.audit_deps_command)
+
     # Install command
     install_parser = subparsers.add_parser(
         "install",
@@ -433,6 +443,12 @@ def create_parser() -> argparse.ArgumentParser:
         "--no-streaming",
         action="store_true",
         help="Skip streaming benchmark",
+    )
+    benchmark_parser.add_argument(
+        "--suite",
+        choices=["rag", "competitors", "all"],
+        default=None,
+        help="Run the performance benchmark suite instead of legacy model benchmarking",
     )
     benchmark_parser.set_defaults(func=commands.benchmark_command)
 

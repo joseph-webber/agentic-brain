@@ -153,6 +153,31 @@ def topics_audit_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def audit_deps_command(args: argparse.Namespace) -> int:
+    """Run the dependency security audit and produce a JSON report."""
+    print_header("Dependency Security Audit")
+    try:
+        # Import lazily so CLI remains fast if audit tools are not required
+        from agentic_brain.security import dependency_audit
+
+        rc = dependency_audit.main(["--output", args.output])
+        if rc == 0:
+            print_success(f"Dependency audit completed: {args.output}")
+        else:
+            print_warning(f"Dependency audit finished with code {rc}")
+        return rc
+    except Exception as exc:
+        print_error(f"Failed to run dependency audit: {exc}")
+        # Provide fallback: try running the module as script
+        try:
+            subprocess.run([sys.executable, "-m", "agentic_brain.security.dependency_audit", "--output", args.output], check=False)
+            print_warning("Ran dependency audit as a subprocess (fallback)")
+            return 0
+        except Exception as exc2:
+            print_error(f"Fallback run failed: {exc2}")
+            return 2
+
+
 def security_scan_command(args: argparse.Namespace) -> int:
     """Run the penetration-testing suite and print a concise report."""
 
@@ -1504,6 +1529,75 @@ def install_command(args: argparse.Namespace) -> int:
         return 1
 
 
+def benchmark_suite_command(args: argparse.Namespace) -> int:
+    """Run the performance benchmark suite and optional competitor comparison."""
+    print_header("Agentic Brain Performance Benchmark")
+
+    try:
+        from agentic_brain.benchmark import BenchmarkSuite, CompetitorBenchmark
+
+        print_info("Running performance suite...")
+        suite_result = BenchmarkSuite().run()
+        competitor_report = None
+        if args.suite in ("competitors", "all"):
+            competitor_report = CompetitorBenchmark(suite_result).compare()
+
+        if args.format == "json":
+            payload: dict[str, Any] = {"suite": suite_result.to_dict()}
+            if competitor_report:
+                payload["competitors"] = competitor_report.to_dict()
+            output = json.dumps(payload, indent=2)
+        elif args.format == "markdown":
+            parts = [suite_result.to_markdown()]
+            if competitor_report:
+                parts.extend(
+                    [
+                        "",
+                        "## Competitor Comparison",
+                        "",
+                        competitor_report.to_table(),
+                        "",
+                        competitor_report.ascii_charts(),
+                    ]
+                )
+            output = "\n".join(parts)
+        else:
+            parts = [suite_result.to_table(), "", suite_result.ascii_chart()]
+            if competitor_report:
+                parts.extend(
+                    [
+                        "",
+                        competitor_report.to_table(),
+                        "",
+                        competitor_report.ascii_charts(),
+                    ]
+                )
+            output = "\n".join(parts)
+
+        print(output)
+
+        if args.output:
+            Path(args.output).write_text(output, encoding="utf-8")
+            print_success(f"Results saved to: {args.output}")
+
+        print()
+        print_success("Performance benchmark suite complete")
+        for tip in suite_result.recommendations():
+            print_info(tip)
+        return 0
+
+    except ImportError as e:
+        print_error(f"Missing dependency: {e}")
+        return 1
+    except Exception as e:
+        print_error(f"Benchmark suite failed: {e}")
+        if args.verbose:
+            import traceback
+
+            traceback.print_exc()
+        return 1
+
+
 def benchmark_command(args: argparse.Namespace) -> int:
     """
     Benchmark local LLM performance.
@@ -1555,6 +1649,9 @@ def benchmark_command(args: argparse.Namespace) -> int:
     """
     import asyncio
     from pathlib import Path
+
+    if getattr(args, "suite", None):
+        return benchmark_suite_command(args)
 
     print_header("Agentic Brain LLM Benchmark")
 

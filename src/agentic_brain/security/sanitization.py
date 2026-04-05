@@ -300,7 +300,7 @@ class InputSanitizer:
 
         # Check for known dangerous commands
         dangerous_commands = {
-            'rm', 'dd', 'mkfs', 'shutdown', 'reboot',
+            'rm', 'dd', 'mkfs', 'shutdown', 'reboot', 'sudo',
             'format', 'fdisk', 'delpart', 'kill', 'pkill'
         }
         cmd_name = command.split()[0].split('/')[-1] if command else ''

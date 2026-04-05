@@ -46,6 +46,13 @@ class PromptFilter:
             ),
             "System-role impersonation is not allowed.",
         ),
+        PromptRule(
+            re.compile(
+                r"(\bact as\b.{0,20}\b(admin|developer|system|root)\b|\bwithout\s+filters?\b)",
+                re.IGNORECASE | re.DOTALL,
+            ),
+            "Privilege escalation prompts are not allowed.",
+        ),
     )
 
     EXECUTION_RULES = (

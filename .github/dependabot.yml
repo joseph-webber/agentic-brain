@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    allow:
+      - dependency-type: "direct"
+    # Optionally ignore noisy pins (example):
+    # ignore:
+    #   - dependency-name: "django"
+    #     update-types: ["version-update:semver-minor"]

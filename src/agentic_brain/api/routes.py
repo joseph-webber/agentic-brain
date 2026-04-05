@@ -1475,9 +1475,35 @@ def _register_setup_routes(app) -> None:
         """
         try:
             help_text = get_setup_help(provider)
+            documentation_urls = {
+                "groq": "https://console.groq.com",
+                "ollama": "https://ollama.com",
+                "openai": "https://platform.openai.com/docs",
+                "anthropic": "https://docs.anthropic.com",
+                "google": "https://ai.google.dev",
+                "xai": "https://docs.x.ai",
+                "openrouter": "https://openrouter.ai/docs",
+                "together": "https://docs.together.ai",
+            }
             return {
                 "provider": provider,
-                "instructions": help_text,
+                "title": f"Setup {provider.title()}",
+                "description": f"Setup instructions for {provider}",
+                "documentation_url": documentation_urls.get(
+                    provider.lower(), "https://github.com/agentic-brain/agentic-brain"
+                ),
+                "steps": [
+                    {
+                        "step": 1,
+                        "title": "Follow the setup guide",
+                        "instruction": help_text,
+                        "code": None,
+                    }
+                ],
+                "pricing_info": None,
+                "troubleshooting": {
+                    "general": "See the setup guide above for the latest provider instructions."
+                },
             }
         except Exception as e:
             logger.error(f"Setup help failed for {provider}: {e}")
@@ -2182,6 +2208,7 @@ def register_routes(app) -> None:
     - Sessions: /session/* - Session management endpoints
     - Setup: /setup - Setup diagnostics and guidance
     - Auth: /auth/* - SAML and SSO helper endpoints
+    - REST: /query, /index, /metrics, /graph/query, /evaluate, /config
     """
     _register_health_routes(app)
     _register_chat_routes(app)
@@ -2189,6 +2216,16 @@ def register_routes(app) -> None:
     _register_session_routes(app)
     _register_setup_routes(app)
     _register_auth_routes(app)
+
+    # Register lightweight REST endpoints (RAG, index, metrics, graph, eval, config)
+    try:
+        from .rest import register_rest_routes
+
+        register_rest_routes(app)
+    except Exception as exc:
+        import logging
+
+        logging.getLogger(__name__).warning("Failed to register REST routes: %s", exc)
 
     # Commerce webhooks (WooCommerce, etc.)
     try:

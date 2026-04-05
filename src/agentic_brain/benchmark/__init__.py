@@ -28,6 +28,13 @@ from .metrics import (
     OutputFormat,
     RegressionFinding,
 )
+from .competitors import (
+    CompetitorBenchmark,
+    CompetitorComparisonReport,
+    CompetitorComparisonRow,
+    CompetitorProfile,
+)
+from .suite import BenchmarkMetric, BenchmarkSuite, BenchmarkSuiteResult
 from .reporter import BenchmarkReporter
 from .runner import (
     BenchmarkRunner,
@@ -42,8 +49,15 @@ __all__ = [
     "BenchmarkConfig",
     "BenchmarkReporter",
     "BenchmarkResult",
+    "BenchmarkMetric",
     "BenchmarkRunner",
+    "BenchmarkSuite",
+    "BenchmarkSuiteResult",
     "BrainBenchmark",
+    "CompetitorBenchmark",
+    "CompetitorComparisonReport",
+    "CompetitorComparisonRow",
+    "CompetitorProfile",
     "DEFAULT_METRICS",
     "HardwareInfo",
     "METRIC_DEFINITIONS",
