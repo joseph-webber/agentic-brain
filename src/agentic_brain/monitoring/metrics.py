@@ -75,12 +75,22 @@ class Metrics:
                 self._request_timestamps.popleft()
 
     def get_throughput_rps(self) -> float:
-        """Return requests per second averaged over the throughput window."""
+        """Return requests per second averaged over the throughput window.
+
+        Evicts old timestamps based on current time so that callers which advance
+        time (e.g., tests) observe eviction even if no new requests arrive.
+        """
         with self._lock:
             if not self._request_timestamps:
                 return 0.0
+            # Evict old timestamps relative to now
+            now = time.time()
+            cutoff = now - self.throughput_window
+            while self._request_timestamps and self._request_timestamps[0] < cutoff:
+                self._request_timestamps.popleft()
+            if not self._request_timestamps:
+                return 0.0
             span = min(self.throughput_window, self._request_timestamps[-1] - (self._request_timestamps[0] if len(self._request_timestamps)>1 else self._request_timestamps[0]))
-            # avoid division by zero
             span = max(span, 1e-6)
             return len(self._request_timestamps) / span
 
