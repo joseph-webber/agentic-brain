@@ -186,6 +186,25 @@ from .evaluation import (
     EvalResults,
     RAGEvaluator,
 )
+
+# RAGAS Evaluation (2026 industry standard)
+from .ragas_eval import (
+    QUALITY_BAR,
+    AnswerRelevancyCalculator,
+    ContextPrecisionCalculator,
+    ContextRecallCalculator,
+    FaithfulnessCalculator,
+    MetricResult,
+    QualityLevel,
+    RAGASDataset,
+    RAGASEvaluator,
+    RAGASResults,
+    RAGASSample,
+    SampleResult,
+    check_quality_bar,
+    create_graphrag_evaluator,
+    quick_evaluate,
+)
 from .graph_rag import (
     GraphRAG,
     GraphRAGConfig,
@@ -225,6 +244,28 @@ from .graphql_api import (
     create_graphql_app,
     get_context,
     get_schema,
+)
+
+# LlamaIndex compatibility layer
+from .llamaindex_compat import (
+    AgenticIndex,
+    AgenticQueryEngine,
+    AgenticRetriever,
+    AgenticSynthesizer,
+    BaseIndex,
+    BaseQueryEngine,
+    BaseRetriever as LlamaIndexBaseRetriever,
+    BaseSynthesizer,
+    GraphRAGIndex,
+    GraphRAGQueryEngine,
+    LlamaIndexGraphRAGRetriever,
+    LIDocument,
+    NodeWithScore,
+    Response as LlamaIndexResponse,
+    ResponseMode,
+    Settings as LlamaIndexSettings,
+    SimpleDirectoryReader,
+    TextNode,
 )
 
 # Hybrid search
@@ -388,6 +429,21 @@ from .store import (
     InMemoryDocumentStore,
 )
 
+# LangChain compatibility layer (optional - requires langchain-core)
+from .langchain_compat import LANGCHAIN_AVAILABLE
+
+if LANGCHAIN_AVAILABLE:
+    from .langchain_compat import (
+        AgenticBrainCallbackAdapter,
+        AgenticBrainRetriever,
+        DocumentStoreRetriever,
+        GraphRAGRetriever,
+        agentic_document_to_langchain_document,
+        create_langchain_retriever,
+        langchain_document_to_agentic_document,
+        retrieved_chunk_to_langchain_document,
+    )
+
 __all__ = [
     # Core
     "RAGPipeline",
@@ -454,6 +510,22 @@ __all__ = [
     "EvalResults",
     "EvalDataset",
     "RAGEvaluator",
+    # RAGAS Evaluation (2026 industry standard)
+    "RAGASEvaluator",
+    "RAGASDataset",
+    "RAGASSample",
+    "RAGASResults",
+    "SampleResult",
+    "MetricResult",
+    "QualityLevel",
+    "QUALITY_BAR",
+    "FaithfulnessCalculator",
+    "AnswerRelevancyCalculator",
+    "ContextPrecisionCalculator",
+    "ContextRecallCalculator",
+    "create_graphrag_evaluator",
+    "quick_evaluate",
+    "check_quality_bar",
     # Cloud Loaders
     "LoadedDocument",
     "BaseLoader",
@@ -578,4 +650,33 @@ __all__ = [
     "create_graphql_app",
     "get_schema",
     "get_context",
+    # LangChain Compatibility
+    "LANGCHAIN_AVAILABLE",
+    "AgenticBrainRetriever",
+    "GraphRAGRetriever",
+    "DocumentStoreRetriever",
+    "retrieved_chunk_to_langchain_document",
+    "agentic_document_to_langchain_document",
+    "langchain_document_to_agentic_document",
+    "AgenticBrainCallbackAdapter",
+    "create_langchain_retriever",
+    # LlamaIndex Compatibility
+    "TextNode",
+    "LIDocument",
+    "NodeWithScore",
+    "LlamaIndexResponse",
+    "LlamaIndexBaseRetriever",
+    "AgenticRetriever",
+    "LlamaIndexGraphRAGRetriever",
+    "ResponseMode",
+    "BaseSynthesizer",
+    "AgenticSynthesizer",
+    "BaseQueryEngine",
+    "AgenticQueryEngine",
+    "GraphRAGQueryEngine",
+    "BaseIndex",
+    "AgenticIndex",
+    "GraphRAGIndex",
+    "SimpleDirectoryReader",
+    "LlamaIndexSettings",
 ]

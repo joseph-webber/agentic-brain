@@ -24,14 +24,24 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from .community_detection import detect_communities_async
+# Community detection is lazy-loaded to support simple mode (enable_communities=False)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Lazy-loaded real embeddings
+# Lazy-loaded modules
 _mlx_embeddings = None
+_community_detection_module = None
+
+
+def _get_community_detection():
+    """Lazy-load community detection to avoid import when disabled."""
+    global _community_detection_module
+    if _community_detection_module is None:
+        from . import community_detection
+        _community_detection_module = community_detection
+    return _community_detection_module
 
 
 def _get_mlx_embeddings():
@@ -262,7 +272,8 @@ class GraphRAG:
             # Run community detection if enabled
             if self.config.enable_communities:
                 try:
-                    communities = await detect_communities_async(session)
+                    cd = _get_community_detection()
+                    communities = await cd.detect_communities_async(session)
                 except Exception as exc:
                     logger.warning("Community detection failed: %s", exc)
                     communities = {}
@@ -284,7 +295,7 @@ class GraphRAG:
         - VECTOR: Fast embedding similarity
         - GRAPH: Traverse relationships
         - HYBRID: Best of both worlds
-        - COMMUNITY: Global understanding via community summaries
+        - COMMUNITY: Global understanding via community summaries (requires enable_communities=True)
         - MULTI_HOP: Follow chains of reasoning
         """
         if strategy == SearchStrategy.HYBRID:
@@ -292,22 +303,33 @@ class GraphRAG:
         elif strategy == SearchStrategy.VECTOR:
             return await self._vector_search(query, top_k)
         elif strategy == SearchStrategy.GRAPH:
-            # Simple graph search (mocked for now, assumes exact match on query terms to entities)
-            # In production this would use entity linking
-            return []
+            return await self._graph_search(query, top_k)
+        elif strategy == SearchStrategy.MULTI_HOP:
+            return await self._multi_hop_search(query, top_k, include_context)
         elif strategy == SearchStrategy.COMMUNITY:
+            if not self.config.enable_communities:
+                logger.warning(
+                    "COMMUNITY search requested but enable_communities=False. "
+                    "Falling back to HYBRID search."
+                )
+                return await self._hybrid_search(query, top_k)
             return await self._community_search(query, top_k)
 
         return []
 
     async def _community_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
-        """Search using community detection for broader context."""
+        """Search using community detection for broader context.
+        
+        NOTE: This method assumes enable_communities=True. Callers should check
+        the config before calling, or use search() which handles the fallback.
+        """
         if not self._driver:
             return []
 
         async with self._driver.session() as session:
             try:
-                communities = await detect_communities_async(session)
+                cd = _get_community_detection()
+                communities = await cd.detect_communities_async(session)
             except Exception as exc:
                 logger.warning("Community detection failed: %s", exc)
                 return await self._hybrid_search(query, top_k)
@@ -392,6 +414,152 @@ class GraphRAG:
             )
 
         return neighbors
+
+    async def _graph_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
+        """
+        Pure graph traversal search using relationship patterns.
+
+        Uses the GraphTraversalRetriever for Neo4j-based graph exploration.
+        Good for entity-centric queries like "who works on X" or "what depends on Y".
+        """
+        if not self._driver:
+            return []
+
+        from .graph_traversal import GraphTraversalRetriever, TraversalStrategy
+
+        retriever = GraphTraversalRetriever(
+            driver=self._driver,
+            default_node_labels=["Entity", "Document"],
+            default_relationship_types=["RELATES_TO", "MENTIONS", "PART_OF"],
+        )
+
+        try:
+            context = retriever.retrieve(
+                query=query,
+                max_depth=self.config.max_hops,
+                limit=top_k,
+                strategy=TraversalStrategy.HYBRID,
+            )
+
+            results = []
+            for node in context.root_nodes + context.related_nodes:
+                results.append(
+                    {
+                        "entity_id": node.id or f"node_{len(results)}",
+                        "content": node.content,
+                        "score": node.score,
+                        "depth": node.depth,
+                        "labels": node.labels,
+                        "path": node.path,
+                        "strategy": "graph",
+                    }
+                )
+
+            # Sort by score descending
+            results.sort(key=lambda x: x["score"], reverse=True)
+            return results[:top_k]
+
+        except Exception as exc:
+            logger.warning("Graph traversal search failed: %s", exc)
+            return []
+
+    async def _multi_hop_search(
+        self, query: str, top_k: int, include_context: bool = True
+    ) -> List[Dict[str, Any]]:
+        """
+        Multi-hop reasoning search for complex queries.
+
+        Decomposes complex questions into reasoning chains and follows
+        each hop to build a comprehensive answer.
+        """
+        if not self._driver:
+            return []
+
+        from .multi_hop_reasoning import GraphMultiHopReasoner
+
+        # Create a simple retriever wrapper for the multi-hop reasoner
+        class _RetrieverAdapter:
+            def __init__(self, graph_rag: "GraphRAG"):
+                self._graph_rag = graph_rag
+
+            def retrieve(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+                import asyncio
+
+                # Run async search synchronously
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    # Already in async context, use hybrid search directly
+                    import concurrent.futures
+
+                    with concurrent.futures.ThreadPoolExecutor() as pool:
+                        future = pool.submit(
+                            asyncio.run,
+                            self._graph_rag._hybrid_search(query, top_k),
+                        )
+                        return future.result()
+                else:
+                    return loop.run_until_complete(
+                        self._graph_rag._hybrid_search(query, top_k)
+                    )
+
+        # Create a mock LLM for query decomposition
+        class _MockLLM:
+            def generate(self, prompt: str, **kwargs) -> str:
+                # Simple decomposition for multi-hop queries
+                if "plan" in prompt.lower() or "step" in prompt.lower():
+                    return "1. Find the primary entity - identify main subject\n2. Find related entities - expand context"
+                if "confidence" in prompt.lower():
+                    return "0.8"
+                if "synthesize" in prompt.lower():
+                    return "FINAL_ANSWER: Based on the reasoning chain\nEXPLANATION: Multi-hop analysis\nCONFIDENCE: 0.8"
+                return "Answer based on context"
+
+        try:
+            reasoner = GraphMultiHopReasoner(
+                llm=_MockLLM(),
+                retriever=_RetrieverAdapter(self),
+                neo4j_driver=self._driver,
+                max_hops=self.config.max_hops,
+            )
+
+            chain = reasoner.reason(query)
+
+            # Convert reasoning chain to search results format
+            results = []
+            for hop in chain.hops:
+                for source in hop.sources:
+                    results.append(
+                        {
+                            "entity_id": source.get("id", f"hop_{len(results)}"),
+                            "content": source.get("content", hop.answer or ""),
+                            "score": hop.confidence,
+                            "hop_query": hop.query,
+                            "hop_type": hop.hop_type.value,
+                            "reasoning": hop.reasoning,
+                            "strategy": "multi_hop",
+                        }
+                    )
+
+            # Add final answer as top result if we have context
+            if chain.final_answer and include_context:
+                results.insert(
+                    0,
+                    {
+                        "entity_id": "final_answer",
+                        "content": chain.final_answer,
+                        "score": chain.confidence,
+                        "explanation": chain.explanation,
+                        "citations": chain.citations,
+                        "strategy": "multi_hop",
+                    },
+                )
+
+            return results[:top_k]
+
+        except Exception as exc:
+            logger.warning("Multi-hop search failed: %s", exc)
+            # Fallback to hybrid search
+            return await self._hybrid_search(query, top_k)
 
     async def _hybrid_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """

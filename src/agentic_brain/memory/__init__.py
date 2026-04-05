@@ -36,6 +36,16 @@ Exports:
     - ConversationSummary: Unified summary format
     - SummaryType: Types of summaries
     - UnifiedSummarizer: Real-time and session summarization
+    
+    **Unified Session Management (CANONICAL - from session_manager.py):**
+    - SessionManager: Factory/manager with auto-fallback
+    - Session: Active conversation session
+    - SessionMessage: Message dataclass with importance scoring
+    - SessionSummary: Session summary for persistence
+    - SessionConfig: Configuration options
+    - get_session_manager: Get global singleton instance
+    
+    See docs/SESSION_MANAGEMENT.md for the canonical approach.
 """
 
 # Import from the neo4j memory module
@@ -76,6 +86,20 @@ from .unified import (
     get_unified_memory,
 )
 
+# Export unified session management (canonical)
+from .session_manager import (
+    MessageRole,
+    Neo4jSessionBackend,
+    Session,
+    SessionConfig,
+    SessionManager,
+    SessionMessage,
+    SessionSummary,
+    SQLiteSessionBackend,
+    get_session_manager,
+    reset_session_manager,
+)
+
 __all__ = [
     # Original memory exports
     "Neo4jMemory",
@@ -101,4 +125,15 @@ __all__ = [
     "ConversationSummary",
     "SummaryType",
     "UnifiedSummarizer",
+    # Unified Session Management (canonical)
+    "SessionManager",
+    "Session",
+    "SessionMessage",
+    "SessionSummary",
+    "SessionConfig",
+    "MessageRole",
+    "Neo4jSessionBackend",
+    "SQLiteSessionBackend",
+    "get_session_manager",
+    "reset_session_manager",
 ]
