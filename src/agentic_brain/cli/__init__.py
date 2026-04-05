@@ -436,6 +436,28 @@ def create_parser() -> argparse.ArgumentParser:
     )
     benchmark_parser.set_defaults(func=commands.benchmark_command)
 
+    # Security scan command
+    security_parser = subparsers.add_parser(
+        "security-scan",
+        help="Run penetration-testing suite",
+        formatter_class=ColoredFormatter,
+        description="Run SQL, Cypher, prompt, path, command, XSS, and rate-limit penetration tests.",
+    )
+    security_parser.add_argument(
+        "--format",
+        type=str,
+        choices=["text", "json"],
+        default="text",
+        help="Report format (default: text)",
+    )
+    security_parser.add_argument(
+        "--output",
+        type=str,
+        default=None,
+        help="Optional output file for the report",
+    )
+    security_parser.set_defaults(func=commands.security_scan_command)
+
     # Neo4j command group
     neo4j_parser = subparsers.add_parser(
         "neo4j",

@@ -153,6 +153,33 @@ def topics_audit_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def security_scan_command(args: argparse.Namespace) -> int:
+    """Run the penetration-testing suite and print a concise report."""
+
+    from agentic_brain.security.pentest import run_security_pentest
+
+    print_header("Security Penetration Scan")
+    report = run_security_pentest()
+
+    if getattr(args, "format", "text") == "json":
+        rendered = json.dumps(report.to_dict(), indent=2)
+    else:
+        rendered = report.format_text()
+
+    print(rendered)
+
+    if getattr(args, "output", None):
+        _write_output_file(args.output, rendered)
+        print_success(f"Saved security scan report to {args.output}")
+
+    if report.failed:
+        print_error(f"Security scan failed: {report.failed} issue(s) found")
+        return 1
+
+    print_success(f"Security scan passed ({report.total} checks)")
+    return 0
+
+
 def find_available_port(start_port: int = 8000, max_attempts: int = 10) -> int:
     """
     Find an available port starting from start_port.

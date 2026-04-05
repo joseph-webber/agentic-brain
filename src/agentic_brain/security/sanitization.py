@@ -145,6 +145,12 @@ class InputSanitizer:
                     violations.append(f"Dangerous Cypher keyword detected: {pattern}")
                     threat_level = "high"
 
+        if re.search(r"\bOR\b.{0,20}\b1\s*=\s*1\b", query, re.IGNORECASE) or re.search(
+            r"\bWHERE\b.{0,20}\b(1\s*=\s*1|true)\b", query, re.IGNORECASE
+        ):
+            violations.append("Cypher tautology detected")
+            threat_level = "high"
+
         # Check for comment sequences (can bypass sanitization)
         if '//' in query or '/*' in query or '--' in query:
             violations.append("SQL/Cypher comment syntax detected")
@@ -251,6 +257,10 @@ class InputSanitizer:
                 violations.append(f"SQL injection pattern detected: {pattern}")
                 threat_level = "high"
 
+        if re.search(r"\bOR\b.{0,20}\b1\s*=\s*1\b", query, re.IGNORECASE):
+            violations.append("SQL tautology detected")
+            threat_level = "high"
+
         # Check for comment bypass
         if re.search(r'(--|#|/\*)', query):
             violations.append("SQL comment syntax detected")
@@ -333,7 +343,7 @@ class InputSanitizer:
         # Normalize path and check if it escapes base
         import os.path
         normalized = os.path.normpath(path)
-        if normalized.startswith('..') or normalized.startswith('/'):
+        if normalized.startswith('..') or normalized.startswith('/') or normalized.startswith('~'):
             violations.append("Path attempts to escape base directory")
             threat_level = "high"
 

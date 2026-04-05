@@ -57,6 +57,9 @@ from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import APIKeyHeader, APIKeyQuery, OAuth2PasswordBearer
 from pydantic import BaseModel
 
+# Import secure utilities
+from ..security.utils import constant_time_compare, validate_jwt_secret
+
 logger = logging.getLogger(__name__)
 
 
@@ -79,8 +82,15 @@ def get_api_keys() -> list[str]:
 
 
 def get_jwt_secret() -> str:
-    """Get JWT secret from environment."""
-    return os.getenv("JWT_SECRET", "")
+    """
+    Get JWT secret from environment with validation.
+
+    SECURITY: Validates secret strength and length.
+
+    Raises:
+        ValueError: If JWT_SECRET is not configured or too weak
+    """
+    return validate_jwt_secret()
 
 
 def get_jwt_algorithm() -> str:

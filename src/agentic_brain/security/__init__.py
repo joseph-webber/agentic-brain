@@ -1,6 +1,26 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Security roles, guards, agent wrappers, and LLM controls."""
+"""Security roles, guards, agent wrappers, LLM controls, and OWASP auditing."""
 
+from .owasp_checks import (
+    CodeAnalyzer,
+    OWASPAuditor,
+    OWASPCategory,
+    RegexPatternChecker,
+    SecurityIssue,
+    Severity,
+    audit_and_report,
+)
+from .utils import (
+    constant_time_compare,
+    generate_secure_token,
+    get_secret_from_vault,
+    hash_password,
+    is_development_mode,
+    is_production_mode,
+    validate_api_key,
+    validate_jwt_secret,
+    verify_password,
+)
 from .base_agent import (
     BackgroundWorker,
     BaseSecureAgent,
@@ -30,6 +50,20 @@ from .platform_security import (
     normalize_endpoint,
 )
 from .prompt_filter import PromptFilter, PromptFilterError
+from .pentest import (
+    COMMAND_INJECTION_VECTORS,
+    CYPHER_INJECTION_VECTORS,
+    PATH_TRAVERSAL_VECTORS,
+    PROMPT_INJECTION_VECTORS,
+    PentestFinding,
+    PentestReport,
+    PentestSuite,
+    PentestVector,
+    SQL_INJECTION_VECTORS,
+    XSS_VECTORS,
+    build_xss_header_report,
+    run_security_pentest,
+)
 from .roles import (
     DANGEROUS_COMMAND_PATTERNS,
     ROLE_PERMISSIONS,
@@ -60,6 +94,18 @@ __all__ = [
     "PlatformSecurityProfile",
     "PromptFilter",
     "PromptFilterError",
+    "PentestFinding",
+    "PentestReport",
+    "PentestSuite",
+    "PentestVector",
+    "SQL_INJECTION_VECTORS",
+    "CYPHER_INJECTION_VECTORS",
+    "PROMPT_INJECTION_VECTORS",
+    "PATH_TRAVERSAL_VECTORS",
+    "COMMAND_INJECTION_VECTORS",
+    "XSS_VECTORS",
+    "build_xss_header_report",
+    "run_security_pentest",
     "ROLE_PERMISSIONS",
     "RolePermissions",
     "SecurityGuard",
@@ -87,4 +133,22 @@ __all__ = [
     "require_user_or_above",
     "reset_security_guard",
     "set_security_guard",
+    # OWASP Auditing
+    "CodeAnalyzer",
+    "OWASPAuditor",
+    "OWASPCategory",
+    "RegexPatternChecker",
+    "SecurityIssue",
+    "Severity",
+    "audit_and_report",
+    # Security Utilities
+    "constant_time_compare",
+    "generate_secure_token",
+    "get_secret_from_vault",
+    "hash_password",
+    "is_development_mode",
+    "is_production_mode",
+    "validate_api_key",
+    "validate_jwt_secret",
+    "verify_password",
 ]
