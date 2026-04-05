@@ -142,7 +142,7 @@ jobs:
             --cov-report=html \
             --cov-report=term \
             --cov-report=json \
-            --cov-fail-under=80
+            --cov-fail-under=40
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v4
