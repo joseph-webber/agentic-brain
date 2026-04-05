@@ -138,7 +138,7 @@ def _check_langchain() -> None:
 
 def retrieved_chunk_to_langchain_document(
     chunk: RetrievedChunk,
-) -> "LangChainDocument":
+) -> LangChainDocument:
     """Convert an Agentic Brain RetrievedChunk to a LangChain Document.
 
     Args:
@@ -167,7 +167,7 @@ def retrieved_chunk_to_langchain_document(
 
 def agentic_document_to_langchain_document(
     doc: AgenticDocument,
-) -> "LangChainDocument":
+) -> LangChainDocument:
     """Convert an Agentic Brain Document to a LangChain Document.
 
     Args:
@@ -194,7 +194,7 @@ def agentic_document_to_langchain_document(
 
 
 def langchain_document_to_agentic_document(
-    doc: "LangChainDocument",
+    doc: LangChainDocument,
     doc_id: Optional[str] = None,
 ) -> AgenticDocument:
     """Convert a LangChain Document to an Agentic Brain Document.
@@ -214,7 +214,6 @@ def langchain_document_to_agentic_document(
         >>> doc.id
         'doc1'
     """
-    import hashlib
 
     metadata = dict(doc.metadata) if doc.metadata else {}
     if doc_id is None:
@@ -313,8 +312,8 @@ class AgenticBrainRetriever(BaseRetriever if LANGCHAIN_AVAILABLE else object):
         self,
         query: str,
         *,
-        run_manager: Optional["CallbackManagerForRetrieverRun"] = None,
-    ) -> list["LangChainDocument"]:
+        run_manager: Optional[CallbackManagerForRetrieverRun] = None,
+    ) -> list[LangChainDocument]:
         """Retrieve relevant documents for a query.
 
         This is the core method required by LangChain's BaseRetriever.
@@ -350,8 +349,8 @@ class AgenticBrainRetriever(BaseRetriever if LANGCHAIN_AVAILABLE else object):
         self,
         query: str,
         *,
-        run_manager: Optional["AsyncCallbackManagerForRetrieverRun"] = None,
-    ) -> list["LangChainDocument"]:
+        run_manager: Optional[AsyncCallbackManagerForRetrieverRun] = None,
+    ) -> list[LangChainDocument]:
         """Async version of document retrieval.
 
         Args:
@@ -374,7 +373,7 @@ class AgenticBrainRetriever(BaseRetriever if LANGCHAIN_AVAILABLE else object):
         k: Optional[int] = None,
         min_score: Optional[float] = None,
         sources: Optional[list[str]] = None,
-    ) -> "AgenticBrainRetriever":
+    ) -> AgenticBrainRetriever:
         """Return a new retriever with updated configuration.
 
         Args:
@@ -475,8 +474,8 @@ class GraphRAGRetriever(BaseRetriever if LANGCHAIN_AVAILABLE else object):
         self,
         query: str,
         *,
-        run_manager: Optional["CallbackManagerForRetrieverRun"] = None,
-    ) -> list["LangChainDocument"]:
+        run_manager: Optional[CallbackManagerForRetrieverRun] = None,
+    ) -> list[LangChainDocument]:
         """Retrieve documents using GraphRAG.
 
         Args:
@@ -531,8 +530,8 @@ class GraphRAGRetriever(BaseRetriever if LANGCHAIN_AVAILABLE else object):
         self,
         query: str,
         *,
-        run_manager: Optional["AsyncCallbackManagerForRetrieverRun"] = None,
-    ) -> list["LangChainDocument"]:
+        run_manager: Optional[AsyncCallbackManagerForRetrieverRun] = None,
+    ) -> list[LangChainDocument]:
         """Async document retrieval using GraphRAG.
 
         Args:
@@ -543,6 +542,7 @@ class GraphRAGRetriever(BaseRetriever if LANGCHAIN_AVAILABLE else object):
             list[LangChainDocument]: Retrieved documents.
         """
         from langchain_core.documents import Document as LCDocument
+
         from .graph_rag import SearchStrategy
 
         strategy = SearchStrategy(self.search_strategy)
@@ -622,8 +622,8 @@ class DocumentStoreRetriever(BaseRetriever if LANGCHAIN_AVAILABLE else object):
         self,
         query: str,
         *,
-        run_manager: Optional["CallbackManagerForRetrieverRun"] = None,
-    ) -> list["LangChainDocument"]:
+        run_manager: Optional[CallbackManagerForRetrieverRun] = None,
+    ) -> list[LangChainDocument]:
         """Retrieve documents from the store.
 
         Args:
@@ -648,8 +648,8 @@ class DocumentStoreRetriever(BaseRetriever if LANGCHAIN_AVAILABLE else object):
         self,
         query: str,
         *,
-        run_manager: Optional["AsyncCallbackManagerForRetrieverRun"] = None,
-    ) -> list["LangChainDocument"]:
+        run_manager: Optional[AsyncCallbackManagerForRetrieverRun] = None,
+    ) -> list[LangChainDocument]:
         """Async retrieval (runs sync in executor)."""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
@@ -657,7 +657,7 @@ class DocumentStoreRetriever(BaseRetriever if LANGCHAIN_AVAILABLE else object):
             lambda: self._get_relevant_documents(query, run_manager=None),
         )
 
-    def add_documents(self, documents: Sequence["LangChainDocument"]) -> list[str]:
+    def add_documents(self, documents: Sequence[LangChainDocument]) -> list[str]:
         """Add LangChain documents to the store.
 
         Args:
@@ -717,7 +717,7 @@ class AgenticBrainCallbackAdapter:
 
     def on_retrieval_end(
         self,
-        documents: list["LangChainDocument"],
+        documents: list[LangChainDocument],
         metadata: Optional[dict[str, Any]] = None,
     ) -> None:
         """Emit retrieval end event to all callbacks.
@@ -908,8 +908,8 @@ class Runnable(ABC, Generic[Input, Output]):
         yield self.invoke(input, config)
 
     def __or__(
-        self, other: "Runnable[Output, Other]"
-    ) -> "RunnableSequence[Input, Other]":
+        self, other: Runnable[Output, Other]
+    ) -> RunnableSequence[Input, Other]:
         """Compose with another runnable using pipe operator.
 
         Args:
@@ -923,13 +923,13 @@ class Runnable(ABC, Generic[Input, Output]):
         """
         return RunnableSequence(first=self, last=other)
 
-    def __ror__(self, other: Any) -> "RunnableSequence":
+    def __ror__(self, other: Any) -> RunnableSequence:
         """Support piping from non-Runnable objects."""
         if isinstance(other, dict):
             return RunnableParallel(other) | self
         return NotImplemented
 
-    def bind(self, **kwargs: Any) -> "RunnableBinding[Input, Output]":
+    def bind(self, **kwargs: Any) -> RunnableBinding[Input, Output]:
         """Bind arguments to this runnable.
 
         Args:
@@ -944,7 +944,7 @@ class Runnable(ABC, Generic[Input, Output]):
         self,
         config: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> "RunnableBinding[Input, Output]":
+    ) -> RunnableBinding[Input, Output]:
         """Return runnable with updated configuration.
 
         Args:
@@ -1010,7 +1010,7 @@ class RunnableSequence(Runnable[Input, Output]):
             result = await step.ainvoke(result, config)
         return result
 
-    def __or__(self, other: Runnable) -> "RunnableSequence":
+    def __or__(self, other: Runnable) -> RunnableSequence:
         """Extend the sequence with another runnable."""
         return RunnableSequence(
             first=self.first,
@@ -1090,7 +1090,7 @@ class RunnablePassthrough(Runnable[Input, Input]):
         return input
 
     @classmethod
-    def assign(cls, **kwargs: Runnable) -> "RunnableAssign":
+    def assign(cls, **kwargs: Runnable) -> RunnableAssign:
         """Create a RunnableAssign that adds keys to input dict.
 
         Args:
@@ -1253,10 +1253,7 @@ class RunnableBranch(Runnable[Input, Output]):
 
     def __init__(
         self,
-        *branches: Union[
-            tuple[Callable[[Input], bool], Runnable[Input, Output]],
-            Runnable[Input, Output],
-        ],
+        *branches: tuple[Callable[[Input], bool], Runnable[Input, Output]] | Runnable[Input, Output],
     ):
         """Initialize with condition-runnable pairs and optional default.
 
@@ -1693,7 +1690,7 @@ class BaseLoader(ABC):
     """
 
     @abstractmethod
-    def load(self) -> List["LangChainDocument"]:
+    def load(self) -> List[LangChainDocument]:
         """Load and return documents.
 
         Returns:
@@ -1701,7 +1698,7 @@ class BaseLoader(ABC):
         """
         pass
 
-    def lazy_load(self) -> Iterator["LangChainDocument"]:
+    def lazy_load(self) -> Iterator[LangChainDocument]:
         """Lazily load documents one at a time.
 
         Yields:
@@ -1723,7 +1720,7 @@ class TextLoader(BaseLoader):
 
     def __init__(
         self,
-        file_path: Union[str, Path],
+        file_path: str | Path,
         encoding: str = "utf-8",
         autodetect_encoding: bool = False,
     ):
@@ -1738,7 +1735,7 @@ class TextLoader(BaseLoader):
         self.encoding = encoding
         self.autodetect_encoding = autodetect_encoding
 
-    def load(self) -> List["LangChainDocument"]:
+    def load(self) -> List[LangChainDocument]:
         """Load the text file."""
         _check_langchain()
         from langchain_core.documents import Document as LCDocument
@@ -1777,7 +1774,7 @@ class DirectoryLoader(BaseLoader):
 
     def __init__(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         glob: str = "**/*.*",
         loader_cls: Optional[Type[BaseLoader]] = None,
         loader_kwargs: Optional[Dict[str, Any]] = None,
@@ -1810,7 +1807,7 @@ class DirectoryLoader(BaseLoader):
         self.max_concurrency = max_concurrency
         self.silent_errors = silent_errors
 
-    def load(self) -> List["LangChainDocument"]:
+    def load(self) -> List[LangChainDocument]:
         """Load all matching files."""
         files = list(self.path.glob(self.glob))
 
@@ -1828,11 +1825,11 @@ class DirectoryLoader(BaseLoader):
                         logger.warning(f"Error loading {file_path}: {e}")
         return docs
 
-    def _load_multithreaded(self, files: List[Path]) -> List["LangChainDocument"]:
+    def _load_multithreaded(self, files: List[Path]) -> List[LangChainDocument]:
         """Load files using multiple threads."""
-        docs: List["LangChainDocument"] = []
+        docs: List[LangChainDocument] = []
 
-        def load_file(file_path: Path) -> List["LangChainDocument"]:
+        def load_file(file_path: Path) -> List[LangChainDocument]:
             if not file_path.is_file():
                 return []
             try:
@@ -1866,7 +1863,7 @@ class UnstructuredFileLoader(BaseLoader):
 
     def __init__(
         self,
-        file_path: Union[str, Path],
+        file_path: str | Path,
         mode: str = "single",  # "single" | "elements" | "paged"
         strategy: str = "auto",
         encoding: str = "utf-8",
@@ -1884,7 +1881,7 @@ class UnstructuredFileLoader(BaseLoader):
         self.strategy = strategy
         self.encoding = encoding
 
-    def load(self) -> List["LangChainDocument"]:
+    def load(self) -> List[LangChainDocument]:
         """Load file based on extension."""
         _check_langchain()
         from langchain_core.documents import Document as LCDocument
@@ -1992,8 +1989,8 @@ class TextSplitter(ABC):
         pass
 
     def split_documents(
-        self, documents: List["LangChainDocument"]
-    ) -> List["LangChainDocument"]:
+        self, documents: List[LangChainDocument]
+    ) -> List[LangChainDocument]:
         """Split documents into chunks.
 
         Args:
@@ -2164,7 +2161,7 @@ class RecursiveCharacterTextSplitter(TextSplitter):
         cls,
         language: str,
         **kwargs: Any,
-    ) -> "RecursiveCharacterTextSplitter":
+    ) -> RecursiveCharacterTextSplitter:
         """Create splitter with language-specific separators.
 
         Args:
@@ -3208,7 +3205,7 @@ class FileCallbackHandler(BaseCallbackHandler):
         >>> chain.invoke(input, config={"callbacks": [handler]})
     """
 
-    def __init__(self, filename: Union[str, Path]):
+    def __init__(self, filename: str | Path):
         """Initialize file handler.
 
         Args:

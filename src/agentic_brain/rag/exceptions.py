@@ -21,6 +21,8 @@ from typing import Any, Optional
 
 from agentic_brain.core.exceptions import (
     AgenticBrainError,
+)
+from agentic_brain.core.exceptions import (
     EmbeddingError as CoreEmbeddingError,
 )
 

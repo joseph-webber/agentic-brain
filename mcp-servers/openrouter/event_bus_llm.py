@@ -34,16 +34,17 @@ Usage:
 
 import json
 import os
+import subprocess
 import sys
+import threading
 import time
 import uuid
-import threading
-import subprocess
-from typing import Dict, Any, Optional, Callable, List
 from datetime import datetime
-from kafka import KafkaProducer, KafkaConsumer
-from kafka.errors import KafkaError
+from typing import Any, Callable, Dict, List, Optional
+
 import redis
+from kafka import KafkaConsumer, KafkaProducer
+from kafka.errors import KafkaError
 
 # Add brain to path
 sys.path.insert(0, os.path.expanduser("~/brain"))
@@ -378,7 +379,7 @@ def consumer_loop():
         _consumer = get_consumer([TOPIC_REQUEST])
         _running = True
 
-        print(f"✅ LLM consumer ready!")
+        print("✅ LLM consumer ready!")
 
         # Poll with timeout to allow clean shutdown
         while _running:
@@ -608,7 +609,7 @@ def main():
         response = wait_for_response(request_id, timeout=35)
 
         if response:
-            print(f"\n✅ Got response!")
+            print("\n✅ Got response!")
             print(f"   Provider: {response.get('provider_used')}")
             print(f"   Latency: {response.get('latency_ms')}ms")
             print(f"   Cached: {response.get('cached')}")

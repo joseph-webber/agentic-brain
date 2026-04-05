@@ -268,7 +268,7 @@ class StreamingResponse:
                         total_tokens,
                         time.time() - start_time,
                     )
-        except (asyncio.TimeoutError, TimeoutError):
+        except TimeoutError:
             yield StreamToken(
                 token="",
                 finish_reason="error",
@@ -357,7 +357,7 @@ class StreamingResponse:
                                 )
                                 is_first = False
                         return
-            except (asyncio.TimeoutError, aiohttp.ClientError) as exc:
+            except (TimeoutError, aiohttp.ClientError) as exc:
                 attempt += 1
                 if attempt >= max_retries:
                     yield StreamToken(
@@ -458,7 +458,7 @@ class StreamingResponse:
                             metadata={"provider": "anthropic", "model": self.model},
                         )
                         return
-            except (asyncio.TimeoutError, aiohttp.ClientError) as exc:
+            except (TimeoutError, aiohttp.ClientError) as exc:
                 attempt += 1
                 if attempt >= max_retries:
                     yield StreamToken(

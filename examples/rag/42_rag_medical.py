@@ -40,17 +40,17 @@ Requirements:
 import asyncio
 import hashlib
 import json
+import math
 import os
 import re
 import tempfile
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, date
+from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Generator, Optional
-import math
-import warnings
 
 # Try importing optional dependencies
 try:
@@ -2076,7 +2076,7 @@ def run_demo():
                     )
 
             if result.detected_concepts:
-                print(f"\n🏷️ Detected Concepts:")
+                print("\n🏷️ Detected Concepts:")
                 for concept in result.detected_concepts[:5]:
                     print(f"   • {concept.name} ({concept.concept_type.value})")
 

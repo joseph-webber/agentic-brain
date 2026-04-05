@@ -5,7 +5,7 @@
 
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -30,7 +30,7 @@ class TestVoiceUtterance:
 
     def test_create_utterance(self):
         """Test creating a basic utterance."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         utt = VoiceUtterance(
             text="Hello there!",
             timestamp=now,
@@ -46,7 +46,7 @@ class TestVoiceUtterance:
 
     def test_utterance_to_dict(self):
         """Test serialization to dictionary."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         utt = VoiceUtterance(
             id="test-123",
             text="Test message",
@@ -65,7 +65,7 @@ class TestVoiceUtterance:
 
     def test_utterance_from_record(self):
         """Test deserialization from Neo4j record."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         record = {
             "id": "rec-456",
             "text": "From record",
@@ -89,7 +89,7 @@ class TestVoiceConversation:
 
     def test_create_conversation(self):
         """Test creating a conversation."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         conv = VoiceConversation(
             session_id="session-001",
             started_at=now,
@@ -103,7 +103,7 @@ class TestVoiceConversation:
 
     def test_conversation_to_dict(self):
         """Test serialization."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         conv = VoiceConversation(
             session_id="session-002",
             started_at=now,
@@ -132,7 +132,7 @@ class TestVoiceMemoryInMemory:
         # Create memory without Neo4j
         memory = VoiceMemory(use_neo4j=False)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         utt = VoiceUtterance(
             text="Hello world",
             timestamp=now,
@@ -149,7 +149,7 @@ class TestVoiceMemoryInMemory:
         """Test getting conversation context from memory."""
         memory = VoiceMemory(use_neo4j=False)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for i in range(5):
             utt = VoiceUtterance(
                 text=f"Message {i}",
@@ -220,7 +220,7 @@ class TestVoiceMemoryInMemory:
         memory = VoiceMemory(use_neo4j=False)
 
         # Create utterances with known embeddings
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         utt1 = VoiceUtterance(
             text="Good morning",
             timestamp=now,
@@ -259,7 +259,7 @@ class TestVoiceMemoryInMemory:
         """Test that in-memory storage is trimmed."""
         memory = VoiceMemory(use_neo4j=False)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Store more than limit (1000)
         for i in range(1100):
@@ -294,7 +294,7 @@ class TestVoiceMemoryWithMockedNeo4j:
         with patch("agentic_brain.core.neo4j_write") as mock_write:
             mock_write.return_value = 1
 
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             utt = VoiceUtterance(
                 text="Hello Neo4j",
                 timestamp=now,
@@ -475,7 +475,7 @@ class TestVoiceMemoryNeo4jIntegration:
         if memory._get_embedder() is None:
             pytest.skip("sentence-transformers not available")
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         conv = memory.create_conversation(topic="Integration Test")
 
         # Store utterances

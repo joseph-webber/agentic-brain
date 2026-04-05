@@ -20,20 +20,20 @@ Requirements:
 """
 
 import os
-import sys
 import random
 import subprocess
-from pathlib import Path
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 # Try to import rich for beautiful output, fallback to plain text
 try:
-    from rich.console import Console
-    from rich.table import Table
-    from rich.panel import Panel
-    from rich.markdown import Markdown
     from rich import box
+    from rich.console import Console
+    from rich.markdown import Markdown
+    from rich.panel import Panel
+    from rich.table import Table
 
     RICH_AVAILABLE = True
     console = Console()
@@ -928,7 +928,7 @@ def print_example_detail(example: Example):
         print(f"Category: {CATEGORIES[example.category].name}")
         print(f"Level: {example.level}")
         print(f"File: {example.path}")
-        print(f"\nDescription:")
+        print("\nDescription:")
         print(docstring[:500])
         print()
 

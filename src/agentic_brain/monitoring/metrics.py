@@ -4,10 +4,10 @@ This module provides a lightweight in-process metrics registry and Prometheus
 text-format exposition endpoint to avoid an external dependency.
 """
 
-from collections import deque
+import math
 import threading
 import time
-import math
+from collections import deque
 
 
 class Metrics:

@@ -26,14 +26,14 @@ Requirements:
 """
 
 import asyncio
+import json
+import random
+import re
+import string
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
-import json
-import random
-import string
-import re
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DATA MODELS
@@ -1578,7 +1578,7 @@ async def demo():
     c = cat_detail["category"]
     print(f"Category: {c['name']}")
     print(f"Description: {c['description']}")
-    print(f"Articles:")
+    print("Articles:")
     for art in c["articles"]:
         print(f"  • {art['title']}")
 

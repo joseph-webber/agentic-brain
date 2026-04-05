@@ -90,7 +90,7 @@ class TestPackageDistributionReadiness:
         required_scripts = ["agentic-brain", "agentic", "ab"]
         for script_name in required_scripts:
             assert script_name in scripts, f"Missing script: {script_name}"
-            assert "agentic_brain.cli:main" == scripts[script_name]
+            assert scripts[script_name] == "agentic_brain.cli:main"
 
     def test_dependencies_structure(self):
         """Verify dependencies are properly structured."""

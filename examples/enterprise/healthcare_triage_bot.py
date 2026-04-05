@@ -61,15 +61,15 @@ import logging
 import sqlite3
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta, time, timezone
+from datetime import UTC, date, datetime, time, timedelta, timezone
 from enum import Enum, IntEnum
 from typing import Any, Optional
 
 from agentic_brain.auth import (
-    JWTAuth,
     AuthConfig,
-    require_role,
+    JWTAuth,
     User,
+    require_role,
 )
 
 # =============================================================================
@@ -417,7 +417,7 @@ class HealthcareTriageBot:
             VALUES (?, ?, ?, ?, ?, ?)
         """,
             (
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
                 user_id,
                 action,
                 entity_type,
@@ -486,7 +486,7 @@ class HealthcareTriageBot:
             return {"error": "Patient not found"}
 
         assessment_id = f"ASS-{uuid.uuid4().hex[:8].upper()}"
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Check for red flag symptoms
         red_flags = []

@@ -1,10 +1,11 @@
 import asyncio
+
 import pytest
 
 from agentic_brain.async_api import (
     AsyncEmbedder,
-    AsyncLLM,
     AsyncGraphClient,
+    AsyncLLM,
     AsyncRAGPipeline,
 )
 from agentic_brain.rag.pipeline import RAGResult

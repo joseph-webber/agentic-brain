@@ -33,6 +33,7 @@ Requirements:
 import asyncio
 import hashlib
 import json
+import math
 import os
 import re
 from abc import ABC, abstractmethod
@@ -42,7 +43,6 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Generator, Optional
-import math
 
 try:
     import numpy as np
@@ -794,7 +794,7 @@ class ResearchRAGPipeline:
     ) -> ResearchPaper:
         """Add a research paper to the corpus."""
         if path:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 content = f.read()
 
         if not content:
@@ -1479,7 +1479,7 @@ def run_demo():
 
     # Show stats
     stats = pipeline.get_stats()
-    print(f"\n📊 Corpus Stats:")
+    print("\n📊 Corpus Stats:")
     print(f"   Papers: {stats['papers']}")
     print(f"   Chunks: {stats['chunks']}")
     print(f"   Topics: {stats['topics']}")

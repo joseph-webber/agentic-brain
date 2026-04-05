@@ -14,6 +14,7 @@ JSON Message Protocol:
 """
 
 import asyncio
+import fcntl
 import json
 import logging
 import os
@@ -23,10 +24,9 @@ import struct
 import subprocess
 import sys
 import termios
-import fcntl
+import weakref
 from pathlib import Path
 from typing import Dict, Optional
-import weakref
 
 import websockets
 from websockets.server import WebSocketServerProtocol, serve
@@ -153,7 +153,7 @@ class PTYSession:
                 loop.run_in_executor(None, self._read_nonblock), timeout=timeout
             )
             return data
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return None
         except Exception as e:
             logger.warning(f"Error reading from PTY {self.session_id}: {e}")
@@ -280,7 +280,7 @@ class WebSocketTerminalServer:
                 json.dumps(
                     {
                         "type": "output",
-                        "data": f"Terminal session started. Type 'exit' to close.\n",
+                        "data": "Terminal session started. Type 'exit' to close.\n",
                     }
                 )
             )
@@ -338,7 +338,7 @@ class WebSocketTerminalServer:
                     await asyncio.sleep(0.01)
 
             except websockets.exceptions.ConnectionClosed:
-                logger.debug(f"Client disconnected in output loop")
+                logger.debug("Client disconnected in output loop")
                 break
 
             except Exception as e:

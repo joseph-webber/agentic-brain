@@ -26,7 +26,6 @@ from agentic_brain.rag.embeddings import (
     get_embeddings,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -168,7 +167,7 @@ class TestOllamaEmbeddings:
 
 
 class TestOpenAIEmbeddings:
-    def _make(self, model: str) -> "OpenAIEmbeddings":
+    def _make(self, model: str) -> OpenAIEmbeddings:
         import os
 
         os.environ.setdefault("OPENAI_API_KEY", "test-key-for-tests")
@@ -273,7 +272,6 @@ class TestGetEmbeddings:
 
     def test_ollama_provider(self) -> None:
         """get_embeddings(provider='ollama') may wrap in CachedEmbeddings but is still an EmbeddingProvider."""
-        from agentic_brain.rag.embeddings import CachedEmbeddings
 
         provider = get_embeddings(provider="ollama")
         assert isinstance(provider, EmbeddingProvider)

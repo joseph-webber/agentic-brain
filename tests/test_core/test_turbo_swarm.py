@@ -6,12 +6,13 @@ cheap/fast models (pawns/knights) to protect expensive ones (king/queen).
 """
 
 import pytest
+
 from agentic_brain.core.rate_limiter import (
-    TurboChessSwarm,
-    SwarmTask,
-    SwarmAgent,
-    turbo_deploy,
     ProviderTier,
+    SwarmAgent,
+    SwarmTask,
+    TurboChessSwarm,
+    turbo_deploy,
 )
 
 

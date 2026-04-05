@@ -23,9 +23,9 @@ Usage:
     extract_entities()
 """
 
-from .embed_pipeline import embed_sessions, embed_text, EmbeddingProvider
-from .entity_extractor import extract_entities, EntityExtractor
-from .synthesis_layer import recall, GraphRAGSynthesis
+from .embed_pipeline import EmbeddingProvider, embed_sessions, embed_text
+from .entity_extractor import EntityExtractor, extract_entities
+from .synthesis_layer import GraphRAGSynthesis, recall
 
 __all__ = [
     "recall",

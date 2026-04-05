@@ -9,8 +9,8 @@ This implements the bipartite overlay pattern where:
 Aligned with: Microsoft GraphRAG, Neo4j GDS best practices
 """
 
-from typing import List, Dict, Any
 import logging
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +179,7 @@ class ZonedGraph:
         """Get node counts per zone."""
         stats = {}
         for zone, labels in self.ZONE_LABELS.items():
-            query = f"""
+            query = """
             MATCH (n)
             WHERE any(label IN labels(n) WHERE label IN $labels)
             RETURN count(n) as count

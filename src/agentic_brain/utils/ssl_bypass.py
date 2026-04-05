@@ -53,7 +53,7 @@ def should_verify_ssl() -> bool:
     return True
 
 
-def get_ssl_context() -> Union[ssl.SSLContext, bool]:
+def get_ssl_context() -> ssl.SSLContext | bool:
     """Get SSL context for aiohttp/httpx.
 
     Returns:

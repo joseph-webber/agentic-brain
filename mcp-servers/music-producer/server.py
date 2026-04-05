@@ -17,12 +17,12 @@ Capabilities:
 - Auto-publish to Music Publisher MCP
 """
 
+import hashlib
 import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List, Dict, Any
-import hashlib
+from typing import Any, Dict, List, Optional
 
 from mcp.server.fastmcp import FastMCP
 

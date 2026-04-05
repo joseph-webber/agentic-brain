@@ -50,22 +50,22 @@ import asyncio
 import hashlib
 import json
 import logging
+import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from enum import IntEnum, Enum
+from datetime import UTC, datetime, timezone
+from enum import Enum, IntEnum
 from pathlib import Path
 from typing import Any, Optional
-import uuid
 
 from agentic_brain.auth import (
+    AuthConfig,
     AuthProvider,
     JWTAuth,
-    AuthConfig,
-    require_role,
-    require_authority,
-    current_user,
-    User,
     Token,
+    User,
+    current_user,
+    require_authority,
+    require_role,
 )
 
 # =============================================================================
@@ -131,7 +131,7 @@ class SecureDocument:
     title: str
     classification: Classification
     caveats: list[str] = field(default_factory=list)  # e.g., ["AUSTEO", "EYES ONLY"]
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     created_by: str = ""
     hash_sha256: str = ""
     content_summary: str = ""  # Never store actual content, just summaries
@@ -170,7 +170,7 @@ class ClearedUser:
 
         # Check clearance expiry
         if self.clearance_expires and self.clearance_expires < datetime.now(
-            timezone.utc
+            UTC
         ):
             return False
 
@@ -254,7 +254,7 @@ class AuditService:
         """Create an immutable audit entry."""
         entry = AuditEntry(
             entry_id=str(uuid.uuid4()),
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             user_id=user.user_id,
             action=action.value,
             resource_type=resource_type,
@@ -325,7 +325,7 @@ class AuditService:
 
     def get_user_activity(self, user_id: str, hours: int = 24) -> list[AuditEntry]:
         """Get recent activity for a specific user."""
-        cutoff = datetime.now(timezone.utc).timestamp() - (hours * 3600)
+        cutoff = datetime.now(UTC).timestamp() - (hours * 3600)
         return [
             e
             for e in self._entries
@@ -837,22 +837,22 @@ def demo():
 
     # Baseline user tries to access PROTECTED document
     result = assistant.handle_query("session-2", "access DOC-002")
-    print(f"\nJohn Doe (BASELINE) accessing PROTECTED doc:")
+    print("\nJohn Doe (BASELINE) accessing PROTECTED doc:")
     print(f"  Result: {result.get('error', 'SUCCESS')}")
 
     # NV2 user accesses PROTECTED document
     result = assistant.handle_query("session-1", "access DOC-002")
-    print(f"\nJane Smith (NV2) accessing PROTECTED doc:")
+    print("\nJane Smith (NV2) accessing PROTECTED doc:")
     print(f"  Result: {result.get('document', {}).get('title', 'DENIED')}")
 
     # NV2 user tries to access SECRET document
     result = assistant.handle_query("session-1", "access DOC-003")
-    print(f"\nJane Smith (NV2) accessing SECRET doc:")
+    print("\nJane Smith (NV2) accessing SECRET doc:")
     print(f"  Result: {result.get('error', 'SUCCESS')}")
 
     # PV user accesses SECRET document
     result = assistant.handle_query("session-3", "access DOC-003")
-    print(f"\nSarah Johnson (PV) accessing SECRET doc:")
+    print("\nSarah Johnson (PV) accessing SECRET doc:")
     print(f"  Result: {result.get('document', {}).get('title', 'DENIED')}")
 
     # Demo: Audit trail

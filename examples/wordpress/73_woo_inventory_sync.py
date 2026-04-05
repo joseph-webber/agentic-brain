@@ -24,14 +24,14 @@ Usage:
 
 import argparse
 import asyncio
+import hashlib
 import json
 import random
-import hashlib
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
-from collections import defaultdict
 
 # =============================================================================
 # ENUMS
@@ -2144,7 +2144,7 @@ async def po_menu(service: InventorySyncService) -> None:
             remaining = line.quantity_ordered - line.quantity_received
             if remaining > 0:
                 print(f"    {line.sku}: {remaining} remaining")
-                qty = input(f"    Quantity received: ").strip()
+                qty = input("    Quantity received: ").strip()
                 if qty:
                     received.append({"sku": line.sku, "quantity": int(qty)})
 
@@ -2351,10 +2351,10 @@ async def demo_mode(service: InventorySyncService) -> None:
         print(f"   PO: {po.po_number}")
 
         service.submit_purchase_order(po.po_number)
-        print(f"   Status: Submitted ✅")
+        print("   Status: Submitted ✅")
 
         service.confirm_purchase_order(po.po_number)
-        print(f"   Status: Confirmed ✅")
+        print("   Status: Confirmed ✅")
 
         received = [
             {"sku": line.sku, "quantity": line.quantity_ordered} for line in po.lines

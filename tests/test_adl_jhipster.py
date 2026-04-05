@@ -17,6 +17,10 @@ import textwrap
 
 import pytest
 
+from agentic_brain.adl.generators.api_routes import ApiRouteGenerator
+from agentic_brain.adl.generators.neo4j_schema import Neo4jSchemaGenerator
+from agentic_brain.adl.generators.python_models import PythonModelGenerator
+from agentic_brain.adl.generators.react_components import ReactComponentGenerator
 from agentic_brain.adl.parser import (
     ADLConfig,
     ADLParseError,
@@ -31,11 +35,6 @@ from agentic_brain.adl.parser import (
     Validator,
     parse_adl,
 )
-from agentic_brain.adl.generators.neo4j_schema import Neo4jSchemaGenerator
-from agentic_brain.adl.generators.python_models import PythonModelGenerator
-from agentic_brain.adl.generators.api_routes import ApiRouteGenerator
-from agentic_brain.adl.generators.react_components import ReactComponentGenerator
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

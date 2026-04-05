@@ -38,7 +38,7 @@ import asyncio
 import hashlib
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -92,8 +92,8 @@ class ProfessionalProfile:
     experience_years: int = 0
     connections: list[str] = field(default_factory=list)
     visibility: str = "internal"  # "internal", "team", "department"
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def skill_strengths(self) -> dict[str, int]:
@@ -119,7 +119,7 @@ class ContentPost:
     engagement: dict = field(
         default_factory=lambda: {"views": 0, "reactions": 0, "comments": 0, "shares": 0}
     )
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass
@@ -283,7 +283,7 @@ class ProfessionalCommunityAgent:
         endorsement = SkillEndorsement(
             skill=skill,
             endorser_id=endorser_id,
-            endorsed_at=datetime.now(timezone.utc),
+            endorsed_at=datetime.now(UTC),
             relationship=relationship,
             note=note,
         )

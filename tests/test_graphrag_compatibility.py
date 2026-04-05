@@ -22,7 +22,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Schema Compatibility Tests
 # ---------------------------------------------------------------------------
@@ -178,6 +177,7 @@ class TestQueryCompatibility:
     def test_merge_pattern_for_entities(self):
         """Entity creation uses MERGE (idempotent) not CREATE."""
         import inspect
+
         from agentic_brain.rag.graph import EnhancedGraphRAG
 
         source = inspect.getsource(EnhancedGraphRAG.index_document)
@@ -187,6 +187,7 @@ class TestQueryCompatibility:
     def test_merge_pattern_for_documents(self):
         """Document creation uses MERGE (idempotent) not CREATE."""
         import inspect
+
         from agentic_brain.rag.graph import EnhancedGraphRAG
 
         source = inspect.getsource(EnhancedGraphRAG.index_document)
@@ -195,6 +196,7 @@ class TestQueryCompatibility:
     def test_merge_pattern_for_chunks(self):
         """Chunk creation uses MERGE (idempotent) not CREATE."""
         import inspect
+
         from agentic_brain.rag.graph import EnhancedGraphRAG
 
         source = inspect.getsource(EnhancedGraphRAG.index_document)
@@ -203,6 +205,7 @@ class TestQueryCompatibility:
     def test_batched_unwind_for_ingest(self):
         """Ingest should use UNWIND for batch writes (no N+1 queries)."""
         import inspect
+
         from agentic_brain.rag.graph import EnhancedGraphRAG
 
         source = inspect.getsource(EnhancedGraphRAG.index_document)
@@ -211,6 +214,7 @@ class TestQueryCompatibility:
     def test_relationship_merge_not_create(self):
         """All relationship writes use MERGE for idempotency."""
         import inspect
+
         from agentic_brain.rag.graph import EnhancedGraphRAG
 
         source = inspect.getsource(EnhancedGraphRAG.index_document)
@@ -243,6 +247,7 @@ class TestDataImportCompatibility:
     def test_ingest_document_dict_format(self):
         """Documents can use 'content', 'text', or 'page_content' keys."""
         import inspect
+
         from agentic_brain.rag.graph_rag import GraphRAG
 
         source = inspect.getsource(GraphRAG.ingest)
@@ -254,6 +259,7 @@ class TestDataImportCompatibility:
     def test_ingest_accepts_entity_and_relationship_dicts(self):
         """When no text content, ingest() accepts pre-extracted entities/rels."""
         import inspect
+
         from agentic_brain.rag.graph_rag import GraphRAG
 
         source = inspect.getsource(GraphRAG.ingest)
@@ -356,6 +362,7 @@ class TestKnowledgeExtractorCompatibility:
     def test_extractor_config_uses_env_vars(self):
         """Neo4j connection should read from environment variables."""
         import os
+
         from agentic_brain.rag.graphrag.knowledge_extractor import (
             KnowledgeExtractorConfig,
         )

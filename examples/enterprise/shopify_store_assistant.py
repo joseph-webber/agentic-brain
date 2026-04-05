@@ -32,17 +32,17 @@ Author: Joseph Webber
 Created: 2025
 """
 
-import os
-import json
 import hashlib
 import hmac
-from typing import Optional, Dict, Any, List
+import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum, auto
+from typing import Any, Dict, List, Optional
 
-from agentic_brain import AgenticBrain, Tool, Message
+from agentic_brain import AgenticBrain, Message, Tool
 
 # ============================================================================
 # Configuration
@@ -726,7 +726,7 @@ def create_shopify_tools(
         response = f"Added {quantity}x {product['title']}"
         if cart_item.variant_title and cart_item.variant_title != "Default":
             response += f" ({cart_item.variant_title})"
-        response += f" to your cart.\n\n"
+        response += " to your cart.\n\n"
         response += f"Cart total: ${session.cart.subtotal:.2f} AUD ({session.cart.item_count} items)"
 
         return response
@@ -1036,7 +1036,7 @@ Full terms at our website.
         if policy:
             return policy
         else:
-            return f"Available policies: returns, shipping, privacy, terms\nWhich would you like to know about?"
+            return "Available policies: returns, shipping, privacy, terms\nWhich would you like to know about?"
 
     async def get_collections() -> str:
         """Browse available product collections/categories."""

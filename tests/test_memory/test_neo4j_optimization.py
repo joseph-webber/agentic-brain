@@ -1,11 +1,12 @@
-import json
 import contextlib
+import json
 from contextlib import contextmanager
-import pytest
 from types import SimpleNamespace
 
-from agentic_brain.memory import session_manager as sm
+import pytest
+
 from agentic_brain.memory import neo4j_memory as nm
+from agentic_brain.memory import session_manager as sm
 
 
 class FakeSession:

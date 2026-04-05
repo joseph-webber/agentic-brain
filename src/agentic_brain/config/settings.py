@@ -7,12 +7,12 @@ from __future__ import annotations
 
 import os
 import re
+import tomllib
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Mapping
 
-import tomllib
 import yaml
 from pydantic import (
     BaseModel,
@@ -116,7 +116,7 @@ class Neo4jSettings(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def reconcile_timeout_alias(self) -> "Neo4jSettings":
+    def reconcile_timeout_alias(self) -> Neo4jSettings:
         if self.connection_timeout_seconds is not None:
             self.connection_timeout = self.connection_timeout_seconds
         return self
@@ -148,7 +148,7 @@ class LLMSettings(BaseModel):
     xai_api_key: SecretStr | None = None
 
     @model_validator(mode="after")
-    def reconcile_timeout_alias(self) -> "LLMSettings":
+    def reconcile_timeout_alias(self) -> LLMSettings:
         if self.timeout_seconds is not None:
             self.timeout = self.timeout_seconds
         return self
@@ -195,7 +195,7 @@ class SecuritySettings(BaseModel):
         return _validate_origins(values)
 
     @model_validator(mode="after")
-    def reconcile_rate_limit_alias(self) -> "SecuritySettings":
+    def reconcile_rate_limit_alias(self) -> SecuritySettings:
         if self.rate_limit_requests_per_minute is not None:
             self.rate_limit_requests = self.rate_limit_requests_per_minute
         return self
@@ -227,7 +227,7 @@ class CacheSettings(BaseModel):
     semantic_similarity_threshold: float = Field(default=0.95, ge=0.0, le=1.0)
 
     @model_validator(mode="after")
-    def validate_backend(self) -> "CacheSettings":
+    def validate_backend(self) -> CacheSettings:
         if self.backend == CacheBackend.REDIS and not self.redis_url:
             raise ValueError("redis_url is required when cache backend is redis")
         return self
@@ -293,7 +293,7 @@ class Settings(BaseModel):
         return value
 
     @model_validator(mode="after")
-    def validate_profile_rules(self) -> "Settings":
+    def validate_profile_rules(self) -> Settings:
         if self.profile in {"production", "prod"}:
             secret = self.security.jwt_secret.get_secret_value()
             if "change-me" in secret or len(secret) < 32:
@@ -338,7 +338,7 @@ class Settings(BaseModel):
         config_file: str | Path | None = None,
         env_file: str | Path | None = None,
         base_path: str | Path | None = None,
-    ) -> "Settings":
+    ) -> Settings:
         resolved_profile = get_profile(profile or _profile_from_env())
         data = resolved_profile.build()
         data = deep_merge(data, _load_config_file(config_file, base_path=base_path))

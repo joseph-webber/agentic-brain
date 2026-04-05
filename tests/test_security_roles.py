@@ -20,7 +20,6 @@ from agentic_brain.security.auth import (
     is_user,
     setup_admin_from_env,
 )
-from agentic_brain.security.guards import check_file_access
 from agentic_brain.security.guards import (
     SecurityGuard,
     SecurityViolation,

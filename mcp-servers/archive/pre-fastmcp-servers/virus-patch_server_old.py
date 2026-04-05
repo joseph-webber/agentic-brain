@@ -22,24 +22,24 @@ import os
 import subprocess
 import sys
 from datetime import datetime
-from typing import Any, Optional
 from pathlib import Path
+from typing import Any, Optional
 
 # MCP SDK
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 
 # Neo4j
 from neo4j import GraphDatabase
 
 # Add brain path for fuzzy search
 sys.path.insert(0, os.path.expanduser("~/brain"))
-from core.fuzzy_search import fuzzy_match, fuzzy_filter, fuzzy_best, fuzzy_ratio
+from core.fuzzy_search import fuzzy_best, fuzzy_filter, fuzzy_match, fuzzy_ratio
 
 # Kick & Bass Demo
 try:
-    from kick_bass_demo import KickBassDemoEngine, PARAMS, load_style, list_midi_styles
+    from kick_bass_demo import PARAMS, KickBassDemoEngine, list_midi_styles, load_style
 
     KICKBASS_AVAILABLE = True
 except ImportError:
@@ -615,20 +615,20 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         stats = virus_server.get_stats()
 
         lines = [
-            f"📊 Virus Patch Library Stats",
+            "📊 Virus Patch Library Stats",
             f"   Total patches: {stats['total_patches']}",
-            f"\n   Categories:",
+            "\n   Categories:",
         ]
         for cat, count in list(stats["categories"].items())[:10]:
             lines.append(f"      {cat:15s}: {count}")
 
         if stats["top_rated"]:
-            lines.append(f"\n   ⭐ Top Rated:")
+            lines.append("\n   ⭐ Top Rated:")
             for p in stats["top_rated"][:5]:
                 lines.append(f"      {p['name']} - {'⭐' * p['rating']}")
 
         if stats["most_played"]:
-            lines.append(f"\n   🎵 Most Played:")
+            lines.append("\n   🎵 Most Played:")
             for p in stats["most_played"][:5]:
                 lines.append(f"      {p['name']} - {p['plays']} plays")
 
@@ -668,7 +668,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
                 )
             ]
         else:
-            return [TextContent(type="text", text=f"❌ Failed to load random patch")]
+            return [TextContent(type="text", text="❌ Failed to load random patch")]
 
     elif name == "virus_jam":
         bpm = arguments.get("bpm", 174)

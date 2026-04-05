@@ -227,7 +227,7 @@ class SignatureMeta(type):
 
     def __new__(
         mcs, name: str, bases: tuple, namespace: dict, **kwargs: Any
-    ) -> "SignatureMeta":
+    ) -> SignatureMeta:
         cls = super().__new__(mcs, name, bases, namespace)
 
         # Collect fields from class and bases
@@ -354,7 +354,7 @@ class Signature(metaclass=SignatureMeta):
         return self._values.copy()
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Signature":
+    def from_dict(cls, data: Dict[str, Any]) -> Signature:
         """Create signature instance from dictionary."""
         return cls(**data)
 
@@ -460,7 +460,7 @@ class Module(ABC):
     """
 
     def __init__(self):
-        self._submodules: Dict[str, "Module"] = {}
+        self._submodules: Dict[str, Module] = {}
         self._parameters: Dict[str, Any] = {}
         self._compiled: bool = False
 
@@ -480,7 +480,7 @@ class Module(ABC):
         """Execute the module. Must be implemented by subclasses."""
         ...
 
-    def named_submodules(self) -> Iterator[Tuple[str, "Module"]]:
+    def named_submodules(self) -> Iterator[Tuple[str, Module]]:
         """Iterate over all submodules with names."""
         for name, module in self._submodules.items():
             yield name, module
@@ -723,7 +723,7 @@ class Retrieve(Module):
                     metadata.append(item)
                     return
                 if hasattr(item, "content"):
-                    passages.append(getattr(item, "content"))
+                    passages.append(item.content)
                     scores.append(float(getattr(item, "score", 0.0)))
                     metadata.append(getattr(item, "metadata", {}))
                     return
@@ -1042,9 +1042,7 @@ class ReAct(Module):
 
         # Add output fields
         for name in self.signature._output_fields:
-            if name == "answer":
-                result[name] = trace.final_answer
-            elif name not in result:
+            if name == "answer" or name not in result:
                 result[name] = trace.final_answer
 
         return Prediction(**result)

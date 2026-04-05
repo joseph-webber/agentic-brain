@@ -3,8 +3,8 @@
 Provides: faithfulness_score, relevancy_score, context_precision, context_recall, answer_similarity
 """
 
-from typing import Iterable, Set
 from difflib import SequenceMatcher
+from typing import Iterable, Set
 
 
 def _safe_set(iterable: Iterable) -> Set:

@@ -34,13 +34,13 @@ License: MIT
 """
 
 import asyncio
+import random
+import string
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
-import random
-import string
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ENUMS AND CONSTANTS
@@ -1168,7 +1168,7 @@ async def demo():
             print(f"   {notif}")
 
     portfolio = dashboard["portfolio"]
-    print(f"\n📊 Portfolio Overview:")
+    print("\n📊 Portfolio Overview:")
     print(f"   Properties: {portfolio['total_properties']}")
     print(f"   Weekly Rent: ${portfolio['total_weekly_rent']:.2f}")
     print(f"   Occupancy: {portfolio['occupancy_rate']}")
@@ -1192,7 +1192,7 @@ async def demo():
 
         if prop.status == PropertyStatus.LEASED:
             perf = portal.get_property_performance(prop.property_id, months=12)
-            print(f"   12-Month Performance:")
+            print("   12-Month Performance:")
             print(f"      Gross Income: ${perf['gross_income']:.2f}")
             print(f"      Net Income: ${perf['net_income']:.2f}")
             print(f"      ROI: {perf['roi_percent']:.1f}%")
@@ -1255,11 +1255,11 @@ async def demo():
 
     analysis = portal.get_market_analysis("PROP-001")
     if analysis:
-        print(f"\n📍 Adelaide CBD Apartment:")
+        print("\n📍 Adelaide CBD Apartment:")
         print(f"   Current Rent: ${analysis.current_rent}/week")
         print(f"   Market Estimate: ${analysis.estimated_market_rent}/week")
         print(f"   Variance: {analysis.variance_percent:+.1f}%")
-        print(f"\n   Comparable Properties:")
+        print("\n   Comparable Properties:")
         for comp in analysis.comparable_properties:
             print(f"      • {comp['address']}: ${comp['rent']}/week")
         print(f"\n   💡 Recommendation: {analysis.recommendation}")
@@ -1276,14 +1276,14 @@ async def demo():
     income = portal.get_income_history(months=3)
     total_income = sum(r.gross_rent for r in income)
     total_fees = sum(r.management_fee for r in income)
-    print(f"\n📈 Last 3 Months:")
+    print("\n📈 Last 3 Months:")
     print(f"   Gross Rent: ${total_income:.2f}")
     print(f"   Management Fees: ${total_fees:.2f}")
     print(f"   Net Income: ${total_income - total_fees:.2f}")
 
     # Expenses by category
     expense_summary = portal.get_expense_summary(financial_year="2025-26")
-    print(f"\n📉 Expenses (FY 2025-26):")
+    print("\n📉 Expenses (FY 2025-26):")
     for category, amount in expense_summary["by_category"].items():
         print(f"   {category}: ${amount:.2f}")
     print(f"   Total: ${expense_summary['total_expenses']:.2f}")
@@ -1304,10 +1304,10 @@ async def demo():
         print(f"   Deductions: ${prop_summary['total_deductions']:.2f}")
         print(f"   Net Income: ${prop_summary['net_income']:.2f}")
         if prop_summary["negatively_geared"]:
-            print(f"   ⚠️ Negatively geared")
+            print("   ⚠️ Negatively geared")
 
     totals = eofy["portfolio_totals"]
-    print(f"\n📊 Portfolio Totals:")
+    print("\n📊 Portfolio Totals:")
     print(f"   Total Income: ${totals['total_income']:.2f}")
     print(f"   Total Deductions: ${totals['total_deductions']:.2f}")
     print(f"   Net Rental Income: ${totals['net_rental_income']:.2f}")

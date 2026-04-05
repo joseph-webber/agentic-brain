@@ -24,14 +24,14 @@ Usage:
 
 import argparse
 import asyncio
+import hashlib
 import json
 import random
-import hashlib
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
-from collections import defaultdict
 
 # =============================================================================
 # ENUMS
@@ -1613,7 +1613,7 @@ async def label_menu(service: ShippingLogisticsService) -> None:
         label = service.generate_label(shipment_id)
 
         if label:
-            print(f"\n✅ Label generated!")
+            print("\n✅ Label generated!")
             print(f"   Label ID: {label.label_id}")
             print(f"   Tracking: {label.tracking_number}")
             print(f"   Format: {label.label_format}")
@@ -1942,7 +1942,7 @@ async def bulk_menu(service: ShippingLogisticsService) -> None:
         result = await service.process_bulk_batch(batch_id, progress)
 
         if result["success"]:
-            print(f"\n✅ Batch processing complete!")
+            print("\n✅ Batch processing complete!")
             print(f"   Status: {result['status']}")
             print(f"   Successful: {result['successful']}/{result['total']}")
             if result["errors"]:
@@ -2145,13 +2145,13 @@ async def demo_mode(service: ShippingLogisticsService) -> None:
 
     int_quotes = service.get_rate_quotes(int_address, [package])
     if int_quotes:
-        print(f"   Rates to USA:")
+        print("   Rates to USA:")
         for q in int_quotes:
             print(f"   • {q.service_name}: ${q.total_cost_aud:.2f}")
 
     # Duties estimate
     duties = service.estimate_duties_taxes("US", package.declared_value_aud)
-    print(f"\n   Duties/Taxes estimate:")
+    print("\n   Duties/Taxes estimate:")
     print(f"   • Value: ${duties['declared_value_aud']:.2f}")
     print(f"   • De minimis: ${duties['de_minimis_threshold_aud']:.2f}")
     if duties.get("below_de_minimis"):
@@ -2167,7 +2167,7 @@ async def demo_mode(service: ShippingLogisticsService) -> None:
         order_total_aud=150.00, order_weight_kg=2.0, to_address=to_address
     )
 
-    print(f"   Order: $150.00, 2kg to Sydney")
+    print("   Order: $150.00, 2kg to Sydney")
     print(f"   Free shipping: {'Yes' if rules_result['free_shipping'] else 'No'}")
     print(f"   Rules applied: {', '.join(rules_result['applied_rules'])}")
     await asyncio.sleep(1)
@@ -2222,7 +2222,7 @@ async def demo_mode(service: ShippingLogisticsService) -> None:
     print(f"   Labels generated: {summary['labels_generated']}")
 
     performance = service.get_carrier_performance()
-    print(f"\n   Carrier performance:")
+    print("\n   Carrier performance:")
     for perf in performance[:3]:
         print(f"   • {perf['carrier_name']}: {perf['delivered']} delivered")
 

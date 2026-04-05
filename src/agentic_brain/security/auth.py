@@ -22,12 +22,12 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from .roles import SecurityRole
 from .guards import (
     SecurityGuard,
     get_security_guard,
     set_security_guard,
 )
+from .roles import SecurityRole
 
 logger = logging.getLogger(__name__)
 

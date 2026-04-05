@@ -8,7 +8,6 @@ voice_orchestrator.py.
 
 from __future__ import annotations
 
-
 # Complexity levels
 SIMPLE = "simple"
 MEDIUM = "medium"

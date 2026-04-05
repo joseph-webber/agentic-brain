@@ -26,14 +26,14 @@ Requirements:
 """
 
 import asyncio
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta, date, time
-from enum import Enum
-from typing import Optional
 import json
 import random
-import string
 import re
+import string
+from dataclasses import dataclass, field
+from datetime import date, datetime, time, timedelta
+from enum import Enum
+from typing import Optional
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DATA MODELS
@@ -1047,7 +1047,7 @@ Alice: Perfect. Let's reconvene next week with more detailed plans.
             "success": True,
             "action_item_id": action_id,
             "status": item.status.value,
-            "message": f"Action item updated",
+            "message": "Action item updated",
         }
 
     # ──────────────────────────────────────────────────────────────────────────
@@ -1596,10 +1596,10 @@ async def demo():
     notes = service.get_meeting_notes("MTG-001")
     n = notes["notes"]
     print(f"Summary: {n['summary'][:100]}...")
-    print(f"\nKey Decisions:")
+    print("\nKey Decisions:")
     for decision in n["key_decisions"][:3]:
         print(f"  • {decision}")
-    print(f"\nAction Items:")
+    print("\nAction Items:")
     for action in n["action_items"][:3]:
         print(f"  → {action}")
 

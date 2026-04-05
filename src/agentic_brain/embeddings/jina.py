@@ -8,14 +8,15 @@ Supports Jina's multilingual embedding models with support for long documents.
 Optimized for cross-lingual and multimodal retrieval.
 """
 
+import asyncio
+import logging
 import os
 import time
-import asyncio
-from typing import List, Optional, Literal
-import numpy as np
-import logging
+from typing import List, Literal, Optional
 
-from .base import Embedder, EmbeddingProvider, EmbeddingResult, BatchEmbeddingResult
+import numpy as np
+
+from .base import BatchEmbeddingResult, Embedder, EmbeddingProvider, EmbeddingResult
 
 logger = logging.getLogger(__name__)
 
@@ -76,8 +77,8 @@ class JinaEmbedder(Embedder):
         self.last_request_time = 0.0
 
         try:
-            from jinaai.embeddings import EmbeddingColbert as EmbeddingAPI
             from jinaai import JinaAI
+            from jinaai.embeddings import EmbeddingColbert as EmbeddingAPI
 
             self.client = JinaAI(api_key=self.api_key)
         except ImportError:

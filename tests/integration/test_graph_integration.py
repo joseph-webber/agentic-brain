@@ -3,9 +3,9 @@ from __future__ import annotations
 import pytest
 
 from agentic_brain.rag.graph import EnhancedGraphRAG, GraphRAGConfig, RetrievalStrategy
+from agentic_brain.rag.graph_traversal import TraversalStrategy
 from agentic_brain.rag.graphrag.knowledge_extractor import KnowledgeExtractor
 from agentic_brain.rag.pipeline import RAGPipeline
-from agentic_brain.rag.graph_traversal import TraversalStrategy
 
 pytestmark = [pytest.mark.integration, pytest.mark.graph]
 

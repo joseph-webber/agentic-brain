@@ -56,13 +56,13 @@ License: MIT
 """
 
 import asyncio
+import hashlib
+import json
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
-import hashlib
-import json
 
 # ══════════════════════════════════════════════════════════════════════════════
 # NDIS SDA ENUMERATIONS
@@ -773,9 +773,7 @@ class SDAPropertyManager:
             if acc_reqs:
                 acc = prop.accessibility
                 for req in acc_reqs:
-                    if req == "ceiling_hoists" and acc.ceiling_hoists:
-                        score += 5
-                    elif req == "smart_home" and acc.smart_home_controls:
+                    if req == "ceiling_hoists" and acc.ceiling_hoists or req == "smart_home" and acc.smart_home_controls:
                         score += 5
 
             if score > 0:
@@ -1179,7 +1177,7 @@ async def demo():
     print("=" * 70)
     print("🏠 SPECIALIST DISABILITY ACCOMMODATION (SDA) MANAGEMENT SYSTEM")
     print("=" * 70)
-    print(f"\n📋 Provider: Community Living Co")
+    print("\n📋 Provider: Community Living Co")
     print("🔒 Privacy Mode: On-Premise (No Cloud)")
 
     # Initialize manager
@@ -1381,7 +1379,7 @@ async def demo():
     print("🔍 STEP 3: Finding Matching Properties")
     print("─" * 70)
 
-    print(f"\n🔎 Finding matches for Sarah M. (High Physical Support)...")
+    print("\n🔎 Finding matches for Sarah M. (High Physical Support)...")
     matches = manager.find_matching_properties("PART-001")
 
     if matches:
@@ -1408,9 +1406,9 @@ async def demo():
     )
 
     if agreement:
-        print(f"\n📋 Agreement Details:")
+        print("\n📋 Agreement Details:")
         print(f"   Agreement ID: {agreement.agreement_id}")
-        print(f"   Property: Parkview Accessible Apartments - Unit 3")
+        print("   Property: Parkview Accessible Apartments - Unit 3")
         print(f"   SDA Daily Rate: ${agreement.sda_daily_rate:.2f}")
         print(f"   Rent Contribution: ${agreement.reasonable_rent_contribution:.2f}")
         print(f"   Start Date: {agreement.start_date}")
@@ -1433,7 +1431,7 @@ async def demo():
         affects_accessibility=True,
     )
 
-    print(f"\n📝 Pending Maintenance Requests:")
+    print("\n📝 Pending Maintenance Requests:")
     pending = manager.get_pending_maintenance()
     for req in pending:
         print(f"   • [{req.priority.value.upper()}] {req.description[:50]}...")
@@ -1456,7 +1454,7 @@ async def demo():
     )
 
     result = manager.process_application(application.application_id)
-    print(f"\n📋 Application Result:")
+    print("\n📋 Application Result:")
     print(f"   Status: {result.get('status', 'unknown')}")
     if result.get("property"):
         print(f"   Offered Property: {result['property']['name']}")
@@ -1492,7 +1490,7 @@ async def demo():
     print("─" * 70)
 
     compliance = manager.get_compliance_report()
-    print(f"\n📋 Compliance Summary:")
+    print("\n📋 Compliance Summary:")
     print(f"   Report Date: {compliance['report_date']}")
     print(f"   Total Properties: {compliance['total_properties']}")
     print(f"   Compliant: {compliance['compliant']}")

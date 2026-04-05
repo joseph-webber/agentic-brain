@@ -10,16 +10,16 @@ with batch processing, rate limiting, and both sync/async interfaces.
 """
 
 from .base import (
+    BatchEmbeddingResult,
     Embedder,
     EmbeddingProvider,
     EmbeddingResult,
-    BatchEmbeddingResult,
 )
-from .openai import OpenAIEmbedder
 from .cohere import CohereEmbedder
-from .sentence_transformers import SentenceTransformersEmbedder, E5Embedder
-from .voyage import VoyageEmbedder
 from .jina import JinaEmbedder
+from .openai import OpenAIEmbedder
+from .sentence_transformers import E5Embedder, SentenceTransformersEmbedder
+from .voyage import VoyageEmbedder
 
 __all__ = [
     "Embedder",

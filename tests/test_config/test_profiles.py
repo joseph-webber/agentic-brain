@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import agentic_brain.config.profiles as config_profiles
-
 from agentic_brain.config.profiles import (
     BUILTIN_PROFILES,
     CustomProfile,

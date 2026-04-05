@@ -43,13 +43,13 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
+import json
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Protocol
-import json
-import logging
 
 logger = logging.getLogger(__name__)
 

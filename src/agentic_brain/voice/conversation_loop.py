@@ -446,7 +446,7 @@ class VoiceConversationLoop:
                     self._audio_queue.get(),
                     timeout=0.1,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
 
             # Check for speech using VAD

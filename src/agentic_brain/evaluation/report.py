@@ -1,7 +1,7 @@
 """Report generation for RAG evaluation."""
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 
 @dataclass

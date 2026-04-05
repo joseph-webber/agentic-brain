@@ -54,7 +54,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Optional, Callable
+from typing import Any, Callable, Optional
 
 # Configure logging
 logging.basicConfig(

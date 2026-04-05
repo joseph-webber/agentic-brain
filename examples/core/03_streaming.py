@@ -28,8 +28,9 @@ import asyncio
 import logging
 from typing import AsyncGenerator
 
-from agentic_brain.streaming import StreamingResponse
 from agentic_brain.errors import AgenticBrainError
+
+from agentic_brain.streaming import StreamingResponse
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +137,7 @@ async def streaming_with_callbacks():
 
         # Detect stream end
         if token.is_end:
-            print(f"\n\n✅ Stream complete!")
+            print("\n\n✅ Stream complete!")
             print(f"   Tokens: {token_count}")
             print(f"   Finish reason: {token.finish_reason}")
 

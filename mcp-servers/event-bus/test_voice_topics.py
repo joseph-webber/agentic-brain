@@ -12,11 +12,11 @@ Tests all new voice event functionality:
 - Voice queue management
 """
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 # Add paths
 sys.path.insert(0, os.path.expanduser("~/brain"))
@@ -55,25 +55,24 @@ class MockEventBus:
 
 # Import voice topics
 from voice_topics import (
-    VoiceTopics,
-    VoiceEventPublisher,
-    VoiceEventSubscriber,
+    ConversationEndedEvent,
     ConversationStartedEvent,
     ConversationTurnEvent,
-    ConversationEndedEvent,
+    FallbackLocalEvent,
     LadyIntroducedEvent,
     LadyReactionEvent,
     MoodChangedEvent,
-    TurnRequestedEvent,
+    QueueAddedEvent,
+    QueueEmptyEvent,
+    QueueSpeakingEvent,
     TurnGrantedEvent,
     TurnReleasedEvent,
-    FallbackLocalEvent,
-    QueueAddedEvent,
-    QueueSpeakingEvent,
-    QueueEmptyEvent,
+    TurnRequestedEvent,
+    VoiceEventPublisher,
+    VoiceEventSubscriber,
+    VoiceTopics,
     validate_voice_event,
 )
-
 
 # ============================================================================
 # TEST CASES

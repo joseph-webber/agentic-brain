@@ -57,9 +57,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
+from ..exceptions import ChunkingError
 from .base import BaseChunker, Chunk
 from .base import SemanticChunker as BuiltinSemanticChunker
-from ..exceptions import ChunkingError
 
 logger = logging.getLogger(__name__)
 

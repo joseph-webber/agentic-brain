@@ -1,5 +1,5 @@
-from agentic_brain.evaluation.evaluator import RAGEvaluator
 from agentic_brain.evaluation.datasets import Dataset
+from agentic_brain.evaluation.evaluator import RAGEvaluator
 
 
 def test_evaluator_with_no_retrievals_and_no_answers():

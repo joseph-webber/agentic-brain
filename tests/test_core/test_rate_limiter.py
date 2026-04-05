@@ -1,16 +1,17 @@
 """Tests for rate limit management."""
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from agentic_brain.core.rate_limiter import (
-    RateLimitManager,
-    RateLimitStrategy,
     ProviderQuota,
     ProviderState,
     RateLimitEvent,
+    RateLimitManager,
+    RateLimitStrategy,
     calculate_safe_agent_count,
     can_deploy_agents,
     get_deployment_recommendation,

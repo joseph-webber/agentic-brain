@@ -25,7 +25,7 @@ import asyncio
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
-from agentic_brain import Agent, Neo4jMemory, DataScope
+from agentic_brain import Agent, DataScope, Neo4jMemory
 
 
 @dataclass

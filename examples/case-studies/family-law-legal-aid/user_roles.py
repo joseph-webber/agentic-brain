@@ -42,11 +42,11 @@ Copyright (C) 2025-2026 Joseph Webber / Iris Lumina
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, auto
 from typing import Any, Callable, Dict, List, Optional, Set
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -344,7 +344,7 @@ class User:
     def get_greeting(self) -> str:
         """Get role-appropriate greeting."""
         greetings = {
-            UserRole.JUDGE: f"Good day, Your Honour",
+            UserRole.JUDGE: "Good day, Your Honour",
             UserRole.REGISTRAR: f"Hello Registrar {self.name}",
             UserRole.APPLICANT_LAWYER: f"Hello {self.name}, counsel for the applicant",
             UserRole.RESPONDENT_LAWYER: f"Hello {self.name}, counsel for the respondent",

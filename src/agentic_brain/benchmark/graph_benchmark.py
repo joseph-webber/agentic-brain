@@ -485,13 +485,13 @@ class GraphBenchmark:
             f"  Score               : 100 − ({friction_recent} × 10) = {friction_score}%"
         )
         if unproven:
-            print(f"\n  ⚠️  No friction events logged yet (unproven).")
+            print("\n  ⚠️  No friction events logged yet (unproven).")
         print(SEP)
         print(f"  FRICTION SCORE  {bar(friction_score)}  {friction_score}%")
 
         # Combined
         print(f"\n{DSEP}")
-        print(f"  FINAL SCORE")
+        print("  FINAL SCORE")
         print(DSEP)
         print(
             f"  Structure:  {int(w_struct*100)}% × {struct_avg}% = {round(struct_avg * w_struct, 1)} pts"

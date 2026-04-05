@@ -32,19 +32,19 @@ Usage:
     And the emulator handles it autonomously!
 """
 
-import os
-import sys
 import json
+import os
+import subprocess
+import sys
+import threading
 import time
 import uuid
-import threading
-import subprocess
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, field, asdict
-from enum import Enum
 from collections import deque
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -159,7 +159,7 @@ def query_emulator(
 
         return None, response_time
 
-    except Exception as e:
+    except Exception:
         return None, time.time() - start_time
 
 

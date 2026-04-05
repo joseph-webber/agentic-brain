@@ -2,6 +2,7 @@
 """
 
 from __future__ import annotations
+
 import time
 from typing import Any, Dict, List, Optional
 
@@ -10,7 +11,7 @@ class Span:
     def __init__(
         self,
         name: str,
-        tracer: "RAGTracer" = None,
+        tracer: RAGTracer = None,
         attributes: Optional[Dict[str, Any]] = None,
     ):
         self.name = name
@@ -18,13 +19,13 @@ class Span:
         self.attributes: Dict[str, Any] = dict(attributes or {})
         self.start_time = time.perf_counter()
         self.end_time: Optional[float] = None
-        self.children: List["Span"] = []
+        self.children: List[Span] = []
         self.ended = False
 
     def set_attribute(self, key: str, value: Any) -> None:
         self.attributes[key] = value
 
-    def add_child(self, span: "Span") -> None:
+    def add_child(self, span: Span) -> None:
         self.children.append(span)
 
     def end(self) -> None:

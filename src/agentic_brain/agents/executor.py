@@ -177,7 +177,7 @@ class ToolExecutor:
                     timeout=context.timeout_seconds,
                 )
                 return result
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 raise ExecutionTimeout(
                     f"Tool execution exceeded {context.timeout_seconds}s"
                 ) from e

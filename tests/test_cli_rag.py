@@ -31,19 +31,18 @@ import argparse
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
 from agentic_brain.cli.rag_commands import (
-    cmd_query,
-    cmd_index,
+    cmd_config,
     cmd_eval,
     cmd_health,
-    cmd_config,
+    cmd_index,
+    cmd_query,
     register_rag_commands,
 )
-
 
 # ===== FIXTURES =====
 

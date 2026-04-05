@@ -4,6 +4,7 @@ we provide a minimal shim that converts spans to a serializable form.
 """
 
 from __future__ import annotations
+
 from typing import Any, Dict
 
 

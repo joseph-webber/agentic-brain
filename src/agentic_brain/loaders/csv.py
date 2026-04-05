@@ -43,7 +43,7 @@ class CSVLoader(SyncDocumentLoader):
             raise FileNotFoundError(f"CSV file not found: {path}")
 
         try:
-            with open(path, "r", encoding=self.encoding) as f:
+            with open(path, encoding=self.encoding) as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
 
@@ -103,7 +103,7 @@ class CSVRowLoader(SyncDocumentLoader):
 
         documents = []
         try:
-            with open(path, "r", encoding=self.encoding) as f:
+            with open(path, encoding=self.encoding) as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
 

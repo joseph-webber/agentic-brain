@@ -559,7 +559,6 @@ class HealthResponse(BaseModel):
 # Message and Session Management Models
 # =============================================================================
 
-from pydantic import RootModel
 
 
 class MessageListResponse(RootModel[list[dict]]):

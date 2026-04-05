@@ -31,16 +31,16 @@ Requirements:
 """
 
 import asyncio
+import difflib
 import hashlib
 import json
+import math
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Optional
-import math
-import difflib
 
 try:
     import numpy as np
@@ -855,7 +855,7 @@ class ContractRAGPipeline:
     ) -> Contract:
         """Add a contract to the system."""
         if path:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 content = f.read()
 
         if not content:
@@ -1056,7 +1056,7 @@ class ContractRAGPipeline:
         ]
 
         if contract.parties:
-            summary_parts.append(f"\n**Parties:**")
+            summary_parts.append("\n**Parties:**")
             for party in contract.parties:
                 summary_parts.append(f"- {party.role}: {party.name}")
 
@@ -1082,7 +1082,7 @@ class ContractRAGPipeline:
             summary_parts.append(f"- {clause.reference}: {clause.clause_type.value}")
 
         # Risk summary
-        summary_parts.append(f"\n**Risk Assessment:**")
+        summary_parts.append("\n**Risk Assessment:**")
         for level in [
             RiskLevel.CRITICAL,
             RiskLevel.HIGH,
@@ -1094,7 +1094,7 @@ class ContractRAGPipeline:
                 summary_parts.append(f"- {level.value.upper()}: {count}")
 
         if contract.risks:
-            summary_parts.append(f"\n**Top Risks:**")
+            summary_parts.append("\n**Top Risks:**")
             for risk in contract.risks[:3]:
                 summary_parts.append(
                     f"- [{risk.risk_level.value.upper()}] {risk.description}"
@@ -1409,7 +1409,7 @@ def run_demo():
 
     # Show stats
     stats = pipeline.get_stats()
-    print(f"\n📊 Analysis Stats:")
+    print("\n📊 Analysis Stats:")
     print(f"   Contracts: {stats['contracts']}")
     print(f"   Clauses: {stats['clauses']}")
     print(f"   Total Risks: {stats['total_risks']}")
@@ -1468,7 +1468,7 @@ def run_demo():
             cid = contract_ids[0] if contract_ids else None
             if cid:
                 risks = pipeline.analyze_risks(cid)
-                print(f"\n⚠️ Risk Analysis:")
+                print("\n⚠️ Risk Analysis:")
                 for risk in risks:
                     level_emoji = {
                         "critical": "🔴",
@@ -1508,11 +1508,11 @@ def run_demo():
                 if diff.removed_clauses:
                     print(f"\n   ➖ Removed: {', '.join(diff.removed_clauses)}")
                 if diff.modified_clauses:
-                    print(f"\n   ✏️ Modified:")
+                    print("\n   ✏️ Modified:")
                     for clause_type, old, new in diff.modified_clauses[:3]:
                         print(f"      - {clause_type}")
                 if diff.risk_changes:
-                    print(f"\n   ⚠️ Risk Changes:")
+                    print("\n   ⚠️ Risk Changes:")
                     for change in diff.risk_changes[:5]:
                         print(f"      - {change}")
             else:

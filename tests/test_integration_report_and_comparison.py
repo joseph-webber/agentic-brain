@@ -1,7 +1,7 @@
-from agentic_brain.evaluation.evaluator import RAGEvaluator
-from agentic_brain.evaluation.datasets import Dataset
-from agentic_brain.evaluation.report import EvaluationReport
 from agentic_brain.evaluation.comparison import compare_reports
+from agentic_brain.evaluation.datasets import Dataset
+from agentic_brain.evaluation.evaluator import RAGEvaluator
+from agentic_brain.evaluation.report import EvaluationReport
 
 
 def test_full_integration():

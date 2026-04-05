@@ -1,14 +1,15 @@
 """RAGEvaluator: orchestrates evaluation using datasets and metrics."""
 
 from typing import List, Optional
+
+from .datasets import Dataset
 from .metrics import (
-    faithfulness_score,
-    relevancy_score,
+    answer_similarity,
     context_precision,
     context_recall,
-    answer_similarity,
+    faithfulness_score,
+    relevancy_score,
 )
-from .datasets import Dataset
 from .report import EvaluationReport
 
 

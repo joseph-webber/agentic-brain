@@ -23,7 +23,6 @@ from tools.voice.llm_providers import (
     get_providers,
 )
 
-
 # ---------------------------------------------------------------------------
 # Task-type specialisation routing
 # ---------------------------------------------------------------------------
@@ -100,7 +99,7 @@ _TASK_SIGNALS: dict[str, list[str]] = {
 def detect_task_type(text: str) -> str:
     """Detect the task type from user text."""
     lower = text.lower()
-    scores: dict[str, int] = {k: 0 for k in SPECIALISATION}
+    scores: dict[str, int] = dict.fromkeys(SPECIALISATION, 0)
     for task_type, signals in _TASK_SIGNALS.items():
         for signal in signals:
             if signal in lower:

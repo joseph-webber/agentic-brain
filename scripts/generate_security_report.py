@@ -4,12 +4,13 @@ Security Report Generator for agentic-brain
 Runs penetration tests and generates a formatted report.
 """
 
-import pytest
-import sys
 import json
+import os
+import sys
 import time
 from datetime import datetime
-import os
+
+import pytest
 
 
 def generate_report():
@@ -56,7 +57,7 @@ def generate_report():
     with open(report_file, "w") as f:
         f.write("# 🛡️ Security Penetration Test Report\n\n")
         f.write(f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write(f"**Target:** agentic-brain\n\n")
+        f.write("**Target:** agentic-brain\n\n")
 
         f.write("## 📊 Summary\n")
         total = plugin.passed + plugin.failed
@@ -121,7 +122,7 @@ def generate_report():
     print(f"\n✅ Report generated: {report_file}")
 
     # Also print to stdout
-    with open(report_file, "r") as f:
+    with open(report_file) as f:
         print(f.read())
 
     return ret_code

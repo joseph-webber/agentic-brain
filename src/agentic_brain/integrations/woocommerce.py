@@ -61,7 +61,7 @@ class WooCommerceCapabilities:
     can_manage_settings: bool = False
 
     @classmethod
-    def from_role(cls, role: WooCommerceRole) -> "WooCommerceCapabilities":
+    def from_role(cls, role: WooCommerceRole) -> WooCommerceCapabilities:
         """Get capabilities for a WooCommerce role."""
 
         if role == WooCommerceRole.CUSTOMER:

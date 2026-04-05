@@ -24,7 +24,6 @@ import pytest
 from agentic_brain.memory import UnifiedMemory
 from agentic_brain.memory.neo4j_memory import ConversationMemory, MemoryConfig, Message
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

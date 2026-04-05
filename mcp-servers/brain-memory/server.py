@@ -23,8 +23,8 @@ Created: 2026-03-15
 Author: Joseph Webber's Brain (Iris Lumina)
 """
 
-import atexit
 import asyncio
+import atexit
 import hashlib
 import json
 import os
@@ -297,7 +297,7 @@ def detect_crash() -> Optional[Dict]:
         return None
 
     try:
-        with open(STATE_FILE, "r") as f:
+        with open(STATE_FILE) as f:
             state = json.load(f)
 
         if not state.get("clean_shutdown", False):
@@ -389,7 +389,7 @@ async def memory_lifespan(server: FastMCP):
     # Check for crash
     crash_info = detect_crash()
     if crash_info:
-        print(f"🚨 Previous session crashed - recovering...", file=sys.stderr)
+        print("🚨 Previous session crashed - recovering...", file=sys.stderr)
         _session["recovered_from_crash"] = True
 
         bus = get_event_bus()

@@ -1440,10 +1440,10 @@ class Session:
         """Export to Markdown format for documentation."""
         lines = [
             f"# Session: {self.session_id}",
-            f"",
+            "",
             f"**Started**: {self._started_at.strftime('%Y-%m-%d %H:%M:%S UTC')}",
             f"**Messages**: {len(self._messages)}",
-            f"",
+            "",
             "---",
             "",
         ]

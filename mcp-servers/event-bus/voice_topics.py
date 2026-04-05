@@ -51,11 +51,10 @@ Example:
 
 import json
 import uuid
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Callable, Dict, Optional, Any, List
-from dataclasses import dataclass, asdict, field
 from enum import Enum
-
+from typing import Any, Callable, Dict, List, Optional
 
 # ============================================================================
 # Voice Topics Registry
@@ -642,7 +641,7 @@ class VoiceEventPublisher:
         retry_after_seconds: int = 60,
     ) -> dict:
         """Publish fallback to local LLM event"""
-        announcement = f"I'm switching to local mode - be right back!"
+        announcement = "I'm switching to local mode - be right back!"
 
         event = FallbackLocalEvent(
             reason=reason,

@@ -364,7 +364,7 @@ def extract_entities(
                 print(f"    ERROR: {e}")
                 total_errors += 1
 
-        print(f"\nDone.")
+        print("\nDone.")
         print(f"  Sessions processed: {len(sessions)}")
         print(f"  Entity-session links written: {total_written}")
         print(f"  Errors: {total_errors}")

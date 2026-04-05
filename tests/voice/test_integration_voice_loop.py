@@ -1,8 +1,9 @@
 """Integration tests for full voice loop."""
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 import fakeredis
+import pytest
 
 
 class TestVoiceLoop:

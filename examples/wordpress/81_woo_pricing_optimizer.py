@@ -25,13 +25,13 @@ Usage:
 
 import argparse
 import json
-import random
-from datetime import datetime, timedelta
-from typing import Any, Optional, Callable
-from dataclasses import dataclass, field
-from enum import Enum
-import statistics
 import math
+import random
+import statistics
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Callable, Optional
 
 # =============================================================================
 # DOMAIN MODELS
@@ -1110,9 +1110,9 @@ class MarginAnalyzer:
         if competitor_avg > 0:
             price_diff_pct = ((product.price - competitor_avg) / competitor_avg) * 100
             if price_diff_pct > 5:
-                position = "Premium (+{:.1f}%)".format(price_diff_pct)
+                position = f"Premium (+{price_diff_pct:.1f}%)"
             elif price_diff_pct < -5:
-                position = "Discount ({:.1f}%)".format(price_diff_pct)
+                position = f"Discount ({price_diff_pct:.1f}%)"
             else:
                 position = "Market rate"
         else:
@@ -2325,7 +2325,7 @@ class InteractivePricing:
             product, self.competitor_prices
         )
         if rec:
-            print(f"\n💡 Recommendation:")
+            print("\n💡 Recommendation:")
             print(f"   Suggested Price: ${rec.recommended_price:.2f}")
             print(f"   Change: {rec.change_percent:+.1f}%")
             print(f"   Reason: {rec.reason}")
@@ -2468,7 +2468,7 @@ def main():
         margin_analyzer = MarginAnalyzer(target_margin=args.min_margin)
         analysis = margin_analyzer.analyze_catalog(products)
 
-        print(f"\n📊 MARGIN ANALYSIS REPORT")
+        print("\n📊 MARGIN ANALYSIS REPORT")
         print("=" * 50)
         print(f"   Products analyzed: {analysis['total_products']}")
         print(f"   Average margin: {analysis['avg_margin']:.1f}%")

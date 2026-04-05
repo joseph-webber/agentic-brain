@@ -34,7 +34,7 @@ class SecurityRole(Enum):
     ADMIN = "full_admin"  # Backwards-compatible alias
     DEVELOPER = "safe_admin"  # Backwards-compatible alias
 
-    def __lt__(self, other: "SecurityRole") -> bool:
+    def __lt__(self, other: SecurityRole) -> bool:
         order = {
             SecurityRole.GUEST: 0,
             SecurityRole.USER: 1,
@@ -43,13 +43,13 @@ class SecurityRole(Enum):
         }
         return order[self] < order[other]
 
-    def __le__(self, other: "SecurityRole") -> bool:
+    def __le__(self, other: SecurityRole) -> bool:
         return self == other or self < other
 
-    def __gt__(self, other: "SecurityRole") -> bool:
+    def __gt__(self, other: SecurityRole) -> bool:
         return not self <= other
 
-    def __ge__(self, other: "SecurityRole") -> bool:
+    def __ge__(self, other: SecurityRole) -> bool:
         return not self < other
 
 
@@ -269,7 +269,7 @@ class RolePermissions:
             if pattern.search(command_stripped):
                 return (
                     False,
-                    f"Command blocked by security policy: matches dangerous pattern",
+                    "Command blocked by security policy: matches dangerous pattern",
                 )
 
         return True, None

@@ -24,8 +24,8 @@ Start with: python server.py
 
 import json
 import os
-import sys
 import subprocess
+import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -39,12 +39,12 @@ from dotenv import load_dotenv
 load_dotenv(os.path.expanduser("~/brain/.env"))
 
 # MCP protocol
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
-
 # Import backup functions
 from importlib import import_module
+
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+from mcp.types import TextContent, Tool
 
 # Lazy import backup module
 _backup_module = None

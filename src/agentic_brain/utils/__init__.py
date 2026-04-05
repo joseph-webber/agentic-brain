@@ -17,9 +17,9 @@
 
 from .clock import AgentClock, Clock, agent_clock, clock, get_clock
 from .ssl_bypass import (
-    should_verify_ssl,
     get_ssl_context,
     patch_ssl_globally,
+    should_verify_ssl,
 )
 
 __all__ = [

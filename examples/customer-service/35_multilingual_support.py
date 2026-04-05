@@ -19,11 +19,11 @@ import asyncio
 import json
 import re
 import time
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Callable, Any
-from collections import defaultdict
+from typing import Any, Callable, Optional
 
 
 class Language(Enum):
@@ -904,7 +904,7 @@ class MultilingualBot:
 
         # Default response - ask for clarification
         clarification_responses = {
-            "en": f"I'd be happy to help! Could you please tell me more about what you're looking for? I can assist with shipping, returns, and product information.",
+            "en": "I'd be happy to help! Could you please tell me more about what you're looking for? I can assist with shipping, returns, and product information.",
             "es": "¡Estaré encantado de ayudarle! ¿Podría decirme más sobre lo que busca? Puedo ayudarle con envíos, devoluciones e información de productos.",
             "fr": "Je serai ravi de vous aider! Pourriez-vous m'en dire plus sur ce que vous recherchez? Je peux vous aider concernant les livraisons, les retours et les informations sur les produits.",
             "de": "Ich helfe Ihnen gerne! Könnten Sie mir bitte mehr darüber erzählen, wonach Sie suchen? Ich kann Ihnen bei Versand, Rückgaben und Produktinformationen helfen.",
@@ -977,7 +977,7 @@ class MultilingualConsole:
 
         while True:
             try:
-                user_input = input(f"\n  You: ").strip()
+                user_input = input("\n  You: ").strip()
 
                 if not user_input:
                     continue

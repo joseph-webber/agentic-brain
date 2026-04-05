@@ -22,11 +22,11 @@ Requirements:
 
 import asyncio
 import json
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
 from enum import Enum
-import re
+from typing import Any, Dict, List, Optional
 
 # =============================================================================
 # ENUMS AND CONSTANTS
@@ -2202,7 +2202,7 @@ You Save: ${savings:.2f}"""
             f"SKU: {product.sku} | Brand: {product.brand}",
             f"Category: {product.full_category}",
             "",
-            f"**Pricing:**",
+            "**Pricing:**",
             f"  Current: ${product.price:.2f}",
         ]
 
@@ -2225,7 +2225,7 @@ You Save: ${savings:.2f}"""
                 "",
                 f"**Stock:** {stock_status}",
                 "",
-                f"**Specifications:**",
+                "**Specifications:**",
             ]
         )
 
@@ -2237,7 +2237,7 @@ You Save: ${savings:.2f}"""
         lines.extend(
             [
                 "",
-                f"**Description:**",
+                "**Description:**",
                 product.description,
             ]
         )

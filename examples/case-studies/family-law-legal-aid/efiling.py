@@ -41,16 +41,16 @@ Copyright (C) 2025-2026 Joseph Webber / Iris Lumina
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime, date
-from enum import Enum, auto
-from typing import Any, BinaryIO, Dict, List, Optional, Tuple
-from pathlib import Path
 import asyncio
 import hashlib
 import logging
 import mimetypes
 import uuid
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from enum import Enum, auto
+from pathlib import Path
+from typing import Any, BinaryIO, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -314,7 +314,7 @@ class EFilingService:
         # Check file size (max 25MB per document)
         max_size = 25 * 1024 * 1024
         if document.file_size > max_size:
-            errors.append(f"File too large. Maximum size is 25MB")
+            errors.append("File too large. Maximum size is 25MB")
 
         # Check consent orders format (must have signed + unsigned)
         if document.category == DocumentCategory.CONSENT_ORDERS:
@@ -701,7 +701,7 @@ class FilingAssistant:
 
         if not is_valid:
             return {
-                "message": f"Document validation failed:\n- " + "\n- ".join(errors),
+                "message": "Document validation failed:\n- " + "\n- ".join(errors),
                 "awaiting": "file_upload",
             }
 

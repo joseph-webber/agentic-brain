@@ -21,19 +21,19 @@ Usage:
     python 75_wordpress_content_manager.py --url https://yoursite.com --user admin --password app_password
 """
 
-import os
-import sys
-import json
 import asyncio
-import hashlib
-import logging
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any, Tuple
-from dataclasses import dataclass, field, asdict
-from enum import Enum
-from abc import ABC, abstractmethod
 import base64
+import hashlib
+import json
+import logging
+import os
 import re
+import sys
+from abc import ABC, abstractmethod
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
 # Configure logging
@@ -824,7 +824,7 @@ class ContentCalendar:
 
     def generate_calendar_view(self, year: int, month: int) -> str:
         """Generate text calendar view."""
-        from calendar import monthcalendar, month_name
+        from calendar import month_name, monthcalendar
 
         entries = self.get_entries_for_month(year, month)
         cal = monthcalendar(year, month)

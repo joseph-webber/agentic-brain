@@ -129,7 +129,7 @@ def get_todos_from_session() -> List[Dict]:
         conn.close()
 
         return [dict(row) for row in rows]
-    except Exception as e:
+    except Exception:
         return []
 
 
@@ -141,8 +141,8 @@ def get_neo4j_driver():
     if not NEO4J_ENABLED:
         return None
     try:
-        from neo4j import GraphDatabase
         from dotenv import load_dotenv
+        from neo4j import GraphDatabase
 
         load_dotenv(BRAIN_ROOT / ".env")
 
@@ -215,7 +215,7 @@ def save_to_neo4j(state: Dict) -> bool:
 
         driver.close()
         return True
-    except Exception as e:
+    except Exception:
         return False
 
 
@@ -283,7 +283,7 @@ def save_state(
     history = []
     if HISTORY_FILE.exists():
         try:
-            with open(HISTORY_FILE, "r") as f:
+            with open(HISTORY_FILE) as f:
                 history = json.load(f)
         except Exception:
             pass
@@ -321,7 +321,7 @@ def recover_state() -> Dict:
         return {"recovered": False, "message": "No previous session found"}
 
     try:
-        with open(STATE_FILE, "r") as f:
+        with open(STATE_FILE) as f:
             state = json.load(f)
 
         todos = state.get("todos", [])
@@ -402,7 +402,7 @@ def session_status() -> dict:
     state = {}
     if has_state:
         try:
-            with open(STATE_FILE, "r") as f:
+            with open(STATE_FILE) as f:
                 state = json.load(f)
         except Exception:
             pass
@@ -410,7 +410,7 @@ def session_status() -> dict:
     history_count = 0
     if HISTORY_FILE.exists():
         try:
-            with open(HISTORY_FILE, "r") as f:
+            with open(HISTORY_FILE) as f:
                 history_count = len(json.load(f))
         except Exception:
             pass
@@ -446,7 +446,7 @@ def session_history(limit: int = 10) -> dict:
         limit: Number of history entries to show (default 10)
     """
     if HISTORY_FILE.exists():
-        with open(HISTORY_FILE, "r") as f:
+        with open(HISTORY_FILE) as f:
             history = json.load(f)[:limit]
         return {"history": history, "count": len(history)}
     return {"history": [], "count": 0}

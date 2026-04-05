@@ -46,8 +46,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterator, Optional
 
 if TYPE_CHECKING:
-    from agentic_brain.voice.live_mode import LiveVoiceMode
     from agentic_brain.voice.cartesia_tts import CartesiaTTS
+    from agentic_brain.voice.live_mode import LiveVoiceMode
 
 logger = logging.getLogger(__name__)
 
@@ -244,8 +244,8 @@ class CartesiaLiveMode:
         self._sample_rate = sample_rate
 
         # Lazy-loaded components
-        self._live_mode: Optional["LiveVoiceMode"] = None
-        self._cartesia_tts: Optional["CartesiaTTS"] = None
+        self._live_mode: Optional[LiveVoiceMode] = None
+        self._cartesia_tts: Optional[CartesiaTTS] = None
         self._player: Optional[CartesiaStreamPlayer] = None
         self._lock = threading.Lock()
 
@@ -255,7 +255,7 @@ class CartesiaLiveMode:
         self._total_latency_ms = 0.0
         self._start_time: Optional[float] = None
 
-    def _get_live_mode(self) -> "LiveVoiceMode":
+    def _get_live_mode(self) -> LiveVoiceMode:
         """Get or create the underlying LiveVoiceMode."""
         if self._live_mode is None:
             from agentic_brain.voice.live_mode import LiveVoiceMode
@@ -267,7 +267,7 @@ class CartesiaLiveMode:
             )
         return self._live_mode
 
-    def _get_cartesia(self) -> Optional["CartesiaTTS"]:
+    def _get_cartesia(self) -> Optional[CartesiaTTS]:
         """Lazy-load CartesiaTTS if available."""
         if self._cartesia_tts is None:
             api_key = os.getenv("CARTESIA_API_KEY")

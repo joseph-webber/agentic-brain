@@ -6,6 +6,7 @@ Tests for base agent framework.
 """
 
 import asyncio
+
 import pytest
 
 from agentic_brain.agents import (

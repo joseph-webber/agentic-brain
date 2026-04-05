@@ -21,20 +21,20 @@ Usage:
     python 77_wordpress_seo_assistant.py --analyze "https://example.com/product/wireless-earbuds"
 """
 
-import os
-import sys
-import json
 import asyncio
-import logging
 import hashlib
-import re
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any, Tuple, Set
-from dataclasses import dataclass, field, asdict
-from enum import Enum
-from abc import ABC, abstractmethod
-from urllib.parse import urlparse, urljoin
+import json
+import logging
 import math
+import os
+import re
+import sys
+from abc import ABC, abstractmethod
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
+from urllib.parse import urljoin, urlparse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1628,11 +1628,11 @@ class SitemapManager:
         ]
 
         for sitemap in sitemaps:
-            xml_parts.append(f"  <sitemap>")
+            xml_parts.append("  <sitemap>")
             xml_parts.append(f"    <loc>{sitemap['loc']}</loc>")
             if sitemap.get("lastmod"):
                 xml_parts.append(f"    <lastmod>{sitemap['lastmod']}</lastmod>")
-            xml_parts.append(f"  </sitemap>")
+            xml_parts.append("  </sitemap>")
 
         xml_parts.append("</sitemapindex>")
 

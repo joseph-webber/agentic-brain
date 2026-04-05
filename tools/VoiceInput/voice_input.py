@@ -11,9 +11,9 @@ Exit codes from the Swift app:
     1  = permission denied or audio engine error
     2  = no speech detected within timeout
 """
+import os
 import subprocess
 import sys
-import os
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 VOICE_BINARY = os.path.join(_DIR, "VoiceInput.app", "Contents", "MacOS", "VoiceInput")

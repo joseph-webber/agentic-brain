@@ -34,6 +34,7 @@ Requirements:
 import asyncio
 import hashlib
 import json
+import math
 import os
 import re
 import tempfile
@@ -43,7 +44,6 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Generator, Optional
-import math
 
 # Try importing optional dependencies
 try:
@@ -217,7 +217,7 @@ class TextLoader(DocumentLoader):
     """Load plain text and markdown files."""
 
     def load(self, path: str) -> tuple[str, dict]:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             content = f.read()
 
         metadata = {
@@ -1597,7 +1597,7 @@ def run_demo():
 
     # Show stats
     stats = pipeline.get_stats()
-    print(f"\n📊 Pipeline Stats:")
+    print("\n📊 Pipeline Stats:")
     print(f"   Documents: {stats['documents']}")
     print(f"   Chunks: {stats['chunks']}")
     print(f"   Embedding Model: {stats['embedding_model']}")
@@ -1636,7 +1636,7 @@ def run_demo():
 
         if query.lower() == "stats":
             stats = pipeline.get_stats()
-            print(f"\n📊 Pipeline Statistics:")
+            print("\n📊 Pipeline Statistics:")
             for key, value in stats.items():
                 print(f"   {key}: {value}")
             continue

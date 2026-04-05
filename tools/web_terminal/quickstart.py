@@ -5,9 +5,9 @@ QUICKSTART - WebSocket PTY Bridge Server
 This script demonstrates how to use the server locally with auto-installation.
 """
 
+import os
 import subprocess
 import sys
-import os
 from pathlib import Path
 
 
@@ -19,7 +19,7 @@ def install_dependencies():
         capture_output=True,
     )
     if result.returncode != 0:
-        print(f"❌ Failed to install dependencies")
+        print("❌ Failed to install dependencies")
         print(result.stderr.decode())
         sys.exit(1)
     print("✓ Dependencies installed")

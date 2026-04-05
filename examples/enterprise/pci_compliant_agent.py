@@ -894,14 +894,14 @@ class PCICompliantAgent:
                 },
             }
 
-        except Exception as e:
+        except Exception:
             self.audit_logger.log_event(
                 event_type=AuditEventType.INVALID_ACCESS_ATTEMPT,
                 user_id=user_id,
                 user_role="customer",
                 resource_type="payment_token",
                 resource_id=token_id,
-                details=f"Failed to retrieve card info",
+                details="Failed to retrieve card info",
                 success=False,
                 source_ip=source_ip,
             )

@@ -45,15 +45,14 @@ from dotenv import load_dotenv
 load_dotenv(os.path.expanduser("~/brain/.env"))
 
 # MCP protocol
+# Fuzzy search
+from core.fuzzy_search import fuzzy_best, fuzzy_filter, fuzzy_match, fuzzy_ratio
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 
 # Neo4j
 from neo4j import GraphDatabase
-
-# Fuzzy search
-from core.fuzzy_search import fuzzy_match, fuzzy_filter, fuzzy_best, fuzzy_ratio
 
 # Brain paths
 BRAIN_ROOT = Path.home() / "brain"

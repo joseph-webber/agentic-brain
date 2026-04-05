@@ -24,9 +24,9 @@ Note:
 """
 
 import asyncio
+import random
 from datetime import datetime, timedelta
 from typing import Any
-import random
 
 from agentic_brain import Agent
 

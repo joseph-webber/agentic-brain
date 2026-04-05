@@ -35,7 +35,7 @@ class YOLOCommand:
     source: str = "brain.yolo.commands"
 
     @classmethod
-    def from_message(cls, payload: str | bytes | dict[str, Any]) -> "YOLOCommand":
+    def from_message(cls, payload: str | bytes | dict[str, Any]) -> YOLOCommand:
         if isinstance(payload, bytes):
             payload = payload.decode("utf-8")
 

@@ -16,23 +16,23 @@ Tools:
 - ni_params: Get/set plugin parameters
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 # Add brain to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
+from tools.ni_audio_engine import AudioEngine
+from tools.ni_midi_controller import MIDIController, PatternFactory
 
 # Import our NI modules
-from tools.ni_plugin_discovery import scan_ni_plugins, get_plugin_by_name, PluginInfo
+from tools.ni_plugin_discovery import PluginInfo, get_plugin_by_name, scan_ni_plugins
 from tools.ni_plugin_loader import NIPluginLoader
-from tools.ni_midi_controller import MIDIController, PatternFactory
-from tools.ni_audio_engine import AudioEngine
 
 # Global state
 _loaded_plugins: Dict[str, NIPluginLoader] = {}
@@ -326,7 +326,7 @@ async def handle_load(name: str) -> List[TextContent]:
     global _loaded_plugins
 
     # Check if already loaded
-    if name.lower() in [k.lower() for k in _loaded_plugins.keys()]:
+    if name.lower() in [k.lower() for k in _loaded_plugins]:
         return [TextContent(type="text", text=f"✅ {name} already loaded")]
 
     # Find the plugin

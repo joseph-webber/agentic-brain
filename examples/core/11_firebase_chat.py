@@ -38,8 +38,8 @@ Open multiple terminals to see cross-device sync in action!
 import asyncio
 import os
 import sys
-from datetime import datetime, timezone
 import uuid
+from datetime import UTC, datetime, timezone
 
 # Check for Firebase SDK
 try:
@@ -51,14 +51,14 @@ except ImportError:
     sys.exit(1)
 
 from agentic_brain.transport import (
+    ConnectionState,
     FirebaseTransport,
     TransportConfig,
     TransportMessage,
-    ConnectionState,
 )
 from agentic_brain.transport.firebase_config import (
-    load_firebase_config,
     create_sample_config,
+    load_firebase_config,
 )
 
 # ============================================================================
@@ -116,7 +116,7 @@ async def update_presence(transport: FirebaseTransport, online: bool) -> None:
             "clients": {
                 CLIENT_ID: {
                     "online": online,
-                    "last_seen": datetime.now(timezone.utc).isoformat(),
+                    "last_seen": datetime.now(UTC).isoformat(),
                 }
             }
         }
@@ -131,7 +131,7 @@ async def send_message(transport: FirebaseTransport, content: str) -> None:
         message_id=f"msg-{uuid.uuid4().hex[:8]}",
         metadata={
             "client_id": CLIENT_ID,
-            "sent_at": datetime.now(timezone.utc).isoformat(),
+            "sent_at": datetime.now(UTC).isoformat(),
         },
     )
 
@@ -211,7 +211,7 @@ async def interactive_chat(transport: FirebaseTransport) -> None:
 
                     elif cmd == "/stats":
                         stats = transport.stats
-                        print(f"\n📈 Transport Stats:")
+                        print("\n📈 Transport Stats:")
                         print(f"   Messages sent: {stats.messages_sent}")
                         print(f"   Messages received: {stats.messages_received}")
                         print(f"   Reconnections: {stats.reconnection_count}")

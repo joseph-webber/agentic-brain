@@ -165,17 +165,28 @@ if CHONKIE_AVAILABLE:
     from .chunking import ChonkieChunker, ChonkieStrategy, benchmark_chunkers
 
 # Contextual compression (reduce chunk noise)
+from .community import (
+    CommunityGraphRAG,
+    CommunityLevel,
+    CommunityQueryResult,
+)
+
+# Community detection (hierarchical, multi-algorithm)
+from .community_detection import (
+    Community,
+    CommunityHierarchy,
+    detect_communities,
+    detect_communities_hierarchical,
+    resolve_entities,
+    summarize_all_communities,
+    summarize_community,
+)
 from .contextual_compression import (
     ChainedCompressor,
     CompressedChunk,
     CompressionResult,
     CompressionStrategy,
     ContextualCompressor,
-)
-from .community import (
-    CommunityGraphRAG,
-    CommunityLevel,
-    CommunityQueryResult,
 )
 
 # Evaluation
@@ -187,52 +198,15 @@ from .evaluation import (
     RAGEvaluator,
 )
 
-# RAGAS Evaluation (2026 industry standard)
-from .ragas_eval import (
-    AdvancedRAGASEvaluator,
-    AnswerCorrectnessCalculator,
-    AnswerSimilarityCalculator,
-    QUALITY_BAR,
-    AspectCritiqueCalculator,
-    AspectCritiqueResult,
-    AspectType,
-    AnswerRelevancyCalculator,
-    ContextPrecisionCalculator,
-    ContextEntityRecallCalculator,
-    ContextRecallCalculator,
-    FaithfulnessCalculator,
-    ConversationSample,
-    ConversationTurn,
-    MetricResult,
-    MultiTurnEvaluator,
-    MultiTurnResult,
-    NoiseRobustnessCalculator,
-    QualityLevel,
-    RAGASDataset,
-    RAGASEvaluator,
-    RAGASResults,
-    RAGASSample,
-    SummarizationScoreCalculator,
-    SampleResult,
-    check_quality_bar,
-    create_graphrag_evaluator,
-    quick_evaluate,
-)
-from .graph_rag import (
-    GraphRAG,
-    GraphRAGConfig,
-    SearchStrategy,
-)
-
 # Global Search (Microsoft GraphRAG map-reduce pattern)
 from .global_search import (
+    CommunityResponse,
     GlobalSearch,
     GlobalSearchConfig,
     GlobalSearchMode,
     GlobalSearchResult,
-    CommunityResponse,
-    ResponseType,
     ResponseCache,
+    ResponseType,
     global_search,
 )
 
@@ -242,16 +216,10 @@ from .graph import (
     EnhancedGraphRAGConfig,
     RetrievalStrategy,
 )
-
-# Community detection (hierarchical, multi-algorithm)
-from .community_detection import (
-    Community,
-    CommunityHierarchy,
-    detect_communities,
-    detect_communities_hierarchical,
-    resolve_entities,
-    summarize_community,
-    summarize_all_communities,
+from .graph_rag import (
+    GraphRAG,
+    GraphRAGConfig,
+    SearchStrategy,
 )
 
 # Graph traversal (Neo4j relationship-aware retrieval)
@@ -271,6 +239,13 @@ from .graphql_api import (
     get_schema,
 )
 
+# Hybrid search
+from .hybrid import (
+    BM25Index,
+    HybridSearch,
+    HybridSearchResult,
+)
+
 # LlamaIndex compatibility layer
 from .llamaindex_compat import (
     AgenticIndex,
@@ -279,36 +254,24 @@ from .llamaindex_compat import (
     AgenticSynthesizer,
     BaseIndex,
     BaseQueryEngine,
-    BaseRetriever as LlamaIndexBaseRetriever,
     BaseSynthesizer,
     GraphRAGIndex,
     GraphRAGQueryEngine,
-    LlamaIndexGraphRAGRetriever,
     LIDocument,
+    LlamaIndexGraphRAGRetriever,
     NodeWithScore,
-    Response as LlamaIndexResponse,
     ResponseMode,
-    Settings as LlamaIndexSettings,
     SimpleDirectoryReader,
     TextNode,
 )
-
-# Hybrid search
-from .hybrid import (
-    BM25Index,
-    HybridSearch,
-    HybridSearchResult,
+from .llamaindex_compat import (
+    BaseRetriever as LlamaIndexBaseRetriever,
 )
-
-# Unified RRF (Reciprocal Rank Fusion)
-from .rrf import (
-    DEFAULT_K as RRF_DEFAULT_K,
-    RRFExplanation,
-    RRFResult,
-    RRFSourceContribution,
-    get_result_id,
-    reciprocal_rank_fusion,
-    reciprocal_rank_fusion_legacy,
+from .llamaindex_compat import (
+    Response as LlamaIndexResponse,
+)
+from .llamaindex_compat import (
+    Settings as LlamaIndexSettings,
 )
 
 # Document loaders - modular package (migrated from monolith 2026-03-23)
@@ -393,6 +356,51 @@ from .loaders import (
     iCloudLoader,
     load_from_multiple_sources,
     with_rate_limit,
+)
+
+# RAGAS Evaluation (2026 industry standard)
+from .ragas_eval import (
+    QUALITY_BAR,
+    AdvancedRAGASEvaluator,
+    AnswerCorrectnessCalculator,
+    AnswerRelevancyCalculator,
+    AnswerSimilarityCalculator,
+    AspectCritiqueCalculator,
+    AspectCritiqueResult,
+    AspectType,
+    ContextEntityRecallCalculator,
+    ContextPrecisionCalculator,
+    ContextRecallCalculator,
+    ConversationSample,
+    ConversationTurn,
+    FaithfulnessCalculator,
+    MetricResult,
+    MultiTurnEvaluator,
+    MultiTurnResult,
+    NoiseRobustnessCalculator,
+    QualityLevel,
+    RAGASDataset,
+    RAGASEvaluator,
+    RAGASResults,
+    RAGASSample,
+    SampleResult,
+    SummarizationScoreCalculator,
+    check_quality_bar,
+    create_graphrag_evaluator,
+    quick_evaluate,
+)
+
+# Unified RRF (Reciprocal Rank Fusion)
+from .rrf import (
+    DEFAULT_K as RRF_DEFAULT_K,
+)
+from .rrf import (
+    RRFExplanation,
+    RRFResult,
+    RRFSourceContribution,
+    get_result_id,
+    reciprocal_rank_fusion,
+    reciprocal_rank_fusion_legacy,
 )
 
 # Additional availability flags exposed by loader modules

@@ -8,44 +8,44 @@ Verifies that the LlamaIndex-compatible API works correctly and provides
 a seamless migration path for LlamaIndex users.
 """
 
-import pytest
-from typing import List
 from dataclasses import dataclass
+from typing import List
+
+import pytest
 
 # Import the compatibility layer
 from agentic_brain.rag.llamaindex_compat import (
-    # Core data structures
-    TextNode,
-    LIDocument,
-    NodeWithScore,
-    Response,
-    # Retrievers
-    BaseRetriever,
-    AgenticRetriever,
-    LlamaIndexGraphRAGRetriever,
-    # Synthesizers
-    ResponseMode,
-    BaseSynthesizer,
-    AgenticSynthesizer,
-    # Query engines
-    BaseQueryEngine,
+    AgenticIndex,
     AgenticQueryEngine,
-    GraphRAGQueryEngine,
+    AgenticRetriever,
+    AgenticSynthesizer,
     # Indexes
     BaseIndex,
-    AgenticIndex,
-    GraphRAGIndex,
-    # Loaders
-    SimpleDirectoryReader,
-    # Settings
-    Settings,
+    # Query engines
+    BaseQueryEngine,
+    # Retrievers
+    BaseRetriever,
+    BaseSynthesizer,
     # Re-exports
     GraphRAGConfig,
+    GraphRAGIndex,
+    GraphRAGQueryEngine,
+    LIDocument,
+    LlamaIndexGraphRAGRetriever,
+    NodeWithScore,
+    Response,
+    # Synthesizers
+    ResponseMode,
     SearchStrategy,
+    # Settings
+    Settings,
+    # Loaders
+    SimpleDirectoryReader,
+    # Core data structures
+    TextNode,
 )
-
-from agentic_brain.rag.retriever import RetrievedChunk
 from agentic_brain.rag.pipeline import RAGResult
+from agentic_brain.rag.retriever import RetrievedChunk
 from agentic_brain.rag.store import Document, InMemoryDocumentStore
 
 

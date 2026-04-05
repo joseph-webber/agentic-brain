@@ -19,10 +19,10 @@ Tools:
   - switch_provider: Switch between Redpanda/Kafka
 """
 
+import asyncio
+import json
 import os
 import sys
-import json
-import asyncio
 from datetime import datetime
 from typing import Any
 
@@ -31,13 +31,12 @@ sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 
+# Import our abstraction layer
+from core.interfaces.event_bus import EventBusConfig, EventBusFactory, EventBusProvider
+from core.kafka_bus import BrainTopics
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
-
-# Import our abstraction layer
-from core.interfaces.event_bus import EventBusFactory, EventBusConfig, EventBusProvider
-from core.kafka_bus import BrainTopics
+from mcp.types import TextContent, Tool
 
 
 class EventBusMCP:

@@ -62,15 +62,15 @@ Requirements:
     ollama pull llama3.1:8b
 """
 
-import asyncio
 import argparse
+import asyncio
 import json
 import secrets
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Optional, Any
 from pathlib import Path
+from typing import Any, Optional
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DISCLAIMERS & CONSTANTS
@@ -739,13 +739,11 @@ Type a number or just tell me what you need!
    You just use your services and NDIS handles the rest.
 """
 
-        output += """
+        output += f"""
 💰 YOUR MONEY
 
-Your plan has ${:,.2f} in total. Here's how it's divided:
-""".format(
-            plan.total_funding
-        )
+Your plan has ${plan.total_funding:,.2f} in total. Here's how it's divided:
+"""
 
         category_names = {
             "core_daily": SupportCategory.CORE_DAILY,

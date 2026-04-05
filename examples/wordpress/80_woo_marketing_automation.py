@@ -24,15 +24,15 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import random
-import string
-import hashlib
-from datetime import datetime, timedelta
-from typing import Any, Optional, Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import re
+import string
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Callable, Optional
 
 # =============================================================================
 # DOMAIN MODELS
@@ -1490,7 +1490,7 @@ class FlashSaleManager:
             start_time=start_time,
             end_time=end_time,
             notify_customers=True,
-            landing_page_url=f"https://store.example.com/flash-sale",
+            landing_page_url="https://store.example.com/flash-sale",
         )
 
         self.sales.append(sale)

@@ -1319,7 +1319,7 @@ safety precautions and document references."""
             return f"No maintenance items found for interval: {interval}"
 
         response = f"**{interval.upper()} MAINTENANCE SCHEDULE**\n"
-        response += f"Classification: UNCLASSIFIED\n\n"
+        response += "Classification: UNCLASSIFIED\n\n"
 
         for i, item in enumerate(items, 1):
             response += f"{i}. {item}\n"
@@ -1336,7 +1336,7 @@ safety precautions and document references."""
             return f"No specific precautions found for: {work_type}"
 
         response = f"**SAFETY PRECAUTIONS: {work_type.upper()}**\n"
-        response += f"Classification: UNCLASSIFIED\n\n"
+        response += "Classification: UNCLASSIFIED\n\n"
         response += "⚠️ MANDATORY SAFETY REQUIREMENTS:\n\n"
 
         for i, precaution in enumerate(precautions, 1):

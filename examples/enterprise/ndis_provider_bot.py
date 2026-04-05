@@ -67,16 +67,16 @@ import logging
 import sqlite3
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Optional
 
 from agentic_brain.auth import (
-    JWTAuth,
     AuthConfig,
-    require_role,
+    JWTAuth,
     User,
+    require_role,
 )
 
 # =============================================================================
@@ -323,7 +323,7 @@ class NDISProviderAssistant:
             VALUES (?, ?, ?, ?, ?, ?)
         """,
             (
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
                 user_id,
                 action,
                 entity_type,
@@ -604,7 +604,7 @@ class NDISProviderAssistant:
             participant_id=booking.participant_id,
             author_id=author_id,
             author_name=author_name,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             service_date=booking.service_date,
             goals_addressed=goals_addressed,
             activities=activities,
@@ -682,7 +682,7 @@ class NDISProviderAssistant:
             incident_type=incident_type,
             severity=severity,
             incident_date=incident_date,
-            reported_date=datetime.now(timezone.utc),
+            reported_date=datetime.now(UTC),
             reporter_id=reporter_id,
             reporter_name=reporter_name,
             description=description,
@@ -757,11 +757,11 @@ class NDISProviderAssistant:
             for inc in self.incidents.values()
             if inc.ndis_reportable
             and not inc.reported_to_ndis
-            and (datetime.now(timezone.utc) - inc.reported_date).days >= 1
+            and (datetime.now(UTC) - inc.reported_date).days >= 1
         ]
 
         return {
-            "report_date": datetime.now(timezone.utc).isoformat(),
+            "report_date": datetime.now(UTC).isoformat(),
             "plans_near_review": plans_near_review,
             "plans_near_review_count": len(plans_near_review),
             "open_incidents": open_incidents,
@@ -821,7 +821,7 @@ async def run_demo():
         Decimal("3.5"),
         date(2024, 11, 11),  # Monday
     )
-    print(f"\nWeekday Personal Care (3.5 hrs):")
+    print("\nWeekday Personal Care (3.5 hrs):")
     print(f"  Rate: ${cost['rate_per_hour']}/hr ({cost['rate_type']})")
     print(f"  Total: ${cost['total_cost']}")
 
@@ -831,7 +831,7 @@ async def run_demo():
         Decimal("3.5"),
         date(2024, 11, 10),  # Sunday
     )
-    print(f"\nSunday Personal Care (3.5 hrs):")
+    print("\nSunday Personal Care (3.5 hrs):")
     print(f"  Rate: ${cost['rate_per_hour']}/hr ({cost['rate_type']})")
     print(f"  Total: ${cost['total_cost']}")
 
@@ -845,7 +845,7 @@ async def run_demo():
     print(f"NDIS Number: {summary['ndis_number']}")
     print(f"Plan Status: {summary['plan_status']}")
     print(f"Days until review: {summary['days_until_review']}")
-    print(f"\nBudgets:")
+    print("\nBudgets:")
     for budget in summary["budgets"]:
         print(f"  {budget['category']}:")
         print(
@@ -901,7 +901,7 @@ async def run_demo():
         participant_id="PART-001",
         incident_type="Injury",
         severity="Medium",
-        incident_date=datetime.now(timezone.utc),
+        incident_date=datetime.now(UTC),
         reporter_id="WORKER-001",
         reporter_name="Emma Support Worker",
         description="Participant experienced a minor fall while walking in the garden. No visible injuries.",

@@ -29,7 +29,6 @@ from agentic_brain.rag.loaders.base import (
 from agentic_brain.rag.loaders.json_loader import JSONLLoader, JSONLoader
 from agentic_brain.rag.loaders.text import MarkdownLoader, TextLoader
 
-
 # ---------------------------------------------------------------------------
 # LoadedDocument dataclass
 # ---------------------------------------------------------------------------

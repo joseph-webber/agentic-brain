@@ -49,13 +49,13 @@ License: MIT
 """
 
 import asyncio
+import hashlib
+import json
 from dataclasses import dataclass, field
-from datetime import datetime, date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
-import hashlib
-import json
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ENUMERATIONS
@@ -300,7 +300,7 @@ class PropertyListing:
                 score += 20
                 matches.append(f"Location in {self.suburb}")
             else:
-                missing.append(f"Not in preferred locations")
+                missing.append("Not in preferred locations")
         else:
             score += 20
 
@@ -1750,7 +1750,7 @@ async def demo():
             f"      SDA: {'✅' if prov['sda_registered'] else '❌'} | SIL: {'✅' if prov['sil_registered'] else '❌'}"
         )
 
-    print(f"\n   Summary:")
+    print("\n   Summary:")
     print(f"   • Highest Rated: {comparison['summary']['highest_rated']}")
     print(f"   • Best Accessibility: {comparison['summary']['best_accessibility']}")
 
@@ -1790,7 +1790,7 @@ async def demo():
         property_id="PROP-001",
     )
 
-    print(f"\n   Documents required:")
+    print("\n   Documents required:")
     for doc in application.documents_required:
         print(f"      □ {doc}")
 
@@ -1818,7 +1818,7 @@ async def demo():
     )
 
     waitlist_status = assistant.get_waitlist_status("SEARCH-001")
-    print(f"\n   Current waitlists:")
+    print("\n   Current waitlists:")
     for entry in waitlist_status:
         print(f"      • {entry['property_name']}")
         print(

@@ -80,18 +80,18 @@ Requirements:
     ollama pull llama3.2:1b  # Smallest model
 """
 
+import argparse
 import asyncio
-import os
-import json
-import time
-import sqlite3
 import hashlib
+import json
+import os
+import sqlite3
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional, Dict, List, Any
 from pathlib import Path
-import argparse
+from typing import Any, Dict, List, Optional
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HARDWARE PROFILES
@@ -958,13 +958,13 @@ async def run_benchmark(assistant: KioskAssistant, iterations: int = 50):
     # Results
     print("\n📊 RESULTS")
     print("-" * 40)
-    print(f"  Cached queries:")
+    print("  Cached queries:")
     print(f"    Average: {sum(cached_times)/len(cached_times):.2f} ms")
     print(f"    Min: {min(cached_times):.2f} ms")
     print(f"    Max: {max(cached_times):.2f} ms")
     print(f"    P95: {sorted(cached_times)[int(len(cached_times)*0.95)]:.2f} ms")
 
-    print(f"\n  Fresh queries (no cache):")
+    print("\n  Fresh queries (no cache):")
     print(f"    Average: {sum(fresh_times)/len(fresh_times):.2f} ms")
     print(f"    Min: {min(fresh_times):.2f} ms")
     print(f"    Max: {max(fresh_times):.2f} ms")

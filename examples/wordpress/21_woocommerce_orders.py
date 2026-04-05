@@ -23,8 +23,8 @@ Requirements:
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Optional
 from enum import Enum
+from typing import Optional
 
 
 class OrderStatus(Enum):
@@ -775,7 +775,7 @@ Want to check a specific order? Just provide your order number!"""
         lines = ["🌟 **Recommended Products**\n"]
 
         for product in products[:4]:
-            sale_badge = f" **SALE!**" if product.is_on_sale else ""
+            sale_badge = " **SALE!**" if product.is_on_sale else ""
             lines.append(f"⭐ **{product.name}**{sale_badge}")
             lines.append(
                 f"   ${product.price} | {product.categories[0] if product.categories else 'General'}"

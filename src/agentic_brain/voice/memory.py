@@ -51,7 +51,7 @@ import logging
 import threading
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -105,13 +105,13 @@ class VoiceUtterance:
         }
 
     @classmethod
-    def from_record(cls, record: Dict[str, Any]) -> "VoiceUtterance":
+    def from_record(cls, record: Dict[str, Any]) -> VoiceUtterance:
         """Deserialize from Neo4j record."""
         ts = record.get("timestamp")
         if isinstance(ts, str):
             ts = datetime.fromisoformat(ts)
         elif ts is None:
-            ts = datetime.now(timezone.utc)
+            ts = datetime.now(UTC)
 
         embedding = record.get("embedding")
         if embedding is not None and not isinstance(embedding, list):
@@ -360,7 +360,7 @@ class VoiceMemory:
                 ON CREATE SET c.started_at = $started_at
                 """,
                 session_id=conversation_id,
-                started_at=datetime.now(timezone.utc).isoformat(),
+                started_at=datetime.now(UTC).isoformat(),
             )
 
             # Create utterance node with embedding
@@ -426,7 +426,7 @@ class VoiceMemory:
             if conversation_id not in self._conversations:
                 self._conversations[conversation_id] = VoiceConversation(
                     session_id=conversation_id,
-                    started_at=datetime.now(timezone.utc),
+                    started_at=datetime.now(UTC),
                 )
             self._conversations[conversation_id].utterances.append(utterance)
 
@@ -694,7 +694,7 @@ class VoiceMemory:
         """
         conv = VoiceConversation(
             session_id=session_id or str(uuid.uuid4()),
-            started_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
             topic=topic,
         )
 
@@ -793,7 +793,7 @@ class VoiceMemory:
                 if isinstance(ts, str):
                     ts = datetime.fromisoformat(ts)
                 else:
-                    ts = datetime.now(timezone.utc)
+                    ts = datetime.now(UTC)
 
                 conv = VoiceConversation(
                     session_id=node.get("session_id", ""),

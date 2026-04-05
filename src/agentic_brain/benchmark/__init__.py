@@ -15,6 +15,12 @@
 
 """Public benchmarking API for Agentic Brain."""
 
+from .competitors import (
+    CompetitorBenchmark,
+    CompetitorComparisonReport,
+    CompetitorComparisonRow,
+    CompetitorProfile,
+)
 from .metrics import (
     DEFAULT_METRICS,
     METRIC_DEFINITIONS,
@@ -28,13 +34,6 @@ from .metrics import (
     OutputFormat,
     RegressionFinding,
 )
-from .competitors import (
-    CompetitorBenchmark,
-    CompetitorComparisonReport,
-    CompetitorComparisonRow,
-    CompetitorProfile,
-)
-from .suite import BenchmarkMetric, BenchmarkSuite, BenchmarkSuiteResult
 from .reporter import BenchmarkReporter
 from .runner import (
     BenchmarkRunner,
@@ -43,6 +42,7 @@ from .runner import (
     run_benchmark,
     run_benchmark_sync,
 )
+from .suite import BenchmarkMetric, BenchmarkSuite, BenchmarkSuiteResult
 
 __all__ = [
     "BenchmarkComparison",

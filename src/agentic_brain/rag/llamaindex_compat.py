@@ -158,7 +158,7 @@ class TextNode:
         )
 
     @classmethod
-    def from_agentic_document(cls, doc: Document) -> "TextNode":
+    def from_agentic_document(cls, doc: Document) -> TextNode:
         """Create TextNode from Agentic Brain Document."""
         return cls(
             text=doc.content,
@@ -167,7 +167,7 @@ class TextNode:
         )
 
     @classmethod
-    def from_retrieved_chunk(cls, chunk: RetrievedChunk) -> "TextNode":
+    def from_retrieved_chunk(cls, chunk: RetrievedChunk) -> TextNode:
         """Create TextNode from RetrievedChunk."""
         return cls(
             text=chunk.content,
@@ -192,7 +192,7 @@ class NodeWithScore:
     score: float = 0.0
 
     @classmethod
-    def from_retrieved_chunk(cls, chunk: RetrievedChunk) -> "NodeWithScore":
+    def from_retrieved_chunk(cls, chunk: RetrievedChunk) -> NodeWithScore:
         """Create from Agentic Brain RetrievedChunk."""
         return cls(
             node=TextNode.from_retrieved_chunk(chunk),
@@ -225,7 +225,7 @@ class Response:
         return self.response
 
     @classmethod
-    def from_rag_result(cls, result: RAGResult) -> "Response":
+    def from_rag_result(cls, result: RAGResult) -> Response:
         """Create from Agentic Brain RAGResult."""
         source_nodes = [
             NodeWithScore.from_retrieved_chunk(chunk) for chunk in result.sources
@@ -495,7 +495,7 @@ class AgenticSynthesizer(BaseSynthesizer):
         query: str,
         nodes: List[NodeWithScore],
         **kwargs: Any,
-    ) -> "StreamingResponse":
+    ) -> StreamingResponse:
         """Streaming synthesis (token generator + async generator)."""
         streamer = StreamingSynthesizer(llm_model=self.llm_model)
         return streamer.synthesize_stream(query, nodes, **kwargs)
@@ -539,7 +539,7 @@ class AgenticQueryEngine(BaseQueryEngine):
         if self.service_context is not None:
             self.service_context.to_settings()
 
-    def query(self, query: str, **kwargs: Any) -> Union[Response, StreamingResponse]:
+    def query(self, query: str, **kwargs: Any) -> Response | StreamingResponse:
         streaming = bool(kwargs.pop("streaming", False))
         response_mode = kwargs.get("response_mode")
 
@@ -570,7 +570,7 @@ class AgenticQueryEngine(BaseQueryEngine):
 
     async def aquery(
         self, query: str, **kwargs: Any
-    ) -> Union[Response, StreamingResponse]:
+    ) -> Response | StreamingResponse:
         streaming = bool(kwargs.pop("streaming", False))
         response_mode = kwargs.get("response_mode")
 
@@ -638,9 +638,9 @@ class BaseIndex(ABC):
     @abstractmethod
     def from_documents(
         cls,
-        documents: Sequence[Union[TextNode, Document, Dict[str, Any]]],
+        documents: Sequence[TextNode | Document | Dict[str, Any]],
         **kwargs: Any,
-    ) -> "BaseIndex":
+    ) -> BaseIndex:
         """Create index from documents."""
         pass
 
@@ -686,10 +686,10 @@ class AgenticIndex(BaseIndex):
     @classmethod
     def from_documents(
         cls,
-        documents: Sequence[Union[TextNode, Document, Dict[str, Any]]],
+        documents: Sequence[TextNode | Document | Dict[str, Any]],
         show_progress: bool = True,
         **kwargs: Any,
-    ) -> "AgenticIndex":
+    ) -> AgenticIndex:
         """Create index from documents.
 
         This preserves the existing behavior (one stored item per input document)
@@ -781,7 +781,7 @@ class AgenticIndex(BaseIndex):
             similarity_top_k=kwargs.get("similarity_top_k", 5),
         )
 
-    def insert(self, document: Union[TextNode, Document, Dict[str, Any]]) -> None:
+    def insert(self, document: TextNode | Document | Dict[str, Any]) -> None:
         """Insert a single document into the index."""
         if isinstance(document, TextNode):
             self._store.add(
@@ -802,7 +802,7 @@ class AgenticIndex(BaseIndex):
 
     def refresh(
         self,
-        documents: Sequence[Union[TextNode, Document]],
+        documents: Sequence[TextNode | Document],
     ) -> List[bool]:
         """
         Refresh documents in index (update existing, add new).
@@ -856,10 +856,10 @@ class GraphRAGIndex(BaseIndex):
     @classmethod
     def from_documents(
         cls,
-        documents: Sequence[Union[TextNode, Document, Dict[str, Any]]],
+        documents: Sequence[TextNode | Document | Dict[str, Any]],
         show_progress: bool = True,
         **kwargs: Any,
-    ) -> "GraphRAGIndex":
+    ) -> GraphRAGIndex:
         """
         Create GraphRAG index from documents.
 
@@ -1103,8 +1103,8 @@ class ServiceContext:
     embed_model: Optional[str] = None
     chunk_size: int = 512
     chunk_overlap: int = 50
-    callback_manager: Optional["CallbackManager"] = None
-    node_parser: Optional["BaseNodeParser"] = None
+    callback_manager: Optional[CallbackManager] = None
+    node_parser: Optional[BaseNodeParser] = None
 
     @classmethod
     def from_defaults(
@@ -1113,10 +1113,10 @@ class ServiceContext:
         embed_model: Optional[str] = None,
         chunk_size: Optional[int] = None,
         chunk_overlap: Optional[int] = None,
-        callback_manager: Optional["CallbackManager"] = None,
-        node_parser: Optional["BaseNodeParser"] = None,
+        callback_manager: Optional[CallbackManager] = None,
+        node_parser: Optional[BaseNodeParser] = None,
         **kwargs: Any,
-    ) -> "ServiceContext":
+    ) -> ServiceContext:
         """
         Create ServiceContext with defaults from Settings.
 
@@ -1182,7 +1182,7 @@ class BaseNodeParser(ABC):
     @abstractmethod
     def get_nodes_from_documents(
         self,
-        documents: Sequence[Union[TextNode, Document]],
+        documents: Sequence[TextNode | Document],
         show_progress: bool = False,
     ) -> List[TextNode]:
         """Parse documents into nodes."""
@@ -1190,7 +1190,7 @@ class BaseNodeParser(ABC):
 
     def __call__(
         self,
-        documents: Sequence[Union[TextNode, Document]],
+        documents: Sequence[TextNode | Document],
         **kwargs: Any,
     ) -> List[TextNode]:
         """Callable interface for parsing."""
@@ -1289,7 +1289,7 @@ class SentenceSplitter(BaseNodeParser):
 
     def get_nodes_from_documents(
         self,
-        documents: Sequence[Union[TextNode, Document]],
+        documents: Sequence[TextNode | Document],
         show_progress: bool = False,
     ) -> List[TextNode]:
         """Split documents into nodes."""
@@ -1415,7 +1415,7 @@ class TokenTextSplitter(BaseNodeParser):
 
     def get_nodes_from_documents(
         self,
-        documents: Sequence[Union[TextNode, Document]],
+        documents: Sequence[TextNode | Document],
         show_progress: bool = False,
     ) -> List[TextNode]:
         """Split documents into token-bounded nodes."""
@@ -1631,7 +1631,7 @@ class SimpleSummarizeSynthesizer(BaseSynthesizer):
 
 
 def get_response_synthesizer(
-    response_mode: Union[ResponseMode, str] = ResponseMode.COMPACT,
+    response_mode: ResponseMode | str = ResponseMode.COMPACT,
     llm_model: str = "gpt-4o-mini",
     **kwargs: Any,
 ) -> BaseSynthesizer:
@@ -2396,7 +2396,6 @@ class KeywordExtractor(BaseExtractor):
             "all",
             "each",
             "every",
-            "both",
             "few",
             "more",
             "most",
@@ -2454,7 +2453,7 @@ class IngestionPipeline:
 
     def __init__(
         self,
-        transformations: Optional[List[Union[BaseNodeParser, BaseExtractor]]] = None,
+        transformations: Optional[List[BaseNodeParser | BaseExtractor]] = None,
         documents: Optional[List[TextNode]] = None,
     ):
         self.transformations = transformations or []
@@ -2539,7 +2538,7 @@ class ComposableGraph:
         children_indices: List[BaseIndex],
         index_summaries: Optional[List[str]] = None,
         **kwargs: Any,
-    ) -> "ComposableGraph":
+    ) -> ComposableGraph:
         """
         Create composable graph from multiple indices.
 
@@ -2585,7 +2584,7 @@ class ComposableGraph:
         self,
         child_query_engine_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> "ComposableQueryEngine":
+    ) -> ComposableQueryEngine:
         """Get a query engine for the composable graph."""
         return ComposableQueryEngine(
             graph=self,
@@ -2596,7 +2595,7 @@ class ComposableGraph:
     def as_retriever(
         self,
         **kwargs: Any,
-    ) -> "ComposableRetriever":
+    ) -> ComposableRetriever:
         """Get a retriever for the composable graph."""
         return ComposableRetriever(graph=self, **kwargs)
 

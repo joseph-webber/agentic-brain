@@ -1122,7 +1122,7 @@ class PaymentProcessor:
         return available
 
     def get_gateway(
-        self: "PaymentProcessor", gateway_name: str | GatewayType | None = None
+        self: PaymentProcessor, gateway_name: str | GatewayType | None = None
     ) -> PaymentGateway:
         """Return the configured gateway by name."""
         try:
@@ -1142,7 +1142,7 @@ class PaymentProcessor:
             raise GatewayError(f"Gateway lookup failed: {exc}") from exc
 
     def charge(
-        self: "PaymentProcessor",
+        self: PaymentProcessor,
         amount: Decimal | str | int | float,
         currency: str,
         payment_method_token: str,
@@ -1183,7 +1183,7 @@ class PaymentProcessor:
             raise PaymentError(f"Charge operation failed: {exc}") from exc
 
     def process_payment(
-        self: "PaymentProcessor",
+        self: PaymentProcessor,
         request: PaymentRequest,
         *,
         gateway_name: str | None = None,
@@ -1231,7 +1231,7 @@ class PaymentProcessor:
             raise GatewayError(f"Payment processing failed: {exc}") from exc
 
     def create_subscription(
-        self: "PaymentProcessor",
+        self: PaymentProcessor,
         request: SubscriptionRequest,
         *,
         gateway_name: str | None = None,
@@ -1278,7 +1278,7 @@ class PaymentProcessor:
             raise GatewayError(f"Subscription creation failed: {exc}") from exc
 
     def create_checkout(
-        self: "PaymentProcessor",
+        self: PaymentProcessor,
         request: PaymentRequest,
         *,
         return_url: str,
@@ -1332,7 +1332,7 @@ class PaymentProcessor:
             raise GatewayError(f"Checkout creation failed: {exc}") from exc
 
     def refund_payment(
-        self: "PaymentProcessor",
+        self: PaymentProcessor,
         request: RefundRequest,
         *,
         gateway_name: str | None = None,
@@ -1381,7 +1381,7 @@ class PaymentProcessor:
             raise GatewayError(f"Refund processing failed: {exc}") from exc
 
     def handle_webhook(
-        self: "PaymentProcessor",
+        self: PaymentProcessor,
         payload: str | bytes,
         *,
         signature: str,
@@ -1426,7 +1426,7 @@ class PaymentProcessor:
             raise GatewayError(f"Webhook handling failed: {exc}") from exc
 
     def _run_fraud_checks(
-        self: "PaymentProcessor",
+        self: PaymentProcessor,
         gateway_name: str,
         operation: str,
         payload: Any,
@@ -1487,7 +1487,7 @@ class PaymentProcessor:
             return {"fraud_check_error": str(exc)}
 
     def _record_transaction(
-        self: "PaymentProcessor",
+        self: PaymentProcessor,
         *,
         operation: str,
         gateway: str,

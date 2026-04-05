@@ -8,15 +8,16 @@ Supports OpenAI's embedding models (text-embedding-3-small, text-embedding-3-lar
 Includes rate limiting, retry logic, and batch processing.
 """
 
+import asyncio
+import logging
 import os
 import time
-import asyncio
-from typing import List, Optional
-import numpy as np
 from datetime import datetime, timedelta
-import logging
+from typing import List, Optional
 
-from .base import Embedder, EmbeddingProvider, EmbeddingResult, BatchEmbeddingResult
+import numpy as np
+
+from .base import BatchEmbeddingResult, Embedder, EmbeddingProvider, EmbeddingResult
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ class OpenAIEmbedder(Embedder):
         self.last_request_time = 0.0
 
         try:
-            from openai import OpenAI, AsyncOpenAI
+            from openai import AsyncOpenAI, OpenAI
         except ImportError:
             raise ImportError(
                 "openai package required. Install with: pip install openai"

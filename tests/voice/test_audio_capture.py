@@ -1,8 +1,9 @@
 """Tests for audio capture functionality."""
 
-import pytest
 from unittest.mock import Mock, patch
+
 import numpy as np
+import pytest
 
 
 class TestAudioCapture:

@@ -54,15 +54,15 @@ Requirements:
     ollama pull llama3.1:8b
 """
 
-import asyncio
 import argparse
+import asyncio
 import json
 import secrets
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Optional, Any
 from pathlib import Path
+from typing import Any, Optional
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DISCLAIMERS & CONSTANTS
@@ -918,7 +918,7 @@ Legend: SSC=Specialist, CoS=Coordination of Supports, SC=Support Connection
             output += f"   {i}. {goal['statement']}\n"
             output += f"      Category: {goal['category']} | Progress: {goal.get('progress', 'N/A')}\n"
 
-        output += f"""
+        output += """
 🏢 ACTIVE PROVIDERS
 """
         for provider in p.active_providers:
@@ -960,7 +960,7 @@ Legend: SSC=Specialist, CoS=Coordination of Supports, SC=Support Connection
             specialization=specialization if specialization else None,
         )
 
-        output = f"""
+        output = """
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║  PROVIDER SEARCH RESULTS                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
@@ -1100,7 +1100,7 @@ Or contact NDIS for provider referral support.
    Evidence: [To be documented]
 """
 
-        output += f"""
+        output += """
 🏢 SERVICES ACCESSED
 """
         for provider in p.active_providers:
@@ -1190,7 +1190,7 @@ Next steps:
 
 """
 
-        output += f"""
+        output += """
 SERVICES ACCESSED
 -----------------
 Providers engaged this period:

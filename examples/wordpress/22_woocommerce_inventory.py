@@ -23,8 +23,8 @@ Requirements:
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Optional
 from enum import Enum
+from typing import Optional
 
 
 class StockStatus(Enum):

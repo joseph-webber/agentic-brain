@@ -24,7 +24,7 @@ from .base import Document, DocumentLoader
 from .csv import CSVLoader
 from .docx import DocxLoader
 from .html import HTMLLoader
-from .json import JSONLoader, JSONLinesLoader
+from .json import JSONLinesLoader, JSONLoader
 from .markdown import MarkdownLoader
 from .pdf import PDFLoader
 

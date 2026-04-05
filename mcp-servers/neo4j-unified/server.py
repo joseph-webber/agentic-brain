@@ -22,9 +22,9 @@ Created: 2026-03-17
 Author: Iris Lumina
 """
 
+import json
 import os
 import sys
-import json
 import time
 from typing import Any, Dict, List, Optional
 
@@ -35,8 +35,8 @@ brain_path = (
 sys.path.insert(0, str(brain_path))
 
 from mcp.server import Server
-from mcp.types import Tool, TextContent
 from mcp.server.stdio import stdio_server
+from mcp.types import TextContent, Tool
 
 # ============================================================================
 # LAZY IMPORTS (Performance optimization - 1690ms → <500ms)

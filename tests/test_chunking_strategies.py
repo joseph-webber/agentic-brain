@@ -16,7 +16,11 @@ from agentic_brain.chunking import (
 )
 from agentic_brain.rag.chunking.base import (
     ChunkingStrategy as RagChunkingStrategy,
+)
+from agentic_brain.rag.chunking.base import (
     FixedChunker as RagFixedChunker,
+)
+from agentic_brain.rag.chunking.base import (
     create_chunker as rag_create_chunker,
 )
 

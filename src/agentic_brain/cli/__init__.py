@@ -44,8 +44,8 @@ from agentic_brain import __version__
 from . import commands
 from .audio_commands import register_audio_commands
 from .greet_command import register_greet_command
-from .voice_commands import register_voice_commands
 from .rag_commands import register_rag_commands
+from .voice_commands import register_voice_commands
 
 # Lazy import temporal_commands to avoid requiring temporalio
 try:

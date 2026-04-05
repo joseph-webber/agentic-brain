@@ -7,10 +7,12 @@ from typing import Any, Dict, List
 
 from agentic_brain.core.neo4j_pool import (
     configure_pool,
+)
+from agentic_brain.core.neo4j_pool import (
     get_driver as get_shared_driver,
 )
 
-from ..security.sanitization import sanitize_cypher, SanitizationError
+from ..security.sanitization import SanitizationError, sanitize_cypher
 from .patterns import CORE_TOPICS, TopicGraph, ZonedGraph, setup_graph_constraints
 
 # Singleton driver

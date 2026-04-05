@@ -33,8 +33,8 @@ from typing import Optional
 
 # Agentic Brain imports
 from agentic_brain import Agent
-from agentic_brain.router import LLMRouter
 from agentic_brain.memory import get_memory_backend
+from agentic_brain.router import LLMRouter
 
 # ─────────────────────────────────────────────────────────────────────────────
 # BUSINESS MODELS

@@ -28,7 +28,6 @@ from agentic_brain.rag.rrf import (
     reciprocal_rank_fusion_legacy,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -652,7 +651,7 @@ class TestIntegration:
 
     def test_hybrid_search_uses_unified_rrf(self) -> None:
         """HybridSearch._reciprocal_rank_fusion should use unified RRF."""
-        from agentic_brain.rag.hybrid import HybridSearch, DEFAULT_K
+        from agentic_brain.rag.hybrid import DEFAULT_K, HybridSearch
 
         assert DEFAULT_K == 60
         # The import should work, proving hybrid.py uses rrf.py

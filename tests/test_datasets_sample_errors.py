@@ -1,5 +1,6 @@
-from agentic_brain.evaluation.datasets import Dataset
 import pytest
+
+from agentic_brain.evaluation.datasets import Dataset
 
 
 def test_dataset_sample_too_many():

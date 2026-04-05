@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 import agentic_brain.config.profiles as config_profiles
-
 from agentic_brain.config import (
     CustomProfile,
     DevelopmentProfile,

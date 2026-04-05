@@ -61,16 +61,16 @@ import logging
 import sqlite3
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Optional
 
 from agentic_brain.auth import (
-    JWTAuth,
     AuthConfig,
-    require_role,
+    JWTAuth,
     User,
+    require_role,
 )
 
 # =============================================================================
@@ -344,7 +344,7 @@ class AMLComplianceBot:
             VALUES (?, ?, ?, ?, ?, ?)
         """,
             (
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
                 user_id,
                 action,
                 entity_type,
@@ -441,7 +441,7 @@ class AMLComplianceBot:
 
         checks = {
             "customer_id": customer_id,
-            "check_date": datetime.now(timezone.utc).isoformat(),
+            "check_date": datetime.now(UTC).isoformat(),
             "checks_performed": [],
             "risk_factors": [],
             "required_actions": [],
@@ -533,7 +533,7 @@ class AMLComplianceBot:
 
         result = {
             "customer_id": customer_id,
-            "screening_date": datetime.now(timezone.utc).isoformat(),
+            "screening_date": datetime.now(UTC).isoformat(),
             "is_pep": customer.is_pep,
             "details": customer.pep_details if customer.is_pep else "",
             "category": "",
@@ -557,7 +557,7 @@ class AMLComplianceBot:
         # In production, would call actual sanctions screening APIs
         result = {
             "customer_id": customer_id,
-            "screening_date": datetime.now(timezone.utc).isoformat(),
+            "screening_date": datetime.now(UTC).isoformat(),
             "name_screened": customer.full_name,
             "lists_checked": [
                 SanctionsList.DFAT_CONSOLIDATED.value,
@@ -746,7 +746,7 @@ class AMLComplianceBot:
             return {"error": "Customer not found"}
 
         smr_id = f"SMR-{uuid.uuid4().hex[:8].upper()}"
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Standard deadline is 3 business days from forming suspicion
         # 24 hours if it relates to terrorism financing
@@ -807,7 +807,7 @@ class AMLComplianceBot:
             return {"error": "SMR not found"}
 
         smr.reviewed_by = mlro_id
-        smr.review_date = datetime.now(timezone.utc)
+        smr.review_date = datetime.now(UTC)
         smr.approved = approved
 
         self._audit_log(
@@ -840,7 +840,7 @@ class AMLComplianceBot:
 
     def generate_compliance_dashboard(self) -> dict:
         """Generate compliance dashboard summary."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Customer statistics
         customer_stats = {
@@ -969,7 +969,7 @@ async def run_demo():
 
     pep_cdd = bot.perform_cdd_check("CUST-002", "ANALYST-001")
     print(f"\nCDD Check for PEP Customer: {pep_cdd['customer_id']}")
-    print(f"Risk Factors:")
+    print("Risk Factors:")
     for factor in pep_cdd["risk_factors"]:
         print(f"  • {factor}")
     print(f"EDD Required: {pep_cdd['edd_required']}")
@@ -983,7 +983,7 @@ async def run_demo():
     transaction = Transaction(
         transaction_id="TXN-001",
         customer_id="CUST-001",
-        transaction_date=datetime.now(timezone.utc),
+        transaction_date=datetime.now(UTC),
         transaction_type="Credit",
         amount=Decimal("12500.00"),
         currency="AUD",
@@ -996,7 +996,7 @@ async def run_demo():
     print(f"Amount: ${result['amount']} {result['currency']}")
     print(f"Risk Score: {result['risk_score']}")
     print(f"TTR Required: {result['ttr_required']}")
-    print(f"Alerts:")
+    print("Alerts:")
     for alert in result["alerts"]:
         print(f"  • [{alert['rule']}] {alert['description']}")
 
@@ -1008,7 +1008,7 @@ async def run_demo():
     intl_transaction = Transaction(
         transaction_id="TXN-002",
         customer_id="CUST-002",
-        transaction_date=datetime.now(timezone.utc),
+        transaction_date=datetime.now(UTC),
         transaction_type="Debit",
         amount=Decimal("25000.00"),
         currency="AUD",
@@ -1022,7 +1022,7 @@ async def run_demo():
     print(f"Amount: ${result['amount']}")
     print(f"Risk Score: {result['risk_score']}")
     print(f"SMR Recommended: {result['smr_recommended']}")
-    print(f"Alerts:")
+    print("Alerts:")
     for alert in result["alerts"]:
         print(f"  • [{alert['rule']}] {alert['description']}")
 
@@ -1056,14 +1056,14 @@ async def run_demo():
 
     dashboard = bot.generate_compliance_dashboard()
     print(f"\nCompliance Dashboard - {dashboard['generated_at'][:10]}")
-    print(f"\nCustomers:")
+    print("\nCustomers:")
     print(f"  Total: {dashboard['customers']['total_customers']}")
     print(f"  High Risk: {dashboard['customers']['high_risk']}")
     print(f"  PEPs: {dashboard['customers']['peps']}")
-    print(f"\nSuspicious Matters:")
+    print("\nSuspicious Matters:")
     print(f"  Total SMRs: {dashboard['suspicious_matters']['total_smrs']}")
     print(f"  Pending Review: {dashboard['suspicious_matters']['pending_review']}")
-    print(f"\nAlerts:")
+    print("\nAlerts:")
     for alert in dashboard["alerts"]:
         print(f"  {alert}")
 

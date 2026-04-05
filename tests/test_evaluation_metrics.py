@@ -1,10 +1,11 @@
 import pytest
+
 from agentic_brain.evaluation.metrics import (
     answer_similarity,
     context_precision,
     context_recall,
-    relevancy_score,
     faithfulness_score,
+    relevancy_score,
 )
 
 

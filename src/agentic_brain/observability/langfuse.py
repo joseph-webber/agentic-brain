@@ -3,6 +3,7 @@ This module does not depend on the official Langfuse SDK to keep tests simple.
 """
 
 from __future__ import annotations
+
 from typing import Any
 
 

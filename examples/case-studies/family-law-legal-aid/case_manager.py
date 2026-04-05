@@ -53,12 +53,12 @@ GNU General Public License for more details.
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 import uuid
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, date, timedelta
+from dataclasses import asdict, dataclass, field
+from datetime import date, datetime, timedelta
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -339,9 +339,7 @@ class Deadline:
     def calculate_urgency(self) -> UrgencyLevel:
         """Calculate urgency based on days remaining."""
         days = self.days_remaining
-        if days < 0:
-            return UrgencyLevel.CRITICAL
-        elif days <= 2:
+        if days < 0 or days <= 2:
             return UrgencyLevel.CRITICAL
         elif days <= 7:
             return UrgencyLevel.HIGH
@@ -659,9 +657,9 @@ class FamilyLawCase:
             json.dump(data, f, indent=2, default=str)
 
     @classmethod
-    def load(cls, filepath: Path) -> "FamilyLawCase":
+    def load(cls, filepath: Path) -> FamilyLawCase:
         """Load case from JSON file."""
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             data = json.load(f)
 
         case = cls(
@@ -2022,7 +2020,7 @@ def main():
 
     # Save to file
     case.save(Path("/tmp/test_case.json"))
-    print(f"\nCase saved to /tmp/test_case.json")
+    print("\nCase saved to /tmp/test_case.json")
 
     # Test chatbot
     chatbot = CaseManagerChatbot(case)

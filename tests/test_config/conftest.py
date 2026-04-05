@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from agentic_brain.config import get_settings
-from agentic_brain.config.settings import ENVIRONMENT_KEYS, ENV_VAR_PATHS
+from agentic_brain.config.settings import ENV_VAR_PATHS, ENVIRONMENT_KEYS
 
 CONFIG_ENV_KEYS = (
     set(ENV_VAR_PATHS)

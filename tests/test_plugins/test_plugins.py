@@ -1,7 +1,8 @@
-import os
-import sys
 import importlib
 import inspect
+import os
+import sys
+
 import pytest
 
 # ensure src is on path
@@ -10,8 +11,8 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from agentic_brain.plugins.base import Plugin, PluginManager
 from agentic_brain.plugins import loader
+from agentic_brain.plugins.base import Plugin, PluginManager
 
 
 def test_imports():

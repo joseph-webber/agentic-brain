@@ -8,14 +8,14 @@ Tests for agent tools framework.
 import pytest
 
 from agentic_brain.agents import (
+    CalculatorTool,
+    CodeExecutionTool,
+    SearchTool,
     Tool,
     ToolCategory,
     ToolParameter,
     ToolRegistry,
     ToolResult,
-    SearchTool,
-    CalculatorTool,
-    CodeExecutionTool,
     WebLookupTool,
     create_default_registry,
 )

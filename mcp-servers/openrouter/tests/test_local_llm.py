@@ -3,11 +3,12 @@
 Local LLM Integration Tests for Brain
 Run: pytest test_local_llm.py -v
 """
-import subprocess
 import json
-import time
-import pytest
 import os
+import subprocess
+import time
+
+import pytest
 
 # Test configuration
 OLLAMA_MODELS = ["llama3.2:3b", "llama3.1:8b"]

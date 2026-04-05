@@ -53,7 +53,9 @@ except ImportError:
 
 _HAS_FASTER_WHISPER = False
 try:
-    from faster_whisper import WhisperModel as FasterWhisperModel  # type: ignore[import-untyped]
+    from faster_whisper import (
+        WhisperModel as FasterWhisperModel,  # type: ignore[import-untyped]
+    )
 
     _HAS_FASTER_WHISPER = True
 except ImportError:
@@ -111,7 +113,7 @@ class TranscriptionMetrics:
     _confidence_samples: list[float] = field(default_factory=list)
 
     def record(
-        self: "TranscriptionMetrics", result: TranscriptionResult, processing_ms: float
+        self: TranscriptionMetrics, result: TranscriptionResult, processing_ms: float
     ) -> None:
         self.total_requests += 1
         self.successful += 1
@@ -122,24 +124,24 @@ class TranscriptionMetrics:
             self._confidence_samples
         )
 
-    def record_error(self: "TranscriptionMetrics") -> None:
+    def record_error(self: TranscriptionMetrics) -> None:
         self.total_requests += 1
         self.errors += 1
 
     @property
-    def accuracy_rate(self: "TranscriptionMetrics") -> float:
+    def accuracy_rate(self: TranscriptionMetrics) -> float:
         if self.total_requests == 0:
             return 0.0
         return self.successful / self.total_requests
 
     @property
-    def realtime_factor(self: "TranscriptionMetrics") -> float:
+    def realtime_factor(self: TranscriptionMetrics) -> float:
         """Processing time / audio time.  < 1.0 means faster-than-realtime."""
         if self.total_audio_ms == 0:
             return 0.0
         return self.total_processing_ms / self.total_audio_ms
 
-    def to_dict(self: "TranscriptionMetrics") -> dict[str, Any]:
+    def to_dict(self: TranscriptionMetrics) -> dict[str, Any]:
         return {
             "total_requests": self.total_requests,
             "successful": self.successful,
@@ -198,7 +200,7 @@ class StreamingBuffer:
     """
 
     def __init__(
-        self: "StreamingBuffer",
+        self: StreamingBuffer,
         window_secs: float = 2.0,
         overlap_secs: float = 0.5,
         sample_rate: int = 16_000,
@@ -210,7 +212,7 @@ class StreamingBuffer:
         self._segment_index = 0
         self._lock = threading.Lock()
 
-    def add_chunk(self: "StreamingBuffer", chunk: bytes) -> Optional[Any]:
+    def add_chunk(self: StreamingBuffer, chunk: bytes) -> Optional[Any]:
         """Add audio chunk and return segment if window is full.
 
         Args:
@@ -253,7 +255,7 @@ class StreamingBuffer:
                 logger.warning("StreamingBuffer: failed to add audio chunk: %s", exc)
                 return None
 
-    def flush(self: "StreamingBuffer") -> Optional[Any]:
+    def flush(self: StreamingBuffer) -> Optional[Any]:
         """Flush remaining buffer as final segment."""
         with self._lock:
             try:
@@ -273,14 +275,14 @@ class StreamingBuffer:
                 return None
 
     @property
-    def segment_index(self: "StreamingBuffer") -> int:
+    def segment_index(self: StreamingBuffer) -> int:
         return self._segment_index
 
     @property
-    def buffer_duration_ms(self: "StreamingBuffer") -> float:
+    def buffer_duration_ms(self: StreamingBuffer) -> float:
         return (len(self._buffer) / self.sample_rate) * 1000
 
-    def reset(self: "StreamingBuffer") -> None:
+    def reset(self: StreamingBuffer) -> None:
         """Clear buffer and reset segment counter."""
         with self._lock:
             self._buffer = []

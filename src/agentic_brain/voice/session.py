@@ -82,7 +82,7 @@ class LiveVoiceSession(AudioHandlersMixin):
         self._ptt_controller: Any = None
         if self.config.ptt_mode:
             try:
-                from agentic_brain.voice.ptt import PushToTalkController, PTTConfig
+                from agentic_brain.voice.ptt import PTTConfig, PushToTalkController
 
                 hotkey = self.config.ptt_hotkey or "ctrl+space"
                 self._ptt_controller = PushToTalkController(

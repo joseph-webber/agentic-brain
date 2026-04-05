@@ -70,37 +70,6 @@ from .neo4j_memory import (
     MemoryConfig as ConversationMemoryConfig,
 )
 
-# Export summarization classes
-from .summarization import (
-    ConversationSummary,
-    SummaryType,
-    UnifiedSummarizer,
-)
-from .unified import (
-    Memory,
-    MemoryEntry,
-    MemoryType,
-    SimpleHashEmbedding,
-    SQLiteMemoryStore,
-    UnifiedMemory,
-    HookEvent,
-    SessionLink,
-    SessionHooks,
-    SessionStitcher,
-    get_unified_memory,
-    get_session_hooks,
-    get_session_stitcher,
-    on_session_start,
-    on_session_end,
-    on_user_prompt,
-    on_assistant_response,
-    on_tool_use,
-    on_voice_input,
-    stitch_message,
-    find_related_sessions,
-    get_session_context,
-)
-
 # Export unified session management (canonical)
 from .session_manager import (
     MessageRole,
@@ -113,6 +82,37 @@ from .session_manager import (
     SQLiteSessionBackend,
     get_session_manager,
     reset_session_manager,
+)
+
+# Export summarization classes
+from .summarization import (
+    ConversationSummary,
+    SummaryType,
+    UnifiedSummarizer,
+)
+from .unified import (
+    HookEvent,
+    Memory,
+    MemoryEntry,
+    MemoryType,
+    SessionHooks,
+    SessionLink,
+    SessionStitcher,
+    SimpleHashEmbedding,
+    SQLiteMemoryStore,
+    UnifiedMemory,
+    find_related_sessions,
+    get_session_context,
+    get_session_hooks,
+    get_session_stitcher,
+    get_unified_memory,
+    on_assistant_response,
+    on_session_end,
+    on_session_start,
+    on_tool_use,
+    on_user_prompt,
+    on_voice_input,
+    stitch_message,
 )
 
 __all__ = [

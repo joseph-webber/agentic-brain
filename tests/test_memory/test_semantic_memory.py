@@ -30,7 +30,6 @@ from agentic_brain.memory.unified import (
     UnifiedMemory,
 )
 
-
 # ---------------------------------------------------------------------------
 # SimpleHashEmbedding – unit tests
 # ---------------------------------------------------------------------------

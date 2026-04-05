@@ -784,8 +784,8 @@ class SecureCardCollector:
         if not validation.is_valid:
             # SECURITY: Don't echo back the invalid card number
             return (
-                f"That doesn't appear to be a valid card number. "
-                f"Please check and try again."
+                "That doesn't appear to be a valid card number. "
+                "Please check and try again."
             ), False
 
         # Store temporarily (will be wiped after tokenization)

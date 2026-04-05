@@ -34,13 +34,13 @@ License: MIT
 """
 
 import asyncio
+import random
+import string
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
-import random
-import string
 
 # ══════════════════════════════════════════════════════════════════════════════
 # AUSTRALIAN STATE CONFIGURATIONS
@@ -1330,7 +1330,7 @@ async def demo():
     )
 
     summary = manager.get_maintenance_summary()
-    print(f"\nMaintenance Summary:")
+    print("\nMaintenance Summary:")
     print(f"   Planned: {summary['planned']}")
     print(f"   Total Planned Cost: ${summary['total_planned_cost']:,.2f}")
 
@@ -1404,7 +1404,7 @@ async def demo():
 
     financials = manager.get_financial_summary()
 
-    print(f"\nFund Balances:")
+    print("\nFund Balances:")
     print(
         f"   {manager.terminology.admin_fund}: ${financials['admin_fund_balance']:,.2f}"
     )
@@ -1413,12 +1413,12 @@ async def demo():
     )
     print(f"   Total: ${financials['total_fund_balance']:,.2f}")
 
-    print(f"\nLevies (YTD):")
+    print("\nLevies (YTD):")
     print(f"   Raised: ${financials['levies_raised_ytd']:,.2f}")
     print(f"   Collected: ${financials['levies_collected_ytd']:,.2f}")
     print(f"   Collection Rate: {financials['collection_rate']}")
 
-    print(f"\nArrears:")
+    print("\nArrears:")
     print(f"   Total: ${financials['total_arrears']:,.2f}")
     print(f"   Lots in arrears: {financials['lots_in_arrears']}")
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Karen Voice Chat - Simple and Direct"""
+import os
 import subprocess
 import sys
-import os
 
 
 def speak(text, rate=160):
@@ -27,8 +27,8 @@ def ask_copilot(prompt):
 
 def ask_ollama(prompt):
     """Fallback to Ollama"""
-    import urllib.request
     import json
+    import urllib.request
 
     try:
         data = json.dumps(
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             if user.lower() in ["quit", "exit", "bye"]:
                 speak("Goodbye!")
                 break
-            print(f"🧠 Processing...")
+            print("🧠 Processing...")
             response = chat(user)
             print(
                 f"💬 Karen: {response[:200]}..."

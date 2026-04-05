@@ -25,7 +25,6 @@ from agentic_brain.rag.community import (
     CommunityQueryResult,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -199,8 +198,8 @@ class TestCommunityDetection:
             rag, "_detect_hierarchy", new_callable=AsyncMock
         ) as mock_detect:
             from agentic_brain.rag.community_detection import (
-                CommunityHierarchy,
                 Community,
+                CommunityHierarchy,
             )
 
             # Create mock hierarchy

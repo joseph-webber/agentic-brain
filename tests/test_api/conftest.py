@@ -25,7 +25,7 @@ def build_app(
     api_keys: str | None = None,
     cors_origins: list[str] | None = None,
     oauth2_enabled: bool = False,
-) -> "object":
+) -> object:
     """Create an isolated FastAPI app instance for tests."""
 
     monkeypatch.setenv("TESTING", "1")

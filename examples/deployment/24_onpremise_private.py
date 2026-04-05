@@ -63,16 +63,16 @@ Requirements:
     ollama pull llama3.1:8b  # Pre-download before air-gap
 """
 
+import argparse
 import asyncio
+import json
+import os
 import platform
 import subprocess
-import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Optional
-import json
-import argparse
 
 # ══════════════════════════════════════════════════════════════════════════════
 # HARDWARE DETECTION

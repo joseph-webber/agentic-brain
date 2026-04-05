@@ -22,8 +22,8 @@ Includes firm ratings and specialties for informed choices.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, List, Dict, Any
-from math import radians, sin, cos, sqrt, atan2
+from math import atan2, cos, radians, sin, sqrt
+from typing import Any, Dict, List, Optional
 
 
 class LawFirmSpecialty(Enum):
@@ -976,9 +976,7 @@ class FamilyLawFirmFinder:
         results = []
 
         for firm in self.find_in_state(state):
-            if firm.price_range in [PriceRange.LEGAL_AID, PriceRange.LOW]:
-                results.append(firm)
-            elif include_legal_aid and firm.accepts_legal_aid:
+            if firm.price_range in [PriceRange.LEGAL_AID, PriceRange.LOW] or include_legal_aid and firm.accepts_legal_aid:
                 results.append(firm)
 
         return results

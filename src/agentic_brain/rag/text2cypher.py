@@ -656,7 +656,7 @@ class ClaudeLLMBackend:
                 timeout=self.timeout,
             )
             return response.content[0].text
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise LLMProviderError(f"Claude request timed out after {self.timeout}s")
         except Exception as e:
             raise LLMProviderError(f"Claude API error: {e}", context={"error": str(e)})
@@ -714,7 +714,7 @@ class OpenAILLMBackend:
                 timeout=self.timeout,
             )
             return response.choices[0].message.content or ""
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise LLMProviderError(f"OpenAI request timed out after {self.timeout}s")
         except Exception as e:
             raise LLMProviderError(f"OpenAI API error: {e}", context={"error": str(e)})
@@ -774,7 +774,7 @@ class OllamaLLMBackend:
                         )
                     data = await response.json()
                     return data.get("response", "")
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise LLMProviderError(f"Ollama request timed out after {self.timeout}s")
         except aiohttp.ClientError as e:
             raise LLMProviderError(f"Ollama connection error: {e}")
@@ -836,7 +836,7 @@ class GroqLLMBackend:
                         raise LLMProviderError(f"Groq error {response.status}: {text}")
                     data = await response.json()
                     return data["choices"][0]["message"]["content"]
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise LLMProviderError(f"Groq request timed out after {self.timeout}s")
 
 

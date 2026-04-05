@@ -24,14 +24,14 @@ Usage:
 
 import argparse
 import asyncio
+import hashlib
 import json
 import random
-import hashlib
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
-from collections import defaultdict
 
 # =============================================================================
 # ENUMS
@@ -1960,7 +1960,7 @@ async def pick_list_menu(service: WarehouseOpsService) -> None:
         pl_id = input("Pick list ID: ").strip()
         result = service.complete_pick_list(pl_id)
         if result["success"]:
-            print(f"\n✅ Pick list completed")
+            print("\n✅ Pick list completed")
             print(f"   Status: {result['status']}")
             print(f"   Picked: {result['total_picked']}/{result['total_required']}")
             print(f"   Completion: {result['completion_rate']:.1f}%")
@@ -2012,7 +2012,7 @@ async def pack_station_menu(service: WarehouseOpsService) -> None:
 
         if items:
             rec = service.recommend_box_size(items)
-            print(f"\n📦 Box Recommendation:")
+            print("\n📦 Box Recommendation:")
             print(f"   Box: {rec['recommended_box']} ({rec['box_dimensions']})")
             print(f"   Total weight: {rec['total_weight_kg']} kg")
             print(f"   Materials: {', '.join(rec['packing_materials'])}")
@@ -2061,7 +2061,7 @@ async def stock_take_menu(service: WarehouseOpsService) -> None:
 
         if service.start_stock_take(st_id, counters):
             bins = service.get_bins_for_stock_take(st_id)
-            print(f"\n✅ Stock take started")
+            print("\n✅ Stock take started")
             print(f"   Bins to count: {len(bins)}")
         else:
             print("❌ Could not start stock take")
@@ -2078,7 +2078,7 @@ async def stock_take_menu(service: WarehouseOpsService) -> None:
             print(f"\n📦 Bin: {bin_info['location_code']}")
             for item in bin_info["expected_items"]:
                 print(f"   SKU: {item['sku']} - Expected: {item['expected_qty']}")
-                counted = input(f"   Actual count: ").strip()
+                counted = input("   Actual count: ").strip()
                 if counted:
                     service.record_count(
                         st_id,
@@ -2095,7 +2095,7 @@ async def stock_take_menu(service: WarehouseOpsService) -> None:
         result = service.complete_stock_take(st_id)
 
         if result["success"]:
-            print(f"\n✅ Stock take completed")
+            print("\n✅ Stock take completed")
             print(f"   Status: {result['status']}")
             print(f"   Items counted: {result['total_counted']}")
             print(f"   Variances: {result['total_variances']}")
@@ -2182,7 +2182,7 @@ async def receiving_menu(service: WarehouseOpsService) -> None:
         result = service.complete_receiving(rcv_id)
 
         if result["success"]:
-            print(f"\n✅ Receiving completed")
+            print("\n✅ Receiving completed")
             print(f"   Status: {result['status']}")
             print(f"   Putaway tasks created: {len(result['putaway_tasks'])}")
             if result["total_variance"] != 0:
@@ -2529,7 +2529,7 @@ async def demo_mode(service: WarehouseOpsService) -> None:
     print(f"   Counted {counted} items")
 
     result = service.complete_stock_take(stock_take.stock_take_id)
-    print(f"   ✅ Stock take completed")
+    print("   ✅ Stock take completed")
     print(f"      Accuracy: {result['accuracy_rate']:.1f}%")
     print(f"      Variances: {result['total_variances']}")
     await asyncio.sleep(1)

@@ -18,15 +18,15 @@ Demo: Office supplies FAQ (paper, ink, furniture)
 
 import asyncio
 import json
+import math
 import re
 import time
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from difflib import SequenceMatcher
 from enum import Enum
-from typing import Optional, Callable
-from collections import defaultdict
-import math
+from typing import Callable, Optional
 
 
 class MatchConfidence(Enum):
@@ -1165,7 +1165,7 @@ class FAQConsole:
 
             if response.get("partial_answer"):
                 partial = response["partial_answer"]
-                print(f"\n  💭 In the meantime, this might help:")
+                print("\n  💭 In the meantime, this might help:")
                 print(f"     {partial['answer'][:100]}...")
                 print(f"     (Confidence: {partial['confidence']:.0%})")
 
@@ -1224,7 +1224,7 @@ def automated_demo():
 
     response = bot.ask_question(session.id, "How do I return items?")
     if response["status"] == "answered":
-        print(f"  Q: How do I return items?")
+        print("  Q: How do I return items?")
         print(f"  A: {response['answer'][:60]}...")
 
         # Simulate helpful feedback

@@ -6,8 +6,8 @@ Enables LUDICROUS SMASH MODE - fire all LLMs, fastest wins!
 import asyncio
 import json
 import time
-from dataclasses import dataclass, asdict
-from typing import Optional, Dict, Any, List
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 try:

@@ -49,18 +49,18 @@ import asyncio
 import hashlib
 import json
 import logging
+import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Optional
-import uuid
 
 from agentic_brain.auth import (
-    JWTAuth,
     AuthConfig,
-    require_role,
-    require_authority,
+    JWTAuth,
     User,
+    require_authority,
+    require_role,
 )
 
 # =============================================================================
@@ -157,7 +157,7 @@ class SIRSIncident:
         """Check if notification is overdue."""
         return (
             not self.notification_sent
-            and datetime.now(timezone.utc) > self.notification_due
+            and datetime.now(UTC) > self.notification_due
         )
 
 
@@ -197,7 +197,7 @@ class SIRSService:
 
         Calculates notification deadline based on priority.
         """
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         priority = self._determine_priority(incident_type)
 
         # Calculate notification deadline
@@ -284,13 +284,13 @@ class Credential:
     @property
     def is_valid(self) -> bool:
         """Check if credential is currently valid."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return self.verification_status == "verified" and self.expiry_date > now
 
     @property
     def days_until_expiry(self) -> int:
         """Days until credential expires."""
-        delta = self.expiry_date - datetime.now(timezone.utc)
+        delta = self.expiry_date - datetime.now(UTC)
         return delta.days
 
 
@@ -329,7 +329,7 @@ class StaffCredentialService:
 
     def _init_sample_data(self):
         """Initialise sample staff and credentials."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # Registered Nurse
         rn = StaffMember(
@@ -687,7 +687,7 @@ class AgedCareQualityAgent:
         qi_actions = self._quality.get_action_required()
 
         return {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "sirs": {
                 "pending_notifications": len(pending_sirs),
                 "overdue_notifications": len(overdue_sirs),

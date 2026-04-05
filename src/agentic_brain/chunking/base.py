@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-import re
 from typing import Any, Sequence
 
 DEFAULT_CHUNK_SIZE = 512

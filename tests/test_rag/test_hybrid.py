@@ -18,7 +18,6 @@ import pytest
 from agentic_brain.rag.hybrid import HybridSearchResult, reciprocal_rank_fusion
 from agentic_brain.rag.retriever import RetrievedChunk
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

@@ -142,7 +142,7 @@ class Document:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Document":
+    def from_dict(cls, data: Dict[str, Any]) -> Document:
         """Create Document from dictionary."""
         return cls(
             content=data.get("content", ""),
@@ -161,7 +161,7 @@ class Document:
         )
 
     @classmethod
-    def from_agentic_document(cls, doc: AgenticDocument) -> "Document":
+    def from_agentic_document(cls, doc: AgenticDocument) -> Document:
         """Create from Agentic Brain Document."""
         return cls(
             content=doc.content,
@@ -170,7 +170,7 @@ class Document:
         )
 
     @classmethod
-    def from_retrieved_chunk(cls, chunk: RetrievedChunk) -> "Document":
+    def from_retrieved_chunk(cls, chunk: RetrievedChunk) -> Document:
         """Create from RetrievedChunk."""
         return cls(
             content=chunk.content,
@@ -195,12 +195,12 @@ class ByteStream:
     @classmethod
     def from_string(
         cls, text: str, encoding: str = "utf-8", mime_type: str = "text/plain"
-    ) -> "ByteStream":
+    ) -> ByteStream:
         """Create from string."""
         return cls(data=text.encode(encoding), mime_type=mime_type)
 
     @classmethod
-    def from_file_path(cls, path: str) -> "ByteStream":
+    def from_file_path(cls, path: str) -> ByteStream:
         """Load from file."""
         from pathlib import Path
 
@@ -409,7 +409,7 @@ class Pipeline:
             raise ValueError(f"Component '{name}' already exists in pipeline")
 
         if not hasattr(instance, "run") or not callable(instance.run):
-            raise ValueError(f"Component must have a callable 'run' method")
+            raise ValueError("Component must have a callable 'run' method")
 
         self._components[name] = instance
         self._graph[name]  # Initialize entry
@@ -610,7 +610,7 @@ class Pipeline:
     def _topological_sort(self) -> List[str]:
         """Get components in execution order using Kahn's algorithm."""
         # Calculate in-degrees
-        in_degree = {name: 0 for name in self._components}
+        in_degree = dict.fromkeys(self._components, 0)
         for connections in self._graph.values():
             for receiver in connections:
                 in_degree[receiver] += 1
@@ -823,7 +823,7 @@ class Pipeline:
         cls,
         data: Dict[str, Any],
         callbacks: Optional[Dict[str, Callable]] = None,
-    ) -> "Pipeline":
+    ) -> Pipeline:
         """
         Deserialize pipeline from dictionary.
 
@@ -894,7 +894,7 @@ class Pipeline:
         return json.dumps(self.to_dict(), indent=2, default=str)
 
     @classmethod
-    def loads(cls, data: str) -> "Pipeline":
+    def loads(cls, data: str) -> Pipeline:
         """Deserialize pipeline from JSON string."""
         return cls.from_dict(json.loads(data))
 
@@ -2148,7 +2148,7 @@ class TextFileToDocument:
         self.encoding = encoding
 
     @component.output_types(documents=List[Document])
-    def run(self, sources: List[Union[str, ByteStream]]) -> Dict[str, List[Document]]:
+    def run(self, sources: List[str | ByteStream]) -> Dict[str, List[Document]]:
         """Convert sources to documents."""
         documents = []
         for source in sources:

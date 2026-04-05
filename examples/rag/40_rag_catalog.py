@@ -32,13 +32,13 @@ Requirements:
 import asyncio
 import hashlib
 import json
+import math
 import re
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Optional
-import math
 
 try:
     import numpy as np
@@ -1265,7 +1265,7 @@ def run_demo():
 
     # Show stats
     stats = pipeline.get_stats()
-    print(f"\n📊 Catalog Stats:")
+    print("\n📊 Catalog Stats:")
     print(f"   Products: {stats['total_products']}")
     print(f"   Categories: {list(stats['categories'].keys())}")
     print(
@@ -1332,7 +1332,7 @@ def run_demo():
                 comparison = pipeline.compare_products(ids)
 
                 if comparison.products:
-                    print(f"\n📊 Product Comparison:")
+                    print("\n📊 Product Comparison:")
                     print("-" * 70)
 
                     # Header

@@ -26,8 +26,8 @@ Start with: python server.py
 
 import json
 import os
-import sys
 import subprocess
+import sys
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -42,7 +42,7 @@ load_dotenv(os.path.expanduser("~/brain/.env"))
 # MCP protocol
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 
 # LAZY IMPORTS - All Neo4j and heavy modules loaded on first use
 # This allows server to start INSTANTLY even if Neo4j is down
@@ -56,9 +56,15 @@ def _load_fuzzy():
     global _fuzzy_loaded, fuzzy_match, fuzzy_filter, fuzzy_best, fuzzy_ratio
     if not _fuzzy_loaded:
         from brain_core.fuzzy_search import (
-            fuzzy_match as fm,
-            fuzzy_filter as ff,
             fuzzy_best as fb,
+        )
+        from brain_core.fuzzy_search import (
+            fuzzy_filter as ff,
+        )
+        from brain_core.fuzzy_search import (
+            fuzzy_match as fm,
+        )
+        from brain_core.fuzzy_search import (
             fuzzy_ratio as fr,
         )
 
@@ -1947,7 +1953,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
 
             # Search emails
             try:
-                email_query = f"""
+                email_query = """
                 MATCH (e:Email) 
                 WHERE e.subject CONTAINS $topic OR e.body CONTAINS $topic
                 RETURN e.subject, e.from, e.date
@@ -1962,7 +1968,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
 
             # Search teams
             try:
-                teams_query = f"""
+                teams_query = """
                 MATCH (t:TeamsMessage) 
                 WHERE t.content CONTAINS $topic
                 RETURN t.content, t.sender, t.timestamp
@@ -1977,7 +1983,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
 
             # Search JIRA
             try:
-                jira_query = f"""
+                jira_query = """
                 MATCH (j:Ticket) 
                 WHERE j.key CONTAINS $topic OR j.summary CONTAINS $topic
                 RETURN j.key, j.summary, j.status, j.updated
@@ -2020,7 +2026,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             days = arguments.get("days", 7)
             # Get all Steve communications
             try:
-                query = f"""
+                query = """
                 MATCH (m) 
                 WHERE (m:TeamsMessage OR m:Email OR m:Ticket)
                 AND (

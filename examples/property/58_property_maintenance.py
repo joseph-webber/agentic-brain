@@ -34,13 +34,13 @@ License: MIT
 """
 
 import asyncio
+import random
+import string
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
-import random
-import string
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ENUMS AND CONSTANTS
@@ -1407,11 +1407,11 @@ async def demo():
     summary = coordinator.get_maintenance_summary(days=30)
 
     print(f"\nTotal Work Orders: {summary['total_work_orders']}")
-    print(f"\nBy Status:")
+    print("\nBy Status:")
     for status, count in summary["by_status"].items():
         print(f"   {status}: {count}")
 
-    print(f"\nBy Trade:")
+    print("\nBy Trade:")
     for trade, count in summary["by_trade"].items():
         print(f"   {trade}: {count}")
 

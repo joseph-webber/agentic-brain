@@ -618,7 +618,7 @@ if __name__ == "__main__":
 
     # Set cache
     redis.cache_set(query, "Python is a programming language", "local-test")
-    print(f"   Cached response")
+    print("   Cached response")
 
     # Check again (should hit)
     cached = redis.cache_get(query)

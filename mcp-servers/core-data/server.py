@@ -13,20 +13,20 @@ Tools are named: {module}_{method}
 Example: teams_send_message, jira_get_ticket, bitbucket_get_pull_requests
 """
 
+import asyncio
+import importlib
+import inspect
+import json
 import os
 import sys
-import json
-import asyncio
-import inspect
-import importlib
 from typing import Any, Dict, List, Optional
 
 # Add brain to path
 sys.path.insert(0, os.path.expanduser("~/brain"))
 
 from mcp.server import Server
-from mcp.types import Tool, TextContent
 from mcp.server.stdio import stdio_server
+from mcp.types import TextContent, Tool
 
 # Modules to expose (add more as needed)
 EXPOSED_MODULES = {
@@ -369,8 +369,8 @@ async def call_tool(name: str, arguments: Dict) -> List[TextContent]:
 
 async def reality_check() -> str:
     """Check data freshness across all sources. Returns reality score and staleness report."""
-    import subprocess
     import shutil
+    import subprocess
 
     # Try to find reality-check in PATH or relative to brain root
     reality_check_path = shutil.which("reality-check")

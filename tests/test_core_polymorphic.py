@@ -1,11 +1,11 @@
 import pytest
 
 from agentic_brain.core.polymorphic import (
-    PolymorphicBrain,
-    UserType,
+    ComplianceMode,
     ContextType,
     EnvironmentType,
-    ComplianceMode,
+    PolymorphicBrain,
+    UserType,
 )
 
 

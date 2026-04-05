@@ -65,19 +65,19 @@ Requirements:
     ollama pull llama3.1:8b  # On-premise LLM
 """
 
-import asyncio
 import argparse
+import asyncio
 import hashlib
 import json
 import os
 import secrets
 import sys
-from base64 import b64encode, b64decode
+from base64 import b64decode, b64encode
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Optional, Any
 from pathlib import Path
+from typing import Any, Optional
 
 # Encryption (cryptography library)
 try:
@@ -1412,7 +1412,7 @@ def run_interactive(role: UserRole):
     """Run interactive mode."""
     print(NDIS_DISCLAIMER)
     print("\n" + "=" * 60)
-    print(f"🏥 NDIS PROVIDER SYSTEM - Interactive Mode")
+    print("🏥 NDIS PROVIDER SYSTEM - Interactive Mode")
     print(f"   Role: {role.value}")
     print("=" * 60)
 

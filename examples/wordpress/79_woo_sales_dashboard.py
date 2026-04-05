@@ -26,11 +26,11 @@ Usage:
 import argparse
 import json
 import random
-from datetime import datetime, timedelta
-from typing import Any, Optional
-from dataclasses import dataclass, field
-from enum import Enum
 import statistics
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Optional
 
 # =============================================================================
 # DOMAIN MODELS

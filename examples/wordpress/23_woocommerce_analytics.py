@@ -29,11 +29,11 @@ Requirements:
 """
 
 import asyncio
+import random
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Optional
 from enum import Enum
-import random
+from typing import Optional
 
 
 class TimePeriod(Enum):

@@ -7,21 +7,21 @@ Uses the arraz2000 topic-centric graph pattern:
 - CORE_TOPICS for controlled vocabulary
 """
 
-from .patterns import TopicGraph, ZonedGraph, CORE_TOPICS, setup_graph_constraints
 from .brain_graph import (
-    get_driver,
-    get_topic_graph,
-    get_zoned_graph,
-    query,
-    query_by_topic,
-    link_to_topic,
-    get_topic_health,
-    get_zone_stats,
     check_zone_boundaries,
     ensure_topics_exist,
-    init_graph,
+    get_driver,
     get_rag_context,
+    get_topic_graph,
+    get_topic_health,
+    get_zone_stats,
+    get_zoned_graph,
+    init_graph,
+    link_to_topic,
+    query,
+    query_by_topic,
 )
+from .patterns import CORE_TOPICS, TopicGraph, ZonedGraph, setup_graph_constraints
 
 __all__ = [
     # Classes

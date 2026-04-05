@@ -36,19 +36,21 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from datetime import UTC
+
 from agentic_brain.rag import (
-    # Core loaders
-    GoogleDriveLoader,
-    GmailLoader,
-    iCloudLoader,
-    # Factory functions
-    create_loader,
-    load_from_multiple_sources,
-    # Data class
-    LoadedDocument,
     # Availability flags
     GOOGLE_API_AVAILABLE,
     PYICLOUD_AVAILABLE,
+    GmailLoader,
+    # Core loaders
+    GoogleDriveLoader,
+    # Data class
+    LoadedDocument,
+    # Factory functions
+    create_loader,
+    iCloudLoader,
+    load_from_multiple_sources,
 )
 
 
@@ -402,8 +404,8 @@ def example_loaded_document():
         source_id="abc123xyz",
         filename="report.pdf",
         mime_type="application/pdf",
-        created_at=datetime(2026, 1, 15, tzinfo=timezone.utc),
-        modified_at=datetime(2026, 1, 20, tzinfo=timezone.utc),
+        created_at=datetime(2026, 1, 15, tzinfo=UTC),
+        modified_at=datetime(2026, 1, 20, tzinfo=UTC),
         size_bytes=15000,
     )
 
@@ -422,7 +424,7 @@ def example_loaded_document():
 
     # Restore from dict
     restored = LoadedDocument.from_dict(data)
-    print(f"\nRestored from dict:")
+    print("\nRestored from dict:")
     print(f"  Filename: {restored.filename}")
     print(f"  Content matches: {restored.content == doc.content}")
 

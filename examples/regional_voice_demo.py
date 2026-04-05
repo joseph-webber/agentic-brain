@@ -13,9 +13,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from agentic_brain.voice.regional import (
+    AUSTRALIAN_REGIONS,
     get_regional_voice,
     list_regions,
-    AUSTRALIAN_REGIONS,
 )
 
 
@@ -31,17 +31,17 @@ def demo_adelaide():
     print(f"   Timezone: {rv.timezone}")
 
     # Demo greetings
-    print(f"\n👋 Greetings:")
+    print("\n👋 Greetings:")
     for _ in range(3):
         print(f"   {rv.get_greeting()}")
 
     # Demo farewells
-    print(f"\n👋 Farewells:")
+    print("\n👋 Farewells:")
     for _ in range(3):
         print(f"   {rv.get_farewell()}")
 
     # Demo regionalizations
-    print(f"\n🗣️  Regional Expressions:")
+    print("\n🗣️  Regional Expressions:")
     examples = [
         "That's very great! Thank you!",
         "Let's go to the bottle shop this afternoon",
@@ -56,7 +56,7 @@ def demo_adelaide():
         print(f"   Adelaide: {regionalized}")
 
     # Demo local knowledge
-    print(f"\n📚 Local Knowledge:")
+    print("\n📚 Local Knowledge:")
     knowledge_topics = [
         ("coffee_order", "☕"),
         ("football", "🏈"),
@@ -81,18 +81,18 @@ def demo_travel():
     rv = get_regional_voice()
 
     # Start in Adelaide
-    print(f"\n📍 Starting in Adelaide...")
+    print("\n📍 Starting in Adelaide...")
     text = "That's very great!"
     adelaide_version = rv.regionalize(text)
     print(f"   Adelaide: {adelaide_version}")
     print(f"   Greeting: {rv.get_greeting()}")
 
     # Travel to Melbourne
-    print(f"\n✈️  Flying to Melbourne...")
+    print("\n✈️  Flying to Melbourne...")
     rv.save_location("melbourne")
     rv._load_location()
 
-    print(f"\n📍 Now in Melbourne!")
+    print("\n📍 Now in Melbourne!")
     melbourne_version = rv.regionalize(text)
     print(f"   Melbourne: {melbourne_version}")
     print(f"   Greeting: {rv.get_greeting()}")
@@ -101,12 +101,12 @@ def demo_travel():
     adelaide_coffee = AUSTRALIAN_REGIONS["adelaide"].local_knowledge.get("coffee_order")
     melbourne_coffee = AUSTRALIAN_REGIONS["melbourne"].local_knowledge.get("coffee")
 
-    print(f"\n☕ Coffee Culture:")
+    print("\n☕ Coffee Culture:")
     print(f"   Adelaide: {adelaide_coffee}")
     print(f"   Melbourne: {melbourne_coffee}")
 
     # Return to Adelaide
-    print(f"\n✈️  Flying back to Adelaide...")
+    print("\n✈️  Flying back to Adelaide...")
     rv.save_location("adelaide")
     rv._load_location()
     print(f"   Back home! {rv.get_greeting()}")
@@ -122,23 +122,23 @@ def demo_learning():
 
     # Before learning
     text = "How is your friend going? That's awesome!"
-    print(f"\n   Before learning:")
+    print("\n   Before learning:")
     print(f"   {text}")
     print(f"   → {rv.regionalize(text)}")
 
     # Learn new expressions
-    print(f"\n   📝 Teaching new slang...")
+    print("\n   📝 Teaching new slang...")
     rv.add_expression("friend", "mate")
     rv.add_expression("going", "goin'")
     rv.add_expression("awesome", "bonza")
 
     # After learning
-    print(f"\n   After learning:")
+    print("\n   After learning:")
     print(f"   {text}")
     print(f"   → {rv.regionalize(text)}")
 
     # Learn local knowledge
-    print(f"\n   📝 Adding local knowledge...")
+    print("\n   📝 Adding local knowledge...")
     rv.add_local_knowledge("pub", "The Adelaide Casino is popular for poker")
 
     pub_info = rv.get_local_knowledge("pub")
@@ -198,11 +198,11 @@ def demo_voice_test():
 
         print(f"\n   Standard: {standard}")
         print(f"   Regional: {regional}")
-        print(f"\n   🎙️ Speaking regional version...")
+        print("\n   🎙️ Speaking regional version...")
 
         speak(regional, voice="Karen (Premium)", rate=160, regionalize=False)
 
-        print(f"   ✓ Done!")
+        print("   ✓ Done!")
 
     except Exception as e:
         print(f"   ⚠️  Could not test voice: {e}")

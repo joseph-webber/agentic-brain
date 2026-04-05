@@ -34,6 +34,7 @@ Requirements:
 import asyncio
 import hashlib
 import json
+import math
 import os
 import re
 from abc import ABC, abstractmethod
@@ -42,7 +43,6 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Generator, Optional
-import math
 
 # Try imports
 try:
@@ -972,7 +972,7 @@ class CodeRAGPipeline:
         """Add a source file to the index."""
         # Read file if content not provided
         if content is None:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 content = f.read()
 
         # Detect language
@@ -1674,7 +1674,7 @@ def run_demo():
 
     # Show stats
     stats = pipeline.get_stats()
-    print(f"\n📊 Codebase Stats:")
+    print("\n📊 Codebase Stats:")
     print(f"   Files: {stats['files']}")
     print(f"   Elements: {stats['elements']}")
     print(f"   By type: {stats['by_type']}")
@@ -1714,7 +1714,7 @@ def run_demo():
 
         if query.lower() == "stats":
             stats = pipeline.get_stats()
-            print(f"\n📊 Pipeline Statistics:")
+            print("\n📊 Pipeline Statistics:")
             for key, value in stats.items():
                 print(f"   {key}: {value}")
             continue

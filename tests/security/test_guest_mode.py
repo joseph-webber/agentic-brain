@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from agentic_brain.security.roles import SecurityRole
 from agentic_brain.security.guards import SecurityGuard
+from agentic_brain.security.roles import SecurityRole
 
 
 class TestGuestMode:

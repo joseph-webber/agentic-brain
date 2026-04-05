@@ -4,8 +4,8 @@ Quick test to demonstrate Redis caching in action.
 Shows the performance difference between cache hit and miss.
 """
 
-import sys
 import os
+import sys
 import time
 
 sys.path.insert(0, os.path.expanduser("~/brain"))
@@ -61,7 +61,7 @@ def main():
     # Performance comparison
     if cached:
         speedup = elapsed_miss / elapsed_hit
-        print(f"⚡ PERFORMANCE")
+        print("⚡ PERFORMANCE")
         print(f"  Cache miss: {elapsed_miss * 1000:.2f}ms")
         print(f"  Cache hit:  {elapsed_hit * 1000:.2f}ms")
         print(f"  Speedup:    {speedup:.1f}x faster!\n")

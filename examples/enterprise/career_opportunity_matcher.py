@@ -37,7 +37,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -133,7 +133,7 @@ class Opportunity:
     required_experience_years: int = 0
     team_size: int = 0
     hiring_manager_id: str = ""
-    posted_date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    posted_date: datetime = field(default_factory=lambda: datetime.now(UTC))
     deadline: datetime | None = None
     is_active: bool = True
     applications_count: int = 0
@@ -223,14 +223,14 @@ class Application:
 
     def advance_status(self, new_status: ApplicationStatus, note: str = ""):
         """Move application to next status."""
-        self.status_history.append((self.status, datetime.now(timezone.utc)))
+        self.status_history.append((self.status, datetime.now(UTC)))
         self.status = new_status
         if note:
             self.notes.append(
                 {
                     "status": new_status.value,
                     "note": note,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
             )
 
@@ -585,9 +585,7 @@ class OpportunityMatcherAgent:
         skill_score = sum(skill_scores) / len(skill_scores) if skill_scores else 0.5
 
         # Experience matching
-        if opportunity.required_experience_years == 0:
-            exp_score = 1.0
-        elif candidate.years_experience >= opportunity.required_experience_years:
+        if opportunity.required_experience_years == 0 or candidate.years_experience >= opportunity.required_experience_years:
             exp_score = 1.0
         else:
             exp_score = (
@@ -646,7 +644,7 @@ class OpportunityMatcherAgent:
             status=ApplicationStatus.SUBMITTED,
             match_result=match_result,
             cover_note=cover_note,
-            submitted_at=datetime.now(timezone.utc),
+            submitted_at=datetime.now(UTC),
         )
 
         await self._ensure_neo4j()

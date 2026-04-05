@@ -27,8 +27,9 @@ Requirements:
 import asyncio
 import logging
 
-from agentic_brain import Agent, Neo4jMemory
 from agentic_brain.errors import AgenticBrainError
+
+from agentic_brain import Agent, Neo4jMemory
 
 logger = logging.getLogger(__name__)
 

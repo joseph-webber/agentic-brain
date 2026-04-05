@@ -4,9 +4,9 @@ CLI Tools MCP Server - Wrapper for powerful CLI utilities
 Tools: ripgrep, fd, bat, fzf, eza, tldr, sox, lazygit
 """
 
-import subprocess
 import json
 import os
+import subprocess
 from pathlib import Path
 
 # MCP SDK

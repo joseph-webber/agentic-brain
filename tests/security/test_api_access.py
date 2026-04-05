@@ -3,8 +3,9 @@
 
 """Tests for API-based access control."""
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from agentic_brain.security.api_access import (
     APIAccessController,

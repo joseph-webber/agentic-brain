@@ -55,11 +55,6 @@ from agentic_brain.voice.config import (
     VoiceConfig,
     VoiceQuality,
 )
-from agentic_brain.voice.ptt import (
-    PTTConfig,
-    PTTState,
-    PushToTalkController,
-)
 from agentic_brain.voice.emotions import (
     EMOTION_PARAMS,
     Emotion,
@@ -72,6 +67,11 @@ from agentic_brain.voice.emotions import (
     emotion_to_voice_emotion,
 )
 from agentic_brain.voice.expression import ExpressionEngine
+from agentic_brain.voice.ptt import (
+    PTTConfig,
+    PTTState,
+    PushToTalkController,
+)
 
 # Import voice queue (CRITICAL for accessibility!)
 from agentic_brain.voice.queue import (

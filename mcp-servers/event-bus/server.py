@@ -19,38 +19,37 @@ Architecture:
 
 import json
 import os
+import subprocess
 import sys
 import uuid
-import subprocess
 from datetime import datetime
 
 sys.path.insert(0, os.path.expanduser("~/brain"))
 sys.path.insert(0, os.path.dirname(__file__))
 
-from mcp.server.fastmcp import FastMCP
-
 # Import our abstraction layer
-from core.kafka_bus import BrainTopics, BrainEventBus
+from core.kafka_bus import BrainEventBus, BrainTopics
+from mcp.server.fastmcp import FastMCP
 
 # Import voice topics (enhanced)
 try:
     from voice_topics import (
-        VoiceTopics,
-        VoiceEventPublisher,
-        VoiceEventSubscriber,
+        ConversationEndedEvent,
         ConversationStartedEvent,
         ConversationTurnEvent,
-        ConversationEndedEvent,
+        FallbackLocalEvent,
         LadyIntroducedEvent,
         LadyReactionEvent,
         MoodChangedEvent,
-        TurnRequestedEvent,
+        QueueAddedEvent,
+        QueueEmptyEvent,
+        QueueSpeakingEvent,
         TurnGrantedEvent,
         TurnReleasedEvent,
-        FallbackLocalEvent,
-        QueueAddedEvent,
-        QueueSpeakingEvent,
-        QueueEmptyEvent,
+        TurnRequestedEvent,
+        VoiceEventPublisher,
+        VoiceEventSubscriber,
+        VoiceTopics,
         validate_voice_event,
     )
 except ImportError as e:

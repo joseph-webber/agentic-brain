@@ -14,27 +14,27 @@ Tests cover:
 - Normalization and similarity calculations
 """
 
-import pytest
-import numpy as np
 import asyncio
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from typing import List
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import numpy as np
+import pytest
 
 from agentic_brain.embeddings.base import (
+    BatchEmbeddingResult,
     Embedder,
     EmbeddingProvider,
     EmbeddingResult,
-    BatchEmbeddingResult,
 )
-from agentic_brain.embeddings.openai import OpenAIEmbedder
 from agentic_brain.embeddings.cohere import CohereEmbedder
+from agentic_brain.embeddings.jina import JinaEmbedder
+from agentic_brain.embeddings.openai import OpenAIEmbedder
 from agentic_brain.embeddings.sentence_transformers import (
-    SentenceTransformersEmbedder,
     E5Embedder,
+    SentenceTransformersEmbedder,
 )
 from agentic_brain.embeddings.voyage import VoyageEmbedder
-from agentic_brain.embeddings.jina import JinaEmbedder
-
 
 # ============================================================================
 # Base Embedder Tests

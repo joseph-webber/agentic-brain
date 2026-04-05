@@ -6,9 +6,9 @@ Run this BEFORE and AFTER using MicRequestApp.app
 Usage:
     python3 mic_tcc_diagnostic.py
 """
+import os
 import subprocess
 import sys
-import os
 
 
 def run(cmd, capture=True):

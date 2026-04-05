@@ -50,7 +50,6 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Callable
 
-
 from ..model_aliases import MODEL_ALIASES
 from ..router import get_router
 from .config import ChatConfig

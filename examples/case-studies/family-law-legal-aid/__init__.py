@@ -66,26 +66,25 @@ __author__ = "Joseph Webber / Iris Lumina"
 __license__ = "GPL-3.0-or-later"
 
 # Core imports
+from .cmms_adapters import (
+    AlfrescoAdapter,
+    CaseStatus,
+    CMMSAdapter,
+    CMMSCase,
+    CMMSDocument,
+    CMMSEvent,
+    CMMSRAGBridge,
+    CMMSRegistry,
+    Dynamics365Adapter,
+    LocalCMMSAdapter,
+    WorkflowAction,
+)
 from .knowledge_base import (
     FamilyLawKnowledgeBase,
     KnowledgeCategory,
     KnowledgeDocument,
     SearchResult,
     create_knowledge_base,
-)
-
-from .cmms_adapters import (
-    CMMSAdapter,
-    CMMSCase,
-    CMMSDocument,
-    CMMSEvent,
-    CaseStatus,
-    WorkflowAction,
-    CMMSRegistry,
-    CMMSRAGBridge,
-    LocalCMMSAdapter,
-    Dynamics365Adapter,
-    AlfrescoAdapter,
 )
 
 
@@ -101,9 +100,9 @@ def get_case_manager():
     """Get case management classes (lazy import)."""
     from .case_manager import (
         CasePhase,
-        FamilyLawCase,
         DeadlineTracker,
         DocumentTracker,
+        FamilyLawCase,
     )
 
     return {
@@ -117,10 +116,10 @@ def get_case_manager():
 def get_templates():
     """Get template guidance functions (lazy import)."""
     from .templates import (
-        get_template_guidance,
         get_checklist,
         get_common_mistakes,
         get_filing_instructions,
+        get_template_guidance,
     )
 
     return {

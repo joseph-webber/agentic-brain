@@ -7,9 +7,9 @@ attribution. macOS launch services keeps com.josephbrain.pymicpermission
 as the requesting app even after exec(). Dialog appears, permission works!
 """
 
-import sys
 import os
 import subprocess
+import sys
 
 # Ensure tools dir is on path
 TOOLS_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -35,11 +35,12 @@ def push_redis(msg):
         pass
 
 
-import objc
-import AVFoundation
-from Foundation import NSRunLoop, NSDate, NSObject, NSLog
-from AppKit import NSApplication, NSApp
 import threading
+
+import AVFoundation
+import objc
+from AppKit import NSApp, NSApplication
+from Foundation import NSDate, NSLog, NSObject, NSRunLoop
 
 
 def get_status_str(status):

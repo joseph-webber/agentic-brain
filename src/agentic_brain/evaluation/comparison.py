@@ -1,8 +1,8 @@
 """Comparison utilities for A/B testing of RAG outputs."""
 
-from typing import Dict, Any
-from statistics import mean
 import math
+from statistics import mean
+from typing import Any, Dict
 
 try:
     from scipy import stats  # type: ignore

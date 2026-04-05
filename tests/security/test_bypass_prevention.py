@@ -11,12 +11,12 @@ from pathlib import Path
 
 import pytest
 
+from agentic_brain.security.guards import SecurityGuard
 from agentic_brain.security.roles import (
+    DANGEROUS_COMMAND_PATTERNS,
     SecurityRole,
     is_dangerous_command,
-    DANGEROUS_COMMAND_PATTERNS,
 )
-from agentic_brain.security.guards import SecurityGuard
 
 
 class TestSecurityBypassPrevention:

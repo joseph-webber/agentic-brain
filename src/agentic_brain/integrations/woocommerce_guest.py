@@ -29,7 +29,6 @@ from typing import Any, Dict, List, Optional
 
 from ..security.api_access import APIAccessController
 
-
 # WooCommerce Store API endpoints that guests can access
 WOOCOMMERCE_GUEST_ENDPOINTS = {
     # Product browsing - public access

@@ -1,8 +1,9 @@
 """Tests for text-to-speech output."""
 
-import pytest
-from unittest.mock import patch, Mock
 import subprocess
+from unittest.mock import Mock, patch
+
+import pytest
 
 
 class TestMacOSTTS:

@@ -78,16 +78,16 @@ Requirements:
     # Optional: OPENAI_API_KEY for cloud fallback
 """
 
+import argparse
 import asyncio
-import os
+import hashlib
 import json
+import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional, Any
-import argparse
-import hashlib
+from typing import Any, Optional
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ROUTING LOGIC
@@ -892,7 +892,7 @@ async def run_demo():
     print("📚 KNOWLEDGE BASE")
     print("-" * 40)
     print(f"  Articles cached: {len(assistant.kb.local_cache)}")
-    print(f"  Categories: HR, Finance, IT, Products, Facilities")
+    print("  Categories: HR, Finance, IT, Products, Facilities")
     print()
 
     # Demo queries

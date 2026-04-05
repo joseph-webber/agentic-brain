@@ -27,9 +27,9 @@ IMPORTANT DISCLAIMERS:
 """
 
 import asyncio
+import random
 from datetime import datetime, timedelta
 from typing import Any
-import random
 
 from agentic_brain import Agent
 
@@ -355,7 +355,7 @@ def schedule_appointment(
     return {
         "success": True,
         "appointment": new_appointment,
-        "message": f"Appointment request submitted. You will receive confirmation within 24-48 hours.",
+        "message": "Appointment request submitted. You will receive confirmation within 24-48 hours.",
         "note": "This is a simulated appointment for demonstration purposes.",
     }
 

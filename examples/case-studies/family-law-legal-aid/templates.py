@@ -41,9 +41,9 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
-from typing import List, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Optional
 
 # =============================================================================
 # CONSTANTS AND ENUMS

@@ -63,9 +63,9 @@ from typing import Any, Dict, List, Optional
 from .redis_coordinator import (
     SwarmCoordinator,
     _dumps,
-    _loads,
-    _key_tasks,
     _key_results,
+    _key_tasks,
+    _loads,
 )
 
 logger = logging.getLogger(__name__)

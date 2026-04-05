@@ -18,8 +18,8 @@ Tools:
 
 import json
 import os
-import sys
 import subprocess
+import sys
 import time
 from typing import Any, Dict, List, Optional
 
@@ -28,7 +28,7 @@ sys.path.insert(0, os.path.expanduser("~/brain"))
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 
 # ═══════════════════════════════════════════════════════════════
 # MODEL REGISTRY
@@ -729,7 +729,7 @@ copilot            varies   Fast     FREE*       Terminal, git, coding
                 f"   Model: {best}",
                 f"   Params: {MODELS.get(best, {}).get('params', '?')}",
                 f"   Speed: {MODELS.get(best, {}).get('speed', '?')}",
-                f"   Cost: FREE",
+                "   Cost: FREE",
                 "",
                 f"To use: openrouter_chat(prompt='...', model='{best}')",
             ]

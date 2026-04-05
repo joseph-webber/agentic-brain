@@ -59,7 +59,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, TypeVar, Protocol, runtime_checkable
+from typing import Any, Callable, Protocol, TypeVar, runtime_checkable
 
 __all__ = [
     "reciprocal_rank_fusion",
@@ -264,7 +264,7 @@ def reciprocal_rank_fusion(
         for rank, item in enumerate(results):
             try:
                 item_id = id_fn(item)
-            except (KeyError, TypeError) as e:
+            except (KeyError, TypeError):
                 # Skip items without valid ID
                 continue
 

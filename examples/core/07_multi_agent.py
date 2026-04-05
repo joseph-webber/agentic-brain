@@ -26,10 +26,10 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
 from agentic_brain.orchestration import (
+    AgentRole,
     Crew,
     CrewConfig,
     ExecutionStrategy,
-    AgentRole,
     Workflow,
     WorkflowStep,
 )
@@ -239,7 +239,7 @@ async def example_workflow_branching():
     print("\n🚀 Running workflow...")
     result = workflow.run()
 
-    print(f"\n📋 Workflow result:")
+    print("\n📋 Workflow result:")
     print(f"  Status: {result.state.value}")
     print(f"  Path: {' → '.join(result.steps_executed)}")
     print(f"  Duration: {result.duration_ms:.0f}ms")
@@ -376,7 +376,7 @@ async def example_complex_pipeline():
     print("\n🚀 Running content pipeline...")
     result = pipeline.run(context={"topic": "AI in Healthcare"})
 
-    print(f"\n✅ Pipeline complete!")
+    print("\n✅ Pipeline complete!")
     print(f"  Stages: {' → '.join(result.steps_executed)}")
     print(f"  Duration: {result.duration_ms:.0f}ms")
 

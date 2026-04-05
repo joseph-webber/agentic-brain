@@ -882,7 +882,7 @@ def openrouter_smart_fallback(task: str = "general") -> str:
             f"   Model: {best}",
             f"   Params: {MODELS.get(best, {}).get('params', '?')}",
             f"   Speed: {MODELS.get(best, {}).get('speed', '?')}",
-            f"   Cost: FREE",
+            "   Cost: FREE",
             "",
             f"To use: openrouter_chat(prompt='...', model='{best}')",
         ]
@@ -1336,7 +1336,7 @@ def openrouter_auto_fallback_status() -> str:
 
     if state.get("rate_limited"):
         lines.append(f"⚠️ RATE LIMITED since: {state.get('last_429', 'unknown')}")
-        lines.append(f"🔄 Fallback active: YES")
+        lines.append("🔄 Fallback active: YES")
         lines.append(
             f"🤖 Current model: {state.get('current_model', 'claude-emulator')}"
         )
@@ -1450,7 +1450,7 @@ def openrouter_ask_local(prompt: str, model: str = "claude-emulator") -> str:
     except urllib.error.URLError:
         return "❌ Ollama not running. Start with: ollama serve"
     except TimeoutError:
-        return f"⏱️ Timeout (60s) - try llama3.2:3b for speed"
+        return "⏱️ Timeout (60s) - try llama3.2:3b for speed"
     except Exception as e:
         return (
             f"❌ Local LLM error: {str(e)}\n\nMake sure Ollama is running: ollama serve"
@@ -2137,7 +2137,7 @@ def openrouter_compaction_start(summary: str = "") -> str:
     except:
         pass
 
-    return f"""🔄 COMPACTION MODE ACTIVATED
+    return """🔄 COMPACTION MODE ACTIVATED
 
 ✅ Local LLM takeover: ACTIVE
 ✅ llama3.2:3b pre-warmed for fast responses
@@ -2222,7 +2222,7 @@ def openrouter_context_retrieve(label: str) -> str:
     offload_dir = os.path.expanduser("~/.brain-continuity/context-offload")
 
     if not os.path.exists(offload_dir):
-        return f"❌ No offloaded context found"
+        return "❌ No offloaded context found"
 
     # Find matching files
     matches = []
@@ -2304,7 +2304,7 @@ def openrouter_benchmark() -> str:
 
         except subprocess.TimeoutExpired:
             results.append({"model": model, "success": False, "error": "timeout"})
-            lines.append(f"   ❌ Timeout (>60s)")
+            lines.append("   ❌ Timeout (>60s)")
         except Exception as e:
             results.append({"model": model, "success": False, "error": str(e)})
             lines.append(f"   ❌ Error: {e}")
@@ -2523,7 +2523,7 @@ def openrouter_context_load_neo4j(
                 f"~/.brain-continuity/context-neo4j/{ctx_id}.txt"
             )
             if os.path.exists(content_file):
-                lines.append(f"   📄 Full content available in file")
+                lines.append("   📄 Full content available in file")
             lines.append("")
 
         return "\n".join(lines)
@@ -3238,8 +3238,9 @@ def openrouter_event_subscribe(timeout_sec: int = 60) -> str:
         openrouter_event_subscribe(timeout_sec=30)
     """
     try:
-        import event_bus_llm
         import time
+
+        import event_bus_llm
 
         responses = []
         consumer = event_bus_llm.get_consumer([event_bus_llm.TOPIC_RESPONSE])
@@ -3299,7 +3300,7 @@ Providers:
         for provider, count in sorted(providers.items(), key=lambda x: -x[1]):
             result += f"  {provider}: {count} ({count*100//total}%)\n"
 
-        result += f"\nRecent Requests:\n"
+        result += "\nRecent Requests:\n"
         for r in responses[-5:]:
             status = "❌" if r["error"] else "✅"
             cached = "💾" if r["cached"] else ""
@@ -3345,7 +3346,7 @@ def openrouter_event_status() -> str:
         try:
             producer = event_bus_llm.get_producer()
             result += f"  ✅ Connected to {event_bus_llm.KAFKA_BOOTSTRAP_SERVERS}\n"
-            result += f"  Topics:\n"
+            result += "  Topics:\n"
             result += f"    • {event_bus_llm.TOPIC_REQUEST} (requests)\n"
             result += f"    • {event_bus_llm.TOPIC_RESPONSE} (responses)\n"
             result += f"    • {event_bus_llm.TOPIC_STATUS} (health)\n"
@@ -3358,7 +3359,7 @@ def openrouter_event_status() -> str:
             r = event_bus_llm.get_redis()
             if r:
                 info = r.info()
-                result += f"  ✅ Connected\n"
+                result += "  ✅ Connected\n"
                 result += f"  Memory: {info.get('used_memory_human', 'N/A')}\n"
                 result += f"  Keys: {r.dbsize()}\n"
 
@@ -3366,7 +3367,7 @@ def openrouter_event_status() -> str:
                 cached = len(r.keys("llm:response:*"))
                 result += f"  Cached Responses: {cached}\n"
             else:
-                result += f"  ⚠️  Not available (caching disabled)\n"
+                result += "  ⚠️  Not available (caching disabled)\n"
         except Exception as e:
             result += f"  ❌ Error: {e}\n"
 
@@ -3378,8 +3379,8 @@ def openrouter_event_status() -> str:
         if consumer_check.returncode == 0:
             result += f"  ✅ Running (PID {consumer_check.stdout.strip()})\n"
         else:
-            result += f"  ❌ Not running\n"
-            result += f"  Start with: python -m mcp-servers.openrouter.event_bus_llm start &\n"
+            result += "  ❌ Not running\n"
+            result += "  Start with: python -m mcp-servers.openrouter.event_bus_llm start &\n"
 
         # Recent health updates
         result += "\n🏥 Recent Health Updates:\n"
@@ -3402,9 +3403,9 @@ def openrouter_event_status() -> str:
                     latency = update.get("latency_ms", 0)
                     result += f"  {status} {provider}: {latency}ms\n"
             else:
-                result += f"  No recent updates\n"
+                result += "  No recent updates\n"
         except:
-            result += f"  Unable to fetch updates\n"
+            result += "  Unable to fetch updates\n"
 
         return result
 

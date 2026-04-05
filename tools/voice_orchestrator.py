@@ -644,7 +644,8 @@ def run_daemon() -> None:
 
 def cmd_test() -> None:
     """Send a test query through the full pipeline."""
-    import uuid, subprocess
+    import subprocess
+    import uuid
 
     rid = str(uuid.uuid4())[:8]
     test_query = {

@@ -6,13 +6,13 @@
 import pytest
 
 from agentic_brain.security import (
+    BackgroundWorker,
     BaseSecureAgent,
+    EventProcessor,
+    ExploreAgent,
     SecurityRole,
     SecurityViolation,
     TaskAgent,
-    ExploreAgent,
-    BackgroundWorker,
-    EventProcessor,
 )
 
 

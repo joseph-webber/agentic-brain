@@ -25,9 +25,9 @@ DISCLAIMER:
 """
 
 import asyncio
+import random
 from datetime import datetime, timedelta
 from typing import Any
-import random
 
 from agentic_brain import Agent
 
@@ -849,7 +849,7 @@ async def main():
 
             if user_input.lower() == "claims":
                 status = get_claim_status()
-                print(f"\n📋 Claims Summary:")
+                print("\n📋 Claims Summary:")
                 print(f"  Open claims: {len(status['open_claims'])}")
                 print(f"  Total claims: {status['total_claims']}")
                 continue

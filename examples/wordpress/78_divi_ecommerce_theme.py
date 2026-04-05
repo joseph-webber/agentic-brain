@@ -21,18 +21,18 @@ Usage:
     python 78_divi_ecommerce_theme.py --layout product --category smartphones
 """
 
-import os
-import sys
-import json
 import asyncio
+import json
 import logging
-import re
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any, Tuple, Set
-from dataclasses import dataclass, field, asdict
-from enum import Enum
-from abc import ABC, abstractmethod
+import os
 import random
+import re
+import sys
+from abc import ABC, abstractmethod
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -2096,7 +2096,7 @@ class DiviEcommerceAgent:
         print("-" * 50)
         for layout in ProductLayoutType:
             print(f"   • {layout.value.replace('_', ' ').title()}")
-        print(f"   Default template lines: ~50 (Standard Layout)")
+        print("   Default template lines: ~50 (Standard Layout)")
 
         # Demo 2: Shop Layouts
         print("\n🏪 Shop Page Layouts:")
@@ -2163,7 +2163,7 @@ class DiviEcommerceAgent:
         )
         print(f"   Name: {category.name}")
         print(f"   Products: {category.product_count}")
-        print(f"   Template sections: Hero, Subcategories, Products Grid")
+        print("   Template sections: Hero, Subcategories, Products Grid")
 
         # Demo 10: Cross-Sell/Upsell
         print("\n🔄 Cross-Sell & Upsell Sections:")
@@ -2200,8 +2200,8 @@ class DiviEcommerceAgent:
         css = self.generate_complete_theme_css()
         lines = css.split("\n")
         print(f"   Total CSS lines: {len(lines)}")
-        print(f"   Includes: Variables, Cart, Checkout, Category,")
-        print(f"             Banners, Mobile, Cross-sell styles")
+        print("   Includes: Variables, Cart, Checkout, Category,")
+        print("             Banners, Mobile, Cross-sell styles")
 
         # Demo 13: Trust Elements
         print("\n🛡️  Checkout Trust Elements:")

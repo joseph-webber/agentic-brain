@@ -39,21 +39,22 @@ Created: 2026-03-21
 Philosophy: "Code at the speed of thought, bending time itself"
 """
 
+import hashlib
 import json
+import logging
 import os
+import signal
 import subprocess
 import sys
+import threading
 import time
-import logging
-import signal
-import hashlib
-import requests
+import urllib.error
+import urllib.request
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import threading
-import urllib.request
-import urllib.error
+
+import requests
 
 # ============================================================================
 # CONFIGURATION - LUDICROUS MODE
@@ -207,7 +208,7 @@ def run_benchmarks() -> Dict[str, float]:
     logger.info("Running benchmarks...")
     results = {}
 
-    for model in TARGETS.keys():
+    for model in TARGETS:
         # Warm up
         get_model_latency(model, timeout=120)
 
@@ -604,7 +605,7 @@ class SelfModifier:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_path = self.backup_dir / f"optimizer_{timestamp}.py"
 
-        with open(self.own_file, "r") as src:
+        with open(self.own_file) as src:
             with open(backup_path, "w") as dst:
                 dst.write(src.read())
 
@@ -624,7 +625,7 @@ class SelfModifier:
             return False
 
         try:
-            with open(backup, "r") as src:
+            with open(backup) as src:
                 with open(self.own_file, "w") as dst:
                     dst.write(src.read())
             logger.info(f"Rolled back to {backup}")
@@ -711,7 +712,7 @@ class SelfModifier:
             1 for h in recent if "success" in h.get("description", "").lower()
         )
 
-        with open(self.own_file, "r") as f:
+        with open(self.own_file) as f:
             current_code = f.read()
 
         # If mostly succeeding, we can relax intervals
@@ -739,7 +740,7 @@ class SelfModifier:
         Add a new optimization strategy to the daemon.
         This allows the daemon to learn new tricks.
         """
-        with open(self.own_file, "r") as f:
+        with open(self.own_file) as f:
             current_code = f.read()
 
         # Find where to insert (before STRATEGIES list)

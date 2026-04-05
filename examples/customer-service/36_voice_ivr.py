@@ -21,11 +21,11 @@ import json
 import random
 import re
 import time
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional, Callable, Any
-from collections import defaultdict
+from typing import Any, Callable, Optional
 
 
 class CallState(Enum):
@@ -1112,7 +1112,7 @@ class IVRConsole:
 
         if cmd == "/status":
             call = self.current_call
-            print(f"\n  📞 Call Status")
+            print("\n  📞 Call Status")
             print(f"     ID: {call.id}")
             print(f"     State: {call.state.value}")
             print(f"     Duration: {call.total_duration:.0f}s")
@@ -1121,7 +1121,7 @@ class IVRConsole:
 
         if cmd == "/metrics":
             metrics = self.bot.get_metrics()
-            print(f"\n  📊 IVR Metrics")
+            print("\n  📊 IVR Metrics")
             print(f"     Total calls: {metrics['total_calls']}")
             print(f"     Completed: {metrics['calls_completed']}")
             print(f"     Avg wait: {metrics['avg_wait_time']:.0f}s")

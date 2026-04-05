@@ -27,9 +27,11 @@ import pytest
 from agentic_brain.memory import (
     DataScope,
     InMemoryStore,
-    MemoryDataclass as MemData,
     get_memory_backend,
     reset_memory_backend,
+)
+from agentic_brain.memory import (
+    MemoryDataclass as MemData,
 )
 from agentic_brain.memory.unified import (
     MemoryEntry,
@@ -37,7 +39,6 @@ from agentic_brain.memory.unified import (
     SQLiteMemoryStore,
     UnifiedMemory,
 )
-
 
 # ---------------------------------------------------------------------------
 # SQLiteMemoryStore – data survives a fresh connection

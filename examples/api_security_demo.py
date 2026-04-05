@@ -12,10 +12,10 @@ access external APIs, not have direct machine access.
 import asyncio
 
 from agentic_brain.integrations import (
-    create_wordpress_client,
-    create_woocommerce_client,
-    WordPressRole,
     WooCommerceRole,
+    WordPressRole,
+    create_woocommerce_client,
+    create_wordpress_client,
 )
 from agentic_brain.security.roles import SecurityRole
 
@@ -88,7 +88,7 @@ async def example_woocommerce_customer():
     print("\n✅ Created WooCommerce API client")
     print(f"   - WooCommerce Role: {WooCommerceRole.CUSTOMER.value}")
     print(f"   - Chatbot Role: {SecurityRole.USER.value} (API-ONLY)")
-    print(f"   - Customer ID: 42 (can only see THIS customer's orders)")
+    print("   - Customer ID: 42 (can only see THIS customer's orders)")
     print(f"   - Can view orders: {wc_client.capabilities.can_view_own_orders}")
     print(f"   - Can edit orders: {wc_client.capabilities.can_edit_orders}")
     print(f"   - Can manage products: {wc_client.capabilities.can_create_products}")

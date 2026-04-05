@@ -6,14 +6,14 @@ Lightweight load testing utilities for the Agentic Brain.
 
 from __future__ import annotations
 
-import time
-import threading
-import urllib.request
-import urllib.error
 import statistics
+import threading
+import time
 import tracemalloc
+import urllib.error
+import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 class LoadResult:

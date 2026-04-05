@@ -267,7 +267,7 @@ class SecurityChecklist:
                         message="No external network connectivity",
                     )
                 )
-        except (socket.timeout, OSError):
+        except (TimeoutError, OSError):
             self.results.append(
                 CheckResult(
                     name=name,
@@ -1120,7 +1120,7 @@ ENTRYPOINT ["python", "-m", "agentic_brain.server"]
 
     def generate_docker_compose(self) -> str:
         """Generate docker-compose.yml with security settings."""
-        return f"""# Air-Gapped Deployment Stack
+        return """# Air-Gapped Deployment Stack
 # docker-compose.yml
 
 version: "3.8"
@@ -1238,7 +1238,7 @@ services:
       - neo4j_logs:/logs:rw
     
     environment:
-      - NEO4J_AUTH=${{NEO4J_PASSWORD:-changeme}}
+      - NEO4J_AUTH=${NEO4J_PASSWORD:-changeme}
       - NEO4J_dbms_default__listen__address=0.0.0.0
       - NEO4J_dbms_security_auth__enabled=true
       - NEO4J_dbms_memory_heap_initial__size=512m

@@ -22,7 +22,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Optional, TypeVar, Generic
+from typing import Any, Generic, Optional, TypeVar
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -225,7 +225,7 @@ class Agent(ABC):
 
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self.set_state(AgentState.ERROR)
             return AgentResult(
                 success=False,

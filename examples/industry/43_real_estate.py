@@ -24,9 +24,9 @@ Note:
 """
 
 import asyncio
+import random
 from datetime import datetime, timedelta
 from typing import Any
-import random
 
 from agentic_brain import Agent
 
@@ -963,7 +963,7 @@ async def main():
 
             if user_input.lower() == "neighborhoods":
                 print("\n🏘️ Available Neighborhoods:")
-                for name in NEIGHBORHOODS.keys():
+                for name in NEIGHBORHOODS:
                     print(f"  • {name}")
                 continue
 

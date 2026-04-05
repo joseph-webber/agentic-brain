@@ -20,13 +20,15 @@ from agentic_brain.voice.transcription import (
     StreamingConfig,
     StreamingStitcher,
     StreamingTranscriptionResult,
-    TimeoutError as TranscriptionTimeoutError,
     TranscriptionResult,
     WhisperTranscriber,
     faster_whisper_available,
     get_streaming_transcriber,
     get_transcriber,
     whisper_available,
+)
+from agentic_brain.voice.transcription import (
+    TimeoutError as TranscriptionTimeoutError,
 )
 
 

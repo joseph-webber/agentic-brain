@@ -1,7 +1,7 @@
 """Tests for Redis coordination."""
 
-import pytest
 import fakeredis
+import pytest
 
 
 class TestRedisState:

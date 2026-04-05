@@ -17,13 +17,13 @@ import sys
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 from agentic_brain.voice.platform import (
-    detect_platform,
-    check_voice_available,
-    get_recommended_voice_method,
-    get_platform_info,
     VoicePlatform,
+    check_voice_available,
+    detect_platform,
+    get_platform_info,
+    get_recommended_voice_method,
 )
-from agentic_brain.voice.resilient import speak, get_voice_stats
+from agentic_brain.voice.resilient import get_voice_stats, speak
 
 
 async def demo_platform_detection():
@@ -44,7 +44,7 @@ async def demo_platform_detection():
 
     # Check availability
     availability = check_voice_available()
-    print(f"\n✓ Voice Systems Available:")
+    print("\n✓ Voice Systems Available:")
 
     for system, available in availability.items():
         status = "✓" if available else "✗"
@@ -55,7 +55,7 @@ async def demo_platform_detection():
     if recommended:
         print(f"\n✓ Recommended Method: {recommended}")
     else:
-        print(f"\n✗ No voice method available!")
+        print("\n✗ No voice method available!")
 
 
 async def demo_basic_speech():
@@ -141,7 +141,7 @@ async def demo_voice_stats():
     stats = get_voice_stats()
 
     print("\n✓ Voice System Statistics:")
-    print(f"\nFallback Methods Used:")
+    print("\nFallback Methods Used:")
 
     for method_name, method_stats in stats.get("voice", {}).items():
         success = method_stats.get("success", 0)
@@ -155,7 +155,7 @@ async def demo_voice_stats():
 
     daemon_stats = stats.get("daemon", {})
     if daemon_stats.get("status") != "not_started":
-        print(f"\nDaemon Statistics:")
+        print("\nDaemon Statistics:")
         print(f"  Processed: {daemon_stats.get('processed', 0)}")
         print(f"  Errors: {daemon_stats.get('errors', 0)}")
 
@@ -210,7 +210,7 @@ async def demo_platform_specific():
             print(f"  (Could not list voices: {e})")
 
     else:
-        print(f"\n✓ Unknown platform - using cloud fallback")
+        print("\n✓ Unknown platform - using cloud fallback")
 
 
 async def demo_cloud_fallback():

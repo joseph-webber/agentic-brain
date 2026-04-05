@@ -7,19 +7,20 @@ Measures latency, accuracy, and resource usage
 
 import json
 import os
-import time
 import subprocess
 import sys
+import time
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
-from datetime import datetime
+
 import numpy as np
 
 try:
-    from faster_whisper import WhisperModel
     import librosa
     import soundfile as sf
+    from faster_whisper import WhisperModel
 except ImportError:
     print("❌ Required packages not installed. Install with:")
     print("   pip3 install faster-whisper librosa soundfile")

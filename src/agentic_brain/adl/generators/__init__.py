@@ -11,9 +11,9 @@ Available generators:
 * :class:`ReactComponentGenerator` — Accessible React CRUD components
 """
 
+from .api_routes import ApiRouteGenerator
 from .neo4j_schema import Neo4jSchemaGenerator
 from .python_models import PythonModelGenerator
-from .api_routes import ApiRouteGenerator
 from .react_components import ReactComponentGenerator
 
 __all__ = [

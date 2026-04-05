@@ -10,7 +10,7 @@ Demonstrates:
 - Statistics and management
 """
 
-from agentic_brain.rag import RAGPipeline, InMemoryDocumentStore, ChunkingStrategy
+from agentic_brain.rag import ChunkingStrategy, InMemoryDocumentStore, RAGPipeline
 
 
 def main():
@@ -85,7 +85,7 @@ def main():
 
         if query.lower() == "stats":
             stats = rag.get_stats()
-            print(f"\n📊 Pipeline Statistics:")
+            print("\n📊 Pipeline Statistics:")
             for key, value in stats.items():
                 print(f"  {key}: {value}")
             continue

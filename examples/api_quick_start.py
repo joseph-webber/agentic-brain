@@ -11,10 +11,10 @@ This file demonstrates the new ergonomic API improvements:
 
 from agentic_brain.api import (
     AgenticBrain,
-    quick_rag,
-    quick_graph,
-    quick_search,
     quick_eval,
+    quick_graph,
+    quick_rag,
+    quick_search,
 )
 
 

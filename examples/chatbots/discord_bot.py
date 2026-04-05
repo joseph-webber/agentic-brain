@@ -34,12 +34,12 @@ Created: 2026-03-22
 """
 
 import asyncio
-import os
 import logging
-from typing import Dict, Optional, List, Any
-from datetime import datetime, timedelta
-from dataclasses import dataclass, field
+import os
 from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 # Discord imports
 try:
@@ -53,9 +53,9 @@ except ImportError:
     print("discord.py not installed. Run: pip install discord.py")
 
 # Agentic Brain imports
-from agentic_brain import LLMRouter, Agent, Memory
-from agentic_brain.rag import DiscordLoader, VectorStore
+from agentic_brain import Agent, LLMRouter, Memory
 from agentic_brain.chat import Chatbot
+from agentic_brain.rag import DiscordLoader, VectorStore
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

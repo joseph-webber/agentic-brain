@@ -9,14 +9,15 @@ Supports CPU, GPU (CUDA), and Apple Silicon (MPS) acceleration.
 No API keys required - fully offline capable.
 """
 
-import time
 import asyncio
-from typing import List, Optional
-import numpy as np
 import logging
 import os
+import time
+from typing import List, Optional
 
-from .base import Embedder, EmbeddingProvider, EmbeddingResult, BatchEmbeddingResult
+import numpy as np
+
+from .base import BatchEmbeddingResult, Embedder, EmbeddingProvider, EmbeddingResult
 
 logger = logging.getLogger(__name__)
 

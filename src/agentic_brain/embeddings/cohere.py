@@ -8,14 +8,15 @@ Supports Cohere's embedding models (embed-english-v3.0, embed-english-light-v3.0
 Includes rate limiting, multilingual support, and efficient batch processing.
 """
 
+import asyncio
+import logging
 import os
 import time
-import asyncio
-from typing import List, Optional, Literal
-import numpy as np
-import logging
+from typing import List, Literal, Optional
 
-from .base import Embedder, EmbeddingProvider, EmbeddingResult, BatchEmbeddingResult
+import numpy as np
+
+from .base import BatchEmbeddingResult, Embedder, EmbeddingProvider, EmbeddingResult
 
 logger = logging.getLogger(__name__)
 

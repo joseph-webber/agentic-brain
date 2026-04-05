@@ -1,10 +1,11 @@
 import asyncio
-import types
 import time
+import types
+
 import pytest
+from neo4j.exceptions import ClientError, ServiceUnavailable, TransientError
 
 from agentic_brain.core import neo4j_utils as nu
-from neo4j.exceptions import ClientError, ServiceUnavailable, TransientError
 
 
 class DummyResult:

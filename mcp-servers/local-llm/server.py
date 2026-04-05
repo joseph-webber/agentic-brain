@@ -4,10 +4,10 @@
 Direct brain access to local Ollama models
 """
 
-import subprocess
 import json
-import time
 import os
+import subprocess
+import time
 from pathlib import Path
 
 try:

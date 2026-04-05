@@ -21,19 +21,19 @@ Usage:
     python 76_divi_page_builder.py --page product --product "Wireless Earbuds"
 """
 
-import os
-import sys
-import json
 import asyncio
-import logging
-from datetime import datetime
-from typing import Optional, List, Dict, Any, Tuple, Set
-from dataclasses import dataclass, field, asdict
-from enum import Enum
-from abc import ABC, abstractmethod
-import re
-import random
 import colorsys
+import json
+import logging
+import os
+import random
+import re
+import sys
+from abc import ABC, abstractmethod
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1157,7 +1157,7 @@ class ResponsiveChecker:
                                 "type": "warning",
                                 "element": module.module_type.value,
                                 "issue": f"Font size {size}px may be too large on mobile",
-                                "suggestion": f"Use responsive font sizing or reduce to max 48px on mobile",
+                                "suggestion": "Use responsive font sizing or reduce to max 48px on mobile",
                             }
                         )
                 except ValueError:
@@ -2063,7 +2063,7 @@ def main():
 
         if args.analyze:
             analysis = agent.analyze_page(layout)
-            print(f"\nAnalysis:")
+            print("\nAnalysis:")
             print(f"  Sections: {analysis['sections']}")
             print(f"  Modules: {analysis['total_modules']}")
             print(f"  Speed Issues: {len(analysis['speed_issues'])}")

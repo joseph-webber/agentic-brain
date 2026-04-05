@@ -177,7 +177,7 @@ export const {name}Form: React.FC<{{ onSubmit: (data: Partial<I{name}>) => void 
                 input_type = "number"
             elif f.type == "Boolean":
                 input_type = "checkbox"
-            lines.append(f"      <div>")
+            lines.append("      <div>")
             lines.append(
                 f'        <label htmlFor="{f.name}">{f.name}{req_star}</label>'
             )
@@ -185,5 +185,5 @@ export const {name}Form: React.FC<{{ onSubmit: (data: Partial<I{name}>) => void 
                 f'        <input id="{f.name}" name="{f.name}" type="{input_type}"{req_attr}'
                 f' aria-label="{f.name} field" />'
             )
-            lines.append(f"      </div>")
+            lines.append("      </div>")
         return "\n".join(lines)

@@ -61,16 +61,16 @@ import logging
 import sqlite3
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta, time, timezone
+from datetime import UTC, date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from enum import Enum
 from typing import Any, Optional
 
 from agentic_brain.auth import (
-    JWTAuth,
     AuthConfig,
-    require_role,
+    JWTAuth,
     User,
+    require_role,
 )
 
 # =============================================================================
@@ -329,7 +329,7 @@ class AgedCareAssistant:
             VALUES (?, ?, ?, ?, ?, ?)
         """,
             (
-                datetime.now(timezone.utc).isoformat(),
+                datetime.now(UTC).isoformat(),
                 user_id,
                 action,
                 entity_type,
@@ -575,7 +575,7 @@ class AgedCareAssistant:
                 )
 
         admin_id = f"ADMIN-{uuid.uuid4().hex[:8].upper()}"
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         admin = MedicationAdministration(
             admin_id=admin_id,
@@ -731,7 +731,7 @@ class AgedCareAssistant:
 
         return {
             "reporting_period": reporting_period,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "facility_summary": {
                 "total_residents": total_residents,
                 "care_plans_overdue": sum(
@@ -762,7 +762,7 @@ class AgedCareAssistant:
             return {"error": "Resident not found"}
 
         incident_id = f"SIRS-{uuid.uuid4().hex[:8].upper()}"
-        reported_at = datetime.now(timezone.utc)
+        reported_at = datetime.now(UTC)
 
         # Calculate reporting deadline (24 hours from becoming aware)
         deadline = reported_at + timedelta(hours=24)
@@ -823,7 +823,7 @@ class AgedCareAssistant:
             note
             for note in self.care_notes
             if note.resident_id == resident_id
-            and (datetime.now(timezone.utc) - note.created_at).days <= 7
+            and (datetime.now(UTC) - note.created_at).days <= 7
         ]
 
         summary = {
@@ -862,7 +862,7 @@ class AgedCareAssistant:
         # Demo verification (would check against actual records)
         credentials = {
             "staff_id": staff_id,
-            "verification_date": datetime.now(timezone.utc).isoformat(),
+            "verification_date": datetime.now(UTC).isoformat(),
             "police_check": {
                 "status": "Current",
                 "expiry": (date.today() + timedelta(days=180)).isoformat(),
@@ -931,7 +931,7 @@ async def run_demo():
     print(f"Cognitive Status: {summary['cognitive_status']}")
     print(f"\nDietary: {', '.join(summary['dietary_requirements'])}")
     print(f"Allergies: {', '.join(summary['allergies'])}")
-    print(f"\nGoals of Care:")
+    print("\nGoals of Care:")
     for goal in summary["goals_of_care"]:
         print(f"  • {goal}")
     print(f"\nCare Plan Review Due: {'Yes ⚠️' if summary['care_plan_due'] else 'No'}")
@@ -985,7 +985,7 @@ async def run_demo():
         status="Given",
         clinical_notes="Given for breakthrough pain. Resident comfort improved.",
     )
-    print(f"\n✓ S8 Medication administered with witness")
+    print("\n✓ S8 Medication administered with witness")
     for warning in result.get("warnings", []):
         print(f"  {warning}")
 
@@ -1012,7 +1012,7 @@ async def run_demo():
     incident = assistant.report_sirs_incident(
         resident_id="RES-001",
         incident_type=SIRSIncidentType.MISSING_CONSUMER,
-        incident_date=datetime.now(timezone.utc),
+        incident_date=datetime.now(UTC),
         description="Resident found in garden unaccompanied. Returned safely within 10 minutes.",
         immediate_actions="Resident returned to unit. Door alarm checked and functioning.",
         reporter_id="RN-001",
@@ -1034,7 +1034,7 @@ async def run_demo():
     print(f"  General Wellbeing: {update['general_wellbeing']}")
     print(f"  Meals: {update['meals']}")
     print(f"  Sleep: {update['sleep']}")
-    print(f"\n  Recent Activities:")
+    print("\n  Recent Activities:")
     for activity in update["activities_participated"]:
         print(f"    • {activity}")
 

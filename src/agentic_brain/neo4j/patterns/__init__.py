@@ -8,9 +8,9 @@ Implements:
 """
 
 from .topic_graph import (
+    CORE_TOPICS,
     TopicGraph,
     ZonedGraph,
-    CORE_TOPICS,
     setup_graph_constraints,
 )
 

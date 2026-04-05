@@ -30,7 +30,7 @@ from typing import Any, Dict, List, Optional
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 
 # Paths
 BRAIN_ROOT = Path.home() / "brain"
@@ -144,8 +144,8 @@ def get_neo4j_driver():
     if not NEO4J_ENABLED:
         return None
     try:
-        from neo4j import GraphDatabase
         from dotenv import load_dotenv
+        from neo4j import GraphDatabase
 
         load_dotenv(BRAIN_ROOT / ".env")
 
@@ -262,7 +262,7 @@ def get_comms_state() -> Dict:
     try:
         # Import from communications server
         sys.path.insert(0, str(BRAIN_ROOT / "mcp-servers/communications"))
-        from server import save_comms_state_for_continuity, get_urgent_items
+        from server import get_urgent_items, save_comms_state_for_continuity
 
         comms_state = save_comms_state_for_continuity()
         urgent = get_urgent_items()
@@ -320,7 +320,7 @@ def save_state(
     history = []
     if HISTORY_FILE.exists():
         try:
-            with open(HISTORY_FILE, "r") as f:
+            with open(HISTORY_FILE) as f:
                 history = json.load(f)
         except Exception:
             history = []
@@ -359,7 +359,7 @@ def recover_state() -> Dict:
         return {"recovered": False, "message": "No previous session found"}
 
     try:
-        with open(STATE_FILE, "r") as f:
+        with open(STATE_FILE) as f:
             state = json.load(f)
 
         # Build recovery summary
@@ -413,7 +413,7 @@ def get_status() -> Dict:
     state = {}
     if has_state:
         try:
-            with open(STATE_FILE, "r") as f:
+            with open(STATE_FILE) as f:
                 state = json.load(f)
         except Exception:
             pass
@@ -421,7 +421,7 @@ def get_status() -> Dict:
     history_count = 0
     if HISTORY_FILE.exists():
         try:
-            with open(HISTORY_FILE, "r") as f:
+            with open(HISTORY_FILE) as f:
                 history_count = len(json.load(f))
         except Exception:
             pass
@@ -525,7 +525,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         elif name == "session_history":
             limit = arguments.get("limit", 10)
             if HISTORY_FILE.exists():
-                with open(HISTORY_FILE, "r") as f:
+                with open(HISTORY_FILE) as f:
                     history = json.load(f)[:limit]
                 result = {"history": history, "count": len(history)}
             else:

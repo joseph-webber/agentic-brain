@@ -8,9 +8,9 @@ Tests for RAG agent implementation.
 import pytest
 
 from agentic_brain.agents import (
+    AgentRole,
     RAGAgent,
     RAGAgentConfig,
-    AgentRole,
     ToolCategory,
 )
 

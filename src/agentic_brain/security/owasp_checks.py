@@ -450,7 +450,7 @@ class OWASPAuditor:
         file_issues = []
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Regex-based checks
@@ -465,7 +465,7 @@ class OWASPAuditor:
             except SyntaxError:
                 pass  # Skip files with syntax errors
 
-        except (IOError, UnicodeDecodeError):
+        except (OSError, UnicodeDecodeError):
             pass
 
         return file_issues
@@ -514,7 +514,7 @@ class OWASPAuditor:
         medium = len([i for i in self.issues if i.severity == Severity.MEDIUM])
         low = len([i for i in self.issues if i.severity == Severity.LOW])
 
-        report.append(f"## Summary\n")
+        report.append("## Summary\n")
         report.append(f"- **Critical**: {critical}\n")
         report.append(f"- **High**: {high}\n")
         report.append(f"- **Medium**: {medium}\n")

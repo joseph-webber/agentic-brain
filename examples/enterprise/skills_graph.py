@@ -37,11 +37,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from enum import Enum
 from typing import Any
-from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ class SkillNode:
     keywords: list[str] = field(default_factory=list)
     demand_score: float = 0.5  # 0-1 market demand
     trend: TrendDirection = TrendDirection.STABLE
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 @dataclass
@@ -318,7 +318,7 @@ class SkillsGraphAgent:
             skill_id=skill_id,
             level=level,
             years_experience=years_experience,
-            last_used=datetime.now(timezone.utc),
+            last_used=datetime.now(UTC),
             projects=projects or [],
             certifications=certifications or [],
         )
@@ -394,7 +394,7 @@ class SkillsGraphAgent:
             "skill_name": skill_name,
             "type": endorsement_type.value,
             "note": note,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         await self._ensure_neo4j()

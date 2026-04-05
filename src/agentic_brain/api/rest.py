@@ -16,17 +16,16 @@ from __future__ import annotations
 
 import os
 import time
-from collections import deque, defaultdict
+from collections import defaultdict, deque
 from typing import Deque
 
-from fastapi import APIRouter, FastAPI, HTTPException, Request, status, Depends
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware import Middleware
 from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from ..monitoring.metrics import global_metrics
-from .auth import get_api_keys, require_auth, AuthContext
-
+from .auth import AuthContext, get_api_keys, require_auth
 
 # ---------------------------------------------------------------------------
 # Models

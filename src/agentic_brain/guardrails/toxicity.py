@@ -1,7 +1,7 @@
 """Basic toxicity detection and filtering."""
 
-from typing import List
 import re
+from typing import List
 
 
 class ToxicityDetector:

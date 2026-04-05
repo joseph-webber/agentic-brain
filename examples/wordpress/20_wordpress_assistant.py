@@ -24,6 +24,7 @@ import base64
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
+
 import aiohttp
 
 # Simulated WordPress data for demo

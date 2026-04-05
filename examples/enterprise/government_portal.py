@@ -49,19 +49,19 @@ import asyncio
 import hashlib
 import json
 import logging
+import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Optional
-import uuid
 
 from agentic_brain.auth import (
-    JWTAuth,
     AuthConfig,
-    require_role,
-    require_authority,
-    current_user,
+    JWTAuth,
     User,
+    current_user,
+    require_authority,
+    require_role,
 )
 
 # =============================================================================
@@ -148,7 +148,7 @@ class EssentialEightCompliance:
 
     def _init_defaults(self):
         """Initialise default compliance status."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         for control in EssentialEightControl:
             self._status[control] = EssentialEightStatus(
                 control=control,
@@ -317,7 +317,7 @@ class PrivacyActCompliance:
     ):
         """Log access to personal information (APP 11 audit trail)."""
         entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "citizen_id_hash": hashlib.sha256(citizen_id.encode()).hexdigest()[:16],
             "data_type": data_type,
             "accessed_by": accessed_by,
@@ -444,7 +444,7 @@ class DepartmentAuthorisation:
                 auth["from_dept"] == department.value
                 and auth["to_category"] == category.value
                 and auth["citizen_id"] == citizen_id
-                and auth["expires_at"] > datetime.now(timezone.utc)
+                and auth["expires_at"] > datetime.now(UTC)
             ):
                 return True, "Cross-department authorisation active"
 
@@ -472,8 +472,8 @@ class DepartmentAuthorisation:
             "to_category": target_category.value,
             "citizen_id": citizen_id,
             "purpose": purpose,
-            "requested_at": datetime.now(timezone.utc).isoformat(),
-            "expires_at": datetime.now(timezone.utc) + timedelta(hours=duration_hours),
+            "requested_at": datetime.now(UTC).isoformat(),
+            "expires_at": datetime.now(UTC) + timedelta(hours=duration_hours),
             "status": "pending_approval",
         }
 
@@ -528,7 +528,7 @@ class CitizenServicesAgent:
                 Department.CENTRELINK,
             ],
             identity_strength="strong",
-            last_verified=datetime.now(timezone.utc) - timedelta(days=30),
+            last_verified=datetime.now(UTC) - timedelta(days=30),
         )
 
         self._citizens["CIT-002"] = Citizen(
@@ -563,7 +563,7 @@ class CitizenServicesAgent:
             }
 
         # Update verification timestamp
-        citizen.last_verified = datetime.now(timezone.utc)
+        citizen.last_verified = datetime.now(UTC)
 
         logger.info(f"Identity verified: {citizen_id} via {verification_method}")
 
@@ -641,8 +641,8 @@ class CitizenServicesAgent:
             category=category,
             request_type=request_type,
             status="pending",
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
+            updated_at=datetime.now(UTC),
             details=details,
         )
 
@@ -858,7 +858,7 @@ def demo():
 
     # Query linked services
     result = agent.handle_query(citizen_id, "what services are linked?")
-    print(f"Query: 'what services are linked?'")
+    print("Query: 'what services are linked?'")
     print(f"Response: {result.get('total_linked')} services linked")
     for svc in result.get("services", []):
         print(f"  - {svc['name']}")
@@ -866,7 +866,7 @@ def demo():
 
     # Query privacy/data access
     result = agent.handle_query(citizen_id, "who has accessed my data?")
-    print(f"Query: 'who has accessed my data?'")
+    print("Query: 'who has accessed my data?'")
     print(f"Response: {result.get('response')}")
     print()
 

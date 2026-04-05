@@ -39,11 +39,10 @@ USAGE:
   open ~/brain/agentic-brain/tools/PyMicPermission.app   # Direct app launch
 """
 
-import sys
+import argparse
 import os
 import subprocess
-import argparse
-
+import sys
 
 REDIS_KEY = "swarm:mic_permission:findings"
 APP_PATH = os.path.join(
@@ -82,22 +81,22 @@ def get_av_status():
 def cmd_status():
     """Show complete permission status."""
     raw, label = get_av_status()
-    print(f"┌─ Microphone Permission Status ─────────────────────────────────────┐")
+    print("┌─ Microphone Permission Status ─────────────────────────────────────┐")
     print(f"│  AVFoundation status (current process): {label} (raw={raw})")
 
     icons = {0: "⏳", 1: "🔒", 2: "❌", 3: "✅", -1: "⚠️"}
     print(f"│  {icons.get(raw, '?')} {label}")
-    print(f"│")
+    print("│")
 
     # Test sox capture (inherits Terminal TCC)
     sox_ok = _test_sox_quick()
     print(
         f"│  sox capture test: {'✅ WORKING (Terminal TCC inherited)' if sox_ok else '❌ Failed'}"
     )
-    print(f"│")
+    print("│")
     print(f"│  PyMicPermission.app: {APP_PATH}")
-    print(f"│  Bundle ID: com.josephbrain.pymicpermission")
-    print(f"└────────────────────────────────────────────────────────────────────┘")
+    print("│  Bundle ID: com.josephbrain.pymicpermission")
+    print("└────────────────────────────────────────────────────────────────────┘")
 
     if raw == 0 and not sox_ok:
         print("\n→  Run: open ~/brain/agentic-brain/tools/PyMicPermission.app")
@@ -178,8 +177,9 @@ def cmd_test():
         return False
 
     try:
-        import numpy as np
         import wave
+
+        import numpy as np
 
         outfile = os.path.expanduser("~/brain/cache/mic_test.wav")
         os.makedirs(os.path.dirname(outfile), exist_ok=True)
@@ -215,7 +215,7 @@ def cmd_test():
         if rms < 1e-10:
             print("⚠️  All zeros — microphone permission blocked at driver level")
             push_redis(
-                f"mic_permission_manager.py: sox test captured all zeros - driver blocked"
+                "mic_permission_manager.py: sox test captured all zeros - driver blocked"
             )
             return False
         else:

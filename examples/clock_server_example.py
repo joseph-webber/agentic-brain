@@ -6,15 +6,16 @@ This example demonstrates how AI agents should use the clock server
 to get accurate, never-stale date/time information.
 """
 
+import json
+
 from agentic_brain.mcp.clock_server import (
-    clock_year,
     clock_adelaide,
-    clock_greeting,
-    clock_is_business_hours,
     clock_convert,
     clock_format,
+    clock_greeting,
+    clock_is_business_hours,
+    clock_year,
 )
-import json
 
 
 def example_greeting():
@@ -79,7 +80,7 @@ def example_adelaide_info():
 
     adelaide_data = json.loads(clock_adelaide())
 
-    print(f"\n📍 Adelaide, South Australia")
+    print("\n📍 Adelaide, South Australia")
     print(f"   Date: {adelaide_data['date']}")
     print(f"   Time: {adelaide_data['time']}")
     print(f"   Day: {adelaide_data['day']}")

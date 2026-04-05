@@ -24,21 +24,22 @@ Tests for:
 - Factory functions
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from agentic_brain.rag.retriever import RetrievedChunk, Retriever
-from agentic_brain.rag.store import Document as AgenticDocument, InMemoryDocumentStore
+import pytest
+
 from agentic_brain.rag.langchain_compat import (
     LANGCHAIN_AVAILABLE,
-    retrieved_chunk_to_langchain_document,
-    agentic_document_to_langchain_document,
-    langchain_document_to_agentic_document,
     AgenticBrainCallbackAdapter,
+    agentic_document_to_langchain_document,
     create_langchain_retriever,
+    langchain_document_to_agentic_document,
+    retrieved_chunk_to_langchain_document,
 )
-
+from agentic_brain.rag.retriever import RetrievedChunk, Retriever
+from agentic_brain.rag.store import Document as AgenticDocument
+from agentic_brain.rag.store import InMemoryDocumentStore
 
 # Skip all tests if LangChain is not installed
 pytestmark = pytest.mark.skipif(
@@ -233,6 +234,7 @@ class TestDocumentStoreRetriever:
     def test_add_documents(self):
         """Test adding LangChain documents to the store."""
         from langchain_core.documents import Document as LCDocument
+
         from agentic_brain.rag.langchain_compat import DocumentStoreRetriever
 
         store = InMemoryDocumentStore()
@@ -338,6 +340,7 @@ class TestLCELChainIntegration:
     def test_retriever_in_dict_chain(self, mock_search):
         """Test retriever as part of a dict chain component."""
         from langchain_core.runnables import RunnablePassthrough
+
         from agentic_brain.rag.langchain_compat import AgenticBrainRetriever
 
         mock_search.return_value = [
@@ -358,6 +361,7 @@ class TestLCELChainIntegration:
     def test_retriever_pipe_operator(self, mock_search):
         """Test retriever works with pipe operator."""
         from langchain_core.runnables import RunnableLambda
+
         from agentic_brain.rag.langchain_compat import AgenticBrainRetriever
 
         mock_search.return_value = [

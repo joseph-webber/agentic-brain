@@ -8,14 +8,15 @@ Supports Voyage AI's embedding models with advanced retrieval capabilities.
 Optimized for semantic search and ranking.
 """
 
+import asyncio
+import logging
 import os
 import time
-import asyncio
-from typing import List, Optional, Literal
-import numpy as np
-import logging
+from typing import List, Literal, Optional
 
-from .base import Embedder, EmbeddingProvider, EmbeddingResult, BatchEmbeddingResult
+import numpy as np
+
+from .base import BatchEmbeddingResult, Embedder, EmbeddingProvider, EmbeddingResult
 
 logger = logging.getLogger(__name__)
 

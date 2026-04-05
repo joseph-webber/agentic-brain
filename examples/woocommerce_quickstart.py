@@ -40,7 +40,6 @@ if str(SRC) not in sys.path:
 
 from agentic_brain.commerce import WooCommerceAgent  # noqa: E402
 
-
 REQUIRED_ENV_VARS = (
     "WOOCOMMERCE_URL",
     "WOOCOMMERCE_CONSUMER_KEY",

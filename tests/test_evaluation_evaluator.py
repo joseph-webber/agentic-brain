@@ -1,5 +1,5 @@
-from agentic_brain.evaluation.evaluator import RAGEvaluator
 from agentic_brain.evaluation.datasets import Dataset, Example
+from agentic_brain.evaluation.evaluator import RAGEvaluator
 
 
 def make_dataset():

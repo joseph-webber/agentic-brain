@@ -1,10 +1,11 @@
 """Health check helpers and a minimal WSGI app for health & metrics."""
 
-import os
 import json
+import os
 import socket
 import time
 from typing import Dict
+
 from .metrics import global_metrics
 
 

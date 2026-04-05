@@ -31,13 +31,13 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
+from agentic_brain.core.exceptions import GraphConnectionError
 from agentic_brain.core.neo4j_pool import (
     configure_pool as configure_neo4j_pool,
 )
 from agentic_brain.core.neo4j_pool import (
     get_driver as get_shared_neo4j_driver,
 )
-from agentic_brain.core.exceptions import GraphConnectionError
 
 from .embeddings import EmbeddingProvider, get_embeddings
 from .exceptions import EmbeddingError, RetrievalError
@@ -326,7 +326,7 @@ class Retriever:
 
         try:
             query_embedding = self.embeddings.embed(query)
-        except EmbeddingError as exc:
+        except EmbeddingError:
             logger.exception("Failed to embed query for document store retrieval")
             return []
 
@@ -374,7 +374,7 @@ class Retriever:
 
         try:
             query_embedding = self.embeddings.embed(query)
-        except EmbeddingError as exc:
+        except EmbeddingError:
             logger.exception("Failed to embed query for file search")
             return []
 

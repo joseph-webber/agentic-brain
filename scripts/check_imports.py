@@ -1,7 +1,7 @@
-import os
-import sys
 import importlib
+import os
 import pkgutil
+import sys
 
 
 def check_imports(start_dir):
@@ -33,7 +33,7 @@ def check_imports(start_dir):
                     print(f"❌ Error importing {module_name}: {e}")
                     error_count += 1
 
-    print(f"\nImport check complete.")
+    print("\nImport check complete.")
     print(f"Success: {success_count}")
     print(f"Errors: {error_count}")
 

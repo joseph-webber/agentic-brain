@@ -13,7 +13,7 @@ import time
 import tracemalloc
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from typing import Any, Awaitable, Callable
 
 
@@ -135,7 +135,7 @@ class BenchmarkMetric:
 @dataclass
 class BenchmarkSuiteResult:
     timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
     hardware: dict[str, Any] = field(default_factory=dict)
     metrics: dict[str, BenchmarkMetric] = field(default_factory=dict)

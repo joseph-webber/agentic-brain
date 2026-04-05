@@ -3,24 +3,24 @@
 
 """Comprehensive security hardening tests."""
 
-import pytest
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
-from agentic_brain.security.sanitization import (
-    InputSanitizer,
-    SanitizationType,
-    SanitizationError,
-    sanitize_cypher,
-    sanitize_prompt,
-    sanitize_sql,
-    sanitize_command,
-    sanitize_path,
-)
+import pytest
 
 from agentic_brain.security.auth import (
+    RateLimitConfig,
     RateLimiter,
     RateLimitError,
-    RateLimitConfig,
+)
+from agentic_brain.security.sanitization import (
+    InputSanitizer,
+    SanitizationError,
+    SanitizationType,
+    sanitize_command,
+    sanitize_cypher,
+    sanitize_path,
+    sanitize_prompt,
+    sanitize_sql,
 )
 
 

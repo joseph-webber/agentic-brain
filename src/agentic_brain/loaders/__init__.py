@@ -20,7 +20,7 @@ from .csv import CSVLoader, CSVRowLoader
 from .directory import DirectoryLoader
 from .docx import DocxLoader
 from .html import HTMLLoader
-from .json import JSONLoader, JSONLinesLoader, JSONLinesRowLoader
+from .json import JSONLinesLoader, JSONLinesRowLoader, JSONLoader
 from .markdown import MarkdownHeadingLoader, MarkdownLoader
 from .pdf import PDFLoader, PDFPageLoader
 

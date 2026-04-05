@@ -20,12 +20,12 @@ import subprocess
 import sys
 import tempfile
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -95,7 +95,7 @@ def call_ollama_api(
         with urllib.request.urlopen(req, timeout=timeout) as response:
             data = json.loads(response.read().decode("utf-8"))
             return data.get("response", "").strip()
-    except Exception as e:
+    except Exception:
         return None
 
 

@@ -35,13 +35,13 @@ License: MIT
 """
 
 import asyncio
+import random
+import string
 from dataclasses import dataclass, field
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
-import random
-import string
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ENUMS AND CONSTANTS
@@ -1014,7 +1014,7 @@ async def demo():
         for notif in dashboard["notifications"]:
             print(f"   {notif}")
 
-    print(f"\n📊 Dashboard:")
+    print("\n📊 Dashboard:")
     print(f"   💰 Rent Balance: ${dashboard['rent_balance']:.2f}")
     print(f"   🔧 Open Maintenance: {dashboard['open_maintenance']}")
     print(f"   ✉️ Unread Messages: {dashboard['unread_messages']}")
@@ -1032,7 +1032,7 @@ async def demo():
 
     # Payment details
     details = portal.get_payment_details()
-    print(f"\n💳 Payment Options:")
+    print("\n💳 Payment Options:")
     print(f"   BPAY Biller: {details['bpay_biller_code']}")
     print(f"   BPAY Ref: {details['bpay_reference']}")
     print(f"   Bank: {details['bank_name']}")
@@ -1100,7 +1100,7 @@ async def demo():
 
     # Lease summary
     lease = portal.get_lease_summary()
-    print(f"\n📜 Lease Summary:")
+    print("\n📜 Lease Summary:")
     print(f"   Start: {lease['start_date']}")
     print(f"   End: {lease['end_date']}")
     print(f"   Weekly Rent: ${lease['weekly_rent']}")
@@ -1116,7 +1116,7 @@ async def demo():
 
     inspections = portal.get_inspection_schedule()
     if inspections:
-        print(f"\n📅 Upcoming Inspections:")
+        print("\n📅 Upcoming Inspections:")
         for insp in inspections:
             print(f"   📆 {insp.inspection_date.strftime('%d %B %Y')}")
             print(f"      Time: {insp.time_slot.value}")
@@ -1144,7 +1144,7 @@ async def demo():
         print(f"\n📬 Unread Messages ({len(unread)}):")
         for msg in unread:
             print(f"   ✉️ {msg.subject}")
-            print(f"      From: Property Manager")
+            print("      From: Property Manager")
             print(f"      Date: {msg.sent_date.strftime('%d/%m/%Y')}")
             portal.mark_message_read(msg.message_id)
 

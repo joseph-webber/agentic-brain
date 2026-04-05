@@ -1,5 +1,6 @@
-from agentic_brain.plugins.base import Plugin
 import asyncio
+
+from agentic_brain.plugins.base import Plugin
 
 
 class ExamplePlugin(Plugin):

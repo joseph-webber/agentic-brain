@@ -11,8 +11,8 @@ from __future__ import annotations
 import asyncio
 from typing import Any, AsyncGenerator, Iterable, List, Optional
 
-from .rag.pipeline import RAGPipeline, RAGResult
 from .rag.embeddings import EmbeddingProvider
+from .rag.pipeline import RAGPipeline, RAGResult
 
 
 class AsyncEmbedder:

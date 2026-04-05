@@ -5,9 +5,9 @@ import json
 import pytest
 
 from agentic_brain.streaming.stream_handler import (
+    StreamingResponse,
     StreamProvider,
     StreamToken,
-    StreamingResponse,
     iter_chunked_lines,
     iter_sse_payloads,
     iter_text_chunks,

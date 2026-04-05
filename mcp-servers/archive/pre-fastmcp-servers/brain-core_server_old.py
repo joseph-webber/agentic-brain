@@ -29,23 +29,25 @@ from dotenv import load_dotenv
 load_dotenv(os.path.expanduser("~/brain/.env"))
 
 # MCP protocol
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from core.fuzzy_search import fuzzy_filter, fuzzy_ratio
+from core.mcp_cache import cache, cached
+from core.neo4j_pool import (
+    health_check as neo4j_health,
+)
 
 # Core utilities (new!)
 from core.neo4j_pool import (
     query,
     query_single,
     query_value,
-    health_check as neo4j_health,
 )
-from core.mcp_cache import cache, cached
-from core.fuzzy_search import fuzzy_ratio, fuzzy_filter
+from core_data.core import CoreData
 
 # Brain data
 from core_data.neo4j_claude import brain_data
-from core_data.core import CoreData
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+from mcp.types import TextContent, Tool
 
 # Lazy-loaded core
 _core: Optional[CoreData] = None

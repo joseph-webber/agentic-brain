@@ -11,7 +11,6 @@ from pathlib import Path
 
 import pytest
 
-
 BASE_DIR = Path(__file__).resolve().parents[2] / "src" / "agentic_brain" / "rag"
 
 

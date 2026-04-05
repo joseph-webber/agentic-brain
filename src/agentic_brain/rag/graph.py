@@ -33,12 +33,13 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from .community import CommunityGraphRAG
 from agentic_brain.core.neo4j_schema import (
     VECTOR_INDEX_NAME,
     ensure_indexes_sync,
 )
 from agentic_brain.core.neo4j_utils import resilient_query_sync
+
+from .community import CommunityGraphRAG
 
 logger = logging.getLogger(__name__)
 

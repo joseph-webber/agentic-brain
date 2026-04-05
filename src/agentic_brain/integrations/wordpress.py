@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-
 from ..security.api_access import (
     APIAccessController,
     APIEndpoint,
@@ -64,7 +63,7 @@ class WordPressCapabilities:
     can_moderate_comments: bool = False
 
     @classmethod
-    def from_role(cls, role: WordPressRole) -> "WordPressCapabilities":
+    def from_role(cls, role: WordPressRole) -> WordPressCapabilities:
         """Get capabilities for a WordPress role."""
 
         if role == WordPressRole.SUBSCRIBER:

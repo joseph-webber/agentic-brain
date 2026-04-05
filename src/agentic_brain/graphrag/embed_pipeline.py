@@ -257,7 +257,7 @@ def embed_sessions(
             if embedded % 10 == 0:
                 print(f"  Progress: {embedded}/{len(sessions)} embedded...")
 
-        print(f"\nDone.")
+        print("\nDone.")
         print(f"  Embedded: {embedded}")
         print(f"  Errors: {errors}")
         for prov, cnt in provider_counts.items():

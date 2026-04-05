@@ -68,20 +68,20 @@ import os
 import sqlite3
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from enum import IntEnum, Enum
+from datetime import UTC, datetime, timedelta, timezone
+from enum import Enum, IntEnum
 from pathlib import Path
 from typing import Any, Optional
 
 from agentic_brain.auth import (
+    AuthConfig,
     AuthProvider,
     JWTAuth,
-    AuthConfig,
-    require_role,
-    require_authority,
-    current_user,
-    User,
     Token,
+    User,
+    current_user,
+    require_authority,
+    require_role,
 )
 
 # =============================================================================
@@ -164,7 +164,7 @@ class SecurityOfficer:
 
     def has_clearance_for(self, classification: PSPFClassification) -> bool:
         """Check if officer has sufficient clearance for classification."""
-        if self.clearance_expiry < datetime.now(timezone.utc):
+        if self.clearance_expiry < datetime.now(UTC):
             return False
 
         clearance_map = {
@@ -207,7 +207,7 @@ class ClassifiedDocument:
     compartments: list[str] = field(default_factory=list)
     codewords: list[str] = field(default_factory=list)
     originator: str = ""
-    created_date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_date: datetime = field(default_factory=lambda: datetime.now(UTC))
     review_date: Optional[datetime] = None
     destruction_date: Optional[datetime] = None
     content_hash: str = ""
@@ -311,7 +311,7 @@ class SecureAuditLog:
         details: str = "",
     ):
         """Log a document access attempt."""
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
 
         entry = {
             "timestamp": timestamp,
@@ -447,7 +447,7 @@ class DefenceContractorAssistant:
         In production, this would verify against AGSVA/DISP systems.
         """
         # Check clearance validity
-        if officer.clearance_expiry < datetime.now(timezone.utc):
+        if officer.clearance_expiry < datetime.now(UTC):
             logger.warning(f"EXPIRED CLEARANCE: {officer.employee_id}")
             return False
 
@@ -630,7 +630,7 @@ def create_demo_officers() -> list[SecurityOfficer]:
             employee_id="EMP-001",
             name="Alice Chen",
             clearance_level=AGSVAClearance.PV,
-            clearance_expiry=datetime.now(timezone.utc) + timedelta(days=365),
+            clearance_expiry=datetime.now(UTC) + timedelta(days=365),
             codeword_access=["NAVIGATOR"],
             need_to_know_compartments=["AUKUS-SUB", "NUCLEAR-PROP", "SOVEREIGN-CAP"],
             nationality="AUS",
@@ -640,7 +640,7 @@ def create_demo_officers() -> list[SecurityOfficer]:
             employee_id="EMP-002",
             name="Bob Williams",
             clearance_level=AGSVAClearance.NV2,
-            clearance_expiry=datetime.now(timezone.utc) + timedelta(days=180),
+            clearance_expiry=datetime.now(UTC) + timedelta(days=180),
             need_to_know_compartments=["AUKUS-SUB"],
             nationality="AUS",
         ),
@@ -648,7 +648,7 @@ def create_demo_officers() -> list[SecurityOfficer]:
             employee_id="EMP-003",
             name="Carol Smith",
             clearance_level=AGSVAClearance.NV1,
-            clearance_expiry=datetime.now(timezone.utc) + timedelta(days=90),
+            clearance_expiry=datetime.now(UTC) + timedelta(days=90),
             nationality="AUS",
         ),
     ]

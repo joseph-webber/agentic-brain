@@ -43,12 +43,12 @@ Copyright (C) 2025-2026 Joseph Webber / Iris Lumina
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
+import math
 from dataclasses import dataclass, field
 from datetime import datetime, time
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional, Tuple
-import logging
-import math
 
 logger = logging.getLogger(__name__)
 

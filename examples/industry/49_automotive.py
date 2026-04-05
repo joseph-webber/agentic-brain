@@ -24,9 +24,9 @@ Note:
 """
 
 import asyncio
+import random
 from datetime import datetime, timedelta
 from typing import Any
-import random
 
 from agentic_brain import Agent
 
@@ -953,7 +953,7 @@ async def main():
             # Special commands
             if user_input.lower() == "vehicle":
                 vehicle = get_vehicle_info()
-                print(f"\n🚙 Your Vehicle:")
+                print("\n🚙 Your Vehicle:")
                 print(
                     f"  {vehicle['year']} {vehicle['make']} {vehicle['model']} {vehicle['trim']}"
                 )
@@ -962,7 +962,7 @@ async def main():
 
             if user_input.lower() == "history":
                 history = get_service_history()
-                print(f"\n📋 Service History:")
+                print("\n📋 Service History:")
                 for s in history["service_history"][:5]:
                     print(f"  {s['date']}: {s['service']} - ${s['cost']:.2f}")
                 continue

@@ -11,34 +11,35 @@ Also tests deprecation wrappers for backwards compatibility.
 Created: 2026-04-01
 """
 
-import pytest
 import json
-import warnings
 import os
-from datetime import datetime, UTC
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+import warnings
+from datetime import UTC, datetime
+from pathlib import Path
+
+import pytest
 
 # Import unified implementations
 from agentic_brain.memory import (
-    UnifiedMemory,
-    MemoryType,
-    MemoryEntry,
     HookEvent,
-    SessionLink,
+    MemoryEntry,
+    MemoryType,
     SessionHooks,
+    SessionLink,
     SessionStitcher,
-    get_unified_memory,
-    get_session_hooks,
-    get_session_stitcher,
-    on_session_start,
-    on_user_prompt,
-    on_assistant_response,
-    on_tool_use,
-    stitch_message,
+    UnifiedMemory,
     find_related_sessions,
     get_session_context,
+    get_session_hooks,
+    get_session_stitcher,
+    get_unified_memory,
+    on_assistant_response,
+    on_session_start,
+    on_tool_use,
+    on_user_prompt,
+    stitch_message,
 )
 
 
@@ -460,6 +461,8 @@ class TestDeprecationWrappers:
             sys.path.insert(0, os.path.expanduser("~/brain"))
             from core.memory.session_stitcher import (
                 SessionStitcher as OldStitcher,
+            )
+            from core.memory.session_stitcher import (
                 get_stitcher,
             )
 

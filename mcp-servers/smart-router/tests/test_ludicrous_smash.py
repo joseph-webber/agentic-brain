@@ -3,11 +3,12 @@
 Claude SMASHES all other LLMs in parallel for maximum speed!
 """
 
-import pytest
 import asyncio
-import httpx
 import os
 import time
+
+import httpx
+import pytest
 
 pytestmark = pytest.mark.skipif(
     not os.environ.get("OPENAI_API_KEY"), reason="API keys required for ludicrous mode"
@@ -41,7 +42,7 @@ class LudicriousSmashMode:
                 ok = r.status_code == 200
                 self.results.append(("openai", elapsed, ok))
                 return "openai", ok
-        except Exception as e:
+        except Exception:
             self.results.append(("openai", time.time() - start, False))
             return "openai", False
 
@@ -63,7 +64,7 @@ class LudicriousSmashMode:
                 ok = r.status_code == 200
                 self.results.append(("groq", elapsed, ok))
                 return "groq", ok
-        except Exception as e:
+        except Exception:
             self.results.append(("groq", time.time() - start, False))
             return "groq", False
 
@@ -81,7 +82,7 @@ class LudicriousSmashMode:
                 ok = "candidates" in data
                 self.results.append(("gemini", elapsed, ok))
                 return "gemini", ok
-        except Exception as e:
+        except Exception:
             self.results.append(("gemini", time.time() - start, False))
             return "gemini", False
 
@@ -98,7 +99,7 @@ class LudicriousSmashMode:
                 ok = r.status_code == 200
                 self.results.append(("local", elapsed, ok))
                 return "local", ok
-        except Exception as e:
+        except Exception:
             self.results.append(("local", time.time() - start, False))
             return "local", False
 
@@ -133,7 +134,7 @@ class TestLudicriousSmashMode:
         smasher = LudicriousSmashMode()
         result = await smasher.ludicrous_smash()
 
-        print(f"\n🔥 LUDICROUS SMASH RESULTS 🔥")
+        print("\n🔥 LUDICROUS SMASH RESULTS 🔥")
         print(f"Total time: {result['total_time']:.2f}s")
         for provider, elapsed, ok in result["results"]:
             status = "✅" if ok else "❌"

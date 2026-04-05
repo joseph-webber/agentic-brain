@@ -572,8 +572,8 @@ def alert_status() -> dict:
     Get unified alert radar status.
     Shows queue depth, dedup stats, active monitors, pending alerts.
     """
-    from core.priority_alert_queue import AlertQueue
     from brain_core import UnifiedAlertDeduplicator as AlertDeduplicator
+    from core.priority_alert_queue import AlertQueue
     from core.security_monitor import SecurityMonitor
 
     queue = AlertQueue()
@@ -615,8 +615,8 @@ def alert_send(
     Priority: critical, high, normal, low
     Alert types: info, warning, error, security, sage, jira, pr
     """
-    from core.priority_alert_queue import AlertQueue
     from brain_core import UnifiedAlertDeduplicator as AlertDeduplicator
+    from core.priority_alert_queue import AlertQueue
 
     queue = AlertQueue()
     dedup = AlertDeduplicator()
@@ -1007,7 +1007,7 @@ def skills_list(category: str = None) -> dict:
     Returns list of skills with name, description, and category.
     """
     try:
-        from brain_core.skills import list_skills, SkillCategory
+        from brain_core.skills import SkillCategory, list_skills
 
         cat = None
         if category:

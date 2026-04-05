@@ -9,10 +9,11 @@ Supports sync/async embedding, batch operations, and dimension specification.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
-import numpy as np
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 
 class EmbeddingProvider(str, Enum):

@@ -52,13 +52,13 @@ License: MIT
 """
 
 import asyncio
+import hashlib
+import json
 from dataclasses import dataclass, field
-from datetime import datetime, date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import Enum
 from typing import Optional
-import hashlib
-import json
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SIL ENUMERATIONS
@@ -875,7 +875,7 @@ class SILCoordinator:
             return False
 
         if not worker.is_compliant():
-            print(f"❌ Cannot assign non-compliant worker")
+            print("❌ Cannot assign non-compliant worker")
             return False
 
         shift.worker_id = worker_id
@@ -1187,12 +1187,12 @@ class SILCoordinator:
         if severity == IncidentSeverity.CRITICAL:
             print(f"🚨 CRITICAL INCIDENT: {incident_id}")
             print(f"   Type: {incident_type.value}")
-            print(f"   Requires immediate attention!")
+            print("   Requires immediate attention!")
 
         # Check if reportable to NDIS Commission
         if incident.is_reportable():
             print(
-                f"⚠️ REPORTABLE INCIDENT - Must report to NDIS Commission within 5 days"
+                "⚠️ REPORTABLE INCIDENT - Must report to NDIS Commission within 5 days"
             )
             incident.requires_investigation = True
 
@@ -1364,7 +1364,7 @@ async def demo():
     print("=" * 70)
     print("🏠 SUPPORTED INDEPENDENT LIVING (SIL) COORDINATOR")
     print("=" * 70)
-    print(f"\n📋 Provider: Support Network Services")
+    print("\n📋 Provider: Support Network Services")
     print("🔒 Privacy Mode: On-Premise (No Cloud)")
 
     # Initialize coordinator
@@ -1639,7 +1639,7 @@ async def demo():
 
     # Show summary
     summary = sil.get_goals_summary("SIL-001")
-    print(f"\n   📊 Goal Summary for David C.:")
+    print("\n   📊 Goal Summary for David C.:")
     print(f"      Total Goals: {summary['total']}")
     print(f"      In Progress: {summary['in_progress']}")
     print(f"      Achieved: {summary['achieved']}")
@@ -1753,7 +1753,7 @@ async def demo():
 
     # Get budget summary
     budget = sil.calculate_participant_spend("SIL-001", month=8, year=2024)
-    print(f"\n   📊 Budget Summary for David C. (August 2024):")
+    print("\n   📊 Budget Summary for David C. (August 2024):")
     print(f"      Total Shifts: {budget['total_shifts']}")
     print(f"      Total Hours: {budget['total_hours']}")
     print(f"      Total Cost: ${Decimal(budget['total_cost']):.2f}")

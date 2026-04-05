@@ -1,5 +1,5 @@
-from agentic_brain.evaluation.report import EvaluationReport
 from agentic_brain.evaluation.comparison import compare_reports
+from agentic_brain.evaluation.report import EvaluationReport
 
 
 def test_identical_reports_yield_high_p():

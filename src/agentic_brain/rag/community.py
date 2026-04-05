@@ -756,7 +756,8 @@ class CommunityGraphRAG:
         hierarchy_level: int | None = None,
     ) -> list[dict[str, Any]]:
         """Hybrid search combining community summaries and entities using unified RRF."""
-        from .rrf import DEFAULT_K, reciprocal_rank_fusion as rrf_unified
+        from .rrf import DEFAULT_K
+        from .rrf import reciprocal_rank_fusion as rrf_unified
 
         summary_results = (
             await self._search_community_summaries(

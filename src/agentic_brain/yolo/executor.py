@@ -14,13 +14,13 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from .handlers import CommandExecutionResult, CommandHandlers, InterpretedCommand
 from ..security import (
     SecurityGuard,
     SecurityRole,
     SecurityViolation,
     get_or_create_guard,
 )
+from .handlers import CommandExecutionResult, CommandHandlers, InterpretedCommand
 
 logger = logging.getLogger(__name__)
 

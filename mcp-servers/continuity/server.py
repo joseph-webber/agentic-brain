@@ -56,14 +56,14 @@ except ImportError:
 # Import continuity API
 try:
     from core.continuity import (
+        BlockSummary,
         ContinuityAPI,
+        CryptoProof,
+        RepairResult,
         SaveResult,
         SessionState,
-        VerifyResult,
-        CryptoProof,
         SystemStatus,
-        RepairResult,
-        BlockSummary,
+        VerifyResult,
         get_api,
     )
 except ImportError as e:
@@ -687,7 +687,7 @@ def continuity_compact() -> dict:
 
 if __name__ == "__main__":
     print("🔐 Continuity MCP Server starting...", file=sys.stderr)
-    print(f"   Chain file: ~/.brain-continuity/chain.json", file=sys.stderr)
+    print("   Chain file: ~/.brain-continuity/chain.json", file=sys.stderr)
 
     # Initialize API to check chain
     try:
@@ -696,9 +696,9 @@ if __name__ == "__main__":
 
         verify = api.verify()
         if verify.valid:
-            print(f"   ✅ Chain verified", file=sys.stderr)
+            print("   ✅ Chain verified", file=sys.stderr)
         else:
-            print(f"   ⚠️ Chain has issues - run continuity_repair", file=sys.stderr)
+            print("   ⚠️ Chain has issues - run continuity_repair", file=sys.stderr)
     except Exception as e:
         print(f"   ⚠️ API init error: {e}", file=sys.stderr)
 

@@ -90,11 +90,11 @@ __all__ = [
 
 # Rate limit management
 from agentic_brain.core.rate_limiter import (
+    ProviderQuota,
     RateLimitManager,
     RateLimitStrategy,
-    ProviderQuota,
-    get_rate_limit_manager,
     calculate_safe_agent_count,
     can_deploy_agents,
     get_deployment_recommendation,
+    get_rate_limit_manager,
 )

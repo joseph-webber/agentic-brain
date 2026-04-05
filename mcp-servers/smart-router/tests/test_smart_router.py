@@ -95,7 +95,7 @@ class TestRateLimiting:
 
     def test_record_request(self):
         """Recording request should add timestamp."""
-        from server import record_request, rate_limits
+        from server import rate_limits, record_request
 
         rate_limits["openai"] = []
         record_request("openai")
@@ -124,7 +124,7 @@ class TestSmartRoute:
     @pytest.mark.asyncio
     async def test_smart_route_with_mock(self):
         """Smart route should try providers in order."""
-        from server import smart_route, rate_limits
+        from server import rate_limits, smart_route
 
         # Clear rate limits
         for k in rate_limits:
@@ -144,7 +144,7 @@ class TestSmartRoute:
     @pytest.mark.asyncio
     async def test_prefer_override(self):
         """Prefer parameter should override default routing."""
-        from server import smart_route, rate_limits
+        from server import rate_limits, smart_route
 
         for k in rate_limits:
             rate_limits[k] = []
@@ -277,7 +277,7 @@ class TestSmokeSmartRoute:
     @pytest.mark.asyncio
     async def test_fallback_chain(self):
         """Should fallback to next provider on failure."""
-        from server import smart_route, rate_limits
+        from server import rate_limits, smart_route
 
         # This just tests that the system handles the chain
         result = await smart_route("Reply OK", task="free")  # Uses free providers only
@@ -306,8 +306,9 @@ class TestMCPIntegration:
     @pytest.mark.asyncio
     async def test_router_status_tool(self):
         """router_status tool should return valid JSON."""
-        from server import router_status
         import json
+
+        from server import router_status
 
         result = await router_status()
         data = json.loads(result)

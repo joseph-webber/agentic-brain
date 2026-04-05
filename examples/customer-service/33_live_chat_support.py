@@ -21,11 +21,11 @@ import json
 import random
 import re
 import time
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Callable, Any
-from collections import deque
+from typing import Any, Callable, Optional
 
 
 class ChatStatus(Enum):
@@ -618,7 +618,7 @@ class LiveChatBot:
 
         # Check for common intents
         if any(word in message_lower for word in ["hi", "hello", "hey"]):
-            return f"Hello! How can I help you today?"
+            return "Hello! How can I help you today?"
 
         if any(word in message_lower for word in ["thank", "thanks"]):
             return "You're welcome! Is there anything else I can help with?"

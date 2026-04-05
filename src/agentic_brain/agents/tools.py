@@ -365,7 +365,7 @@ class CodeExecutionTool(Tool):
                 execution_time_ms=(time.perf_counter() - start_time) * 1000,
             )
         except Exception as e:
-            self._logger.exception(f"Code execution failed")
+            self._logger.exception("Code execution failed")
             return ToolResult(
                 tool_name=self.name,
                 success=False,

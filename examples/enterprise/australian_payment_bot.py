@@ -50,7 +50,7 @@ import re
 import secrets
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 from typing import Any, Optional
 

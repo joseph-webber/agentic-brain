@@ -45,12 +45,12 @@ Copyright (C) 2025-2026 Joseph Webber / Iris Lumina
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
 from dataclasses import dataclass, field
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional, Tuple
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ class ChildProtectionService:
         """Get information about how to report to this agency."""
         info = [
             f"To report a child safety concern in {self.state}:",
-            f"",
+            "",
             f"📞 Hotline (24/7): {self.hotline}",
         ]
 
@@ -152,8 +152,8 @@ class ChildProtectionService:
 
         info.extend(
             [
-                f"",
-                f"In immediate danger, call 000",
+                "",
+                "In immediate danger, call 000",
             ]
         )
 
@@ -928,9 +928,9 @@ class ChildServicesLocator:
         lines = [
             f"Child services in {state}.",
             f"Child protection hotline: {services['child_protection']['hotline']}.",
-            f"Child Support: 1 3 1 2 7 2.",
-            f"Kids Helpline: 1 8 hundred 5 5 1 8 hundred.",
-            f"Parent Line: 1 3 hundred 30 1 3 hundred.",
+            "Child Support: 1 3 1 2 7 2.",
+            "Kids Helpline: 1 8 hundred 5 5 1 8 hundred.",
+            "Parent Line: 1 3 hundred 30 1 3 hundred.",
         ]
 
         return " ".join(lines)

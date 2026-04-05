@@ -26,7 +26,6 @@ import os
 import shutil
 from dataclasses import dataclass
 
-
 from .config import Provider
 
 logger = logging.getLogger(__name__)

@@ -1,9 +1,9 @@
 """Policy enforcer that composes various guardrails."""
 
-from .pii_detector import PiiDetector
-from .toxicity import ToxicityDetector
 from .hallucination import HallucinationDetector
 from .output_filter import OutputFilter
+from .pii_detector import PiiDetector
+from .toxicity import ToxicityDetector
 
 
 class PolicyEnforcer:

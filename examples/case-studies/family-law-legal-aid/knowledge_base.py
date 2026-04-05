@@ -43,13 +43,13 @@ the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 """
 
+import json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-import json
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -421,7 +421,7 @@ class FamilyLawKnowledgeBase:
 
     def add_documents_from_path(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         category: KnowledgeCategory,
         source: str,
     ) -> int:
@@ -816,7 +816,7 @@ class FamilyLawKnowledgeBase:
     # Export/Import
     # -------------------------------------------------------------------------
 
-    def export_to_json(self, path: Union[str, Path]) -> None:
+    def export_to_json(self, path: str | Path) -> None:
         """Export knowledge base to JSON."""
         path = Path(path)
 
@@ -830,7 +830,7 @@ class FamilyLawKnowledgeBase:
         path.write_text(json.dumps(data, indent=2))
         logger.info(f"Exported {len(self.documents)} documents to {path}")
 
-    def import_from_json(self, path: Union[str, Path]) -> int:
+    def import_from_json(self, path: str | Path) -> int:
         """Import knowledge base from JSON."""
         path = Path(path)
 

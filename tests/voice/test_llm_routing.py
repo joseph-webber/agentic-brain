@@ -1,7 +1,8 @@
 """Tests for multi-LLM routing."""
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 class TestLLMRouter:

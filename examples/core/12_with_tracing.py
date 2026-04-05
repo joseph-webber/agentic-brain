@@ -38,11 +38,11 @@ def example_basic_tracing():
     print("\n=== Example 1: Basic Tracing ===\n")
 
     from agentic_brain.observability import (
+        ExporterType,
+        TracingConfig,
         setup_tracing,
         shutdown_tracing,
         trace,
-        TracingConfig,
-        ExporterType,
     )
 
     # Setup with explicit config
@@ -73,13 +73,13 @@ async def example_async_tracing():
     print("\n=== Example 2: Async Tracing ===\n")
 
     from agentic_brain.observability import (
+        ExporterType,
+        TracingConfig,
+        add_span_attributes,
+        get_current_span,
         setup_tracing,
         shutdown_tracing,
         trace_async,
-        get_current_span,
-        add_span_attributes,
-        TracingConfig,
-        ExporterType,
     )
 
     setup_tracing(
@@ -127,14 +127,14 @@ def example_metrics():
     print("\n=== Example 3: Metrics ===\n")
 
     from agentic_brain.observability import (
+        MetricsConfig,
+        record_chat_latency,
+        record_chat_request,
+        record_llm_error,
+        record_tokens,
+        set_active_sessions,
         setup_metrics,
         shutdown_metrics,
-        record_chat_request,
-        record_chat_latency,
-        record_tokens,
-        record_llm_error,
-        set_active_sessions,
-        MetricsConfig,
     )
 
     # Setup metrics
@@ -182,14 +182,14 @@ async def example_fastapi_middleware():
         return
 
     from agentic_brain.observability import (
-        setup_tracing,
-        setup_metrics,
-        shutdown_tracing,
-        shutdown_metrics,
-        trace_async,
-        record_chat_request,
-        TracingConfig,
         MetricsConfig,
+        TracingConfig,
+        record_chat_request,
+        setup_metrics,
+        setup_tracing,
+        shutdown_metrics,
+        shutdown_tracing,
+        trace_async,
     )
     from agentic_brain.observability.middleware import (
         create_observability_middleware,
@@ -271,13 +271,13 @@ def example_context_propagation():
     print("\n=== Example 5: Context Propagation ===\n")
 
     from agentic_brain.observability import (
-        setup_tracing,
-        shutdown_tracing,
+        ExporterType,
+        TracingConfig,
+        extract_context,
         get_tracer,
         inject_context,
-        extract_context,
-        TracingConfig,
-        ExporterType,
+        setup_tracing,
+        shutdown_tracing,
     )
 
     setup_tracing(
@@ -334,16 +334,16 @@ def example_with_agent():
     print("\n=== Example 6: Agent with Tracing ===\n")
 
     from agentic_brain.observability import (
-        setup_tracing,
+        MetricsConfig,
+        TracingConfig,
+        record_chat_latency,
+        record_chat_request,
         setup_metrics,
-        shutdown_tracing,
+        setup_tracing,
         shutdown_metrics,
+        shutdown_tracing,
         trace,
         trace_async,
-        record_chat_request,
-        record_chat_latency,
-        TracingConfig,
-        MetricsConfig,
     )
 
     # Setup observability
@@ -404,11 +404,11 @@ def example_custom_metrics():
     print("\n=== Example 7: Custom Metrics ===\n")
 
     from agentic_brain.observability import (
-        setup_metrics,
-        shutdown_metrics,
+        MetricsConfig,
         counter,
         histogram,
-        MetricsConfig,
+        setup_metrics,
+        shutdown_metrics,
     )
     from agentic_brain.observability.metrics import timed
 

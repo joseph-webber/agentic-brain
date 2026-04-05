@@ -1,11 +1,12 @@
 import asyncio
+
 import pytest
 
 from agentic_brain.rag.graph import (
-    _validate_embedding,
-    _get_embedding_dimension,
     EnhancedGraphRAG,
     GraphRAGConfig,
+    _get_embedding_dimension,
+    _validate_embedding,
 )
 
 

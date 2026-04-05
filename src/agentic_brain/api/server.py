@@ -48,7 +48,6 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.staticfiles import StaticFiles
 
 from .. import __version__
-
 from ..dashboard import create_dashboard_router
 from .audit import AUDIT_ENABLED, AuditLogger, AuditMiddleware
 from .middleware import SecurityHeadersMiddleware, setup_cors, setup_exception_handlers

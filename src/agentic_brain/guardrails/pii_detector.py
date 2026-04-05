@@ -1,7 +1,7 @@
 """Simple PII detection utilities."""
 
 import re
-from typing import List, Dict
+from typing import Dict, List
 
 
 class PiiDetector:

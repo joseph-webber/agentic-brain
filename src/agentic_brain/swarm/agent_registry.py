@@ -33,10 +33,10 @@ from typing import Any, Dict, List, Optional
 
 from .redis_coordinator import (
     SwarmCoordinator,
-    _loads,
     _key_agents_hash,
     _key_agents_set,
     _key_hb,
+    _loads,
 )
 
 logger = logging.getLogger(__name__)

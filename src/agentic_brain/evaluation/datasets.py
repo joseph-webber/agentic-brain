@@ -1,7 +1,7 @@
 """Dataset utilities for RAG evaluation."""
 
 from dataclasses import dataclass
-from typing import List, Optional, Iterable
+from typing import Iterable, List, Optional
 
 
 @dataclass

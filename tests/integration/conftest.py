@@ -414,7 +414,7 @@ class FakeSession:
     def run(self, query: str, **params: Any) -> FakeRecordList:
         return FakeRecordList(self.store.execute(query, params))
 
-    def __enter__(self) -> "FakeSession":
+    def __enter__(self) -> FakeSession:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:

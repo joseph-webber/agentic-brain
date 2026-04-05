@@ -23,17 +23,16 @@ Usage:
 """
 
 import os
-import sys
+import re
 import subprocess
+import sys
 import time
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
-import re
+from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, os.path.expanduser("~/brain"))
 
 from core.mcp_cache import cache
-
 
 # ============================================================
 # MAIL CACHE - 1 hour TTL for search results
@@ -169,7 +168,7 @@ def _search_neo4j(
             else []
         )
 
-    except Exception as e:
+    except Exception:
         return []  # Fall through to Spotlight
 
 
@@ -515,7 +514,7 @@ if __name__ == "__main__":
     # Test search (no speak for test)
     print("\n🔍 Search test:")
     result = mail_search("test", speak=False)
-    print(f"  Query: test")
+    print("  Query: test")
     print(f"  Source: {result.get('source')}")
     print(f"  Count: {result.get('count')}")
     print(f"  Time: {result.get('search_time_ms')}ms")

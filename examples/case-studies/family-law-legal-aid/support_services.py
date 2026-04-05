@@ -51,10 +51,10 @@ Copyright (C) 2025-2026 Joseph Webber / Iris Lumina
 SPDX-License-Identifier: GPL-3.0-or-later
 """
 
+import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -2243,7 +2243,7 @@ if __name__ == "__main__":
     kh = KIDS_HELPLINE
     print(f"Name: {kh.name}")
     print(f"Description: {kh.description}")
-    print(f"\nContact Channels:")
+    print("\nContact Channels:")
     for c in kh.contacts:
         print(f"  - {c.channel.value}: {c.value}")
         if c.hours:

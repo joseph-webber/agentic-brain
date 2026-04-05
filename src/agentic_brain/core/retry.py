@@ -227,7 +227,7 @@ def timeout(
             async def wrapped_async(*args: Any, **kwargs: Any) -> T:
                 try:
                     return await async_wrapper(*args, **kwargs)
-                except asyncio.TimeoutError as exc:
+                except TimeoutError as exc:
                     raise TimeoutError(timeout_message) from exc
 
             wrapper = functools.wraps(callable_obj)(wrapped_async)  # type: ignore[assignment]

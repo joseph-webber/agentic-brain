@@ -10,18 +10,18 @@ Comprehensive test suite with 25+ test cases covering:
 - Integration scenarios
 """
 
-import pytest
 from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from agentic_brain.api import (
     AgenticBrain,
-    quick_rag,
-    quick_graph,
-    quick_search,
     quick_eval,
+    quick_graph,
+    quick_rag,
+    quick_search,
 )
 from agentic_brain.rag import RAGResult
-
 
 # ============================================================================
 # SHORTCUTS TESTS

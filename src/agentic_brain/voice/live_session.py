@@ -62,6 +62,8 @@ except ImportError:
 
 # ── Re-export constants and data types from sub-modules ──────────────
 
+# Re-export LiveVoiceSession from session sub-module
+from agentic_brain.voice.session import LiveVoiceSession
 from agentic_brain.voice.state import (
     DEFAULT_CHANNELS,
     DEFAULT_CHUNK_SIZE,
@@ -78,10 +80,6 @@ from agentic_brain.voice.state import (
     find_airpods_device,
     rms_amplitude,
 )
-
-# Re-export LiveVoiceSession from session sub-module
-from agentic_brain.voice.session import LiveVoiceSession
-
 
 # ── Audio utilities defined here (so tests can patch _HAS_PYAUDIO/pyaudio) ──
 

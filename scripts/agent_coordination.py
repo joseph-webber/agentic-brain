@@ -109,7 +109,7 @@ def _utc_now() -> datetime:
     return datetime.utcnow()
 
 
-def _get_redis_client() -> "redis.Redis":
+def _get_redis_client() -> redis.Redis:
     """Create a Redis client using standard Agentic Brain environment.
 
     This mirrors the defaults used elsewhere in the project:
@@ -138,7 +138,7 @@ def _get_redis_client() -> "redis.Redis":
     )
 
 
-def _publish(client: "redis.Redis", event: str, agent_id: str, **extra: Any) -> None:
+def _publish(client: redis.Redis, event: str, agent_id: str, **extra: Any) -> None:
     """Publish a small JSON event to both coordination channels."""
 
     payload = {
@@ -156,7 +156,7 @@ def _publish(client: "redis.Redis", event: str, agent_id: str, **extra: Any) -> 
 
 
 def _update_status(
-    client: "redis.Redis", agent_id: str, status: str, **extra: Any
+    client: redis.Redis, agent_id: str, status: str, **extra: Any
 ) -> None:
     """Write a compact status document for quick inspection.
 

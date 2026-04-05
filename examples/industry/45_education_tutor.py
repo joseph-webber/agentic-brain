@@ -24,9 +24,9 @@ Note:
 """
 
 import asyncio
+import random
 from datetime import datetime, timedelta
 from typing import Any
-import random
 
 from agentic_brain import Agent
 
@@ -1047,13 +1047,13 @@ async def main():
             # Special commands
             if user_input.lower() == "subjects":
                 print("\n📚 Available Subjects:")
-                for subj in SUBJECTS.keys():
+                for subj in SUBJECTS:
                     print(f"  • {subj.title()}")
                 continue
 
             if user_input.lower() == "progress":
                 prog = get_progress()
-                print(f"\n📊 Your Progress:")
+                print("\n📊 Your Progress:")
                 print(f"  Quizzes taken: {prog['summary']['quizzes_taken']}")
                 print(f"  Pass rate: {prog['summary']['pass_rate']}")
                 print(f"  Accuracy: {prog['summary']['overall_accuracy']}")

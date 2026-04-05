@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Voice Chat - Press Fn Fn to dictate, Enter to send"""
+import json
 import subprocess
 import sys
 import urllib.request
-import json
 
 
 def speak(text, rate=160):

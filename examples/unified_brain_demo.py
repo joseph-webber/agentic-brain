@@ -30,7 +30,7 @@ except ImportError:
     print("⚠️  Redis not available - using mock for demo")
     sys.modules["redis"] = MagicMock()
 
-from agentic_brain.unified_brain import UnifiedBrain, TaskType
+from agentic_brain.unified_brain import TaskType, UnifiedBrain
 
 
 def print_header(title: str):
@@ -47,7 +47,7 @@ def demo_brain_status():
     brain = UnifiedBrain(enable_inter_bot_comms=False)  # Disable Redis for demo
     status = brain.get_brain_status()
 
-    print(f"✓ Unified Brain Operational")
+    print("✓ Unified Brain Operational")
     print(f"  • Total Models: {status['total_bots']}")
     print(f"  • Providers Integrated: {', '.join(sorted(status['providers']))}")
     print(f"  • Collective Capabilities: {', '.join(sorted(status['capabilities']))}")
@@ -149,17 +149,17 @@ def demo_consensus_voting():
         timeout=30.0,
     )
 
-    print(f"✓ Consensus Result:")
+    print("✓ Consensus Result:")
     print(f"  Consensus: {result['consensus']}")
     print(f"  Confidence: {result['confidence']:.0%}")
     print(f"  Models Used: {', '.join(result.get('models_used', []))}")
     print(
         f"  Above Threshold (80%): {'✓ YES' if result['above_threshold'] else '✗ NO'}"
     )
-    print(f"\nWhy This Matters:")
-    print(f"  • Single model accuracy: ~90%")
-    print(f"  • 5-model consensus accuracy: ~99.9%")
-    print(f"  • Hallucination rate drops from 10% to <0.1%")
+    print("\nWhy This Matters:")
+    print("  • Single model accuracy: ~90%")
+    print("  • 5-model consensus accuracy: ~99.9%")
+    print("  • Hallucination rate drops from 10% to <0.1%")
 
 
 def demo_broadcast():
@@ -176,17 +176,17 @@ def demo_broadcast():
         timeout=30.0,
     )
 
-    print(f"✓ Broadcast Status:")
+    print("✓ Broadcast Status:")
     print(f"  Task ID: {result['task_id']}")
     print(f"  Status: {result['status']}")
     print(f"  Bots Notified: {result['num_bots']}")
     print(f"  Consensus Required: {result['consensus_required']}")
     print(f"  Timeout: {result['timeout']}s")
-    print(f"\nWhy Broadcast?")
+    print("\nWhy Broadcast?")
     print(
         f"  • Gather diverse perspectives ({result['num_bots']} models = {result['num_bots']} viewpoints)"
     )
-    print(f"  • Find edge cases you'd miss with single model")
+    print("  • Find edge cases you'd miss with single model")
     print(
         f"  • Parallel execution (all {result['num_bots']} models respond simultaneously)"
     )
@@ -373,7 +373,7 @@ def demo_brain_status():
     brain = UnifiedBrain()
     status = brain.get_brain_status()
 
-    print(f"✓ Unified Brain Operational")
+    print("✓ Unified Brain Operational")
     print(f"  • Total Models: {status['total_bots']}")
     print(f"  • Providers Integrated: {', '.join(status['providers'])}")
     print(f"  • Collective Capabilities: {', '.join(status['capabilities'])}")
@@ -470,17 +470,17 @@ def demo_consensus_voting():
         timeout=30.0,
     )
 
-    print(f"✓ Consensus Result:")
+    print("✓ Consensus Result:")
     print(f"  Consensus: {result['consensus']}")
     print(f"  Confidence: {result['confidence']:.0%}")
     print(f"  Models Used: {', '.join(result.get('models_used', []))}")
     print(
         f"  Above Threshold (80%): {'✓ YES' if result['above_threshold'] else '✗ NO'}"
     )
-    print(f"\nWhy This Matters:")
-    print(f"  • Single model accuracy: ~90%")
-    print(f"  • 5-model consensus accuracy: ~99.9%")
-    print(f"  • Hallucination rate drops from 10% to <0.1%")
+    print("\nWhy This Matters:")
+    print("  • Single model accuracy: ~90%")
+    print("  • 5-model consensus accuracy: ~99.9%")
+    print("  • Hallucination rate drops from 10% to <0.1%")
 
 
 def demo_broadcast():
@@ -497,16 +497,16 @@ def demo_broadcast():
         timeout=30.0,
     )
 
-    print(f"✓ Broadcast Status:")
+    print("✓ Broadcast Status:")
     print(f"  Task ID: {result['task_id']}")
     print(f"  Status: {result['status']}")
     print(f"  Bots Notified: {result['num_bots']}")
     print(f"  Consensus Required: {result['consensus_required']}")
     print(f"  Timeout: {result['timeout']}s")
-    print(f"\nWhy Broadcast?")
-    print(f"  • Gather diverse perspectives (5 models = 5 viewpoints)")
-    print(f"  • Find edge cases you'd miss with single model")
-    print(f"  • Parallel execution (all 5 models respond simultaneously)")
+    print("\nWhy Broadcast?")
+    print("  • Gather diverse perspectives (5 models = 5 viewpoints)")
+    print("  • Find edge cases you'd miss with single model")
+    print("  • Parallel execution (all 5 models respond simultaneously)")
 
 
 def demo_consensus_threshold():

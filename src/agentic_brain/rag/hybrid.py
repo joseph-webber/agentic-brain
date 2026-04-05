@@ -51,12 +51,16 @@ import numpy as np
 
 from .embeddings import EmbeddingProvider, get_embeddings
 from .retriever import RetrievedChunk
+from .rrf import (
+    DEFAULT_K,
+)
 
 # Import unified RRF implementation and re-export for backward compatibility
 from .rrf import (
     get_result_id as _get_result_id,
+)
+from .rrf import (
     reciprocal_rank_fusion_legacy as reciprocal_rank_fusion,
-    DEFAULT_K,
 )
 
 

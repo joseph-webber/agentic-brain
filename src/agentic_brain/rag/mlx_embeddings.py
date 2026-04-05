@@ -326,7 +326,7 @@ class MemoryMappedEmbeddings:
     def __del__(self) -> None:
         self.close()
 
-    def __enter__(self) -> "MemoryMappedEmbeddings":
+    def __enter__(self) -> MemoryMappedEmbeddings:
         return self
 
     def __exit__(self, *args: Any) -> None:
@@ -648,8 +648,8 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
 
     def similarity_search(
         self,
-        query: Union[str, list[float]],
-        corpus: Union[list[str], list[list[float]]],
+        query: str | list[float],
+        corpus: list[str] | list[list[float]],
         top_k: int = 5,
     ) -> list[tuple[int, float]]:
         """
@@ -757,7 +757,7 @@ class MLXAcceleratedEmbeddings(EmbeddingProvider):
         store.add_batch(embeddings)
         return store
 
-    def create_mmap_store(self, path: Union[str, Path]) -> MemoryMappedEmbeddings:
+    def create_mmap_store(self, path: str | Path) -> MemoryMappedEmbeddings:
         """
         Create a memory-mapped embedding store.
 
@@ -956,8 +956,8 @@ class MLXEmbeddings:
     @classmethod
     def similarity_search(
         cls,
-        query: Union[str, list[float]],
-        corpus: Union[list[str], list[list[float]]],
+        query: str | list[float],
+        corpus: list[str] | list[list[float]],
         top_k: int = 5,
     ) -> list[tuple[int, float]]:
         """GPU-accelerated similarity search."""

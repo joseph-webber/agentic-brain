@@ -143,7 +143,7 @@ rate_limits: dict[str, list[float]] = {p: [] for p in PROVIDERS}
 # ============================================================================
 
 # Provider modes: "full" | "smoke-test-only" | "heartbeat" | "disabled"
-provider_modes: dict[str, str] = {p: "full" for p in PROVIDERS}
+provider_modes: dict[str, str] = dict.fromkeys(PROVIDERS, "full")
 
 # Custom rate limits set by admin (overrides default)
 admin_rate_limits: dict[str, int] = {}
@@ -177,8 +177,8 @@ def get_effective_rate_limit(provider: str) -> int:
 
 
 # Smart cycling state - tracks "heat" of each provider
-provider_heat: dict[str, float] = {p: 0.0 for p in PROVIDERS}
-last_used: dict[str, float] = {p: 0.0 for p in PROVIDERS}
+provider_heat: dict[str, float] = dict.fromkeys(PROVIDERS, 0.0)
+last_used: dict[str, float] = dict.fromkeys(PROVIDERS, 0.0)
 cycle_index: int = 0  # Round-robin index
 
 # Cooldown settings (seconds)

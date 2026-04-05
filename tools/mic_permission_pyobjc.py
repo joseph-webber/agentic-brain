@@ -30,9 +30,9 @@ REDIS COORDINATION:
   redis-cli -a BrainRedis2026 LRANGE swarm:mic_permission:findings 0 -1
 """
 
-import sys
 import os
 import subprocess
+import sys
 
 
 def get_status():
@@ -73,11 +73,11 @@ def request_permission_blocking(timeout_seconds=30):
         True  - permission granted
         False - denied or cancelled
     """
-    import AVFoundation
-    from Foundation import NSRunLoop, NSDate, NSObject
-    from AppKit import NSApplication
-
     import threading
+
+    import AVFoundation
+    from AppKit import NSApplication
+    from Foundation import NSDate, NSObject, NSRunLoop
 
     current_status = get_status()
     print(f"Current microphone status: {current_status}")

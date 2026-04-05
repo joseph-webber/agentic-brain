@@ -29,8 +29,8 @@ USER EXPERIENCE:
 - Crash? Recovered automatically on restart
 """
 
-import atexit
 import asyncio
+import atexit
 import json
 import os
 import re
@@ -304,7 +304,7 @@ async def session_lifespan(mcp_server: FastMCP):
     # Check for CRASH/unclean shutdown - AUTO RECOVER
     crash_info = detect_unclean_shutdown()
     if crash_info:
-        print(f"🚨 CRASH DETECTED - auto-recovering...")
+        print("🚨 CRASH DETECTED - auto-recovering...")
         _current_session["recovered_from_crash"] = True
         recovered_state = recover_from_crash()
         if recovered_state:
@@ -321,7 +321,7 @@ async def session_lifespan(mcp_server: FastMCP):
         # Check for clean previous session
         if STATE_FILE.exists():
             try:
-                with open(STATE_FILE, "r") as f:
+                with open(STATE_FILE) as f:
                     prev_state = json.load(f)
                 emit_session_event(
                     "previous_session_found",
@@ -382,7 +382,7 @@ async def session_lifespan(mcp_server: FastMCP):
             )
 
             # Mark as CLEAN shutdown in state file
-            with open(STATE_FILE, "r") as f:
+            with open(STATE_FILE) as f:
                 state = json.load(f)
             state["clean_shutdown"] = True
             state["ended_at"] = datetime.now().isoformat()
@@ -489,7 +489,7 @@ def detect_unclean_shutdown() -> Optional[Dict]:
     # Check for emergency save (indicates rate limit or forced save)
     if EMERGENCY_SAVE.exists():
         try:
-            with open(EMERGENCY_SAVE, "r") as f:
+            with open(EMERGENCY_SAVE) as f:
                 return {"type": "emergency", "data": json.load(f)}
         except Exception:
             pass
@@ -497,7 +497,7 @@ def detect_unclean_shutdown() -> Optional[Dict]:
     # Check if last session has lifecycle_session but no end marker
     if STATE_FILE.exists():
         try:
-            with open(STATE_FILE, "r") as f:
+            with open(STATE_FILE) as f:
                 state = json.load(f)
             # If auto_save is False and there's a lifecycle session, it was a manual save
             # If auto_save is True, check if it was the final save
@@ -547,7 +547,7 @@ def emergency_save_context(reason: str, context_data: Dict = None):
         )
 
         return True
-    except Exception as e:
+    except Exception:
         return False
 
 
@@ -565,7 +565,7 @@ def recover_from_crash() -> Dict:
     # 1. Check emergency save (highest priority - most recent)
     if EMERGENCY_SAVE.exists():
         try:
-            with open(EMERGENCY_SAVE, "r") as f:
+            with open(EMERGENCY_SAVE) as f:
                 emergency = json.load(f)
             recovery["sources_checked"].append("emergency_save")
             recovery["recovered_data"]["emergency"] = emergency
@@ -584,7 +584,7 @@ def recover_from_crash() -> Dict:
     # 2. Check state file
     if STATE_FILE.exists():
         try:
-            with open(STATE_FILE, "r") as f:
+            with open(STATE_FILE) as f:
                 state = json.load(f)
             recovery["sources_checked"].append("state_file")
             recovery["recovered_data"]["state"] = state
@@ -744,7 +744,7 @@ def get_todos_from_session() -> List[Dict]:
         conn.close()
 
         return [dict(row) for row in rows]
-    except Exception as e:
+    except Exception:
         return []
 
 
@@ -756,8 +756,8 @@ def get_neo4j_driver():
     if not NEO4J_ENABLED:
         return None
     try:
-        from neo4j import GraphDatabase
         from dotenv import load_dotenv
+        from neo4j import GraphDatabase
 
         load_dotenv(BRAIN_ROOT / ".env")
 
@@ -830,7 +830,7 @@ def save_to_neo4j(state: Dict) -> bool:
 
         driver.close()
         return True
-    except Exception as e:
+    except Exception:
         return False
 
 
@@ -901,7 +901,7 @@ def save_state(
     history = []
     if HISTORY_FILE.exists():
         try:
-            with open(HISTORY_FILE, "r") as f:
+            with open(HISTORY_FILE) as f:
                 history = json.load(f)
         except Exception:
             pass
@@ -952,7 +952,7 @@ def recover_state() -> Dict:
         return {"recovered": False, "message": "No previous session found"}
 
     try:
-        with open(STATE_FILE, "r") as f:
+        with open(STATE_FILE) as f:
             state = json.load(f)
 
         todos = state.get("todos", [])
@@ -1033,7 +1033,7 @@ def session_status() -> dict:
     state = {}
     if has_state:
         try:
-            with open(STATE_FILE, "r") as f:
+            with open(STATE_FILE) as f:
                 state = json.load(f)
         except Exception:
             pass
@@ -1041,7 +1041,7 @@ def session_status() -> dict:
     history_count = 0
     if HISTORY_FILE.exists():
         try:
-            with open(HISTORY_FILE, "r") as f:
+            with open(HISTORY_FILE) as f:
                 history_count = len(json.load(f))
         except Exception:
             pass
@@ -1098,7 +1098,7 @@ def session_history(limit: int = 10) -> dict:
         limit: Number of history entries to show (default 10)
     """
     if HISTORY_FILE.exists():
-        with open(HISTORY_FILE, "r") as f:
+        with open(HISTORY_FILE) as f:
             history = json.load(f)[:limit]
         return {"history": history, "count": len(history)}
     return {"history": [], "count": 0}
@@ -1545,9 +1545,9 @@ if __name__ == "__main__":
     print(f"   State file: {STATE_FILE}")
     print(f"   Has state: {STATE_FILE.exists()}")
     print(f"   Event bus: {EVENT_BUS_AVAILABLE}")
-    print(f"   Lifespan hooks: ENABLED ✅")
-    print(f"   Auto-save: Every 60 seconds ✅")
-    print(f"   Heartbeat: Every 30 seconds ✅")
-    print(f"   Signal handlers: SIGTERM, SIGINT, SIGHUP ✅")
-    print(f"   Crash recovery: AUTO ✅")
+    print("   Lifespan hooks: ENABLED ✅")
+    print("   Auto-save: Every 60 seconds ✅")
+    print("   Heartbeat: Every 30 seconds ✅")
+    print("   Signal handlers: SIGTERM, SIGINT, SIGHUP ✅")
+    print("   Crash recovery: AUTO ✅")
     mcp.run()
