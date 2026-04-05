@@ -1,0 +1,10 @@
+{
+  "name": "Test Document",
+  "data": {
+    "items": [
+      {"id": 1, "value": "first"},
+      {"id": 2, "value": "second"}
+    ]
+  },
+  "description": "A test JSON file"
+}

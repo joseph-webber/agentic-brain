@@ -1,0 +1,17 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+recursive-include docs *
+recursive-include tests *
+recursive-include src/agentic_brain/audio/earcons *.wav
+recursive-include src/agentic_brain/audio/sounds *.wav
+recursive-include src/agentic_brain/audio/native *.swift *.m *.cpp
+prune .git
+prune .github
+prune __pycache__
+prune .pytest_cache
+prune .mypy_cache
+prune dist
+prune build
+prune *.egg-info

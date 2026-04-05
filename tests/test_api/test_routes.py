@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 import pytest
+from fastapi.responses import StreamingResponse as FastAPIStreamingResponse
 
 
 class DummyStreamingResponse:
@@ -22,6 +23,13 @@ class DummyStreamingResponse:
         }
         yield f"data: {json.dumps(payload1)}\n\n"
         yield f"data: {json.dumps(payload2)}\n\n"
+
+    def as_fastapi_response(self, message: str, history: list[dict], headers=None):
+        return FastAPIStreamingResponse(
+            self.stream_sse(message, history),
+            media_type="text/event-stream",
+            headers=headers or {},
+        )
 
 
 def test_health_ok(client):
@@ -101,21 +109,18 @@ def test_setup_status_ok(client):
 
 
 def test_setup_help_provider_currently_returns_500_due_to_response_model(client):
-    """/setup/help/{provider} advertises SetupHelpResponse but returns a non-matching payload.
-
-    Until the implementation matches the schema, FastAPI raises a response validation
-    error which is surfaced as a 500.
-    """
+    """/setup/help/{provider} should return a validated response payload."""
 
     from fastapi.testclient import TestClient
 
     with TestClient(client.app, raise_server_exceptions=False) as safe_client:
         resp = safe_client.get("/setup/help/groq")
 
-    assert resp.status_code == 500
+    assert resp.status_code == 200
     body = resp.json()
-    assert body["status_code"] == 500
-    assert body["error"]
+    assert body["provider"] == "groq"
+    assert body["title"].startswith("Setup")
+    assert "steps" in body
 
 
 def test_chat_stream_sse_headers_and_body(client, monkeypatch):

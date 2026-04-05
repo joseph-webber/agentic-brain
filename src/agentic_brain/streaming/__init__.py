@@ -13,47 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Streaming Response Support
-==========================
+"""Streaming response support for the Agentic Brain API."""
 
-Unified streaming interface for multiple LLM providers:
-- Ollama (local)
-- OpenAI (cloud)
-- Anthropic (cloud)
-
-Makes responses feel instant with token-by-token streaming.
-
-Quick Start:
-    streamer = StreamingResponse(provider="ollama", model="llama3.1:8b")
-    async for token in streamer.stream("What is AI?"):
-        print(token, end="", flush=True)
-
-With SSE (Server-Sent Events):
-    from fastapi.responses import StreamingResponse
-
-    @app.get("/chat/stream")
-    async def stream_chat(message: str):
-        streamer = StreamingResponse(provider="ollama", model="llama3.1:8b")
-        return StreamingResponse(
-            streamer.stream_sse(message),
-            media_type="text/event-stream"
-        )
-
-WebSocket:
-    from fastapi import WebSocket
-
-    @app.websocket("/ws/chat")
-    async def websocket_chat(websocket: WebSocket):
-        streamer = StreamingResponse(provider="ollama", model="llama3.1:8b")
-        async for token in streamer.stream("What is AI?"):
-            await websocket.send_text(token)
-"""
-
-from .stream import StreamingResponse, StreamProvider, StreamToken
+from .stream_handler import (
+    StreamProvider,
+    StreamToken,
+    StreamingResponse,
+    iter_chunked_lines,
+    iter_sse_payloads,
+    iter_text_chunks,
+)
 
 __all__ = [
     "StreamingResponse",
     "StreamProvider",
     "StreamToken",
+    "iter_chunked_lines",
+    "iter_sse_payloads",
+    "iter_text_chunks",
 ]

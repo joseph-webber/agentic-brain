@@ -46,10 +46,49 @@ Agentic Brain is an enterprise AI orchestration platform that combines:
 
 ```bash
 # macOS/Linux
-curl -fsSL https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ecomlounge/brain/main/install.sh | bash
 
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/agentic-brain-project/agentic-brain/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/ecomlounge/brain/main/install.ps1 | iex
+```
+
+### PyPI Installation
+
+The simplest way to install agentic-brain is from PyPI:
+
+```bash
+# Basic installation (core features only)
+pip install agentic-brain
+
+# With LLM support (OpenAI, Anthropic, etc.)
+pip install "agentic-brain[llm]"
+
+# With API server and async support
+pip install "agentic-brain[api]"
+
+# With GraphRAG and Neo4j
+pip install "agentic-brain[graphrag]"
+
+# With voice capabilities
+pip install "agentic-brain[voice-kokoro]"
+
+# Full installation (everything)
+pip install "agentic-brain[all]"
+
+# Development installation (with testing tools)
+pip install "agentic-brain[dev]"
+```
+
+**Verify installation:**
+
+```bash
+# Check version
+python -c "import agentic_brain; print(f'Agentic Brain {agentic_brain.__version__}')"
+
+# Try the CLI
+agentic-brain --help
+agentic --help
+ab --help
 ```
 
 ### Manual Install
@@ -63,8 +102,8 @@ ab chat "Hello, Brain!"
 ### Docker
 
 ```bash
-git clone https://github.com/agentic-brain-project/agentic-brain.git
-cd agentic-brain
+git clone https://github.com/ecomlounge/brain.git
+cd brain
 cp .env.docker.example .env.docker
 docker compose up -d
 ```

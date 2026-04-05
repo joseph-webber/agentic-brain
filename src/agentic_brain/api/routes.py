@@ -778,8 +778,6 @@ def _register_streaming_routes(app) -> None:
             - Handles client disconnections gracefully
             - Automatically stores messages in session history
         """
-        from fastapi.responses import StreamingResponse as FastAPIStreamingResponse
-
         try:
             # Check rate limit
             client_ip = req.client.host if req and req.client else "unknown"
@@ -822,15 +820,11 @@ def _register_streaming_routes(app) -> None:
                 temperature=temperature,
             )
 
-            return FastAPIStreamingResponse(
-                streamer.stream_sse(
-                    message, history[:-1]
-                ),  # Exclude the message we just added
-                media_type="text/event-stream",
+            return streamer.as_fastapi_response(
+                message,
+                history[:-1],  # Exclude the message we just added
                 headers={
-                    "Cache-Control": "no-cache",
                     "X-Session-ID": session_id,
-                    "X-Content-Type-Options": "nosniff",
                 },
             )
         except Exception as e:
