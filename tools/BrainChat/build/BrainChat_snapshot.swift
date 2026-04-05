@@ -3244,6 +3244,8 @@ final class KeyboardAwareContentView: NSView {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var window: NSWindow!
     private let listenButton = NSButton(title: "Press Enter to Talk", target: nil, action: nil)
+    private let textInputField = NSTextField()
+    private let sendButton = NSButton(title: "Send", target: nil, action: nil)
     private let statusLabel = NSTextField(labelWithString: "Starting Brain Chat…")
     private let transcriptView = NSTextView()
     private let scrollView = NSScrollView()
@@ -3498,10 +3500,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         listenButton.keyEquivalent = "\r"
         listenButton.keyEquivalentModifierMask = []
         listenButton.setAccessibilityLabel("Start listening")
-        listenButton.setAccessibilityHelp("Tap or press Enter to start voice input. Tap again to stop and send your message.")
+        listenButton.setAccessibilityHelp("Double tap to toggle voice input. Press Enter or Cmd+M to start listening.")
         listenButton.setAccessibilityRole(NSAccessibility.Role.button)
-        listenButton.setAccessibilityTraits(.button)
         contentView.addSubview(listenButton)
+
+        // Text input field for typing messages
+        textInputField.frame = NSRect(x: 40, y: 360, width: 720, height: 30)
+        textInputField.placeholderString = "Type a message or press Enter to use voice..."
+        textInputField.font = NSFont.systemFont(ofSize: 16)
+        textInputField.target = self
+        textInputField.action = #selector(sendTextMessage)
+        textInputField.setAccessibilityLabel("Message input")
+        textInputField.setAccessibilityHelp("Type your message here and press Enter to send")
+        contentView.addSubview(textInputField)
+
+        // Send button
+        sendButton.frame = NSRect(x: 770, y: 360, width: 90, height: 30)
+        sendButton.bezelStyle = .rounded
+        sendButton.target = self
+        sendButton.action = #selector(sendTextMessage)
+        sendButton.setAccessibilityLabel("Send message")
+        contentView.addSubview(sendButton)
 
         statusLabel.frame = NSRect(x: 40, y: 362, width: 820, height: 24)
         statusLabel.font = NSFont.systemFont(ofSize: 16, weight: .medium)
@@ -3513,7 +3532,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         transcriptLabel.frame = NSRect(x: 40, y: 330, width: 300, height: 24)
         contentView.addSubview(transcriptLabel)
 
-        scrollView.frame = NSRect(x: 40, y: 40, width: 820, height: 280)
+        scrollView.frame = NSRect(x: 40, y: 80, width: 820, height: 270)
         scrollView.hasVerticalScroller = true
         scrollView.borderType = .bezelBorder
         scrollView.autoresizingMask = [.width, .height]
@@ -3676,6 +3695,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         lastHeardText = ""
         isListening = true
         listenButton.title = "Listening… Press Enter to Stop"
+        listenButton.setAccessibilityLabel("Stop listening")
         updateStatus("Listening…")
 
         let request = SFSpeechAudioBufferRecognitionRequest()
@@ -3748,6 +3768,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if updateButton {
             listenButton.title = "Press Enter to Talk"
+            listenButton.setAccessibilityLabel("Start listening")
         }
     }
     
@@ -3774,6 +3795,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else if text.isEmpty {
             speakAndLog("I didn't hear anything. Please try again.", speaker: "Brain")
         }
+    }
+
+    @objc private func sendTextMessage() {
+        let text = textInputField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        textInputField.stringValue = ""
+        appendTranscript(speaker: "You", text: text)
+        processInput(text)
     }
 
     private func processInput(_ text: String) {
