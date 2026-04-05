@@ -540,27 +540,53 @@ class CommunityGraphRAG:
         return results[:top_k]
 
     async def _hybrid_search(self, query: str, top_k: int) -> list[dict[str, Any]]:
+        """Hybrid search combining community summaries and entities using unified RRF."""
+        from .rrf import reciprocal_rank_fusion as rrf_unified, DEFAULT_K
+
         summary_results = await self._search_community_summaries(query, top_k)
         entity_results = await self._search_entities(query, top_k)
-        combined: dict[str, dict[str, Any]] = {}
 
-        for index, result in enumerate(summary_results, start=1):
-            key = f"community:{result['community_id']}"
-            combined[key] = {**result, "score": result["score"] + (1 / (60 + index))}
+        # Prepare results for unified RRF
+        summary_dicts = []
+        for result in summary_results:
+            result_id = f"community:{result['community_id']}"
+            summary_dicts.append({
+                "id": result_id,
+                **result,
+            })
 
-        for index, result in enumerate(entity_results, start=1):
-            key = result.get("chunk_id") or result.get("result_id") or result.get("entity_name") or f"entity:{index}"
-            existing = combined.get(key)
-            rrf = 1 / (60 + index)
-            if existing is None:
-                combined[key] = {**result, "score": result["score"] + rrf, "strategy": "hybrid"}
-            else:
-                existing["score"] = existing.get("score", 0.0) + result["score"] + rrf
-                existing["entity_name"] = result.get("entity_name", existing.get("entity_name"))
-                existing["strategy"] = "hybrid"
+        entity_dicts = []
+        for i, result in enumerate(entity_results):
+            result_id = (
+                result.get("chunk_id")
+                or result.get("result_id")
+                or result.get("entity_name")
+                or f"entity:{i}"
+            )
+            entity_dicts.append({
+                "id": result_id,
+                **result,
+            })
 
-        ranked = sorted(combined.values(), key=lambda result: result.get("score", 0.0), reverse=True)
-        return ranked[:top_k]
+        # Use unified RRF
+        fused = rrf_unified(
+            [
+                {"source": "summaries", "results": summary_dicts},
+                {"source": "entities", "results": entity_dicts},
+            ],
+            k=DEFAULT_K,
+            top_k=top_k,
+        )
+
+        # Convert back and add strategy marker
+        ranked = []
+        for item in fused.items:
+            item["strategy"] = "hybrid"
+            # Combine original score with RRF score
+            item["score"] = item.get("score", 0.0) + item["rrf_score"]
+            ranked.append(item)
+
+        return ranked
 
     async def _generate_summary(
         self, members: list[str], llm: Any | None = None

@@ -106,8 +106,9 @@ class SearchStrategy(Enum):
     VECTOR = "vector"  # Pure embedding similarity
     GRAPH = "graph"  # Pure graph traversal
     HYBRID = "hybrid"  # Vector + Graph combined
-    COMMUNITY = "community"  # Community-based global search
+    COMMUNITY = "community"  # Community-based local search
     MULTI_HOP = "multi_hop"  # Multi-hop reasoning
+    GLOBAL = "global"  # Microsoft GraphRAG global search (map-reduce over communities)
 
 
 @dataclass

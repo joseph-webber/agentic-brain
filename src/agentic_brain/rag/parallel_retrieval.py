@@ -436,37 +436,47 @@ class FederatedRetriever(ParallelRetriever):
         """
         Reciprocal Rank Fusion - combines rankings from multiple sources.
 
-        RRF score = sum(1 / (k + rank)) for each source where doc appears
+        Uses the unified RRF implementation from agentic_brain.rag.rrf.
+
+        Args:
+            results_by_source: Dict mapping source name to list of results
+            k: RRF smoothing constant (default 60)
+
+        Returns:
+            List of ParallelResult sorted by fused RRF score
         """
-        # Map content hash to (result, total_score)
-        fused: dict[str, tuple[ParallelResult, float]] = {}
+        from .rrf import reciprocal_rank_fusion as rrf_unified
 
-        for source_results in results_by_source.values():
-            for rank, result in enumerate(source_results):
-                h = result.content_hash()
-                rrf_score = 1.0 / (k + rank + 1)
+        # Convert to unified RRF format
+        ranked_lists = []
+        for source_name, source_results in results_by_source.items():
+            results_dicts = []
+            for result in source_results:
+                results_dicts.append({
+                    "id": result.content_hash(),
+                    "content": result.content,
+                    "source_name": result.source_name,
+                    "source_type": result.source_type,
+                    "score": result.score,
+                    "metadata": result.metadata,
+                    "retrieval_time_ms": result.retrieval_time_ms,
+                    "_original": result,
+                })
+            ranked_lists.append({"source": source_name, "results": results_dicts})
 
-                if h in fused:
-                    existing_result, existing_score = fused[h]
-                    fused[h] = (existing_result, existing_score + rrf_score)
-                else:
-                    fused[h] = (result, rrf_score)
+        fused = rrf_unified(ranked_lists, k=k)
 
-        # Sort by fused score
-        results = [(r, s) for r, s in fused.values()]
-        results.sort(key=lambda x: x[1], reverse=True)
-
-        # Update scores to fused scores
+        # Convert back to ParallelResult
         return [
             ParallelResult(
-                content=r.content,
-                source_name=r.source_name,
-                source_type=r.source_type,
-                score=s,
-                metadata=r.metadata,
-                retrieval_time_ms=r.retrieval_time_ms,
+                content=item["content"],
+                source_name=item["source_name"],
+                source_type=item["source_type"],
+                score=item["rrf_score"],
+                metadata=item.get("metadata", {}),
+                retrieval_time_ms=item.get("retrieval_time_ms", 0.0),
             )
-            for r, s in results
+            for item in fused.items
         ]
 
     def _combmnz_fusion(

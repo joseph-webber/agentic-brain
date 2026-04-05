@@ -31,6 +31,15 @@ Usage:
         vector_weight=0.6,
         keyword_weight=0.4
     )
+
+RRF Usage:
+    from agentic_brain.rag.hybrid import reciprocal_rank_fusion
+
+    # Legacy API (backward compatible)
+    fused = reciprocal_rank_fusion(vector_results, graph_results, keyword_results)
+
+    # For advanced RRF features (weighted, explain mode), use rrf module directly:
+    from agentic_brain.rag.rrf import reciprocal_rank_fusion as rrf_advanced
 """
 
 import json
@@ -43,51 +52,12 @@ import numpy as np
 from .embeddings import EmbeddingProvider, get_embeddings
 from .retriever import RetrievedChunk
 
-
-def _get_result_id(item: dict[str, Any]) -> str:
-    """Return a stable identifier for an RRF result item."""
-    item_id = item.get("id") or item.get("chunk_id")
-    if not item_id:
-        raise KeyError("RRF result item must include 'id' or 'chunk_id'")
-    return str(item_id)
-
-
-def reciprocal_rank_fusion(
-    vector_results: list[dict[str, Any]],
-    graph_results: list[dict[str, Any]],
-    keyword_results: Optional[list[dict[str, Any]]] = None,
-    k: int = 60,
-) -> list[dict[str, Any]]:
-    """
-    Combine multiple ranked lists using Reciprocal Rank Fusion.
-
-    RRF score = sum(1 / (k + rank)) for each ranked list where the item appears.
-    """
-    scores: dict[str, float] = {}
-    merged_items: dict[str, dict[str, Any]] = {}
-
-    ranked_lists = [vector_results, graph_results]
-    if keyword_results:
-        ranked_lists.append(keyword_results)
-
-    for results in ranked_lists:
-        for rank, item in enumerate(results):
-            item_id = _get_result_id(item)
-            merged_items[item_id] = {**merged_items.get(item_id, {}), **item}
-            scores[item_id] = scores.get(item_id, 0.0) + 1.0 / (k + rank + 1)
-
-    sorted_ids = sorted(
-        scores.keys(), key=lambda item_id: scores[item_id], reverse=True
-    )
-
-    return [
-        {
-            **merged_items[item_id],
-            "id": item_id,
-            "rrf_score": scores[item_id],
-        }
-        for item_id in sorted_ids
-    ]
+# Import unified RRF implementation and re-export for backward compatibility
+from .rrf import (
+    get_result_id as _get_result_id,
+    reciprocal_rank_fusion_legacy as reciprocal_rank_fusion,
+    DEFAULT_K,
+)
 
 
 @dataclass
@@ -396,44 +366,60 @@ class HybridSearch:
         vector_results: list[RetrievedChunk],
         keyword_results: list[RetrievedChunk],
         k: int,
-        k_rrf: int = 60,
+        k_rrf: int = DEFAULT_K,
     ) -> list[RetrievedChunk]:
         """
         Combine results using Reciprocal Rank Fusion.
 
-        RRF = sum(1 / (k + rank)) for each ranking
-        Good for combining diverse ranking signals.
+        Uses the unified RRF implementation from agentic_brain.rag.rrf.
+
+        Args:
+            vector_results: Results from vector search
+            keyword_results: Results from keyword search
+            k: Number of results to return
+            k_rrf: RRF smoothing constant (default 60)
+
+        Returns:
+            Fused list of RetrievedChunk sorted by RRF score
         """
-        rrf_scores = {}
+        from .rrf import reciprocal_rank_fusion as rrf_unified
 
-        # Add vector results
-        for rank, chunk in enumerate(vector_results):
-            key = (chunk.content, chunk.source)
-            rrf_scores[key] = rrf_scores.get(key, 0) + 1 / (k_rrf + rank + 1)
+        # Create unique IDs using content+source tuple hash
+        def chunk_to_dict(chunk: RetrievedChunk, idx: int, source: str) -> dict:
+            chunk_id = f"{hash((chunk.content, chunk.source))}_{idx}"
+            return {
+                "id": chunk_id,
+                "content": chunk.content,
+                "source": chunk.source,
+                "score": chunk.score,
+                "metadata": chunk.metadata,
+                "_chunk": chunk,
+            }
 
-        # Add keyword results
-        for rank, chunk in enumerate(keyword_results):
-            key = (chunk.content, chunk.source)
-            rrf_scores[key] = rrf_scores.get(key, 0) + 1 / (k_rrf + rank + 1)
+        vector_dicts = [chunk_to_dict(c, i, "vector") for i, c in enumerate(vector_results)]
+        keyword_dicts = [chunk_to_dict(c, i, "keyword") for i, c in enumerate(keyword_results)]
 
-        # Combine results
-        all_chunks = {
-            (c.content, c.source): c for c in vector_results + keyword_results
-        }
+        result = rrf_unified(
+            [
+                {"source": "vector", "results": vector_dicts},
+                {"source": "keyword", "results": keyword_dicts},
+            ],
+            k=k_rrf,
+            top_k=k,
+        )
 
-        # Sort by RRF score
-        sorted_results = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
-
+        # Convert back to RetrievedChunk
         fused = []
-        for (content, source), score in sorted_results[:k]:
-            chunk = all_chunks[(content, source)]
-            fused_chunk = RetrievedChunk(
-                content=chunk.content,
-                source=chunk.source,
-                score=score,
-                metadata={**chunk.metadata, "fusion_method": "rrf"},
-            )
-            fused.append(fused_chunk)
+        for item in result.items:
+            chunk = item.get("_chunk")
+            if chunk:
+                fused_chunk = RetrievedChunk(
+                    content=chunk.content,
+                    source=chunk.source,
+                    score=item["rrf_score"],
+                    metadata={**chunk.metadata, "fusion_method": "rrf"},
+                )
+                fused.append(fused_chunk)
 
         return fused
 

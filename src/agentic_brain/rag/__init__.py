@@ -275,6 +275,17 @@ from .hybrid import (
     HybridSearchResult,
 )
 
+# Unified RRF (Reciprocal Rank Fusion)
+from .rrf import (
+    DEFAULT_K as RRF_DEFAULT_K,
+    RRFExplanation,
+    RRFResult,
+    RRFSourceContribution,
+    get_result_id,
+    reciprocal_rank_fusion,
+    reciprocal_rank_fusion_legacy,
+)
+
 # Document loaders - modular package (migrated from monolith 2026-03-23)
 from .loaders import (
     # Availability flags
@@ -504,6 +515,14 @@ __all__ = [
     "BM25Index",
     "HybridSearch",
     "HybridSearchResult",
+    # Unified RRF (Reciprocal Rank Fusion)
+    "reciprocal_rank_fusion",
+    "reciprocal_rank_fusion_legacy",
+    "RRFResult",
+    "RRFExplanation",
+    "RRFSourceContribution",
+    "get_result_id",
+    "RRF_DEFAULT_K",
     # Evaluation
     "EvalQuery",
     "EvalMetrics",

@@ -69,3 +69,14 @@ __all__ = [
     "neo4j_pool_health",
     "neo4j_first",
 ]
+
+# Rate limit management
+from agentic_brain.core.rate_limiter import (
+    RateLimitManager,
+    RateLimitStrategy,
+    ProviderQuota,
+    get_rate_limit_manager,
+    calculate_safe_agent_count,
+    can_deploy_agents,
+    get_deployment_recommendation,
+)
