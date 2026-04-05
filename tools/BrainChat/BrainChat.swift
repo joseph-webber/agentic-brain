@@ -3492,7 +3492,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         instructionsLabel.setAccessibilityLabel("Instructions")
         contentView.addSubview(instructionsLabel)
 
-        listenButton.frame = NSRect(x: 40, y: 400, width: 820, height: 64)
+        listenButton.frame = NSRect(x: 40, y: 410, width: 820, height: 64)
         listenButton.bezelStyle = .regularSquare
         listenButton.font = NSFont.systemFont(ofSize: 28, weight: .bold)
         listenButton.target = self
@@ -3504,35 +3504,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         listenButton.setAccessibilityRole(NSAccessibility.Role.button)
         contentView.addSubview(listenButton)
 
+        // Status label - positioned between listen button and text input  
+        statusLabel.frame = NSRect(x: 40, y: 385, width: 820, height: 20)
+        statusLabel.font = NSFont.systemFont(ofSize: 14, weight: .medium)
+        statusLabel.setAccessibilityLabel("Status")
+        contentView.addSubview(statusLabel)
+
         // Text input field for typing messages
-        textInputField.frame = NSRect(x: 40, y: 360, width: 720, height: 30)
+        textInputField.frame = NSRect(x: 40, y: 350, width: 720, height: 30)
         textInputField.placeholderString = "Type a message or press Enter to use voice..."
         textInputField.font = NSFont.systemFont(ofSize: 16)
         textInputField.target = self
         textInputField.action = #selector(sendTextMessage)
         textInputField.setAccessibilityLabel("Message input")
         textInputField.setAccessibilityHelp("Type your message here and press Enter to send")
+        textInputField.setAccessibilityRole(NSAccessibility.Role.textField)
+        textInputField.setAccessibilityElement(true)
+        textInputField.isEditable = true
+        textInputField.isSelectable = true
+        textInputField.isBezeled = true
+        textInputField.isBordered = true
+        textInputField.bezelStyle = .roundedBezel
+        textInputField.drawsBackground = true
+        textInputField.backgroundColor = NSColor.textBackgroundColor
+        textInputField.isHidden = false
         contentView.addSubview(textInputField)
 
         // Send button
-        sendButton.frame = NSRect(x: 770, y: 360, width: 90, height: 30)
+        sendButton.frame = NSRect(x: 770, y: 350, width: 90, height: 30)
         sendButton.bezelStyle = .rounded
         sendButton.target = self
         sendButton.action = #selector(sendTextMessage)
         sendButton.setAccessibilityLabel("Send message")
+        sendButton.setAccessibilityHelp("Double tap to send the typed message to Brain Chat")
+        sendButton.setAccessibilityRole(NSAccessibility.Role.button)
         contentView.addSubview(sendButton)
-
-        statusLabel.frame = NSRect(x: 40, y: 362, width: 820, height: 24)
-        statusLabel.font = NSFont.systemFont(ofSize: 16, weight: .medium)
-        statusLabel.setAccessibilityLabel("Status")
-        contentView.addSubview(statusLabel)
 
         let transcriptLabel = NSTextField(labelWithString: "Conversation Transcript")
         transcriptLabel.font = NSFont.systemFont(ofSize: 18, weight: .semibold)
-        transcriptLabel.frame = NSRect(x: 40, y: 330, width: 300, height: 24)
+        transcriptLabel.frame = NSRect(x: 40, y: 320, width: 300, height: 24)
         contentView.addSubview(transcriptLabel)
 
-        scrollView.frame = NSRect(x: 40, y: 80, width: 820, height: 270)
+        scrollView.frame = NSRect(x: 40, y: 80, width: 820, height: 235)
         scrollView.hasVerticalScroller = true
         scrollView.borderType = .bezelBorder
         scrollView.autoresizingMask = [.width, .height]
@@ -3547,6 +3560,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         transcriptView.setAccessibilityLabel("Conversation transcript. All messages are recorded here for copying and review.")
         scrollView.documentView = transcriptView
         contentView.addSubview(scrollView)
+
+        // Bring text input and send button to front (add last for z-ordering)
+        textInputField.removeFromSuperview()
+        sendButton.removeFromSuperview()
+        contentView.addSubview(textInputField)
+        contentView.addSubview(sendButton)
 
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(listenButton)
