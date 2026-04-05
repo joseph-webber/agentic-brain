@@ -7,8 +7,6 @@ Sync functions use ``neo4j.GraphDatabase``; async functions use
 :class:`Neo4jPoolConfig`.
 """
 
-# SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Joseph Webber
 
 from __future__ import annotations
 

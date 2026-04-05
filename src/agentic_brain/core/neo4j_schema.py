@@ -5,8 +5,6 @@ Maintains a canonical set of indexes for fulltext search, range filtering,
 and vector similarity matching used by RAG and entity extraction.
 """
 
-# SPDX-License-Identifier: Apache-2.0
-# Copyright 2024-2026 Agentic Brain Contributors
 
 from __future__ import annotations
 
