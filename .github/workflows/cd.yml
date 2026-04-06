@@ -41,6 +41,8 @@ jobs:
   build-and-push:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
+    # Only run when paths actually change (push) or on manual trigger
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     permissions:
       contents: read
       packages: write
@@ -159,6 +161,7 @@ jobs:
   security-scan:
     name: Security Scan
     needs: build-and-push
+    if: needs.build-and-push.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -274,7 +277,7 @@ jobs:
     name: Notify Deployment Complete
     needs: [build-and-push]
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && needs.build-and-push.result != 'skipped'
     permissions:
       contents: read
 
@@ -382,7 +385,8 @@ jobs:
   deploy-brainchat:
     name: Deploy BrainChat Continuous Updates
     runs-on: macos-14
-    if: github.ref == 'refs/heads/main'
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && needs.build-and-push.result == 'success'
     permissions:
       contents: write
     steps:
