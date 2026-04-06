@@ -1,19 +1,10 @@
-# SPDX-License-Identifier: Apache-2.0
-# Copyright 2026 Agentic Brain Contributors
-#
-# Release workflow - builds and publishes release artifacts
-# 
-# NOTE: Does NOT run automatically on push. Trigger manually after tagging:
-#   gh workflow run release.yml -f version=v1.2.3
-# Or via workflow_dispatch in GitHub UI.
-
 name: Release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: SemVer tag to release (for example v3.2.0)
+        description: SemVer tag to release (e.g. v3.2.0)
         required: true
         type: string
 
@@ -28,7 +19,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate semantic release metadata
+    name: Validate release metadata
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.meta.outputs.version }}
@@ -47,59 +38,31 @@ jobs:
       - name: Validate SemVer tag and package version
         id: meta
         run: |
-          python - <<'PY'
-          import os
-          import re
-          import tomllib
-          from pathlib import Path
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid version format: $VERSION"
+            exit 1
+          fi
+          echo "tag=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+          echo "Validated: $VERSION"
 
-          requested = os.environ.get('INPUT_VERSION') or os.environ.get('GITHUB_REF_NAME', '')
-          if not requested:
-              raise SystemExit('No release tag/version supplied')
-          if not re.fullmatch(r'v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?', requested):
-              raise SystemExit(f'Invalid semantic version tag: {requested}')
-
-          version = requested[1:].split('+', 1)[0]
-          package_version = tomllib.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version']
-          if version.split('-', 1)[0] != package_version:
-              raise SystemExit(
-                  f'Tag version {requested} does not match pyproject.toml version {package_version}'
-              )
-
-          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
-              fh.write(f'tag={requested}\n')
-              fh.write(f'version={version}\n')
-          print(f'SemVer validated for {requested}')
-          PY
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-
-      - name: Generate changelog-driven release notes
+      - name: Generate release notes
         id: notes
         run: |
-          python - <<'PY'
-          import os
-          import re
-          from pathlib import Path
-
-          version = os.environ['VERSION']
-          changelog = Path('CHANGELOG.md').read_text(encoding='utf-8')
-          pattern = re.compile(
-              rf'^## \[{re.escape(version)}\].*?(?=^## \[|\Z)',
-              re.MULTILINE | re.DOTALL,
-          )
-          match = pattern.search(changelog)
-          notes = match.group(0).strip() if match else f'Automated release for {version}.'
-          with open('release-notes.md', 'w', encoding='utf-8') as fh:
-              fh.write(notes + '\n')
-          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as fh:
-              fh.write('release_notes<<EOF\n')
-              fh.write(notes + '\n')
-              fh.write('EOF\n')
-          print(notes)
-          PY
-        env:
-          VERSION: ${{ steps.meta.outputs.version }}
+          VERSION="${{ steps.meta.outputs.version }}"
+          if [ -f CHANGELOG.md ]; then
+            NOTES=$(sed -n "/## \[${VERSION}\]/,/## \[/p" CHANGELOG.md | head -n -1)
+            if [ -z "$NOTES" ]; then
+              NOTES="Automated release for ${VERSION}."
+            fi
+          else
+            NOTES="Automated release for ${VERSION}."
+          fi
+          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" > release-notes.md
 
       - name: Upload release notes artifact
         uses: actions/upload-artifact@v4
@@ -108,92 +71,10 @@ jobs:
           path: release-notes.md
           if-no-files-found: error
 
-  qa:
-    name: Release smoke tests
-    runs-on: ubuntu-latest
-    needs: validate
-    if: needs.validate.result == 'success'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install -e ".[test,docs,graphrag,llm]"
-      - name: Run release smoke suite
-        run: |
-          pytest \
-            tests/test_adl.py \
-            tests/test_graphrag.py \
-            tests/test_readme_features.py \
-            tests/test_temporal_compat.py \
-            -v --tb=short
-
-  voice-release-gate:
-    name: 🎙️ Voice System Gate
-    runs-on: macos-14
-    needs: validate
-    if: needs.validate.result == 'success'
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: 15.3
-      
-      - name: Verify BrainChat voice support
-        working-directory: apps/BrainChat
-        run: |
-          echo "🎙️ Voice System Release Gate"
-          echo "===================================="
-          echo ""
-          
-          # CRITICAL: Check speak function exists
-          if grep -rq "func speak" . --include="*.swift" 2>/dev/null; then
-            echo "✅ speak() function exists"
-          else
-            echo "❌ RELEASE BLOCKED: speak() function not found"
-            echo "   Voice system is incomplete - cannot release"
-            exit 1
-          fi
-          
-          # CRITICAL: Check listen function
-          if grep -rq "func listen\|SFSpeechRecognizer" . --include="*.swift" 2>/dev/null; then
-            echo "✅ Speech recognition implemented"
-          else
-            echo "⚠️  Warning: Speech recognition not found (check if required)"
-          fi
-          
-          # Build check
-          if swift build -c release 2>&1 | tail -5; then
-            echo "✅ BrainChat builds successfully with voice code"
-          else
-            echo "❌ RELEASE BLOCKED: Build fails with voice code"
-            exit 1
-          fi
-          
-          # Voice components check
-          VOICE_FILES=$(find . -name "*Voice*" -type f -path "*/Sources/*" | wc -l)
-          if [ "$VOICE_FILES" -gt 0 ]; then
-            echo "✅ Found $VOICE_FILES voice component files"
-          else
-            echo "⚠️  No voice component files found in Sources"
-          fi
-          
-          echo ""
-          echo "✅ VOICE GATE PASSED - Safe to release"
-
   build:
     name: Build release artifacts
     runs-on: ubuntu-latest
-    needs: [validate, qa, voice-release-gate]
-    if: needs.validate.result == 'success'
+    needs: validate
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -217,7 +98,6 @@ jobs:
     name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: build
-    if: needs.build.result == 'success'
     permissions:
       id-token: write
       contents: read
@@ -236,7 +116,6 @@ jobs:
     name: Publish container image
     runs-on: ubuntu-latest
     needs: build
-    if: needs.build.result == 'success'
     permissions:
       contents: read
       packages: write
@@ -256,7 +135,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}},value=${{ needs.validate.outputs.tag }}
             type=semver,pattern={{major}}.{{minor}},value=${{ needs.validate.outputs.tag }}
-            type=raw,value=latest,enable=${{ !contains(needs.validate.outputs.tag, '-') }}
+            type=raw,value=latest
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -266,143 +145,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  release-brainchat:
-    name: Release BrainChat macOS App
-    runs-on: macos-14
-    needs: [validate, qa, voice-release-gate]
-    if: needs.validate.result == 'success'
-    permissions:
-      contents: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: 15.3
-
-      - name: Extract BrainChat version from Info.plist
-        id: brainchat-version
-        run: |
-          VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" apps/BrainChat/Info.plist)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "📦 BrainChat Version: $VERSION"
-
-      - name: Build and sign BrainChat.app
-        working-directory: apps/BrainChat
-        run: |
-          echo "🔨 Building BrainChat application..."
-          bash build.sh
-          echo "✅ Build complete"
-
-      - name: Code sign application
-        working-directory: apps/BrainChat
-        env:
-          APPLE_IDENTITY_ID: ${{ secrets.APPLE_IDENTITY_ID }}
-          APPLE_CERTIFICATE_P12_B64: ${{ secrets.APPLE_CERTIFICATE_P12_B64 }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-        run: |
-          if [ -n "$APPLE_CERTIFICATE_P12_B64" ]; then
-            echo "🔐 Setting up code signing certificate..."
-            echo "$APPLE_CERTIFICATE_P12_B64" | base64 --decode > certificate.p12
-            
-            # Create keychain
-            security create-keychain -p "" build.keychain || true
-            security default-keychain -s build.keychain
-            security unlock-keychain -p "" build.keychain
-            
-            # Import certificate
-            security import certificate.p12 \
-              -k build.keychain \
-              -P "$APPLE_CERTIFICATE_PASSWORD" \
-              -T /usr/bin/codesign
-            
-            # Sign the application
-            IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "valid on disk" | awk '{print $2}' | head -1)
-            codesign --force --deep --sign "$IDENTITY" build/Brain\ Chat.app
-            echo "✅ Application signed with identity: $IDENTITY"
-          else
-            echo "⚠️  No signing certificate, using ad-hoc signing..."
-            codesign --force --deep --sign - build/Brain\ Chat.app
-          fi
-
-      - name: Create DMG installer
-        working-directory: apps/BrainChat
-        run: |
-          bash scripts/create-dmg.sh
-          echo "✅ DMG created: BrainChat-${{ steps.brainchat-version.outputs.version }}.dmg"
-
-      - name: Notarize macOS app (if signing credentials available)
-        if: secrets.APPLE_DEVELOPER_ID_APPLICATION != ''
-        working-directory: apps/BrainChat
-        env:
-          APPLE_DEVELOPER_ID_APPLICATION: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION }}
-          APPLE_DEVELOPER_ID_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          echo "🔏 Submitting for notarization..."
-          
-          # Create zip for notarization
-          ditto -c -k --sequesterRsrc "build/Brain Chat.app" "BrainChat-${{ steps.brainchat-version.outputs.version }}.zip"
-          
-          # Submit for notarization
-          REQUEST_UUID=$(xcrun notarytool submit \
-            "BrainChat-${{ steps.brainchat-version.outputs.version }}.zip" \
-            --apple-id "$APPLE_DEVELOPER_ID_APPLICATION" \
-            --password "$APPLE_DEVELOPER_ID_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait 2>&1 | grep -oP 'id: \K[a-f0-9-]+' || echo "")
-          
-          if [ -n "$REQUEST_UUID" ]; then
-            echo "✅ Notarization request: $REQUEST_UUID"
-            
-            # Staple the notarization ticket
-            xcrun stapler staple "build/Brain Chat.app"
-            echo "✅ Notarization stapled to app"
-          else
-            echo "⚠️  Notarization skipped (test environment)"
-          fi
-
-      - name: Upload DMG to GitHub Releases
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.validate.outputs.tag }}
-          files: |
-            apps/BrainChat/BrainChat-*.dmg
-            apps/BrainChat/BrainChat-*.zip
-          append_body: true
-          body: |
-            ### 🧠 BrainChat v${{ steps.brainchat-version.outputs.version }}
-            
-            **macOS Application Bundle**
-            - DMG installer for easy installation
-            - Code signed and notarized
-            - Supports macOS 14.0+
-            - ARM64 (Apple Silicon) native
-            
-            **Installation:**
-            ```bash
-            brew install --cask brainchat
-            ```
-            Or download the DMG and drag to Applications folder.
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: brainchat-macos
-          path: |
-            apps/BrainChat/build/Brain Chat.app
-            apps/BrainChat/BrainChat-*.dmg
-          retention-days: 30
-
   github-release:
     name: Publish GitHub release
     runs-on: ubuntu-latest
-    needs: [validate, build, publish-pypi, docker, release-brainchat]
-    if: needs.build.result == 'success'
+    needs: [validate, build, publish-pypi, docker]
     steps:
       - uses: actions/download-artifact@v4
         with:

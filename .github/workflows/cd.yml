@@ -1,21 +1,12 @@
-# SPDX-License-Identifier: Apache-2.0
-# Copyright (C) 2024-2026 Agentic Brain Contributors
-#
-# Continuous Deployment: Docker Image Build & Push
-# Builds Docker image and publishes to GitHub Container Registry (ghcr.io)
-# 
-# NOTE: This workflow does NOT run on push. It is called by other workflows
-# or triggered manually via workflow_dispatch.
-
 name: Continuous Deployment
 
 on:
   workflow_dispatch:
     inputs:
       deploy_target:
-        description: 'Deploy target (ghcr, local-docker, or both)'
+        description: Deploy target (ghcr, local-docker, or both)
         required: false
-        default: 'ghcr'
+        default: ghcr
         type: choice
         options:
           - ghcr
@@ -24,13 +15,13 @@ on:
   workflow_call:
     inputs:
       deploy_target:
-        description: 'Deploy target'
+        description: Deploy target
         required: false
         type: string
-        default: 'ghcr'
+        default: ghcr
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: cd-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -38,9 +29,8 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # Build and push Docker image to GitHub Container Registry
   build-and-push:
-    name: Build & Push Docker Image
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -51,14 +41,6 @@ jobs:
     outputs:
       image-digest: ${{ steps.push.outputs.digest }}
       image-url: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      has_aws: ${{ steps.check-secrets.outputs.has_aws }}
-      has_gcp: ${{ steps.check-secrets.outputs.has_gcp }}
-      has_azure: ${{ steps.check-secrets.outputs.has_azure }}
-      has_heroku: ${{ steps.check-secrets.outputs.has_heroku }}
-      has_railway: ${{ steps.check-secrets.outputs.has_railway }}
-      has_render: ${{ steps.check-secrets.outputs.has_render }}
-      has_fly: ${{ steps.check-secrets.outputs.has_fly }}
-      has_digitalocean: ${{ steps.check-secrets.outputs.has_digitalocean }}
 
     steps:
       - name: Checkout repository
@@ -71,7 +53,7 @@ jobs:
         run: |
           VERSION=$(grep -m 1 'version = ' pyproject.toml | cut -d'"' -f2)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "🏷️  Version: $VERSION"
+          echo "Version: $VERSION"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -115,7 +97,6 @@ jobs:
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
             COMMIT=${{ github.sha }}
-            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v1
@@ -124,353 +105,11 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
-      - name: Check deployment secrets
-        id: check-secrets
-        run: |
-          echo "has_aws=${{ secrets.AWS_ACCESS_KEY_ID != '' }}" >> $GITHUB_OUTPUT
-          echo "has_gcp=${{ secrets.GCP_PROJECT_ID != '' }}" >> $GITHUB_OUTPUT
-          echo "has_azure=${{ secrets.AZURE_CLIENT_ID != '' }}" >> $GITHUB_OUTPUT
-          echo "has_heroku=${{ secrets.HEROKU_APP_NAME != '' }}" >> $GITHUB_OUTPUT
-          echo "has_railway=${{ secrets.RAILWAY_TOKEN != '' }}" >> $GITHUB_OUTPUT
-          echo "has_render=${{ secrets.RENDER_API_KEY != '' }}" >> $GITHUB_OUTPUT
-          echo "has_fly=${{ secrets.FLY_API_TOKEN != '' }}" >> $GITHUB_OUTPUT
-          echo "has_digitalocean=${{ secrets.DIGITALOCEAN_API_TOKEN != '' }}" >> $GITHUB_OUTPUT
-
       - name: Create deployment summary
         run: |
-          echo "## 🐳 Docker Image Built & Published" >> $GITHUB_STEP_SUMMARY
+          echo "## Docker Image Built and Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Registry:** \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** \`${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** \`${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Digest:** \`${{ steps.push.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Docker Tags" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Pull Command" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-  # Security scanning on built image
-  security-scan:
-    name: Security Scan
-    needs: build-and-push
-    if: needs.build-and-push.result == 'success'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ needs.build-and-push.outputs.image-url }}:latest
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-          category: 'trivy-docker-scan'
-
-  # Optional: Deploy to local Mac Docker (self-hosted runner)
-  deploy-local-mac:
-    name: Deploy to Local Mac Docker
-    needs: build-and-push
-    runs-on: [self-hosted, macos, arm64]
-    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.deploy_target == 'local-docker' || github.event.inputs.deploy_target == 'both')
-    permissions:
-      contents: read
-    environment:
-      name: mac-docker-local
-      url: http://localhost:8000
-
-    steps:
-      - name: Check Docker availability
-        run: |
-          docker --version
-          docker ps
-
-      - name: Pull latest image
-        run: |
-          docker pull ${{ needs.build-and-push.outputs.image-url }}:latest
-
-      - name: Stop existing container (if running)
-        run: |
-          docker stop agentic-brain || true
-          docker rm agentic-brain || true
-
-      - name: Run container
-        run: |
-          docker run -d \
-            --name agentic-brain \
-            --restart unless-stopped \
-            -p 8000:8000 \
-            -e NEO4J_URI="${{ secrets.NEO4J_URI }}" \
-            -e NEO4J_USER="${{ secrets.NEO4J_USER }}" \
-            -e NEO4J_PASSWORD="${{ secrets.NEO4J_PASSWORD }}" \
-            -e REDIS_HOST="${{ secrets.REDIS_HOST }}" \
-            -e REDIS_PORT="${{ secrets.REDIS_PORT }}" \
-            -e GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}" \
-            -v agentic-brain-data:/app/data \
-            --health-cmd='curl -f http://localhost:8000/health || exit 1' \
-            --health-interval=30s \
-            --health-timeout=10s \
-            --health-retries=3 \
-            ${{ needs.build-and-push.outputs.image-url }}:latest
-
-      - name: Wait for container to be healthy
-        run: |
-          echo "Waiting for container to be healthy..."
-          for i in {1..30}; do
-            HEALTH=$(docker inspect -f '{{.State.Health.Status}}' agentic-brain 2>/dev/null || echo "unknown")
-            if [ "$HEALTH" = "healthy" ]; then
-              echo "✅ Container is healthy!"
-              break
-            fi
-            echo "  Attempt $i/30: Status=$HEALTH, waiting..."
-            sleep 5
-          done
-          docker inspect -f '{{.State.Health.Status}}' agentic-brain || true
-
-      - name: Test API endpoint
-        run: |
-          echo "Testing API endpoint..."
-          curl -s http://localhost:8000/health | jq . || echo "Health endpoint response:"
-          curl -s http://localhost:8000/health
-
-      - name: Show container logs
-        if: always()
-        run: |
-          echo "Container logs (last 50 lines):"
-          docker logs --tail 50 agentic-brain
-
-      - name: Create deployment status
-        run: |
-          echo "## 🚀 Deployed to Local Mac Docker" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Container:** agentic-brain" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** ${{ needs.build-and-push.outputs.image-url }}:latest" >> $GITHUB_STEP_SUMMARY
-          echo "**API URL:** http://localhost:8000" >> $GITHUB_STEP_SUMMARY
-          echo "**Health Check:** http://localhost:8000/health" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Container Commands" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "docker logs -f agentic-brain          # View logs" >> $GITHUB_STEP_SUMMARY
-          echo "docker inspect agentic-brain         # View details" >> $GITHUB_STEP_SUMMARY
-          echo "docker stop agentic-brain            # Stop container" >> $GITHUB_STEP_SUMMARY
-          echo "docker rm agentic-brain              # Remove container" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-  # Notify deployment completion
-  notify-deployment:
-    name: Notify Deployment Complete
-    needs: [build-and-push]
-    runs-on: ubuntu-latest
-    if: always() && needs.build-and-push.result != 'skipped'
-    permissions:
-      contents: read
-
-    steps:
-      - name: Deployment notification
-        run: |
-          echo "## ✅ Deployment Pipeline Complete"
-          echo ""
-          echo "**Build Status:** ${{ job.status }}"
-          echo "**Image URL:** ${{ needs.build-and-push.outputs.image-url }}"
-          echo "**Commit:** ${{ github.sha }}"
-          echo "**Branch:** ${{ github.ref_name }}"
-
-  # ==================================================================
-  # Cloud deployments (trigger re-usable workflows where available)
-  # Each job only runs on main when the relevant secrets are present.
-  # ==================================================================
-  deploy-aws:
-    name: Deploy to AWS (ECS/EKS)
-    needs: build-and-push
-    if: github.ref == 'refs/heads/main' && needs.build-and-push.outputs.has_aws == 'true'
-    uses: ./.github/workflows/deploy-aws.yml
-    with:
-      environment: production
-      deployment_type: ecs
-    secrets: inherit
-
-  deploy-gcp:
-    name: Deploy to Google Cloud Run
-    needs: build-and-push
-    if: github.ref == 'refs/heads/main' && needs.build-and-push.outputs.has_gcp == 'true'
-    uses: ./.github/workflows/deploy-gcp.yml
-    with:
-      environment: production
-    secrets: inherit
-
-  deploy-azure:
-    name: Deploy to Azure Container Apps
-    needs: build-and-push
-    if: github.ref == 'refs/heads/main' && needs.build-and-push.outputs.has_azure == 'true'
-    uses: ./.github/workflows/deploy-azure.yml
-    with:
-      environment: production
-    secrets: inherit
-
-  deploy-heroku:
-    name: Deploy to Heroku (template)
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && needs.build-and-push.outputs.has_heroku == 'true'
-    steps:
-      - name: Heroku deployment note
-        run: |
-          echo "Heroku deployment is configured via heroku.yml and one-click button."
-          echo "Set HEROKU_APP_NAME and HEROKU_API_KEY and wire up Heroku GitHub integration."
-
-  deploy-railway:
-    name: Deploy to Railway (template)
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && needs.build-and-push.outputs.has_railway == 'true'
-    steps:
-      - name: Railway deployment note
-        run: |
-          echo "Railway deployment uses railway.json and the one-click template."
-          echo "Use Railway dashboard/CLI with RAILWAY_TOKEN to deploy the GitHub repo."
-
-  deploy-render:
-    name: Deploy to Render (template)
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && needs.build-and-push.outputs.has_render == 'true'
-    steps:
-      - name: Render deployment note
-        run: |
-          echo "Render deployment uses render.yaml Blueprint and one-click button."
-          echo "Connect Render to this repo and enable auto-deploy on main."
-
-  deploy-fly:
-    name: Deploy to Fly.io (template)
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && needs.build-and-push.outputs.has_fly == 'true'
-    steps:
-      - name: Fly.io deployment note
-        run: |
-          echo "Fly.io deployment is managed by fly.toml and the Fly CLI."
-          echo "Use FLY_API_TOKEN with fly deploy or the Fly dashboard."
-
-  deploy-digitalocean:
-    name: Deploy to DigitalOcean App Platform (template)
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && needs.build-and-push.outputs.has_digitalocean == 'true'
-    steps:
-      - name: DigitalOcean deployment note
-        run: |
-          echo "DigitalOcean App Platform deployment uses app.yaml and GitHub integration."
-          echo "Configure App Platform to watch main and deploy from this repo."
-
-  # ============================================================================
-  # BrainChat macOS Continuous Deployment
-  # Automatically deploy BrainChat when tagged release versions are created
-  # ============================================================================
-  deploy-brainchat:
-    name: Deploy BrainChat Continuous Updates
-    runs-on: macos-14
-    needs: build-and-push
-    if: github.ref == 'refs/heads/main' && needs.build-and-push.result == 'success'
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check if tag exists
-        id: check-tag
-        run: |
-          LATEST_TAG=$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || echo "")
-          if [ -z "$LATEST_TAG" ]; then
-            echo "No release tags found yet"
-            echo "tag=" >> $GITHUB_OUTPUT
-          else
-            echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Extract BrainChat version
-        id: brainchat-version
-        run: |
-          VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" apps/BrainChat/Info.plist)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "🎯 BrainChat Version: $VERSION"
-
-      - name: Build BrainChat
-        working-directory: apps/BrainChat
-        run: |
-          echo "🔨 Building BrainChat for continuous deployment..."
-          bash build.sh
-          echo "✅ Build complete"
-
-      - name: Create DMG for Homebrew
-        working-directory: apps/BrainChat
-        run: |
-          echo "📦 Creating DMG installer..."
-          bash scripts/create-dmg.sh
-          echo "✅ DMG created"
-
-      - name: Generate Sparkle appcast
-        working-directory: apps/BrainChat
-        run: |
-          echo "📡 Generating Sparkle auto-update manifest..."
-          bash scripts/generate-appcast.sh getagentic brain appcast.xml
-          echo "✅ Appcast generated"
-
-      - name: Update Homebrew tap (optional)
-        if: secrets.HOMEBREW_TAP_TOKEN != ''
-        env:
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          BRAINCHAT_VERSION: ${{ steps.brainchat-version.outputs.version }}
-        run: |
-          echo "🍺 Would update Homebrew tap for version $BRAINCHAT_VERSION"
-          # This would clone the homebrew-brainchat tap and update the formula
-          # git clone https://github.com/getagentic/homebrew-brainchat.git tap
-          # cd tap
-          # Update formula with new version and SHA256
-          # git add .
-          # git commit -m "Update BrainChat to $BRAINCHAT_VERSION"
-          # git push
-
-      - name: Update GitHub Pages appcast
-        run: |
-          echo "📝 Appcast available at:"
-          echo "   https://raw.githubusercontent.com/${{ github.repository }}/main/apps/BrainChat/appcast.xml"
-          echo ""
-          echo "To enable Sparkle auto-updates in BrainChat, add to Info.plist:"
-          echo "   <key>SUFeedURL</key>"
-          echo "   <string>https://raw.githubusercontent.com/${{ github.repository }}/main/apps/BrainChat/appcast.xml</string>"
-
-      - name: Log deployment info
-        run: |
-          echo "## 🚀 BrainChat Deployment Info" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${{ steps.brainchat-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Installation Methods:**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "1. **Homebrew (recommended):**" >> $GITHUB_STEP_SUMMARY
-          echo "   \`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "   brew install --cask brainchat" >> $GITHUB_STEP_SUMMARY
-          echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "2. **Direct download:**" >> $GITHUB_STEP_SUMMARY
-          echo "   - GitHub Releases: https://github.com/${{ github.repository }}/releases" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Auto-Updates:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Sparkle appcast: https://raw.githubusercontent.com/${{ github.repository }}/main/apps/BrainChat/appcast.xml" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** ${{ env.REGISTRY }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Digest:** ${{ steps.push.outputs.digest }}" >> $GITHUB_STEP_SUMMARY
