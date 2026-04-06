@@ -84,7 +84,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 
 ---
 
-## [2.22.0] - 2026-03-29
 
 ### Added
 
@@ -110,7 +109,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 
 ---
 
-## [2.21.0] - 2026-03-29
 
 ### Added
 
@@ -146,7 +144,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 - `docs/voice/EMOTIONS.md` - Emotion system documentation
 - `docs/voice/VOICE_PERSONAS.md` - Voice personas documentation
 
-## [2.17.0] - 2026-03-28
 
 ### Added
 
@@ -169,7 +166,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 - Chatbot examples for natural language store management
 - Plugin developer guide with hooks and filters
 
-## [2.16.0] - 2026-03-30
 
 ### Added
 
@@ -192,7 +188,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
   - `docs/GRAPHRAG.md` expanded with sections on MLX embeddings, RRF scoring, async Neo4j usage, and transaction retries.
   - Added `docs/neo4j.md` as the canonical integration guide covering community detection, hybrid search, and operational best practices.
 
-## [2.15.0] - 2026-03-28
 
 ### Added
 
@@ -238,7 +233,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 - Removed `docling` dependency — replaced by 102 built-in loaders
 - Removed `mem0ai` dependency — replaced by built-in `UnifiedMemory`
 
-## [2.12.0] - 2026-03-26
 
 ### Added
 
@@ -285,7 +279,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 - Package description now reads "155+ RAG loaders" (verified: 155 loader classes defined) instead of "54+ integrations"
 - Compliance badge and trust section now accurately state SOC 2 "Ready" (not "Certified")
 
-## [2.11.0] - 2026-03-23
 
 ### Added
 
@@ -366,7 +359,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 - `activity.Info` dataclass field ordering for Python 3.10 compatibility
 - Black formatting applied to 55 files for consistency
 
-## [2.10.0] - 2026-03-22
 
 ### Added
 - **Windows Installer Improvements**
@@ -416,7 +408,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 - Installation now more user-friendly with guided setup
 - Error messages now more helpful with actionable guidance
 
-## [2.8.0] - 2026-03-22
 
 ### Added
 - **Enterprise Authentication Module**
@@ -465,7 +456,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 - Removed fake case studies from enterprise docs
 - Toned down SOC 2 claims to "compatible" not "certified"
 
-## [2.7.0] - 2026-03-22
 
 ### Added
 - **One-Command Installation**
@@ -498,7 +488,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 - Removed comparison tables against other frameworks
 - Removed fear-based marketing copy
 
-## [2.6.0] - 2026-03-21
 
 ### Added
 - **HTTP Connection Pooling**
@@ -554,7 +543,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 - Updated `docs/DEPENDENCIES.md` with all architectural decisions
 - Added decision log entries for all 2026-03-21 changes
 
-## [2.5.0] - 2026-03-20
 
 ### Added
 - **Hardware Acceleration for Embeddings**
@@ -584,7 +572,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 ### Fixed
 - Tests now properly skip when optional dependencies unavailable
 
-## [2.4.0] - 2026-03-20
 
 ### Added
 - **MCP Protocol Support**: Universal AI tool interoperability
@@ -631,7 +618,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 
 ## [Unreleased]
 
-## [2.2.1] - 2026-03-20
 
 ### Added
 - **Unified Summarization System**: Brain-core compatible conversation summarization
@@ -649,7 +635,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 - Added `memory` parameter to `ConversationSummarizer` for Neo4j storage
 - Added `unified` property to access advanced summarization features
 
-## [2.2.0] - 2026-03-20
 
 ### Added
 - **Conversation Intelligence**: Smart chatbot features for enhanced user interaction
@@ -673,7 +658,6 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
   - `summarize_history()`: Generate conversation summary
 - **Comprehensive Tests**: 45+ test cases for all intelligence features
 
-## [2.1.0] - 2026-03-20
 
 ### Added
 - **Recovery System**: Retry with exponential backoff, checkpoint-based recovery
@@ -809,10 +793,5 @@ This release marks agentic-brain as the clean, open-source foundation for all AI
 
 - Project licensed under Apache-2.0 for maximum flexibility
 
-[Unreleased]: https://github.com/agentic-brain-project/agentic-brain/compare/v2.5.0...HEAD
-[2.5.0]: https://github.com/agentic-brain-project/agentic-brain/compare/v2.4.0...v2.5.0
-[2.4.0]: https://github.com/agentic-brain-project/agentic-brain/compare/v2.2.1...v2.4.0
-[2.2.1]: https://github.com/agentic-brain-project/agentic-brain/compare/v2.2.0...v2.2.1
-[2.2.0]: https://github.com/agentic-brain-project/agentic-brain/compare/v2.1.0...v2.2.0
-[2.1.0]: https://github.com/agentic-brain-project/agentic-brain/compare/v1.0.0...v2.1.0
+[Unreleased]: https://github.com/agentic-brain-project/agentic-brain/compare/v3.1.1...HEAD
 [1.0.0]: https://github.com/agentic-brain-project/agentic-brain/releases/tag/v1.0.0

@@ -98,7 +98,7 @@
 
 ### Documentation Gaps
 
-- **Version mismatch:** Docs say v2.6.0, actual is v2.10.0
+- **Version mismatch:** Docs say v3.1.1, actual is v3.1.1
 - **Missing guides:** ERROR_HANDLING.md, TESTING.md, TROUBLESHOOTING.md, PERFORMANCE.md, MIGRATION.md
 - **Missing docstring Args/Returns:** `router.py chat()`, `memory store()`, `rag/pipeline.py ask()`
 
