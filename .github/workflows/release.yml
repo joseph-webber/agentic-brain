@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2026 Agentic Brain Contributors
+#
+# Release workflow - builds and publishes release artifacts
+# 
+# NOTE: Does NOT run automatically on push. Trigger manually after tagging:
+#   gh workflow run release.yml -f version=v1.2.3
+# Or via workflow_dispatch in GitHub UI.
 
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
-      - 'v*.*.*-*'
   workflow_dispatch:
     inputs:
       version:
@@ -28,8 +30,6 @@ jobs:
   validate:
     name: Validate semantic release metadata
     runs-on: ubuntu-latest
-    # Only run on tags or workflow_dispatch - skip on regular pushes/PRs
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     outputs:
       version: ${{ steps.meta.outputs.version }}
       tag: ${{ steps.meta.outputs.tag }}

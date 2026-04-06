@@ -11,9 +11,6 @@ on:
         description: 'Release notes summary'
         required: false
         default: ''
-  push:
-    tags:
-      - 'brainchat-v*'
 
 concurrency:
   group: brainchat-release-${{ github.ref }}
@@ -30,8 +27,6 @@ jobs:
     name: Prepare Release
     runs-on: macos-14
     timeout-minutes: 15
-    # Only run on tags or workflow_dispatch
-    if: startsWith(github.ref, 'refs/tags/brainchat-v') || github.event_name == 'workflow_dispatch'
     outputs:
       version: ${{ steps.version.outputs.version }}
       release_tag: ${{ steps.version.outputs.tag }}
