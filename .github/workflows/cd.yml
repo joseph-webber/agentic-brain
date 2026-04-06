@@ -2,20 +2,14 @@
 # Copyright (C) 2024-2026 Agentic Brain Contributors
 #
 # Continuous Deployment: Docker Image Build & Push
-# Builds Docker image on push to main and publishes to GitHub Container Registry (ghcr.io)
-# Can optionally be manually deployed to local Mac Docker
+# Builds Docker image and publishes to GitHub Container Registry (ghcr.io)
+# 
+# NOTE: This workflow does NOT run on push. It is called by other workflows
+# or triggered manually via workflow_dispatch.
 
 name: Continuous Deployment
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'src/**'
-      - 'Dockerfile'
-      - 'pyproject.toml'
-      - '.github/workflows/cd.yml'
   workflow_dispatch:
     inputs:
       deploy_target:
@@ -27,6 +21,13 @@ on:
           - ghcr
           - local-docker
           - both
+  workflow_call:
+    inputs:
+      deploy_target:
+        description: 'Deploy target'
+        required: false
+        type: string
+        default: 'ghcr'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,8 +42,6 @@ jobs:
   build-and-push:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
-    # Only run when paths actually change (push) or on manual trigger
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     permissions:
       contents: read
       packages: write
